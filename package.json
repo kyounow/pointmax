@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "tsx scripts/generate-master.ts",
     "build": "tsc -b && vite build",
+    "predev": "tsx scripts/generate-master.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
@@ -27,6 +29,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
+    "tsx": "^4.21.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^8.0.10",

@@ -13,6 +13,9 @@ dist-ssr
 dev-dist
 *.local
 
+# 自動生成されるマスタデータ (ビルド時にseedから生成)
+public/master.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

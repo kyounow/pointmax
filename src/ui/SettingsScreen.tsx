@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
 import { useDialog } from "./dialog/DialogProvider";
+import { DEFAULT_SYNC_URL } from "../state/seed";
 
 export function SettingsScreen() {
   const syncUrl = useStore((s) => s.syncUrl);
@@ -68,11 +69,13 @@ export function SettingsScreen() {
       <p className="hint">
         マスタJSON（エクスポート形式と同じ）を公開URLに置けば、複数端末から取り込めます。
         <br />
-        例: GitHub Gist の Raw URL、自前のWebサーバ等。
-        <strong>HTTPS</strong>かつ <strong>CORS許可</strong> されている必要があります。
+        デフォルトでは
+        本アプリの <strong>公式マスタ（このリポジトリのseedをビルド時に生成）</strong>
+        が設定されています。push毎にGitHub Pagesから自動配信されるので、
+        <strong>「差分のみマージ」を押すたび最新サンプルが取り込まれます</strong>。
       </p>
 
-      <div className="row" style={{ marginBottom: 12 }}>
+      <div className="row" style={{ marginBottom: 8 }}>
         <input
           type="url"
           placeholder="https://gist.githubusercontent.com/.../raw/data.json"
@@ -83,7 +86,22 @@ export function SettingsScreen() {
         <button onClick={handleSave} disabled={draftUrl === syncUrl}>
           URL保存
         </button>
+        <button
+          onClick={() => {
+            setDraftUrl(DEFAULT_SYNC_URL);
+            setSyncUrl(DEFAULT_SYNC_URL);
+          }}
+          disabled={draftUrl === DEFAULT_SYNC_URL && syncUrl === DEFAULT_SYNC_URL}
+          title={`デフォルト: ${DEFAULT_SYNC_URL}`}
+        >
+          デフォルトに戻す
+        </button>
       </div>
+      {draftUrl === DEFAULT_SYNC_URL && (
+        <p className="hint" style={{ marginTop: 0 }}>
+          ✓ 公式マスタを参照中
+        </p>
+      )}
 
       <div className="row" style={{ gap: 8, marginBottom: 12 }}>
         <button

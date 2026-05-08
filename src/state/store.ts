@@ -9,7 +9,7 @@ import type {
   Store,
   StoreRule,
 } from "../domain/types";
-import { seed, SEED_VERSION } from "./seed";
+import { seed, SEED_VERSION, DEFAULT_SYNC_URL } from "./seed";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
 
 const newId = () =>
@@ -90,7 +90,8 @@ const empty: State = {
   pointCards: [],
   loyaltyRules: [],
   lastSeedVersion: 0,
-  syncUrl: "",
+  // 初期値はビルトインの公式マスタURL。ユーザーが空に戻すと再びデフォルトを参照する想定
+  syncUrl: DEFAULT_SYNC_URL,
   lastSyncAt: null,
 };
 
@@ -387,7 +388,8 @@ export const useStore = create<State & Actions>()(
           pointCards: s.pointCards ?? [],
           loyaltyRules: s.loyaltyRules ?? [],
           lastSeedVersion: s.lastSeedVersion ?? 0,
-          syncUrl: s.syncUrl ?? "",
+          // 既存ユーザーのsyncUrlが空ならデフォルトに戻す
+          syncUrl: s.syncUrl ? s.syncUrl : DEFAULT_SYNC_URL,
           lastSyncAt: s.lastSyncAt ?? null,
         } as State;
       },

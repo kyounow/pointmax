@@ -12,6 +12,13 @@ import type {
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 export const SEED_VERSION = 5;
 
+// デプロイされた公式マスタJSONのURL。
+// scripts/generate-master.ts でビルド時に public/master.json として出力され、
+// GitHub Pages 経由でこのURLから配信される。
+// ユーザーが設定で空欄に戻したらこのURLが使われる。
+export const DEFAULT_SYNC_URL =
+  "https://kyounow.github.io/pointmax/master.json";
+
 // 各バージョンで追加された主な内容（差分通知に使用）
 export const SEED_CHANGELOG: {
   version: number;
