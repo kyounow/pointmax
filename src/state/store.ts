@@ -26,6 +26,8 @@ type State = {
   pointCards: PointCard[];
   loyaltyRules: LoyaltyRule[];
   lastSeedVersion: number;
+  syncUrl: string;
+  lastSyncAt: string | null;
 };
 
 type Actions = {
@@ -70,6 +72,13 @@ type Actions = {
   dismissSeedUpdate: () => void;
   exportJson: () => string;
   importJson: (json: string) => { ok: true } | { ok: false; error: string };
+  setSyncUrl: (url: string) => void;
+  syncFromUrl: (
+    mode: "merge" | "overwrite",
+  ) => Promise<
+    | { ok: true; added?: number; mode: "merge" | "overwrite" }
+    | { ok: false; error: string }
+  >;
 };
 
 const empty: State = {
@@ -81,6 +90,8 @@ const empty: State = {
   pointCards: [],
   loyaltyRules: [],
   lastSeedVersion: 0,
+  syncUrl: "",
+  lastSyncAt: null,
 };
 
 export const useStore = create<State & Actions>()(
@@ -220,6 +231,100 @@ export const useStore = create<State & Actions>()(
       dismissSeedUpdate: () =>
         set(() => ({ lastSeedVersion: SEED_VERSION })),
 
+      setSyncUrl: (url) => set(() => ({ syncUrl: url.trim() })),
+
+      syncFromUrl: async (mode) => {
+        const url = get().syncUrl;
+        if (!url) {
+          return { ok: false, error: "同期URLが未設定です" };
+        }
+        try {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) {
+            return {
+              ok: false,
+              error: `HTTP ${res.status}: ${res.statusText}`,
+            };
+          }
+          const text = await res.text();
+          const data = JSON.parse(text);
+          if (typeof data !== "object" || data == null) {
+            return { ok: false, error: "JSONが不正です" };
+          }
+          const required = [
+            "cards",
+            "currencies",
+            "stores",
+            "rules",
+            "edges",
+          ];
+          for (const key of required) {
+            if (!Array.isArray(data[key])) {
+              return {
+                ok: false,
+                error: `"${key}" が配列ではありません`,
+              };
+            }
+          }
+          const remote = {
+            cards: data.cards,
+            currencies: data.currencies,
+            stores: data.stores,
+            rules: data.rules,
+            edges: data.edges,
+            pointCards: Array.isArray(data.pointCards) ? data.pointCards : [],
+            loyaltyRules: Array.isArray(data.loyaltyRules)
+              ? data.loyaltyRules
+              : [],
+          };
+          if (mode === "overwrite") {
+            set(() => ({
+              ...remote,
+              lastSyncAt: new Date().toISOString(),
+            }));
+            return { ok: true, mode };
+          }
+          // merge
+          const s = get();
+          const result = mergeSeedFn(
+            {
+              cards: s.cards,
+              currencies: s.currencies,
+              stores: s.stores,
+              rules: s.rules,
+              edges: s.edges,
+              pointCards: s.pointCards,
+              loyaltyRules: s.loyaltyRules,
+            },
+            remote,
+          );
+          const addedCount =
+            result.diff.cards.length +
+            result.diff.currencies.length +
+            result.diff.stores.length +
+            result.diff.rules.length +
+            result.diff.edges.length +
+            result.diff.pointCards.length +
+            result.diff.loyaltyRules.length;
+          set(() => ({
+            cards: result.cards,
+            currencies: result.currencies,
+            stores: result.stores,
+            rules: result.rules,
+            edges: result.edges,
+            pointCards: result.pointCards,
+            loyaltyRules: result.loyaltyRules,
+            lastSyncAt: new Date().toISOString(),
+          }));
+          return { ok: true, added: addedCount, mode };
+        } catch (e) {
+          return {
+            ok: false,
+            error: e instanceof Error ? e.message : String(e),
+          };
+        }
+      },
+
       exportJson: () => {
         const s = get();
         return JSON.stringify(
@@ -272,7 +377,20 @@ export const useStore = create<State & Actions>()(
     {
       name: "pointmax-store",
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
+      migrate: (persistedState) => {
+        // 旧バージョンからの移行: 不足フィールドにデフォルトを補う
+        const s = (persistedState ?? {}) as Partial<State>;
+        return {
+          ...empty,
+          ...s,
+          pointCards: s.pointCards ?? [],
+          loyaltyRules: s.loyaltyRules ?? [],
+          lastSeedVersion: s.lastSeedVersion ?? 0,
+          syncUrl: s.syncUrl ?? "",
+          lastSyncAt: s.lastSyncAt ?? null,
+        } as State;
+      },
     },
   ),
 );

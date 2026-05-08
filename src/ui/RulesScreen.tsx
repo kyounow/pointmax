@@ -17,8 +17,10 @@ export function RulesScreen() {
   const [cardId, setCardId] = useState("");
   const [storeId, setStoreId] = useState("");
   const [category, setCategory] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [rate, setRate] = useState("0.02");
   const [currencyId, setCurrencyId] = useState("");
+  const [monthlyCap, setMonthlyCap] = useState("");
   const [notes, setNotes] = useState("");
 
   const cardName = (id: string) => {
@@ -36,6 +38,21 @@ export function RulesScreen() {
     for (const s of stores) if (s.category) set.add(s.category);
     return Array.from(set).sort();
   }, [stores]);
+
+  // 既存の支払い方法一覧 (datalist用) + 標準候補
+  const paymentMethodOptions = useMemo(() => {
+    const set = new Set<string>([
+      "Visaタッチ",
+      "QUICPay",
+      "iD",
+      "スマホタッチ",
+      "楽天ペイ",
+      "PayPay",
+      "d払い",
+    ]);
+    for (const r of rules) if (r.paymentMethod) set.add(r.paymentMethod);
+    return Array.from(set).sort();
+  }, [rules]);
 
   return (
     <section>
@@ -76,30 +93,32 @@ export function RulesScreen() {
         onSubmit={(e) => {
           e.preventDefault();
           if (!cardId || !currencyId) return;
+          const pm = paymentMethod.trim();
+          const cap = monthlyCap.trim()
+            ? Math.max(0, Number(monthlyCap))
+            : undefined;
+          const common = {
+            cardId,
+            rate: Number(rate),
+            currencyId,
+            notes: notes.trim() || undefined,
+            paymentMethod: pm || undefined,
+            monthlyCapAmountYen: cap,
+          };
           if (ruleType === "store") {
             if (!storeId) return;
-            addRule({
-              cardId,
-              storeId,
-              rate: Number(rate),
-              currencyId,
-              notes: notes.trim() || undefined,
-            });
+            addRule({ ...common, storeId });
           } else {
             if (!category.trim()) return;
-            addRule({
-              cardId,
-              category: category.trim(),
-              rate: Number(rate),
-              currencyId,
-              notes: notes.trim() || undefined,
-            });
+            addRule({ ...common, category: category.trim() });
           }
           setCardId("");
           setStoreId("");
           setCategory("");
+          setPaymentMethod("");
           setRate("0.02");
           setCurrencyId("");
+          setMonthlyCap("");
           setNotes("");
         }}
       >
@@ -156,6 +175,28 @@ export function RulesScreen() {
           ))}
         </select>
         <input
+          list="rules-payment-methods"
+          placeholder="支払い方法 (任意)"
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          style={{ width: 130 }}
+        />
+        <datalist id="rules-payment-methods">
+          {paymentMethodOptions.map((p) => (
+            <option key={p} value={p} />
+          ))}
+        </datalist>
+        <input
+          type="number"
+          min="0"
+          step="10000"
+          placeholder="月上限円 (任意)"
+          value={monthlyCap}
+          onChange={(e) => setMonthlyCap(e.target.value)}
+          style={{ width: 120 }}
+          title="月間/年間の上限金額（情報表示のみ）"
+        />
+        <input
           placeholder="メモ (任意)"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -169,8 +210,10 @@ export function RulesScreen() {
             <th>種別</th>
             <th>カード</th>
             <th>対象</th>
+            <th>支払方法</th>
             <th>還元率</th>
             <th>貯まる通貨</th>
+            <th>月上限</th>
             <th>メモ</th>
             <th></th>
           </tr>
@@ -206,6 +249,19 @@ export function RulesScreen() {
                 </td>
                 <td>
                   <input
+                    list="rules-payment-methods"
+                    value={r.paymentMethod ?? ""}
+                    placeholder="-"
+                    onChange={(e) =>
+                      updateRule(r.id, {
+                        paymentMethod: e.target.value || undefined,
+                      })
+                    }
+                    style={{ width: 110 }}
+                  />
+                </td>
+                <td>
+                  <input
                     type="number"
                     step="0.001"
                     min="0"
@@ -231,6 +287,23 @@ export function RulesScreen() {
                 </td>
                 <td>
                   <input
+                    type="number"
+                    min="0"
+                    step="10000"
+                    placeholder="-"
+                    value={r.monthlyCapAmountYen ?? ""}
+                    onChange={(e) =>
+                      updateRule(r.id, {
+                        monthlyCapAmountYen: e.target.value
+                          ? Math.max(0, Number(e.target.value))
+                          : undefined,
+                      })
+                    }
+                    style={{ width: 100 }}
+                  />
+                </td>
+                <td>
+                  <input
                     value={r.notes ?? ""}
                     onChange={(e) =>
                       updateRule(r.id, { notes: e.target.value || undefined })
@@ -247,7 +320,7 @@ export function RulesScreen() {
           })}
           {rules.length === 0 && (
             <tr>
-              <td colSpan={7} className="empty">
+              <td colSpan={9} className="empty">
                 まだありません（無いカード×店舗はカードのデフォルトが使われます）
               </td>
             </tr>

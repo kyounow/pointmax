@@ -10,7 +10,7 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 4;
+export const SEED_VERSION = 5;
 
 // 各バージョンで追加された主な内容（差分通知に使用）
 export const SEED_CHANGELOG: {
@@ -41,6 +41,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-08",
     summary:
       "JAL/ANA交換パートナー大幅追加（Marriott Bonvoy / ALL Accor / AMEX MR / Eposポイント）。楽天pt→JAL、WAON→JAL、Vポイント→WAON経由でJAL等の重要ルートを反映",
+  },
+  {
+    version: 5,
+    date: "2026-05-08",
+    summary:
+      "三重取り対応 (Store.maxLoyaltyStacks)、支払い方法別ルール (paymentMethod)、月上限表示 (monthlyCapAmountYen)、外部URL同期機能を追加",
   },
 ];
 
@@ -273,6 +279,7 @@ export const seed = (): {
       id: "rule-smbc-7eleven",
       cardId: "smbc-v",
       storeId: "conv-7eleven",
+      paymentMethod: "Visaタッチ",
       rate: 0.07,
       currencyId: "v-pt",
       notes: "Visaタッチ決済時(スマホタッチで+α)",
@@ -283,6 +290,7 @@ export const seed = (): {
       storeId: "conv-lawson",
       rate: 0.07,
       currencyId: "v-pt",
+      paymentMethod: "Visaタッチ",
       notes: "Visaタッチ決済時",
     },
     {
@@ -291,6 +299,7 @@ export const seed = (): {
       storeId: "mcdonalds",
       rate: 0.07,
       currencyId: "v-pt",
+      paymentMethod: "Visaタッチ",
       notes: "Visaタッチ決済時",
     },
     {
@@ -299,6 +308,7 @@ export const seed = (): {
       storeId: "conv-ministop",
       rate: 0.07,
       currencyId: "v-pt",
+      paymentMethod: "Visaタッチ",
       notes: "Visaタッチ決済時",
     },
     {
@@ -307,6 +317,7 @@ export const seed = (): {
       storeId: "sukiya",
       rate: 0.07,
       currencyId: "v-pt",
+      paymentMethod: "Visaタッチ",
       notes: "Visaタッチ決済時",
     },
     {
@@ -315,6 +326,7 @@ export const seed = (): {
       storeId: "saizeriya",
       rate: 0.07,
       currencyId: "v-pt",
+      paymentMethod: "Visaタッチ",
       notes: "Visaタッチ決済時",
     },
     {
@@ -323,6 +335,7 @@ export const seed = (): {
       storeId: "gusto",
       rate: 0.07,
       currencyId: "v-pt",
+      paymentMethod: "Visaタッチ",
       notes: "Visaタッチ決済時",
     },
     {
@@ -331,6 +344,7 @@ export const seed = (): {
       storeId: "doutor",
       rate: 0.07,
       currencyId: "v-pt",
+      paymentMethod: "Visaタッチ",
       notes: "Visaタッチ決済時",
     },
     {
@@ -339,6 +353,7 @@ export const seed = (): {
       storeId: "sushiro",
       rate: 0.07,
       currencyId: "v-pt",
+      paymentMethod: "Visaタッチ",
       notes: "Visaタッチ決済時",
     },
     // JALカードSuica × Suicaチャージ: ビューカードでJRE POINT 1.5%

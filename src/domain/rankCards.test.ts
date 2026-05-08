@@ -167,8 +167,48 @@ describe("rankCards", () => {
     // ロイヤリティ: 100 dpt direct
     // total: 200
     expect(result[0].finalAmount).toBe(100);
-    expect(result[0].loyalty?.finalAmount).toBe(100);
+    expect(result[0].loyalties).toHaveLength(1);
+    expect(result[0].loyalties[0].finalAmount).toBe(100);
     expect(result[0].totalFinalAmount).toBe(200);
+  });
+
+  it("Store.maxLoyaltyStacks=2 で2枚のポイントカードが同時加算される（三重取り）", () => {
+    const dCard = {
+      id: "d-card",
+      name: "dカード",
+      currencyId: "d-pt",
+    };
+    const rakutenCard = {
+      id: "r-card",
+      name: "楽天カード",
+      currencyId: "rakuten-pt",
+    };
+    const stackStore: Store = {
+      id: "stack-shop",
+      name: "重ね取り店",
+      maxLoyaltyStacks: 2,
+    };
+    const result = rankCards({
+      payment: { storeId: "stack-shop", amount: 10000 },
+      targetCurrencyId: "d-pt",
+      cards: [rakuten],
+      stores: [...baseStores, stackStore],
+      rules: [],
+      edges: [
+        edge("rakuten-to-d", "rakuten-pt", "d-pt", 1),
+      ],
+      pointCards: [dCard, rakutenCard],
+      loyaltyRules: [
+        { id: "l1", storeId: "stack-shop", pointCardId: "d-card", rate: 0.01 },
+        { id: "l2", storeId: "stack-shop", pointCardId: "r-card", rate: 0.005 },
+      ],
+    });
+    // クレカ(楽天): 100 楽天pt → 100 d-pt
+    // ロイヤリティ1: dカード 100 d-pt
+    // ロイヤリティ2: 楽天カード 50 楽天pt → 50 d-pt
+    // total: 100 + 100 + 50 = 250
+    expect(result[0].loyalties).toHaveLength(2);
+    expect(result[0].totalFinalAmount).toBe(250);
   });
 
   it("カテゴリルールが店舗のカテゴリ経由で適用される", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bestLoyalty } from "./loyalty";
+import { bestLoyalty, bestLoyalties } from "./loyalty";
 import type { ConversionEdge, LoyaltyRule, PointCard } from "./types";
 
 const edge = (
@@ -23,6 +23,11 @@ const rakutenCard: PointCard = {
   id: "r-card",
   name: "楽天ポイントカード",
   currencyId: "rakuten-pt",
+};
+const pontaCard: PointCard = {
+  id: "p-card",
+  name: "Pontaカード",
+  currencyId: "ponta-pt",
 };
 
 describe("bestLoyalty", () => {
@@ -64,7 +69,6 @@ describe("bestLoyalty", () => {
       { id: "r1", storeId: "famima", pointCardId: "d-card", rate: 0.005 },
       { id: "r2", storeId: "famima", pointCardId: "r-card", rate: 0.01 },
     ];
-    // target=d-pt: dカードは50pt, 楽天は100ptだが d-pt 到達不可で0
     const result = bestLoyalty(
       "famima",
       10000,
@@ -124,7 +128,6 @@ describe("bestLoyalty", () => {
   });
 
   it("最終量が同点の場合、ownedPointCards の配列順で先頭に近いカードが優先される", () => {
-    // 両方とも 100 ana-mile に到達するレートで設定
     const rules: LoyaltyRule[] = [
       { id: "r-d", storeId: "lawson", pointCardId: "d-card", rate: 0.005 },
       { id: "r-r", storeId: "lawson", pointCardId: "r-card", rate: 0.005 },
@@ -133,7 +136,6 @@ describe("bestLoyalty", () => {
       edge("d-to-ana", "d-pt", "ana-mile", 1),
       edge("r-to-ana", "rakuten-pt", "ana-mile", 1),
     ];
-    // 楽天が先頭の場合
     const r1 = bestLoyalty(
       "lawson",
       10000,
@@ -144,7 +146,6 @@ describe("bestLoyalty", () => {
     );
     expect(r1!.pointCard.id).toBe("r-card");
 
-    // dを先頭に並べ替え
     const r2 = bestLoyalty(
       "lawson",
       10000,
@@ -176,5 +177,114 @@ describe("bestLoyalty", () => {
     );
     expect(result!.earnedCurrencyId).toBe("rakuten-pt");
     expect(result!.finalAmount).toBe(100);
+  });
+});
+
+describe("bestLoyalties (Top-N stack)", () => {
+  it("ルール無しなら []", () => {
+    expect(bestLoyalties("any", 1000, "d-pt", [], [], [], 2)).toEqual([]);
+  });
+
+  it("max=1 は bestLoyalty 1件と同じ結果", () => {
+    const rules: LoyaltyRule[] = [
+      { id: "r1", storeId: "famima", pointCardId: "d-card", rate: 0.005 },
+      { id: "r2", storeId: "famima", pointCardId: "r-card", rate: 0.01 },
+    ];
+    const single = bestLoyalty(
+      "famima",
+      10000,
+      "d-pt",
+      [dCard, rakutenCard],
+      rules,
+      [],
+    );
+    const top = bestLoyalties(
+      "famima",
+      10000,
+      "d-pt",
+      [dCard, rakutenCard],
+      rules,
+      [],
+      1,
+    );
+    expect(top).toHaveLength(1);
+    expect(top[0].pointCard.id).toBe(single!.pointCard.id);
+  });
+
+  it("max=2 で異なる2枚が適用可能なら両方返す", () => {
+    const rules: LoyaltyRule[] = [
+      { id: "r1", storeId: "shop", pointCardId: "d-card", rate: 0.01 },
+      { id: "r2", storeId: "shop", pointCardId: "r-card", rate: 0.01 },
+    ];
+    const top = bestLoyalties(
+      "shop",
+      10000,
+      "d-pt",
+      [dCard, rakutenCard],
+      rules,
+      [edge("r-to-d", "rakuten-pt", "d-pt", 1)],
+      2,
+    );
+    expect(top).toHaveLength(2);
+    expect(top.map((r) => r.pointCard.id).sort()).toEqual(["d-card", "r-card"]);
+  });
+
+  it("max=2 でも適用可能が1枚なら1要素", () => {
+    const rules: LoyaltyRule[] = [
+      { id: "r1", storeId: "shop", pointCardId: "d-card", rate: 0.01 },
+    ];
+    const top = bestLoyalties(
+      "shop",
+      10000,
+      "d-pt",
+      [dCard, rakutenCard],
+      rules,
+      [],
+      2,
+    );
+    expect(top).toHaveLength(1);
+  });
+
+  it("同一カードに複数ルールがあっても、そのカードは1スタック分のみ採用", () => {
+    const rules: LoyaltyRule[] = [
+      { id: "r1", storeId: "shop", pointCardId: "d-card", rate: 0.01 },
+      { id: "r2", storeId: "shop", pointCardId: "d-card", rate: 0.005 },
+    ];
+    const top = bestLoyalties("shop", 10000, "d-pt", [dCard], rules, [], 2);
+    expect(top).toHaveLength(1);
+    expect(top[0].pointCard.id).toBe("d-card");
+    expect(top[0].rule.id).toBe("r1"); // 高レートが採用
+  });
+
+  it("max=0 は []", () => {
+    const rules: LoyaltyRule[] = [
+      { id: "r1", storeId: "shop", pointCardId: "d-card", rate: 0.01 },
+    ];
+    expect(
+      bestLoyalties("shop", 10000, "d-pt", [dCard], rules, [], 0),
+    ).toEqual([]);
+  });
+
+  it("3枚適用可能 + max=2 なら最終量上位2枚を選ぶ", () => {
+    const rules: LoyaltyRule[] = [
+      { id: "r1", storeId: "shop", pointCardId: "d-card", rate: 0.01 },
+      { id: "r2", storeId: "shop", pointCardId: "r-card", rate: 0.005 },
+      { id: "r3", storeId: "shop", pointCardId: "p-card", rate: 0.02 },
+    ];
+    const edges = [
+      edge("r-to-d", "rakuten-pt", "d-pt", 1),
+      edge("p-to-d", "ponta-pt", "d-pt", 1),
+    ];
+    const top = bestLoyalties(
+      "shop",
+      10000,
+      "d-pt",
+      [dCard, rakutenCard, pontaCard],
+      rules,
+      edges,
+      2,
+    );
+    // d=100, r=50, p=200 → 上位2件は p, d
+    expect(top.map((r) => r.pointCard.id)).toEqual(["p-card", "d-card"]);
   });
 });

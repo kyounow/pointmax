@@ -18,7 +18,15 @@ export function CalculatorScreen() {
   const [storeId, setStoreId] = useState("");
   const [amount, setAmount] = useState("10000");
   const [targetCurrencyId, setTargetCurrencyId] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  // 既存ルールから利用可能な支払い方法を抽出
+  const paymentMethods = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rules) if (r.paymentMethod) set.add(r.paymentMethod);
+    return Array.from(set).sort();
+  }, [rules]);
 
   const currencyById = useMemo(
     () => new Map(currencies.map((c) => [c.id, c])),
@@ -31,7 +39,11 @@ export function CalculatorScreen() {
     const amt = Number(amount);
     if (!Number.isFinite(amt) || amt <= 0) return null;
     return rankCards({
-      payment: { storeId, amount: amt },
+      payment: {
+        storeId,
+        amount: amt,
+        paymentMethod: paymentMethod || undefined,
+      },
       targetCurrencyId,
       cards,
       stores,
@@ -44,6 +56,7 @@ export function CalculatorScreen() {
     storeId,
     amount,
     targetCurrencyId,
+    paymentMethod,
     cards,
     stores,
     rules,
@@ -52,7 +65,7 @@ export function CalculatorScreen() {
     loyaltyRules,
   ]);
 
-  const loyalty = result && result.length > 0 ? result[0].loyalty : null;
+  const loyalties = result && result.length > 0 ? result[0].loyalties : [];
 
   // 入力が変わるたびに、最上位の reachable カードだけ展開状態にリセット
   useEffect(() => {
@@ -123,6 +136,22 @@ export function CalculatorScreen() {
             ))}
           </select>
         </label>
+        {paymentMethods.length > 0 && (
+          <label>
+            支払い方法:
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            >
+              <option value="">通常クレカ決済</option>
+              {paymentMethods.map((pm) => (
+                <option key={pm} value={pm}>
+                  {pm}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </form>
 
       {!result && (
@@ -131,41 +160,56 @@ export function CalculatorScreen() {
         </p>
       )}
 
-      {result && loyalty && (
+      {result && loyalties.length > 0 && (
         <div className="loyalty-banner">
           <div className="loyalty-banner-title">
-            ポイントカード併用 ({loyalty.pointCard.name})
+            ポイントカード併用
+            {loyalties.length > 1
+              ? `（${loyalties.length}枚を同時提示・三重取り）`
+              : `（${loyalties[0].pointCard.name}）`}
           </div>
-          <div className="loyalty-banner-body">
-            <span className="loyalty-rate">
-              還元率 {(loyalty.rule.rate * 100).toFixed(2)}% →{" "}
-              {formatNum(loyalty.earnedAmount)}{" "}
-              {currencyName(loyalty.earnedCurrencyId)}
-            </span>
-            <span className="path-line">
-              <NodePill currency={currencyById.get(loyalty.earnedCurrencyId)} />
-              {loyalty.pathSteps.map((step) => (
-                <span key={step.id} className="path-segment">
-                  <span className="arrow">
-                    →<small>{formatRatio(step.rate)}</small>
+          {loyalties.map((loyalty, idx) => (
+            <div className="loyalty-banner-body" key={loyalty.rule.id}>
+              {loyalties.length > 1 && (
+                <span className="loyalty-stack-tag">{idx + 1}枚目</span>
+              )}
+              <span className="loyalty-rate">
+                {loyalties.length > 1 && (
+                  <>
+                    <strong>{loyalty.pointCard.name}</strong>{" "}
+                  </>
+                )}
+                還元率 {(loyalty.rule.rate * 100).toFixed(2)}% →{" "}
+                {formatNum(loyalty.earnedAmount)}{" "}
+                {currencyName(loyalty.earnedCurrencyId)}
+              </span>
+              <span className="path-line">
+                <NodePill
+                  currency={currencyById.get(loyalty.earnedCurrencyId)}
+                />
+                {loyalty.pathSteps.map((step) => (
+                  <span key={step.id} className="path-segment">
+                    <span className="arrow">
+                      →<small>{formatRatio(step.rate)}</small>
+                    </span>
+                    <NodePill currency={currencyById.get(step.toCurrencyId)} />
                   </span>
-                  <NodePill currency={currencyById.get(step.toCurrencyId)} />
-                </span>
-              ))}
-            </span>
-            {loyalty.reachable ? (
-              <strong className="final" style={{ marginLeft: "auto" }}>
-                +{formatNum(loyalty.finalAmount)}{" "}
-                {currencyName(targetCurrencyId)}
-              </strong>
-            ) : (
-              <small className="hint">
-                {currencyName(loyalty.earnedCurrencyId)} から{" "}
-                {currencyName(targetCurrencyId)}{" "}
-                へのルート未登録（合算は0扱い）
-              </small>
-            )}
-          </div>
+                ))}
+              </span>
+              {loyalty.reachable ? (
+                <strong className="final" style={{ marginLeft: "auto" }}>
+                  +{formatNum(loyalty.finalAmount)}{" "}
+                  {currencyName(targetCurrencyId)}
+                </strong>
+              ) : (
+                <small className="hint">
+                  {currencyName(loyalty.earnedCurrencyId)} から{" "}
+                  {currencyName(targetCurrencyId)}{" "}
+                  へのルート未登録（合算は0扱い）
+                </small>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -186,7 +230,12 @@ export function CalculatorScreen() {
             <p className="empty">保有カードが登録されていません。</p>
           )}
           {result.map((r, i) => {
-            const hasLoyalty = !!r.loyalty?.reachable;
+            const reachableLoyalties = r.loyalties.filter((l) => l.reachable);
+            const loyaltyTotal = reachableLoyalties.reduce(
+              (s, l) => s + l.finalAmount,
+              0,
+            );
+            const hasLoyalty = reachableLoyalties.length > 0;
             const expanded = expandedIds.has(r.card.id);
             return (
               <article
@@ -220,7 +269,11 @@ export function CalculatorScreen() {
                           {currencyName(targetCurrencyId)}
                           <small className="loyalty-breakdown">
                             （クレカ {formatNum(r.finalAmount)} + 併用{" "}
-                            {formatNum(r.loyalty!.finalAmount)}）
+                            {formatNum(loyaltyTotal)}
+                            {reachableLoyalties.length > 1
+                              ? ` ×${reachableLoyalties.length}枚`
+                              : ""}
+                            ）
                           </small>
                         </>
                       ) : (
@@ -245,6 +298,22 @@ export function CalculatorScreen() {
                       {r.resolved.source === "category" && (
                         <span className="badge">カテゴリルール適用</span>
                       )}
+                      {(() => {
+                        if (r.resolved.source === "default") return null;
+                        const ruleId = r.resolved.ruleId;
+                        const rule = rules.find((rl) => rl.id === ruleId);
+                        if (!rule?.monthlyCapAmountYen) return null;
+                        return (
+                          <span
+                            className="cap-warn"
+                            title="この還元率には月間/年間の上限があります"
+                          >
+                            ⚠ 上限{" "}
+                            {rule.monthlyCapAmountYen.toLocaleString()}
+                            円/月
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <div className="path">

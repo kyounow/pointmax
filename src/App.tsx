@@ -7,6 +7,7 @@ import { RulesScreen } from "./ui/RulesScreen";
 import { EdgesScreen } from "./ui/EdgesScreen";
 import { CalculatorScreen } from "./ui/CalculatorScreen";
 import { PointCardsScreen } from "./ui/PointCardsScreen";
+import { SettingsScreen } from "./ui/SettingsScreen";
 import { UpdateBanner } from "./ui/UpdateBanner";
 import { useStore } from "./state/store";
 import { useDialog } from "./ui/dialog/DialogProvider";
@@ -18,7 +19,8 @@ type Tab =
   | "currencies"
   | "stores"
   | "rules"
-  | "edges";
+  | "edges"
+  | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "calculator", label: "計算" },
@@ -28,6 +30,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "stores", label: "店舗" },
   { id: "rules", label: "ルール" },
   { id: "edges", label: "交換ルート" },
+  { id: "settings", label: "設定" },
 ];
 
 function App() {
@@ -193,6 +196,7 @@ function App() {
         {tab === "stores" && <StoresScreen />}
         {tab === "rules" && <RulesScreen />}
         {tab === "edges" && <EdgesScreen />}
+        {tab === "settings" && <SettingsScreen />}
       </main>
     </div>
   );

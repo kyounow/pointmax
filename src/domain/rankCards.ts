@@ -8,10 +8,10 @@ import type {
 } from "./types";
 import { resolveRate, type ResolvedRate } from "./resolveRate";
 import { bestPath } from "./bestPath";
-import { bestLoyalty, type LoyaltyResult } from "./loyalty";
+import { bestLoyalties, type LoyaltyResult } from "./loyalty";
 
 export type RankInput = {
-  payment: { storeId: string; amount: number };
+  payment: { storeId: string; amount: number; paymentMethod?: string };
   targetCurrencyId: string;
   cards: Card[];
   stores: Store[];
@@ -30,8 +30,8 @@ export type CardRanking = {
   pathProduct: number;
   finalAmount: number;
   reachable: boolean;
-  loyalty: LoyaltyResult | null; // 店舗ごとに共通(全カード同じ値)
-  totalFinalAmount: number; // finalAmount + (loyalty?.finalAmount ?? 0)
+  loyalties: LoyaltyResult[]; // 三重取り対応で配列化
+  totalFinalAmount: number; // finalAmount + Σ(loyalties[].finalAmount where reachable)
 };
 
 export function rankCards(input: RankInput): CardRanking[] {
@@ -46,17 +46,30 @@ export function rankCards(input: RankInput): CardRanking[] {
     loyaltyRules = [],
   } = input;
 
-  const loyalty = bestLoyalty(
+  const store = stores.find((s) => s.id === payment.storeId);
+  const maxStacks = Math.max(0, store?.maxLoyaltyStacks ?? 1);
+  const loyalties = bestLoyalties(
     payment.storeId,
     payment.amount,
     targetCurrencyId,
     pointCards,
     loyaltyRules,
     edges,
+    maxStacks,
+  );
+  const loyaltyTotal = loyalties.reduce(
+    (sum, r) => sum + (r.reachable ? r.finalAmount : 0),
+    0,
   );
 
   const ranked: CardRanking[] = cards.map((card) => {
-    const resolved = resolveRate(card, payment.storeId, rules, stores);
+    const resolved = resolveRate(
+      card,
+      payment.storeId,
+      rules,
+      stores,
+      payment.paymentMethod,
+    );
     const earnedAmount = payment.amount * resolved.rate;
     const earnedCurrencyId = resolved.currencyId;
 
@@ -69,7 +82,6 @@ export function rankCards(input: RankInput): CardRanking[] {
 
     const baseFinal = path?.finalAmount ?? 0;
     const reachable = path !== null;
-    const loyaltyFinal = loyalty?.reachable ? loyalty.finalAmount : 0;
 
     return {
       card,
@@ -80,8 +92,8 @@ export function rankCards(input: RankInput): CardRanking[] {
       pathProduct: path?.product ?? 0,
       finalAmount: baseFinal,
       reachable,
-      loyalty,
-      totalFinalAmount: baseFinal + loyaltyFinal,
+      loyalties,
+      totalFinalAmount: baseFinal + loyaltyTotal,
     };
   });
 

@@ -23,21 +23,28 @@ export type Card = {
 };
 
 // プルダウン用店舗マスタ
+// maxLoyaltyStacks: ポイントカードを同時に複数提示できる数 (default 1)
+//   例: 多くの店は1、紀伊國屋等で複数加盟ある場合は2以上
 export type Store = {
   id: string;
   name: string;
   category?: string;
+  maxLoyaltyStacks?: number;
 };
 
 // カード×店舗(直接) または カード×カテゴリ(間接) のルール
 // storeId と category のいずれか一方を指定する。両方指定された場合は storeId が優先
+// paymentMethod があれば、計算時に同じ支払い方法を選んだ場合のみ適用される
+// monthlyCapAmountYen は情報表示用（年/月の上限が決まっている特約） — 計算には影響しない
 export type StoreRule = {
   id: string;
   cardId: string;
   storeId?: string;
   category?: string;
+  paymentMethod?: string;
   rate: number;
   currencyId: string;
+  monthlyCapAmountYen?: number;
   notes?: string;
 };
 

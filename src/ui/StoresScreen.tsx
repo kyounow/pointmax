@@ -15,6 +15,7 @@ export function StoresScreen() {
       <h2>店舗</h2>
       <p className="hint">
         計算画面のプルダウンに出る店舗一覧です。「(その他)」を1つ用意しておくと自由入力的に使えます。
+        ポイントカード提示が複数枚できる店舗（紀伊國屋等）は「同時提示数」を2以上に設定。
       </p>
 
       <form
@@ -48,6 +49,7 @@ export function StoresScreen() {
           <tr>
             <th>店舗名</th>
             <th>カテゴリ</th>
+            <th>同時提示数</th>
             <th></th>
           </tr>
         </thead>
@@ -71,6 +73,25 @@ export function StoresScreen() {
                 />
               </td>
               <td>
+                <input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="1"
+                  placeholder="1"
+                  value={s.maxLoyaltyStacks ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    updateStore(s.id, {
+                      maxLoyaltyStacks:
+                        v === "" ? undefined : Math.max(0, Number(v)),
+                    });
+                  }}
+                  style={{ width: 70 }}
+                  title="ポイントカードを同時提示できる枚数（空欄=1）"
+                />
+              </td>
+              <td>
                 <button className="danger" onClick={() => removeStore(s.id)}>
                   削除
                 </button>
@@ -79,7 +100,7 @@ export function StoresScreen() {
           ))}
           {stores.length === 0 && (
             <tr>
-              <td colSpan={3} className="empty">
+              <td colSpan={4} className="empty">
                 まだありません
               </td>
             </tr>

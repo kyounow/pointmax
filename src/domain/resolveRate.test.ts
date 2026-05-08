@@ -181,6 +181,73 @@ describe("resolveRate", () => {
     expect(result.currencyId).toBe("amazon-pt");
   });
 
+  // ===== 支払い方法 (paymentMethod) =====
+
+  it("ルールに paymentMethod が指定されているとき、一致しないと適用されない", () => {
+    const rule: StoreRule = {
+      id: "touch",
+      cardId: "rakuten",
+      storeId: "amazon",
+      paymentMethod: "Visaタッチ",
+      rate: 0.07,
+      currencyId: "v-pt",
+    };
+    const r1 = resolveRate(card, "amazon", [rule], stores, "通常");
+    expect(r1.source).toBe("default");
+
+    const r2 = resolveRate(card, "amazon", [rule], stores, "Visaタッチ");
+    expect(r2.source).toBe("rule");
+    expect(r2.rate).toBe(0.07);
+  });
+
+  it("paymentMethod 無しのルールは支払い方法に関係なく適用される", () => {
+    const rule: StoreRule = {
+      id: "any",
+      cardId: "rakuten",
+      storeId: "amazon",
+      rate: 0.02,
+      currencyId: "amazon-pt",
+    };
+    const r = resolveRate(card, "amazon", [rule], stores, "Visaタッチ");
+    expect(r.source).toBe("rule");
+    expect(r.rate).toBe(0.02);
+  });
+
+  it("paymentMethod 一致ルールが、無印ルールより優先される", () => {
+    const generic: StoreRule = {
+      id: "generic",
+      cardId: "rakuten",
+      storeId: "amazon",
+      rate: 0.01,
+      currencyId: "amazon-pt",
+    };
+    const specific: StoreRule = {
+      id: "specific",
+      cardId: "rakuten",
+      storeId: "amazon",
+      paymentMethod: "QUICPay",
+      rate: 0.04,
+      currencyId: "amazon-pt",
+    };
+    const r1 = resolveRate(card, "amazon", [generic, specific], stores, "QUICPay");
+    expect(r1.rate).toBe(0.04); // QUICPay優先
+    const r2 = resolveRate(card, "amazon", [generic, specific], stores, "通常");
+    expect(r2.rate).toBe(0.01); // genericへフォールバック
+  });
+
+  it("paymentMethod 引数を省略した場合、無印ルールのみマッチする", () => {
+    const onlyTouch: StoreRule = {
+      id: "x",
+      cardId: "rakuten",
+      storeId: "amazon",
+      paymentMethod: "Visaタッチ",
+      rate: 0.07,
+      currencyId: "v-pt",
+    };
+    const r = resolveRate(card, "amazon", [onlyTouch], stores);
+    expect(r.source).toBe("default");
+  });
+
   it("不明な storeId のときは store が見つからずデフォルトに落ちる", () => {
     const rule: StoreRule = {
       id: "any",
