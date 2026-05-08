@@ -1,0 +1,6 @@
+/* App-specific theme is in App.css. This file is kept minimal. */
+html,
+body,
+#root {
+  height: 100%;
+}
