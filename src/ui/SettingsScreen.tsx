@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import { useDialog } from "./dialog/DialogProvider";
 import { DEFAULT_SYNC_URL } from "../state/seed";
@@ -9,8 +9,15 @@ export function SettingsScreen() {
   const setSyncUrl = useStore((s) => s.setSyncUrl);
   const syncFromUrl = useStore((s) => s.syncFromUrl);
   const dialog = useDialog();
-  const [draftUrl, setDraftUrl] = useState(syncUrl);
+  const [draftUrl, setDraftUrl] = useState(syncUrl || DEFAULT_SYNC_URL);
   const [busy, setBusy] = useState(false);
+
+  // 永続化に空URLが残っている場合、自動でデフォルトに補完
+  useEffect(() => {
+    if (!syncUrl) {
+      setSyncUrl(DEFAULT_SYNC_URL);
+    }
+  }, [syncUrl, setSyncUrl]);
 
   const handleSave = () => {
     setSyncUrl(draftUrl);

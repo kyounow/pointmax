@@ -378,7 +378,7 @@ export const useStore = create<State & Actions>()(
     {
       name: "pointmax-store",
       storage: createJSONStorage(() => localStorage),
-      version: 3,
+      version: 4,
       migrate: (persistedState) => {
         // 旧バージョンからの移行: 不足フィールドにデフォルトを補う
         const s = (persistedState ?? {}) as Partial<State>;
