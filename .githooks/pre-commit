@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# PointMax pre-commit hook
+#  - 機密値 (Gemini API Key 等) がステージ済み diff に紛れ込んでないかをチェック
+#  - 検出した場合は commit を中止して内容を表示
+#
+# 有効化: `git config core.hooksPath .githooks`
+# (詳細は .githooks/README.md を参照)
+
+set -euo pipefail
+
+# ステージ済みの追加行のみを対象 (削除行や既存行は対象外)
+# --no-color で色制御文字を抑止、--unified=0 で context 行を抑止
+STAGED_DIFF=$(git diff --cached --no-color --unified=0 -- ':!*.example' || true)
+
+# 検出パターン: 値が空文字列でないものを対象にする
+PATTERNS=(
+  # Gemini / Google AI API Key (AIzaSy で始まる 39 文字)
+  'AIzaSy[A-Za-z0-9_-]{33}'
+  # GEMINI_API_KEY= の右辺に非空値
+  'GEMINI_API_KEY=[A-Za-z0-9][A-Za-z0-9_-]{6,}'
+  # OPENAI_API_KEY=sk- 形式 (将来用)
+  'sk-[A-Za-z0-9]{20,}'
+  # GitHub PAT (ghp_, gho_, ghs_)
+  '(ghp|gho|ghs)_[A-Za-z0-9]{30,}'
+)
+
+FOUND_ISSUES=0
+for pattern in "${PATTERNS[@]}"; do
+  # 追加行 (+で始まる) のみから検索
+  if echo "$STAGED_DIFF" | grep -E "^\+" | grep -E "$pattern" > /dev/null 2>&1; then
+    echo "✗ pre-commit: 機密値らしき文字列が検出されました (pattern: $pattern)"
+    echo "  該当行:"
+    echo "$STAGED_DIFF" | grep -E "^\+" | grep -E "$pattern" | sed 's/^/    /'
+    FOUND_ISSUES=$((FOUND_ISSUES + 1))
+  fi
+done
+
+if [ "$FOUND_ISSUES" -gt 0 ]; then
+  echo ""
+  echo "Commit を中止しました。"
+  echo "  - 誤検知の場合: git commit --no-verify で回避できますが、本当に問題ないか必ず確認してください"
+  echo "  - 本物の機密値の場合: 該当ファイルから値を取り除き、 .env.local 等の git管理外に移動してください"
+  exit 1
+fi
+
+exit 0

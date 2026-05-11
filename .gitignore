@@ -16,6 +16,16 @@ dev-dist
 # 自動生成されるマスタデータ (ビルド時にseedから生成)
 public/master.json
 
+# シークレット (Gemini API Key 等)
+# .env.local は *.local で既にカバーされているが明示
+.env
+.env.*
+!.env.example
+
+# Gemini CLI のローカル設定 (OAuth トークン等)
+.gemini/
+.gemini-cli/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

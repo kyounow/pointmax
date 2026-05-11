@@ -1,0 +1,41 @@
+# PointMax master sync: source registry
+# 各クレカ・ポイントカード・決済アプリの「マスタとなる公式ページ」を列挙する。
+# 週次 GitHub Actions cron がこのファイルを読み、各 enabled: true なソースを Gemini CLI に渡す。
+#
+# 編集ルール:
+#  - 新規追加時は id をユニーク (slug, kebab-case) に
+#  - 一時的に止めたい場合は enabled: false で残す (履歴のため削除しない)
+#  - notes に「なぜこのソースを選んだか」を残すと将来の自分が助かる
+#
+# extractor の選択肢: card | jal-tokuyaku | point-partner | payment-app
+# produces の選択肢:  cards / storeRules / categoryRules / stores / loyaltyRules / paymentApps
+
+version: 1
+
+sources:
+  - id: jal-card-tokuyaku-list
+    label: JALカード 特約店一覧 (公式)
+    url: https://www.jal.co.jp/jp/ja/jalcard/use/jaltokuyaku/list/
+    extractor: jal-tokuyaku
+    produces:
+      - stores
+      - storeRules
+      - categoryRules
+    enabled: true
+    notes: |
+      JALカード共通の特約店一覧。マイル積算率 200% (= 2%) の店舗を網羅。
+      新規追加・廃止・還元率変動を週次でチェックする想定。
+      cardId は jal-card-suica を主に対象、他の JALカード保有時は別ソース追加で対応。
+
+  - id: rakuten-point-partners
+    label: 楽天ポイントカード 加盟店 (公式)
+    url: https://pointcard.rakuten.co.jp/partner/
+    extractor: point-partner
+    produces:
+      - stores
+      - loyaltyRules
+    enabled: true
+    notes: |
+      楽天ポイントカード提示で貯まる加盟店一覧。
+      pointCardId は rakuten-card を対象。
+      還元率は店舗によって違うので Gemini に正確な数値抽出を求める。

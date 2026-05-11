@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "PointMax master sync: ExtractedSource schema. Used as Gemini responseSchema and as in-repo contract documentation. Keep flat (no $ref) for Gemini compatibility.",
+  "title": "ExtractedSource",
+  "description": "One file per registry source. Output of a single Gemini scrape run for sources/extracted/<sourceId>.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sourceId",
+    "sourceUrl",
+    "fetchedAt",
+    "promptVersion",
+    "extractor",
+    "geminiModel"
+  ],
+  "properties": {
+    "sourceId": {
+      "type": "string",
+      "description": "Matches the id in sources/registry.yaml."
+    },
+    "sourceUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "fetchedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of when this extraction completed."
+    },
+    "promptVersion": {
+      "type": "string",
+      "description": "e.g. \"card-v1.0\" - referencing the extractor prompt file used."
+    },
+    "extractor": {
+      "type": "string",
+      "enum": ["card", "jal-tokuyaku", "point-partner", "payment-app"]
+    },
+    "geminiModel": {
+      "type": "string",
+      "description": "e.g. \"gemini-2.5-pro\""
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form comments from Gemini about the extraction (warnings, caveats, etc.)."
+    },
+
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cardId", "evidenceQuote", "explicitness", "ambiguity"],
+        "properties": {
+          "cardId": { "type": "string", "description": "Must match an existing Card.id in seed.ts." },
+          "name": { "type": "string" },
+          "grade": { "type": "string" },
+          "defaultRate": { "type": "number", "minimum": 0, "maximum": 1, "description": "0.01 = 1%." },
+          "defaultCurrencyId": { "type": "string" },
+          "evidenceQuote": { "type": "string", "minLength": 1 },
+          "evidenceUrl": { "type": "string", "format": "uri" },
+          "explicitness": { "type": "number", "minimum": 0, "maximum": 1 },
+          "ambiguity": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+
+    "storeRules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cardId",
+          "storeId",
+          "rate",
+          "currencyId",
+          "evidenceQuote",
+          "explicitness",
+          "ambiguity"
+        ],
+        "properties": {
+          "cardId": { "type": "string" },
+          "storeId": { "type": "string", "description": "Must match an existing Store.id, or be added via stores[] in the same extraction." },
+          "paymentAppId": { "type": "string", "description": "Only set if this rule applies only to a specific PaymentApp." },
+          "rate": { "type": "number", "minimum": 0, "maximum": 1 },
+          "currencyId": { "type": "string" },
+          "monthlyCapAmountYen": { "type": "integer", "minimum": 0 },
+          "notes": { "type": "string" },
+          "evidenceQuote": { "type": "string", "minLength": 1 },
+          "evidenceUrl": { "type": "string", "format": "uri" },
+          "explicitness": { "type": "number", "minimum": 0, "maximum": 1 },
+          "ambiguity": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+
+    "categoryRules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cardId",
+          "category",
+          "rate",
+          "currencyId",
+          "evidenceQuote",
+          "explicitness",
+          "ambiguity"
+        ],
+        "properties": {
+          "cardId": { "type": "string" },
+          "category": { "type": "string", "description": "e.g. \"JAL特約店\", \"コンビニ\"." },
+          "paymentAppId": { "type": "string" },
+          "rate": { "type": "number", "minimum": 0, "maximum": 1 },
+          "currencyId": { "type": "string" },
+          "monthlyCapAmountYen": { "type": "integer", "minimum": 0 },
+          "notes": { "type": "string" },
+          "evidenceQuote": { "type": "string", "minLength": 1 },
+          "evidenceUrl": { "type": "string", "format": "uri" },
+          "explicitness": { "type": "number", "minimum": 0, "maximum": 1 },
+          "ambiguity": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+
+    "stores": {
+      "type": "array",
+      "description": "New stores not yet in seed.ts. The storeId is proposed; collision triggers a needsReview Issue.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "storeId",
+          "name",
+          "evidenceQuote",
+          "explicitness",
+          "ambiguity"
+        ],
+        "properties": {
+          "storeId": { "type": "string", "description": "Proposed slug. lowercase kebab-case." },
+          "name": { "type": "string" },
+          "category": { "type": "string" },
+          "evidenceQuote": { "type": "string", "minLength": 1 },
+          "evidenceUrl": { "type": "string", "format": "uri" },
+          "explicitness": { "type": "number", "minimum": 0, "maximum": 1 },
+          "ambiguity": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+
+    "loyaltyRules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pointCardId",
+          "storeId",
+          "rate",
+          "evidenceQuote",
+          "explicitness",
+          "ambiguity"
+        ],
+        "properties": {
+          "pointCardId": { "type": "string" },
+          "storeId": { "type": "string" },
+          "rate": { "type": "number", "minimum": 0, "maximum": 1 },
+          "currencyId": { "type": "string", "description": "Usually omit; defaults to PointCard.currencyId." },
+          "notes": { "type": "string" },
+          "evidenceQuote": { "type": "string", "minLength": 1 },
+          "evidenceUrl": { "type": "string", "format": "uri" },
+          "explicitness": { "type": "number", "minimum": 0, "maximum": 1 },
+          "ambiguity": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+
+    "paymentApps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "paymentAppId",
+          "evidenceQuote",
+          "explicitness",
+          "ambiguity"
+        ],
+        "properties": {
+          "paymentAppId": { "type": "string" },
+          "name": { "type": "string" },
+          "defaultBonusRate": { "type": "number", "minimum": 0, "maximum": 1 },
+          "defaultBonusCurrencyId": { "type": "string" },
+          "chargeBased": { "type": "boolean" },
+          "compatibleCardIds": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "evidenceQuote": { "type": "string", "minLength": 1 },
+          "evidenceUrl": { "type": "string", "format": "uri" },
+          "explicitness": { "type": "number", "minimum": 0, "maximum": 1 },
+          "ambiguity": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    }
+  }
+}
