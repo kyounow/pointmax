@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { cardLabel } from "../domain/cardLabel";
+import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
+import type { StoreRule } from "../domain/types";
 
 type RuleType = "store" | "category";
 
@@ -32,14 +34,12 @@ export function RulesScreen() {
   const currencyName = (id: string) =>
     currencies.find((c) => c.id === id)?.name ?? "?";
 
-  // 既存の店舗カテゴリ一覧
   const categories = useMemo(() => {
     const set = new Set<string>();
     for (const s of stores) if (s.category) set.add(s.category);
     return Array.from(set).sort();
   }, [stores]);
 
-  // 既存の支払い方法一覧 (datalist用) + 標準候補
   const paymentMethodOptions = useMemo(() => {
     const set = new Set<string>([
       "Visaタッチ",
@@ -53,6 +53,132 @@ export function RulesScreen() {
     for (const r of rules) if (r.paymentMethod) set.add(r.paymentMethod);
     return Array.from(set).sort();
   }, [rules]);
+
+  const ruleColumns: ColumnDef<StoreRule>[] = [
+    {
+      key: "type",
+      label: "種別",
+      view: (r) => {
+        const isCat = !r.storeId && !!r.category;
+        return (
+          <span
+            className="badge"
+            style={{ background: isCat ? "#7c3aed" : "#3a86ff" }}
+          >
+            {isCat ? "カテゴリ" : "店舗"}
+          </span>
+        );
+      },
+    },
+    {
+      key: "card",
+      label: "カード",
+      view: (r) => cardName(r.cardId),
+    },
+    {
+      key: "target",
+      label: "対象",
+      view: (r) => {
+        const isCat = !r.storeId && !!r.category;
+        return isCat ? `[カテゴリ] ${r.category}` : storeName(r.storeId ?? "");
+      },
+      edit: (r, set) => {
+        const isCat = !r.storeId && !!r.category;
+        return isCat ? (
+          <input
+            list="rules-category-list-edit"
+            value={r.category ?? ""}
+            onChange={(e) => set({ category: e.target.value })}
+          />
+        ) : (
+          <span>{storeName(r.storeId ?? "")}</span>
+        );
+      },
+    },
+    {
+      key: "paymentMethod",
+      label: "支払方法",
+      view: (r) => r.paymentMethod ?? "-",
+      edit: (r, set) => (
+        <input
+          list="rules-payment-methods"
+          value={r.paymentMethod ?? ""}
+          placeholder="-"
+          onChange={(e) =>
+            set({ paymentMethod: e.target.value || undefined })
+          }
+          style={{ width: 110 }}
+        />
+      ),
+    },
+    {
+      key: "rate",
+      label: "還元率",
+      view: (r) => `${(r.rate * 100).toFixed(2)}%`,
+      edit: (r, set) => (
+        <input
+          type="number"
+          step="0.001"
+          min="0"
+          value={r.rate}
+          onChange={(e) => set({ rate: Number(e.target.value) })}
+        />
+      ),
+    },
+    {
+      key: "currency",
+      label: "貯まる通貨",
+      view: (r) => currencyName(r.currencyId),
+      edit: (r, set) => (
+        <select
+          value={r.currencyId}
+          onChange={(e) => set({ currencyId: e.target.value })}
+        >
+          {currencies.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      ),
+    },
+    {
+      key: "cap",
+      label: "月上限",
+      view: (r) =>
+        r.monthlyCapAmountYen
+          ? `${r.monthlyCapAmountYen.toLocaleString()}円`
+          : "-",
+      edit: (r, set) => (
+        <input
+          type="number"
+          min="0"
+          step="10000"
+          placeholder="-"
+          value={r.monthlyCapAmountYen ?? ""}
+          onChange={(e) =>
+            set({
+              monthlyCapAmountYen: e.target.value
+                ? Math.max(0, Number(e.target.value))
+                : undefined,
+            })
+          }
+          style={{ width: 100 }}
+        />
+      ),
+    },
+    {
+      key: "notes",
+      label: "メモ",
+      view: (r) => r.notes ?? "-",
+      edit: (r, set) => (
+        <input
+          value={r.notes ?? ""}
+          onChange={(e) => set({ notes: e.target.value || undefined })}
+        />
+      ),
+    },
+  ];
 
   return (
     <section>
@@ -131,10 +257,7 @@ export function RulesScreen() {
           ))}
         </select>
         {ruleType === "store" ? (
-          <select
-            value={storeId}
-            onChange={(e) => setStoreId(e.target.value)}
-          >
+          <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
             <option value="">店舗</option>
             {stores.map((s) => (
               <option key={s.id} value={s.id}>
@@ -204,129 +327,13 @@ export function RulesScreen() {
         <button type="submit">追加</button>
       </form>
 
-      <table>
-        <thead>
-          <tr>
-            <th>種別</th>
-            <th>カード</th>
-            <th>対象</th>
-            <th>支払方法</th>
-            <th>還元率</th>
-            <th>貯まる通貨</th>
-            <th>月上限</th>
-            <th>メモ</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rules.map((r) => {
-            const isCat = !r.storeId && !!r.category;
-            return (
-              <tr key={r.id}>
-                <td>
-                  <span
-                    className="badge"
-                    style={{
-                      background: isCat ? "#7c3aed" : "#3a86ff",
-                    }}
-                  >
-                    {isCat ? "カテゴリ" : "店舗"}
-                  </span>
-                </td>
-                <td>{cardName(r.cardId)}</td>
-                <td>
-                  {isCat ? (
-                    <input
-                      list="rules-category-list-edit"
-                      value={r.category ?? ""}
-                      onChange={(e) =>
-                        updateRule(r.id, { category: e.target.value })
-                      }
-                    />
-                  ) : (
-                    storeName(r.storeId ?? "")
-                  )}
-                </td>
-                <td>
-                  <input
-                    list="rules-payment-methods"
-                    value={r.paymentMethod ?? ""}
-                    placeholder="-"
-                    onChange={(e) =>
-                      updateRule(r.id, {
-                        paymentMethod: e.target.value || undefined,
-                      })
-                    }
-                    style={{ width: 110 }}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    step="0.001"
-                    min="0"
-                    value={r.rate}
-                    onChange={(e) =>
-                      updateRule(r.id, { rate: Number(e.target.value) })
-                    }
-                  />
-                </td>
-                <td>
-                  <select
-                    value={r.currencyId}
-                    onChange={(e) =>
-                      updateRule(r.id, { currencyId: e.target.value })
-                    }
-                  >
-                    {currencies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    min="0"
-                    step="10000"
-                    placeholder="-"
-                    value={r.monthlyCapAmountYen ?? ""}
-                    onChange={(e) =>
-                      updateRule(r.id, {
-                        monthlyCapAmountYen: e.target.value
-                          ? Math.max(0, Number(e.target.value))
-                          : undefined,
-                      })
-                    }
-                    style={{ width: 100 }}
-                  />
-                </td>
-                <td>
-                  <input
-                    value={r.notes ?? ""}
-                    onChange={(e) =>
-                      updateRule(r.id, { notes: e.target.value || undefined })
-                    }
-                  />
-                </td>
-                <td>
-                  <button className="danger" onClick={() => removeRule(r.id)}>
-                    削除
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-          {rules.length === 0 && (
-            <tr>
-              <td colSpan={9} className="empty">
-                まだありません（無いカード×店舗はカードのデフォルトが使われます）
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <ResponsiveTable
+        rows={rules}
+        columns={ruleColumns}
+        onSave={(id, patch) => updateRule(id, patch)}
+        onDelete={removeRule}
+        empty="まだありません（無いカード×店舗はカードのデフォルトが使われます）"
+      />
       <datalist id="rules-category-list-edit">
         {categories.map((c) => (
           <option key={c} value={c} />
@@ -338,52 +345,56 @@ export function RulesScreen() {
         <p className="hint">
           現在登録されている全カード × 全店舗の組合せで、何が適用されるかをプレビュー：
         </p>
-        <table>
-          <thead>
-            <tr>
-              <th>カード</th>
-              <th>店舗</th>
-              <th>還元率</th>
-              <th>貯まる通貨</th>
-              <th>由来</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cards.flatMap((c) =>
-              stores.map((s) => {
-                const direct = rules.find(
-                  (r) => r.cardId === c.id && r.storeId === s.id,
-                );
-                const cat =
-                  !direct && s.category
-                    ? rules.find(
-                        (r) =>
-                          r.cardId === c.id && r.category === s.category,
-                      )
-                    : undefined;
-                const applied = direct ?? cat;
-                const source = direct
-                  ? "ルール"
-                  : cat
-                    ? `カテゴリ(${s.category})`
-                    : "デフォルト";
-                return (
-                  <tr key={`${c.id}-${s.id}`}>
-                    <td>{cardLabel(c)}</td>
-                    <td>{s.name}</td>
-                    <td>
-                      {((applied?.rate ?? c.defaultRate) * 100).toFixed(2)}%
-                    </td>
-                    <td>
-                      {currencyName(applied?.currencyId ?? c.defaultCurrencyId)}
-                    </td>
-                    <td>{source}</td>
-                  </tr>
-                );
-              }),
-            )}
-          </tbody>
-        </table>
+        <div className="responsive-table">
+          <table>
+            <thead>
+              <tr>
+                <th>カード</th>
+                <th>店舗</th>
+                <th>還元率</th>
+                <th>貯まる通貨</th>
+                <th>由来</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cards.flatMap((c) =>
+                stores.map((s) => {
+                  const direct = rules.find(
+                    (r) => r.cardId === c.id && r.storeId === s.id,
+                  );
+                  const cat =
+                    !direct && s.category
+                      ? rules.find(
+                          (r) =>
+                            r.cardId === c.id && r.category === s.category,
+                        )
+                      : undefined;
+                  const applied = direct ?? cat;
+                  const source = direct
+                    ? "ルール"
+                    : cat
+                      ? `カテゴリ(${s.category})`
+                      : "デフォルト";
+                  return (
+                    <tr key={`${c.id}-${s.id}`}>
+                      <td data-label="カード">{cardLabel(c)}</td>
+                      <td data-label="店舗">{s.name}</td>
+                      <td data-label="還元率">
+                        {((applied?.rate ?? c.defaultRate) * 100).toFixed(2)}%
+                      </td>
+                      <td data-label="貯まる通貨">
+                        {currencyName(
+                          applied?.currencyId ?? c.defaultCurrencyId,
+                        )}
+                      </td>
+                      <td data-label="由来">{source}</td>
+                    </tr>
+                  );
+                }),
+              )}
+            </tbody>
+          </table>
+        </div>
       </details>
     </section>
   );

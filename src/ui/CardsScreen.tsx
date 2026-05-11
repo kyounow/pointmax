@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
+import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
+import type { Card } from "../domain/types";
 
 export function CardsScreen() {
   const cards = useStore((s) => s.cards);
@@ -12,6 +14,66 @@ export function CardsScreen() {
   const [grade, setGrade] = useState("");
   const [rate, setRate] = useState("0.01");
   const [currencyId, setCurrencyId] = useState("");
+
+  const currencyName = (id: string) =>
+    currencies.find((c) => c.id === id)?.name ?? id;
+
+  const columns: ColumnDef<Card>[] = [
+    {
+      key: "name",
+      label: "カード名",
+      view: (c) => c.name,
+      edit: (c, set) => (
+        <input
+          value={c.name}
+          onChange={(e) => set({ name: e.target.value })}
+        />
+      ),
+    },
+    {
+      key: "grade",
+      label: "グレード",
+      view: (c) => c.grade ?? "-",
+      edit: (c, set) => (
+        <input
+          placeholder="(任意)"
+          value={c.grade ?? ""}
+          onChange={(e) => set({ grade: e.target.value || undefined })}
+        />
+      ),
+    },
+    {
+      key: "rate",
+      label: "基本還元率",
+      view: (c) => `${(c.defaultRate * 100).toFixed(2)}%`,
+      edit: (c, set) => (
+        <input
+          type="number"
+          step="0.001"
+          min="0"
+          value={c.defaultRate}
+          onChange={(e) => set({ defaultRate: Number(e.target.value) })}
+        />
+      ),
+    },
+    {
+      key: "currency",
+      label: "貯まる通貨",
+      view: (c) => currencyName(c.defaultCurrencyId),
+      edit: (c, set) => (
+        <select
+          value={c.defaultCurrencyId}
+          onChange={(e) => set({ defaultCurrencyId: e.target.value })}
+        >
+          {currencies.map((cur) => (
+            <option key={cur.id} value={cur.id}>
+              {cur.name}
+            </option>
+          ))}
+        </select>
+      ),
+    },
+  ];
 
   return (
     <section>
@@ -69,75 +131,13 @@ export function CardsScreen() {
         <button type="submit">追加</button>
       </form>
 
-      <table>
-        <thead>
-          <tr>
-            <th>カード名</th>
-            <th>グレード</th>
-            <th>基本還元率</th>
-            <th>貯まる通貨</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {cards.map((c) => (
-            <tr key={c.id}>
-              <td>
-                <input
-                  value={c.name}
-                  onChange={(e) => updateCard(c.id, { name: e.target.value })}
-                />
-              </td>
-              <td>
-                <input
-                  placeholder="(任意)"
-                  value={c.grade ?? ""}
-                  onChange={(e) =>
-                    updateCard(c.id, { grade: e.target.value || undefined })
-                  }
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  step="0.001"
-                  min="0"
-                  value={c.defaultRate}
-                  onChange={(e) =>
-                    updateCard(c.id, { defaultRate: Number(e.target.value) })
-                  }
-                />
-              </td>
-              <td>
-                <select
-                  value={c.defaultCurrencyId}
-                  onChange={(e) =>
-                    updateCard(c.id, { defaultCurrencyId: e.target.value })
-                  }
-                >
-                  {currencies.map((cur) => (
-                    <option key={cur.id} value={cur.id}>
-                      {cur.name}
-                    </option>
-                  ))}
-                </select>
-              </td>
-              <td>
-                <button className="danger" onClick={() => removeCard(c.id)}>
-                  削除
-                </button>
-              </td>
-            </tr>
-          ))}
-          {cards.length === 0 && (
-            <tr>
-              <td colSpan={5} className="empty">
-                まだありません
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <ResponsiveTable
+        rows={cards}
+        columns={columns}
+        onSave={(id, patch) => updateCard(id, patch)}
+        onDelete={removeCard}
+        empty="まだありません"
+      />
     </section>
   );
 }

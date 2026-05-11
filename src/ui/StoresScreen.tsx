@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
+import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
+import type { Store } from "../domain/types";
 
 export function StoresScreen() {
   const stores = useStore((s) => s.stores);
@@ -9,6 +11,52 @@ export function StoresScreen() {
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
+
+  const columns: ColumnDef<Store>[] = [
+    {
+      key: "name",
+      label: "店舗名",
+      view: (s) => s.name,
+      edit: (s, set) => (
+        <input value={s.name} onChange={(e) => set({ name: e.target.value })} />
+      ),
+    },
+    {
+      key: "category",
+      label: "カテゴリ",
+      view: (s) => s.category ?? "-",
+      edit: (s, set) => (
+        <input
+          value={s.category ?? ""}
+          onChange={(e) => set({ category: e.target.value || undefined })}
+        />
+      ),
+    },
+    {
+      key: "stacks",
+      label: "同時提示数",
+      view: (s) => s.maxLoyaltyStacks ?? 1,
+      edit: (s, set) => (
+        <input
+          type="number"
+          min="0"
+          max="5"
+          step="1"
+          placeholder="1"
+          value={s.maxLoyaltyStacks ?? ""}
+          onChange={(e) =>
+            set({
+              maxLoyaltyStacks:
+                e.target.value === ""
+                  ? undefined
+                  : Math.max(0, Number(e.target.value)),
+            })
+          }
+          style={{ width: 80 }}
+        />
+      ),
+    },
+  ];
 
   return (
     <section>
@@ -44,69 +92,12 @@ export function StoresScreen() {
         <button type="submit">追加</button>
       </form>
 
-      <table>
-        <thead>
-          <tr>
-            <th>店舗名</th>
-            <th>カテゴリ</th>
-            <th>同時提示数</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {stores.map((s) => (
-            <tr key={s.id}>
-              <td>
-                <input
-                  value={s.name}
-                  onChange={(e) => updateStore(s.id, { name: e.target.value })}
-                />
-              </td>
-              <td>
-                <input
-                  value={s.category ?? ""}
-                  onChange={(e) =>
-                    updateStore(s.id, {
-                      category: e.target.value || undefined,
-                    })
-                  }
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  min="0"
-                  max="5"
-                  step="1"
-                  placeholder="1"
-                  value={s.maxLoyaltyStacks ?? ""}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    updateStore(s.id, {
-                      maxLoyaltyStacks:
-                        v === "" ? undefined : Math.max(0, Number(v)),
-                    });
-                  }}
-                  style={{ width: 70 }}
-                  title="ポイントカードを同時提示できる枚数（空欄=1）"
-                />
-              </td>
-              <td>
-                <button className="danger" onClick={() => removeStore(s.id)}>
-                  削除
-                </button>
-              </td>
-            </tr>
-          ))}
-          {stores.length === 0 && (
-            <tr>
-              <td colSpan={4} className="empty">
-                まだありません
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <ResponsiveTable
+        rows={stores}
+        columns={columns}
+        onSave={(id, patch) => updateStore(id, patch)}
+        onDelete={removeStore}
+      />
     </section>
   );
 }

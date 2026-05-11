@@ -10,7 +10,7 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 5;
+export const SEED_VERSION = 6;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -54,6 +54,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-08",
     summary:
       "三重取り対応 (Store.maxLoyaltyStacks)、支払い方法別ルール (paymentMethod)、月上限表示 (monthlyCapAmountYen)、外部URL同期機能を追加",
+  },
+  {
+    version: 6,
+    date: "2026-05-11",
+    summary:
+      "テーブル全画面を ResponsiveTable に統一（PC/モバイル共通の閲覧→編集モード）。マイグレーション基盤（updateField/delete 宣言型、ユーザー編集との衝突は個別確認）を導入",
   },
 ];
 

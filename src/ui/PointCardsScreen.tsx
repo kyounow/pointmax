@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { CurrencyIcon } from "./CurrencyIcon";
+import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
+import type { LoyaltyRule, PointCard } from "../domain/types";
 
 export function PointCardsScreen() {
   const pointCards = useStore((s) => s.pointCards);
@@ -35,6 +37,81 @@ export function PointCardsScreen() {
     () => new Map(stores.map((s) => [s.id, s])),
     [stores],
   );
+
+  const pointCardColumns: ColumnDef<PointCard>[] = [
+    {
+      key: "icon",
+      label: "アイコン",
+      view: (p) => {
+        const cur = currencyById.get(p.currencyId);
+        return cur ? <CurrencyIcon currency={cur} size={28} /> : null;
+      },
+    },
+    {
+      key: "name",
+      label: "名前",
+      view: (p) => p.name,
+      edit: (p, set) => (
+        <input value={p.name} onChange={(e) => set({ name: e.target.value })} />
+      ),
+    },
+    {
+      key: "currency",
+      label: "貯まる通貨",
+      view: (p) => currencyById.get(p.currencyId)?.name ?? "?",
+      edit: (p, set) => (
+        <select
+          value={p.currencyId}
+          onChange={(e) => set({ currencyId: e.target.value })}
+        >
+          {currencies.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      ),
+    },
+  ];
+
+  const loyaltyColumns: ColumnDef<LoyaltyRule>[] = [
+    {
+      key: "pointCard",
+      label: "ポイントカード",
+      view: (r) => pointCardById.get(r.pointCardId)?.name ?? "?",
+    },
+    {
+      key: "store",
+      label: "店舗",
+      view: (r) => storeById.get(r.storeId)?.name ?? "?",
+    },
+    {
+      key: "rate",
+      label: "還元率",
+      view: (r) => `${(r.rate * 100).toFixed(2)}%`,
+      edit: (r, set) => (
+        <input
+          type="number"
+          step="0.001"
+          min="0"
+          value={r.rate}
+          onChange={(e) => set({ rate: Number(e.target.value) })}
+          style={{ width: 100 }}
+        />
+      ),
+    },
+    {
+      key: "notes",
+      label: "メモ",
+      view: (r) => r.notes ?? "-",
+      edit: (r, set) => (
+        <input
+          value={r.notes ?? ""}
+          onChange={(e) => set({ notes: e.target.value || undefined })}
+        />
+      ),
+    },
+  ];
 
   return (
     <section>
@@ -79,94 +156,34 @@ export function PointCardsScreen() {
         <button type="submit">追加</button>
       </form>
 
-      <table>
-        <thead>
-          <tr>
-            <th style={{ width: 70 }}>優先順</th>
-            <th style={{ width: 44 }}></th>
-            <th>名前</th>
-            <th>貯まる通貨</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {pointCards.map((p, i) => {
-            const cur = currencyById.get(p.currencyId);
-            return (
-              <tr key={p.id}>
-                <td>
-                  <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                    <span
-                      style={{
-                        color: "var(--muted)",
-                        width: 16,
-                        textAlign: "right",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {i + 1}
-                    </span>
-                    <button
-                      onClick={() => movePointCard(p.id, "up")}
-                      disabled={i === 0}
-                      title="優先度を上げる"
-                      style={{ padding: "2px 6px" }}
-                    >
-                      ↑
-                    </button>
-                    <button
-                      onClick={() => movePointCard(p.id, "down")}
-                      disabled={i === pointCards.length - 1}
-                      title="優先度を下げる"
-                      style={{ padding: "2px 6px" }}
-                    >
-                      ↓
-                    </button>
-                  </div>
-                </td>
-                <td>{cur && <CurrencyIcon currency={cur} size={28} />}</td>
-                <td>
-                  <input
-                    value={p.name}
-                    onChange={(e) =>
-                      updatePointCard(p.id, { name: e.target.value })
-                    }
-                  />
-                </td>
-                <td>
-                  <select
-                    value={p.currencyId}
-                    onChange={(e) =>
-                      updatePointCard(p.id, { currencyId: e.target.value })
-                    }
-                  >
-                    {currencies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <button
-                    className="danger"
-                    onClick={() => removePointCard(p.id)}
-                  >
-                    削除
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-          {pointCards.length === 0 && (
-            <tr>
-              <td colSpan={5} className="empty">
-                まだありません
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <ResponsiveTable
+        rows={pointCards}
+        columns={pointCardColumns}
+        onSave={(id, patch) => updatePointCard(id, patch)}
+        onDelete={removePointCard}
+        extraActions={(p) => {
+          const i = pointCards.findIndex((x) => x.id === p.id);
+          return (
+            <>
+              <button
+                onClick={() => movePointCard(p.id, "up")}
+                disabled={i === 0}
+                title="優先度を上げる"
+              >
+                ↑
+              </button>
+              <button
+                onClick={() => movePointCard(p.id, "down")}
+                disabled={i === pointCards.length - 1}
+                title="優先度を下げる"
+              >
+                ↓
+              </button>
+            </>
+          );
+        }}
+        testId="point-cards"
+      />
 
       <h3 style={{ marginTop: 24 }}>店舗 × ポイントカード 提示還元ルール</h3>
       <p className="hint">
@@ -225,68 +242,13 @@ export function PointCardsScreen() {
         <button type="submit">追加</button>
       </form>
 
-      <table>
-        <thead>
-          <tr>
-            <th>ポイントカード</th>
-            <th>店舗</th>
-            <th>還元率</th>
-            <th>メモ</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {loyaltyRules.map((r) => {
-            const pc = pointCardById.get(r.pointCardId);
-            const st = storeById.get(r.storeId);
-            return (
-              <tr key={r.id}>
-                <td>{pc?.name ?? "?"}</td>
-                <td>{st?.name ?? "?"}</td>
-                <td>
-                  <input
-                    type="number"
-                    step="0.001"
-                    min="0"
-                    value={r.rate}
-                    onChange={(e) =>
-                      updateLoyaltyRule(r.id, {
-                        rate: Number(e.target.value),
-                      })
-                    }
-                    style={{ width: 100 }}
-                  />
-                </td>
-                <td>
-                  <input
-                    value={r.notes ?? ""}
-                    onChange={(e) =>
-                      updateLoyaltyRule(r.id, {
-                        notes: e.target.value || undefined,
-                      })
-                    }
-                  />
-                </td>
-                <td>
-                  <button
-                    className="danger"
-                    onClick={() => removeLoyaltyRule(r.id)}
-                  >
-                    削除
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-          {loyaltyRules.length === 0 && (
-            <tr>
-              <td colSpan={5} className="empty">
-                まだありません
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <ResponsiveTable
+        rows={loyaltyRules}
+        columns={loyaltyColumns}
+        onSave={(id, patch) => updateLoyaltyRule(id, patch)}
+        onDelete={removeLoyaltyRule}
+        testId="loyalty-rules"
+      />
     </section>
   );
 }

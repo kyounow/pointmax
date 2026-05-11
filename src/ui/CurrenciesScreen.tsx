@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
 import { KIND_OPTIONS, styleOf } from "../domain/currencyKind";
-import type { CurrencyKind } from "../domain/types";
+import type { Currency, CurrencyKind } from "../domain/types";
 import { CurrencyIcon } from "./CurrencyIcon";
+import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 
 export function CurrenciesScreen() {
   const currencies = useStore((s) => s.currencies);
@@ -13,6 +14,97 @@ export function CurrenciesScreen() {
   const [kind, setKind] = useState<CurrencyKind | "">("point");
   const [iconChar, setIconChar] = useState("");
   const [iconColor, setIconColor] = useState("#4ea1ff");
+
+  const columns: ColumnDef<Currency>[] = [
+    {
+      key: "icon",
+      label: "アイコン",
+      view: (c) => <CurrencyIcon currency={c} size={32} />,
+    },
+    {
+      key: "name",
+      label: "名前",
+      view: (c) => c.name,
+      edit: (c, set) => (
+        <input value={c.name} onChange={(e) => set({ name: e.target.value })} />
+      ),
+    },
+    {
+      key: "kind",
+      label: "種別",
+      view: (c) => {
+        const style = styleOf(c.kind);
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 999,
+                background: style.border,
+                display: "inline-block",
+              }}
+            />
+            {style.label}
+          </span>
+        );
+      },
+      edit: (c, set) => (
+        <select
+          value={c.kind ?? ""}
+          onChange={(e) =>
+            set({ kind: (e.target.value as CurrencyKind | "") || undefined })
+          }
+        >
+          <option value="">種別なし</option>
+          {KIND_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      ),
+    },
+    {
+      key: "iconChar",
+      label: "アイコン文字",
+      view: (c) => c.iconChar ?? c.name.charAt(0),
+      edit: (c, set) => (
+        <input
+          value={c.iconChar ?? ""}
+          placeholder={c.name.charAt(0)}
+          onChange={(e) =>
+            set({ iconChar: e.target.value || undefined })
+          }
+          style={{ width: 100 }}
+        />
+      ),
+    },
+    {
+      key: "iconColor",
+      label: "色",
+      view: (c) => (
+        <span
+          style={{
+            display: "inline-block",
+            width: 22,
+            height: 22,
+            borderRadius: 4,
+            background: c.iconColor ?? "transparent",
+            border: "1px solid var(--border)",
+          }}
+        />
+      ),
+      edit: (c, set) => (
+        <input
+          type="color"
+          value={c.iconColor ?? "#4ea1ff"}
+          onChange={(e) => set({ iconColor: e.target.value })}
+          style={{ width: 50, padding: 2 }}
+        />
+      ),
+    },
+  ];
 
   return (
     <section>
@@ -70,96 +162,12 @@ export function CurrenciesScreen() {
         <button type="submit">追加</button>
       </form>
 
-      <table>
-        <thead>
-          <tr>
-            <th style={{ width: 44 }}></th>
-            <th>名前</th>
-            <th>種別</th>
-            <th>アイコン文字</th>
-            <th>色</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {currencies.map((c) => {
-            const style = styleOf(c.kind);
-            return (
-              <tr key={c.id}>
-                <td>
-                  <CurrencyIcon currency={c} size={32} />
-                </td>
-                <td>
-                  <input
-                    value={c.name}
-                    onChange={(e) =>
-                      updateCurrency(c.id, { name: e.target.value })
-                    }
-                  />
-                </td>
-                <td>
-                  <select
-                    value={c.kind ?? ""}
-                    onChange={(e) =>
-                      updateCurrency(c.id, {
-                        kind:
-                          (e.target.value as CurrencyKind | "") || undefined,
-                      })
-                    }
-                    style={{
-                      borderLeft: `4px solid ${style.border}`,
-                    }}
-                  >
-                    <option value="">種別なし</option>
-                    {KIND_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <input
-                    value={c.iconChar ?? ""}
-                    placeholder={c.name.charAt(0)}
-                    onChange={(e) =>
-                      updateCurrency(c.id, {
-                        iconChar: e.target.value || undefined,
-                      })
-                    }
-                    style={{ width: 80 }}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="color"
-                    value={c.iconColor ?? "#4ea1ff"}
-                    onChange={(e) =>
-                      updateCurrency(c.id, { iconColor: e.target.value })
-                    }
-                    style={{ width: 40, padding: 2 }}
-                  />
-                </td>
-                <td>
-                  <button
-                    className="danger"
-                    onClick={() => removeCurrency(c.id)}
-                  >
-                    削除
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-          {currencies.length === 0 && (
-            <tr>
-              <td colSpan={6} className="empty">
-                まだありません
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <ResponsiveTable
+        rows={currencies}
+        columns={columns}
+        onSave={(id, patch) => updateCurrency(id, patch)}
+        onDelete={removeCurrency}
+      />
     </section>
   );
 }

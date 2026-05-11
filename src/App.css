@@ -900,6 +900,152 @@ details summary {
   border: 1px solid var(--border);
 }
 
+.migration-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+.migration-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.migration-item code {
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--accent);
+}
+.from-value {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.to-value {
+  color: var(--good);
+  font-weight: 600;
+}
+.user-value {
+  color: var(--accent);
+  font-weight: 600;
+}
+.delete-tag {
+  color: var(--bad);
+  font-weight: 600;
+}
+.warn-text {
+  color: #f59e0b;
+}
+
+/* ==== ResponsiveTable ==== */
+.responsive-table table {
+  /* デフォルト: 通常のテーブル表示 */
+}
+.responsive-table .row-editing {
+  background: rgba(78, 161, 255, 0.06);
+}
+.responsive-table .cell-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+}
+.responsive-table .row-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.responsive-table .row-actions button {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.responsive-table .row-actions-cell {
+  vertical-align: middle;
+}
+
+/* モバイル: 各行をカード化 */
+@media (max-width: 720px) {
+  .responsive-table {
+    /* テーブル全体を独立コンテナに */
+    width: 100%;
+  }
+  .responsive-table table,
+  .responsive-table thead,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+    white-space: normal;
+    min-width: 0;
+  }
+  .responsive-table thead {
+    display: none;
+  }
+  .responsive-table tr {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: var(--panel);
+  }
+  .responsive-table tr.row-editing {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+  .responsive-table td {
+    border: none;
+    padding: 6px 0;
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .responsive-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .responsive-table td.empty {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .responsive-table td.empty::before {
+    display: none;
+  }
+  .responsive-table .cell-content {
+    width: 100%;
+  }
+  .responsive-table .cell-content input,
+  .responsive-table .cell-content select {
+    width: 100%;
+  }
+  .responsive-table .row-actions-cell {
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    margin-top: 4px;
+  }
+  .responsive-table .row-actions-cell::before {
+    display: none;
+  }
+  .responsive-table .row-actions-cell {
+    grid-template-columns: 1fr;
+  }
+  .responsive-table .row-actions {
+    justify-content: flex-end;
+  }
+}
+
 /* ==== Calculator results: collapse ==== */
 .results-toolbar {
   display: flex;

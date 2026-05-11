@@ -11,6 +11,12 @@ import type {
 } from "../domain/types";
 import { seed, SEED_VERSION, DEFAULT_SYNC_URL } from "./seed";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
+import {
+  MIGRATIONS,
+  applyMigrationsByKey,
+  planMigrations,
+  autoApplicableKeys,
+} from "../domain/migrations";
 
 const newId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -69,6 +75,8 @@ type Actions = {
   loadSeed: () => void;
   clearAll: () => void;
   mergeFromSeed: () => void;
+  // 追加 + 自動適用可能なマイグレーション + ユーザー選択した衝突上書きをまとめて適用
+  applySeedUpdate: (overrideKeys: string[]) => void;
   dismissSeedUpdate: () => void;
   exportJson: () => string;
   importJson: (json: string) => { ok: true } | { ok: false; error: string };
@@ -226,6 +234,58 @@ export const useStore = create<State & Actions>()(
             edges: result.edges,
             pointCards: result.pointCards,
             loyaltyRules: result.loyaltyRules,
+            lastSeedVersion: SEED_VERSION,
+          };
+        }),
+      applySeedUpdate: (overrideKeys) =>
+        set((s) => {
+          const currentShape = {
+            cards: s.cards,
+            currencies: s.currencies,
+            stores: s.stores,
+            rules: s.rules,
+            edges: s.edges,
+            pointCards: s.pointCards,
+            loyaltyRules: s.loyaltyRules,
+          };
+          // 1. 追加分マージ (mergeSeed; add-only)
+          const merged = mergeSeedFn(currentShape, seed());
+
+          // 2. マイグレーション計画 (現在の state + 追加後で再計算)
+          const plan = planMigrations(
+            merged,
+            s.lastSeedVersion,
+            SEED_VERSION,
+            MIGRATIONS,
+          );
+
+          // 3. 自動適用キー + ユーザー上書き選択
+          const keysToApply = new Set<string>([
+            ...autoApplicableKeys(plan),
+            ...overrideKeys,
+          ]);
+          const finalState = applyMigrationsByKey(
+            {
+              cards: merged.cards,
+              currencies: merged.currencies,
+              stores: merged.stores,
+              rules: merged.rules,
+              edges: merged.edges,
+              pointCards: merged.pointCards,
+              loyaltyRules: merged.loyaltyRules,
+            },
+            plan,
+            keysToApply,
+          );
+
+          return {
+            cards: finalState.cards,
+            currencies: finalState.currencies,
+            stores: finalState.stores,
+            rules: finalState.rules,
+            edges: finalState.edges,
+            pointCards: finalState.pointCards,
+            loyaltyRules: finalState.loyaltyRules,
             lastSeedVersion: SEED_VERSION,
           };
         }),

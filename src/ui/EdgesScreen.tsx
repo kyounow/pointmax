@@ -14,10 +14,15 @@ import "@xyflow/react/dist/style.css";
 
 import { useStore } from "../state/store";
 import { formatRatio, styleOf } from "../domain/currencyKind";
-import type { Currency, CurrencyKind } from "../domain/types";
+import type {
+  ConversionEdge,
+  Currency,
+  CurrencyKind,
+} from "../domain/types";
 import { CurrencyIcon } from "./CurrencyIcon";
 import { nodeTypes, type CurrencyNodeType } from "./CurrencyNode";
 import { useDialog } from "./dialog/DialogProvider";
+import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 
 type Selection =
   | { type: "node"; id: string }
@@ -199,6 +204,46 @@ export function EdgesScreen() {
 
   const selectedEdge =
     sel?.type === "edge" ? edges.find((e) => e.id === sel.id) ?? null : null;
+
+  const edgeColumns: ColumnDef<ConversionEdge>[] = [
+    {
+      key: "from",
+      label: "from",
+      view: (e) => currencyName(e.fromCurrencyId),
+    },
+    {
+      key: "to",
+      label: "to",
+      view: (e) => currencyName(e.toCurrencyId),
+    },
+    {
+      key: "rate",
+      label: "レート",
+      view: (e) => formatRatio(e.rate),
+      edit: (e, set) => (
+        <input
+          type="number"
+          step="0.0001"
+          min="0"
+          value={e.rate}
+          onChange={(ev) => set({ rate: Number(ev.target.value) })}
+        />
+      ),
+    },
+    {
+      key: "notes",
+      label: "メモ",
+      view: (e) => e.notes ?? "-",
+      edit: (e, set) => (
+        <input
+          value={e.notes ?? ""}
+          onChange={(ev) =>
+            set({ notes: ev.target.value || undefined })
+          }
+        />
+      ),
+    },
+  ];
   const selectedCurrency =
     sel?.type === "node" ? currencyById.get(sel.id) ?? null : null;
 
@@ -472,60 +517,12 @@ export function EdgesScreen() {
           <button type="submit">追加</button>
         </form>
 
-        <table>
-          <thead>
-            <tr>
-              <th>from</th>
-              <th></th>
-              <th>to</th>
-              <th>レート</th>
-              <th>メモ</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {edges.map((e) => (
-              <tr key={e.id}>
-                <td>{currencyName(e.fromCurrencyId)}</td>
-                <td>→</td>
-                <td>{currencyName(e.toCurrencyId)}</td>
-                <td>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    value={e.rate}
-                    onChange={(ev) =>
-                      updateEdge(e.id, { rate: Number(ev.target.value) })
-                    }
-                  />
-                </td>
-                <td>
-                  <input
-                    value={e.notes ?? ""}
-                    onChange={(ev) =>
-                      updateEdge(e.id, {
-                        notes: ev.target.value || undefined,
-                      })
-                    }
-                  />
-                </td>
-                <td>
-                  <button className="danger" onClick={() => removeEdge(e.id)}>
-                    削除
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {edges.length === 0 && (
-              <tr>
-                <td colSpan={6} className="empty">
-                  まだありません
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <ResponsiveTable
+          rows={edges}
+          columns={edgeColumns}
+          onSave={(id, patch) => updateEdge(id, patch)}
+          onDelete={removeEdge}
+        />
       </details>
     </section>
   );
