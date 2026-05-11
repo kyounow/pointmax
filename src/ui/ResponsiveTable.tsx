@@ -111,6 +111,18 @@ export function ResponsiveTable<T extends { id: string }>({
                             保存
                           </button>
                           <button onClick={cancelEdit}>キャンセル</button>
+                          {onDelete && (
+                            <button
+                              className="danger"
+                              onClick={() => {
+                                onDelete(row.id);
+                                cancelEdit();
+                              }}
+                              title="この行を削除"
+                            >
+                              削除
+                            </button>
+                          )}
                         </>
                       ) : (
                         <>
@@ -120,7 +132,7 @@ export function ResponsiveTable<T extends { id: string }>({
                             </button>
                           )}
                           {extraActions && extraActions(row)}
-                          {onDelete && (
+                          {!onSave && onDelete && (
                             <button
                               className="danger"
                               onClick={() => onDelete(row.id)}
