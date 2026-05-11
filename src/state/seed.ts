@@ -11,7 +11,8 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 13;
+// v0.8 リリースを起点として 1 から再開。v1.0 までに各バージョンの差分を積み上げる。
+export const SEED_VERSION = 1;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -28,81 +29,9 @@ export const SEED_CHANGELOG: {
 }[] = [
   {
     version: 1,
-    date: "2026-05-01",
-    summary:
-      "初期サンプルデータ（保有4カード・基本通貨・主要店舗・基本ルール）",
-  },
-  {
-    version: 2,
-    date: "2026-05-04",
-    summary:
-      "ポイントカード（dカード/楽天/Ponta/nanaco/WAON/Vカード）と二重取りルール、店舗カテゴリ機能を追加",
-  },
-  {
-    version: 3,
-    date: "2026-05-06",
-    summary:
-      "三井住友ゴールドの7%対象店舗を網羅、JAL特約店をカテゴリルールで一括設定、Vポイント現金相当エッジ追加",
-  },
-  {
-    version: 4,
-    date: "2026-05-08",
-    summary:
-      "JAL/ANA交換パートナー大幅追加（Marriott Bonvoy / ALL Accor / AMEX MR / Eposポイント）。楽天pt→JAL、WAON→JAL、Vポイント→WAON経由でJAL等の重要ルートを反映",
-  },
-  {
-    version: 5,
-    date: "2026-05-08",
-    summary:
-      "三重取り対応 (Store.maxLoyaltyStacks)、支払い方法別ルール (paymentMethod)、月上限表示 (monthlyCapAmountYen)、外部URL同期機能を追加",
-  },
-  {
-    version: 6,
     date: "2026-05-11",
     summary:
-      "テーブル全画面を ResponsiveTable に統一（PC/モバイル共通の閲覧→編集モード）。マイグレーション基盤（updateField/delete 宣言型、ユーザー編集との衝突は個別確認）を導入",
-  },
-  {
-    version: 7,
-    date: "2026-05-11",
-    summary:
-      "JRキューポ（JR九州ポイント）を追加。Vポイント ⇄ JRキューポの相互交換ルート（500:500の等価交換）を追加。Vポイント→JALマイル経由ルートの選択肢が広がる",
-  },
-  {
-    version: 8,
-    date: "2026-05-11",
-    summary:
-      "店舗追加: 大丸松坂屋・無印良品・ユニクロ・ロイヤルホスト(JAL特約店) / 高島屋・ノジマ・ココカラファイン。ルール追加: JALカードSuica×ファミマ 2% / dカード×ガスト/ノジマ/高島屋/ココカラファイン",
-  },
-  {
-    version: 9,
-    date: "2026-05-11",
-    summary:
-      "店舗追加: 西友(スーパー) / ツルハドラッグ(JAL特約店)。ルール追加: 楽天ポイントカード × 西友・ツルハ (200円1pt = 0.5%)。ツルハはJAL特約店カテゴリ経由でJALカードSuicaも2%自動適用",
-  },
-  {
-    version: 10,
-    date: "2026-05-11",
-    summary:
-      "支払方法(PaymentApp) を独立エンティティ化。Visaタッチ/QUICPay/iD/楽天Pay/d払い/PayPay 等を追加し、計算画面では自動最適化（ユーザは選ばずに最良が表示される）。楽天Pay/d払いはアプリ自体の還元(楽天Pay 1%等)も加算。新タブ「支払方法」追加",
-  },
-  {
-    version: 11,
-    date: "2026-05-11",
-    summary:
-      "PaymentApp に chargeBased フラグ追加。楽天Pay/d払い/PayPay はチャージ式として扱い、計算結果ヘッダーで「[d払い] の残高にカードからチャージ、JALカードSuica」のような主従関係を反映",
-  },
-  {
-    version: 12,
-    date: "2026-05-11",
-    summary:
-      "計算ロジック修正: chargeBased=true (楽天Pay/d払い/PayPay) は店舗ルール/カテゴリルールを無視 (例: ツルハ×JALカードSuicaのJAL特約店2%はカード直接決済のみ)。Store.preferredPointCardIds を追加し、店舗別に優先提示カードを設定可能 (ファミマ→Vポイント)",
-  },
-  {
-    version: 13,
-    date: "2026-05-11",
-    summary:
-      "コンビニ各店舗に基本提示カードを設定: セブン→nanaco / ローソン→Ponta / ミニストップ→WAON。ポイントカードの全体優先順を 楽天→V→d→Ponta→nanaco→WAON に変更（新規ユーザー向け。既存ユーザーは PointCardsScreen の↑↓で変更可能）",
+      "PointMax v0.8 リリース。クレカ＋ポイントカードの二重取り計算、支払方法(PaymentApp)の自動最適選択、JAL/ANA等の交換ルート、PWA対応、公式マスタの自動同期を提供",
   },
 ];
 

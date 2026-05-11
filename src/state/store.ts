@@ -19,6 +19,17 @@ import {
   autoApplicableKeys,
 } from "../domain/migrations";
 
+// v0.8 リリース時に persist 階層を世代交代した。旧 v0.x キーは一度きりクリーンアップ。
+// （次回 v1.0 以降は migrate / mergeFromSeed で吸収する）
+const LEGACY_STORE_KEY = "pointmax-store";
+if (typeof localStorage !== "undefined") {
+  try {
+    localStorage.removeItem(LEGACY_STORE_KEY);
+  } catch {
+    // localStorage 無効環境では無視
+  }
+}
+
 const newId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -430,7 +441,7 @@ export const useStore = create<State & Actions>()(
         const s = get();
         return JSON.stringify(
           {
-            version: 3,
+            version: 1,
             exportedAt: new Date().toISOString(),
             cards: s.cards,
             currencies: s.currencies,
@@ -455,7 +466,7 @@ export const useStore = create<State & Actions>()(
             if (!Array.isArray(data[key]))
               return { ok: false, error: `"${key}" が配列ではありません` };
           }
-          // pointCards / loyaltyRules / paymentApps は古い export には無いので任意
+          // 手書き JSON で省略されているケースのため、欠けてれば空配列で防御
           set(() => ({
             cards: data.cards,
             currencies: data.currencies,
@@ -480,24 +491,10 @@ export const useStore = create<State & Actions>()(
       },
     }),
     {
-      name: "pointmax-store",
+      // v0.8 で世代交代。旧キー "pointmax-store" は無視 (孤児は起動時に削除)
+      name: "pointmax-v08-store",
       storage: createJSONStorage(() => localStorage),
-      version: 5,
-      migrate: (persistedState) => {
-        // 旧バージョンからの移行: 不足フィールドにデフォルトを補う
-        const s = (persistedState ?? {}) as Partial<State>;
-        return {
-          ...empty,
-          ...s,
-          pointCards: s.pointCards ?? [],
-          loyaltyRules: s.loyaltyRules ?? [],
-          paymentApps: s.paymentApps ?? [],
-          lastSeedVersion: s.lastSeedVersion ?? 0,
-          // 既存ユーザーのsyncUrlが空ならデフォルトに戻す
-          syncUrl: s.syncUrl ? s.syncUrl : DEFAULT_SYNC_URL,
-          lastSyncAt: s.lastSyncAt ?? null,
-        } as State;
-      },
+      version: 1,
     },
   ),
 );

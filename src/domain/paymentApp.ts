@@ -43,7 +43,7 @@ function isPaymentAppCompatible(
 }
 
 // 指定の paymentApp に紐づくルールを優先的に解決
-// (paymentAppId 一致 > paymentMethod=name 一致 > 汎用 > デフォルト)
+// (paymentAppId 一致 > 汎用 > デフォルト)
 function resolveRateForPaymentApp(
   card: Card,
   storeId: string,
@@ -51,11 +51,7 @@ function resolveRateForPaymentApp(
   stores: Store[],
   paymentApp: PaymentApp,
 ): ResolvedRate {
-  // paymentAppId が一致するルールがあれば最優先
-  // resolveRate 自体は paymentMethod (string) ベースなので、
-  //   - paymentAppId が一致するルールを探す or
-  //   - paymentMethod 名と PaymentApp.name が一致するルール (旧データ互換) を resolveRate に委ねる
-  // ここでは "paymentAppId 一致" を独自実装して優先取得
+  // paymentAppId が一致する直接ルール (storeId)
   const directWithApp = rules.find(
     (r) =>
       r.cardId === card.id &&
@@ -70,22 +66,7 @@ function resolveRateForPaymentApp(
       ruleId: directWithApp.id,
     };
   }
-  // 旧 paymentMethod (string) との照合
-  const directLegacy = rules.find(
-    (r) =>
-      r.cardId === card.id &&
-      r.storeId === storeId &&
-      r.paymentMethod === paymentApp.name,
-  );
-  if (directLegacy) {
-    return {
-      rate: directLegacy.rate,
-      currencyId: directLegacy.currencyId,
-      source: "rule",
-      ruleId: directLegacy.id,
-    };
-  }
-  // カテゴリルール (paymentAppId 一致)
+  // paymentAppId が一致するカテゴリルール
   const store = stores.find((s) => s.id === storeId);
   if (store?.category) {
     const catWithApp = rules.find(
@@ -102,26 +83,10 @@ function resolveRateForPaymentApp(
         ruleId: catWithApp.id,
       };
     }
-    const catLegacy = rules.find(
-      (r) =>
-        r.cardId === card.id &&
-        r.category === store.category &&
-        r.paymentMethod === paymentApp.name,
-    );
-    if (catLegacy) {
-      return {
-        rate: catLegacy.rate,
-        currencyId: catLegacy.currencyId,
-        source: "category",
-        ruleId: catLegacy.id,
-      };
-    }
   }
-  // paymentApp/paymentMethod 指定なしルール (汎用) で resolveRate にフォールバック
-  // paymentAppId か paymentMethod を持つルールは「特定支払方法専用」なので除外する
-  const universalRules = rules.filter(
-    (r) => !r.paymentAppId && !r.paymentMethod,
-  );
+  // paymentAppId 指定なし (汎用) ルールにフォールバック
+  // paymentAppId を持つルールは「特定支払方法専用」なので除外
+  const universalRules = rules.filter((r) => !r.paymentAppId);
   return resolveRate(card, storeId, universalRules, stores);
 }
 

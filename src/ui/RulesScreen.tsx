@@ -51,12 +51,11 @@ export function RulesScreen() {
     () => new Map(paymentApps.map((p) => [p.id, p])),
     [paymentApps],
   );
-  // ルール表示用: paymentApp 名を解決 (新 paymentAppId 優先、旧 paymentMethod でもname一致を返す)
+  // ルール表示用: paymentApp 名を解決 (未指定なら "全方法")
   const paymentAppNameForRule = (r: StoreRule): string => {
     if (r.paymentAppId) {
       return paymentAppById.get(r.paymentAppId)?.name ?? r.paymentAppId;
     }
-    if (r.paymentMethod) return `${r.paymentMethod} (旧)`;
     return "全方法";
   };
 
@@ -109,11 +108,7 @@ export function RulesScreen() {
         <select
           value={r.paymentAppId ?? ""}
           onChange={(e) =>
-            set({
-              paymentAppId: e.target.value || undefined,
-              // 新方式に切替時は旧 paymentMethod を消す
-              paymentMethod: e.target.value ? undefined : r.paymentMethod,
-            })
+            set({ paymentAppId: e.target.value || undefined })
           }
         >
           <option value="">全方法</option>

@@ -5,30 +5,20 @@ export type ResolvedRate =
   | { rate: number; currencyId: string; source: "rule"; ruleId: string }
   | { rate: number; currencyId: string; source: "category"; ruleId: string };
 
-// paymentMethod が指定されたら、ルールの paymentMethod と一致したものだけマッチする。
-// ルール側の paymentMethod が undefined なら、どの支払い方法でもマッチ（汎用ルール）。
-// 優先順位: storeId+pm一致 > storeId汎用 > category+pm一致 > category汎用 > default
+// カード × 店舗 (or カテゴリ) を解決して還元率と通貨を返す。
+// 呼び出し側 (paymentApp.ts) は paymentApp 専用ルールを先に試した後、
+// このメソッドには paymentAppId が無い汎用ルールだけを渡す。
+// 優先順位: 直接ルール (storeId) > カテゴリルール > カード本来の defaultRate
 export function resolveRate(
   card: Card,
   storeId: string,
   rules: StoreRule[],
   stores: Store[],
-  paymentMethod?: string,
 ): ResolvedRate {
-  const matchesPm = (rulePm: string | undefined) => {
-    if (!rulePm) return true; // 汎用ルール
-    if (!paymentMethod) return false; // ルールが特定支払い方法だが指定無し
-    return rulePm === paymentMethod;
-  };
-
-  // 1. 直接ルール (cardId × storeId)、paymentMethod 一致を優先
-  const directMatches = rules.filter(
-    (r) => r.cardId === card.id && r.storeId === storeId && matchesPm(r.paymentMethod),
+  // 1. 直接ルール (cardId × storeId)
+  const direct = rules.find(
+    (r) => r.cardId === card.id && r.storeId === storeId,
   );
-  // pm一致を最優先
-  const directSpecific = directMatches.find((r) => r.paymentMethod);
-  const directGeneric = directMatches.find((r) => !r.paymentMethod);
-  const direct = directSpecific ?? directGeneric;
   if (direct) {
     return {
       rate: direct.rate,
@@ -38,18 +28,12 @@ export function resolveRate(
     };
   }
 
-  // 2. カテゴリルール (cardId × store.category)、同じ優先順位
+  // 2. カテゴリルール (cardId × store.category)
   const store = stores.find((s) => s.id === storeId);
   if (store?.category) {
-    const catMatches = rules.filter(
-      (r) =>
-        r.cardId === card.id &&
-        r.category === store.category &&
-        matchesPm(r.paymentMethod),
+    const cat = rules.find(
+      (r) => r.cardId === card.id && r.category === store.category,
     );
-    const catSpecific = catMatches.find((r) => r.paymentMethod);
-    const catGeneric = catMatches.find((r) => !r.paymentMethod);
-    const cat = catSpecific ?? catGeneric;
     if (cat) {
       return {
         rate: cat.rate,

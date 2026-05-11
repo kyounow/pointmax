@@ -118,31 +118,6 @@ describe("evaluatePaymentApps", () => {
     expect(def!.cardEarnedAmount).toBeCloseTo(50, 6);
   });
 
-  it("旧 paymentMethod (string) の値が PaymentApp.name と一致する場合も適用される", () => {
-    const rules: StoreRule[] = [
-      {
-        id: "legacy-rule",
-        cardId: "smbc",
-        storeId: "lawson",
-        paymentMethod: "Visaタッチ",
-        rate: 0.07,
-        currencyId: "v-pt",
-      },
-    ];
-    const results = evaluatePaymentApps(
-      smbcCard,
-      "lawson",
-      10000,
-      "v-pt",
-      [defaultApp, visaTouch],
-      rules,
-      stores,
-      [],
-    );
-    const visa = results.find((r) => r.paymentApp.id === "pa-visa-touch");
-    expect(visa!.cardEarnedAmount).toBeCloseTo(700, 6);
-  });
-
   it("交換ルートが無くて target に到達できない場合は reachable=false", () => {
     const results = evaluatePaymentApps(
       rakutenCard,
