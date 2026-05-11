@@ -194,26 +194,35 @@ async function callGemini(args: {
 }): Promise<GeminiResult> {
   const ai = new GoogleGenAI({ apiKey: args.apiKey });
   const userPrompt =
-    `以下の URL を読み取り、systemInstruction に従って ExtractedSource JSON を返してください。\n\n` +
+    `以下の URL を読み、systemInstruction の指示に従って ExtractedSource JSON を返してください。\n\n` +
     `URL: ${args.url}\n` +
     `sourceId: ${args.sourceId}\n\n` +
-    `**重要**: 出力は ExtractedSource スキーマに準拠した有効な JSON のみ。コードブロック (\`\`\`json) や説明文は付けない。`;
+    `**出力ルール (厳守)**:\n` +
+    `1. 出力は ExtractedSource スキーマに準拠した**有効な JSON オブジェクト 1 件のみ**\n` +
+    `2. 思考過程・解説・コードブロック ( \`\`\`json ) は**一切出力しない**\n` +
+    `3. JSON を [ ] でラップしない。{ から始まり } で終わる単一オブジェクト\n` +
+    `4. JSON は **compact 形式** で出力 (改行・余分なインデント無し、出力トークン節約のため)\n` +
+    `5. ページから抽出できない場合も、最低限の必須フィールドだけ持つ JSON を返し、notes に理由を 1 行で書く\n\n` +
+    `必須フィールド: sourceId, sourceUrl, fetchedAt (ISO8601), promptVersion, extractor, geminiModel`;
 
-  // 注意: URL Context Tool 使用時は responseMimeType: 'application/json' は併用不可
-  // (Gemini API 制約)。プロンプトと postprocess で JSON 抽出を担保する。
+  // 注意:
+  //  - URL Context Tool 使用時は responseMimeType: 'application/json' は併用不可
+  //    (Gemini API 制約)。プロンプトと postprocess で JSON 抽出を担保。
+  //  - gemini-2.5-flash は思考前提モデル。thinkingBudget=0 にすると空応答に
+  //    なるので、適度な思考枠 (1024) を残しつつプロンプトで JSON 出力を強制。
+  //  - maxOutputTokens は flash 上限の 8192 (デフォルト)。
   const response = await ai.models.generateContent({
     model: GEMINI_MODEL,
     contents: userPrompt,
     config: {
       systemInstruction: args.systemInstruction,
       tools: [{ urlContext: {} }],
+      thinkingConfig: { thinkingBudget: 1024 },
     },
   });
 
-  const text = response.text;
-  if (!text || text.trim().length === 0) {
-    throw new Error("Gemini が空のレスポンスを返した");
-  }
+  // 空応答も上位の graceful fallback で扱うため、ここでは投げない
+  const text = response.text ?? "";
 
   // URL Context が実際にどの URL を取りに行ったかを (可能なら) 抽出
   const retrievedUrls: string[] = [];
@@ -299,13 +308,16 @@ async function main(): Promise<void> {
     console.log("   ⚠️ retrievedUrls メタデータ無し (URL Context が動いてない可能性)");
   }
 
-  // URL Context が全 URL で失敗していたら、空の ExtractedSource を書き出して exit
-  // (Gemini が JSON でなく謝罪文章を返すケースに対応。proposed-migrations 側は notes で skip 判定する)
+  // Gemini が空応答 or URL Context 全失敗 → fallback ExtractedSource
   const allFailed =
     retrievedUrls.length > 0 &&
     retrievedUrls.every((u) => u.includes("URL_RETRIEVAL_STATUS_ERROR"));
-  if (allFailed) {
-    console.log("⚠️ URL Context が全 URL で失敗。空の ExtractedSource を書き出します。");
+  const emptyResponse = rawJson.trim().length === 0;
+  if (allFailed || emptyResponse) {
+    const reason = allFailed
+      ? "URL retrieval failed (URL_RETRIEVAL_STATUS_ERROR)"
+      : "Gemini empty response (output cut or model refusal)";
+    console.log(`⚠️ ${reason}。空の ExtractedSource を書き出します。`);
     const fallback: ExtractedSource = {
       sourceId: source.id,
       sourceUrl: source.url,
@@ -314,8 +326,7 @@ async function main(): Promise<void> {
       extractor: source.extractor,
       geminiModel: GEMINI_MODEL,
       notes:
-        `URL retrieval failed (URL_RETRIEVAL_STATUS_ERROR). ` +
-        `URL を確認するか、ソースを enabled: false に設定してください。`,
+        `${reason}. URL を確認するか、ソースを enabled: false に設定してください。`,
     };
     mkdirSync(OUTPUT_DIR, { recursive: true });
     const outPath = resolve(OUTPUT_DIR, `${source.id}.json`);
@@ -328,11 +339,21 @@ async function main(): Promise<void> {
   let parsed: ExtractedSource;
   try {
     // Gemini が ```json コードフェンスでラップしてくることがあるので除去 (保険)
-    const cleaned = rawJson
+    let cleaned = rawJson
       .replace(/^\s*```(?:json)?\s*/i, "")
       .replace(/```\s*$/i, "")
       .trim();
-    parsed = JSON.parse(cleaned) as ExtractedSource;
+    // Gemini が誤って [...] 配列でラップしてくる事例あり。先頭が [ なら要素 0 を取る
+    if (cleaned.startsWith("[")) {
+      const arr = JSON.parse(cleaned);
+      if (!Array.isArray(arr) || arr.length === 0) {
+        throw new Error("配列が空 or 不正");
+      }
+      parsed = arr[0] as ExtractedSource;
+      console.log("   注意: Gemini が配列でラップしてきたので 1 要素目を採用");
+    } else {
+      parsed = JSON.parse(cleaned) as ExtractedSource;
+    }
   } catch (e) {
     // Gemini が JSON でなく散文で「ページから抽出できなかった」と返した場合。
     // crash せず空の ExtractedSource を書き出し、proposed-migrations 側で skip 判定。
