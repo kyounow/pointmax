@@ -299,6 +299,31 @@ async function main(): Promise<void> {
     console.log("   ⚠️ retrievedUrls メタデータ無し (URL Context が動いてない可能性)");
   }
 
+  // URL Context が全 URL で失敗していたら、空の ExtractedSource を書き出して exit
+  // (Gemini が JSON でなく謝罪文章を返すケースに対応。proposed-migrations 側は notes で skip 判定する)
+  const allFailed =
+    retrievedUrls.length > 0 &&
+    retrievedUrls.every((u) => u.includes("URL_RETRIEVAL_STATUS_ERROR"));
+  if (allFailed) {
+    console.log("⚠️ URL Context が全 URL で失敗。空の ExtractedSource を書き出します。");
+    const fallback: ExtractedSource = {
+      sourceId: source.id,
+      sourceUrl: source.url,
+      fetchedAt: new Date().toISOString(),
+      promptVersion: `${source.extractor}-vUnknown`,
+      extractor: source.extractor,
+      geminiModel: GEMINI_MODEL,
+      notes:
+        `URL retrieval failed (URL_RETRIEVAL_STATUS_ERROR). ` +
+        `URL を確認するか、ソースを enabled: false に設定してください。`,
+    };
+    mkdirSync(OUTPUT_DIR, { recursive: true });
+    const outPath = resolve(OUTPUT_DIR, `${source.id}.json`);
+    writeFileSync(outPath, JSON.stringify(fallback, null, 2));
+    console.log(`✓ wrote ${outPath} (空)`);
+    return;
+  }
+
   console.log("📋 JSON 解析中...");
   let parsed: ExtractedSource;
   try {
@@ -309,9 +334,27 @@ async function main(): Promise<void> {
       .trim();
     parsed = JSON.parse(cleaned) as ExtractedSource;
   } catch (e) {
-    throw new Error(
-      `Gemini レスポンスが JSON として解析不能:\n${(e as Error).message}\n--- raw (first 500 chars) ---\n${rawJson.slice(0, 500)}`,
-    );
+    // Gemini が JSON でなく散文で「ページから抽出できなかった」と返した場合。
+    // crash せず空の ExtractedSource を書き出し、proposed-migrations 側で skip 判定。
+    console.log("⚠️ Gemini レスポンスが JSON でない (取得には成功したが抽出失敗)");
+    console.log(`     raw (first 300 chars): ${rawJson.slice(0, 300)}`);
+    const fallback: ExtractedSource = {
+      sourceId: source.id,
+      sourceUrl: source.url,
+      fetchedAt: new Date().toISOString(),
+      promptVersion: `${source.extractor}-vUnknown`,
+      extractor: source.extractor,
+      geminiModel: GEMINI_MODEL,
+      notes:
+        `Gemini could not extract structured data from this URL. ` +
+        `Likely cause: page is a navigation hub, not the partner list itself. ` +
+        `Raw response (first 300 chars): ${rawJson.slice(0, 300).replace(/\s+/g, " ")}`,
+    };
+    mkdirSync(OUTPUT_DIR, { recursive: true });
+    const outPath = resolve(OUTPUT_DIR, `${source.id}.json`);
+    writeFileSync(outPath, JSON.stringify(fallback, null, 2));
+    console.log(`✓ wrote ${outPath} (空 + 失敗 notes)`);
+    return;
   }
 
   // 必須メタ情報を「スクリプトが知ってる事実」で上書き。

@@ -49,3 +49,17 @@ sources:
       加盟店数が膨大 (個店 + 全国チェーン) なので chains-only。
       pointCardId は rakuten-pointcard を対象。
       還元率は店舗によって違うので Gemini に正確な数値抽出を求める。
+
+  - id: d-point-partners
+    label: dポイントカード 加盟店 (公式)
+    url: https://dpoint.docomo.ne.jp/content/feature/point_realstore.html
+    extractor: point-partner
+    produces:
+      - stores
+      - loyaltyRules
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      dポイントカード提示で貯まる加盟店一覧。
+      加盟店数が膨大なので chains-only。
+      pointCardId は d-pointcard を対象。
