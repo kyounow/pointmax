@@ -9,22 +9,25 @@
 #
 # extractor の選択肢: card | jal-tokuyaku | point-partner | payment-app
 # produces の選択肢:  cards / storeRules / categoryRules / stores / loyaltyRules / paymentApps
+# extractionScope:    comprehensive | chains-only | existing-only
 
 version: 1
 
 sources:
   - id: jal-card-tokuyaku-list
     label: JALカード 特約店一覧 (公式)
-    url: https://www.jal.co.jp/jp/ja/jalcard/use/jaltokuyaku/list/
+    url: https://www.jal.co.jp/jalcard/use/jaltokuyaku/list/
     extractor: jal-tokuyaku
     produces:
       - stores
       - storeRules
       - categoryRules
+    extractionScope: chains-only
     enabled: true
     notes: |
       JALカード共通の特約店一覧。マイル積算率 200% (= 2%) の店舗を網羅。
-      新規追加・廃止・還元率変動を週次でチェックする想定。
+      個別店舗 (地元飲食店等) まで全部含めると膨大なので chains-only に限定。
+      全国チェーンだけ新規取り込み、既存登録の特約店についてはキャンペーン/還元率変動を検知。
       cardId は jal-suica を主に対象、他の JALカード保有時は別ソース追加で対応。
 
   - id: rakuten-point-partners
@@ -34,8 +37,10 @@ sources:
     produces:
       - stores
       - loyaltyRules
+    extractionScope: chains-only
     enabled: true
     notes: |
       楽天ポイントカード提示で貯まる加盟店一覧。
+      加盟店数が膨大 (個店 + 全国チェーン) なので chains-only。
       pointCardId は rakuten-pointcard を対象。
       還元率は店舗によって違うので Gemini に正確な数値抽出を求める。

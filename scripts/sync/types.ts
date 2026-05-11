@@ -20,12 +20,13 @@ import type { CollectionName } from "../../src/domain/migrations";
 
 // sources/registry.yaml の各エントリ
 export type RegistrySource = {
-  id: string;               // ユニークなソース ID (slug)
-  label: string;            // 人間向け表示名
-  url: string;              // 取得元 URL
-  extractor: ExtractorKind; // 使うプロンプト種別
-  produces: ProducesKind[]; // このソースから出るエンティティ種別
-  enabled: boolean;         // 一時的に止めたい時 false
+  id: string;                       // ユニークなソース ID (slug)
+  label: string;                    // 人間向け表示名
+  url: string;                      // 取得元 URL
+  extractor: ExtractorKind;         // 使うプロンプト種別
+  produces: ProducesKind[];         // このソースから出るエンティティ種別
+  extractionScope: ExtractionScope; // 抽出範囲 (店舗数が膨大なソース対策)
+  enabled: boolean;                 // 一時的に止めたい時 false
   notes?: string;
 };
 
@@ -47,6 +48,49 @@ export type ProducesKind =
   | "stores"
   | "loyaltyRules"
   | "paymentApps";
+
+// 抽出範囲。ローカル個店まで含めると膨大になるソース (JAL特約店、楽天加盟店等)
+// で「チェーン店だけ拾う」を明示できるようにする。
+//
+//  - comprehensive  : 個店も含めて網羅的に抽出 (デフォルト)
+//  - chains-only    : 全国/広域チェーンだけ抽出。地域店・1店舗業態は除外。
+//                     既存登録済み店舗のキャンペーン/還元率変動は引き続き検知する。
+//  - existing-only  : 新規追加はせず、既存エンティティの変更のみ検知。
+export type ExtractionScope = "comprehensive" | "chains-only" | "existing-only";
+
+// scope ごとに systemInstruction に prepend する追加指示
+export const SCOPE_DIRECTIVES: Record<ExtractionScope, string> = {
+  comprehensive: `## 抽出スコープ: comprehensive (網羅)
+このソースは個店も含めて全件抽出する方針です。ページ上に明示された店舗は基本的に取り込んでください。
+`,
+  "chains-only": `## 抽出スコープ: chains-only (チェーン店のみ)
+**重要**: このソースは個店数が膨大なため、抽出対象を**全国/広域チェーン店**に限定します。
+
+### 新規追加対象 (stores[] に入れる):
+- 全国チェーン (例: マクドナルド、ファミリーマート、ENEOS、ヤマダ電機)
+- 主要広域チェーン (複数都道府県に展開している有名業態)
+
+### 抽出対象外 (stores[] には入れない):
+- 単一店舗の個人店、地元のみの飲食店、地域限定スーパー
+- 「○○店」「△△支店」のような特定店舗指定
+- そのチェーン名が PointMax 既存に**ない場合のみ追加候補**
+
+### 既存店舗については引き続き全力でチェック
+既に PointMax に登録済みの特約店/加盟店 (上記 INJECT で示した一覧) については、
+還元率の変動・キャンペーン情報・廃止情報を**従来通り** storeRules / categoryRules / notes で報告してください。
+
+迷ったら追加しない方向で。誤って大量の個店を登録すると、後の運用で逆にノイズになります。
+`,
+  "existing-only": `## 抽出スコープ: existing-only (既存エンティティのみ)
+**重要**: このソースでは新規エンティティの追加は行いません (stores[] / cards[] 等の "新規追加" 用配列は空にしてください)。
+
+抽出対象: 既存 PointMax エンティティ (INJECT で表示した一覧のもの) の
+- 還元率変動
+- 廃止/契約終了
+- キャンペーンや条件変更
+のみ、storeRules / categoryRules / notes 経由で報告してください。
+`,
+};
 
 // ===========================================================
 // Layer 1: Extracted (Gemini 出力)

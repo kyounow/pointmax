@@ -21,9 +21,9 @@ import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { GoogleGenAI } from "@google/genai";
 import { injectExistingEntities } from "./inject-prompt";
+import { SCOPE_DIRECTIVES } from "./types";
 import type {
   ExtractedSource,
-  ExtractorKind,
   RegistryFile,
   RegistrySource,
 } from "./types";
@@ -156,13 +156,16 @@ function findSource(registry: RegistryFile, sourceId: string): RegistrySource {
   return s;
 }
 
-function loadResolvedPrompt(extractor: ExtractorKind): string {
-  const path = resolve(EXTRACTORS_DIR, `${extractor}.prompt.md`);
+function loadResolvedPrompt(source: RegistrySource): string {
+  const path = resolve(EXTRACTORS_DIR, `${source.extractor}.prompt.md`);
   if (!existsSync(path)) {
     throw new Error(`extractor プロンプトが見つからない: ${path}`);
   }
   const template = readFileSync(path, "utf-8");
-  return injectExistingEntities(template);
+  // 抽出スコープの指示を先頭に prepend。プロンプト本文より優先度高めに見せる。
+  const scopeDirective = SCOPE_DIRECTIVES[source.extractionScope];
+  const injected = injectExistingEntities(template);
+  return `${scopeDirective}\n${injected}`;
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -259,10 +262,11 @@ async function main(): Promise<void> {
   console.log(`   url:      ${source.url}`);
   console.log(`   extractor:${source.extractor}`);
   console.log(`   produces: ${source.produces.join(", ")}`);
+  console.log(`   scope:    ${source.extractionScope}`);
 
-  const systemInstruction = loadResolvedPrompt(source.extractor);
+  const systemInstruction = loadResolvedPrompt(source);
   console.log(
-    `🧩 prompt: 解決済み ${systemInstruction.length.toLocaleString()} chars`,
+    `🧩 prompt: 解決済み ${systemInstruction.length.toLocaleString()} chars (scope directive 込み)`,
   );
 
   if (args.dryRun) {
