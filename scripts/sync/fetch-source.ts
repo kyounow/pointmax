@@ -204,7 +204,9 @@ async function fetchPageText(url: string): Promise<string> {
 // Gemini call
 // ───────────────────────────────────────────────────────────────
 
-const GEMINI_MODEL = "gemini-2.5-pro";
+// デフォルトは Flash (無料枠が緩く JSON 抽出に十分)。
+// 高精度が必要なら GEMINI_MODEL=gemini-2.5-pro で上書き可能 (要 Pro クォータ)。
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 
 async function callGemini(args: {
   apiKey: string;
@@ -303,12 +305,14 @@ async function main(): Promise<void> {
     );
   }
 
-  // 必須メタ情報を補完 (Gemini が落とした場合のため)
+  // 必須メタ情報を「スクリプトが知ってる事実」で上書き。
+  // (Gemini はプロンプト例の値をコピーしてくることがあるため信用しない)
   parsed.sourceId = source.id;
   parsed.sourceUrl = source.url;
-  parsed.fetchedAt = parsed.fetchedAt || new Date().toISOString();
+  parsed.fetchedAt = new Date().toISOString();
   parsed.extractor = source.extractor;
-  parsed.geminiModel = parsed.geminiModel || GEMINI_MODEL;
+  parsed.geminiModel = GEMINI_MODEL;
+  // promptVersion だけは Gemini が読み取る値を尊重 (extractor のバージョン管理)
   parsed.promptVersion = parsed.promptVersion || `${source.extractor}-vUnknown`;
 
   console.log("✅ schema 検証中...");

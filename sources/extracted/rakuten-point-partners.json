@@ -1,0 +1,11 @@
+{
+  "sourceId": "rakuten-point-partners",
+  "sourceUrl": "https://pointcard.rakuten.co.jp/partner/",
+  "fetchedAt": "2026-05-11T03:00:00Z",
+  "promptVersion": "point-partner-v1.0",
+  "extractor": "point-partner",
+  "geminiModel": "gemini-2.5-pro",
+  "stores": [],
+  "loyaltyRules": [],
+  "notes": "ページコンテンツはJavaScriptにより動的に読み込まれるため、静的HTMLからは加盟店情報を抽出できませんでした。楽天ペイや楽天Edyなど、楽天グループサービスへのリンクは存在しますが、これらは楽天ポイントカードの加盟店情報として直接抽出する対象ではありません。"
+}
