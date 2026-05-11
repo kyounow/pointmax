@@ -3,6 +3,7 @@ import { useStore } from "../state/store";
 import { cardLabel } from "../domain/cardLabel";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { StoreRule } from "../domain/types";
+import { groupBy } from "../domain/groupBy";
 
 type RuleType = "store" | "category";
 
@@ -39,6 +40,11 @@ export function RulesScreen() {
     for (const s of stores) if (s.category) set.add(s.category);
     return Array.from(set).sort();
   }, [stores]);
+
+  const storesByCategory = useMemo(
+    () => groupBy(stores, (s) => s.category ?? "その他"),
+    [stores],
+  );
 
   const paymentMethodOptions = useMemo(() => {
     const set = new Set<string>([
@@ -259,10 +265,14 @@ export function RulesScreen() {
         {ruleType === "store" ? (
           <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
             <option value="">店舗</option>
-            {stores.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
+            {storesByCategory.map((g) => (
+              <optgroup key={g.key} label={g.key}>
+                {g.items.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         ) : (

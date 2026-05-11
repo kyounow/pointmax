@@ -5,6 +5,7 @@ import { cardLabel } from "../domain/cardLabel";
 import { formatRatio, styleOf } from "../domain/currencyKind";
 import type { Currency } from "../domain/types";
 import { CurrencyIcon } from "./CurrencyIcon";
+import { groupBy } from "../domain/groupBy";
 
 export function CalculatorScreen() {
   const cards = useStore((s) => s.cards);
@@ -27,6 +28,28 @@ export function CalculatorScreen() {
     for (const r of rules) if (r.paymentMethod) set.add(r.paymentMethod);
     return Array.from(set).sort();
   }, [rules]);
+
+  // 店舗をカテゴリ別にグループ化
+  const storesByCategory = useMemo(
+    () => groupBy(stores, (s) => s.category ?? "その他"),
+    [stores],
+  );
+  // 通貨を kind 別にグループ化（マイル/ポイント/現金相当/未分類）
+  const currenciesByKind = useMemo(() => {
+    const kindLabel = (k?: string) => {
+      switch (k) {
+        case "mile":
+          return "マイル";
+        case "point":
+          return "ポイント";
+        case "cashlike":
+          return "現金相当";
+        default:
+          return "その他";
+      }
+    };
+    return groupBy(currencies, (c) => kindLabel(c.kind));
+  }, [currencies]);
 
   const currencyById = useMemo(
     () => new Map(currencies.map((c) => [c.id, c])),
@@ -104,10 +127,14 @@ export function CalculatorScreen() {
           店舗:
           <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
             <option value="">選択</option>
-            {stores.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
+            {storesByCategory.map((g) => (
+              <optgroup key={g.key} label={g.key}>
+                {g.items.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>
@@ -129,10 +156,14 @@ export function CalculatorScreen() {
             onChange={(e) => setTargetCurrencyId(e.target.value)}
           >
             <option value="">選択</option>
-            {currencies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+            {currenciesByKind.map((g) => (
+              <optgroup key={g.key} label={g.key}>
+                {g.items.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>

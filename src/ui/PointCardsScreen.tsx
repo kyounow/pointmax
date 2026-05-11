@@ -3,6 +3,7 @@ import { useStore } from "../state/store";
 import { CurrencyIcon } from "./CurrencyIcon";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { LoyaltyRule, PointCard } from "../domain/types";
+import { groupBy } from "../domain/groupBy";
 
 export function PointCardsScreen() {
   const pointCards = useStore((s) => s.pointCards);
@@ -35,6 +36,10 @@ export function PointCardsScreen() {
   );
   const storeById = useMemo(
     () => new Map(stores.map((s) => [s.id, s])),
+    [stores],
+  );
+  const storesByCategory = useMemo(
+    () => groupBy(stores, (s) => s.category ?? "その他"),
     [stores],
   );
 
@@ -220,10 +225,14 @@ export function PointCardsScreen() {
         </select>
         <select value={lrStore} onChange={(e) => setLrStore(e.target.value)}>
           <option value="">店舗</option>
-          {stores.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
+          {storesByCategory.map((g) => (
+            <optgroup key={g.key} label={g.key}>
+              {g.items.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
         <input

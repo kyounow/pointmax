@@ -14,6 +14,7 @@ import "@xyflow/react/dist/style.css";
 
 import { useStore } from "../state/store";
 import { formatRatio, styleOf } from "../domain/currencyKind";
+import { groupBy } from "../domain/groupBy";
 import type {
   ConversionEdge,
   Currency,
@@ -83,6 +84,22 @@ export function EdgesScreen() {
   );
 
   const positions = useMemo(() => layoutByKind(currencies), [currencies]);
+
+  const currenciesByKind = useMemo(() => {
+    const kindLabel = (k?: string) => {
+      switch (k) {
+        case "mile":
+          return "マイル";
+        case "point":
+          return "ポイント";
+        case "cashlike":
+          return "現金相当";
+        default:
+          return "その他";
+      }
+    };
+    return groupBy(currencies, (c) => kindLabel(c.kind));
+  }, [currencies]);
 
   // ノード選択時、フォーカス対象（隣接ノードと自分）
   const focusedNodes = useMemo(() => {
@@ -486,19 +503,27 @@ export function EdgesScreen() {
         >
           <select value={from} onChange={(e) => setFrom(e.target.value)}>
             <option value="">from</option>
-            {currencies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+            {currenciesByKind.map((g) => (
+              <optgroup key={g.key} label={g.key}>
+                {g.items.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <span>→</span>
           <select value={to} onChange={(e) => setTo(e.target.value)}>
             <option value="">to</option>
-            {currencies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+            {currenciesByKind.map((g) => (
+              <optgroup key={g.key} label={g.key}>
+                {g.items.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <input
