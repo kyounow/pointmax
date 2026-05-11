@@ -22,6 +22,7 @@ import type {
 } from "../domain/types";
 import { CurrencyIcon } from "./CurrencyIcon";
 import { nodeTypes, type CurrencyNodeType } from "./CurrencyNode";
+import { edgeTypes } from "./PointMaxEdge";
 import { useDialog } from "./dialog/DialogProvider";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 
@@ -205,6 +206,7 @@ export function EdgesScreen() {
         id: e.id,
         source: e.fromCurrencyId,
         target: e.toCurrencyId,
+        type: "pointmax",
         label: showLabels ? formatRatio(e.rate) : undefined,
         markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
         style: {
@@ -368,6 +370,7 @@ export function EdgesScreen() {
             nodes={rfNodes}
             edges={rfEdges}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             onConnect={onConnect}
             onEdgeClick={onEdgeClick}
             onNodeClick={onNodeClick}

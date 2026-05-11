@@ -8,6 +8,17 @@ export function SettingsScreen() {
   const lastSyncAt = useStore((s) => s.lastSyncAt);
   const setSyncUrl = useStore((s) => s.setSyncUrl);
   const syncFromUrl = useStore((s) => s.syncFromUrl);
+  const loadSeed = useStore((s) => s.loadSeed);
+  const clearAll = useStore((s) => s.clearAll);
+  const hasData = useStore(
+    (s) =>
+      s.cards.length +
+        s.currencies.length +
+        s.stores.length +
+        s.rules.length +
+        s.edges.length >
+      0,
+  );
   const dialog = useDialog();
   const [draftUrl, setDraftUrl] = useState(syncUrl || DEFAULT_SYNC_URL);
   const [busy, setBusy] = useState(false);
@@ -68,9 +79,57 @@ export function SettingsScreen() {
     ? new Date(lastSyncAt).toLocaleString("ja-JP")
     : "未実施";
 
+  const handleLoadSeed = async () => {
+    if (hasData) {
+      const ok = await dialog.confirm({
+        title: "サンプル投入で上書きしますか？",
+        message:
+          "現在のデータをアプリにバンドルされた最新サンプルで上書きします。\n編集中の内容は失われます。",
+        okText: "上書き",
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    loadSeed();
+    await dialog.alert({
+      title: "サンプル投入完了",
+      message: "バンドル済みサンプルを反映しました。",
+      level: "success",
+    });
+  };
+
+  const handleClearLocal = async () => {
+    const ok = await dialog.confirm({
+      title: "ローカルデータを初期化しますか？",
+      message:
+        "ブラウザに保存されているこのアプリのデータ（カード／ポイント／店舗／ルール／交換ルート／支払方法）を全て削除します。\n公式マスタは「外部URLからのデータ同期」セクションから再取得できます。",
+      okText: "初期化",
+      danger: true,
+    });
+    if (ok) clearAll();
+  };
+
   return (
     <section>
       <h2>設定</h2>
+
+      <h3 style={{ marginTop: 8 }}>データ管理</h3>
+      <p className="hint">
+        サンプル投入はアプリにバンドルされた既定データを反映します（オフラインでも動作）。
+        <br />
+        ローカルデータの初期化はブラウザ内に保存された編集内容を全消去します。
+        公式マスタは下の「外部URLからのデータ同期」で再取得できます。
+      </p>
+      <div className="row" style={{ gap: 8, marginBottom: 16 }}>
+        <button onClick={handleLoadSeed}>サンプル投入</button>
+        <button
+          onClick={handleClearLocal}
+          disabled={!hasData}
+          title="ブラウザ内に保存された全データを削除"
+        >
+          ローカルデータ初期化
+        </button>
+      </div>
 
       <h3 style={{ marginTop: 8 }}>外部URLからのデータ同期</h3>
       <p className="hint">

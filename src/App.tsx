@@ -39,8 +39,6 @@ const TABS: { id: Tab; label: string }[] = [
 function App() {
   const [tab, setTab] = useState<Tab>("calculator");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const loadSeed = useStore((s) => s.loadSeed);
-  const clearAll = useStore((s) => s.clearAll);
   const exportJson = useStore((s) => s.exportJson);
   const importJson = useStore((s) => s.importJson);
   const hasData = useStore(
@@ -133,30 +131,6 @@ function App() {
     }
   };
 
-  const handleLoadSeed = async () => {
-    if (hasData) {
-      const ok = await dialog.confirm({
-        title: "サンプル投入で上書きしますか？",
-        message:
-          "現在のデータを最新サンプルで上書きします。\n編集中の内容は失われます。",
-        okText: "上書き",
-        danger: true,
-      });
-      if (!ok) return;
-    }
-    loadSeed();
-  };
-
-  const handleClearAll = async () => {
-    const ok = await dialog.confirm({
-      title: "全削除しますか？",
-      message: "登録データを全て削除します。元に戻せません。",
-      okText: "削除",
-      danger: true,
-    });
-    if (ok) clearAll();
-  };
-
   const selectTab = (id: Tab) => {
     setTab(id);
     setDrawerOpen(false);
@@ -187,12 +161,6 @@ function App() {
         <div className="active-tab-label mobile-only">{activeTabLabel}</div>
         <div className="appbar-actions desktop-only">
           <button
-            onClick={handleLoadSeed}
-            title="同梱されているサンプル設定を投入"
-          >
-            サンプル投入
-          </button>
-          <button
             onClick={handleExport}
             disabled={!hasData}
             title="現在のデータをJSONファイルとしてダウンロード"
@@ -205,11 +173,6 @@ function App() {
           >
             インポート
           </button>
-          {hasData && (
-            <button className="danger" onClick={handleClearAll}>
-              全削除
-            </button>
-          )}
         </div>
         <input
           type="file"
@@ -258,14 +221,6 @@ function App() {
               <button
                 onClick={() => {
                   setDrawerOpen(false);
-                  void handleLoadSeed();
-                }}
-              >
-                サンプル投入
-              </button>
-              <button
-                onClick={() => {
-                  setDrawerOpen(false);
                   handleExport();
                 }}
                 disabled={!hasData}
@@ -280,17 +235,12 @@ function App() {
               >
                 インポート
               </button>
-              {hasData && (
-                <button
-                  className="danger"
-                  onClick={() => {
-                    setDrawerOpen(false);
-                    void handleClearAll();
-                  }}
-                >
-                  全削除
-                </button>
-              )}
+              <small
+                className="hint"
+                style={{ padding: "8px 14px", fontSize: 11 }}
+              >
+                サンプル投入・データ初期化は「設定」タブから
+              </small>
             </div>
           </aside>
         </div>
