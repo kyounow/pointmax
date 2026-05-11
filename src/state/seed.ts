@@ -10,7 +10,7 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 8;
+export const SEED_VERSION = 9;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -72,6 +72,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-11",
     summary:
       "店舗追加: 大丸松坂屋・無印良品・ユニクロ・ロイヤルホスト(JAL特約店) / 高島屋・ノジマ・ココカラファイン。ルール追加: JALカードSuica×ファミマ 2% / dカード×ガスト/ノジマ/高島屋/ココカラファイン",
+  },
+  {
+    version: 9,
+    date: "2026-05-11",
+    summary:
+      "店舗追加: 西友(スーパー) / ツルハドラッグ(JAL特約店)。ルール追加: 楽天ポイントカード × 西友・ツルハ (200円1pt = 0.5%)。ツルハはJAL特約店カテゴリ経由でJALカードSuicaも2%自動適用",
   },
 ];
 
@@ -307,10 +313,12 @@ export const seed = (): {
       category: "JAL特約店",
     },
     { id: "royal-host", name: "ロイヤルホスト", category: "JAL特約店" },
+    { id: "tsuruha", name: "ツルハドラッグ", category: "JAL特約店" },
     // 百貨店・家電量販店・ドラッグストア (主にdポイント加盟)
     { id: "takashimaya", name: "高島屋", category: "百貨店" },
     { id: "nojima", name: "ノジマ", category: "家電量販店" },
     { id: "cocokara", name: "ココカラファイン", category: "ドラッグストア" },
+    { id: "seiyu", name: "西友", category: "スーパー" },
     // 汎用
     { id: "general", name: "(その他/通常加盟店)", category: "汎用" },
   ];
@@ -887,6 +895,20 @@ export const seed = (): {
       pointCardId: "rakuten-pointcard",
       rate: 0.005,
       notes: "200円ごとに1pt（すかいらーくグループ）",
+    },
+    {
+      id: "loy-r-seiyu",
+      storeId: "seiyu",
+      pointCardId: "rakuten-pointcard",
+      rate: 0.005,
+      notes: "200円(税抜)ごとに1pt（毎週月・土はポイント増量日）",
+    },
+    {
+      id: "loy-r-tsuruha",
+      storeId: "tsuruha",
+      pointCardId: "rakuten-pointcard",
+      rate: 0.005,
+      notes: "200円(税抜)ごとに1pt（ツルハグループ）",
     },
 
     // ====== Pontaカード ======
