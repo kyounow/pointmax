@@ -63,3 +63,17 @@ sources:
       dポイントカード提示で貯まる加盟店一覧。
       加盟店数が膨大なので chains-only。
       pointCardId は d-pointcard を対象。
+
+  - id: v-point-partners
+    label: Vポイント (旧Tポイント) 加盟店 (公式)
+    url: https://t-point.tsite.jp/store/list/
+    extractor: point-partner
+    produces:
+      - stores
+      - loyaltyRules
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      Vポイントカード (旧Tカード) 提示で貯まる加盟店一覧。
+      2024 年に Tポイント が Vポイント に統合。tsite.jp は旧サイトだが現在も提携店リストとして機能している模様。
+      pointCardId は vpoint-card を対象。
