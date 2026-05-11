@@ -10,7 +10,7 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 7;
+export const SEED_VERSION = 8;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -66,6 +66,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-11",
     summary:
       "JRキューポ（JR九州ポイント）を追加。Vポイント ⇄ JRキューポの相互交換ルート（500:500の等価交換）を追加。Vポイント→JALマイル経由ルートの選択肢が広がる",
+  },
+  {
+    version: 8,
+    date: "2026-05-11",
+    summary:
+      "店舗追加: 大丸松坂屋・無印良品・ユニクロ・ロイヤルホスト(JAL特約店) / 高島屋・ノジマ・ココカラファイン。ルール追加: JALカードSuica×ファミマ 2% / dカード×ガスト/ノジマ/高島屋/ココカラファイン",
   },
 ];
 
@@ -285,6 +291,26 @@ export const seed = (): {
     { id: "matsukiyo", name: "マツモトキヨシ", category: "JAL特約店" },
     { id: "kinokuniya", name: "紀伊國屋書店", category: "JAL特約店" },
     { id: "aeon", name: "イオン", category: "JAL特約店" },
+    {
+      id: "daimaru-matsuzakaya",
+      name: "大丸・松坂屋",
+      category: "JAL特約店",
+    },
+    {
+      id: "muji",
+      name: "無印良品 (一部店舗)",
+      category: "JAL特約店",
+    },
+    {
+      id: "uniqlo",
+      name: "ユニクロ (一部店舗)",
+      category: "JAL特約店",
+    },
+    { id: "royal-host", name: "ロイヤルホスト", category: "JAL特約店" },
+    // 百貨店・家電量販店・ドラッグストア (主にdポイント加盟)
+    { id: "takashimaya", name: "高島屋", category: "百貨店" },
+    { id: "nojima", name: "ノジマ", category: "家電量販店" },
+    { id: "cocokara", name: "ココカラファイン", category: "ドラッグストア" },
     // 汎用
     { id: "general", name: "(その他/通常加盟店)", category: "汎用" },
   ];
@@ -410,7 +436,7 @@ export const seed = (): {
       notes: "ビューカード会員 在来線チケットレス特急券 5%還元",
     },
     // JALカードSuica × カテゴリ「JAL特約店」: 100円=2マイル (2%)
-    // ENEOS / 出光 / ウエルシア / 紀伊國屋 / イオン などをまとめてカバー
+    // ENEOS / 出光 / ウエルシア / 紀伊國屋 / イオン / 大丸松坂屋 / 無印 / ユニクロ / ロイヤルホスト
     {
       id: "rule-jal-suica-tokuyaku",
       cardId: "jal-suica",
@@ -418,6 +444,15 @@ export const seed = (): {
       rate: 0.02,
       currencyId: "jal-mile",
       notes: "JAL CARD特約店 100円=2マイル (CLUB-Aゴールド・ショッピングマイルプレミアム込み)",
+    },
+    // JALカードSuica × ファミマ: 個別ルール (ファミマは category="コンビニ" のため上のカテゴリルールが当たらない)
+    {
+      id: "rule-jal-suica-familymart",
+      cardId: "jal-suica",
+      storeId: "conv-familymart",
+      rate: 0.02,
+      currencyId: "jal-mile",
+      notes: "JAL CARD特約店 100円=2マイル (ファミマは特約店個別ルール)",
     },
   ];
 
@@ -791,6 +826,34 @@ export const seed = (): {
     {
       id: "loy-d-matsukiyo",
       storeId: "matsukiyo",
+      pointCardId: "d-pointcard",
+      rate: 0.01,
+      notes: "100円(税抜)ごとに1pt",
+    },
+    {
+      id: "loy-d-gusto",
+      storeId: "gusto",
+      pointCardId: "d-pointcard",
+      rate: 0.005,
+      notes: "200円ごとに1pt (すかいらーくグループ)",
+    },
+    {
+      id: "loy-d-nojima",
+      storeId: "nojima",
+      pointCardId: "d-pointcard",
+      rate: 0.01,
+      notes: "100円ごとに1pt (家電購入時)",
+    },
+    {
+      id: "loy-d-takashimaya",
+      storeId: "takashimaya",
+      pointCardId: "d-pointcard",
+      rate: 0.005,
+      notes: "200円(税抜)ごとに1pt",
+    },
+    {
+      id: "loy-d-cocokara",
+      storeId: "cocokara",
       pointCardId: "d-pointcard",
       rate: 0.01,
       notes: "100円(税抜)ごとに1pt",
