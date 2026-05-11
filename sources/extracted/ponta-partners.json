@@ -1,9 +1,9 @@
 {
   "sourceId": "ponta-partners",
-  "sourceUrl": "https://point.recruit.co.jp/pontaweb/about/ponta/use/",
-  "fetchedAt": "2026-05-11T12:56:56.464Z",
+  "sourceUrl": "https://point.recruit.co.jp/point/?tab=pointUseService",
+  "fetchedAt": "2026-05-11T13:08:58.293Z",
   "promptVersion": "point-partner-vUnknown",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided URL describes how to use Ponta points but does not list specific partner stores or their還元率. It mentions \"コンビニや飲食店ガソリンスタンドなど\" as examples. Therefore, I cannot extract specific `stores[]` or `loyaltyRules[]` from this page. I will return a JSON with only the required fields and a note ex"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided URL lists various Ponta partners. I need to go through the list, identify national/major regional chains, filter out non-qualifying categories and individual stores, and extract the relevant information. The page has two main sections for partners: 1. \"PickUpたまる・つかえるサービス、お店\" - This se"
 }
