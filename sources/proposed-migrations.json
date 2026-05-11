@@ -1,0 +1,1678 @@
+{
+  "generatedAt": "2026-05-11T11:47:00.898Z",
+  "fromSeedVersion": 1,
+  "toSeedVersion": 2,
+  "autoApplicable": [
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "a-pit-autobacs",
+        "name": "A PIT AUTOBACS",
+        "category": "車・バイク"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "A PIT AUTOBACS：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "ace-contact",
+        "name": "エースコンタクト",
+        "category": "コンタクト"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "エースコンタクト：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "ace-one",
+        "name": "エースワン",
+        "category": "スーパー"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "エースワン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "adam-et-rope",
+        "name": "ADAM ET ROPÉ",
+        "category": "ファッション"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ADAM ET ROPÉ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "aiya",
+        "name": "藍屋",
+        "category": "飲食"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "藍屋：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "akakabe-group",
+        "name": "アカカベグループ",
+        "category": "ドラッグストア"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アカカベグループ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "alpen",
+        "name": "アルペン",
+        "category": "スポーツ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アルペン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "alpen-mountains",
+        "name": "アルペンマウンテンズ",
+        "category": "スポーツ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アルペンマウンテンズ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "alpen-outdoors",
+        "name": "アルペンアウトドアーズ",
+        "category": "スポーツ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アルペンアウトドアーズ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "american-drug",
+        "name": "アメリカンドラッグ",
+        "category": "ドラッグストア"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アメリカンドラッグ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "american-holic",
+        "name": "AMERICAN HOLIC",
+        "category": "ファッション"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "AMERICAN HOLIC：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "angie",
+        "name": "ANGIE",
+        "category": "美容"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ANGIE：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "apollo-station",
+        "name": "apollostation",
+        "category": "ガソリンスタンド"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "apollostation：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "arc-oasis",
+        "name": "アークオアシス",
+        "category": "雑貨"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アークオアシス：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "ari-san-hikkoshi",
+        "name": "アリさんマークの引越社",
+        "category": "引越し"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アリさんマークの引越社：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "autobacs",
+        "name": "オートバックス",
+        "category": "車・バイク"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "オートバックス：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "b-and-d-drugstore",
+        "name": "B&Dドラッグストア",
+        "category": "ドラッグストア"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "B&Dドラッグストア：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "bamiyan",
+        "name": "バーミヤン",
+        "category": "飲食"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "バーミヤン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "bayflow",
+        "name": "BAYFLOW",
+        "category": "ファッション"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "BAYFLOW：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "beams",
+        "name": "BEAMS",
+        "category": "ファッション"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "BEAMS：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "beauty-youth-united-arrows",
+        "name": "BEAUTY&YOUTH UNITED ARROWS",
+        "category": "ファッション"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "BEAUTY&YOUTH UNITED ARROWS：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "beisia",
+        "name": "ベイシア",
+        "category": "スーパー"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ベイシア：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "best-megane-contact",
+        "name": "ベストメガネコンタクト",
+        "category": "メガネ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ベストメガネコンタクト：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "bic-camera",
+        "name": "ビックカメラ",
+        "category": "家電量販店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ビックカメラ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "big-boy",
+        "name": "ビッグボーイ",
+        "category": "飲食"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ビッグボーイ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "bon-repas",
+        "name": "ボンラパス",
+        "category": "スーパー"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ボンラパス：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "book-yard",
+        "name": "Book Yard．",
+        "category": "書店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "Book Yard．：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "camp-depot",
+        "name": "キャンプデポ",
+        "category": "スポーツ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "キャンプデポ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "cd-energy-direct-point-denki",
+        "name": "CDエナジーダイレクト ポイントでんき（R）",
+        "category": "電気・ガス"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "CDエナジーダイレクト ポイントでんき（R）：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "coco-ichibanya",
+        "name": "カレーハウスCoCo壱番屋",
+        "category": "飲食"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "カレーハウスCoCo壱番屋：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "cocos",
+        "name": "ココス",
+        "category": "飲食"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ココス：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "commodi-iida",
+        "name": "コモディイイダ",
+        "category": "スーパー"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "コモディイイダ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "contact-eyes-city",
+        "name": "コンタクトのアイシティ",
+        "category": "コンタクト"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "コンタクトのアイシティ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "cosmo-oil",
+        "name": "コスモ石油",
+        "category": "ガソリンスタンド"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "コスモ石油：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "craft-heart-tokai",
+        "name": "クラフトハートトーカイ",
+        "category": "雑貨"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "クラフトハートトーカイ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "craft-park",
+        "name": "クラフトパーク",
+        "category": "雑貨"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "クラフトパーク：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "cygnus-oil",
+        "name": "キグナス石油",
+        "category": "ガソリンスタンド"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "キグナス石油：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "daikoku-drug",
+        "name": "ダイコクドラッグ",
+        "category": "ドラッグストア"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ダイコクドラッグ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "daily-yamazaki",
+        "name": "デイリーヤマザキ",
+        "category": "コンビニ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "デイリーヤマザキ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "dommy",
+        "name": "ドミー",
+        "category": "スーパー"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ドミー：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "drug-eleven",
+        "name": "ドラッグイレブン",
+        "category": "ドラッグストア"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ドラッグイレブン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "edion",
+        "name": "エディオン",
+        "category": "家電量販店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "エディオン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "enejet",
+        "name": "Enejet",
+        "category": "ガソリンスタンド"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "Enejet：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "enex-fleet",
+        "name": "エネクスフリート",
+        "category": "ガソリンスタンド"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "エネクスフリート：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "excel-hotel-tokyu",
+        "name": "エクセルホテル東急",
+        "category": "ホテル"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "エクセルホテル東急：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "eyestyle",
+        "name": "EYESTYLE",
+        "category": "メガネ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "EYESTYLE：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "golf-five",
+        "name": "ゴルフ５",
+        "category": "スポーツ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ゴルフ５：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "gyokukodo",
+        "name": "玉光堂",
+        "category": "音楽・映像"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "玉光堂：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "hands",
+        "name": "ハンズ",
+        "category": "雑貨"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ハンズ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "haneda-airport-pet-hotel",
+        "name": "羽田空港ペットホテル",
+        "category": "ペット"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "羽田空港ペットホテル：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "hc-musashi",
+        "name": "ホームセンタームサシ",
+        "category": "ホームセンター"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ホームセンタームサシ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "heart-hikkoshi",
+        "name": "ハート引越センター",
+        "category": "引越し"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ハート引越センター：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "hotel-keihan-chain",
+        "name": "ホテル京阪チェーン",
+        "category": "ホテル"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ホテル京阪チェーン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "j-net-rent-a-car",
+        "name": "Jネットレンタカー",
+        "category": "レンタカー"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "Jネットレンタカー：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "jms",
+        "name": "ジェームス",
+        "category": "車・バイク"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ジェームス：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "joshin",
+        "name": "ジョーシン",
+        "category": "家電量販店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ジョーシン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "jr-nagoya-takashimaya",
+        "name": "ジェイアール名古屋タカシマヤ",
+        "category": "百貨店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ジェイアール名古屋タカシマヤ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "jumbo-encho",
+        "name": "ジャンボエンチョー",
+        "category": "ホームセンター"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ジャンボエンチョー：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "junkudo",
+        "name": "ジュンク堂書店",
+        "category": "書店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ジュンク堂書店：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "kaldi-coffee-farm",
+        "name": "カルディコーヒーファーム",
+        "category": "雑貨"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "カルディコーヒーファーム：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "kamei",
+        "name": "カメイ株式会社",
+        "category": "エネルギー"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "カメイ株式会社：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "koa-gas-japan",
+        "name": "コーアガス日本",
+        "category": "電気・ガス"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "コーアガス日本：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "kobunkan",
+        "name": "株式会社廣文館",
+        "category": "書店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "株式会社廣文館：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "kohnan",
+        "name": "コーナン",
+        "category": "ホームセンター"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "コーナン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "kojima",
+        "name": "コジマ",
+        "category": "家電量販店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "コジマ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "look-contact",
+        "name": "ルックコンタクト",
+        "category": "コンタクト"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ルックコンタクト：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "maruyoshi-dept",
+        "name": "丸由百貨店",
+        "category": "百貨店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "丸由百貨店：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "maruzen",
+        "name": "丸善",
+        "category": "書店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "丸善：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "maruzen-junkudo",
+        "name": "MARUZEN＆ジュンク堂書店",
+        "category": "書店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "MARUZEN＆ジュンク堂書店：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "matsuya-asakusa",
+        "name": "松屋浅草",
+        "category": "百貨店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "松屋浅草：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "matsuya-ginza",
+        "name": "松屋銀座",
+        "category": "百貨店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "松屋銀座：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "megane-house",
+        "name": "メガネハウス",
+        "category": "メガネ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "メガネハウス：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "megane-no-otsuka",
+        "name": "メガネのオオツカ",
+        "category": "メガネ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "メガネのオオツカ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "megane-no-takahashi",
+        "name": "メガネのタカハシ",
+        "category": "メガネ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "メガネのタカハシ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "nico-pet",
+        "name": "ニコペット",
+        "category": "ペット"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ニコペット：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "nippon-rent-a-car",
+        "name": "ニッポンレンタカー",
+        "category": "レンタカー"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ニッポンレンタカー：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "pet-design",
+        "name": "ペットデザイン",
+        "category": "ペット"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ペットデザイン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "pet-land-peace-one",
+        "name": "ペットランド ピースワン",
+        "category": "ペット"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ペットランド ピースワン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "pets-mam",
+        "name": "ペッツ・マム",
+        "category": "ペット"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ペッツ・マム：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "poplar",
+        "name": "ポプラ",
+        "category": "コンビニ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ポプラ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "princess-cruises",
+        "name": "プリンセスクルーズ",
+        "category": "旅行"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "プリンセスクルーズ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "rakuten-gora",
+        "name": "楽天GORA",
+        "category": "ネット通販"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "楽天GORA：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "rakuten-mobile",
+        "name": "楽天モバイル",
+        "category": "通信"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "楽天モバイル：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "saibu-gas",
+        "name": "西部ガス",
+        "category": "電気・ガス"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "西部ガス：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "sakai-hikkoshi",
+        "name": "株式会社サカイ引越センター",
+        "category": "引越し"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "株式会社サカイ引越センター：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "seagull-japan",
+        "name": "シーガルジャパン",
+        "category": "クリーニング"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "シーガルジャパン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "seiban",
+        "name": "セイバン",
+        "category": "その他"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "セイバン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "shampoo-hair-salon",
+        "name": "Shampoo",
+        "category": "美容"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "Shampoo：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "shonan-biyou-clinic",
+        "name": "湘南美容クリニック",
+        "category": "美容"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "湘南美容クリニック：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "sky-rent-a-car",
+        "name": "スカイレンタカー",
+        "category": "レンタカー"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "スカイレンタカー：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "sofmap",
+        "name": "ソフマップ",
+        "category": "家電量販店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ソフマップ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "sogi-kaikan-tia",
+        "name": "葬儀会館ティア",
+        "category": "その他"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "葬儀会館ティア：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "sugoi-migaki",
+        "name": "すごい磨き",
+        "category": "サービス"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "すごい磨き：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "super-autobacs",
+        "name": "スーパーオートバックス",
+        "category": "車・バイク"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "スーパーオートバックス：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "super-kids-land",
+        "name": "スーパーキッズランド",
+        "category": "おもちゃ"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "スーパーキッズランド：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "taya",
+        "name": "TAYA",
+        "category": "美容"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "TAYA：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "toku-taku",
+        "name": "得タク",
+        "category": "交通"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "得タク：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "tokyu-dept",
+        "name": "東急百貨店",
+        "category": "百貨店"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "東急百貨店：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "tokyu-hotel",
+        "name": "東急ホテル",
+        "category": "ホテル"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "東急ホテル：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "tokyu-rei-hotel",
+        "name": "東急REIホテル",
+        "category": "ホテル"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "東急REIホテル：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "unidy",
+        "name": "ユニディ",
+        "category": "ホームセンター"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ユニディ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "vanda-record",
+        "name": "バンダレコード",
+        "category": "音楽・映像"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "バンダレコード：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "vivahome",
+        "name": "ビバホーム",
+        "category": "ホームセンター"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ビバホーム：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "yellow-hat",
+        "name": "イエローハット",
+        "category": "車・バイク"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "イエローハット：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    }
+  ],
+  "needsReview": [],
+  "summary": {
+    "autoApplicableCount": 104,
+    "needsReviewCount": 0,
+    "sourcesProcessed": 1,
+    "sourcesFailed": 1
+  }
+}
