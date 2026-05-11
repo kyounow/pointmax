@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import { CardsScreen } from "./ui/CardsScreen";
 import { CurrenciesScreen } from "./ui/CurrenciesScreen";
@@ -35,6 +35,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 function App() {
   const [tab, setTab] = useState<Tab>("calculator");
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const loadSeed = useStore((s) => s.loadSeed);
   const clearAll = useStore((s) => s.clearAll);
   const exportJson = useStore((s) => s.exportJson);
@@ -49,8 +50,24 @@ function App() {
       0,
   );
   const dialog = useDialog();
+  const activeTabLabel =
+    TABS.find((t) => t.id === tab)?.label ?? "PointMax";
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ドロワーが開いている時はESCで閉じる、bodyスクロール抑制
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDrawerOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [drawerOpen]);
 
   const handleExport = () => {
     const json = exportJson();
@@ -137,11 +154,23 @@ function App() {
     if (ok) clearAll();
   };
 
+  const selectTab = (id: Tab) => {
+    setTab(id);
+    setDrawerOpen(false);
+  };
+
   return (
     <div className="app">
       <header className="appbar">
+        <button
+          className="hamburger"
+          onClick={() => setDrawerOpen(true)}
+          aria-label="メニューを開く"
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
         <div className="brand">PointMax</div>
-        <nav className="tabs">
+        <nav className="tabs desktop-only">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -152,7 +181,8 @@ function App() {
             </button>
           ))}
         </nav>
-        <div className="appbar-actions">
+        <div className="active-tab-label mobile-only">{activeTabLabel}</div>
+        <div className="appbar-actions desktop-only">
           <button
             onClick={handleLoadSeed}
             title="同梱されているサンプル設定を投入"
@@ -172,20 +202,96 @@ function App() {
           >
             インポート
           </button>
-          <input
-            type="file"
-            accept="application/json,.json"
-            ref={fileInputRef}
-            onChange={handleImportFile}
-            style={{ display: "none" }}
-          />
           {hasData && (
             <button className="danger" onClick={handleClearAll}>
               全削除
             </button>
           )}
         </div>
+        <input
+          type="file"
+          accept="application/json,.json"
+          ref={fileInputRef}
+          onChange={handleImportFile}
+          style={{ display: "none" }}
+        />
       </header>
+
+      {drawerOpen && (
+        <div
+          className="drawer-backdrop"
+          onClick={() => setDrawerOpen(false)}
+          role="presentation"
+        >
+          <aside
+            className="drawer"
+            onClick={(e) => e.stopPropagation()}
+            role="navigation"
+            aria-label="メニュー"
+          >
+            <div className="drawer-header">
+              <strong>PointMax</strong>
+              <button
+                className="drawer-close"
+                onClick={() => setDrawerOpen(false)}
+                aria-label="閉じる"
+              >
+                ×
+              </button>
+            </div>
+            <nav className="drawer-tabs">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  className={`drawer-tab ${tab === t.id ? "active" : ""}`}
+                  onClick={() => selectTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+            <hr className="drawer-divider" />
+            <div className="drawer-actions">
+              <button
+                onClick={() => {
+                  setDrawerOpen(false);
+                  void handleLoadSeed();
+                }}
+              >
+                サンプル投入
+              </button>
+              <button
+                onClick={() => {
+                  setDrawerOpen(false);
+                  handleExport();
+                }}
+                disabled={!hasData}
+              >
+                エクスポート
+              </button>
+              <button
+                onClick={() => {
+                  setDrawerOpen(false);
+                  handleImportClick();
+                }}
+              >
+                インポート
+              </button>
+              {hasData && (
+                <button
+                  className="danger"
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    void handleClearAll();
+                  }}
+                >
+                  全削除
+                </button>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
 
       <main className="content">
         <UpdateBanner />
