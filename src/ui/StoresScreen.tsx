@@ -13,16 +13,34 @@ export function StoresScreen() {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState(""); // "" = 全カテゴリ
+
+  const categoryOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of stores) {
+      const c = s.category ?? "(未分類)";
+      counts.set(c, (counts.get(c) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  }, [stores]);
 
   const filteredStores = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return stores;
-    return stores.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        (s.category ?? "").toLowerCase().includes(q),
-    );
-  }, [stores, search]);
+    return stores.filter((s) => {
+      if (categoryFilter) {
+        const cat = s.category ?? "(未分類)";
+        if (cat !== categoryFilter) return false;
+      }
+      if (q) {
+        const inName = s.name.toLowerCase().includes(q);
+        const inCat = (s.category ?? "").toLowerCase().includes(q);
+        if (!inName && !inCat) return false;
+      }
+      return true;
+    });
+  }, [stores, search, categoryFilter]);
 
   const columns: ColumnDef<Store>[] = [
     {
@@ -134,6 +152,19 @@ export function StoresScreen() {
       </form>
 
       <div className="row" style={{ marginTop: 8 }}>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          aria-label="カテゴリで絞り込み"
+          title="カテゴリで絞り込み"
+        >
+          <option value="">全カテゴリ ({stores.length})</option>
+          {categoryOptions.map((c) => (
+            <option key={c.name} value={c.name}>
+              {c.name} ({c.count})
+            </option>
+          ))}
+        </select>
         <input
           type="search"
           placeholder="店舗を絞り込み (名前/カテゴリ)"
@@ -142,7 +173,7 @@ export function StoresScreen() {
           style={{ flex: 1 }}
           aria-label="店舗を絞り込み検索"
         />
-        {search && (
+        {(search || categoryFilter) && (
           <small className="hint" style={{ alignSelf: "center" }}>
             {filteredStores.length} / {stores.length} 件
           </small>

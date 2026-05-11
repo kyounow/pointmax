@@ -1127,15 +1127,19 @@ details summary {
   padding: 12px 14px;
 }
 
-/* 計算画面: 店舗検索 input + select の組み合わせ */
+/* 計算画面: 店舗 picker (カテゴリ select + 検索 input + 店舗 select) */
 .store-picker {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
 }
+.store-picker .store-category-filter {
+  font-size: 13px;
+  max-width: 140px;
+}
 .store-picker .store-search {
-  width: 140px;
+  width: 120px;
   font-size: 13px;
   padding: 4px 8px;
 }
