@@ -29,23 +29,12 @@ JALカード公式の**特約店リストページ**を読み、
 
 ## 既存の PointMax 特約店一覧（参照用）
 
-これらは既に `category: "JAL特約店"` で登録済み。`stores[]` には**追加しないで**ください:
-
-| storeId | name |
-|---|---|
-| eneos | ENEOS |
-| idemitsu | 出光 |
-| welcia | ウエルシア |
-| matsukiyo | マツモトキヨシ |
-| kinokuniya | 紀伊國屋書店 |
-| aeon | イオン |
-| daimaru-matsuzakaya | 大丸・松坂屋 |
-| muji | 無印良品 (一部店舗) |
-| uniqlo | ユニクロ (一部店舗) |
-| royal-host | ロイヤルホスト |
-| tsuruha | ツルハドラッグ |
-
+これらは既に `category: "JAL特約店"` で登録済み。`stores[]` には**追加しないで**ください。
 ページ上で**これら以外**の店舗名を見つけた場合のみ `stores[]` に追加してください。
+
+<!-- INJECT:stores filter=category:JAL特約店 columns=id,name -->
+_(ビルド時に scripts/sync/inject-prompt.ts が seed.ts から最新一覧を注入)_
+<!-- /INJECT -->
 
 ## 各フィールドの詳細
 

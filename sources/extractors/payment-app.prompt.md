@@ -12,15 +12,10 @@
 - `paymentAppId`: 対象アプリのID（registry entry で指定）
 
 PointMax の既存 paymentAppId は以下:
-| paymentAppId | name | chargeBased |
-|---|---|---|
-| pa-default | 通常クレカ決済 | false |
-| pa-visa-touch | Visaタッチ | false |
-| pa-quickpay | QUICPay | false |
-| pa-id | iD | false |
-| pa-rakuten-pay | 楽天Pay | true |
-| pa-d-pay | d払い | true |
-| pa-paypay | PayPay | true |
+
+<!-- INJECT:paymentApps columns=id,name,chargeBased -->
+_(ビルド時に scripts/sync/inject-prompt.ts が seed.ts から最新一覧を注入)_
+<!-- /INJECT -->
 
 **chargeBased の意味**:
 - `true` = カードからアプリ残高にチャージして決済（アプリ独自の還元あり）
@@ -63,7 +58,11 @@ PointMax の既存 paymentAppId は以下:
 - 例: 楽天Pay は 楽天カードのみ → `["rakuten-card"]`
 - 例: Visaタッチは Visa ブランド全般 → 空または省略（汎用扱い）
 
-PointMax 既存 cardId: `jal-suica / rakuten-card / smbc-v / saison-amex`
+PointMax 既存 cardId:
+
+<!-- INJECT:cards columns=id,name -->
+_(ビルド時に scripts/sync/inject-prompt.ts が seed.ts から最新一覧を注入)_
+<!-- /INJECT -->
 
 ## エビデンス・確信度
 

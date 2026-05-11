@@ -12,14 +12,10 @@
 - `pointCardId`: 対象ポイントカードのID（registry entry が紐づけ）
 
 PointMax の既存 pointCardId は以下のいずれか:
-| pointCardId | name | currencyId |
-|---|---|---|
-| rakuten-pointcard | 楽天ポイントカード | rakuten-pt |
-| vpoint-card | Vポイントカード(旧Tカード) | v-pt |
-| d-pointcard | dポイントカード | d-pt |
-| ponta-card | Pontaカード | ponta-pt |
-| nanaco-card | nanacoカード | nanaco-pt |
-| waon-card | WAONカード | waon-pt |
+
+<!-- INJECT:pointCards columns=id,name,currencyId -->
+_(ビルド時に scripts/sync/inject-prompt.ts が seed.ts から最新一覧を注入)_
+<!-- /INJECT -->
 
 ## 出力スキーマ
 `sources/schema/extracted-source.schema.json` に従う。
@@ -37,36 +33,9 @@ PointMax の既存 pointCardId は以下のいずれか:
 `stores[]` には既存以外の新規店舗のみ追加してください。
 既存店舗の loyaltyRules は問題なく追加可能。
 
-| storeId | name |
-|---|---|
-| rakuten-ichiba | 楽天市場 |
-| amazon | Amazon |
-| conv-7eleven | セブン-イレブン |
-| conv-lawson | ローソン |
-| conv-familymart | ファミリーマート |
-| conv-ministop | ミニストップ |
-| mcdonalds | マクドナルド |
-| sukiya | すき家 |
-| saizeriya | サイゼリヤ |
-| gusto | ガスト |
-| doutor | ドトール |
-| sushiro | スシロー |
-| starbucks | スターバックス |
-| eneos | ENEOS |
-| idemitsu | 出光 |
-| welcia | ウエルシア |
-| matsukiyo | マツモトキヨシ |
-| kinokuniya | 紀伊國屋書店 |
-| aeon | イオン |
-| daimaru-matsuzakaya | 大丸・松坂屋 |
-| muji | 無印良品 (一部店舗) |
-| uniqlo | ユニクロ (一部店舗) |
-| royal-host | ロイヤルホスト |
-| tsuruha | ツルハドラッグ |
-| takashimaya | 高島屋 |
-| nojima | ノジマ |
-| cocokara | ココカラファイン |
-| seiyu | 西友 |
+<!-- INJECT:stores columns=id,name,category -->
+_(ビルド時に scripts/sync/inject-prompt.ts が seed.ts から最新一覧を注入)_
+<!-- /INJECT -->
 
 ## 各フィールドの詳細
 

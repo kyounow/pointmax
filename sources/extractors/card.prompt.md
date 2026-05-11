@@ -33,8 +33,11 @@
 - 「ポイント還元率 1%」と「マイル積算率 100円=1マイル」は同じ 0.01 として扱う
 
 ### `cards[].defaultCurrencyId`
-このカードで貯まる通貨。PointMax 既存通貨 ID は以下のいずれか:
-`jal-mile / rakuten-pt / eikyu / v-pt / ana-mile / d-pt / amazon-pt / jre / edy / paypay / ponta-pt / nanaco-pt / waon-pt / epos / amex-mr / marriott / accor / jrkyupo`
+このカードで貯まる通貨。PointMax 既存通貨 ID は以下:
+
+<!-- INJECT:currencies columns=id,name -->
+_(ビルド時に scripts/sync/inject-prompt.ts が seed.ts から最新一覧を注入)_
+<!-- /INJECT -->
 
 該当する ID がなければ「現行値と一致するなら省略」「変更があるなら notes に記載」で対応。
 
@@ -43,7 +46,11 @@
 推測やイメージで埋めないでください。
 - `storeId`: PointMax 既存 ID を優先、なければ slug 提案 (kebab-case)
 - `category`: 既存カテゴリ名と完全一致させる: `ネット通販 / コンビニ / 飲食 / 電子マネー / 鉄道・交通 / JAL特約店 / 百貨店 / 家電量販店 / ドラッグストア`
-- `paymentAppId`: 「○○タッチ決済時のみ」等の特定支払方法限定なら指定: `pa-visa-touch / pa-quickpay / pa-id / pa-rakuten-pay / pa-d-pay / pa-paypay`
+- `paymentAppId`: 「○○タッチ決済時のみ」等の特定支払方法限定なら指定。利用可能な ID:
+
+<!-- INJECT:paymentApps columns=id,name,chargeBased -->
+_(ビルド時に scripts/sync/inject-prompt.ts が seed.ts から最新一覧を注入)_
+<!-- /INJECT -->
 
 ## エビデンス・確信度（必須）
 

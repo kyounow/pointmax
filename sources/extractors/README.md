@@ -19,11 +19,61 @@ Gemini に渡す抽出プロンプト集。
 2. **promptVersion** (例: `card-v1.0`) — 出力 JSON に必ず含める識別子
 3. **入力** (sourceUrl + 任意の paramater)
 4. **出力スキーマ** (`sources/schema/extracted-source.schema.json` 参照)
-5. **既存エンティティ ID 一覧** — 名前衝突/参照のため
+5. **既存エンティティ ID 一覧** — 名前衝突/参照のため (INJECT マーカーで動的注入)
 6. **各フィールドの詳細** — 値の単位、変換ガイド、選択肢
 7. **エビデンス・確信度** — `evidenceQuote / explicitness / ambiguity` の付け方
 8. **出力例** — 正しい JSON サンプル
 9. **注意** — 抽出してはいけないもの、誤抽出回避
+
+## INJECT マーカー (動的注入)
+
+プロンプト内に直接 ID 一覧を埋め込むと、seed.ts が更新されるたびに陳腐化します。
+代わりに **INJECT マーカー** を埋めておき、`scripts/sync/inject-prompt.ts` が
+Gemini 呼び出し直前に現在の seed から最新一覧を注入します。
+
+### 構文
+
+```html
+<!-- INJECT:<entity> [filter=<field>:<value>] [columns=<col1>,<col2>,...] -->
+任意のプレースホルダ文言 (置換される)
+<!-- /INJECT -->
+```
+
+| 部品 | 必須 | 意味 |
+|---|---|---|
+| `<entity>` | ✅ | `cards / currencies / stores / pointCards / paymentApps` のいずれか |
+| `filter=field:value` | 任意 | フィールドの完全一致でレコード絞り込み (例: `filter=category:JAL特約店`) |
+| `columns=col1,col2` | 任意 | 列指定 (省略時は entity ごとのデフォルト) |
+
+### デフォルト列
+
+| entity | デフォルト列 |
+|---|---|
+| cards | id, name, defaultRate, defaultCurrencyId |
+| currencies | id, name, kind |
+| stores | id, name, category |
+| pointCards | id, name, currencyId |
+| paymentApps | id, name, chargeBased |
+
+### 注入結果の例
+
+```markdown
+<!-- INJECT:stores filter=category:JAL特約店 columns=id,name -->
+| id | name |
+|---|---|
+| eneos | ENEOS |
+| idemitsu | 出光 |
+...
+<!-- /INJECT -->
+```
+
+マーカー自体は出力後も残るため、**何度注入しても結果が同じ (冪等)**。
+
+### 注意
+
+- `<!-- /INJECT -->` の閉じタグを必ず入れる (無いと例外)
+- 未知の `<entity>` を指定すると例外
+- INJECT を使わない場合 (静的な情報のみ) はマーカー無しの普通の Markdown でOK
 
 ## promptVersion の上げ方
 
