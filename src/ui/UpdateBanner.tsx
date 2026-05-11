@@ -19,6 +19,7 @@ export function UpdateBanner() {
   const edges = useStore((s) => s.edges);
   const pointCards = useStore((s) => s.pointCards);
   const loyaltyRules = useStore((s) => s.loyaltyRules);
+  const paymentApps = useStore((s) => s.paymentApps);
   const applySeedUpdate = useStore((s) => s.applySeedUpdate);
   const dismissSeedUpdate = useStore((s) => s.dismissSeedUpdate);
   const loadSeed = useStore((s) => s.loadSeed);
@@ -35,8 +36,18 @@ export function UpdateBanner() {
       edges,
       pointCards,
       loyaltyRules,
+      paymentApps,
     }),
-    [cards, currencies, stores, rules, edges, pointCards, loyaltyRules],
+    [
+      cards,
+      currencies,
+      stores,
+      rules,
+      edges,
+      pointCards,
+      loyaltyRules,
+      paymentApps,
+    ],
   );
 
   const hasData =
@@ -46,7 +57,8 @@ export function UpdateBanner() {
       rules.length +
       edges.length +
       pointCards.length +
-      loyaltyRules.length >
+      loyaltyRules.length +
+      paymentApps.length >
     0;
 
   const merged = useMemo(() => {
@@ -67,6 +79,7 @@ export function UpdateBanner() {
       edges: merged.edges,
       pointCards: merged.pointCards,
       loyaltyRules: merged.loyaltyRules,
+      paymentApps: merged.paymentApps,
     };
     return planMigrations(
       afterMerge,
@@ -130,6 +143,8 @@ export function UpdateBanner() {
         return "ポイントカード";
       case "loyaltyRules":
         return "提示還元ルール";
+      case "paymentApps":
+        return "支払方法";
       default:
         return c;
     }
@@ -206,6 +221,9 @@ export function UpdateBanner() {
                 )}
                 {merged.diff.loyaltyRules.length > 0 && (
                   <li>提示還元ルール: {merged.diff.loyaltyRules.length}件</li>
+                )}
+                {merged.diff.paymentApps.length > 0 && (
+                  <li>支払方法: {merged.diff.paymentApps.length}件</li>
                 )}
               </ul>
             </div>

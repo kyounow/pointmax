@@ -3,6 +3,7 @@ import type {
   ConversionEdge,
   Currency,
   LoyaltyRule,
+  PaymentApp,
   PointCard,
   Store,
   StoreRule,
@@ -10,7 +11,7 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 9;
+export const SEED_VERSION = 10;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -79,6 +80,12 @@ export const SEED_CHANGELOG: {
     summary:
       "店舗追加: 西友(スーパー) / ツルハドラッグ(JAL特約店)。ルール追加: 楽天ポイントカード × 西友・ツルハ (200円1pt = 0.5%)。ツルハはJAL特約店カテゴリ経由でJALカードSuicaも2%自動適用",
   },
+  {
+    version: 10,
+    date: "2026-05-11",
+    summary:
+      "支払方法(PaymentApp) を独立エンティティ化。Visaタッチ/QUICPay/iD/楽天Pay/d払い/PayPay 等を追加し、計算画面では自動最適化（ユーザは選ばずに最良が表示される）。楽天Pay/d払いはアプリ自体の還元(楽天Pay 1%等)も加算。新タブ「支払方法」追加",
+  },
 ];
 
 // 保有4枚に最適化したサンプルデータ。
@@ -92,6 +99,7 @@ export const seed = (): {
   edges: ConversionEdge[];
   pointCards: PointCard[];
   loyaltyRules: LoyaltyRule[];
+  paymentApps: PaymentApp[];
 } => {
   const currencies: Currency[] = [
     // 保有カードで貯まる通貨
@@ -339,7 +347,7 @@ export const seed = (): {
       id: "rule-smbc-7eleven",
       cardId: "smbc-v",
       storeId: "conv-7eleven",
-      paymentMethod: "Visaタッチ",
+      paymentAppId: "pa-visa-touch",
       rate: 0.07,
       currencyId: "v-pt",
       notes: "Visaタッチ決済時(スマホタッチで+α)",
@@ -350,7 +358,7 @@ export const seed = (): {
       storeId: "conv-lawson",
       rate: 0.07,
       currencyId: "v-pt",
-      paymentMethod: "Visaタッチ",
+      paymentAppId: "pa-visa-touch",
       notes: "Visaタッチ決済時",
     },
     {
@@ -359,7 +367,7 @@ export const seed = (): {
       storeId: "mcdonalds",
       rate: 0.07,
       currencyId: "v-pt",
-      paymentMethod: "Visaタッチ",
+      paymentAppId: "pa-visa-touch",
       notes: "Visaタッチ決済時",
     },
     {
@@ -368,7 +376,7 @@ export const seed = (): {
       storeId: "conv-ministop",
       rate: 0.07,
       currencyId: "v-pt",
-      paymentMethod: "Visaタッチ",
+      paymentAppId: "pa-visa-touch",
       notes: "Visaタッチ決済時",
     },
     {
@@ -377,7 +385,7 @@ export const seed = (): {
       storeId: "sukiya",
       rate: 0.07,
       currencyId: "v-pt",
-      paymentMethod: "Visaタッチ",
+      paymentAppId: "pa-visa-touch",
       notes: "Visaタッチ決済時",
     },
     {
@@ -386,7 +394,7 @@ export const seed = (): {
       storeId: "saizeriya",
       rate: 0.07,
       currencyId: "v-pt",
-      paymentMethod: "Visaタッチ",
+      paymentAppId: "pa-visa-touch",
       notes: "Visaタッチ決済時",
     },
     {
@@ -395,7 +403,7 @@ export const seed = (): {
       storeId: "gusto",
       rate: 0.07,
       currencyId: "v-pt",
-      paymentMethod: "Visaタッチ",
+      paymentAppId: "pa-visa-touch",
       notes: "Visaタッチ決済時",
     },
     {
@@ -404,7 +412,7 @@ export const seed = (): {
       storeId: "doutor",
       rate: 0.07,
       currencyId: "v-pt",
-      paymentMethod: "Visaタッチ",
+      paymentAppId: "pa-visa-touch",
       notes: "Visaタッチ決済時",
     },
     {
@@ -413,7 +421,7 @@ export const seed = (): {
       storeId: "sushiro",
       rate: 0.07,
       currencyId: "v-pt",
-      paymentMethod: "Visaタッチ",
+      paymentAppId: "pa-visa-touch",
       notes: "Visaタッチ決済時",
     },
     // JALカードSuica × Suicaチャージ: ビューカードでJRE POINT 1.5%
@@ -976,6 +984,68 @@ export const seed = (): {
     },
   ];
 
+  // 支払アプリ／決済方法
+  // compatibleCardIds: 空 = どのカードでもOK / 非空 = リスト内のカードのみ
+  // defaultBonusRate: その支払アプリ自体の還元 (チャージ元カードの還元とは別軸)
+  const paymentApps: PaymentApp[] = [
+    {
+      id: "pa-default",
+      name: "通常クレカ決済",
+      iconChar: "CC",
+      iconColor: "#6b7280",
+      notes: "クレジットカードをそのまま提示・暗証番号 / サインで支払い",
+    },
+    {
+      id: "pa-visa-touch",
+      name: "Visaタッチ",
+      iconChar: "V",
+      iconColor: "#1a3a8c",
+      notes: "三井住友など Visaタッチ対応カード",
+    },
+    {
+      id: "pa-quickpay",
+      name: "QUICPay",
+      iconChar: "QP",
+      iconColor: "#ff6600",
+      notes: "JCB系の非接触決済",
+    },
+    {
+      id: "pa-id",
+      name: "iD",
+      iconChar: "iD",
+      iconColor: "#ec1c24",
+      notes: "ドコモ系の非接触決済",
+    },
+    {
+      id: "pa-rakuten-pay",
+      name: "楽天Pay",
+      iconChar: "RP",
+      iconColor: "#bf0000",
+      compatibleCardIds: ["rakuten-card"],
+      defaultBonusRate: 0.01,
+      defaultBonusCurrencyId: "rakuten-pt",
+      notes: "楽天カードチャージ・連携で利用 (1.0%還元上乗せ)",
+    },
+    {
+      id: "pa-d-pay",
+      name: "d払い",
+      iconChar: "dP",
+      iconColor: "#cc0033",
+      defaultBonusRate: 0.005,
+      defaultBonusCurrencyId: "d-pt",
+      notes: "他カード/銀行口座チャージで 0.5% (dカード連携なら 1.0%)",
+    },
+    {
+      id: "pa-paypay",
+      name: "PayPay",
+      iconChar: "PP",
+      iconColor: "#ff0033",
+      defaultBonusRate: 0.005,
+      defaultBonusCurrencyId: "paypay",
+      notes: "PayPay残高 or 連携カードで決済時 0.5%還元",
+    },
+  ];
+
   return {
     currencies,
     cards,
@@ -984,5 +1054,6 @@ export const seed = (): {
     edges,
     pointCards,
     loyaltyRules,
+    paymentApps,
   };
 };

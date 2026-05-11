@@ -15,19 +15,12 @@ export function CalculatorScreen() {
   const edges = useStore((s) => s.edges);
   const pointCards = useStore((s) => s.pointCards);
   const loyaltyRules = useStore((s) => s.loyaltyRules);
+  const paymentApps = useStore((s) => s.paymentApps);
 
   const [storeId, setStoreId] = useState("");
   const [amount, setAmount] = useState("10000");
   const [targetCurrencyId, setTargetCurrencyId] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-
-  // 既存ルールから利用可能な支払い方法を抽出
-  const paymentMethods = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of rules) if (r.paymentMethod) set.add(r.paymentMethod);
-    return Array.from(set).sort();
-  }, [rules]);
 
   // 店舗をカテゴリ別にグループ化
   const storesByCategory = useMemo(
@@ -62,11 +55,7 @@ export function CalculatorScreen() {
     const amt = Number(amount);
     if (!Number.isFinite(amt) || amt <= 0) return null;
     return rankCards({
-      payment: {
-        storeId,
-        amount: amt,
-        paymentMethod: paymentMethod || undefined,
-      },
+      payment: { storeId, amount: amt },
       targetCurrencyId,
       cards,
       stores,
@@ -74,18 +63,19 @@ export function CalculatorScreen() {
       edges,
       pointCards,
       loyaltyRules,
+      paymentApps,
     });
   }, [
     storeId,
     amount,
     targetCurrencyId,
-    paymentMethod,
     cards,
     stores,
     rules,
     edges,
     pointCards,
     loyaltyRules,
+    paymentApps,
   ]);
 
   const loyalties = result && result.length > 0 ? result[0].loyalties : [];
@@ -167,22 +157,6 @@ export function CalculatorScreen() {
             ))}
           </select>
         </label>
-        {paymentMethods.length > 0 && (
-          <label>
-            支払い方法:
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-            >
-              <option value="">通常クレカ決済</option>
-              {paymentMethods.map((pm) => (
-                <option key={pm} value={pm}>
-                  {pm}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
       </form>
 
       {!result && (
@@ -292,27 +266,60 @@ export function CalculatorScreen() {
                     {r.reachable ? `#${i + 1}` : "対象外"}
                   </span>
                   <strong>{cardLabel(r.card)}</strong>
+                  {r.paymentApp && (
+                    <span
+                      className="payment-app-badge"
+                      title="自動選択された支払方法"
+                    >
+                      {r.paymentApp.iconChar && (
+                        <span
+                          className="payment-app-icon"
+                          style={{
+                            background: r.paymentApp.iconColor ?? "#6b7280",
+                          }}
+                        >
+                          {r.paymentApp.iconChar}
+                        </span>
+                      )}
+                      {r.paymentApp.name}
+                    </span>
+                  )}
                   {r.reachable && (
                     <span className="final">
-                      {hasLoyalty ? (
-                        <>
-                          合計 {formatNum(r.totalFinalAmount)}{" "}
-                          {currencyName(targetCurrencyId)}
-                          <small className="loyalty-breakdown">
-                            （クレカ {formatNum(r.finalAmount)} + 併用{" "}
-                            {formatNum(loyaltyTotal)}
-                            {reachableLoyalties.length > 1
-                              ? ` ×${reachableLoyalties.length}枚`
-                              : ""}
-                            ）
-                          </small>
-                        </>
-                      ) : (
-                        <>
-                          最終: {formatNum(r.finalAmount)}{" "}
-                          {currencyName(targetCurrencyId)}
-                        </>
-                      )}
+                      {(() => {
+                        const appBonus = r.appBonusReachable
+                          ? r.appBonusFinalAmount
+                          : 0;
+                        const hasExtras = hasLoyalty || appBonus > 0;
+                        if (!hasExtras) {
+                          return (
+                            <>
+                              最終: {formatNum(r.finalAmount)}{" "}
+                              {currencyName(targetCurrencyId)}
+                            </>
+                          );
+                        }
+                        const parts: string[] = [
+                          `クレカ ${formatNum(r.finalAmount)}`,
+                        ];
+                        if (appBonus > 0) {
+                          parts.push(`アプリ +${formatNum(appBonus)}`);
+                        }
+                        if (hasLoyalty) {
+                          parts.push(
+                            `併用 +${formatNum(loyaltyTotal)}${reachableLoyalties.length > 1 ? `×${reachableLoyalties.length}枚` : ""}`,
+                          );
+                        }
+                        return (
+                          <>
+                            合計 {formatNum(r.totalFinalAmount)}{" "}
+                            {currencyName(targetCurrencyId)}
+                            <small className="loyalty-breakdown">
+                              （{parts.join(" + ")}）
+                            </small>
+                          </>
+                        );
+                      })()}
                     </span>
                   )}
                 </header>
@@ -374,6 +381,26 @@ export function CalculatorScreen() {
                         </small>
                       )}
                     </div>
+
+                    {r.paymentApp &&
+                      r.appBonusEarnedAmount > 0 &&
+                      r.appBonusCurrencyId && (
+                        <div className="result-meta">
+                          支払アプリ還元 (
+                          {(
+                            (r.paymentApp.defaultBonusRate ?? 0) * 100
+                          ).toFixed(2)}
+                          %): {formatNum(r.appBonusEarnedAmount)}{" "}
+                          {currencyName(r.appBonusCurrencyId)}
+                          {r.appBonusReachable && r.appBonusFinalAmount > 0 && (
+                            <>
+                              {" "}
+                              → +{formatNum(r.appBonusFinalAmount)}{" "}
+                              {currencyName(targetCurrencyId)}
+                            </>
+                          )}
+                        </div>
+                      )}
                   </>
                 )}
               </article>

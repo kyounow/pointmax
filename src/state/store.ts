@@ -5,6 +5,7 @@ import type {
   ConversionEdge,
   Currency,
   LoyaltyRule,
+  PaymentApp,
   PointCard,
   Store,
   StoreRule,
@@ -31,6 +32,7 @@ type State = {
   edges: ConversionEdge[];
   pointCards: PointCard[];
   loyaltyRules: LoyaltyRule[];
+  paymentApps: PaymentApp[];
   lastSeedVersion: number;
   syncUrl: string;
   lastSyncAt: string | null;
@@ -72,6 +74,13 @@ type Actions = {
   ) => void;
   removeLoyaltyRule: (id: string) => void;
 
+  addPaymentApp: (p: Omit<PaymentApp, "id">) => void;
+  updatePaymentApp: (
+    id: string,
+    patch: Partial<Omit<PaymentApp, "id">>,
+  ) => void;
+  removePaymentApp: (id: string) => void;
+
   loadSeed: () => void;
   clearAll: () => void;
   mergeFromSeed: () => void;
@@ -97,6 +106,7 @@ const empty: State = {
   edges: [],
   pointCards: [],
   loyaltyRules: [],
+  paymentApps: [],
   lastSeedVersion: 0,
   // 初期値はビルトインの公式マスタURL。ユーザーが空に戻すと再びデフォルトを参照する想定
   syncUrl: DEFAULT_SYNC_URL,
@@ -210,6 +220,25 @@ export const useStore = create<State & Actions>()(
           loyaltyRules: s.loyaltyRules.filter((r) => r.id !== id),
         })),
 
+      addPaymentApp: (p) =>
+        set((s) => ({
+          paymentApps: [...s.paymentApps, { ...p, id: newId() }],
+        })),
+      updatePaymentApp: (id, patch) =>
+        set((s) => ({
+          paymentApps: s.paymentApps.map((p) =>
+            p.id === id ? { ...p, ...patch } : p,
+          ),
+        })),
+      removePaymentApp: (id) =>
+        set((s) => ({
+          paymentApps: s.paymentApps.filter((p) => p.id !== id),
+          // 削除した paymentApp を参照しているルールから paymentAppId をクリア
+          rules: s.rules.map((r) =>
+            r.paymentAppId === id ? { ...r, paymentAppId: undefined } : r,
+          ),
+        })),
+
       loadSeed: () => set(() => ({ ...seed(), lastSeedVersion: SEED_VERSION })),
       clearAll: () => set(() => empty),
       mergeFromSeed: () =>
@@ -223,6 +252,7 @@ export const useStore = create<State & Actions>()(
               edges: s.edges,
               pointCards: s.pointCards,
               loyaltyRules: s.loyaltyRules,
+              paymentApps: s.paymentApps,
             },
             seed(),
           );
@@ -234,6 +264,7 @@ export const useStore = create<State & Actions>()(
             edges: result.edges,
             pointCards: result.pointCards,
             loyaltyRules: result.loyaltyRules,
+            paymentApps: result.paymentApps,
             lastSeedVersion: SEED_VERSION,
           };
         }),
@@ -247,6 +278,7 @@ export const useStore = create<State & Actions>()(
             edges: s.edges,
             pointCards: s.pointCards,
             loyaltyRules: s.loyaltyRules,
+            paymentApps: s.paymentApps,
           };
           // 1. 追加分マージ (mergeSeed; add-only)
           const merged = mergeSeedFn(currentShape, seed());
@@ -273,6 +305,7 @@ export const useStore = create<State & Actions>()(
               edges: merged.edges,
               pointCards: merged.pointCards,
               loyaltyRules: merged.loyaltyRules,
+              paymentApps: merged.paymentApps,
             },
             plan,
             keysToApply,
@@ -286,6 +319,7 @@ export const useStore = create<State & Actions>()(
             edges: finalState.edges,
             pointCards: finalState.pointCards,
             loyaltyRules: finalState.loyaltyRules,
+            paymentApps: finalState.paymentApps,
             lastSeedVersion: SEED_VERSION,
           };
         }),
@@ -337,6 +371,9 @@ export const useStore = create<State & Actions>()(
             loyaltyRules: Array.isArray(data.loyaltyRules)
               ? data.loyaltyRules
               : [],
+            paymentApps: Array.isArray(data.paymentApps)
+              ? data.paymentApps
+              : [],
           };
           if (mode === "overwrite") {
             set(() => ({
@@ -356,6 +393,7 @@ export const useStore = create<State & Actions>()(
               edges: s.edges,
               pointCards: s.pointCards,
               loyaltyRules: s.loyaltyRules,
+              paymentApps: s.paymentApps,
             },
             remote,
           );
@@ -366,7 +404,8 @@ export const useStore = create<State & Actions>()(
             result.diff.rules.length +
             result.diff.edges.length +
             result.diff.pointCards.length +
-            result.diff.loyaltyRules.length;
+            result.diff.loyaltyRules.length +
+            result.diff.paymentApps.length;
           set(() => ({
             cards: result.cards,
             currencies: result.currencies,
@@ -375,6 +414,7 @@ export const useStore = create<State & Actions>()(
             edges: result.edges,
             pointCards: result.pointCards,
             loyaltyRules: result.loyaltyRules,
+            paymentApps: result.paymentApps,
             lastSyncAt: new Date().toISOString(),
           }));
           return { ok: true, added: addedCount, mode };
@@ -390,7 +430,7 @@ export const useStore = create<State & Actions>()(
         const s = get();
         return JSON.stringify(
           {
-            version: 2,
+            version: 3,
             exportedAt: new Date().toISOString(),
             cards: s.cards,
             currencies: s.currencies,
@@ -399,6 +439,7 @@ export const useStore = create<State & Actions>()(
             edges: s.edges,
             pointCards: s.pointCards,
             loyaltyRules: s.loyaltyRules,
+            paymentApps: s.paymentApps,
           },
           null,
           2,
@@ -414,7 +455,7 @@ export const useStore = create<State & Actions>()(
             if (!Array.isArray(data[key]))
               return { ok: false, error: `"${key}" が配列ではありません` };
           }
-          // pointCards / loyaltyRules は v1 export には無いので任意
+          // pointCards / loyaltyRules / paymentApps は古い export には無いので任意
           set(() => ({
             cards: data.cards,
             currencies: data.currencies,
@@ -424,6 +465,9 @@ export const useStore = create<State & Actions>()(
             pointCards: Array.isArray(data.pointCards) ? data.pointCards : [],
             loyaltyRules: Array.isArray(data.loyaltyRules)
               ? data.loyaltyRules
+              : [],
+            paymentApps: Array.isArray(data.paymentApps)
+              ? data.paymentApps
               : [],
           }));
           return { ok: true };
@@ -438,7 +482,7 @@ export const useStore = create<State & Actions>()(
     {
       name: "pointmax-store",
       storage: createJSONStorage(() => localStorage),
-      version: 4,
+      version: 5,
       migrate: (persistedState) => {
         // 旧バージョンからの移行: 不足フィールドにデフォルトを補う
         const s = (persistedState ?? {}) as Partial<State>;
@@ -447,6 +491,7 @@ export const useStore = create<State & Actions>()(
           ...s,
           pointCards: s.pointCards ?? [],
           loyaltyRules: s.loyaltyRules ?? [],
+          paymentApps: s.paymentApps ?? [],
           lastSeedVersion: s.lastSeedVersion ?? 0,
           // 既存ユーザーのsyncUrlが空ならデフォルトに戻す
           syncUrl: s.syncUrl ? s.syncUrl : DEFAULT_SYNC_URL,

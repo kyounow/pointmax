@@ -16,6 +16,7 @@ const emptyState = (): SeedShape => ({
   edges: [],
   pointCards: [],
   loyaltyRules: [],
+  paymentApps: [],
 });
 
 describe("planMigrations - updateField", () => {

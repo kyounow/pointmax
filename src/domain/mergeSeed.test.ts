@@ -18,6 +18,7 @@ const empty = {
   edges: [] as ConversionEdge[],
   pointCards: [] as PointCard[],
   loyaltyRules: [] as LoyaltyRule[],
+  paymentApps: [] as never[],
 };
 
 const card = (id: string, name: string): Card => ({
@@ -107,6 +108,7 @@ describe("diffCount", () => {
       edges: [],
       pointCards: [],
       loyaltyRules: [],
+      paymentApps: [],
     };
     expect(diffCount(diff)).toBe(3);
   });
@@ -121,6 +123,7 @@ describe("diffCount", () => {
         edges: [],
         pointCards: [],
         loyaltyRules: [],
+        paymentApps: [],
       }),
     ).toBe(0);
   });

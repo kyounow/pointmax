@@ -2,6 +2,7 @@ import type {
   Card,
   ConversionEdge,
   LoyaltyRule,
+  PaymentApp,
   PointCard,
   Store,
   StoreRule,
@@ -9,9 +10,10 @@ import type {
 import { resolveRate, type ResolvedRate } from "./resolveRate";
 import { bestPath } from "./bestPath";
 import { bestLoyalties, type LoyaltyResult } from "./loyalty";
+import { bestPaymentApp, type PaymentEvalResult } from "./paymentApp";
 
 export type RankInput = {
-  payment: { storeId: string; amount: number; paymentMethod?: string };
+  payment: { storeId: string; amount: number };
   targetCurrencyId: string;
   cards: Card[];
   stores: Store[];
@@ -19,6 +21,7 @@ export type RankInput = {
   edges: ConversionEdge[];
   pointCards?: PointCard[];
   loyaltyRules?: LoyaltyRule[];
+  paymentApps?: PaymentApp[];
 };
 
 export type CardRanking = {
@@ -30,8 +33,16 @@ export type CardRanking = {
   pathProduct: number;
   finalAmount: number;
   reachable: boolean;
-  loyalties: LoyaltyResult[]; // 三重取り対応で配列化
-  totalFinalAmount: number; // finalAmount + Σ(loyalties[].finalAmount where reachable)
+  // 採用された支払アプリ (paymentApps が渡されない場合は null)
+  paymentApp: PaymentApp | null;
+  // 支払アプリのbonus還元結果
+  appBonusFinalAmount: number; // target通貨換算
+  appBonusEarnedAmount: number; // bonus額 (アプリ通貨)
+  appBonusCurrencyId: string | null;
+  appBonusReachable: boolean;
+  // ポイントカード提示の二重取り
+  loyalties: LoyaltyResult[];
+  totalFinalAmount: number;
 };
 
 export function rankCards(input: RankInput): CardRanking[] {
@@ -44,6 +55,7 @@ export function rankCards(input: RankInput): CardRanking[] {
     edges,
     pointCards = [],
     loyaltyRules = [],
+    paymentApps = [],
   } = input;
 
   const store = stores.find((s) => s.id === payment.storeId);
@@ -63,37 +75,97 @@ export function rankCards(input: RankInput): CardRanking[] {
   );
 
   const ranked: CardRanking[] = cards.map((card) => {
-    const resolved = resolveRate(
+    // PaymentApp が登録されていない場合は従来通り (resolveRate のみ)
+    if (paymentApps.length === 0) {
+      const resolved = resolveRate(card, payment.storeId, rules, stores);
+      const earnedAmount = payment.amount * resolved.rate;
+      const earnedCurrencyId = resolved.currencyId;
+      const path = bestPath(
+        edges,
+        earnedCurrencyId,
+        targetCurrencyId,
+        earnedAmount,
+      );
+      const baseFinal = path?.finalAmount ?? 0;
+      const reachable = path !== null;
+      return {
+        card,
+        resolved,
+        earnedAmount,
+        earnedCurrencyId,
+        pathSteps: path?.steps ?? [],
+        pathProduct: path?.product ?? 0,
+        finalAmount: baseFinal,
+        reachable,
+        paymentApp: null,
+        appBonusFinalAmount: 0,
+        appBonusEarnedAmount: 0,
+        appBonusCurrencyId: null,
+        appBonusReachable: false,
+        loyalties,
+        totalFinalAmount: baseFinal + loyaltyTotal,
+      };
+    }
+
+    // PaymentApp 登録あり: 各PaymentAppを試算してbest選択
+    const best: PaymentEvalResult | null = bestPaymentApp(
       card,
       payment.storeId,
+      payment.amount,
+      targetCurrencyId,
+      paymentApps,
       rules,
       stores,
-      payment.paymentMethod,
-    );
-    const earnedAmount = payment.amount * resolved.rate;
-    const earnedCurrencyId = resolved.currencyId;
-
-    const path = bestPath(
       edges,
-      earnedCurrencyId,
-      targetCurrencyId,
-      earnedAmount,
     );
-
-    const baseFinal = path?.finalAmount ?? 0;
-    const reachable = path !== null;
+    if (!best) {
+      // 互換 PaymentApp 無し（例外的）→ resolveRate のみ
+      const resolved = resolveRate(card, payment.storeId, rules, stores);
+      const earnedAmount = payment.amount * resolved.rate;
+      const earnedCurrencyId = resolved.currencyId;
+      const path = bestPath(
+        edges,
+        earnedCurrencyId,
+        targetCurrencyId,
+        earnedAmount,
+      );
+      const baseFinal = path?.finalAmount ?? 0;
+      return {
+        card,
+        resolved,
+        earnedAmount,
+        earnedCurrencyId,
+        pathSteps: path?.steps ?? [],
+        pathProduct: path?.product ?? 0,
+        finalAmount: baseFinal,
+        reachable: path !== null,
+        paymentApp: null,
+        appBonusFinalAmount: 0,
+        appBonusEarnedAmount: 0,
+        appBonusCurrencyId: null,
+        appBonusReachable: false,
+        loyalties,
+        totalFinalAmount: baseFinal + loyaltyTotal,
+      };
+    }
 
     return {
       card,
-      resolved,
-      earnedAmount,
-      earnedCurrencyId,
-      pathSteps: path?.steps ?? [],
-      pathProduct: path?.product ?? 0,
-      finalAmount: baseFinal,
-      reachable,
+      resolved: best.resolved,
+      earnedAmount: best.cardEarnedAmount,
+      earnedCurrencyId: best.cardEarnedCurrencyId,
+      pathSteps: best.cardPathSteps,
+      pathProduct: 0,
+      finalAmount: best.cardFinalAmount,
+      reachable: best.cardReachable,
+      paymentApp: best.paymentApp,
+      appBonusFinalAmount: best.appBonusFinalAmount,
+      appBonusEarnedAmount: best.appBonusEarnedAmount,
+      appBonusCurrencyId: best.appBonusEarnedCurrencyId,
+      appBonusReachable: best.appBonusReachable,
       loyalties,
-      totalFinalAmount: baseFinal + loyaltyTotal,
+      totalFinalAmount:
+        best.cardFinalAmount + best.appBonusFinalAmount + loyaltyTotal,
     };
   });
 

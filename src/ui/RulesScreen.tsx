@@ -12,6 +12,7 @@ export function RulesScreen() {
   const stores = useStore((s) => s.stores);
   const currencies = useStore((s) => s.currencies);
   const rules = useStore((s) => s.rules);
+  const paymentApps = useStore((s) => s.paymentApps);
   const addRule = useStore((s) => s.addRule);
   const updateRule = useStore((s) => s.updateRule);
   const removeRule = useStore((s) => s.removeRule);
@@ -20,7 +21,7 @@ export function RulesScreen() {
   const [cardId, setCardId] = useState("");
   const [storeId, setStoreId] = useState("");
   const [category, setCategory] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentAppId, setPaymentAppId] = useState("");
   const [rate, setRate] = useState("0.02");
   const [currencyId, setCurrencyId] = useState("");
   const [monthlyCap, setMonthlyCap] = useState("");
@@ -46,19 +47,18 @@ export function RulesScreen() {
     [stores],
   );
 
-  const paymentMethodOptions = useMemo(() => {
-    const set = new Set<string>([
-      "Visaタッチ",
-      "QUICPay",
-      "iD",
-      "スマホタッチ",
-      "楽天ペイ",
-      "PayPay",
-      "d払い",
-    ]);
-    for (const r of rules) if (r.paymentMethod) set.add(r.paymentMethod);
-    return Array.from(set).sort();
-  }, [rules]);
+  const paymentAppById = useMemo(
+    () => new Map(paymentApps.map((p) => [p.id, p])),
+    [paymentApps],
+  );
+  // ルール表示用: paymentApp 名を解決 (新 paymentAppId 優先、旧 paymentMethod でもname一致を返す)
+  const paymentAppNameForRule = (r: StoreRule): string => {
+    if (r.paymentAppId) {
+      return paymentAppById.get(r.paymentAppId)?.name ?? r.paymentAppId;
+    }
+    if (r.paymentMethod) return `${r.paymentMethod} (旧)`;
+    return "全方法";
+  };
 
   const ruleColumns: ColumnDef<StoreRule>[] = [
     {
@@ -102,19 +102,27 @@ export function RulesScreen() {
       },
     },
     {
-      key: "paymentMethod",
+      key: "paymentApp",
       label: "支払方法",
-      view: (r) => r.paymentMethod ?? "-",
+      view: (r) => paymentAppNameForRule(r),
       edit: (r, set) => (
-        <input
-          list="rules-payment-methods"
-          value={r.paymentMethod ?? ""}
-          placeholder="-"
+        <select
+          value={r.paymentAppId ?? ""}
           onChange={(e) =>
-            set({ paymentMethod: e.target.value || undefined })
+            set({
+              paymentAppId: e.target.value || undefined,
+              // 新方式に切替時は旧 paymentMethod を消す
+              paymentMethod: e.target.value ? undefined : r.paymentMethod,
+            })
           }
-          style={{ width: 110 }}
-        />
+        >
+          <option value="">全方法</option>
+          {paymentApps.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
       ),
     },
     {
@@ -225,7 +233,6 @@ export function RulesScreen() {
         onSubmit={(e) => {
           e.preventDefault();
           if (!cardId || !currencyId) return;
-          const pm = paymentMethod.trim();
           const cap = monthlyCap.trim()
             ? Math.max(0, Number(monthlyCap))
             : undefined;
@@ -234,7 +241,7 @@ export function RulesScreen() {
             rate: Number(rate),
             currencyId,
             notes: notes.trim() || undefined,
-            paymentMethod: pm || undefined,
+            paymentAppId: paymentAppId || undefined,
             monthlyCapAmountYen: cap,
           };
           if (ruleType === "store") {
@@ -247,7 +254,7 @@ export function RulesScreen() {
           setCardId("");
           setStoreId("");
           setCategory("");
-          setPaymentMethod("");
+          setPaymentAppId("");
           setRate("0.02");
           setCurrencyId("");
           setMonthlyCap("");
@@ -307,18 +314,18 @@ export function RulesScreen() {
             </option>
           ))}
         </select>
-        <input
-          list="rules-payment-methods"
-          placeholder="支払い方法 (任意)"
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)}
-          style={{ width: 130 }}
-        />
-        <datalist id="rules-payment-methods">
-          {paymentMethodOptions.map((p) => (
-            <option key={p} value={p} />
+        <select
+          value={paymentAppId}
+          onChange={(e) => setPaymentAppId(e.target.value)}
+          style={{ minWidth: 130 }}
+        >
+          <option value="">支払方法 (全て)</option>
+          {paymentApps.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
-        </datalist>
+        </select>
         <input
           type="number"
           min="0"
