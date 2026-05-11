@@ -205,4 +205,37 @@ export const MIGRATIONS: VersionMigration[] = [
       },
     ],
   },
+  {
+    toVersion: 13,
+    date: "2026-05-11",
+    changes: [
+      {
+        type: "updateField",
+        collection: "stores",
+        id: "conv-7eleven",
+        field: "preferredPointCardIds",
+        from: undefined,
+        to: ["nanaco-card"],
+        notes: "セブン-イレブン の基本提示カードを nanaco に設定",
+      },
+      {
+        type: "updateField",
+        collection: "stores",
+        id: "conv-lawson",
+        field: "preferredPointCardIds",
+        from: undefined,
+        to: ["ponta-card"],
+        notes: "ローソン の基本提示カードを Ponta に設定",
+      },
+      {
+        type: "updateField",
+        collection: "stores",
+        id: "conv-ministop",
+        field: "preferredPointCardIds",
+        from: undefined,
+        to: ["waon-card"],
+        notes: "ミニストップ の基本提示カードを WAON に設定",
+      },
+    ],
+  },
 ];

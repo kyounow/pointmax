@@ -11,7 +11,7 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 12;
+export const SEED_VERSION = 13;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -97,6 +97,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-11",
     summary:
       "計算ロジック修正: chargeBased=true (楽天Pay/d払い/PayPay) は店舗ルール/カテゴリルールを無視 (例: ツルハ×JALカードSuicaのJAL特約店2%はカード直接決済のみ)。Store.preferredPointCardIds を追加し、店舗別に優先提示カードを設定可能 (ファミマ→Vポイント)",
+  },
+  {
+    version: 13,
+    date: "2026-05-11",
+    summary:
+      "コンビニ各店舗に基本提示カードを設定: セブン→nanaco / ローソン→Ponta / ミニストップ→WAON。ポイントカードの全体優先順を 楽天→V→d→Ponta→nanaco→WAON に変更（新規ユーザー向け。既存ユーザーは PointCardsScreen の↑↓で変更可能）",
   },
 ];
 
@@ -286,15 +292,30 @@ export const seed = (): {
     { id: "rakuten-ichiba", name: "楽天市場", category: "ネット通販" },
     { id: "amazon", name: "Amazon", category: "ネット通販" },
     // コンビニ
-    { id: "conv-7eleven", name: "セブン-イレブン", category: "コンビニ" },
-    { id: "conv-lawson", name: "ローソン", category: "コンビニ" },
+    {
+      id: "conv-7eleven",
+      name: "セブン-イレブン",
+      category: "コンビニ",
+      preferredPointCardIds: ["nanaco-card"],
+    },
+    {
+      id: "conv-lawson",
+      name: "ローソン",
+      category: "コンビニ",
+      preferredPointCardIds: ["ponta-card"],
+    },
     {
       id: "conv-familymart",
       name: "ファミリーマート",
       category: "コンビニ",
       preferredPointCardIds: ["vpoint-card"],
     },
-    { id: "conv-ministop", name: "ミニストップ", category: "コンビニ" },
+    {
+      id: "conv-ministop",
+      name: "ミニストップ",
+      category: "コンビニ",
+      preferredPointCardIds: ["waon-card"],
+    },
     // 飲食 (三井住友ゴールド7%対象が多め)
     { id: "mcdonalds", name: "マクドナルド", category: "飲食" },
     { id: "sukiya", name: "すき家", category: "飲食" },
@@ -785,16 +806,23 @@ export const seed = (): {
   ];
 
   // ポイントカード（クレカ決済とは別軸の店頭提示で貯めるカード）
+  // 配列順 = ユーザー全体優先順位 (PointCardsScreen で↑↓ボタンで変更可)
+  // 1:楽天 / 2:V / 3:d / 4:Ponta / 5:nanaco / 6:WAON
   const pointCards: PointCard[] = [
-    {
-      id: "d-pointcard",
-      name: "dポイントカード",
-      currencyId: "d-pt",
-    },
     {
       id: "rakuten-pointcard",
       name: "楽天ポイントカード",
       currencyId: "rakuten-pt",
+    },
+    {
+      id: "vpoint-card",
+      name: "Vポイントカード(旧Tカード)",
+      currencyId: "v-pt",
+    },
+    {
+      id: "d-pointcard",
+      name: "dポイントカード",
+      currencyId: "d-pt",
     },
     {
       id: "ponta-card",
@@ -810,11 +838,6 @@ export const seed = (): {
       id: "waon-card",
       name: "WAONカード",
       currencyId: "waon-pt",
-    },
-    {
-      id: "vpoint-card",
-      name: "Vポイントカード(旧Tカード)",
-      currencyId: "v-pt",
     },
   ];
 
