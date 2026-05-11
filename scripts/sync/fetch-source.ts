@@ -169,64 +169,70 @@ function loadResolvedPrompt(source: RegistrySource): string {
 }
 
 // ───────────────────────────────────────────────────────────────
-// Page fetch
+// Gemini call (URL Context Tool 経由)
 // ───────────────────────────────────────────────────────────────
-
-const PAGE_MAX_CHARS = 120_000; // Gemini に渡す最大長 (token 節約)
-
-async function fetchPageText(url: string): Promise<string> {
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (PointMax master-sync bot; +https://github.com/kyounow/pointmax)",
-      "Accept-Language": "ja,en;q=0.8",
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status} ${res.statusText} for ${url}`);
-  }
-  const html = await res.text();
-  let stripped = html
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\r\n/g, "\n");
-  // 改行が無駄に多い箇所を圧縮 (Gemini に noise を渡さない)
-  stripped = stripped.replace(/\n{3,}/g, "\n\n");
-  if (stripped.length > PAGE_MAX_CHARS) {
-    stripped =
-      stripped.slice(0, PAGE_MAX_CHARS) + "\n\n[...truncated due to length]";
-  }
-  return stripped;
-}
-
-// ───────────────────────────────────────────────────────────────
-// Gemini call
-// ───────────────────────────────────────────────────────────────
+// 静的 fetch は廃止。Gemini に URL ごと渡し、url_context ツールで
+// Gemini 側に動的レンダリング込みでページを読ませる。
+// SPA や PDF を含むソースでも動作するメリット。
+// 制約: responseSchema は URL Context と併用不可な場合があるため、
+// MIME type のみ application/json に固定し、ajv 側で厳格検証する。
 
 // デフォルトは Flash (無料枠が緩く JSON 抽出に十分)。
 // 高精度が必要なら GEMINI_MODEL=gemini-2.5-pro で上書き可能 (要 Pro クォータ)。
 const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 
+type GeminiResult = {
+  text: string;
+  retrievedUrls: string[]; // URL Context が実際に取得した URL
+};
+
 async function callGemini(args: {
   apiKey: string;
   systemInstruction: string;
-  userContent: string;
-}): Promise<string> {
+  url: string;
+  sourceId: string;
+}): Promise<GeminiResult> {
   const ai = new GoogleGenAI({ apiKey: args.apiKey });
+  const userPrompt =
+    `以下の URL を読み取り、systemInstruction に従って ExtractedSource JSON を返してください。\n\n` +
+    `URL: ${args.url}\n` +
+    `sourceId: ${args.sourceId}\n\n` +
+    `**重要**: 出力は ExtractedSource スキーマに準拠した有効な JSON のみ。コードブロック (\`\`\`json) や説明文は付けない。`;
+
+  // 注意: URL Context Tool 使用時は responseMimeType: 'application/json' は併用不可
+  // (Gemini API 制約)。プロンプトと postprocess で JSON 抽出を担保する。
   const response = await ai.models.generateContent({
     model: GEMINI_MODEL,
-    contents: args.userContent,
+    contents: userPrompt,
     config: {
       systemInstruction: args.systemInstruction,
-      responseMimeType: "application/json",
+      tools: [{ urlContext: {} }],
     },
   });
+
   const text = response.text;
   if (!text || text.trim().length === 0) {
     throw new Error("Gemini が空のレスポンスを返した");
   }
-  return text;
+
+  // URL Context が実際にどの URL を取りに行ったかを (可能なら) 抽出
+  const retrievedUrls: string[] = [];
+  // 型 guard 経由で URL Context メタデータを探す (SDK バージョン非依存)
+  const candidates = (response as { candidates?: Array<{ urlContextMetadata?: { urlMetadata?: Array<{ retrievedUrl?: string; urlRetrievalStatus?: string }> } }> }).candidates;
+  if (candidates && candidates.length > 0) {
+    const meta = candidates[0].urlContextMetadata;
+    if (meta?.urlMetadata) {
+      for (const m of meta.urlMetadata) {
+        if (m.retrievedUrl) retrievedUrls.push(
+          m.urlRetrievalStatus
+            ? `${m.retrievedUrl} [${m.urlRetrievalStatus}]`
+            : m.retrievedUrl,
+        );
+      }
+    }
+  }
+
+  return { text, retrievedUrls };
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -279,29 +285,32 @@ async function main(): Promise<void> {
   // --dry-run でなければ API キーが必要
   const apiKey = getApiKey();
 
-  console.log("🌐 ページ取得中...");
-  const pageText = await fetchPageText(source.url);
-  console.log(`   fetched: ${pageText.length.toLocaleString()} chars`);
-
-  console.log(`🤖 Gemini ${GEMINI_MODEL} 呼び出し中...`);
-  const userContent =
-    `対象 URL: ${source.url}\n` +
-    `sourceId: ${source.id}\n\n` +
-    `以下はこのページの本文 (HTML、script/styleは除去済み) です。指定のスキーマに従って ExtractedSource JSON を返してください:\n\n---\n\n` +
-    pageText;
-  const rawJson = await callGemini({
+  console.log(`🤖 Gemini ${GEMINI_MODEL} 呼び出し中 (URL Context Tool 経由)...`);
+  const { text: rawJson, retrievedUrls } = await callGemini({
     apiKey,
     systemInstruction,
-    userContent,
+    url: source.url,
+    sourceId: source.id,
   });
+  if (retrievedUrls.length > 0) {
+    console.log("   retrieved URLs:");
+    for (const u of retrievedUrls) console.log(`     - ${u}`);
+  } else {
+    console.log("   ⚠️ retrievedUrls メタデータ無し (URL Context が動いてない可能性)");
+  }
 
   console.log("📋 JSON 解析中...");
   let parsed: ExtractedSource;
   try {
-    parsed = JSON.parse(rawJson) as ExtractedSource;
+    // Gemini が ```json コードフェンスでラップしてくることがあるので除去 (保険)
+    const cleaned = rawJson
+      .replace(/^\s*```(?:json)?\s*/i, "")
+      .replace(/```\s*$/i, "")
+      .trim();
+    parsed = JSON.parse(cleaned) as ExtractedSource;
   } catch (e) {
     throw new Error(
-      `Gemini レスポンスが JSON として解析不能:\n${(e as Error).message}\n--- raw ---\n${rawJson.slice(0, 500)}`,
+      `Gemini レスポンスが JSON として解析不能:\n${(e as Error).message}\n--- raw (first 500 chars) ---\n${rawJson.slice(0, 500)}`,
     );
   }
 
