@@ -68,6 +68,7 @@ export function rankCards(input: RankInput): CardRanking[] {
     loyaltyRules,
     edges,
     maxStacks,
+    store?.preferredPointCardIds,
   );
   const loyaltyTotal = loyalties.reduce(
     (sum, r) => sum + (r.reachable ? r.finalAmount : 0),

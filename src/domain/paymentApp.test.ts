@@ -159,6 +159,83 @@ describe("evaluatePaymentApps", () => {
   });
 });
 
+describe("chargeBased PaymentApp", () => {
+  const dPay: PaymentApp = {
+    id: "pa-d-pay",
+    name: "d払い",
+    chargeBased: true,
+    defaultBonusRate: 0.005,
+    defaultBonusCurrencyId: "d-pt",
+  };
+
+  it("chargeBased=true なら店舗ルール/カテゴリルールは無視され、カードのdefaultRate のみ適用", () => {
+    // ツルハ × JAL特約店カテゴリで JAL Suica 2% のルール
+    const jalSuica: Card = {
+      id: "jal-suica",
+      name: "JALカードSuica",
+      defaultRate: 0.01, // 1%
+      defaultCurrencyId: "jal-mile",
+    };
+    const tsuruhaStore: Store = {
+      id: "tsuruha",
+      name: "ツルハドラッグ",
+      category: "JAL特約店",
+    };
+    const jalTokuyakuRule: StoreRule = {
+      id: "jal-tokuyaku",
+      cardId: "jal-suica",
+      category: "JAL特約店",
+      rate: 0.02, // 2%
+      currencyId: "jal-mile",
+    };
+    // 通常クレカ決済: 2% (カテゴリルール適用)
+    const directResults = evaluatePaymentApps(
+      jalSuica,
+      "tsuruha",
+      10000,
+      "jal-mile",
+      [defaultApp],
+      [jalTokuyakuRule],
+      [tsuruhaStore],
+      [],
+    );
+    expect(directResults[0].cardEarnedAmount).toBeCloseTo(200, 6);
+
+    // d払い (chargeBased): カテゴリルール無視 → 1%
+    const dpayResults = evaluatePaymentApps(
+      jalSuica,
+      "tsuruha",
+      10000,
+      "jal-mile",
+      [dPay],
+      [jalTokuyakuRule],
+      [tsuruhaStore],
+      [],
+    );
+    expect(dpayResults[0].cardEarnedAmount).toBeCloseTo(100, 6);
+  });
+
+  it("chargeBased=true でも アプリbonus自体は加算される", () => {
+    const result = evaluatePaymentApps(
+      rakutenCard,
+      "general",
+      10000,
+      "d-pt",
+      [dPay],
+      [],
+      stores,
+      [
+        { id: "rp-to-d", fromCurrencyId: "rakuten-pt", toCurrencyId: "d-pt", rate: 1 },
+      ],
+    );
+    // クレカ: 楽天カード 1% で 100 楽天pt → d-pt 100
+    expect(result[0].cardFinalAmount).toBeCloseTo(100, 6);
+    // d払い bonus: 0.5% で 50 d-pt (直接target)
+    expect(result[0].appBonusFinalAmount).toBeCloseTo(50, 6);
+    expect(result[0].totalFinalAmount).toBeCloseTo(150, 6);
+  });
+});
+
 describe("bestPaymentApp", () => {
   it("複数候補から totalFinalAmount が最大のものを返す", () => {
     const rules: StoreRule[] = [

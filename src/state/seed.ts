@@ -11,7 +11,7 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 11;
+export const SEED_VERSION = 12;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -91,6 +91,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-11",
     summary:
       "PaymentApp に chargeBased フラグ追加。楽天Pay/d払い/PayPay はチャージ式として扱い、計算結果ヘッダーで「[d払い] の残高にカードからチャージ、JALカードSuica」のような主従関係を反映",
+  },
+  {
+    version: 12,
+    date: "2026-05-11",
+    summary:
+      "計算ロジック修正: chargeBased=true (楽天Pay/d払い/PayPay) は店舗ルール/カテゴリルールを無視 (例: ツルハ×JALカードSuicaのJAL特約店2%はカード直接決済のみ)。Store.preferredPointCardIds を追加し、店舗別に優先提示カードを設定可能 (ファミマ→Vポイント)",
   },
 ];
 
@@ -282,7 +288,12 @@ export const seed = (): {
     // コンビニ
     { id: "conv-7eleven", name: "セブン-イレブン", category: "コンビニ" },
     { id: "conv-lawson", name: "ローソン", category: "コンビニ" },
-    { id: "conv-familymart", name: "ファミリーマート", category: "コンビニ" },
+    {
+      id: "conv-familymart",
+      name: "ファミリーマート",
+      category: "コンビニ",
+      preferredPointCardIds: ["vpoint-card"],
+    },
     { id: "conv-ministop", name: "ミニストップ", category: "コンビニ" },
     // 飲食 (三井住友ゴールド7%対象が多め)
     { id: "mcdonalds", name: "マクドナルド", category: "飲食" },

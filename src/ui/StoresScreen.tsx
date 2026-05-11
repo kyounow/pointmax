@@ -5,6 +5,7 @@ import type { Store } from "../domain/types";
 
 export function StoresScreen() {
   const stores = useStore((s) => s.stores);
+  const pointCards = useStore((s) => s.pointCards);
   const addStore = useStore((s) => s.addStore);
   const updateStore = useStore((s) => s.updateStore);
   const removeStore = useStore((s) => s.removeStore);
@@ -30,6 +31,35 @@ export function StoresScreen() {
           value={s.category ?? ""}
           onChange={(e) => set({ category: e.target.value || undefined })}
         />
+      ),
+    },
+    {
+      key: "preferred",
+      label: "優先提示カード",
+      view: (s) => {
+        const ids = s.preferredPointCardIds ?? [];
+        if (ids.length === 0) return "-";
+        return ids
+          .map((id) => pointCards.find((p) => p.id === id)?.name ?? id)
+          .join(", ");
+      },
+      edit: (s, set) => (
+        <select
+          value={(s.preferredPointCardIds ?? [])[0] ?? ""}
+          onChange={(e) => {
+            const v = e.target.value;
+            set({
+              preferredPointCardIds: v ? [v] : undefined,
+            });
+          }}
+        >
+          <option value="">指定なし</option>
+          {pointCards.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
       ),
     },
     {

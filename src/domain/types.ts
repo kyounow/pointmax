@@ -25,11 +25,15 @@ export type Card = {
 // プルダウン用店舗マスタ
 // maxLoyaltyStacks: ポイントカードを同時に複数提示できる数 (default 1)
 //   例: 多くの店は1、紀伊國屋等で複数加盟ある場合は2以上
+// preferredPointCardIds: この店舗で同点還元時に優先的に選ぶポイントカードID（順序付き）
+//   例: ファミマで Vポイントを優先したい場合 ["vpoint-card"]
+//   未指定の場合は PointCards 画面のユーザー優先順を使用
 export type Store = {
   id: string;
   name: string;
   category?: string;
   maxLoyaltyStacks?: number;
+  preferredPointCardIds?: string[];
 };
 
 // カード×店舗(直接) または カード×カテゴリ(間接) のルール

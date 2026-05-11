@@ -190,4 +190,19 @@ export const MIGRATIONS: VersionMigration[] = [
       },
     ],
   },
+  {
+    toVersion: 12,
+    date: "2026-05-11",
+    changes: [
+      {
+        type: "updateField",
+        collection: "stores",
+        id: "conv-familymart",
+        field: "preferredPointCardIds",
+        from: undefined,
+        to: ["vpoint-card"],
+        notes: "ファミマでの基本提示カードを Vポイント に設定",
+      },
+    ],
+  },
 ];

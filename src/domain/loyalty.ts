@@ -20,6 +20,7 @@ export function bestLoyalty(
   ownedPointCards: PointCard[],
   loyaltyRules: LoyaltyRule[],
   edges: ConversionEdge[],
+  preferredPointCardIds?: string[],
 ): LoyaltyResult | null {
   const top = bestLoyalties(
     storeId,
@@ -29,11 +30,13 @@ export function bestLoyalty(
     loyaltyRules,
     edges,
     1,
+    preferredPointCardIds,
   );
   return top[0] ?? null;
 }
 
 // Top-N の重ね取り結果。同一 pointCard は1要素にまとめ、最終量降順で上位 maxStacks 件返す。
+// preferredPointCardIds: 店舗の優先指定。同点還元時にこの順で優先採用される。
 export function bestLoyalties(
   storeId: string,
   amount: number,
@@ -42,6 +45,7 @@ export function bestLoyalties(
   loyaltyRules: LoyaltyRule[],
   edges: ConversionEdge[],
   maxStacks: number,
+  preferredPointCardIds?: string[],
 ): LoyaltyResult[] {
   if (maxStacks <= 0) return [];
 
@@ -85,14 +89,27 @@ export function bestLoyalties(
     };
   });
 
-  // 1) reachable 優先 / 2) finalAmount 降順 / 3) ownedPointCards 配列順 / 4) earnedAmount 降順
-  const priorityIndex = new Map(ownedPointCards.map((p, i) => [p.id, i]));
+  // 1) reachable 優先 / 2) finalAmount 降順
+  // 3) 店舗の preferredPointCardIds 順 (店舗別優先)
+  // 4) ownedPointCards 配列順 (ユーザー全体優先順)
+  // 5) earnedAmount 降順
+  const userPriorityIndex = new Map(ownedPointCards.map((p, i) => [p.id, i]));
+  const storePriorityIndex = new Map(
+    (preferredPointCardIds ?? []).map((id, i) => [id, i]),
+  );
   evaluated.sort((a, b) => {
     if (a.reachable !== b.reachable) return a.reachable ? -1 : 1;
     if (a.finalAmount !== b.finalAmount) return b.finalAmount - a.finalAmount;
-    const ai = priorityIndex.get(a.pointCard.id) ?? Number.POSITIVE_INFINITY;
-    const bi = priorityIndex.get(b.pointCard.id) ?? Number.POSITIVE_INFINITY;
-    if (ai !== bi) return ai - bi;
+    const aStore =
+      storePriorityIndex.get(a.pointCard.id) ?? Number.POSITIVE_INFINITY;
+    const bStore =
+      storePriorityIndex.get(b.pointCard.id) ?? Number.POSITIVE_INFINITY;
+    if (aStore !== bStore) return aStore - bStore;
+    const aUser =
+      userPriorityIndex.get(a.pointCard.id) ?? Number.POSITIVE_INFINITY;
+    const bUser =
+      userPriorityIndex.get(b.pointCard.id) ?? Number.POSITIVE_INFINITY;
+    if (aUser !== bUser) return aUser - bUser;
     return b.earnedAmount - a.earnedAmount;
   });
 

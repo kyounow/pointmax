@@ -157,6 +157,65 @@ describe("bestLoyalty", () => {
     expect(r2!.pointCard.id).toBe("d-card");
   });
 
+  it("店舗の preferredPointCardIds が指定されている場合、ownedPointCards より優先される", () => {
+    // 全カードが同じ rate で同じ finalAmount に到達するシナリオ
+    const rules: LoyaltyRule[] = [
+      {
+        id: "loy-d",
+        storeId: "famima",
+        pointCardId: "d-card",
+        rate: 0.005,
+      },
+      {
+        id: "loy-r",
+        storeId: "famima",
+        pointCardId: "r-card",
+        rate: 0.005,
+      },
+      {
+        id: "loy-v",
+        storeId: "famima",
+        pointCardId: "v-card",
+        rate: 0.005,
+      },
+    ];
+    const vCard: PointCard = {
+      id: "v-card",
+      name: "Vポイントカード",
+      currencyId: "v-pt",
+    };
+    // ユーザー優先順: dカード > 楽天 > V
+    const owned = [dCard, rakutenCard, vCard];
+    // 店舗指定なし → ユーザー優先順で dカードが選ばれる
+    const noStorePref = bestLoyalty(
+      "famima",
+      10000,
+      "d-pt",
+      owned,
+      rules,
+      [
+        edge("r-to-d", "rakuten-pt", "d-pt", 1),
+        edge("v-to-d", "v-pt", "d-pt", 1),
+      ],
+    );
+    expect(noStorePref!.pointCard.id).toBe("d-card");
+
+    // 店舗指定 ["v-card"] → 同点でも Vポイントが優先される
+    const withStorePref = bestLoyalty(
+      "famima",
+      10000,
+      "d-pt",
+      owned,
+      rules,
+      [
+        edge("r-to-d", "rakuten-pt", "d-pt", 1),
+        edge("v-to-d", "v-pt", "d-pt", 1),
+      ],
+      ["v-card"],
+    );
+    expect(withStorePref!.pointCard.id).toBe("v-card");
+  });
+
   it("ルールの currencyId 上書きが効く", () => {
     const rules: LoyaltyRule[] = [
       {

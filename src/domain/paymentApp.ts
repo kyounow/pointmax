@@ -126,6 +126,8 @@ function resolveRateForPaymentApp(
 }
 
 // このカードで使える各 PaymentApp について試算
+// chargeBased=true (楽天Pay/d払い/PayPay 等) はカード直接決済ではないため、
+// JAL特約店2% 等の店舗別ルール/カテゴリルールは適用されない。カード本来の還元率のみ。
 export function evaluatePaymentApps(
   card: Card,
   storeId: string,
@@ -140,7 +142,13 @@ export function evaluatePaymentApps(
     isPaymentAppCompatible(card, pa),
   );
   return compatible.map((pa) => {
-    const resolved = resolveRateForPaymentApp(card, storeId, rules, stores, pa);
+    const resolved: ResolvedRate = pa.chargeBased
+      ? {
+          rate: card.defaultRate,
+          currencyId: card.defaultCurrencyId,
+          source: "default",
+        }
+      : resolveRateForPaymentApp(card, storeId, rules, stores, pa);
     // クレカ部分
     const cardEarned = amount * resolved.rate;
     const cardCurrency = resolved.currencyId;
