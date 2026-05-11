@@ -23,8 +23,13 @@ sources:
       - storeRules
       - categoryRules
     extractionScope: chains-only
-    enabled: true
+    enabled: false
     notes: |
+      ★ disabled: 2026-05-11 — JAL のサイトリニューアルでこの URL が 404 / 取得不能。
+      URL Context Tool 経由でも URL_RETRIEVAL_STATUS_ERROR。
+      正しい新 URL が確認でき次第、url を更新して enabled: true に戻す。
+      候補は https://www.jal.co.jp/jp/ja/jalcard/use/ 周辺 (要確認)。
+      ---
       JALカード共通の特約店一覧。マイル積算率 200% (= 2%) の店舗を網羅。
       個別店舗 (地元飲食店等) まで全部含めると膨大なので chains-only に限定。
       全国チェーンだけ新規取り込み、既存登録の特約店についてはキャンペーン/還元率変動を検知。

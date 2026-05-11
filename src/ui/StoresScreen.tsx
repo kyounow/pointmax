@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { Store } from "../domain/types";
@@ -12,6 +12,17 @@ export function StoresScreen() {
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
+  const [search, setSearch] = useState("");
+
+  const filteredStores = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return stores;
+    return stores.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        (s.category ?? "").toLowerCase().includes(q),
+    );
+  }, [stores, search]);
 
   const columns: ColumnDef<Store>[] = [
     {
@@ -122,8 +133,24 @@ export function StoresScreen() {
         <button type="submit">追加</button>
       </form>
 
+      <div className="row" style={{ marginTop: 8 }}>
+        <input
+          type="search"
+          placeholder="店舗を絞り込み (名前/カテゴリ)"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ flex: 1 }}
+          aria-label="店舗を絞り込み検索"
+        />
+        {search && (
+          <small className="hint" style={{ alignSelf: "center" }}>
+            {filteredStores.length} / {stores.length} 件
+          </small>
+        )}
+      </div>
+
       <ResponsiveTable
-        rows={stores}
+        rows={filteredStores}
         columns={columns}
         onSave={(id, patch) => updateStore(id, patch)}
         onDelete={removeStore}

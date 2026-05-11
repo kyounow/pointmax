@@ -18,14 +18,26 @@ export function CalculatorScreen() {
   const paymentApps = useStore((s) => s.paymentApps);
 
   const [storeId, setStoreId] = useState("");
+  const [storeSearch, setStoreSearch] = useState("");
   const [amount, setAmount] = useState("10000");
   const [targetCurrencyId, setTargetCurrencyId] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  // 店舗をカテゴリ別にグループ化
+  // 検索文字列で店舗を絞り込み (名前 or カテゴリの部分一致、大文字小文字無視)
+  const filteredStores = useMemo(() => {
+    const q = storeSearch.trim().toLowerCase();
+    if (!q) return stores;
+    return stores.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        (s.category ?? "").toLowerCase().includes(q),
+    );
+  }, [stores, storeSearch]);
+
+  // 店舗をカテゴリ別にグループ化 (検索フィルタ後)
   const storesByCategory = useMemo(
-    () => groupBy(stores, (s) => s.category ?? "その他"),
-    [stores],
+    () => groupBy(filteredStores, (s) => s.category ?? "その他"),
+    [filteredStores],
   );
   // 通貨を kind 別にグループ化（マイル/ポイント/現金相当/未分類）
   const currenciesByKind = useMemo(() => {
@@ -115,18 +127,36 @@ export function CalculatorScreen() {
       <form className="row" onSubmit={(e) => e.preventDefault()}>
         <label>
           店舗:
-          <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
-            <option value="">選択</option>
-            {storesByCategory.map((g) => (
-              <optgroup key={g.key} label={g.key}>
-                {g.items.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <span className="store-picker">
+            <input
+              type="search"
+              className="store-search"
+              placeholder="検索..."
+              value={storeSearch}
+              onChange={(e) => setStoreSearch(e.target.value)}
+              aria-label="店舗を絞り込み検索"
+            />
+            <select
+              value={storeId}
+              onChange={(e) => setStoreId(e.target.value)}
+            >
+              <option value="">選択</option>
+              {storesByCategory.map((g) => (
+                <optgroup key={g.key} label={g.key}>
+                  {g.items.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            {storeSearch && (
+              <small className="store-search-hint">
+                {filteredStores.length} 件ヒット
+              </small>
+            )}
+          </span>
         </label>
         <label>
           金額:

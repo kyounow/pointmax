@@ -1126,3 +1126,21 @@ details summary {
 .result-card.collapsed {
   padding: 12px 14px;
 }
+
+/* 計算画面: 店舗検索 input + select の組み合わせ */
+.store-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.store-picker .store-search {
+  width: 140px;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+.store-picker .store-search-hint {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}

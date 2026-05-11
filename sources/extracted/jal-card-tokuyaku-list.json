@@ -1,0 +1,12 @@
+{
+  "sourceId": "jal-card-tokuyaku-list",
+  "sourceUrl": "https://www.jal.co.jp/jalcard/use/jaltokuyaku/list/",
+  "fetchedAt": "2026-05-11T11:37:49.191Z",
+  "promptVersion": "jal-tokuyaku-v1.0",
+  "extractor": "jal-tokuyaku",
+  "geminiModel": "gemini-2.5-flash",
+  "notes": "Source URL could not be fetched. Unable to extract any information from the page.",
+  "categoryRules": [],
+  "storeRules": [],
+  "stores": []
+}
