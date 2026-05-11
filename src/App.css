@@ -302,6 +302,18 @@ details summary {
   border-radius: 6px;
 }
 
+/* グラフツールバー */
+.graph-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
 /* 凡例 */
 .legend {
   display: flex;

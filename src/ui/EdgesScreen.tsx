@@ -60,6 +60,61 @@ function layoutByKind(currencies: Currency[]): Map<
   return map;
 }
 
+// ノード選択時のフォーカスレイアウト
+// 選択ノードを中心に、入口=上 / 出口=下 / 双方向=左右に配置
+// 戻り値: 表示すべきノードIDのみ含むマップ
+function computeFocusedLayout(
+  selectedId: string,
+  edges: ConversionEdge[],
+): Map<string, { x: number; y: number }> {
+  const incomingSet = new Set<string>();
+  const outgoingSet = new Set<string>();
+  for (const e of edges) {
+    if (e.toCurrencyId === selectedId) incomingSet.add(e.fromCurrencyId);
+    if (e.fromCurrencyId === selectedId) outgoingSet.add(e.toCurrencyId);
+  }
+  const bidirSet = new Set<string>();
+  for (const id of incomingSet) {
+    if (outgoingSet.has(id)) bidirSet.add(id);
+  }
+  const inputOnly = [...incomingSet].filter((id) => !bidirSet.has(id));
+  const outputOnly = [...outgoingSet].filter((id) => !bidirSet.has(id));
+  const bidir = [...bidirSet];
+
+  const layout = new Map<string, { x: number; y: number }>();
+
+  const centerX = 400;
+  const centerY = 260;
+  const spacing = 150;
+  layout.set(selectedId, { x: centerX, y: centerY });
+
+  // 入口 (selected の上、y=40)
+  inputOnly.forEach((id, i) => {
+    const x = centerX + (i - (inputOnly.length - 1) / 2) * spacing;
+    layout.set(id, { x, y: 40 });
+  });
+
+  // 出口 (selected の下、y=480)
+  outputOnly.forEach((id, i) => {
+    const x = centerX + (i - (outputOnly.length - 1) / 2) * spacing;
+    layout.set(id, { x, y: 480 });
+  });
+
+  // 双方向: 左右に振り分け (半分ずつ)
+  const leftCount = Math.ceil(bidir.length / 2);
+  const rightCount = bidir.length - leftCount;
+  bidir.slice(0, leftCount).forEach((id, i) => {
+    const y = centerY + (i - (leftCount - 1) / 2) * 120;
+    layout.set(id, { x: centerX - 280, y });
+  });
+  bidir.slice(leftCount).forEach((id, i) => {
+    const y = centerY + (i - (rightCount - 1) / 2) * 120;
+    layout.set(id, { x: centerX + 280, y });
+  });
+
+  return layout;
+}
+
 export function EdgesScreen() {
   const currencies = useStore((s) => s.currencies);
   const edges = useStore((s) => s.edges);
@@ -72,6 +127,7 @@ export function EdgesScreen() {
   const [rate, setRate] = useState("1");
   const [notes, setNotes] = useState("");
   const [sel, setSel] = useState<Selection>(null);
+  const [showLabels, setShowLabels] = useState(false);
   const dialog = useDialog();
 
   const currencyById = useMemo(
@@ -83,7 +139,14 @@ export function EdgesScreen() {
     [currencyById],
   );
 
-  const positions = useMemo(() => layoutByKind(currencies), [currencies]);
+  // ノード選択時はフォーカスレイアウト、未選択時は kind 別レイアウト
+  const focusedNodeId = sel?.type === "node" ? sel.id : null;
+  const positions = useMemo(() => {
+    if (focusedNodeId) {
+      return computeFocusedLayout(focusedNodeId, edges);
+    }
+    return layoutByKind(currencies);
+  }, [currencies, edges, focusedNodeId]);
 
   const currenciesByKind = useMemo(() => {
     const kindLabel = (k?: string) => {
@@ -101,82 +164,67 @@ export function EdgesScreen() {
     return groupBy(currencies, (c) => kindLabel(c.kind));
   }, [currencies]);
 
-  // ノード選択時、フォーカス対象（隣接ノードと自分）
-  const focusedNodes = useMemo(() => {
-    if (sel?.type !== "node") return null;
-    const set = new Set<string>([sel.id]);
-    for (const e of edges) {
-      if (e.fromCurrencyId === sel.id) set.add(e.toCurrencyId);
-      if (e.toCurrencyId === sel.id) set.add(e.fromCurrencyId);
-    }
-    return set;
-  }, [sel, edges]);
-
   const isEdgeRelated = useCallback(
     (e: { fromCurrencyId: string; toCurrencyId: string }) => {
-      if (sel?.type === "node")
-        return e.fromCurrencyId === sel.id || e.toCurrencyId === sel.id;
+      if (focusedNodeId)
+        return (
+          e.fromCurrencyId === focusedNodeId || e.toCurrencyId === focusedNodeId
+        );
       return false;
     },
-    [sel],
+    [focusedNodeId],
   );
 
-  const rfNodes: CurrencyNodeType[] = useMemo(
-    () =>
-      currencies.map((c) => {
-        const pos = positions.get(c.id) ?? { x: 0, y: 0 };
-        const isSelected = sel?.type === "node" && sel.id === c.id;
-        const dimmed = focusedNodes ? !focusedNodes.has(c.id) : false;
-        return {
-          id: c.id,
-          type: "currency",
-          position: pos,
-          data: { currency: c, selected: isSelected, dimmed },
-        };
-      }),
-    [currencies, positions, sel, focusedNodes],
-  );
+  const rfNodes: CurrencyNodeType[] = useMemo(() => {
+    // フォーカス時は positions に含まれるノードのみ表示（無関係ノードは完全に隠す）
+    const visibleCurrencies = focusedNodeId
+      ? currencies.filter((c) => positions.has(c.id))
+      : currencies;
+    return visibleCurrencies.map((c) => {
+      const pos = positions.get(c.id) ?? { x: 0, y: 0 };
+      const isSelected = focusedNodeId === c.id;
+      return {
+        id: c.id,
+        type: "currency",
+        position: pos,
+        data: { currency: c, selected: isSelected, dimmed: false },
+      };
+    });
+  }, [currencies, positions, focusedNodeId]);
 
-  const rfEdges: RFEdge[] = useMemo(
-    () =>
-      edges.map((e) => {
-        const isSelectedEdge = sel?.type === "edge" && sel.id === e.id;
-        const related = isEdgeRelated(e);
-        const focusing = sel?.type === "node";
-        const dimmed = focusing && !related;
-        const stroke = isSelectedEdge
-          ? "#f59e0b"
-          : related
-            ? "#f59e0b"
-            : "#4ea1ff";
-        return {
-          id: e.id,
-          source: e.fromCurrencyId,
-          target: e.toCurrencyId,
-          label: formatRatio(e.rate),
-          markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
-          style: {
-            stroke,
-            strokeWidth: isSelectedEdge || related ? 2.5 : 1.5,
-            opacity: dimmed ? 0.18 : 1,
-          },
-          labelStyle: {
-            fill: "#e6e6e6",
-            fontSize: 12,
-            fontWeight: 600,
-            opacity: dimmed ? 0.3 : 1,
-          },
+  const rfEdges: RFEdge[] = useMemo(() => {
+    // フォーカス時は関連エッジのみ表示
+    const visibleEdges = focusedNodeId
+      ? edges.filter((e) => isEdgeRelated(e))
+      : edges;
+    return visibleEdges.map((e) => {
+      const isSelectedEdge = sel?.type === "edge" && sel.id === e.id;
+      const related = isEdgeRelated(e);
+      const stroke = isSelectedEdge || related ? "#f59e0b" : "#4ea1ff";
+      return {
+        id: e.id,
+        source: e.fromCurrencyId,
+        target: e.toCurrencyId,
+        label: showLabels ? formatRatio(e.rate) : undefined,
+        markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
+        style: {
+          stroke,
+          strokeWidth: isSelectedEdge || related ? 2.5 : 1.5,
+        },
+        labelStyle: {
+          fill: "#e6e6e6",
+          fontSize: 12,
+          fontWeight: 600,
+        },
           labelBgStyle: {
             fill: isSelectedEdge || related ? "#3a2a10" : "#181b22",
-            fillOpacity: dimmed ? 0.3 : 1,
           },
           labelBgPadding: [6, 4] as [number, number],
           labelBgBorderRadius: 4,
           zIndex: isSelectedEdge || related ? 100 : 0,
         };
-      }),
-    [edges, sel, isEdgeRelated],
-  );
+      });
+  }, [edges, sel, isEdgeRelated, focusedNodeId, showLabels]);
 
   const onConnect = useCallback(
     async (conn: Connection) => {
@@ -283,9 +331,34 @@ export function EdgesScreen() {
     <section>
       <h2>ポイント交換ルート</h2>
       <p className="hint">
-        ノード／エッジをクリックで詳細表示。ノード選択時は関連エッジが強調されます。
+        ノード／エッジをクリックで詳細表示。ノード選択時は関連ノードのみ表示され、
+        入口は上・出口は下・双方向は左右に自動配置されます。
         端をドラッグして別ノードに接続で新しい交換ルートを作成。
       </p>
+
+      <div className="graph-toolbar">
+        <label
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 13,
+            color: "var(--muted)",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={showLabels}
+            onChange={(e) => setShowLabels(e.target.checked)}
+          />
+          レート表示
+        </label>
+        {focusedNodeId && (
+          <button onClick={() => setSel(null)} style={{ fontSize: 12 }}>
+            ✕ 全体表示に戻る
+          </button>
+        )}
+      </div>
 
       <div className="graph-wrap" style={{ height: 580 }}>
         {currencies.length === 0 ? (
