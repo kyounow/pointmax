@@ -10,7 +10,7 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 6;
+export const SEED_VERSION = 7;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -60,6 +60,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-11",
     summary:
       "テーブル全画面を ResponsiveTable に統一（PC/モバイル共通の閲覧→編集モード）。マイグレーション基盤（updateField/delete 宣言型、ユーザー編集との衝突は個別確認）を導入",
+  },
+  {
+    version: 7,
+    date: "2026-05-11",
+    summary:
+      "JRキューポ（JR九州ポイント）を追加。Vポイント ⇄ JRキューポの相互交換ルート（500:500の等価交換）を追加。Vポイント→JALマイル経由ルートの選択肢が広がる",
   },
 ];
 
@@ -198,6 +204,13 @@ export const seed = (): {
       kind: "point",
       iconChar: "ACC",
       iconColor: "#0e1b3d",
+    },
+    {
+      id: "jrkyupo",
+      name: "JRキューポ",
+      kind: "point",
+      iconChar: "九",
+      iconColor: "#cb0d2a",
     },
   ];
 
@@ -455,6 +468,20 @@ export const seed = (): {
       toCurrencyId: "waon-pt",
       rate: 1,
       notes: "1Vポイント = 1WAON POINT (等価交換)。Vポイント→JALマイルへの実用ルート",
+    },
+    {
+      id: "v-to-jrkyupo",
+      fromCurrencyId: "v-pt",
+      toCurrencyId: "jrkyupo",
+      rate: 1,
+      notes: "500Vポイント → 500JRキューポ (双方向, 500pt単位)",
+    },
+    {
+      id: "jrkyupo-to-v",
+      fromCurrencyId: "jrkyupo",
+      toCurrencyId: "v-pt",
+      rate: 1,
+      notes: "500JRキューポ → 500Vポイント (双方向, 500pt単位)",
     },
 
     // ============ 永久不滅ポイント (セゾン) ============
