@@ -8,11 +8,18 @@ import type {
   Store,
   StoreRule,
 } from "../domain/types";
+import {
+  ADDED_CARDS,
+  ADDED_LOYALTY_RULES,
+  ADDED_PAYMENT_APPS,
+  ADDED_RULES,
+  ADDED_STORES,
+} from "./seed-additions";
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開。v1.0 までに各バージョンの差分を積み上げる。
-export const SEED_VERSION = 1;
+export const SEED_VERSION = 2;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -1018,14 +1025,27 @@ export const seed = (): {
     },
   ];
 
+  // 自動同期 (scripts/sync/apply-proposals.ts) が seed-additions.ts に書き込んだ
+  // 追加分を concat する。手書きの定義が常に前、追加分が後。
+  // id が重複した場合は handwritten が勝つ (filter で排除)。
+  const addedStoreIds = new Set(stores.map((s) => s.id));
+  const addedCardIds = new Set(cards.map((c) => c.id));
+  const addedPaymentAppIds = new Set(paymentApps.map((p) => p.id));
+
   return {
     currencies,
-    cards,
-    stores,
-    rules,
+    cards: [...cards, ...ADDED_CARDS.filter((c) => !addedCardIds.has(c.id))],
+    stores: [
+      ...stores,
+      ...ADDED_STORES.filter((s) => !addedStoreIds.has(s.id)),
+    ],
+    rules: [...rules, ...ADDED_RULES],
     edges,
     pointCards,
-    loyaltyRules,
-    paymentApps,
+    loyaltyRules: [...loyaltyRules, ...ADDED_LOYALTY_RULES],
+    paymentApps: [
+      ...paymentApps,
+      ...ADDED_PAYMENT_APPS.filter((p) => !addedPaymentAppIds.has(p.id)),
+    ],
   };
 };

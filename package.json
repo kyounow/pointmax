@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sync:fetch": "tsx scripts/sync/fetch-source.ts",
-    "sync:propose": "tsx scripts/sync/diff-and-propose.ts"
+    "sync:propose": "tsx scripts/sync/diff-and-propose.ts",
+    "sync:apply": "tsx scripts/sync/apply-proposals.ts"
   },
   "dependencies": {
     "@xyflow/react": "^12.10.2",
