@@ -265,24 +265,52 @@ export function CalculatorScreen() {
                   <span className="rank">
                     {r.reachable ? `#${i + 1}` : "対象外"}
                   </span>
-                  <strong>{cardLabel(r.card)}</strong>
-                  {r.paymentApp && (
-                    <span
-                      className="payment-app-badge"
-                      title="自動選択された支払方法"
-                    >
-                      {r.paymentApp.iconChar && (
+                  {r.paymentApp?.chargeBased ? (
+                    <>
+                      <span
+                        className="payment-app-badge"
+                        title="支払いに使うアプリ"
+                      >
+                        {r.paymentApp.iconChar && (
+                          <span
+                            className="payment-app-icon"
+                            style={{
+                              background: r.paymentApp.iconColor ?? "#6b7280",
+                            }}
+                          >
+                            {r.paymentApp.iconChar}
+                          </span>
+                        )}
+                        {r.paymentApp.name}
+                      </span>
+                      <span className="charge-flow-hint">
+                        の残高にカードからチャージ、
+                      </span>
+                      <strong>{cardLabel(r.card)}</strong>
+                    </>
+                  ) : (
+                    <>
+                      <strong>{cardLabel(r.card)}</strong>
+                      {r.paymentApp && (
                         <span
-                          className="payment-app-icon"
-                          style={{
-                            background: r.paymentApp.iconColor ?? "#6b7280",
-                          }}
+                          className="payment-app-badge"
+                          title="自動選択された支払方法"
                         >
-                          {r.paymentApp.iconChar}
+                          {r.paymentApp.iconChar && (
+                            <span
+                              className="payment-app-icon"
+                              style={{
+                                background:
+                                  r.paymentApp.iconColor ?? "#6b7280",
+                              }}
+                            >
+                              {r.paymentApp.iconChar}
+                            </span>
+                          )}
+                          {r.paymentApp.name}
                         </span>
                       )}
-                      {r.paymentApp.name}
-                    </span>
+                    </>
                   )}
                   {r.reachable && (
                     <span className="final">
@@ -386,7 +414,10 @@ export function CalculatorScreen() {
                       r.appBonusEarnedAmount > 0 &&
                       r.appBonusCurrencyId && (
                         <div className="result-meta">
-                          支払アプリ還元 (
+                          {r.paymentApp.chargeBased
+                            ? `${r.paymentApp.name} 利用ボーナス`
+                            : "支払アプリ還元"}{" "}
+                          (
                           {(
                             (r.paymentApp.defaultBonusRate ?? 0) * 100
                           ).toFixed(2)}

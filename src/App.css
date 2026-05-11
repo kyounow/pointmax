@@ -522,6 +522,11 @@ details summary {
   padding: 2px 8px 2px 2px;
   border-radius: 999px;
 }
+.charge-flow-hint {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: normal;
+}
 .payment-app-icon {
   display: inline-flex;
   align-items: center;

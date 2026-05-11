@@ -11,7 +11,7 @@ import type {
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-export const SEED_VERSION = 10;
+export const SEED_VERSION = 11;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -85,6 +85,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-11",
     summary:
       "支払方法(PaymentApp) を独立エンティティ化。Visaタッチ/QUICPay/iD/楽天Pay/d払い/PayPay 等を追加し、計算画面では自動最適化（ユーザは選ばずに最良が表示される）。楽天Pay/d払いはアプリ自体の還元(楽天Pay 1%等)も加算。新タブ「支払方法」追加",
+  },
+  {
+    version: 11,
+    date: "2026-05-11",
+    summary:
+      "PaymentApp に chargeBased フラグ追加。楽天Pay/d払い/PayPay はチャージ式として扱い、計算結果ヘッダーで「[d払い] の残高にカードからチャージ、JALカードSuica」のような主従関係を反映",
   },
 ];
 
@@ -1024,6 +1030,7 @@ export const seed = (): {
       compatibleCardIds: ["rakuten-card"],
       defaultBonusRate: 0.01,
       defaultBonusCurrencyId: "rakuten-pt",
+      chargeBased: true,
       notes: "楽天カードチャージ・連携で利用 (1.0%還元上乗せ)",
     },
     {
@@ -1033,6 +1040,7 @@ export const seed = (): {
       iconColor: "#cc0033",
       defaultBonusRate: 0.005,
       defaultBonusCurrencyId: "d-pt",
+      chargeBased: true,
       notes: "他カード/銀行口座チャージで 0.5% (dカード連携なら 1.0%)",
     },
     {
@@ -1042,6 +1050,7 @@ export const seed = (): {
       iconColor: "#ff0033",
       defaultBonusRate: 0.005,
       defaultBonusCurrencyId: "paypay",
+      chargeBased: true,
       notes: "PayPay残高 or 連携カードで決済時 0.5%還元",
     },
   ];

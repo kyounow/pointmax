@@ -140,6 +140,30 @@ export function PaymentAppsScreen() {
         ),
       },
       {
+        key: "chargeBased",
+        label: "チャージ式",
+        view: (p) => (p.chargeBased ? "はい" : "-"),
+        edit: (p, set) => (
+          <label
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              fontSize: 12,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={!!p.chargeBased}
+              onChange={(e) =>
+                set({ chargeBased: e.target.checked ? true : undefined })
+              }
+            />
+            アプリ残高にカードからチャージして決済 (楽天Pay/d払い/PayPay 等)
+          </label>
+        ),
+      },
+      {
         key: "compatibleCards",
         label: "対応カード",
         view: (p) =>

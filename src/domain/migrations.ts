@@ -157,20 +157,37 @@ export function conflictItems(
 // プロジェクトのマイグレーション履歴。新しいバージョンを追加する時はここに append + SEED_VERSION++
 // 自動収集スクリプトもこの配列にエントリを追加することで連携可能
 export const MIGRATIONS: VersionMigration[] = [
-  // 例 (未使用、参考):
-  // {
-  //   toVersion: 6,
-  //   date: "2026-05-15",
-  //   changes: [
-  //     {
-  //       type: "updateField",
-  //       collection: "loyaltyRules",
-  //       id: "loy-d-lawson",
-  //       field: "rate",
-  //       from: 0.005,
-  //       to: 0.01,
-  //       notes: "2026年4月公式レート変更",
-  //     },
-  //   ],
-  // },
+  {
+    toVersion: 11,
+    date: "2026-05-11",
+    changes: [
+      {
+        type: "updateField",
+        collection: "paymentApps",
+        id: "pa-rakuten-pay",
+        field: "chargeBased",
+        from: undefined,
+        to: true,
+        notes: "楽天Pay をチャージ式に分類 (UI表示の主従切替用)",
+      },
+      {
+        type: "updateField",
+        collection: "paymentApps",
+        id: "pa-d-pay",
+        field: "chargeBased",
+        from: undefined,
+        to: true,
+        notes: "d払い をチャージ式に分類",
+      },
+      {
+        type: "updateField",
+        collection: "paymentApps",
+        id: "pa-paypay",
+        field: "chargeBased",
+        from: undefined,
+        to: true,
+        notes: "PayPay をチャージ式に分類",
+      },
+    ],
+  },
 ];

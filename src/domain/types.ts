@@ -84,6 +84,9 @@ export type LoyaltyRule = {
 // compatibleCardIds: このアプリで決済する際に使えるカード（チャージ/紐づけ元）
 //   空配列 / undefined = どのクレカでもOK (Visaタッチ等の汎用)
 //   要素あり = リスト内のカードのみ使用可能 (楽天Pay × 楽天カードなど)
+// chargeBased: true なら「カードからアプリ残高にチャージして決済」型 (楽天Pay/d払い/PayPay)
+//   false / undefined ならカードを直接使う型 (通常クレカ/Visaタッチ/QUICPay/iD)
+//   表示でカードとアプリの主従関係を切り替える
 export type PaymentApp = {
   id: string;
   name: string;
@@ -92,5 +95,6 @@ export type PaymentApp = {
   compatibleCardIds?: string[];
   defaultBonusRate?: number;
   defaultBonusCurrencyId?: string;
+  chargeBased?: boolean;
   notes?: string;
 };
