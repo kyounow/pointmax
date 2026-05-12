@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
+import { isMasterCard } from "../state/seed";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { Card } from "../domain/types";
 
@@ -22,7 +23,15 @@ export function CardsScreen() {
     {
       key: "name",
       label: "カード名",
-      view: (c) => c.name,
+      view: (c) =>
+        isMasterCard(c.id) ? (
+          <span className="card-name-with-badge">
+            <span className="card-master-badge" title="公式マスター由来">公式</span>
+            {c.name}
+          </span>
+        ) : (
+          c.name
+        ),
       edit: (c, set) => (
         <input
           value={c.name}
@@ -178,6 +187,7 @@ export function CardsScreen() {
         columns={columns}
         onSave={(id, patch) => updateCard(id, patch)}
         onDelete={removeCard}
+        canDelete={(c) => !isMasterCard(c.id)}
         empty="まだありません"
       />
     </section>

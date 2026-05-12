@@ -10,7 +10,7 @@ import type {
   Store,
   StoreRule,
 } from "../domain/types";
-import { seed, SEED_VERSION, DEFAULT_SYNC_URL } from "./seed";
+import { seed, SEED_VERSION, DEFAULT_SYNC_URL, isMasterCard } from "./seed";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
 import {
   MIGRATIONS,
@@ -135,11 +135,15 @@ export const useStore = create<State & Actions>()(
         set((s) => ({
           cards: s.cards.map((c) => (c.id === id ? { ...c, ...patch } : c)),
         })),
-      removeCard: (id) =>
+      removeCard: (id) => {
+        // マスター由来カードは削除不可 (mergeFromSeed で復活するため意味がない)。
+        // UI 側で削除ボタンも隠すが、ここでも防御する。
+        if (isMasterCard(id)) return;
         set((s) => ({
           cards: s.cards.filter((c) => c.id !== id),
           rules: s.rules.filter((r) => r.cardId !== id),
-        })),
+        }));
+      },
 
       addCurrency: (c) =>
         set((s) => ({ currencies: [...s.currencies, { ...c, id: newId() }] })),

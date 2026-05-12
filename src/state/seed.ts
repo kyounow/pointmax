@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 10;
+export const SEED_VERSION = 11;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -82,7 +82,25 @@ export const SEED_CHANGELOG: {
     summary:
       "v2 step 1: カード有効化トグル (Card.enabled) を追加。dカード・PayPayカードをデフォルト無効化し Calculator 順位付けから除外。CardsScreen に「使う」列を追加。",
   },
+  {
+    version: 11,
+    date: "2026-05-12",
+    summary:
+      "v2 step 2: マスター由来カードプール。SEED_CARDS / ADDED_CARDS の id を MASTER_CARD_IDS として export し、これらの id を持つカードは removeCard で削除不可 (mergeFromSeed 復活するため)。CardsScreen に「公式」バッジを表示し、master カードの削除ボタンを非表示。ResponsiveTable に汎用 canDelete prop を追加。",
+  },
 ];
+
+// マスター由来カード (seed-data-cards.ts + auto-sync) の id 集合。
+// この集合に含まれる id を持つカードは:
+//   - removeCard で削除されない (次回 mergeFromSeed で復活するだけなので)
+//   - CardsScreen でマスターバッジ表示 + 削除ボタン非表示
+// ユーザーが addCard で追加したカード (UUID id) は集合に含まれない → 削除可能。
+export const MASTER_CARD_IDS = new Set<string>([
+  ...SEED_CARDS.map((c) => c.id),
+  ...ADDED_CARDS.map((c) => c.id),
+]);
+
+export const isMasterCard = (id: string): boolean => MASTER_CARD_IDS.has(id);
 
 // seed() の戻り値の型。状態保存時の SeedShape と一致する。
 type SeedReturn = {

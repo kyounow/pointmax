@@ -1293,3 +1293,21 @@ details summary {
 .card-enabled-toggle.is-off {
   color: var(--muted);
 }
+
+/* CardsScreen の「公式」マスターカードバッジ */
+.card-name-with-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-master-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}

@@ -21,6 +21,9 @@ type Props<T extends { id: string }> = {
   onSave?: (id: string, patch: Partial<T>) => void;
   // 削除時のコールバック (省略時は削除ボタン非表示)
   onDelete?: (id: string) => void;
+  // 行ごとの削除可否。省略時は onDelete が定義されていれば全行削除可能。
+  // 偽を返した行は削除ボタン非表示 (編集モード時の「削除」ボタンも、view モードの onSave 無しケースの「削除」ボタンも両方に適用)。
+  canDelete?: (row: T) => boolean;
   // 行ごとの追加アクション (削除以外、view/edit 両方で表示)
   extraActions?: (row: T) => ReactNode;
   // 全行が編集不可なら true (操作列が出ない)
@@ -35,6 +38,7 @@ export function ResponsiveTable<T extends { id: string }>({
   columns,
   onSave,
   onDelete,
+  canDelete,
   extraActions,
   readOnly,
   empty = "まだありません",
@@ -88,6 +92,7 @@ export function ResponsiveTable<T extends { id: string }>({
           {rows.map((row) => {
             const isEditing = editingId === row.id;
             const display = isEditing && draft ? draft : row;
+            const deletable = !canDelete || canDelete(display);
             return (
               <tr key={row.id} className={isEditing ? "row-editing" : ""}>
                 {columns.map((c) => (
@@ -111,7 +116,7 @@ export function ResponsiveTable<T extends { id: string }>({
                             保存
                           </button>
                           <button onClick={cancelEdit}>キャンセル</button>
-                          {onDelete && (
+                          {onDelete && deletable && (
                             <button
                               className="danger"
                               onClick={() => {
@@ -132,7 +137,7 @@ export function ResponsiveTable<T extends { id: string }>({
                             </button>
                           )}
                           {extraActions && extraActions(row)}
-                          {!onSave && onDelete && (
+                          {!onSave && onDelete && deletable && (
                             <button
                               className="danger"
                               onClick={() => onDelete(row.id)}
