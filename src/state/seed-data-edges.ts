@@ -1,0 +1,307 @@
+// 通貨間の交換レート (1 単位あたり)。
+// 計算: bestPath.ts が Bellman-Ford 派生アルゴリズムで最大積パスを探索する。
+// 実在の公開コースのみ登録 (各社公式情報・JAL/ANA 公式パートナーリスト 等)。
+//
+// 編集時のガイド:
+//   - fromCurrencyId / toCurrencyId は seed-data-currencies.ts に存在する id
+//   - rate: from 1 単位 → to 何単位か (例: 2pt → 1マイル なら rate=0.5)
+//   - 双方向交換は 2 件のエッジ (例: v-to-jrkyupo + jrkyupo-to-v)
+//   - 最低交換単位や上限は計算には反映していない (notes に記載のみ)
+import type { ConversionEdge } from "../domain/types";
+
+export const SEED_EDGES: ConversionEdge[] = [
+  // ============ 楽天ポイント ============
+  {
+    id: "rakuten-to-ana",
+    fromCurrencyId: "rakuten-pt",
+    toCurrencyId: "ana-mile",
+    rate: 0.5,
+    notes: "2pt → 1マイル",
+  },
+  {
+    id: "rakuten-to-edy",
+    fromCurrencyId: "rakuten-pt",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes: "1pt → 1円分のEdy",
+  },
+  {
+    id: "rakuten-to-jal",
+    fromCurrencyId: "rakuten-pt",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    notes: "2pt → 1マイル (50pt以上、月20,000pt上限)",
+  },
+
+  // ============ Vポイント ============
+  {
+    id: "v-to-ana",
+    fromCurrencyId: "v-pt",
+    toCurrencyId: "ana-mile",
+    rate: 0.5,
+    notes: "2pt → 1マイル",
+  },
+  {
+    id: "v-to-edy",
+    fromCurrencyId: "v-pt",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes: "VポイントPay/SBI証券積立/iDキャッシュバック等で 1pt=1円相当",
+  },
+  {
+    id: "v-to-waon",
+    fromCurrencyId: "v-pt",
+    toCurrencyId: "waon-pt",
+    rate: 1,
+    notes:
+      "1Vポイント = 1WAON POINT (等価交換)。Vポイント→JALマイルへの実用ルート",
+  },
+  {
+    id: "v-to-jrkyupo",
+    fromCurrencyId: "v-pt",
+    toCurrencyId: "jrkyupo",
+    rate: 1,
+    notes: "500Vポイント → 500JRキューポ (双方向, 500pt単位)",
+  },
+  {
+    id: "jrkyupo-to-v",
+    fromCurrencyId: "jrkyupo",
+    toCurrencyId: "v-pt",
+    rate: 1,
+    notes: "500JRキューポ → 500Vポイント (双方向, 500pt単位)",
+  },
+
+  // ============ 永久不滅ポイント (セゾン) ============
+  {
+    id: "eikyu-to-ana",
+    fromCurrencyId: "eikyu",
+    toCurrencyId: "ana-mile",
+    rate: 3,
+    notes: "200pt → 600マイル",
+  },
+  {
+    id: "eikyu-to-jal",
+    fromCurrencyId: "eikyu",
+    toCurrencyId: "jal-mile",
+    rate: 2.5,
+    notes: "200pt → 500マイル",
+  },
+  {
+    id: "eikyu-to-d",
+    fromCurrencyId: "eikyu",
+    toCurrencyId: "d-pt",
+    rate: 5,
+    notes: "200pt → 1000dポイント",
+  },
+  {
+    id: "eikyu-to-rakuten",
+    fromCurrencyId: "eikyu",
+    toCurrencyId: "rakuten-pt",
+    rate: 4.5,
+    notes: "200pt → 900楽天ポイント",
+  },
+  {
+    id: "eikyu-to-amazon",
+    fromCurrencyId: "eikyu",
+    toCurrencyId: "amazon-pt",
+    rate: 5,
+    notes: "200pt → 1000円分Amazonギフト券",
+  },
+  {
+    id: "eikyu-to-edy",
+    fromCurrencyId: "eikyu",
+    toCurrencyId: "edy",
+    rate: 4.5,
+    notes: "永久不滅ウォレット 100pt=450円相当",
+  },
+
+  // ============ dポイント ============
+  {
+    id: "d-to-jal",
+    fromCurrencyId: "d-pt",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    notes: "5000pt → 2500マイル",
+  },
+  {
+    id: "d-to-edy",
+    fromCurrencyId: "d-pt",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes: "d払い・店頭利用で 1pt=1円相当",
+  },
+
+  // ============ JRE POINT ============
+  {
+    id: "jre-to-jal",
+    fromCurrencyId: "jre",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    notes: "1500pt → 750マイル",
+  },
+  {
+    id: "jre-to-edy",
+    fromCurrencyId: "jre",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes: "Suicaチャージ 1pt=1円相当 (Edyと同等の現金相当として登録)",
+  },
+
+  // ============ WAON POINT → JALマイル ============
+  {
+    id: "waon-to-jal",
+    fromCurrencyId: "waon-pt",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    notes: "2WAON = 1マイル (50%還元)",
+  },
+
+  // ============ クレカ・ホテル系プログラム ============
+  // エポスポイント (エポスカードで貯まる)
+  {
+    id: "epos-to-jal",
+    fromCurrencyId: "epos",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    notes: "1,000pt = 500マイル (500pt単位)",
+  },
+  {
+    id: "epos-to-ana",
+    fromCurrencyId: "epos",
+    toCurrencyId: "ana-mile",
+    rate: 0.5,
+    notes: "1,000pt = 500マイル",
+  },
+
+  // AMEXメンバーシップ・リワード (AMEXプロパーカードで貯まる)
+  {
+    id: "amex-to-jal",
+    fromCurrencyId: "amex-mr",
+    toCurrencyId: "jal-mile",
+    rate: 0.4,
+    notes:
+      "メンバーシップ・リワード・プラス加入時 2,500pt = 1,000マイル (通常 3,000:1,000)",
+  },
+  {
+    id: "amex-to-ana",
+    fromCurrencyId: "amex-mr",
+    toCurrencyId: "ana-mile",
+    rate: 0.8,
+    notes: "MRプラス + ANAコース加入時 1,250pt = 1,000マイル",
+  },
+
+  // Marriott Bonvoy (Marriott系ホテル・SPGアメックス等で貯まる)
+  {
+    id: "marriott-to-jal",
+    fromCurrencyId: "marriott",
+    toCurrencyId: "jal-mile",
+    rate: 0.333,
+    notes: "3pt = 1マイル。60,000pt一括で +5,000ボーナス (実質 60k:25k)",
+  },
+  {
+    id: "marriott-to-ana",
+    fromCurrencyId: "marriott",
+    toCurrencyId: "ana-mile",
+    rate: 0.333,
+    notes: "3pt = 1マイル。60,000pt一括で +5,000ボーナス",
+  },
+
+  // ALL Accor (Accor系ホテルで貯まる)
+  {
+    id: "accor-to-jal",
+    fromCurrencyId: "accor",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    notes: "4,000pt = 2,000マイル (2:1)",
+  },
+  {
+    id: "jal-to-accor",
+    fromCurrencyId: "jal-mile",
+    toCurrencyId: "accor",
+    rate: 0.4,
+    notes: "10,000マイル = 4,000pt (5,000マイル単位 = 1,000pt も可)",
+  },
+
+  // ============ JALマイル / ANAマイル → ポイント・現金相当 ============
+  // マイル消費の選択肢として現金/ポイントへ流せる経路
+  {
+    id: "jal-to-d",
+    fromCurrencyId: "jal-mile",
+    toCurrencyId: "d-pt",
+    rate: 1,
+    notes: "10,000マイル → 10,000dポイント",
+  },
+  {
+    id: "jal-to-edy",
+    fromCurrencyId: "jal-mile",
+    toCurrencyId: "edy",
+    rate: 1.5,
+    notes: "eJALポイント等のまとめ交換で 1マイル≒1.5円相当",
+  },
+  {
+    id: "ana-to-v",
+    fromCurrencyId: "ana-mile",
+    toCurrencyId: "v-pt",
+    rate: 1,
+    notes: "10,000マイル → 10,000Vポイント (旧Tポイント提携)",
+  },
+  {
+    id: "ana-to-edy",
+    fromCurrencyId: "ana-mile",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes: "ANA SKYコインで 1マイル=1円相当",
+  },
+
+  // ============ Pontaポイント ============
+  {
+    id: "ponta-to-jal",
+    fromCurrencyId: "ponta-pt",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    notes: "2pt → 1マイル",
+  },
+  {
+    id: "ponta-to-d",
+    fromCurrencyId: "ponta-pt",
+    toCurrencyId: "d-pt",
+    rate: 1,
+    notes: "Pontaポイント ⇄ dポイント 1:1 相互交換",
+  },
+  {
+    id: "d-to-ponta",
+    fromCurrencyId: "d-pt",
+    toCurrencyId: "ponta-pt",
+    rate: 1,
+    notes: "dポイント ⇄ Pontaポイント 1:1 相互交換",
+  },
+  {
+    id: "ponta-to-edy",
+    fromCurrencyId: "ponta-pt",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes: "ローソン店頭利用等で 1pt=1円相当",
+  },
+
+  // ============ WAONポイント ============
+  {
+    id: "waon-to-edy",
+    fromCurrencyId: "waon-pt",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes:
+      "WAON電子マネーへのチャージ 1pt=1円分 (Edyと同等の現金相当として登録)",
+  },
+
+  // ============ nanacoポイント ============
+  // nanaco POINT は基本セブン&iグループ内消費。
+  // 1pt = 1円分の電子マネーnanacoへ交換可能なので、現金相当として edy に同質マッピング
+  {
+    id: "nanaco-to-edy",
+    fromCurrencyId: "nanaco-pt",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes:
+      "電子マネーnanacoへのチャージ 1pt=1円分 (Edyと同等の現金相当として登録)",
+  },
+];

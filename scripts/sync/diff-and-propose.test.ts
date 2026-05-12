@@ -116,25 +116,12 @@ describe("proposeStores", () => {
     expect(ps[0].reviewReason).toBe("lowConfidence");
   });
 
-  it("Policy B: 金融カテゴリは excludedCategory", () => {
-    const data = baseSource({
-      stores: [
-        {
-          storeId: "some-bank",
-          name: "Some銀行",
-          category: "金融",
-          evidenceQuote: "明示",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeStores(data, emptySeed);
-    expect(ps[0].reviewReason).toBe("excludedCategory");
-  });
-
-  it("Policy B: ギャンブル/保険/医療/葬儀/ネットサービス/サービス/その他 すべて除外", () => {
+  // 「Policy B: 金融カテゴリ excludedCategory」は単体ケース。
+  // 下のパラメタライズドテスト (金融 / ギャンブル / 保険 / 医療 / 葬儀 / ネット
+  // サービス / サービス / その他 / 不動産・住宅) で全カテゴリを網羅するため統合。
+  it("Policy B: 金融/ギャンブル/保険/医療/葬儀/ネットサービス/サービス/その他/不動産・住宅 すべて除外", () => {
     const excluded = [
+      "金融",
       "ギャンブル",
       "保険",
       "医療",

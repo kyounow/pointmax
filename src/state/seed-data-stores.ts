@@ -1,0 +1,412 @@
+// 店舗まわりのデータ:
+//   - SEED_STORES         : お店マスタ (category 必須、preferredPointCardIds 任意)
+//   - SEED_STORE_RULES    : クレカ × 店舗 (or カテゴリ) で還元率が変わるルール
+//   - SEED_LOYALTY_RULES  : 店舗 × ポイントカード提示の還元率 (二重取り)
+//
+// 編集時のガイド:
+//   - cardId / pointCardId は seed-data-cards.ts に存在する id を参照
+//   - storeId / category は SEED_STORES と整合させる
+//   - paymentAppId は seed-data-cards.ts の SEED_PAYMENT_APPS の id を参照
+//   - 「JAL特約店」カテゴリは多数の店舗が属するため、SEED_STORE_RULES では
+//     category 指定で 1 ルール → 全 JAL特約店に適用される
+import type { LoyaltyRule, Store, StoreRule } from "../domain/types";
+
+export const SEED_STORES: Store[] = [
+  // ネット通販
+  { id: "rakuten-ichiba", name: "楽天市場", category: "ネット通販" },
+  { id: "amazon", name: "Amazon", category: "ネット通販" },
+  // コンビニ
+  {
+    id: "conv-7eleven",
+    name: "セブン-イレブン",
+    category: "コンビニ",
+    preferredPointCardIds: ["nanaco-card"],
+  },
+  {
+    id: "conv-lawson",
+    name: "ローソン",
+    category: "コンビニ",
+    preferredPointCardIds: ["ponta-card"],
+  },
+  {
+    id: "conv-familymart",
+    name: "ファミリーマート",
+    category: "コンビニ",
+    preferredPointCardIds: ["vpoint-card"],
+  },
+  {
+    id: "conv-ministop",
+    name: "ミニストップ",
+    category: "コンビニ",
+    preferredPointCardIds: ["waon-card"],
+  },
+  // 飲食 (三井住友ゴールド7%対象が多め)
+  { id: "mcdonalds", name: "マクドナルド", category: "飲食" },
+  { id: "sukiya", name: "すき家", category: "飲食" },
+  { id: "saizeriya", name: "サイゼリヤ", category: "飲食" },
+  { id: "gusto", name: "ガスト", category: "飲食" },
+  { id: "doutor", name: "ドトール", category: "飲食" },
+  { id: "sushiro", name: "スシロー", category: "飲食" },
+  { id: "starbucks", name: "スターバックス", category: "飲食" },
+  // 交通 / 電子マネー
+  { id: "suica-charge", name: "Suicaチャージ", category: "電子マネー" },
+  {
+    id: "ekinet-shinkansen",
+    name: "えきねっと(新幹線eチケット)",
+    category: "交通",
+  },
+  {
+    id: "ekinet-zairaisen",
+    name: "えきねっと(在来線特急)",
+    category: "交通",
+  },
+  // JAL特約店 (JALカードSuicaで2%還元になる店舗群)
+  { id: "eneos", name: "ENEOS", category: "JAL特約店" },
+  { id: "idemitsu", name: "出光", category: "JAL特約店" },
+  { id: "welcia", name: "ウエルシア", category: "JAL特約店" },
+  { id: "matsukiyo", name: "マツモトキヨシ", category: "JAL特約店" },
+  { id: "kinokuniya", name: "紀伊國屋書店", category: "JAL特約店" },
+  { id: "aeon", name: "イオン", category: "JAL特約店" },
+  { id: "daimaru-matsuzakaya", name: "大丸・松坂屋", category: "JAL特約店" },
+  { id: "muji", name: "無印良品 (一部店舗)", category: "JAL特約店" },
+  { id: "uniqlo", name: "ユニクロ (一部店舗)", category: "JAL特約店" },
+  { id: "royal-host", name: "ロイヤルホスト", category: "JAL特約店" },
+  { id: "tsuruha", name: "ツルハドラッグ", category: "JAL特約店" },
+  // 百貨店・家電量販店・ドラッグストア (主にdポイント加盟)
+  { id: "takashimaya", name: "高島屋", category: "百貨店" },
+  { id: "nojima", name: "ノジマ", category: "家電量販店" },
+  { id: "cocokara", name: "ココカラファイン", category: "ドラッグストア" },
+  { id: "seiyu", name: "西友", category: "スーパー" },
+  // 汎用 (デフォルト選択用。基本還元率を確認したい時に使う)
+  { id: "general", name: "一般店舗 (規定還元)", category: "汎用" },
+];
+
+// クレカ × 店舗 (or カテゴリ) の還元ルール。
+// 優先順位: 直接ルール (storeId) > カテゴリルール (category) > カードの defaultRate
+// paymentAppId 指定があれば、その決済方法選択時のみ適用される。
+// validFrom / validTo はキャンペーン期間限定ルールで使用 (任意)。
+export const SEED_STORE_RULES: StoreRule[] = [
+  // 楽天カード × 楽天市場 (通常1% + SPU基本2% = 3%)
+  {
+    id: "rule-rakuten-ichiba",
+    cardId: "rakuten-card",
+    storeId: "rakuten-ichiba",
+    rate: 0.03,
+    currencyId: "rakuten-pt",
+    notes: "通常+SPU基本分。SPU上乗せは別途",
+  },
+  // 三井住友ゴールド(NL) × タッチ決済対象コンビニ・飲食 (7%)
+  // ファミマは7%対象外なので別の還元率
+  {
+    id: "rule-smbc-7eleven",
+    cardId: "smbc-v",
+    storeId: "conv-7eleven",
+    paymentAppId: "pa-visa-touch",
+    rate: 0.07,
+    currencyId: "v-pt",
+    notes: "Visaタッチ決済時(スマホタッチで+α)",
+  },
+  {
+    id: "rule-smbc-lawson",
+    cardId: "smbc-v",
+    storeId: "conv-lawson",
+    rate: 0.07,
+    currencyId: "v-pt",
+    paymentAppId: "pa-visa-touch",
+    notes: "Visaタッチ決済時",
+  },
+  {
+    id: "rule-smbc-mcdonalds",
+    cardId: "smbc-v",
+    storeId: "mcdonalds",
+    rate: 0.07,
+    currencyId: "v-pt",
+    paymentAppId: "pa-visa-touch",
+    notes: "Visaタッチ決済時",
+  },
+  {
+    id: "rule-smbc-ministop",
+    cardId: "smbc-v",
+    storeId: "conv-ministop",
+    rate: 0.07,
+    currencyId: "v-pt",
+    paymentAppId: "pa-visa-touch",
+    notes: "Visaタッチ決済時",
+  },
+  {
+    id: "rule-smbc-sukiya",
+    cardId: "smbc-v",
+    storeId: "sukiya",
+    rate: 0.07,
+    currencyId: "v-pt",
+    paymentAppId: "pa-visa-touch",
+    notes: "Visaタッチ決済時",
+  },
+  {
+    id: "rule-smbc-saizeriya",
+    cardId: "smbc-v",
+    storeId: "saizeriya",
+    rate: 0.07,
+    currencyId: "v-pt",
+    paymentAppId: "pa-visa-touch",
+    notes: "Visaタッチ決済時",
+  },
+  {
+    id: "rule-smbc-gusto",
+    cardId: "smbc-v",
+    storeId: "gusto",
+    rate: 0.07,
+    currencyId: "v-pt",
+    paymentAppId: "pa-visa-touch",
+    notes: "Visaタッチ決済時",
+  },
+  {
+    id: "rule-smbc-doutor",
+    cardId: "smbc-v",
+    storeId: "doutor",
+    rate: 0.07,
+    currencyId: "v-pt",
+    paymentAppId: "pa-visa-touch",
+    notes: "Visaタッチ決済時",
+  },
+  {
+    id: "rule-smbc-sushiro",
+    cardId: "smbc-v",
+    storeId: "sushiro",
+    rate: 0.07,
+    currencyId: "v-pt",
+    paymentAppId: "pa-visa-touch",
+    notes: "Visaタッチ決済時",
+  },
+  // JALカードSuica × Suicaチャージ: ビューカードでJRE POINT 1.5%
+  {
+    id: "rule-jal-suica-charge",
+    cardId: "jal-suica",
+    storeId: "suica-charge",
+    rate: 0.015,
+    currencyId: "jre",
+    notes: "ビューカード機能でJRE POINT付与",
+  },
+  // JALカードSuica CLUB-Aゴールド × えきねっと: グレード別優遇
+  // ※普通カードは別還元率なので、追加するなら別Cardとして登録してこのルールも別途
+  {
+    id: "rule-jal-suica-ekinet-shinkansen",
+    cardId: "jal-suica",
+    storeId: "ekinet-shinkansen",
+    rate: 0.08,
+    currencyId: "jre",
+    notes: "ビューカード会員 新幹線eチケット 8%還元",
+  },
+  {
+    id: "rule-jal-suica-ekinet-zairaisen",
+    cardId: "jal-suica",
+    storeId: "ekinet-zairaisen",
+    rate: 0.05,
+    currencyId: "jre",
+    notes: "ビューカード会員 在来線チケットレス特急券 5%還元",
+  },
+  // JALカードSuica × カテゴリ「JAL特約店」: 100円=2マイル (2%)
+  // ENEOS / 出光 / ウエルシア / 紀伊國屋 / イオン / 大丸松坂屋 / 無印 / ユニクロ / ロイヤルホスト
+  {
+    id: "rule-jal-suica-tokuyaku",
+    cardId: "jal-suica",
+    category: "JAL特約店",
+    rate: 0.02,
+    currencyId: "jal-mile",
+    notes:
+      "JAL CARD特約店 100円=2マイル (CLUB-Aゴールド・ショッピングマイルプレミアム込み)",
+  },
+  // JALカードSuica × ファミマ: 個別ルール (ファミマは category="コンビニ" のため上のカテゴリルールが当たらない)
+  {
+    id: "rule-jal-suica-familymart",
+    cardId: "jal-suica",
+    storeId: "conv-familymart",
+    rate: 0.02,
+    currencyId: "jal-mile",
+    notes: "JAL CARD特約店 100円=2マイル (ファミマは特約店個別ルール)",
+  },
+];
+
+// 店舗 × ポイントカードの提示還元 (二重取り用)。
+// クレカ決済とは別軸で、店頭提示で貯まる分。calculator では「ポイントカード併用ボーナス」として表示。
+export const SEED_LOYALTY_RULES: LoyaltyRule[] = [
+  // ====== dポイントカード ======
+  {
+    id: "loy-d-lawson",
+    storeId: "conv-lawson",
+    pointCardId: "d-pointcard",
+    rate: 0.005,
+    notes: "200円ごとに1pt",
+  },
+  {
+    id: "loy-d-familymart",
+    storeId: "conv-familymart",
+    pointCardId: "d-pointcard",
+    rate: 0.005,
+    notes: "200円ごとに1pt",
+  },
+  {
+    id: "loy-d-mcdonalds",
+    storeId: "mcdonalds",
+    pointCardId: "d-pointcard",
+    rate: 0.01,
+    notes: "100円(税込)ごとに1pt",
+  },
+  {
+    id: "loy-d-sukiya",
+    storeId: "sukiya",
+    pointCardId: "d-pointcard",
+    rate: 0.005,
+    notes: "200円ごとに1pt",
+  },
+  {
+    id: "loy-d-eneos",
+    storeId: "eneos",
+    pointCardId: "d-pointcard",
+    rate: 0.005,
+    notes: "ENEOS給油等で 200円1pt",
+  },
+  {
+    id: "loy-d-matsukiyo",
+    storeId: "matsukiyo",
+    pointCardId: "d-pointcard",
+    rate: 0.01,
+    notes: "100円(税抜)ごとに1pt",
+  },
+  {
+    id: "loy-d-gusto",
+    storeId: "gusto",
+    pointCardId: "d-pointcard",
+    rate: 0.005,
+    notes: "200円ごとに1pt (すかいらーくグループ)",
+  },
+  {
+    id: "loy-d-nojima",
+    storeId: "nojima",
+    pointCardId: "d-pointcard",
+    rate: 0.01,
+    notes: "100円ごとに1pt (家電購入時)",
+  },
+  {
+    id: "loy-d-takashimaya",
+    storeId: "takashimaya",
+    pointCardId: "d-pointcard",
+    rate: 0.005,
+    notes: "200円(税抜)ごとに1pt",
+  },
+  {
+    id: "loy-d-cocokara",
+    storeId: "cocokara",
+    pointCardId: "d-pointcard",
+    rate: 0.01,
+    notes: "100円(税抜)ごとに1pt",
+  },
+
+  // ====== 楽天ポイントカード ======
+  {
+    id: "loy-r-familymart",
+    storeId: "conv-familymart",
+    pointCardId: "rakuten-pointcard",
+    rate: 0.005,
+    notes: "200円ごとに1pt（提携状況は要確認）",
+  },
+  {
+    id: "loy-r-mcdonalds",
+    storeId: "mcdonalds",
+    pointCardId: "rakuten-pointcard",
+    rate: 0.01,
+    notes: "100円(税込)ごとに1pt",
+  },
+  {
+    id: "loy-r-doutor",
+    storeId: "doutor",
+    pointCardId: "rakuten-pointcard",
+    rate: 0.01,
+    notes: "100円(税込)ごとに1pt",
+  },
+  {
+    id: "loy-r-gusto",
+    storeId: "gusto",
+    pointCardId: "rakuten-pointcard",
+    rate: 0.005,
+    notes: "200円ごとに1pt（すかいらーくグループ）",
+  },
+  {
+    id: "loy-r-seiyu",
+    storeId: "seiyu",
+    pointCardId: "rakuten-pointcard",
+    rate: 0.005,
+    notes: "200円(税抜)ごとに1pt（毎週月・土はポイント増量日）",
+  },
+  {
+    id: "loy-r-tsuruha",
+    storeId: "tsuruha",
+    pointCardId: "rakuten-pointcard",
+    rate: 0.005,
+    notes: "200円(税抜)ごとに1pt（ツルハグループ）",
+  },
+
+  // ====== Pontaカード ======
+  {
+    id: "loy-p-lawson",
+    storeId: "conv-lawson",
+    pointCardId: "ponta-card",
+    rate: 0.005,
+    notes: "200円ごとに1pt",
+  },
+  {
+    id: "loy-p-sukiya",
+    storeId: "sukiya",
+    pointCardId: "ponta-card",
+    rate: 0.005,
+    notes: "200円ごとに1pt",
+  },
+  {
+    id: "loy-p-idemitsu",
+    storeId: "idemitsu",
+    pointCardId: "ponta-card",
+    rate: 0.005,
+    notes: "200円ごとに1pt（旧昭和シェル系）",
+  },
+
+  // ====== nanacoカード ======
+  {
+    id: "loy-n-7eleven",
+    storeId: "conv-7eleven",
+    pointCardId: "nanaco-card",
+    rate: 0.01,
+    notes: "100円(税抜)ごとに1pt（電子マネーnanaco支払い時）",
+  },
+
+  // ====== WAONカード ======
+  {
+    id: "loy-w-aeon",
+    storeId: "aeon",
+    pointCardId: "waon-card",
+    rate: 0.005,
+    notes: "200円ごとに1pt（お客さま感謝デーは別途5%OFF）",
+  },
+  {
+    id: "loy-w-ministop",
+    storeId: "conv-ministop",
+    pointCardId: "waon-card",
+    rate: 0.005,
+    notes: "200円ごとに1pt",
+  },
+
+  // ====== Vポイントカード（旧Tポイントカード） ======
+  {
+    id: "loy-v-familymart",
+    storeId: "conv-familymart",
+    pointCardId: "vpoint-card",
+    rate: 0.005,
+    notes: "200円ごとに1pt（旧Tポイント加盟店）",
+  },
+  {
+    id: "loy-v-welcia",
+    storeId: "welcia",
+    pointCardId: "vpoint-card",
+    rate: 0.005,
+    notes: "200円ごとに1pt（毎月20日のお客様感謝デーはポイントで1.5倍購入可）",
+  },
+];

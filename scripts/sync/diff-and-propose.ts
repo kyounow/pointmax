@@ -1,11 +1,13 @@
 // 全 sources/extracted/*.json を読み、現在の seed と突合して
-// sources/proposed-migrations.json を生成する。
+// sources/proposed-migrations.json を生成する CLI エントリポイント。
 //
 // 流れ:
 //   seed() + extracted/*.json
 //     ↓ propose<Entity>: addRecord / updateField / referenceChange を提案
+//        (個別ロジックは scripts/sync/propose-helpers.ts に分割)
+//     ↓ dedupeAcrossProposals: 同 run 内の同 name/id を idCollision に格下げ
 //     ↓ applyCategoryCap: stores の新規追加をカテゴリあたり N 件に制限 (Q2-C)
-//     ↓ classify: confidence × pp × ratio で auto / review を判定
+//     ↓ classify: reviewReason が無いものを autoApplicable へ
 //     ↓ ProposalReport を proposed-migrations.json に書き出し
 //
 // 使い方:
@@ -17,25 +19,30 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { seed, SEED_VERSION } from "../../src/state/seed";
-import { BLOCKED_STORE_IDS } from "../../src/state/seed-blocklist";
-import { resolveCategory } from "../../src/state/seed-category-aliases";
-import type { SeedShape } from "../../src/domain/mergeSeed";
-import {
-  CONFIDENCE_AUTO_THRESHOLD,
-  EXCLUDED_CATEGORIES,
-  computeConfidence,
-  judgeRateChange,
-} from "./types";
 import type {
   AddRecordProposal,
-  Evidence,
   ExtractedSource,
   Proposal,
   ProposalReport,
-  ReferenceChangeProposal,
-  ReviewReason,
-  UpdateFieldProposal,
 } from "./types";
+import {
+  proposeCards,
+  proposeCategoryRules,
+  proposeLoyaltyRules,
+  proposePaymentApps,
+  proposeStoreRules,
+  proposeStores,
+} from "./propose-helpers";
+
+// 再エクスポート (テスト互換性のため diff-and-propose 経由で参照される旧APIを温存)
+export {
+  proposeCards,
+  proposeCategoryRules,
+  proposeLoyaltyRules,
+  proposePaymentApps,
+  proposeStoreRules,
+  proposeStores,
+};
 
 // ───────────────────────────────────────────────────────────────
 // Paths / config
@@ -93,402 +100,6 @@ export function isFailedExtraction(d: ExtractedSource): boolean {
 }
 
 // ───────────────────────────────────────────────────────────────
-// Evidence の生成 (Extracted* の共通フィールドを抜く)
-// ───────────────────────────────────────────────────────────────
-
-function toEvidence(x: Evidence): Evidence {
-  return {
-    evidenceQuote: x.evidenceQuote,
-    evidenceUrl: x.evidenceUrl,
-    explicitness: x.explicitness,
-    ambiguity: x.ambiguity,
-  };
-}
-
-// ───────────────────────────────────────────────────────────────
-// Per-entity propose functions
-// ───────────────────────────────────────────────────────────────
-
-export function proposeStores(
-  data: ExtractedSource,
-  current: SeedShape,
-): Proposal[] {
-  if (!data.stores || data.stores.length === 0) return [];
-  const existingIds = new Set(current.stores.map((s) => s.id));
-  const existingNames = new Set(current.stores.map((s) => s.name));
-  const result: Proposal[] = [];
-
-  for (const s of data.stores) {
-    const evidence = toEvidence(s);
-    const confidence = computeConfidence(evidence);
-    // alias 適用: 旧名 (e.g., "鉄道・交通") は新名 ("交通") に正規化
-    const normalizedCategory = resolveCategory(s.category);
-    let reviewReason: ReviewReason | undefined;
-
-    // userBlocked: src/state/seed-blocklist.ts でユーザ除外指定の id
-    if (BLOCKED_STORE_IDS.has(s.storeId)) {
-      reviewReason = "userBlocked";
-    }
-    // Policy B: 対象外カテゴリは強制的に needsReview に
-    // (Gemini の scope 指示遵守が完璧でない場合の防御)
-    else if (
-      normalizedCategory &&
-      EXCLUDED_CATEGORIES.has(normalizedCategory)
-    ) {
-      reviewReason = "excludedCategory";
-    } else if (existingIds.has(s.storeId) || existingNames.has(s.name)) {
-      reviewReason = "idCollision";
-    } else if (confidence < CONFIDENCE_AUTO_THRESHOLD) {
-      reviewReason = "lowConfidence";
-    }
-
-    const prop: AddRecordProposal = {
-      type: "addRecord",
-      collection: "stores",
-      record: {
-        id: s.storeId,
-        name: s.name,
-        category: normalizedCategory,
-      },
-      sourceId: data.sourceId,
-      confidence,
-      evidence,
-      reviewReason,
-    };
-    result.push(prop);
-  }
-  return result;
-}
-
-export function proposeStoreRules(
-  data: ExtractedSource,
-  current: SeedShape,
-): Proposal[] {
-  if (!data.storeRules || data.storeRules.length === 0) return [];
-  const result: Proposal[] = [];
-  for (const r of data.storeRules) {
-    const evidence = toEvidence(r);
-    const confidence = computeConfidence(evidence);
-    const existing = current.rules.find(
-      (x) =>
-        x.cardId === r.cardId &&
-        x.storeId === r.storeId &&
-        x.paymentAppId === r.paymentAppId,
-    );
-
-    if (!existing) {
-      // 新規追加 (id は deterministic に生成して冪等性確保)
-      const reviewReason: ReviewReason | undefined =
-        confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined;
-      const ruleId = `rule-${r.cardId}-${r.storeId}${r.paymentAppId ? `-${r.paymentAppId}` : ""}`;
-      result.push({
-        type: "addRecord",
-        collection: "rules",
-        record: {
-          id: ruleId,
-          cardId: r.cardId,
-          storeId: r.storeId,
-          paymentAppId: r.paymentAppId,
-          rate: r.rate,
-          currencyId: r.currencyId,
-          monthlyCapAmountYen: r.monthlyCapAmountYen,
-          notes: r.notes,
-        },
-        sourceId: data.sourceId,
-        confidence,
-        evidence,
-        reviewReason,
-      });
-      continue;
-    }
-
-    // 既存あり: rate / currencyId のいずれかが変わっていれば提案
-    if (existing.rate !== r.rate) {
-      result.push(buildRateUpdate(existing.id, "rules", existing.rate, r.rate, data.sourceId, confidence, evidence));
-    }
-    if (existing.currencyId !== r.currencyId) {
-      result.push({
-        type: "referenceChange",
-        collection: "rules",
-        id: existing.id,
-        field: "currencyId",
-        from: existing.currencyId,
-        to: r.currencyId,
-        sourceId: data.sourceId,
-        confidence,
-        evidence,
-        reviewReason: "referenceChange",
-      } satisfies ReferenceChangeProposal);
-    }
-  }
-  return result;
-}
-
-export function proposeCategoryRules(
-  data: ExtractedSource,
-  current: SeedShape,
-): Proposal[] {
-  if (!data.categoryRules || data.categoryRules.length === 0) return [];
-  const result: Proposal[] = [];
-  for (const r of data.categoryRules) {
-    const evidence = toEvidence(r);
-    const confidence = computeConfidence(evidence);
-    const existing = current.rules.find(
-      (x) =>
-        x.cardId === r.cardId &&
-        x.category === r.category &&
-        x.paymentAppId === r.paymentAppId &&
-        !x.storeId,
-    );
-    if (!existing) {
-      const catRuleId = `catrule-${r.cardId}-${r.category}${r.paymentAppId ? `-${r.paymentAppId}` : ""}`;
-      result.push({
-        type: "addRecord",
-        collection: "rules",
-        record: {
-          id: catRuleId,
-          cardId: r.cardId,
-          category: r.category,
-          paymentAppId: r.paymentAppId,
-          rate: r.rate,
-          currencyId: r.currencyId,
-          monthlyCapAmountYen: r.monthlyCapAmountYen,
-          notes: r.notes,
-        },
-        sourceId: data.sourceId,
-        confidence,
-        evidence,
-        reviewReason:
-          confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
-      });
-      continue;
-    }
-    if (existing.rate !== r.rate) {
-      result.push(buildRateUpdate(existing.id, "rules", existing.rate, r.rate, data.sourceId, confidence, evidence));
-    }
-    if (existing.currencyId !== r.currencyId) {
-      result.push({
-        type: "referenceChange",
-        collection: "rules",
-        id: existing.id,
-        field: "currencyId",
-        from: existing.currencyId,
-        to: r.currencyId,
-        sourceId: data.sourceId,
-        confidence,
-        evidence,
-        reviewReason: "referenceChange",
-      } satisfies ReferenceChangeProposal);
-    }
-  }
-  return result;
-}
-
-export function proposeCards(
-  data: ExtractedSource,
-  current: SeedShape,
-): Proposal[] {
-  if (!data.cards || data.cards.length === 0) return [];
-  const result: Proposal[] = [];
-  for (const c of data.cards) {
-    const evidence = toEvidence(c);
-    const confidence = computeConfidence(evidence);
-    const existing = current.cards.find((x) => x.id === c.cardId);
-    if (!existing) {
-      // 既存にない cardId が抽出された (通常想定外)
-      result.push({
-        type: "addRecord",
-        collection: "cards",
-        record: {
-          id: c.cardId,
-          name: c.name ?? c.cardId,
-          grade: c.grade,
-          defaultRate: c.defaultRate ?? 0,
-          defaultCurrencyId: c.defaultCurrencyId ?? "",
-        },
-        sourceId: data.sourceId,
-        confidence,
-        evidence,
-        reviewReason: "idCollision", // 新規カードは要レビュー
-      });
-      continue;
-    }
-    if (c.defaultRate != null && existing.defaultRate !== c.defaultRate) {
-      result.push(
-        buildRateUpdate(
-          existing.id,
-          "cards",
-          existing.defaultRate,
-          c.defaultRate,
-          data.sourceId,
-          confidence,
-          evidence,
-          "defaultRate",
-        ),
-      );
-    }
-    if (c.defaultCurrencyId && existing.defaultCurrencyId !== c.defaultCurrencyId) {
-      result.push({
-        type: "referenceChange",
-        collection: "cards",
-        id: existing.id,
-        field: "defaultCurrencyId",
-        from: existing.defaultCurrencyId,
-        to: c.defaultCurrencyId,
-        sourceId: data.sourceId,
-        confidence,
-        evidence,
-        reviewReason: "referenceChange",
-      } satisfies ReferenceChangeProposal);
-    }
-  }
-  return result;
-}
-
-export function proposeLoyaltyRules(
-  data: ExtractedSource,
-  current: SeedShape,
-): Proposal[] {
-  if (!data.loyaltyRules || data.loyaltyRules.length === 0) return [];
-  const result: Proposal[] = [];
-  for (const r of data.loyaltyRules) {
-    const evidence = toEvidence(r);
-    const confidence = computeConfidence(evidence);
-    const existing = current.loyaltyRules.find(
-      (x) => x.storeId === r.storeId && x.pointCardId === r.pointCardId,
-    );
-    if (!existing) {
-      const loyaltyId = `loy-${r.pointCardId}-${r.storeId}`;
-      result.push({
-        type: "addRecord",
-        collection: "loyaltyRules",
-        record: {
-          id: loyaltyId,
-          storeId: r.storeId,
-          pointCardId: r.pointCardId,
-          rate: r.rate,
-          currencyId: r.currencyId,
-          notes: r.notes,
-        },
-        sourceId: data.sourceId,
-        confidence,
-        evidence,
-        reviewReason:
-          confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
-      });
-      continue;
-    }
-    if (existing.rate !== r.rate) {
-      result.push(buildRateUpdate(existing.id, "loyaltyRules", existing.rate, r.rate, data.sourceId, confidence, evidence));
-    }
-  }
-  return result;
-}
-
-export function proposePaymentApps(
-  data: ExtractedSource,
-  current: SeedShape,
-): Proposal[] {
-  if (!data.paymentApps || data.paymentApps.length === 0) return [];
-  const result: Proposal[] = [];
-  for (const a of data.paymentApps) {
-    const evidence = toEvidence(a);
-    const confidence = computeConfidence(evidence);
-    const existing = current.paymentApps.find((x) => x.id === a.paymentAppId);
-    if (!existing) {
-      result.push({
-        type: "addRecord",
-        collection: "paymentApps",
-        record: {
-          id: a.paymentAppId,
-          name: a.name ?? a.paymentAppId,
-          chargeBased: a.chargeBased,
-          defaultBonusRate: a.defaultBonusRate,
-          defaultBonusCurrencyId: a.defaultBonusCurrencyId,
-          compatibleCardIds: a.compatibleCardIds,
-        },
-        sourceId: data.sourceId,
-        confidence,
-        evidence,
-        reviewReason: "idCollision",
-      });
-      continue;
-    }
-    if (a.defaultBonusRate != null && existing.defaultBonusRate !== a.defaultBonusRate) {
-      result.push(
-        buildRateUpdate(
-          existing.id,
-          "paymentApps",
-          existing.defaultBonusRate ?? 0,
-          a.defaultBonusRate,
-          data.sourceId,
-          confidence,
-          evidence,
-          "defaultBonusRate",
-        ),
-      );
-    }
-    if (a.chargeBased != null && existing.chargeBased !== a.chargeBased) {
-      // boolean 変更は構造変更扱い → reviewReason
-      result.push({
-        type: "updateField",
-        collection: "paymentApps",
-        id: existing.id,
-        field: "chargeBased",
-        from: existing.chargeBased,
-        to: a.chargeBased,
-        sourceId: data.sourceId,
-        confidence,
-        evidence,
-        reviewReason: "referenceChange", // 構造変更扱いで人間レビュー
-      } satisfies UpdateFieldProposal);
-    }
-  }
-  return result;
-}
-
-// ───────────────────────────────────────────────────────────────
-// 共通: rate 変更の autoMergeable 判定
-// ───────────────────────────────────────────────────────────────
-
-function buildRateUpdate(
-  id: string,
-  collection: UpdateFieldProposal["collection"],
-  from: number,
-  to: number,
-  sourceId: string,
-  confidence: number,
-  evidence: Evidence,
-  field: string = "rate",
-): UpdateFieldProposal {
-  const judge = judgeRateChange(from, to);
-  let reviewReason: ReviewReason | undefined;
-  if (confidence < CONFIDENCE_AUTO_THRESHOLD) {
-    reviewReason = "lowConfidence";
-  } else if (!judge.withinPp) {
-    reviewReason = "rateDeltaTooLarge";
-  } else if (!judge.withinRatio) {
-    reviewReason = "rateRatioOutOfRange";
-  }
-  return {
-    type: "updateField",
-    collection,
-    id,
-    field,
-    from,
-    to,
-    sourceId,
-    confidence,
-    evidence,
-    reviewReason,
-  };
-}
-
-// ───────────────────────────────────────────────────────────────
-// Category cap (Q2-C: 大量の stores 新規追加を categoryあたり N 件に絞る)
-// ───────────────────────────────────────────────────────────────
-
-// ───────────────────────────────────────────────────────────────
 // Within-run dedup (Phase C MUST-fix)
 // ───────────────────────────────────────────────────────────────
 // 同一 propose 実行内で複数 source から「同じ name の store」が提案される
@@ -533,6 +144,10 @@ export function dedupeAcrossProposals(proposals: Proposal[]): {
   return { proposals: out, collisions };
 }
 
+// ───────────────────────────────────────────────────────────────
+// Category cap (Q2-C: 大量の stores 新規追加を categoryあたり N 件に絞る)
+// ───────────────────────────────────────────────────────────────
+
 export function applyCategoryCap(
   proposals: Proposal[],
   cap: number,
@@ -560,7 +175,8 @@ export function applyCategoryCap(
 
   for (const p of sortable) {
     const cat =
-      (((p as AddRecordProposal).record.category as string | undefined) ?? "(未分類)");
+      ((p as AddRecordProposal).record.category as string | undefined) ??
+      "(未分類)";
     const n = (counts.get(cat) ?? 0) + 1;
     counts.set(cat, n);
     if (n <= cap) {
@@ -602,7 +218,7 @@ function main(): void {
   }
 
   // within-run dedup: 異なるソースから同 name/id の store が提案された場合、
-  // 2 件目以降は idCollision で要レビューに格下げする (MUST-fix for v1)
+  // 2 件目以降は idCollision で要レビューに格下げする
   const dedup = dedupeAcrossProposals(allProposals);
   if (dedup.collisions > 0) {
     console.log(
@@ -622,11 +238,13 @@ function main(): void {
       const byCat = new Map<string, number>();
       for (const d of deferred) {
         const cat =
-          (((d as AddRecordProposal).record.category as string | undefined) ??
-            "(未分類)");
+          ((d as AddRecordProposal).record.category as string | undefined) ??
+          "(未分類)";
         byCat.set(cat, (byCat.get(cat) ?? 0) + 1);
       }
-      console.log(`📐 category cap = ${cap}/cat: ${deferred.length} 件を deferred`);
+      console.log(
+        `📐 category cap = ${cap}/cat: ${deferred.length} 件を deferred`,
+      );
       for (const [cat, n] of byCat.entries()) {
         console.log(`     ${cat}: ${n} 件先送り`);
       }
@@ -662,7 +280,8 @@ function main(): void {
 }
 
 // CLI として実行された場合のみ main を呼ぶ (テストからの import 時は呼ばない)
-const isMain = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+const isMain =
+  process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 if (isMain) {
   try {
     main();

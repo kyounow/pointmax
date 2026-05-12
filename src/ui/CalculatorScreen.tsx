@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { rankCards } from "../domain/rankCards";
 import { cardLabel } from "../domain/cardLabel";
-import { formatRatio, styleOf } from "../domain/currencyKind";
-import type { Currency } from "../domain/types";
-import { CurrencyIcon } from "./CurrencyIcon";
+import { formatRatio } from "../domain/currencyKind";
+import { formatNum } from "../domain/formatNum";
 import { groupBy } from "../domain/groupBy";
+import { NodePill } from "./NodePill";
 
 export function CalculatorScreen() {
   const cards = useStore((s) => s.cards);
@@ -539,27 +539,3 @@ export function CalculatorScreen() {
   );
 }
 
-function NodePill({ currency }: { currency: Currency | undefined }) {
-  if (!currency) return <span className="node">?</span>;
-  const s = styleOf(currency.kind);
-  return (
-    <span
-      className="node node-with-icon"
-      style={{
-        background: s.bg,
-        color: s.text,
-        border: `1.5px solid ${s.border}`,
-      }}
-    >
-      <CurrencyIcon currency={currency} size={20} />
-      <span>{currency.name}</span>
-    </span>
-  );
-}
-
-function formatNum(n: number): string {
-  if (!Number.isFinite(n)) return "-";
-  if (Math.abs(n) >= 1)
-    return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
-}
