@@ -18,6 +18,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { seed, SEED_VERSION } from "../../src/state/seed";
 import { BLOCKED_STORE_IDS } from "../../src/state/seed-blocklist";
+import { resolveCategory } from "../../src/state/seed-category-aliases";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 import {
   CONFIDENCE_AUTO_THRESHOLD,
@@ -120,6 +121,8 @@ export function proposeStores(
   for (const s of data.stores) {
     const evidence = toEvidence(s);
     const confidence = computeConfidence(evidence);
+    // alias 適用: 旧名 (e.g., "鉄道・交通") は新名 ("交通") に正規化
+    const normalizedCategory = resolveCategory(s.category);
     let reviewReason: ReviewReason | undefined;
 
     // userBlocked: src/state/seed-blocklist.ts でユーザ除外指定の id
@@ -128,7 +131,10 @@ export function proposeStores(
     }
     // Policy B: 対象外カテゴリは強制的に needsReview に
     // (Gemini の scope 指示遵守が完璧でない場合の防御)
-    else if (s.category && EXCLUDED_CATEGORIES.has(s.category)) {
+    else if (
+      normalizedCategory &&
+      EXCLUDED_CATEGORIES.has(normalizedCategory)
+    ) {
       reviewReason = "excludedCategory";
     } else if (existingIds.has(s.storeId) || existingNames.has(s.name)) {
       reviewReason = "idCollision";
@@ -142,7 +148,7 @@ export function proposeStores(
       record: {
         id: s.storeId,
         name: s.name,
-        category: s.category,
+        category: normalizedCategory,
       },
       sourceId: data.sourceId,
       confidence,

@@ -197,6 +197,37 @@ describe("proposeStores", () => {
     expect(ps[0].reviewReason).toBe("userBlocked");
   });
 
+  it("category alias: 全部の旧名が新名に正規化される", () => {
+    const cases: Array<[string, string]> = [
+      ["鉄道・交通", "交通"],
+      ["本・電子書籍・新聞", "書店"],
+      ["電子書籍", "書店"],
+      ["書籍/ゲーム", "書店"],
+      ["ネット買取", "買取"],
+      ["リサイクル/買取", "買取"],
+      ["エンターテイメント", "エンタメ・チケット"],
+    ];
+    for (const [oldCat, newCat] of cases) {
+      const data = baseSource({
+        stores: [
+          {
+            storeId: `test-${oldCat}`,
+            name: `テスト ${oldCat}`,
+            category: oldCat,
+            evidenceQuote: "x",
+            explicitness: 0.95,
+            ambiguity: 0.05,
+          },
+        ],
+      });
+      const ps = proposeStores(data, emptySeed);
+      expect(
+        (ps[0] as { record: { category: string } }).record.category,
+        oldCat,
+      ).toBe(newCat);
+    }
+  });
+
   it("userBlocked は excludedCategory より優先 (順序確認)", () => {
     // blocked かつ excluded カテゴリ
     const data = baseSource({

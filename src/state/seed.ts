@@ -16,11 +16,12 @@ import {
   ADDED_STORES,
 } from "./seed-additions";
 import { BLOCKED_STORE_IDS } from "./seed-blocklist";
+import { resolveCategory } from "./seed-category-aliases";
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開。v1.0 までに各バージョンの差分を積み上げる。
-export const SEED_VERSION = 5;
+export const SEED_VERSION = 6;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -279,17 +280,17 @@ export const seed = (): {
     { id: "doutor", name: "ドトール", category: "飲食" },
     { id: "sushiro", name: "スシロー", category: "飲食" },
     { id: "starbucks", name: "スターバックス", category: "飲食" },
-    // 鉄道・交通 / 電子マネー
+    // 交通 / 電子マネー
     { id: "suica-charge", name: "Suicaチャージ", category: "電子マネー" },
     {
       id: "ekinet-shinkansen",
       name: "えきねっと(新幹線eチケット)",
-      category: "鉄道・交通",
+      category: "交通",
     },
     {
       id: "ekinet-zairaisen",
       name: "えきねっと(在来線特急)",
-      category: "鉄道・交通",
+      category: "交通",
     },
     // JAL特約店 (JALカードSuicaで2%還元になる店舗群)
     { id: "eneos", name: "ENEOS", category: "JAL特約店" },
@@ -1094,7 +1095,10 @@ export const seed = (): {
       ...stores,
       ...ADDED_STORES.filter(
         (s) => !addedStoreIds.has(s.id) && !BLOCKED_STORE_IDS.has(s.id),
-      ),
+      ).map((s) => ({
+        ...s,
+        category: resolveCategory(s.category),
+      })),
     ],
     rules: [
       ...rules,
