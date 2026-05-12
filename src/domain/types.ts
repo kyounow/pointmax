@@ -88,7 +88,16 @@ export type LoyaltyRule = {
 //   要素あり = リスト内のカードのみ使用可能 (楽天Pay × 楽天カードなど)
 // chargeBased: true なら「カードからアプリ残高にチャージして決済」型 (楽天Pay/d払い/PayPay)
 //   false / undefined ならカードを直接使う型 (通常クレカ/Visaタッチ/QUICPay/iD)
-//   表示でカードとアプリの主従関係を切り替える
+//   表示でカードとアプリの主従関係を切り替える + 店舗ルール(JAL特約店2%等)を bypass
+// paymentMode: チャージ式か直接連携かを明示 (UX 表示用)
+//   "charge": 残高にチャージしてから決済 (chargeBased=true と等価表現)
+//   "direct": カードを支払い元として紐付け (連携式)
+//   "physical": 物理カード or タッチ決済 (default)
+//   省略時は chargeBased から導出
+// defaultBonusRate / defaultBonusCurrencyId: 紐付けカードによらず付与される還元 (デフォルト)
+// cardSpecificBonusRates: 紐付けカード固有の還元 (cardId 一致時に default を上書き)
+//   例 d払い: 「dカードのみ 1.0%、他は 0%」 → defaultBonusRate=0,
+//        cardSpecificBonusRates=[{cardId:"dcard", rate:0.01}]
 export type PaymentApp = {
   id: string;
   name: string;
@@ -98,5 +107,12 @@ export type PaymentApp = {
   defaultBonusRate?: number;
   defaultBonusCurrencyId?: string;
   chargeBased?: boolean;
+  paymentMode?: "charge" | "direct" | "physical";
+  cardSpecificBonusRates?: {
+    cardId: string;
+    rate: number;
+    currencyId?: string; // 省略時は defaultBonusCurrencyId
+    notes?: string;
+  }[];
   notes?: string;
 };

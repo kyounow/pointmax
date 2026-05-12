@@ -18,6 +18,7 @@ export type PaymentEvalResult = {
   cardPathSteps: ConversionEdge[];
   cardReachable: boolean;
   // 決済アプリ自体のbonus還元
+  appBonusRate: number; // 実際に適用された bonus 還元率 (cardSpecific があれば反映)
   appBonusEarnedAmount: number;
   appBonusEarnedCurrencyId: string | null;
   appBonusFinalAmount: number; // target通貨換算
@@ -120,8 +121,14 @@ export function evaluatePaymentApps(
     const cardPath = bestPath(edges, cardCurrency, targetCurrencyId, cardEarned);
 
     // アプリ自体のbonus還元
-    const bonusRate = pa.defaultBonusRate ?? 0;
-    const bonusCurrency = pa.defaultBonusCurrencyId ?? null;
+    // 紐付けカード (card) に対応する cardSpecificBonusRates があればそれを使用
+    // (例: d払い × dカードは 1%、他社カードは 0%)
+    const cardSpecific = pa.cardSpecificBonusRates?.find(
+      (b) => b.cardId === card.id,
+    );
+    const bonusRate = cardSpecific?.rate ?? pa.defaultBonusRate ?? 0;
+    const bonusCurrency =
+      cardSpecific?.currencyId ?? pa.defaultBonusCurrencyId ?? null;
     const bonusEarned = amount * bonusRate;
     const bonusPath =
       bonusRate > 0 && bonusCurrency
@@ -141,6 +148,7 @@ export function evaluatePaymentApps(
       cardFinalAmount: cardFinal,
       cardPathSteps: cardPath?.steps ?? [],
       cardReachable,
+      appBonusRate: bonusRate,
       appBonusEarnedAmount: bonusEarned,
       appBonusEarnedCurrencyId: bonusCurrency,
       appBonusFinalAmount: appFinal,

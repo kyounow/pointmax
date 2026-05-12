@@ -19,7 +19,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開。v1.0 までに各バージョンの差分を積み上げる。
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -221,6 +221,24 @@ export const seed = (): {
       defaultRate: 0.005,
       defaultCurrencyId: "v-pt",
     },
+    // 以下、現在ユーザーが保有していない参考カード (d払い/PayPay の特典構造を表現するため必要)
+    // ※ v2 でカード有効化機能が実装されるまでは、利用しない場合は保有カードから外して下さい
+    {
+      // 100円=1ポイント (1.0%)、dカード GOLD なら 1%
+      id: "dcard",
+      name: "dカード",
+      grade: "通常",
+      defaultRate: 0.01,
+      defaultCurrencyId: "d-pt",
+    },
+    {
+      // 200円=2 PayPayポイント (1.0%)、PayPayカードゴールドなら 1.5%
+      id: "paypay-card",
+      name: "PayPayカード",
+      grade: "通常",
+      defaultRate: 0.01,
+      defaultCurrencyId: "paypay",
+    },
   ];
 
   const stores: Store[] = [
@@ -301,8 +319,8 @@ export const seed = (): {
     { id: "nojima", name: "ノジマ", category: "家電量販店" },
     { id: "cocokara", name: "ココカラファイン", category: "ドラッグストア" },
     { id: "seiyu", name: "西友", category: "スーパー" },
-    // 汎用
-    { id: "general", name: "(その他/通常加盟店)", category: "汎用" },
+    // 汎用 (デフォルト選択用。基本還元率を確認したい時に使う)
+    { id: "general", name: "一般店舗 (規定還元)", category: "汎用" },
   ];
 
   const rules: StoreRule[] = [
@@ -969,6 +987,7 @@ export const seed = (): {
       name: "通常クレカ決済",
       iconChar: "CC",
       iconColor: "#6b7280",
+      paymentMode: "physical",
       notes: "クレジットカードをそのまま提示・暗証番号 / サインで支払い",
     },
     {
@@ -976,13 +995,15 @@ export const seed = (): {
       name: "Visaタッチ",
       iconChar: "V",
       iconColor: "#1a3a8c",
-      notes: "三井住友など Visaタッチ対応カード",
+      paymentMode: "physical",
+      notes: "三井住友など Visaタッチ対応カード (非接触決済)",
     },
     {
       id: "pa-quickpay",
       name: "QUICPay",
       iconChar: "QP",
       iconColor: "#ff6600",
+      paymentMode: "physical",
       notes: "JCB系の非接触決済",
     },
     {
@@ -990,38 +1011,70 @@ export const seed = (): {
       name: "iD",
       iconChar: "iD",
       iconColor: "#ec1c24",
+      paymentMode: "physical",
       notes: "ドコモ系の非接触決済",
     },
+    // 楽天Pay (チャージ式)。楽天カード経由のみ還元、他社カードは 0% 進呈なし
     {
       id: "pa-rakuten-pay",
       name: "楽天Pay",
       iconChar: "RP",
       iconColor: "#bf0000",
-      compatibleCardIds: ["rakuten-card"],
-      defaultBonusRate: 0.01,
+      defaultBonusRate: 0,
       defaultBonusCurrencyId: "rakuten-pt",
       chargeBased: true,
-      notes: "楽天カードチャージ・連携で利用 (1.0%還元上乗せ)",
+      paymentMode: "charge",
+      cardSpecificBonusRates: [
+        {
+          cardId: "rakuten-card",
+          rate: 0.015,
+          notes:
+            "楽天カードから楽天キャッシュへチャージ 0.5% + 楽天Pay 利用 1.0% = 1.5%",
+        },
+      ],
+      notes:
+        "楽天カードからチャージで 1.5%、他社カードからのチャージ/連携は 0% (進呈なし)",
     },
+    // d払い (チャージ式 or 直接連携)。dカード連携時のみ還元、他社カードは 0% 進呈なし
+    // 公式: https://service.smt.docomo.ne.jp/keitai_payment/guide/wallet/payment.html
     {
       id: "pa-d-pay",
       name: "d払い",
       iconChar: "dP",
       iconColor: "#cc0033",
-      defaultBonusRate: 0.005,
+      defaultBonusRate: 0,
       defaultBonusCurrencyId: "d-pt",
       chargeBased: true,
-      notes: "他カード/銀行口座チャージで 0.5% (dカード連携なら 1.0%)",
+      paymentMode: "charge",
+      cardSpecificBonusRates: [
+        {
+          cardId: "dcard",
+          rate: 0.01,
+          notes: "d払い基本還元率 0.5% + dカード支払い特典 0.5% = 1.0%",
+        },
+      ],
+      notes:
+        "dカード連携で 1.0%、dカード以外のクレジットカードでは d払い還元は 進呈なし (0%)",
     },
+    // PayPay (チャージ式)。PayPayカード連携時のみ還元、他社カードは 0%
     {
       id: "pa-paypay",
       name: "PayPay",
       iconChar: "PP",
       iconColor: "#ff0033",
-      defaultBonusRate: 0.005,
+      defaultBonusRate: 0,
       defaultBonusCurrencyId: "paypay",
       chargeBased: true,
-      notes: "PayPay残高 or 連携カードで決済時 0.5%還元",
+      paymentMode: "charge",
+      cardSpecificBonusRates: [
+        {
+          cardId: "paypay-card",
+          rate: 0.005,
+          notes: "PayPayカードからチャージ + PayPay 利用で 0.5%",
+        },
+      ],
+      notes:
+        "PayPayカード連携で 0.5%、他社カードからのチャージは 2025/8 以降 還元対象外",
     },
   ];
 

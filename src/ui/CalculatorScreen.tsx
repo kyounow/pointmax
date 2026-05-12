@@ -17,7 +17,9 @@ export function CalculatorScreen() {
   const loyaltyRules = useStore((s) => s.loyaltyRules);
   const paymentApps = useStore((s) => s.paymentApps);
 
-  const [storeId, setStoreId] = useState("");
+  // デフォルトは「一般店舗 (規定還元)」。基本還元率の確認用。
+  // store-id "general" が存在しない場合 (極端なリセット直後) は空文字フォールバック
+  const [storeId, setStoreId] = useState("general");
   const [storeSearch, setStoreSearch] = useState("");
   const [storeCategory, setStoreCategory] = useState(""); // "" = 全カテゴリ
   const [amount, setAmount] = useState("10000");
@@ -329,26 +331,34 @@ export function CalculatorScreen() {
                   <span className="rank">
                     {r.reachable ? `#${i + 1}` : "対象外"}
                   </span>
-                  {r.paymentApp?.chargeBased ? (
+                  {(() => {
+                    // paymentMode を優先、なければ chargeBased fallback
+                    const mode =
+                      r.paymentApp?.paymentMode ??
+                      (r.paymentApp?.chargeBased ? "charge" : undefined);
+                    return mode === "charge" || mode === "direct";
+                  })() ? (
                     <>
                       <span
                         className="payment-app-badge"
                         title="支払いに使うアプリ"
                       >
-                        {r.paymentApp.iconChar && (
+                        {r.paymentApp!.iconChar && (
                           <span
                             className="payment-app-icon"
                             style={{
-                              background: r.paymentApp.iconColor ?? "#6b7280",
+                              background: r.paymentApp!.iconColor ?? "#6b7280",
                             }}
                           >
-                            {r.paymentApp.iconChar}
+                            {r.paymentApp!.iconChar}
                           </span>
                         )}
-                        {r.paymentApp.name}
+                        {r.paymentApp!.name}
                       </span>
                       <span className="charge-flow-hint">
-                        の残高にカードからチャージ、
+                        {(r.paymentApp!.paymentMode ?? "charge") === "direct"
+                          ? " に紐付けて決済、"
+                          : " の残高にカードからチャージ、"}
                       </span>
                       <strong>{cardLabel(r.card)}</strong>
                     </>
@@ -481,11 +491,8 @@ export function CalculatorScreen() {
                           {r.paymentApp.chargeBased
                             ? `${r.paymentApp.name} 利用ボーナス`
                             : "支払アプリ還元"}{" "}
-                          (
-                          {(
-                            (r.paymentApp.defaultBonusRate ?? 0) * 100
-                          ).toFixed(2)}
-                          %): {formatNum(r.appBonusEarnedAmount)}{" "}
+                          ({(r.appBonusRate * 100).toFixed(2)}%):{" "}
+                          {formatNum(r.appBonusEarnedAmount)}{" "}
                           {currencyName(r.appBonusCurrencyId)}
                           {r.appBonusReachable && r.appBonusFinalAmount > 0 && (
                             <>

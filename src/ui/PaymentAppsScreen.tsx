@@ -140,27 +140,122 @@ export function PaymentAppsScreen() {
         ),
       },
       {
-        key: "chargeBased",
-        label: "チャージ式",
-        view: (p) => (p.chargeBased ? "はい" : "-"),
+        key: "paymentMode",
+        label: "決済形態",
+        view: (p) => {
+          const modeLabel = {
+            charge: "チャージ式",
+            direct: "直接連携",
+            physical: "物理/タッチ",
+          };
+          if (p.paymentMode) return modeLabel[p.paymentMode];
+          return p.chargeBased ? "チャージ式" : "-";
+        },
         edit: (p, set) => (
-          <label
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              fontSize: 12,
+          <select
+            value={p.paymentMode ?? ""}
+            onChange={(e) => {
+              const v = e.target.value as
+                | ""
+                | "charge"
+                | "direct"
+                | "physical";
+              // paymentMode と chargeBased を整合させる
+              if (v === "charge") {
+                set({ paymentMode: "charge", chargeBased: true });
+              } else if (v === "direct" || v === "physical") {
+                set({ paymentMode: v, chargeBased: undefined });
+              } else {
+                set({ paymentMode: undefined });
+              }
             }}
           >
-            <input
-              type="checkbox"
-              checked={!!p.chargeBased}
-              onChange={(e) =>
-                set({ chargeBased: e.target.checked ? true : undefined })
-              }
-            />
-            アプリ残高にカードからチャージして決済 (楽天Pay/d払い/PayPay 等)
-          </label>
+            <option value="">未設定</option>
+            <option value="charge">チャージ式 (残高にチャージしてから決済)</option>
+            <option value="direct">直接連携 (カードを支払い元に紐付け)</option>
+            <option value="physical">物理/タッチ (カードそのまま提示・タッチ)</option>
+          </select>
+        ),
+      },
+      {
+        key: "cardSpecific",
+        label: "カード別還元",
+        view: (p) => {
+          const list = p.cardSpecificBonusRates ?? [];
+          if (list.length === 0) return "-";
+          return list
+            .map((b) => `${cardLabelById(b.cardId)}: ${(b.rate * 100).toFixed(2)}%`)
+            .join(" / ");
+        },
+        edit: (p, set) => (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {cards.map((c) => {
+              const entry = p.cardSpecificBonusRates?.find(
+                (b) => b.cardId === c.id,
+              );
+              const enabled = !!entry;
+              return (
+                <label
+                  key={c.id}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 12,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={(e) => {
+                      const list = p.cardSpecificBonusRates ?? [];
+                      const filtered = list.filter((b) => b.cardId !== c.id);
+                      const next = e.target.checked
+                        ? [
+                            ...filtered,
+                            {
+                              cardId: c.id,
+                              rate: entry?.rate ?? 0.01,
+                            },
+                          ]
+                        : filtered;
+                      set({
+                        cardSpecificBonusRates:
+                          next.length > 0 ? next : undefined,
+                      });
+                    }}
+                  />
+                  <span style={{ minWidth: 130 }}>{cardLabel(c)}:</span>
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    placeholder="0.01 = 1%"
+                    value={entry?.rate ?? ""}
+                    disabled={!enabled}
+                    onChange={(e) => {
+                      const list = p.cardSpecificBonusRates ?? [];
+                      const filtered = list.filter((b) => b.cardId !== c.id);
+                      const rate = e.target.value
+                        ? Number(e.target.value)
+                        : 0;
+                      set({
+                        cardSpecificBonusRates: [
+                          ...filtered,
+                          { cardId: c.id, rate },
+                        ],
+                      });
+                    }}
+                    style={{ width: 90 }}
+                  />
+                </label>
+              );
+            })}
+            <small className="hint" style={{ fontSize: 11 }}>
+              チェック有りのカードを紐付け時、そのカード固有の還元率を使用
+              (例: d払い × dカード = 1%、他は 0%)
+            </small>
+          </div>
         ),
       },
       {

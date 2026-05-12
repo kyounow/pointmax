@@ -36,6 +36,7 @@ export type CardRanking = {
   // 採用された支払アプリ (paymentApps が渡されない場合は null)
   paymentApp: PaymentApp | null;
   // 支払アプリのbonus還元結果
+  appBonusRate: number; // 実際に適用された bonus 還元率
   appBonusFinalAmount: number; // target通貨換算
   appBonusEarnedAmount: number; // bonus額 (アプリ通貨)
   appBonusCurrencyId: string | null;
@@ -99,6 +100,7 @@ export function rankCards(input: RankInput): CardRanking[] {
         finalAmount: baseFinal,
         reachable,
         paymentApp: null,
+        appBonusRate: 0,
         appBonusFinalAmount: 0,
         appBonusEarnedAmount: 0,
         appBonusCurrencyId: null,
@@ -141,6 +143,7 @@ export function rankCards(input: RankInput): CardRanking[] {
         finalAmount: baseFinal,
         reachable: path !== null,
         paymentApp: null,
+        appBonusRate: 0,
         appBonusFinalAmount: 0,
         appBonusEarnedAmount: 0,
         appBonusCurrencyId: null,
@@ -160,6 +163,7 @@ export function rankCards(input: RankInput): CardRanking[] {
       finalAmount: best.cardFinalAmount,
       reachable: best.cardReachable,
       paymentApp: best.paymentApp,
+      appBonusRate: best.appBonusRate,
       appBonusFinalAmount: best.appBonusFinalAmount,
       appBonusEarnedAmount: best.appBonusEarnedAmount,
       appBonusCurrencyId: best.appBonusEarnedCurrencyId,

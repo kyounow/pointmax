@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 import {
   applyCategoryCap,
+  dedupeAcrossProposals,
   isFailedExtraction,
   proposeCards,
   proposeCategoryRules,
@@ -450,5 +451,81 @@ describe("applyCategoryCap", () => {
     expect(ids).toContain("a-first");
     expect(ids).toContain("m-mid");
     expect(ids).not.toContain("z-last");
+  });
+});
+
+describe("dedupeAcrossProposals", () => {
+  const makeStore = (id: string, name: string): Proposal => ({
+    type: "addRecord",
+    collection: "stores",
+    record: { id, name, category: "飲食" },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: { evidenceQuote: "x", explicitness: 0.95, ambiguity: 0.05 },
+  });
+
+  it("同 id の重複は 2 件目を idCollision に格下げ", () => {
+    const props: Proposal[] = [
+      makeStore("shabu-yo", "しゃぶ葉"),
+      makeStore("shabu-yo", "しゃぶ葉 (別ソース)"),
+    ];
+    const { proposals, collisions } = dedupeAcrossProposals(props);
+    expect(collisions).toBe(1);
+    expect(proposals[0].reviewReason).toBeUndefined();
+    expect(proposals[1].reviewReason).toBe("idCollision");
+  });
+
+  it("同 name で id 違いの重複も idCollision に格下げ", () => {
+    const props: Proposal[] = [
+      makeStore("lawson-store100", "ローソンストア100"),
+      makeStore("lawson-store-100", "ローソンストア100"),
+    ];
+    const { proposals, collisions } = dedupeAcrossProposals(props);
+    expect(collisions).toBe(1);
+    expect(proposals[0].reviewReason).toBeUndefined();
+    expect(proposals[1].reviewReason).toBe("idCollision");
+  });
+
+  it("3 件以上の連続重複も全部 idCollision に", () => {
+    const props: Proposal[] = [
+      makeStore("a", "Same"),
+      makeStore("b", "Same"),
+      makeStore("c", "Same"),
+    ];
+    const { proposals, collisions } = dedupeAcrossProposals(props);
+    expect(collisions).toBe(2);
+    expect(proposals[0].reviewReason).toBeUndefined();
+    expect(proposals[1].reviewReason).toBe("idCollision");
+    expect(proposals[2].reviewReason).toBe("idCollision");
+  });
+
+  it("addRecord/stores 以外は触らない", () => {
+    const props: Proposal[] = [
+      makeStore("a", "店A"),
+      {
+        type: "updateField",
+        collection: "rules",
+        id: "r1",
+        field: "rate",
+        from: 0.01,
+        to: 0.02,
+        sourceId: "x",
+        confidence: 0.95,
+        evidence: { evidenceQuote: "x", explicitness: 1, ambiguity: 0 },
+      },
+    ];
+    const { proposals, collisions } = dedupeAcrossProposals(props);
+    expect(collisions).toBe(0);
+    expect(proposals[1].type).toBe("updateField");
+    expect(proposals[1].reviewReason).toBeUndefined();
+  });
+
+  it("既に idCollision の proposal も判定対象 (上書きされない)", () => {
+    const a = makeStore("x", "店X");
+    const b = makeStore("y", "別店");
+    const { proposals, collisions } = dedupeAcrossProposals([a, b]);
+    expect(collisions).toBe(0);
+    expect(proposals[0].reviewReason).toBeUndefined();
+    expect(proposals[1].reviewReason).toBeUndefined();
   });
 });

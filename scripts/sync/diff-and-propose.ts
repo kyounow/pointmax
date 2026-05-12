@@ -477,6 +477,51 @@ function buildRateUpdate(
 // Category cap (Q2-C: 大量の stores 新規追加を categoryあたり N 件に絞る)
 // ───────────────────────────────────────────────────────────────
 
+// ───────────────────────────────────────────────────────────────
+// Within-run dedup (Phase C MUST-fix)
+// ───────────────────────────────────────────────────────────────
+// 同一 propose 実行内で複数 source から「同じ name の store」が提案される
+// ケースを名寄せする。例: rakuten が "ローソンストア100" を storeId="lawson-store100"
+// で出してきた直後に、ponta が同じ店を "lawson-store-100" で出してくる。
+// 既存 seed と比較する existingNames だけだとどちらも未存在で通過してしまうので、
+// 「先に通過した proposal の name/id」を後続の比較対象に積み増す。
+//
+// 同 name / 同 id がぶつかった 2 つ目以降は reviewReason=idCollision に格下げ。
+
+export function dedupeAcrossProposals(proposals: Proposal[]): {
+  proposals: Proposal[];
+  collisions: number;
+} {
+  const seenNames = new Set<string>();
+  const seenIds = new Set<string>();
+  let collisions = 0;
+  const out: Proposal[] = [];
+
+  for (const p of proposals) {
+    if (p.type !== "addRecord" || p.collection !== "stores") {
+      out.push(p);
+      continue;
+    }
+    const r = (p as AddRecordProposal).record as {
+      id?: string;
+      name?: string;
+    };
+    const id = typeof r.id === "string" ? r.id : undefined;
+    const name = typeof r.name === "string" ? r.name : undefined;
+    const dup = (id && seenIds.has(id)) || (name && seenNames.has(name));
+    if (dup) {
+      // 2 件目以降は idCollision に格下げ (元の reviewReason より優先)
+      out.push({ ...p, reviewReason: "idCollision" } as Proposal);
+      collisions += 1;
+    } else {
+      out.push(p);
+    }
+    if (id) seenIds.add(id);
+    if (name) seenNames.add(name);
+  }
+  return { proposals: out, collisions };
+}
+
 export function applyCategoryCap(
   proposals: Proposal[],
   cap: number,
@@ -545,12 +590,21 @@ function main(): void {
     allProposals.push(...proposePaymentApps(data, current));
   }
 
+  // within-run dedup: 異なるソースから同 name/id の store が提案された場合、
+  // 2 件目以降は idCollision で要レビューに格下げする (MUST-fix for v1)
+  const dedup = dedupeAcrossProposals(allProposals);
+  if (dedup.collisions > 0) {
+    console.log(
+      `🔁 within-run dedup: ${dedup.collisions} 件の store 提案を idCollision にダウングレード`,
+    );
+  }
+
   // Category cap (stores の新規追加のみ対象)
   const cap = readCapPerCategory();
-  let finalProposals = allProposals;
+  let finalProposals = dedup.proposals;
   let deferredCount = 0;
   if (cap !== null) {
-    const { kept, deferred } = applyCategoryCap(allProposals, cap);
+    const { kept, deferred } = applyCategoryCap(dedup.proposals, cap);
     finalProposals = kept;
     deferredCount = deferred.length;
     if (deferred.length > 0) {

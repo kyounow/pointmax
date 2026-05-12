@@ -190,6 +190,81 @@ describe("chargeBased PaymentApp", () => {
     expect(dpayResults[0].cardEarnedAmount).toBeCloseTo(100, 6);
   });
 
+  it("cardSpecificBonusRates: 紐付けカードが一致したら default を上書き", () => {
+    // d払いは「dカードのみ 1%、他は 0%」想定
+    const dPayWithSpecific: PaymentApp = {
+      id: "pa-d-pay-v2",
+      name: "d払い",
+      chargeBased: true,
+      defaultBonusRate: 0,
+      defaultBonusCurrencyId: "d-pt",
+      cardSpecificBonusRates: [{ cardId: "dcard", rate: 0.01 }],
+    };
+    const dcard: Card = {
+      id: "dcard",
+      name: "dカード",
+      defaultRate: 0.01,
+      defaultCurrencyId: "d-pt",
+    };
+    // dカード × d払い → bonus 1% (cardSpecific 適用)
+    const withDcard = evaluatePaymentApps(
+      dcard,
+      "general",
+      10000,
+      "d-pt",
+      [dPayWithSpecific],
+      [],
+      stores,
+      [],
+    );
+    expect(withDcard[0].appBonusEarnedAmount).toBeCloseTo(100, 6); // 10000 * 1%
+
+    // 楽天カード × d払い → bonus 0 (default 適用)
+    const withRakuten = evaluatePaymentApps(
+      rakutenCard,
+      "general",
+      10000,
+      "d-pt",
+      [dPayWithSpecific],
+      [],
+      stores,
+      [
+        { id: "rp-to-d", fromCurrencyId: "rakuten-pt", toCurrencyId: "d-pt", rate: 1 },
+      ],
+    );
+    expect(withRakuten[0].appBonusEarnedAmount).toBe(0);
+  });
+
+  it("cardSpecificBonusRates: currencyId 上書きにも対応", () => {
+    const pa: PaymentApp = {
+      id: "x-pay",
+      name: "X-Pay",
+      defaultBonusRate: 0,
+      defaultBonusCurrencyId: "rakuten-pt",
+      cardSpecificBonusRates: [
+        { cardId: "dcard", rate: 0.02, currencyId: "d-pt" },
+      ],
+    };
+    const dcard: Card = {
+      id: "dcard",
+      name: "dカード",
+      defaultRate: 0,
+      defaultCurrencyId: "d-pt",
+    };
+    const result = evaluatePaymentApps(
+      dcard,
+      "general",
+      10000,
+      "d-pt",
+      [pa],
+      [],
+      stores,
+      [],
+    );
+    expect(result[0].appBonusEarnedCurrencyId).toBe("d-pt");
+    expect(result[0].appBonusEarnedAmount).toBeCloseTo(200, 6);
+  });
+
   it("chargeBased=true でも アプリbonus自体は加算される", () => {
     const result = evaluatePaymentApps(
       rakutenCard,

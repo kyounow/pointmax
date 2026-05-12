@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-12T00:43:17.907Z",
+  "generatedAt": "2026-05-12T01:18:34.745Z",
   "fromSeedVersion": 1,
   "toSeedVersion": 2,
   "autoApplicable": [
@@ -1681,22 +1681,6 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "lawson-store-100",
-        "name": "ローソンストア100",
-        "category": "コンビニ"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: ローソンストア100",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
         "id": "lawson-store100",
         "name": "ローソンストア100",
         "category": "コンビニ"
@@ -3013,6 +2997,23 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "lawson-store-100",
+        "name": "ローソンストア100",
+        "category": "コンビニ"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: ローソンストア100",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "idCollision"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "life-net",
         "name": "Life Net",
         "category": "その他"
@@ -3279,7 +3280,7 @@
         "explicitness": 0.95,
         "ambiguity": 0.05
       },
-      "reviewReason": "excludedCategory"
+      "reviewReason": "idCollision"
     },
     {
       "type": "addRecord",
@@ -3347,7 +3348,7 @@
         "explicitness": 0.95,
         "ambiguity": 0.05
       },
-      "reviewReason": "excludedCategory"
+      "reviewReason": "idCollision"
     },
     {
       "type": "addRecord",
@@ -3368,8 +3369,8 @@
     }
   ],
   "summary": {
-    "autoApplicableCount": 154,
-    "needsReviewCount": 50,
+    "autoApplicableCount": 153,
+    "needsReviewCount": 51,
     "sourcesProcessed": 4,
     "sourcesFailed": 1
   }
