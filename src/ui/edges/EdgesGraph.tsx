@@ -16,7 +16,7 @@ import { formatRatio, styleOf } from "../../domain/currencyKind";
 import type { ConversionEdge, Currency, CurrencyKind } from "../../domain/types";
 import { nodeTypes, type CurrencyNodeType } from "../CurrencyNode";
 import { edgeTypes } from "../PointMaxEdge";
-import type { Selection } from "../EdgesScreen";
+import type { Selection } from "./types";
 
 // kind 別に行を分けて配置 (point上段 / mile中段 / cashlike下段 / 未分類最下段)
 function layoutByKind(

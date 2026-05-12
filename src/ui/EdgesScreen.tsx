@@ -11,11 +11,7 @@ import { useNameResolvers } from "./hooks/useNameResolvers";
 import { EdgesGraph } from "./edges/EdgesGraph";
 import { EdgeDetailPanel } from "./edges/EdgeDetailPanel";
 import { NodeDetailPanel } from "./edges/NodeDetailPanel";
-
-export type Selection =
-  | { type: "node"; id: string }
-  | { type: "edge"; id: string }
-  | null;
+import type { Selection } from "./edges/types";
 
 export function EdgesScreen() {
   const currencies = useStore((s) => s.currencies);
