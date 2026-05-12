@@ -86,15 +86,8 @@ sources:
       - stores
       - loyaltyRules
     extractionScope: chains-only
-    enabled: false
+    enabled: true
     notes: |
-      ★ disabled: 2026-05-11 夜 — Gemini 連続して 503 UNAVAILABLE と思考プロセス散文応答。
-      thinkingBudget 1024 / 2048 を試したが、いずれも改善せず。
-      明日の混雑時間外 (午前中など) に再試行する。
-      改善しなければ:
-        - GEMINI_MODEL=gemini-2.0-flash で非思考モデルを試す
-        - URL を別系 (point.recruit.co.jp/pontaweb/partner/ 系列の個別チェーン)
-          に変更して個別取得する設計
-      ---
       Pontaカード提示で貯まる加盟店リスト。
       pointCardId は ponta-card を対象。
+      ※ 昨夜 (2026-05-11 夜) は Gemini が混雑 + 思考散文応答で取得失敗、リトライ予定。
