@@ -157,4 +157,22 @@ export function conflictItems(
 // プロジェクトのマイグレーション履歴。新しいバージョンを追加する時はここに append + SEED_VERSION++
 // 自動収集スクリプトもこの配列にエントリを追加することで連携可能
 // v0.8 リリースで履歴をリセット。v1.0 以降の差分を積み上げる予定
-export const MIGRATIONS: VersionMigration[] = [];
+export const MIGRATIONS: VersionMigration[] = [
+  {
+    toVersion: 13,
+    date: "2026-05-12",
+    changes: [
+      {
+        type: "updateField",
+        collection: "edges",
+        id: "jre-to-jal",
+        field: "requiredCardIds",
+        from: undefined,
+        to: ["jal-suica"],
+        notes:
+          "JRE→JAL マイル は JALカードSuica 会員特典 (公式仕様)。" +
+          "v13 以前は制約なしで全ユーザーに表示していたが、実体に合わせる。",
+      },
+    ],
+  },
+];

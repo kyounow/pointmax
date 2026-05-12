@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { rankCards } from "../domain/rankCards";
 import { cardLabel } from "../domain/cardLabel";
@@ -83,6 +83,10 @@ export function CalculatorScreen() {
     [currencies],
   );
   const currencyName = (id: string) => currencyById.get(id)?.name ?? id;
+  const cardName = useCallback(
+    (id: string) => cards.find((c) => c.id === id)?.name ?? id,
+    [cards],
+  );
 
   const result = useMemo(() => {
     if (!storeId || !targetCurrencyId || !amount) return null;
@@ -276,6 +280,11 @@ export function CalculatorScreen() {
                       →<small>{formatRatio(step.rate)}</small>
                     </span>
                     <NodePill currency={currencyById.get(step.toCurrencyId)} />
+                    {step.requiredCardIds?.length ? (
+                      <small className="step-required-card" title="このステップはこのカード保有を前提とします">
+                        (要 {step.requiredCardIds.map(cardName).join(" / ")})
+                      </small>
+                    ) : null}
                   </span>
                 ))}
               </span>
@@ -494,6 +503,11 @@ export function CalculatorScreen() {
                             <NodePill
                               currency={currencyById.get(step.toCurrencyId)}
                             />
+                            {step.requiredCardIds?.length ? (
+                              <small className="step-required-card" title="このステップはこのカード保有を前提とします">
+                                (要 {step.requiredCardIds.map(cardName).join(" / ")})
+                              </small>
+                            ) : null}
                           </span>
                         ))}
                       </div>

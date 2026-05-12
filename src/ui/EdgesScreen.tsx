@@ -145,6 +145,22 @@ export function EdgesScreen() {
     [cards],
   );
 
+  // 「保有 = state.cards にあり、かつ enabled !== false」(v2 step 1 整合)。
+  // bestPath の availableCardIds と同じ定義。
+  const accessibleCardIds = useMemo(
+    () => new Set(cards.filter((c) => c.enabled !== false).map((c) => c.id)),
+    [cards],
+  );
+
+  // edge が現状ユーザーで実際に利用可能か。requiredCardIds が無ければ常に true。
+  const isEdgeAccessible = useCallback(
+    (e: { requiredCardIds?: string[] }) => {
+      if (!e.requiredCardIds?.length) return true;
+      return e.requiredCardIds.some((id) => accessibleCardIds.has(id));
+    },
+    [accessibleCardIds],
+  );
+
   // ノード選択時はフォーカスレイアウト、未選択時は kind 別レイアウト
   const focusedNodeId = sel?.type === "node" ? sel.id : null;
   const positions = useMemo(() => {
@@ -206,7 +222,9 @@ export function EdgesScreen() {
     return visibleEdges.map((e) => {
       const isSelectedEdge = sel?.type === "edge" && sel.id === e.id;
       const related = isEdgeRelated(e);
-      const stroke = isSelectedEdge || related ? "#f59e0b" : "#4ea1ff";
+      const locked = !isEdgeAccessible(e);
+      const baseStroke = isSelectedEdge || related ? "#f59e0b" : "#4ea1ff";
+      const stroke = locked ? "#6b7280" : baseStroke;
       return {
         id: e.id,
         source: e.fromCurrencyId,
@@ -217,6 +235,8 @@ export function EdgesScreen() {
         style: {
           stroke,
           strokeWidth: isSelectedEdge || related ? 2.5 : 1.5,
+          strokeDasharray: locked ? "6 4" : undefined,
+          opacity: locked ? 0.55 : 1,
         },
         labelStyle: {
           fill: "#e6e6e6",
@@ -231,7 +251,7 @@ export function EdgesScreen() {
           zIndex: isSelectedEdge || related ? 100 : 0,
         };
       });
-  }, [edges, sel, isEdgeRelated, focusedNodeId, showLabels]);
+  }, [edges, sel, isEdgeRelated, focusedNodeId, showLabels, isEdgeAccessible]);
 
   const onConnect = useCallback(
     async (conn: Connection) => {
@@ -301,6 +321,15 @@ export function EdgesScreen() {
           onChange={(ev) => set({ rate: Number(ev.target.value) })}
         />
       ),
+    },
+    {
+      key: "requiredCards",
+      label: "保有必須",
+      view: (e) =>
+        e.requiredCardIds?.length
+          ? e.requiredCardIds.map(cardName).join(" / ")
+          : "-",
+      // edit は edge-panel (グラフ上の選択) で行う。テーブル直編集は対応しない (UI が膨らむため)
     },
     {
       key: "notes",
@@ -438,10 +467,11 @@ export function EdgesScreen() {
                   {outgoing.map((e) => {
                     const to = currencyById.get(e.toCurrencyId);
                     if (!to) return null;
+                    const locked = !isEdgeAccessible(e);
                     return (
                       <button
                         key={e.id}
-                        className="route-item"
+                        className={`route-item${locked ? " is-locked" : ""}`}
                         onClick={() => setSel({ type: "edge", id: e.id })}
                       >
                         <span className="route-arrow">→</span>
@@ -451,8 +481,11 @@ export function EdgesScreen() {
                           {formatRatio(e.rate)}
                         </span>
                         {e.requiredCardIds?.length ? (
-                          <span className="route-required-card" title="このルートを使うために保有が必要なカード">
-                            要 {e.requiredCardIds.map(cardName).join(" / ")}
+                          <span
+                            className={`route-required-card${locked ? " is-locked" : ""}`}
+                            title={locked ? "このカードを保有していないため利用不可" : "このルートを使うために保有が必要なカード"}
+                          >
+                            {locked ? "🔒 " : ""}要 {e.requiredCardIds.map(cardName).join(" / ")}
                           </span>
                         ) : null}
                       </button>
@@ -470,10 +503,11 @@ export function EdgesScreen() {
                   {incoming.map((e) => {
                     const fr = currencyById.get(e.fromCurrencyId);
                     if (!fr) return null;
+                    const locked = !isEdgeAccessible(e);
                     return (
                       <button
                         key={e.id}
-                        className="route-item"
+                        className={`route-item${locked ? " is-locked" : ""}`}
                         onClick={() => setSel({ type: "edge", id: e.id })}
                       >
                         <CurrencyIcon currency={fr} size={26} />
@@ -483,8 +517,11 @@ export function EdgesScreen() {
                           {formatRatio(e.rate)}
                         </span>
                         {e.requiredCardIds?.length ? (
-                          <span className="route-required-card" title="このルートを使うために保有が必要なカード">
-                            要 {e.requiredCardIds.map(cardName).join(" / ")}
+                          <span
+                            className={`route-required-card${locked ? " is-locked" : ""}`}
+                            title={locked ? "このカードを保有していないため利用不可" : "このルートを使うために保有が必要なカード"}
+                          >
+                            {locked ? "🔒 " : ""}要 {e.requiredCardIds.map(cardName).join(" / ")}
                           </span>
                         ) : null}
                       </button>
@@ -551,6 +588,17 @@ export function EdgesScreen() {
                 placeholder="(任意)"
               />
             </label>
+            {(selectedEdge.requiredCardIds?.length ?? 0) > 0 && (
+              <div
+                className={`edge-access-status${
+                  isEdgeAccessible(selectedEdge) ? " is-open" : " is-locked"
+                }`}
+              >
+                {isEdgeAccessible(selectedEdge)
+                  ? "✓ 現在のカード保有状況でこのルートは利用可能"
+                  : "🔒 必要なカードを保有していないため、このルートは Calculator で除外されます"}
+              </div>
+            )}
             <div>
               <div className="edge-panel-section-label">
                 保有が必要なカード <span className="hint-inline">(任意・複数可)</span>

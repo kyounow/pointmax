@@ -1357,3 +1357,36 @@ details summary {
 .edge-required-card-item input[type="checkbox"] {
   margin: 0;
 }
+
+/* 保有していないカード必須ルートの視覚 */
+.route-item.is-locked {
+  opacity: 0.55;
+}
+.route-required-card.is-locked {
+  background: rgba(107, 114, 128, 0.2);
+  color: #9aa0a6;
+}
+
+.edge-access-status {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.edge-access-status.is-open {
+  background: rgba(87, 199, 133, 0.12);
+  color: var(--good);
+  border: 1px solid var(--good);
+}
+.edge-access-status.is-locked {
+  background: rgba(107, 114, 128, 0.15);
+  color: #9aa0a6;
+  border: 1px solid #6b7280;
+}
+
+/* CalculatorScreen path step に表示する保有必須カードの注記 */
+.step-required-card {
+  color: var(--accent);
+  font-size: 10px;
+  margin-left: 2px;
+  white-space: nowrap;
+}
