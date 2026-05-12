@@ -8,6 +8,7 @@
   "storeIds": {
     "seven-eleven": "conv-7eleven",
     "lawson": "conv-lawson",
+    "lowson": "conv-lawson",
     "family-mart": "conv-familymart",
     "familymart": "conv-familymart",
     "ministop": "conv-ministop",

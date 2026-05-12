@@ -15,8 +15,8 @@ version: 1
 
 sources:
   - id: jal-card-tokuyaku-list
-    label: JALカード特約店 グループ・チェーン店 (公式)
-    url: https://www.jal.co.jp/jp/ja/jalcard/milenet/group/index.html
+    label: JALカード特約店 検索結果 (公式)
+    url: https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201
     extractor: jal-tokuyaku
     produces:
       - stores
@@ -25,17 +25,17 @@ sources:
     extractionScope: chains-only
     enabled: true
     notes: |
-      ★ 2026-05-12 (再): partner.jal.co.jp/site/tokuyakuten/campaign/ はキャンペーン一覧で
-      個別店舗リストが無いと Gemini が判定 (extracted notes に明示)。
-      milenet/group/index.html に再切替。これは「JALカード特約店：グループ・チェーン店で選ぶ」
-      ページで、まさに chains-only スコープに最適。
-      curl 直接ではタイムアウトしたが、Gemini URL Context Tool はブラウザ的にアクセスできる
-      可能性が高い。ダメな場合は pre-fetch fallback (attempt 3) で取得を試みる。
-      他の代替候補:
+      ★ 2026-05-12 (3 度目): milenet/group/index.html も Gemini が "navigation hub,
+      not the partner list itself" と判定。実際の店舗データを持つ URL に再々切替。
+      partner.jal.co.jp/search_result/ は条件指定型の検索結果ページで、
+      ptn=1 (マイルのため方=JALカード決済), ct=2, scat=1201 のパラメタで
+      特定カテゴリの特約店リストが取得可能。curl で 104KB のサーバーレンダ済 HTML 確認済。
+      他の代替候補 (失敗時の選択肢):
         - https://partner.jal.co.jp/mapsearch/ (地図検索、JS-heavy)
-        - https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201 (検索結果、要 scat 列挙)
+        - https://www.jal.co.jp/jp/ja/jalcard/milenet/group/index.html (navigation hub 判定)
+        - https://partner.jal.co.jp/site/tokuyakuten/campaign/ (キャンペーン一覧、店舗 list 無し)
         - https://jalcard.jal.co.jp/milenet/jalcardlife/newpartner/ (新規特約店、月次差分)
-      失敗が続くなら上記候補に切り替えるか、URL を複数 source に分割すること検討。
+      これでも失敗するなら scat パラメタを複数列挙して URL を複数 source に分割する案検討。
       ---
       JALカード共通の特約店一覧。マイル積算率 200% (= 2%) の店舗を網羅。
       個別店舗 (地元飲食店等) まで全部含めると膨大なので chains-only に限定。
