@@ -177,6 +177,33 @@ export function RulesScreen() {
       ),
     },
     {
+      key: "campaign",
+      label: "キャンペーン期間",
+      view: (r) => {
+        if (!r.validFrom && !r.validTo) return "-";
+        return `${r.validFrom ?? "..."} 〜 ${r.validTo ?? "..."}`;
+      },
+      edit: (r, set) => (
+        <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
+          <input
+            type="date"
+            value={r.validFrom ?? ""}
+            onChange={(e) => set({ validFrom: e.target.value || undefined })}
+            style={{ width: 130 }}
+            title="開始日 (未指定なら常時)"
+          />
+          <span>〜</span>
+          <input
+            type="date"
+            value={r.validTo ?? ""}
+            onChange={(e) => set({ validTo: e.target.value || undefined })}
+            style={{ width: 130 }}
+            title="終了日 (未指定なら無期限)"
+          />
+        </span>
+      ),
+    },
+    {
       key: "notes",
       label: "メモ",
       view: (r) => r.notes ?? "-",

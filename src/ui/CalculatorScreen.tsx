@@ -253,6 +253,18 @@ export function CalculatorScreen() {
                 還元率 {(loyalty.rule.rate * 100).toFixed(2)}% →{" "}
                 {formatNum(loyalty.earnedAmount)}{" "}
                 {currencyName(loyalty.earnedCurrencyId)}
+                {(loyalty.rule.validFrom || loyalty.rule.validTo) && (
+                  <span
+                    className="campaign-badge"
+                    title="期間限定キャンペーン"
+                    style={{ marginLeft: 6 }}
+                  >
+                    🎯 キャンペーン中
+                    {loyalty.rule.validTo
+                      ? ` (〜${loyalty.rule.validTo})`
+                      : ""}
+                  </span>
+                )}
               </span>
               <span className="path-line">
                 <NodePill
@@ -438,6 +450,19 @@ export function CalculatorScreen() {
                       {r.resolved.source === "category" && (
                         <span className="badge">カテゴリルール適用</span>
                       )}
+                      {(r.resolved.source === "rule" ||
+                        r.resolved.source === "category") &&
+                        (r.resolved.validFrom || r.resolved.validTo) && (
+                          <span
+                            className="campaign-badge"
+                            title="期間限定キャンペーンルール"
+                          >
+                            🎯 キャンペーン中
+                            {r.resolved.validTo
+                              ? ` (〜${r.resolved.validTo})`
+                              : ""}
+                          </span>
+                        )}
                       {(() => {
                         if (r.resolved.source === "default") return null;
                         const ruleId = r.resolved.ruleId;

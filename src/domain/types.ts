@@ -41,6 +41,12 @@ export type Store = {
 // paymentAppId が指定されている場合、その PaymentApp で決済した時のみ適用される
 //   未指定なら全ての (chargeBased=false) 支払方法で適用される汎用ルール
 // monthlyCapAmountYen は情報表示用（年/月の上限が決まっている特約） — 計算には影響しない
+//
+// validFrom / validTo: キャンペーン期間 (ISO 日付 YYYY-MM-DD)
+//   両方未指定 = 常時有効。validTo の日付の終わり (23:59:59) まで有効。
+//   期間外のルールは resolveRate / paymentApp / loyalty で無視される。
+//   同じ specificity (storeId / category) の active ルールが複数あれば
+//   最高 rate のものが選ばれる (通常 1% + キャンペーン 5% → 5%)。
 export type StoreRule = {
   id: string;
   cardId: string;
@@ -51,6 +57,8 @@ export type StoreRule = {
   currencyId: string;
   monthlyCapAmountYen?: number;
   notes?: string;
+  validFrom?: string;
+  validTo?: string;
 };
 
 // ポイント交換エッジ。fromCurrencyId 1単位 → toCurrencyId rate単位
@@ -72,6 +80,7 @@ export type PointCard = {
 };
 
 // 「店舗 × ポイントカード」の還元ルール。クレカ決済還元と二重取りで使う
+// validFrom / validTo: StoreRule と同じくキャンペーン期間
 export type LoyaltyRule = {
   id: string;
   storeId: string;
@@ -79,6 +88,8 @@ export type LoyaltyRule = {
   rate: number;
   currencyId?: string; // 通常は PointCard.currencyId と同じ。差異がある時のみ上書き
   notes?: string;
+  validFrom?: string;
+  validTo?: string;
 };
 
 // 支払アプリ（楽天Pay/d払い/PayPay/Visaタッチ等）

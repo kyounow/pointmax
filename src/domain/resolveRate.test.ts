@@ -82,16 +82,17 @@ describe("resolveRate", () => {
     expect(result.source).toBe("default");
   });
 
-  it("複数の一致ルールがあるとき、配列の先頭を採用する", () => {
+  it("複数の一致ルールがあるとき、最高 rate を採用する (キャンペーン優先)", () => {
+    // 通常ルール 2% とキャンペーンルール 5% が共存 → 5% を採用
     const r1: StoreRule = {
-      id: "first",
+      id: "permanent",
       cardId: "rakuten",
       storeId: "amazon",
       rate: 0.02,
       currencyId: "amazon-pt",
     };
     const r2: StoreRule = {
-      id: "second",
+      id: "campaign",
       cardId: "rakuten",
       storeId: "amazon",
       rate: 0.05,
@@ -100,7 +101,8 @@ describe("resolveRate", () => {
     const result = resolveRate(card, "amazon", [r1, r2], stores);
     expect(result.source).toBe("rule");
     if (result.source === "rule") {
-      expect(result.ruleId).toBe("first");
+      expect(result.ruleId).toBe("campaign");
+      expect(result.rate).toBe(0.05);
     }
   });
 
@@ -179,6 +181,91 @@ describe("resolveRate", () => {
     expect(result.source).toBe("category");
     expect(result.rate).toBe(0.025);
     expect(result.currencyId).toBe("amazon-pt");
+  });
+
+  // ===== キャンペーン期間 (validFrom/validTo) =====
+
+  it("validTo 過去 → そのルール無視、デフォルトに落ちる", () => {
+    const r: StoreRule = {
+      id: "expired",
+      cardId: "rakuten",
+      storeId: "amazon",
+      rate: 0.05,
+      currencyId: "amazon-pt",
+      validTo: "2020-01-01",
+    };
+    const result = resolveRate(
+      card,
+      "amazon",
+      [r],
+      stores,
+      new Date("2026-06-15T12:00:00"),
+    );
+    expect(result.source).toBe("default");
+  });
+
+  it("validFrom 未来 → そのルール無視", () => {
+    const r: StoreRule = {
+      id: "future",
+      cardId: "rakuten",
+      storeId: "amazon",
+      rate: 0.05,
+      currencyId: "amazon-pt",
+      validFrom: "2030-01-01",
+    };
+    const result = resolveRate(
+      card,
+      "amazon",
+      [r],
+      stores,
+      new Date("2026-06-15T12:00:00"),
+    );
+    expect(result.source).toBe("default");
+  });
+
+  it("通常 1% + キャンペーン 5% が共存、期間中なら 5%", () => {
+    const permanent: StoreRule = {
+      id: "permanent",
+      cardId: "rakuten",
+      storeId: "amazon",
+      rate: 0.01,
+      currencyId: "amazon-pt",
+    };
+    const campaign: StoreRule = {
+      id: "campaign",
+      cardId: "rakuten",
+      storeId: "amazon",
+      rate: 0.05,
+      currencyId: "amazon-pt",
+      validFrom: "2026-06-01",
+      validTo: "2026-06-30",
+    };
+    const duringCampaign = resolveRate(
+      card,
+      "amazon",
+      [permanent, campaign],
+      stores,
+      new Date("2026-06-15T12:00:00"),
+    );
+    expect(duringCampaign.source).toBe("rule");
+    if (duringCampaign.source === "rule") {
+      expect(duringCampaign.ruleId).toBe("campaign");
+      expect(duringCampaign.rate).toBe(0.05);
+      expect(duringCampaign.validTo).toBe("2026-06-30");
+    }
+    const afterCampaign = resolveRate(
+      card,
+      "amazon",
+      [permanent, campaign],
+      stores,
+      new Date("2026-07-15T12:00:00"),
+    );
+    expect(afterCampaign.source).toBe("rule");
+    if (afterCampaign.source === "rule") {
+      expect(afterCampaign.ruleId).toBe("permanent");
+      expect(afterCampaign.rate).toBe(0.01);
+      expect(afterCampaign.validTo).toBeUndefined();
+    }
   });
 
   it("不明な storeId のときは store が見つからずデフォルトに落ちる", () => {

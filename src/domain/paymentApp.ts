@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import { resolveRate, type ResolvedRate } from "./resolveRate";
 import { bestPath } from "./bestPath";
+import { isRuleActiveAt } from "./ruleActiveAt";
 
 export type PaymentEvalResult = {
   paymentApp: PaymentApp;
@@ -45,50 +46,67 @@ function isPaymentAppCompatible(
 
 // 指定の paymentApp に紐づくルールを優先的に解決
 // (paymentAppId 一致 > 汎用 > デフォルト)
+// active なルールが複数あれば最高 rate を採用
 function resolveRateForPaymentApp(
   card: Card,
   storeId: string,
   rules: StoreRule[],
   stores: Store[],
   paymentApp: PaymentApp,
+  now: Date = new Date(),
 ): ResolvedRate {
-  // paymentAppId が一致する直接ルール (storeId)
-  const directWithApp = rules.find(
+  // paymentAppId が一致する直接ルール (storeId) のうち active なもの
+  const directMatches = rules.filter(
     (r) =>
       r.cardId === card.id &&
       r.storeId === storeId &&
-      r.paymentAppId === paymentApp.id,
+      r.paymentAppId === paymentApp.id &&
+      isRuleActiveAt(r, now),
   );
-  if (directWithApp) {
+  if (directMatches.length > 0) {
+    const best = pickHighestRate(directMatches);
     return {
-      rate: directWithApp.rate,
-      currencyId: directWithApp.currencyId,
+      rate: best.rate,
+      currencyId: best.currencyId,
       source: "rule",
-      ruleId: directWithApp.id,
+      ruleId: best.id,
+      validFrom: best.validFrom,
+      validTo: best.validTo,
     };
   }
   // paymentAppId が一致するカテゴリルール
   const store = stores.find((s) => s.id === storeId);
   if (store?.category) {
-    const catWithApp = rules.find(
+    const catMatches = rules.filter(
       (r) =>
         r.cardId === card.id &&
         r.category === store.category &&
-        r.paymentAppId === paymentApp.id,
+        r.paymentAppId === paymentApp.id &&
+        isRuleActiveAt(r, now),
     );
-    if (catWithApp) {
+    if (catMatches.length > 0) {
+      const best = pickHighestRate(catMatches);
       return {
-        rate: catWithApp.rate,
-        currencyId: catWithApp.currencyId,
+        rate: best.rate,
+        currencyId: best.currencyId,
         source: "category",
-        ruleId: catWithApp.id,
+        ruleId: best.id,
+        validFrom: best.validFrom,
+        validTo: best.validTo,
       };
     }
   }
   // paymentAppId 指定なし (汎用) ルールにフォールバック
   // paymentAppId を持つルールは「特定支払方法専用」なので除外
   const universalRules = rules.filter((r) => !r.paymentAppId);
-  return resolveRate(card, storeId, universalRules, stores);
+  return resolveRate(card, storeId, universalRules, stores, now);
+}
+
+function pickHighestRate(rules: StoreRule[]): StoreRule {
+  return [...rules].sort((a, b) => {
+    if (b.rate !== a.rate) return b.rate - a.rate;
+    return a.id.localeCompare(b.id);
+  })[0];
 }
 
 // このカードで使える各 PaymentApp について試算

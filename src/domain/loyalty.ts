@@ -1,5 +1,6 @@
 import type { ConversionEdge, LoyaltyRule, PointCard } from "./types";
 import { bestPath } from "./bestPath";
+import { isRuleActiveAt } from "./ruleActiveAt";
 
 export type LoyaltyResult = {
   pointCard: PointCard;
@@ -21,6 +22,7 @@ export function bestLoyalty(
   loyaltyRules: LoyaltyRule[],
   edges: ConversionEdge[],
   preferredPointCardIds?: string[],
+  now: Date = new Date(),
 ): LoyaltyResult | null {
   const top = bestLoyalties(
     storeId,
@@ -31,12 +33,15 @@ export function bestLoyalty(
     edges,
     1,
     preferredPointCardIds,
+    now,
   );
   return top[0] ?? null;
 }
 
 // Top-N の重ね取り結果。同一 pointCard は1要素にまとめ、最終量降順で上位 maxStacks 件返す。
 // preferredPointCardIds: 店舗の優先指定。同点還元時にこの順で優先採用される。
+// now: キャンペーン期間判定の基準時刻 (テスト容易化のため引数化)
+// 同一 (pointCard, store) で複数 rule active なら最高 rate を採用。
 export function bestLoyalties(
   storeId: string,
   amount: number,
@@ -46,12 +51,17 @@ export function bestLoyalties(
   edges: ConversionEdge[],
   maxStacks: number,
   preferredPointCardIds?: string[],
+  now: Date = new Date(),
 ): LoyaltyResult[] {
   if (maxStacks <= 0) return [];
 
   const ownedById = new Map(ownedPointCards.map((p) => [p.id, p]));
+  // 店舗一致 + 保有 pointCard + active な (キャンペーン期間内 or 期間指定なし) ルールのみ
   const applicable = loyaltyRules.filter(
-    (r) => r.storeId === storeId && ownedById.has(r.pointCardId),
+    (r) =>
+      r.storeId === storeId &&
+      ownedById.has(r.pointCardId) &&
+      isRuleActiveAt(r, now),
   );
   if (applicable.length === 0) return [];
 
