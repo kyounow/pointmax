@@ -1,12 +1,9 @@
 {
   "sourceId": "jal-card-tokuyaku-list",
-  "sourceUrl": "https://www.jal.co.jp/jalcard/use/jaltokuyaku/list/",
-  "fetchedAt": "2026-05-11T11:37:49.191Z",
-  "promptVersion": "jal-tokuyaku-v1.0",
+  "sourceUrl": "https://www.jal.co.jp/jp/ja/jalcard/milenet/group/index.html",
+  "fetchedAt": "2026-05-12T13:45:12.041Z",
+  "promptVersion": "jal-tokuyaku-vUnknown",
   "extractor": "jal-tokuyaku",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Source URL could not be fetched. Unable to extract any information from the page.",
-  "categoryRules": [],
-  "storeRules": [],
-  "stores": []
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided URL `https://www.jal.co.jp/jp/ja/jalcard/milenet/group/index.html` is titled \"グループ・チェーン店で選ぶ-JALカード特約店レストラン\". The page explicitly states \"JALカードのご利用でマイルが2倍たまります。\" (With JAL Card usage, miles accumulate at double the rate.). This confirms the standard JAL特約店 rate of 2% for JAL miles. How"
 }

@@ -1,84 +1,9 @@
 {
   "sourceId": "d-point-partners",
   "sourceUrl": "https://dpoint.docomo.ne.jp/content/feature/point_realstore.html",
-  "fetchedAt": "2026-05-11T12:34:55.111Z",
-  "promptVersion": "point-partner-v1.0",
+  "fetchedAt": "2026-05-12T13:46:03.327Z",
+  "promptVersion": "point-partner-vUnknown",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "stores": [
-    {
-      "storeId": "lawson-store100",
-      "name": "ローソンストア100",
-      "category": "コンビニ",
-      "evidenceQuote": "ローソンストア100: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "mister-donut",
-      "name": "ミスタードーナツ",
-      "category": "飲食",
-      "evidenceQuote": "ミスタードーナツ: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "mos-burger",
-      "name": "モスバーガー",
-      "category": "飲食",
-      "evidenceQuote": "モスバーガー: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "wendys-first-kitchen",
-      "name": "ウェンディーズ・ファーストキッチン",
-      "category": "飲食",
-      "evidenceQuote": "ウェンディーズ・ファーストキッチン: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "matsuya",
-      "name": "松屋",
-      "category": "飲食",
-      "evidenceQuote": "松屋: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "kappa-sushi",
-      "name": "かっぱ寿司",
-      "category": "飲食",
-      "evidenceQuote": "かっぱ寿司: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "hama-sushi",
-      "name": "はま寿司",
-      "category": "飲食",
-      "evidenceQuote": "はま寿司: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "kamakura-pasta",
-      "name": "鎌倉パスタ",
-      "category": "飲食",
-      "evidenceQuote": "鎌倉パスタ: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "hidakaya",
-      "name": "日高屋",
-      "category": "飲食",
-      "evidenceQuote": "日高屋: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    }
-  ],
-  "loyaltyRules": [],
-  "notes": "このページはdポイントの『利用』可能店舗をリストしており、ポイントカード提示による『還元率』の明示がないため、loyaltyRulesは空です。また、『※』が付いている店舗はd払いのみ利用可能であり、dポイントカード提示の対象外です。"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided content lists several well-known national chain stores where dポイント can be used, but it explicitly states that for some stores (marked with ※), only d払い (d-payment) can be used, not dポイント directly. The request is to extract `loyaltyRules` for point cards, which means I should only includ"
 }
