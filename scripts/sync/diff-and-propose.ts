@@ -17,6 +17,7 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { seed, SEED_VERSION } from "../../src/state/seed";
+import { BLOCKED_STORE_IDS } from "../../src/state/seed-blocklist";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 import {
   CONFIDENCE_AUTO_THRESHOLD,
@@ -121,9 +122,13 @@ export function proposeStores(
     const confidence = computeConfidence(evidence);
     let reviewReason: ReviewReason | undefined;
 
+    // userBlocked: src/state/seed-blocklist.ts でユーザ除外指定の id
+    if (BLOCKED_STORE_IDS.has(s.storeId)) {
+      reviewReason = "userBlocked";
+    }
     // Policy B: 対象外カテゴリは強制的に needsReview に
     // (Gemini の scope 指示遵守が完璧でない場合の防御)
-    if (s.category && EXCLUDED_CATEGORIES.has(s.category)) {
+    else if (s.category && EXCLUDED_CATEGORIES.has(s.category)) {
       reviewReason = "excludedCategory";
     } else if (existingIds.has(s.storeId) || existingNames.has(s.name)) {
       reviewReason = "idCollision";

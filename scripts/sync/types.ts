@@ -249,7 +249,8 @@ export type ReviewReason =
   | "referenceChange"      // 通貨・カード参照変更
   | "idCollision"          // 新規追加だが既存 ID と衝突
   | "multiSourceConflict"  // 複数ソースで同じフィールドが矛盾
-  | "excludedCategory";    // Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)
+  | "excludedCategory"     // Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)
+  | "userBlocked";         // src/state/seed-blocklist.ts でユーザが除外指定
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";

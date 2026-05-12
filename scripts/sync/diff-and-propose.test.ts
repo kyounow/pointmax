@@ -178,6 +178,42 @@ describe("proposeStores", () => {
     const ps = proposeStores(data, emptySeed);
     expect(ps[0].reviewReason).toBeUndefined();
   });
+
+  it("userBlocked: seed-blocklist にある storeId は強制 review", () => {
+    // 'ana' は seed-blocklist にある (A.店舗じゃない)
+    const data = baseSource({
+      stores: [
+        {
+          storeId: "ana",
+          name: "ANA",
+          category: "交通",
+          evidenceQuote: "明示",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeStores(data, emptySeed);
+    expect(ps[0].reviewReason).toBe("userBlocked");
+  });
+
+  it("userBlocked は excludedCategory より優先 (順序確認)", () => {
+    // blocked かつ excluded カテゴリ
+    const data = baseSource({
+      stores: [
+        {
+          storeId: "telasa",
+          name: "TELASA",
+          category: "ネットサービス", // EXCLUDED にも該当
+          evidenceQuote: "x",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeStores(data, emptySeed);
+    expect(ps[0].reviewReason).toBe("userBlocked");
+  });
 });
 
 describe("proposeStoreRules", () => {
