@@ -1,0 +1,167 @@
+name: Weekly Master Sync
+
+on:
+  schedule:
+    # 日曜 21:00 UTC = 月曜 06:00 JST
+    - cron: '0 21 * * 0'
+  workflow_dispatch:
+    inputs:
+      force_review_only:
+        description: 'auto-merge をスキップし、全件 review PR に流す (慣らしテスト用)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: weekly-sync
+  cancel-in-progress: false  # 進行中の cron を中断しない
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # peter-evans/create-pull-request が full history を必要とする
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Fetch all enabled sources
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npm run sync:fetch-all
+
+      - name: Propose
+        run: npm run sync:propose
+
+      - name: Read counts
+        id: counts
+        run: |
+          AUTO=$(jq '.autoApplicable | length' sources/proposed-migrations.json)
+          REVIEW=$(jq '.needsReview | length' sources/proposed-migrations.json)
+          echo "auto=$AUTO" >> $GITHUB_OUTPUT
+          echo "review=$REVIEW" >> $GITHUB_OUTPUT
+          echo "📊 auto=$AUTO, review=$REVIEW"
+
+      - name: Read config
+        id: config
+        run: |
+          ENABLED=$(jq -r '.autoMergeEnabled // false' sync.config.json)
+          MAX=$(jq -r '.maxAutoChangesPerRun // 50' sync.config.json)
+          # workflow_dispatch で force_review_only=true なら ENABLED を上書き
+          if [ "${{ inputs.force_review_only }}" = "true" ]; then
+            ENABLED=false
+            echo "ℹ️ force_review_only=true なので autoMergeEnabled を false に上書き"
+          fi
+          echo "enabled=$ENABLED" >> $GITHUB_OUTPUT
+          echo "max=$MAX" >> $GITHUB_OUTPUT
+          echo "🛠 autoMergeEnabled=$ENABLED, max=$MAX"
+
+      - name: Generate reports
+        run: npm run sync:report
+
+      # ===== Tier 1: Auto-merge to main =====
+      - name: Apply auto changes
+        if: steps.counts.outputs.auto > 0
+        run: npm run sync:apply
+
+      - name: Safety check (count + test + build)
+        if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true'
+        id: safety
+        continue-on-error: true
+        run: |
+          if [ ${{ steps.counts.outputs.auto }} -gt ${{ steps.config.outputs.max }} ]; then
+            echo "❌ auto 件数 ${{ steps.counts.outputs.auto }} > max ${{ steps.config.outputs.max }}"
+            exit 2
+          fi
+          npm test
+          npm run build
+
+      - name: Commit auto changes to main
+        if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/state/seed-additions.ts sources/extracted/ sources/proposed-migrations.json
+          if git diff --cached --quiet; then
+            echo "ℹ️ no changes to commit"
+          else
+            git commit -F sources/AUTO_SUMMARY.md
+            git push origin main
+            echo "✓ auto-merged ${{ steps.counts.outputs.auto }} changes to main"
+          fi
+
+      # ===== Tier 2: Review PR =====
+      # 条件:
+      #   needsReview > 0   OR
+      #   auto > 0 で autoMergeEnabled=false   OR
+      #   auto > 0 で safety 失敗 (fallback)
+      - name: Determine review-PR trigger
+        id: review_trigger
+        run: |
+          NEED_REVIEW="${{ steps.counts.outputs.review > 0 }}"
+          AUTO_BLOCKED="false"
+          if [ "${{ steps.counts.outputs.auto }}" -gt 0 ]; then
+            if [ "${{ steps.config.outputs.enabled }}" != "true" ]; then
+              AUTO_BLOCKED="true"
+            elif [ "${{ steps.safety.outcome }}" != "success" ]; then
+              AUTO_BLOCKED="true"
+            fi
+          fi
+          if [ "$NEED_REVIEW" = "true" ] || [ "$AUTO_BLOCKED" = "true" ]; then
+            echo "active=true" >> $GITHUB_OUTPUT
+          else
+            echo "active=false" >> $GITHUB_OUTPUT
+          fi
+          echo "🧪 review PR active=$NEED_REVIEW || auto_blocked=$AUTO_BLOCKED"
+
+      # Stage review queue artifacts so peter-evans/create-pull-request picks them up.
+      # Main の auto commit が走った場合、ここでステージするのは「main にすでに含まれない」変更のみ。
+      - name: Stage review queue artifacts
+        if: steps.review_trigger.outputs.active == 'true'
+        run: |
+          git add sources/REVIEW_QUEUE.md sources/proposed-migrations.json sources/extracted/ || true
+          # ステージ済みのみ差分を確認 (一切無ければ peter-evans が no-op して終わる)
+          git status --short
+
+      - name: Create/update review PR
+        if: steps.review_trigger.outputs.active == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/sync-review-queue
+          delete-branch: false
+          title: "📋 週次マスタ同期: 要レビュー項目"
+          body-path: sources/REVIEW_QUEUE.md
+          commit-message: |
+            chore: update sync review queue
+
+            See sources/REVIEW_QUEUE.md for details.
+          labels: |
+            auto-sync
+            needs-review
+          add-paths: |
+            sources/REVIEW_QUEUE.md
+            sources/proposed-migrations.json
+            sources/extracted/**
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Weekly Sync Result" >> $GITHUB_STEP_SUMMARY
+          echo "- autoApplicable: ${{ steps.counts.outputs.auto }}" >> $GITHUB_STEP_SUMMARY
+          echo "- needsReview: ${{ steps.counts.outputs.review }}" >> $GITHUB_STEP_SUMMARY
+          echo "- autoMergeEnabled: ${{ steps.config.outputs.enabled }}" >> $GITHUB_STEP_SUMMARY
+          echo "- safety: ${{ steps.safety.outcome || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- review-PR: ${{ steps.review_trigger.outputs.active || 'false' }}" >> $GITHUB_STEP_SUMMARY

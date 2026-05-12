@@ -135,6 +135,16 @@ npm run sync:apply                 # autoApplicable を seed-additions.ts へ
 
 ---
 
+## 自動アップデート (cron)
+
+- 毎週月曜 06:00 JST に GitHub Actions が自動で同期パイプラインを実行 (`workflow_dispatch` でも手動実行可)
+- 高信頼項目 (autoApplicable) は main に自動 push → GitHub Pages が再デプロイ。要レビュー項目は `chore/sync-review-queue` ブランチの長寿命 PR に集約
+- `sync.config.json` の `autoMergeEnabled` フラグで自動 push の ON/OFF を制御。`maxAutoChangesPerRun` が安全弁 (超過時は全件 review 降格)
+- 初期値は `autoMergeEnabled: false` (慣らし運用)。数回の cron を `chore/sync-review-queue` PR で確認してから `true` に切り替える想定
+- ローカル PC は完全に無関係 — GitHub のサーバー上で実行される
+
+---
+
 ## バージョニング方針
 
 ### v1.0（現行・安定運用）
