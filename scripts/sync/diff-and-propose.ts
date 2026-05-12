@@ -33,6 +33,7 @@ import {
   proposeStoreRules,
   proposeStores,
 } from "./propose-helpers";
+import { resolveCardId, resolveStoreId } from "./aliases";
 
 // 再エクスポート (テスト互換性のため diff-and-propose 経由で参照される旧APIを温存)
 export {
@@ -97,6 +98,28 @@ export function isFailedExtraction(d: ExtractedSource): boolean {
     /アクセスできま(せん|せんで)/,
   ];
   return failurePatterns.some((p) => p.test(d.notes ?? ""));
+}
+
+// ───────────────────────────────────────────────────────────────
+// ID 正規化 (aliases.json に基づく cardId / storeId 揺れ補正)
+// ───────────────────────────────────────────────────────────────
+
+export function normalizeIds(ex: ExtractedSource): ExtractedSource {
+  return {
+    ...ex,
+    cards: ex.cards?.map((c) => ({ ...c, cardId: resolveCardId(c.cardId) })),
+    storeRules: ex.storeRules?.map((r) => ({
+      ...r,
+      cardId: resolveCardId(r.cardId),
+      storeId: r.storeId ? resolveStoreId(r.storeId) : r.storeId,
+    })),
+    categoryRules: ex.categoryRules?.map((r) => ({ ...r, cardId: resolveCardId(r.cardId) })),
+    stores: ex.stores?.map((s) => ({ ...s, storeId: resolveStoreId(s.storeId) })),
+    loyaltyRules: ex.loyaltyRules?.map((r) => ({
+      ...r,
+      storeId: r.storeId ? resolveStoreId(r.storeId) : r.storeId,
+    })),
+  };
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -202,13 +225,15 @@ function main(): void {
   let processed = 0;
   let failed = 0;
 
-  for (const data of extracted) {
-    if (isFailedExtraction(data)) {
-      console.log(`   ⚠️  ${data.sourceId}: 取得失敗 (notes) - スキップ`);
+  for (const raw of extracted) {
+    if (isFailedExtraction(raw)) {
+      console.log(`   ⚠️  ${raw.sourceId}: 取得失敗 (notes) - スキップ`);
       failed += 1;
       continue;
     }
     processed += 1;
+    // alias 正規化: smbc-v-gold → smbc-v, seven-eleven → conv-7eleven 等
+    const data = normalizeIds(raw);
     allProposals.push(...proposeStores(data, current));
     allProposals.push(...proposeStoreRules(data, current));
     allProposals.push(...proposeCategoryRules(data, current));

@@ -33,6 +33,7 @@ import type {
   ReviewReason,
   UpdateFieldProposal,
 } from "./types";
+import { detectSelfReportedExclusion } from "./evidence-check";
 
 // Extracted* レコードから Evidence のみを抜き出す。
 // Extracted は各エンティティに Evidence のフィールドを混ぜている (型上のフラット化)
@@ -78,6 +79,10 @@ export function proposeStores(
     } else if (confidence < CONFIDENCE_AUTO_THRESHOLD) {
       reviewReason = "lowConfidence";
     }
+    // evidence integrity: Gemini 自身が除外と報告している場合は強制 needsReview
+    if (detectSelfReportedExclusion(evidence.evidenceQuote)) {
+      reviewReason = "selfReportedExclusion";
+    }
 
     const prop: AddRecordProposal = {
       type: "addRecord",
@@ -119,8 +124,12 @@ export function proposeStoreRules(
 
     if (!existing) {
       // 新規追加 (id は deterministic に生成して冪等性確保)
-      const reviewReason: ReviewReason | undefined =
+      let reviewReason: ReviewReason | undefined =
         confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined;
+      // evidence integrity: Gemini 自身が除外と報告している場合は強制 needsReview
+      if (detectSelfReportedExclusion(evidence.evidenceQuote)) {
+        reviewReason = "selfReportedExclusion";
+      }
       const ruleId = `rule-${r.cardId}-${r.storeId}${r.paymentAppId ? `-${r.paymentAppId}` : ""}`;
       result.push({
         type: "addRecord",
@@ -197,6 +206,12 @@ export function proposeCategoryRules(
     );
     if (!existing) {
       const catRuleId = `catrule-${r.cardId}-${r.category}${r.paymentAppId ? `-${r.paymentAppId}` : ""}`;
+      let catReviewReason: ReviewReason | undefined =
+        confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined;
+      // evidence integrity check
+      if (detectSelfReportedExclusion(evidence.evidenceQuote)) {
+        catReviewReason = "selfReportedExclusion";
+      }
       result.push({
         type: "addRecord",
         collection: "rules",
@@ -213,8 +228,7 @@ export function proposeCategoryRules(
         sourceId: data.sourceId,
         confidence,
         evidence,
-        reviewReason:
-          confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
+        reviewReason: catReviewReason,
       });
       continue;
     }
@@ -335,6 +349,12 @@ export function proposeLoyaltyRules(
     );
     if (!existing) {
       const loyaltyId = `loy-${r.pointCardId}-${r.storeId}`;
+      let loyaltyReviewReason: ReviewReason | undefined =
+        confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined;
+      // evidence integrity check
+      if (detectSelfReportedExclusion(evidence.evidenceQuote)) {
+        loyaltyReviewReason = "selfReportedExclusion";
+      }
       result.push({
         type: "addRecord",
         collection: "loyaltyRules",
@@ -349,8 +369,7 @@ export function proposeLoyaltyRules(
         sourceId: data.sourceId,
         confidence,
         evidence,
-        reviewReason:
-          confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
+        reviewReason: loyaltyReviewReason,
       });
       continue;
     }

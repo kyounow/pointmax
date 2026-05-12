@@ -3,13 +3,13 @@
 (自動生成 2026-05-12。merge 前に項目を確認してください。)
 
 ## サマリ
-- 要レビュー: 215 件
-- ソース別: ponta=68, smbc-v-gold-7percent=23, rakuten-point=77, v-point=46, d-point=1
-- 主な理由: lowConfidence=42, idCollision=122, userBlocked=23, excludedCategory=28
+- 要レビュー: 194 件
+- ソース別: ponta=68, smbc-v-gold-7percent=2, rakuten-point=77, v-point=46, d-point=1
+- 主な理由: lowConfidence=21, selfReportedExclusion=1, userBlocked=23, idCollision=121, excludedCategory=28
 
 ## 項目 (理由別)
 
-### 🟡 lowConfidence (42 件)
+### 🟡 lowConfidence (21 件)
 理由: Gemini の評価で confidence < 0.9。エビデンス不明瞭・推測混入の疑い。
 
 <details><summary>展開</summary>
@@ -154,20 +154,14 @@
 - 評価: `evidenceQuote="引越し・住まい: ハート引越センター たまる"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-_他 22 件は省略 (sources/proposed-migrations.json を参照)_
+_他 1 件は省略 (sources/proposed-migrations.json を参照)_
 
 </details>
 
-### 🟠 idCollision (122 件)
+### 🟠 idCollision (121 件)
 理由: 新規追加だが既存 ID またはストア名と衝突。重複の可能性あり。
 
 <details><summary>展開</summary>
-
-#### `addRecord/cards` from `smbc-v-gold-7percent`
-- 内容: `id="smbc-v-gold", name="smbc-v-gold", defaultRate=0.01, defaultCurrencyId="v-pt"`
-- confidence: 0.81
-- 評価: `evidenceQuote="三井住友カード Visa Infinite、三井住友カード プラチナ、三井住友カード プラチナプリファード、Oliveフレキシブルペイ プラチナプリファード、三井住友カード プラチナ、三井住友カード プラチナ PA-TYPE、三井住友ビジネ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 #### `addRecord/stores` from `ponta-partners`
 - 内容: `id="2ndstreet", name="セカンドストリート", category="ファッション"`
@@ -283,7 +277,13 @@ _他 22 件は省略 (sources/proposed-migrations.json を参照)_
 - 評価: `evidenceQuote="アリさんマークの引越社：楽天ポイントカードが使えるお店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-_他 102 件は省略 (sources/proposed-migrations.json を参照)_
+#### `addRecord/stores` from `ponta-partners`
+- 内容: `id="art-hikkoshi-center", name="アート引越センター", category="引越し"`
+- confidence: 0.90
+- 評価: `evidenceQuote="引越し・住まい: アート引越センター"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+_他 101 件は省略 (sources/proposed-migrations.json を参照)_
 
 </details>
 

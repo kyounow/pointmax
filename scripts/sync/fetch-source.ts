@@ -27,6 +27,13 @@ import type {
   RegistryFile,
   RegistrySource,
 } from "./types";
+import {
+  classifyResponse,
+  prefetchAsPlainText,
+  type ResponseStatus,
+} from "./fetch-response";
+
+const RETRY_DELAYS_MS = [5000, 15000];  // attempt 2: +5s, attempt 3: +15s (合計 max 20s wait)
 
 // ───────────────────────────────────────────────────────────────
 // Paths
@@ -244,6 +251,95 @@ async function callGemini(args: {
   return { text, retrievedUrls };
 }
 
+// callGemini を 3 段階で試す:
+//   attempt 1: URL Context Tool (現行)
+//   attempt 2: URL Context + 5s 待機
+//   attempt 3: pre-fetch → plain text を user prompt に注入 + 15s 待機
+// それぞれ classifyResponse で評価し、success なら即返却。
+// すべて失敗したら最後の (text, retrievedUrls, lastStatus) を返す。
+async function callGeminiWithRetry(args: {
+  apiKey: string;
+  systemInstruction: string;
+  url: string;
+  sourceId: string;
+}): Promise<GeminiResult & { attempts: number; finalStatus: ResponseStatus }> {
+  let last: GeminiResult = { text: "", retrievedUrls: [] };
+  let lastStatus: ResponseStatus = "empty";
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      if (attempt === 3) {
+        // pre-fetch fallback strategy
+        console.log(`   🌐 attempt ${attempt}/3: pre-fetch HTML → plain text 渡し`);
+        const text = await prefetchAsPlainText(args.url);
+        last = await callGeminiWithText({
+          apiKey: args.apiKey,
+          systemInstruction: args.systemInstruction,
+          sourceId: args.sourceId,
+          url: args.url,
+          plainText: text,
+        });
+      } else {
+        if (attempt > 1) {
+          console.log(`   ⏳ attempt ${attempt}/3 (URL Context, 待機 ${RETRY_DELAYS_MS[attempt - 2] / 1000}s)`);
+          await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt - 2]));
+        }
+        last = await callGemini(args);
+      }
+
+      lastStatus = classifyResponse(last);
+      if (lastStatus === "success") {
+        return { ...last, attempts: attempt, finalStatus: "success" };
+      }
+      console.log(`   ⚠️ attempt ${attempt}/3 status: ${lastStatus}`);
+    } catch (e) {
+      console.log(`   ⚠️ attempt ${attempt}/3 error: ${e instanceof Error ? e.message : String(e)}`);
+      // 429 は特に retry 価値が高いが、他のエラーも次の attempt に進む
+    }
+  }
+
+  return { ...last, attempts: 3, finalStatus: lastStatus };
+}
+
+// pre-fetch 用: URL Context Tool を使わず、plain text を user message に注入
+async function callGeminiWithText(args: {
+  apiKey: string;
+  systemInstruction: string;
+  sourceId: string;
+  url: string;
+  plainText: string;
+}): Promise<GeminiResult> {
+  const ai = new GoogleGenAI({ apiKey: args.apiKey });
+  // URL Context Tool を使わない代わりに、テキストを直接渡す
+  const userPrompt =
+    `以下は ${args.url} のページ本文 (pre-fetch 済 plain text) です。\n` +
+    `systemInstruction の指示に従って ExtractedSource JSON を返してください。\n\n` +
+    `sourceId: ${args.sourceId}\n\n` +
+    `**出力ルール (厳守)**:\n` +
+    `1. 出力は ExtractedSource スキーマに準拠した**有効な JSON オブジェクト 1 件のみ**\n` +
+    `2. 思考過程・解説・コードブロック ( \`\`\`json ) は**一切出力しない**\n` +
+    `3. JSON を [ ] でラップしない。{ から始まり } で終わる単一オブジェクト\n` +
+    `4. ページから抽出できない場合は、必須フィールドだけ持つ JSON を返し notes に理由を 1 行で書く\n\n` +
+    `必須フィールド: sourceId, sourceUrl, fetchedAt (ISO8601), promptVersion, extractor, geminiModel\n\n` +
+    `=== ページ本文 ===\n${args.plainText}`;
+
+  const response = await ai.models.generateContent({
+    model: GEMINI_MODEL,
+    contents: userPrompt,
+    config: {
+      systemInstruction: args.systemInstruction,
+      // pre-fetch モードでは responseMimeType を application/json に固定 (URL Context 非使用なので OK)
+      responseMimeType: "application/json",
+      thinkingConfig: { thinkingBudget: 1024 },
+    },
+  });
+
+  return {
+    text: response.text ?? "",
+    retrievedUrls: [`${args.url} [pre-fetch]`],
+  };
+}
+
 // ───────────────────────────────────────────────────────────────
 // Schema validation
 // ───────────────────────────────────────────────────────────────
@@ -294,13 +390,14 @@ async function main(): Promise<void> {
   // --dry-run でなければ API キーが必要
   const apiKey = getApiKey();
 
-  console.log(`🤖 Gemini ${GEMINI_MODEL} 呼び出し中 (URL Context Tool 経由)...`);
-  const { text: rawJson, retrievedUrls } = await callGemini({
+  console.log(`🤖 Gemini ${GEMINI_MODEL} 呼び出し中 (最大 3 attempts, retry/pre-fetch 込み)...`);
+  const { text: rawJson, retrievedUrls, attempts, finalStatus } = await callGeminiWithRetry({
     apiKey,
     systemInstruction,
     url: source.url,
     sourceId: source.id,
   });
+  console.log(`   ${finalStatus === "success" ? "✓" : "⚠️"} attempts=${attempts}, status=${finalStatus}`);
   if (retrievedUrls.length > 0) {
     console.log("   retrieved URLs:");
     for (const u of retrievedUrls) console.log(`     - ${u}`);
