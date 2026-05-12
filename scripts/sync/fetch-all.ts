@@ -96,10 +96,13 @@ async function main(): Promise<void> {
       }
     }
 
-    // ソース間で 2 秒スリープ (Gemini 429 緩和)
-    // dry-run でも習慣的に入れておく (本番との動作差を最小化)
+    // ソース間で 5 秒スリープ (Gemini 429 / RPM 上限緩和)
+    // gemini-2.5-flash の free tier RPM 上限は 10/min = 1 call/6s。
+    // 1 ソースが内部で 3 attempts まで retry し得るため、ソース間にも
+    // 余裕を持たせて RPM 超過を避ける。dry-run でも習慣的に入れる
+    // (本番との動作差を最小化、6 ソースで合計 25s 待機程度)。
     if (results.length < enabledSources.length) {
-      await new Promise((r) => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 5000));
     }
   }
 
