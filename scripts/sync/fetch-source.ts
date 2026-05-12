@@ -8,10 +8,20 @@
 //   2. sources/registry.yaml から <sourceId> を探す
 //   3. extractors/<extractor>.prompt.md を読み込み、INJECT マーカーを seed の現状で解決
 //   4. (--dry-run なら) ここで停止
-//   5. source.url を fetch して HTML を取得 (script/style を除去)
-//   6. Gemini に systemInstruction = 解決済みプロンプト、user = HTML として送る
-//   7. レスポンス JSON を ajv で schema 検証
+//   5. callGeminiWithRetry で 3 段階試行 (詳細は同関数の docblock 参照):
+//        attempt 1: Gemini に URL Context Tool 経由で URL を渡し読み取り
+//        attempt 2: 5 秒待機して URL Context 再試行 (混雑回避)
+//        attempt 3: Node で URL を pre-fetch → HTML を plain text 化して
+//                   Gemini に直渡し (URL Context Tool 不通時の最終手段)
+//      各 attempt は classifyResponse で評価し、success なら即返却。
+//   6. レスポンスを JSON parse (コードフェンス / 先頭 [...] ラッパに保険対応)
+//   7. ajv で schema 検証
 //   8. sources/extracted/<sourceId>.json に書き出し
+//
+// 失敗時 (全 attempt が success にならなかった、JSON 解析失敗、schema 違反):
+//   - process は exit code 1 でなく fallback ExtractedSource を書き出して終了
+//   - 後段の sync:propose が "URL retrieval failed" notes を見て gracefully skip する
+//   - これにより 1 ソース失敗で週次 cron 全体を停止させない
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
