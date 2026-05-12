@@ -47,8 +47,8 @@ import { SEED_EDGES } from "./seed-data-edges";
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
-// v0.8 リリースを起点として 1 から再開。v1.0 までに各バージョンの差分を積み上げる。
-export const SEED_VERSION = 8;
+// v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
+export const SEED_VERSION = 9;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -58,6 +58,7 @@ export const DEFAULT_SYNC_URL =
   "https://kyounow.github.io/pointmax/master.json";
 
 // 各バージョンで追加された主な内容（差分通知に使用）
+// 個別の auto-sync 適用や微修正のためのバージョン bump は記録しない (CHANGELOG はリリース粒度)。
 export const SEED_CHANGELOG: {
   version: number;
   date: string;
@@ -68,6 +69,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-11",
     summary:
       "PointMax v0.8 リリース。クレカ＋ポイントカードの二重取り計算、支払方法(PaymentApp)の自動最適選択、JAL/ANA等の交換ルート、PWA対応、公式マスタの自動同期を提供",
+  },
+  {
+    version: 9,
+    date: "2026-05-12",
+    summary:
+      "PointMax v1.0 リリース。① 支払方法のカード別還元 (d払い×dカード 1% 等) を表現する cardSpecificBonusRates、② キャンペーン期間限定ルール (validFrom/validTo) と専用画面、③ 自動同期パイプラインで楽天/d/Vポイント/Ponta から計 148 加盟店を取り込み済み。後方互換ポリシー発効。",
   },
 ];
 
