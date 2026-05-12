@@ -248,7 +248,8 @@ export type ReviewReason =
   | "deletion"             // 削除提案
   | "referenceChange"      // 通貨・カード参照変更
   | "idCollision"          // 新規追加だが既存 ID と衝突
-  | "multiSourceConflict"; // 複数ソースで同じフィールドが矛盾
+  | "multiSourceConflict"  // 複数ソースで同じフィールドが矛盾
+  | "excludedCategory";    // Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";
@@ -303,6 +304,25 @@ function clamp01(n: number): number {
 // === 自動マージ閾値 ===
 // confidence: 0.9 以上で autoApplicable 候補
 export const CONFIDENCE_AUTO_THRESHOLD = 0.9;
+
+// === Policy B: 除外カテゴリ ===
+// SCOPE_DIRECTIVES['chains-only'] でも Gemini に指示しているが、漏れた場合の
+// defense-in-depth として Phase C (diff-and-propose) でも store の addRecord を
+// 強制的に needsReview に振り分ける。
+export const EXCLUDED_CATEGORIES = new Set<string>([
+  "金融",
+  "保険",
+  "医療",
+  "ギャンブル",
+  "葬儀",
+  "不動産",
+  "住宅",
+  "不動産・住宅",
+  "ネットサービス",
+  "サービス",        // 漠然カテゴリ
+  "その他",           // 漠然カテゴリ
+  "(未分類)",         // category 未設定で inject-prompt が補ったもの
+]);
 
 // rate 変動: pp (絶対値) と相対倍率 (比) の両方を見る
 // from = 0.01 (1%), to = 0.05 (5%) → ppDelta = 0.04, ratio = 5.0

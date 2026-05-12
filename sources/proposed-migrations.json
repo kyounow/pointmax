@@ -1,8 +1,130 @@
 {
-  "generatedAt": "2026-05-11T11:47:00.898Z",
+  "generatedAt": "2026-05-12T00:43:17.907Z",
   "fromSeedVersion": 1,
   "toSeedVersion": 2,
   "autoApplicable": [
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-jalannet",
+        "storeId": "jalannet",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "じゃらんnetでの宿泊予約でPontaポイントがたまる。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: じゃらんnet / レジャー・旅行: じゃらんnet たまる つかえる リクルートID",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-hotpepper-beauty",
+        "storeId": "hotpepper-beauty",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "ホットペッパービューティーの利用でPontaポイントがたまる。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ホットペッパービューティー / ファッション・美容: ホットペッパービューティー たまる つかえる リクルートID",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-hotpepper-gourmet",
+        "storeId": "hotpepper-gourmet",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "ホットペッパーグルメの利用でPontaポイントがたまる。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ホットペッパーグルメ / グルメ・飲食: ホットペッパーグルメ たまる つかえる リクルートID",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-jalan-golf",
+        "storeId": "jalan-golf",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "じゃらんゴルフの利用でPontaポイントがたまる。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: じゃらんゴルフ / スポーツ・ゴルフ: じゃらんゴルフ たまる つかえる リクルートID",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-jal-rentacar",
+        "storeId": "jal-rentacar",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "じゃらんレンタカーの利用でPontaポイントがたまる。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "レンタカー・ガソリンスタンド・駐車場: じゃらんレンタカー たまる つかえる リクルートID",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "17live",
+        "name": "17LIVE(ワンセブンライブ)",
+        "category": "エンタメ・チケット"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "音楽・映像・ゲーム: 17LIVE(ワンセブンライブ)",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "2ndstreet",
+        "name": "セカンドストリート",
+        "category": "ファッション"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ファッション・美容: セカンドストリート",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
     {
       "type": "addRecord",
       "collection": "stores",
@@ -71,6 +193,22 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "airbnb",
+        "name": "Airbnb",
+        "category": "宿泊"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "Airbnb（エアビーアンドビー）: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "aiya",
         "name": "藍屋",
         "category": "飲食"
@@ -95,6 +233,38 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "アカカベグループ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "albis",
+        "name": "アルビス",
+        "category": "スーパー"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: アルビス",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "alook",
+        "name": "ALOOK",
+        "category": "メガネ"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ALOOK: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -183,6 +353,22 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "ana",
+        "name": "ANA",
+        "category": "交通"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ANA: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "angie",
         "name": "ANGIE",
         "category": "美容"
@@ -199,6 +385,22 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "aoki",
+        "name": "AOKI",
+        "category": "ファッション"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ファッション・美容: AOKI",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "apollo-station",
         "name": "apollostation",
         "category": "ガソリンスタンド"
@@ -207,6 +409,22 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "apollostation：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "aquaclara",
+        "name": "アクアクララ",
+        "category": "生活サービス"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ネットショッピング・通販・宅配: アクアクララ",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -239,6 +457,118 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "アリさんマークの引越社：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "art-hikkoshi-center",
+        "name": "アート引越センター",
+        "category": "引越し"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "引越し・住まい: アート引越センター",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "asahi-shimbun-digital",
+        "name": "朝日新聞（デジタル版）",
+        "category": "本・電子書籍・新聞"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "本・電子書籍・新聞: 朝日新聞（デジタル版）",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "asahiya-shoten",
+        "name": "旭屋書店",
+        "category": "書店"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "旭屋書店: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "au-bookpass",
+        "name": "auブックパス",
+        "category": "本・電子書籍・新聞"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "本・電子書籍・新聞: auブックパス",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "au-denki",
+        "name": "auでんき",
+        "category": "電気・ガス"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "生活・暮らし・ペット: auでんき",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "au-pay-market",
+        "name": "au PAY マーケット",
+        "category": "ネット通販"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ネットショッピング・通販・宅配: au PAY マーケット",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "auto-info",
+        "name": "オート・インフォ",
+        "category": "車・バイク"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "車・バイク: オート・インフォ",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -311,30 +641,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "beams",
-        "name": "BEAMS",
-        "category": "ファッション"
+        "id": "bbic",
+        "name": "BBIQ（QTnet）",
+        "category": "通信"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "BEAMS：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "beauty-youth-united-arrows",
-        "name": "BEAUTY&YOUTH UNITED ARROWS",
-        "category": "ファッション"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "BEAUTY&YOUTH UNITED ARROWS：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "家電・コンピューター・通信: BBIQ（QTnet）",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -439,6 +753,70 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "booklive",
+        "name": "ブックライブ",
+        "category": "電子書籍"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ブックライブ: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "books-misumi",
+        "name": "BOOKSmisumi",
+        "category": "書店"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "BOOKSmisumi: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "cafe-lexcel",
+        "name": "カフェ レクセル",
+        "category": "飲食"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "グルメ・飲食: カフェ レクセル",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "camera-no-kitamura",
+        "name": "カメラのキタムラ",
+        "category": "カメラ・写真"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "カメラのキタムラ: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "camp-depot",
         "name": "キャンプデポ",
         "category": "スポーツ"
@@ -447,6 +825,38 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "キャンプデポ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "carnext",
+        "name": "カーネクスト",
+        "category": "車・バイク"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "車・バイク: カーネクスト",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "carseven",
+        "name": "カーセブン",
+        "category": "車・バイク"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "車・バイク: カーセブン",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -487,22 +897,6 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "cocos",
-        "name": "ココス",
-        "category": "飲食"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ココス：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
         "id": "commodi-iida",
         "name": "コモディイイダ",
         "category": "スーパー"
@@ -511,6 +905,22 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "コモディイイダ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "commufa",
+        "name": "コミュファ",
+        "category": "通信"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "家電・コンピューター・通信: コミュファ",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -631,14 +1041,46 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "dommy",
-        "name": "ドミー",
-        "category": "スーパー"
+        "id": "denki-hikaku-insweb",
+        "name": "でんきの比較インズウェブ",
+        "category": "電気・ガス"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "ドミー：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "生活・暮らし・ペット: でんきの比較インズウェブ",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "dept-ryubo",
+        "name": "デパートリウボウ",
+        "category": "百貨店"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "デパートリウボウ: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "diamond-sha",
+        "name": "ダイヤモンド社",
+        "category": "本・電子書籍・新聞"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "本・電子書籍・新聞: ダイヤモンド社",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -695,6 +1137,22 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "enewan",
+        "name": "エネワン（株式会社サイサン）",
+        "category": "電気・ガス"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "電気・ガス: エネワン（株式会社サイサン）",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "enex-fleet",
         "name": "エネクスフリート",
         "category": "ガソリンスタンド"
@@ -703,6 +1161,22 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "エネクスフリート：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "epark-relax-este",
+        "name": "EPARKリラク＆エステ",
+        "category": "美容"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "EPARKリラク＆エステ: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -743,6 +1217,54 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "gasone",
+        "name": "ガスワン（株式会社サイサン）",
+        "category": "電気・ガス"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "電気・ガス: ガスワン（株式会社サイサン）",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "geo-takuhai-rental",
+        "name": "ゲオ宅配レンタル",
+        "category": "音楽・映像"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ネットショッピング・通販・宅配: ゲオ宅配レンタル",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "go-today-shaire-salon",
+        "name": "GO TODAY SHAiRE SALON",
+        "category": "美容"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "GO TODAY SHAiRE SALON: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "golf-five",
         "name": "ゴルフ５",
         "category": "スポーツ"
@@ -751,6 +1273,22 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "ゴルフ５：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "green-dog-cat",
+        "name": "GREEN DOG & CAT",
+        "category": "ペット"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "GREEN DOG & CAT: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -839,6 +1377,70 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "hitachi-chain-store",
+        "name": "日立チェーンストール",
+        "category": "家電量販店"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "日立チェーンストール: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "hmv-books-online",
+        "name": "HMV&BOOKS online",
+        "category": "音楽・映像"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "音楽・映像・ゲーム: HMV&BOOKS online",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "hmv-stores",
+        "name": "ＨＭＶ（店舗）",
+        "category": "音楽・映像"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "音楽・映像・ゲーム: ＨＭＶ（店舗）",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "hot-pepper-beauty-clinic",
+        "name": "HOT PEPPER Beauty 美容クリニック",
+        "category": "美容"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ファッション・美容: HOT PEPPER Beauty 美容クリニック",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "hotel-keihan-chain",
         "name": "ホテル京阪チェーン",
         "category": "ホテル"
@@ -847,6 +1449,38 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "ホテル京阪チェーン：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "hyundai-mobility-japan",
+        "name": "Hyundai Mobility Japan",
+        "category": "自動車"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "Hyundai Mobility Japan: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "iris-plaza",
+        "name": "アイリスプラザ",
+        "category": "ネット通販"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アイリスプラザ: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -871,14 +1505,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "jms",
-        "name": "ジェームス",
-        "category": "車・バイク"
+        "id": "jal-mileage-bank",
+        "name": "日本航空(JALマイレージバンク)",
+        "category": "鉄道・交通"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "ジェームス：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "日本航空(JALマイレージバンク)",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -983,14 +1617,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "koa-gas-japan",
-        "name": "コーアガス日本",
-        "category": "電気・ガス"
+        "id": "kawatoku-dept",
+        "name": "川徳百貨店",
+        "category": "百貨店"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "v-point-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "コーアガス日本：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "川徳百貨店: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1047,6 +1681,102 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "lawson-store-100",
+        "name": "ローソンストア100",
+        "category": "コンビニ"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: ローソンストア100",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "lawson-store100",
+        "name": "ローソンストア100",
+        "category": "コンビニ"
+      },
+      "sourceId": "d-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ローソンストア100: dポイントをつかえる",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "lawson-ticket",
+        "name": "ローソンチケット",
+        "category": "エンタメ・チケット"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "エンタメ・チケット・お出かけ: ローソンチケット",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "lawson-ticket-travel",
+        "name": "ローチケ旅行",
+        "category": "旅行代理店"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "レジャー・旅行: ローチケ旅行",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "lawson-travel",
+        "name": "ローソントラベル",
+        "category": "旅行代理店"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "レジャー・旅行: ローソントラベル",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "lens-style",
+        "name": "レンズスタイル",
+        "category": "コンタクト"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "レンズスタイル: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "look-contact",
         "name": "ルックコンタクト",
         "category": "コンタクト"
@@ -1055,6 +1785,22 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "ルックコンタクト：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "make-man",
+        "name": "メイクマン",
+        "category": "ホームセンター"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "メイクマン: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1079,38 +1825,6 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "maruzen",
-        "name": "丸善",
-        "category": "書店"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "丸善：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "maruzen-junkudo",
-        "name": "MARUZEN＆ジュンク堂書店",
-        "category": "書店"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "MARUZEN＆ジュンク堂書店：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
         "id": "matsuya-asakusa",
         "name": "松屋浅草",
         "category": "百貨店"
@@ -1119,22 +1833,6 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "松屋浅草：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "matsuya-ginza",
-        "name": "松屋銀座",
-        "category": "百貨店"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "松屋銀座：楽天ポイントカードが使えるお店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1159,14 +1857,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "megane-no-otsuka",
-        "name": "メガネのオオツカ",
+        "id": "megane-ichiba",
+        "name": "眼鏡市場",
         "category": "メガネ"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "v-point-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "メガネのオオツカ：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "眼鏡市場: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1175,14 +1873,62 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "megane-no-takahashi",
-        "name": "メガネのタカハシ",
-        "category": "メガネ"
+        "id": "mercedes-benz",
+        "name": "メルセデス・ベンツ",
+        "category": "自動車"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "v-point-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "メガネのタカハシ：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "メルセデス・ベンツ: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "morecos-plus",
+        "name": "morecos+ (モアコス)",
+        "category": "美容"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ファッション・美容: morecos+ (モアコス)",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "natural-lawson",
+        "name": "ナチュラルローソン",
+        "category": "コンビニ"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: ナチュラルローソン",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "net-off",
+        "name": "ネットオフ",
+        "category": "ネット買取"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ネットオフ: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1223,6 +1969,22 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "oishix",
+        "name": "Oisix",
+        "category": "ネット通販"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: Oisix",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "pet-design",
         "name": "ペットデザイン",
         "category": "ペット"
@@ -1255,22 +2017,6 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "pets-mam",
-        "name": "ペッツ・マム",
-        "category": "ペット"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ペッツ・マム：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
         "id": "poplar",
         "name": "ポプラ",
         "category": "コンビニ"
@@ -1279,6 +2025,38 @@
       "confidence": 0.9025,
       "evidence": {
         "evidenceQuote": "ポプラ：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "premium-water",
+        "name": "プレミアムウォーター",
+        "category": "生活サービス"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ネットショッピング・通販・宅配: プレミアムウォーター",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "president-sha",
+        "name": "プレジデント社",
+        "category": "本・電子書籍・新聞"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "本・電子書籍・新聞: プレジデント社",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1335,14 +2113,30 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "saibu-gas",
-        "name": "西部ガス",
-        "category": "電気・ガス"
+        "id": "relux",
+        "name": "Relux",
+        "category": "ホテル"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "西部ガス：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "レジャー・旅行: Relux",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "route-inn-hotels",
+        "name": "ルートインホテルズ",
+        "category": "ホテル"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "レジャー・旅行: ルートインホテルズ",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1367,6 +2161,22 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
+        "id": "sbinft-market",
+        "name": "SBINFT Market",
+        "category": "ネット通販"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ネットショッピング・通販・宅配: SBINFT Market",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
         "id": "seagull-japan",
         "name": "シーガルジャパン",
         "category": "クリーニング"
@@ -1383,14 +2193,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "seiban",
-        "name": "セイバン",
-        "category": "その他"
+        "id": "shaddy-salada-kan",
+        "name": "シャディ・サラダ館",
+        "category": "ギフト"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "v-point-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "セイバン：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "シャディ・サラダ館: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1399,30 +2209,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "shampoo-hair-salon",
-        "name": "Shampoo",
-        "category": "美容"
+        "id": "shinseido",
+        "name": "新星堂",
+        "category": "音楽・映像"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "v-point-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "Shampoo：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "shonan-biyou-clinic",
-        "name": "湘南美容クリニック",
-        "category": "美容"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "湘南美容クリニック：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "新星堂: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1447,14 +2241,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "sofmap",
-        "name": "ソフマップ",
-        "category": "家電量販店"
+        "id": "smari",
+        "name": "スマリ SMARI",
+        "category": "生活サービス"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "ソフマップ：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "ネットショッピング・通販・宅配: スマリ SMARI",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1463,46 +2257,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "sogi-kaikan-tia",
-        "name": "葬儀会館ティア",
-        "category": "その他"
+        "id": "sokuyomi",
+        "name": "ソク読み",
+        "category": "本・電子書籍・新聞"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "葬儀会館ティア：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "sugoi-migaki",
-        "name": "すごい磨き",
-        "category": "サービス"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "すごい磨き：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "super-autobacs",
-        "name": "スーパーオートバックス",
-        "category": "車・バイク"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "スーパーオートバックス：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "本・電子書籍・新聞: ソク読み",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1527,14 +2289,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "taya",
-        "name": "TAYA",
-        "category": "美容"
+        "id": "telasa",
+        "name": "TELASA（テラサ）",
+        "category": "エンタメ・チケット"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "TAYA：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "音楽・映像・ゲーム: TELASA（テラサ）",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1559,22 +2321,6 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "tokyu-dept",
-        "name": "東急百貨店",
-        "category": "百貨店"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "東急百貨店：楽天ポイントカードが使えるお店",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      }
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
         "id": "tokyu-hotel",
         "name": "東急ホテル",
         "category": "ホテル"
@@ -1591,14 +2337,46 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "tokyu-rei-hotel",
-        "name": "東急REIホテル",
-        "category": "ホテル"
+        "id": "tone-mobile",
+        "name": "トーンモバイル",
+        "category": "通信"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "v-point-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "東急REIホテル：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "トーンモバイル: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "tsutaya",
+        "name": "TSUTAYA",
+        "category": "エンターテイメント"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "TSUTAYA: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "tsutaya-net-kaitori",
+        "name": "TSUTAYAネット買取",
+        "category": "買取"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "TSUTAYAネット買取: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1623,14 +2401,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "vanda-record",
-        "name": "バンダレコード",
-        "category": "音楽・映像"
+        "id": "vip-liner",
+        "name": "VIPライナー（高速バス）",
+        "category": "交通"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "v-point-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "バンダレコード：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "VIPライナー（高速バス）: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1639,14 +2417,14 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "vivahome",
-        "name": "ビバホーム",
-        "category": "ホームセンター"
+        "id": "waterone",
+        "name": "ウォーターワン（株式会社サイサン）",
+        "category": "生活サービス"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "ビバホーム：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "ネットショッピング・通販・宅配: ウォーターワン（株式会社サイサン）",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
@@ -1655,24 +2433,944 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "yellow-hat",
-        "name": "イエローハット",
-        "category": "車・バイク"
+        "id": "willer-travel",
+        "name": "WILLER TRAVEL",
+        "category": "旅行代理店"
       },
-      "sourceId": "rakuten-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "イエローハット：楽天ポイントカードが使えるお店",
+        "evidenceQuote": "レジャー・旅行: WILLER TRAVEL",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "wondergoo",
+        "name": "WonderGOO",
+        "category": "書籍/ゲーム"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "WonderGOO: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      }
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "wonderrex",
+        "name": "WonderREX",
+        "category": "リサイクル/買取"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "WonderREX: Vポイント加盟店",
         "explicitness": 0.95,
         "ambiguity": 0.05
       }
     }
   ],
-  "needsReview": [],
+  "needsReview": [
+    {
+      "type": "updateField",
+      "collection": "loyaltyRules",
+      "id": "loy-p-lawson",
+      "field": "rate",
+      "from": 0.005,
+      "to": 0.01,
+      "sourceId": "ponta-partners",
+      "confidence": 0.6400000000000001,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ローソン",
+        "explicitness": 0.8,
+        "ambiguity": 0.2
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-apollostation",
+        "storeId": "apollostation",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: apollostation / レンタカー・ガソリンスタンド・駐車場: apollostation たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-kentucky",
+        "storeId": "kentucky",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "Web上ではレート記載なし。通常100円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ケンタッキーフライドチキン / グルメ・飲食: ケンタッキーフライドチキン たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-geo",
+        "storeId": "geo",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "Web上ではレート記載なし。通常100円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ゲオ / 音楽・映像・ゲーム: ゲオ たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-ace-contact",
+        "storeId": "ace-contact",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: エースコンタクト たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-takashimaya",
+        "storeId": "takashimaya",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: 高島屋 たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-suika",
+        "storeId": "suika",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "グルメ・飲食: すき家 たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-doutor",
+        "storeId": "doutor",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "Web上ではレート記載なし。通常100円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "グルメ・飲食: ドトールコーヒーショップ たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-best-megane-contact",
+        "storeId": "best-megane-contact",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "ファッション・美容: ベストメガネコンタクト たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-joshin",
+        "storeId": "joshin",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "音楽・映像・ゲーム: ジョーシン たまる つかえる アプリ / 家電・コンピューター・通信: ジョーシン たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-kojima",
+        "storeId": "kojima",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "家電・コンピューター・通信: コジマ たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-sofmap",
+        "storeId": "sofmap",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "家電・コンピューター・通信: ソフマップ たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-bic-camera",
+        "storeId": "bic-camera",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "家電・コンピューター・通信: ビックカメラ たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-saibu-gas",
+        "storeId": "saibu-gas",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "電気・ガス: 西部ガス たまる",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-conv-familymart",
+        "storeId": "conv-familymart",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "PontaWebのトップページでFamilyMartのロゴがありPontaがたまる・つかえると記載。一般的なレートを推定。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ファミリーマート",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-au",
+        "storeId": "au",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "au利用料金での付与レートは別途確認が必要だが、汎用的なレートを設定。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "PickUpたまる・つかえるサービス、お店: au / 家電・コンピューター・通信: au たまる",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-toku-taku",
+        "storeId": "toku-taku",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "Web上ではレート記載なし。通常100円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "レジャー・旅行: 得タク たまる / 車・バイク: 得タク たまる",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-hotel-keihan-chain",
+        "storeId": "hotel-keihan-chain",
+        "pointCardId": "ponta-card",
+        "rate": 0.005,
+        "notes": "Web上ではレート記載なし。通常200円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "レジャー・旅行: ホテル京阪チェーン たまる つかえる アプリ",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-sakai-hikkoshi",
+        "storeId": "sakai-hikkoshi",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "Web上ではレート記載なし。通常100円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "引越し・住まい: サカイ引越センター たまる",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "loyaltyRules",
+      "record": {
+        "id": "loy-ponta-card-heart-hikkoshi",
+        "storeId": "heart-hikkoshi",
+        "pointCardId": "ponta-card",
+        "rate": 0.01,
+        "notes": "Web上ではレート記載なし。通常100円につき1ポイント。"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.48999999999999994,
+      "evidence": {
+        "evidenceQuote": "引越し・住まい: ハート引越センター たまる",
+        "explicitness": 0.7,
+        "ambiguity": 0.3
+      },
+      "reviewReason": "lowConfidence"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "aflac",
+        "name": "アフラック",
+        "category": "保険"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アフラック: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "apamanshop",
+        "name": "アパマンショップ",
+        "category": "不動産・住宅"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "引越し・住まい: アパマンショップ",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "aplus",
+        "name": "アプラス",
+        "category": "金融"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "アプラス: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "caromama-plus",
+        "name": "カロママ プラス",
+        "category": "その他"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "グルメ・飲食: カロママ プラス",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "chargespot",
+        "name": "ChargeSPOT",
+        "category": "サービス"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ChargeSPOT: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "epark-kusuri-no-madoguchi",
+        "name": "EPARK くすりの窓口",
+        "category": "医療"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "EPARK くすりの窓口: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "gaba-english",
+        "name": "Gabaマンツーマン英会話",
+        "category": "その他"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ビジネス・英語・習い事: Gabaマンツーマン英会話",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "jaccs",
+        "name": "JACCS",
+        "category": "金融"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "JACCS: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "kansai-mirai-bank",
+        "name": "関西みらい銀行",
+        "category": "金融"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "関西みらい銀行: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "life-net",
+        "name": "Life Net",
+        "category": "その他"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "生活・暮らし・ペット: Life Net",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "lifenet-seimei",
+        "name": "ライフネット生命",
+        "category": "保険"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ライフネット生命: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "lixil",
+        "name": "LIXIL",
+        "category": "住宅"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "LIXIL: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "marso",
+        "name": "マーソ（人間ドック）",
+        "category": "サービス"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "マーソ（人間ドック）: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "minato-bank",
+        "name": "みなと銀行",
+        "category": "金融"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "みなと銀行: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "mitsui-sumitomo-bank",
+        "name": "三井住友銀行",
+        "category": "金融"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "三井住友銀行: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "otocon",
+        "name": "婚活支援サービス パートナーエージェント（OTOCON）",
+        "category": "その他"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "生活・暮らし・ペット: 婚活支援サービス パートナーエージェント（OTOCON）",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "plaly",
+        "name": "プラリー",
+        "category": "その他"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "生活・暮らし・ペット: プラリー",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "ponta-kantan-hoken",
+        "name": "Pontaかんたん保険",
+        "category": "保険"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "生活・暮らし・ペット: Pontaかんたん保険",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "sbi-sonpo",
+        "name": "SBI損保",
+        "category": "保険"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "SBI損保: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "shimauma-print",
+        "name": "しまうまプリント",
+        "category": "サービス"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "しまうまプリント: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "sokuyaku",
+        "name": "SOKUYAKU",
+        "category": "医療"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "SOKUYAKU: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "sompo-himawari-seimei",
+        "name": "ＳＯＭＰＯひまわり生命",
+        "category": "保険"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "ＳＯＭＰＯひまわり生命: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "studio-mario",
+        "name": "スタジオマリオ（写真館）",
+        "category": "サービス"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "スタジオマリオ（写真館）: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "sugoi-migaki",
+        "name": "すごい磨き",
+        "category": "サービス"
+      },
+      "sourceId": "rakuten-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "すごい磨き：楽天ポイントカードが使えるお店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "tabelog",
+        "name": "食べログ",
+        "category": "ネットサービス"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "食べログ: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "tiktok-lite",
+        "name": "TikTok Lite",
+        "category": "ネットサービス"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "TikTok Lite: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "ur-chintai-jutaku",
+        "name": "UR賃貸住宅",
+        "category": "不動産・住宅"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "引越し・住まい: UR賃貸住宅",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "winticket",
+        "name": "WINTICKET(ウィンチケット)",
+        "category": "ギャンブル"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "エンタメ・チケット・お出かけ: WINTICKET(ウィンチケット)",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "winticket",
+        "name": "WINTICKET",
+        "category": "ギャンブル"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "WINTICKET: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "yahoo-japan",
+        "name": "Yahoo! JAPAN",
+        "category": "ネットサービス"
+      },
+      "sourceId": "v-point-partners",
+      "confidence": 0.9025,
+      "evidence": {
+        "evidenceQuote": "Yahoo! JAPAN: Vポイント加盟店",
+        "explicitness": 0.95,
+        "ambiguity": 0.05
+      },
+      "reviewReason": "excludedCategory"
+    }
+  ],
   "summary": {
-    "autoApplicableCount": 104,
-    "needsReviewCount": 0,
-    "sourcesProcessed": 1,
+    "autoApplicableCount": 154,
+    "needsReviewCount": 50,
+    "sourcesProcessed": 4,
     "sourcesFailed": 1
   }
 }

@@ -19,7 +19,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開。v1.0 までに各バージョンの差分を積み上げる。
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、

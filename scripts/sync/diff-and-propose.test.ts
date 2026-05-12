@@ -114,6 +114,69 @@ describe("proposeStores", () => {
     const ps = proposeStores(data, emptySeed);
     expect(ps[0].reviewReason).toBe("lowConfidence");
   });
+
+  it("Policy B: 金融カテゴリは excludedCategory", () => {
+    const data = baseSource({
+      stores: [
+        {
+          storeId: "some-bank",
+          name: "Some銀行",
+          category: "金融",
+          evidenceQuote: "明示",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeStores(data, emptySeed);
+    expect(ps[0].reviewReason).toBe("excludedCategory");
+  });
+
+  it("Policy B: ギャンブル/保険/医療/葬儀/ネットサービス/サービス/その他 すべて除外", () => {
+    const excluded = [
+      "ギャンブル",
+      "保険",
+      "医療",
+      "葬儀",
+      "ネットサービス",
+      "サービス",
+      "その他",
+      "不動産・住宅",
+    ];
+    for (const cat of excluded) {
+      const data = baseSource({
+        stores: [
+          {
+            storeId: `id-${cat}`,
+            name: `name-${cat}`,
+            category: cat,
+            evidenceQuote: "x",
+            explicitness: 0.95,
+            ambiguity: 0.05,
+          },
+        ],
+      });
+      const ps = proposeStores(data, emptySeed);
+      expect(ps[0].reviewReason, cat).toBe("excludedCategory");
+    }
+  });
+
+  it("Policy B: 通常カテゴリは auto (excludedCategory 不発火)", () => {
+    const data = baseSource({
+      stores: [
+        {
+          storeId: "ok-store",
+          name: "OK店",
+          category: "飲食",
+          evidenceQuote: "明示",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeStores(data, emptySeed);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
 });
 
 describe("proposeStoreRules", () => {

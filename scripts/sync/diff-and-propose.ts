@@ -20,6 +20,7 @@ import { seed, SEED_VERSION } from "../../src/state/seed";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 import {
   CONFIDENCE_AUTO_THRESHOLD,
+  EXCLUDED_CATEGORIES,
   computeConfidence,
   judgeRateChange,
 } from "./types";
@@ -120,7 +121,11 @@ export function proposeStores(
     const confidence = computeConfidence(evidence);
     let reviewReason: ReviewReason | undefined;
 
-    if (existingIds.has(s.storeId) || existingNames.has(s.name)) {
+    // Policy B: 対象外カテゴリは強制的に needsReview に
+    // (Gemini の scope 指示遵守が完璧でない場合の防御)
+    if (s.category && EXCLUDED_CATEGORIES.has(s.category)) {
+      reviewReason = "excludedCategory";
+    } else if (existingIds.has(s.storeId) || existingNames.has(s.name)) {
       reviewReason = "idCollision";
     } else if (confidence < CONFIDENCE_AUTO_THRESHOLD) {
       reviewReason = "lowConfidence";
@@ -161,13 +166,15 @@ export function proposeStoreRules(
     );
 
     if (!existing) {
-      // 新規追加
+      // 新規追加 (id は deterministic に生成して冪等性確保)
       const reviewReason: ReviewReason | undefined =
         confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined;
+      const ruleId = `rule-${r.cardId}-${r.storeId}${r.paymentAppId ? `-${r.paymentAppId}` : ""}`;
       result.push({
         type: "addRecord",
         collection: "rules",
         record: {
+          id: ruleId,
           cardId: r.cardId,
           storeId: r.storeId,
           paymentAppId: r.paymentAppId,
@@ -223,10 +230,12 @@ export function proposeCategoryRules(
         !x.storeId,
     );
     if (!existing) {
+      const catRuleId = `catrule-${r.cardId}-${r.category}${r.paymentAppId ? `-${r.paymentAppId}` : ""}`;
       result.push({
         type: "addRecord",
         collection: "rules",
         record: {
+          id: catRuleId,
           cardId: r.cardId,
           category: r.category,
           paymentAppId: r.paymentAppId,
@@ -338,10 +347,12 @@ export function proposeLoyaltyRules(
       (x) => x.storeId === r.storeId && x.pointCardId === r.pointCardId,
     );
     if (!existing) {
+      const loyaltyId = `loy-${r.pointCardId}-${r.storeId}`;
       result.push({
         type: "addRecord",
         collection: "loyaltyRules",
         record: {
+          id: loyaltyId,
           storeId: r.storeId,
           pointCardId: r.pointCardId,
           rate: r.rate,
