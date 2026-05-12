@@ -121,6 +121,7 @@ export function evaluatePaymentApps(
   rules: StoreRule[],
   stores: Store[],
   edges: ConversionEdge[],
+  availableCardIds?: ReadonlySet<string>,
 ): PaymentEvalResult[] {
   const compatible = paymentApps.filter((pa) =>
     isPaymentAppCompatible(card, pa),
@@ -136,7 +137,7 @@ export function evaluatePaymentApps(
     // クレカ部分
     const cardEarned = amount * resolved.rate;
     const cardCurrency = resolved.currencyId;
-    const cardPath = bestPath(edges, cardCurrency, targetCurrencyId, cardEarned);
+    const cardPath = bestPath(edges, cardCurrency, targetCurrencyId, cardEarned, availableCardIds);
 
     // アプリ自体のbonus還元
     // 紐付けカード (card) に対応する cardSpecificBonusRates があればそれを使用
@@ -150,7 +151,7 @@ export function evaluatePaymentApps(
     const bonusEarned = amount * bonusRate;
     const bonusPath =
       bonusRate > 0 && bonusCurrency
-        ? bestPath(edges, bonusCurrency, targetCurrencyId, bonusEarned)
+        ? bestPath(edges, bonusCurrency, targetCurrencyId, bonusEarned, availableCardIds)
         : null;
 
     const cardFinal = cardPath?.finalAmount ?? 0;
@@ -188,6 +189,9 @@ export function bestPaymentApp(
   rules: StoreRule[],
   stores: Store[],
   edges: ConversionEdge[],
+  // ConversionEdge.requiredCardIds によるゲート判定に使う enabled なカード id の集合。
+  // 渡された場合のみ制約チェックが行われる (未指定 = 後方互換で全エッジ使用)。
+  availableCardIds?: ReadonlySet<string>,
 ): PaymentEvalResult | null {
   const results = evaluatePaymentApps(
     card,
@@ -198,6 +202,7 @@ export function bestPaymentApp(
     rules,
     stores,
     edges,
+    availableCardIds,
   );
   if (results.length === 0) return null;
   // reachable 優先 / totalFinalAmount 降順

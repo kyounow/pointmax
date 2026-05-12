@@ -119,6 +119,7 @@ function computeFocusedLayout(
 export function EdgesScreen() {
   const currencies = useStore((s) => s.currencies);
   const edges = useStore((s) => s.edges);
+  const cards = useStore((s) => s.cards);
   const addEdge = useStore((s) => s.addEdge);
   const updateEdge = useStore((s) => s.updateEdge);
   const removeEdge = useStore((s) => s.removeEdge);
@@ -138,6 +139,10 @@ export function EdgesScreen() {
   const currencyName = useCallback(
     (id: string) => currencyById.get(id)?.name ?? id,
     [currencyById],
+  );
+  const cardName = useCallback(
+    (id: string) => cards.find((c) => c.id === id)?.name ?? id,
+    [cards],
   );
 
   // ノード選択時はフォーカスレイアウト、未選択時は kind 別レイアウト
@@ -445,6 +450,11 @@ export function EdgesScreen() {
                         <span className="route-ratio">
                           {formatRatio(e.rate)}
                         </span>
+                        {e.requiredCardIds?.length ? (
+                          <span className="route-required-card" title="このルートを使うために保有が必要なカード">
+                            要 {e.requiredCardIds.map(cardName).join(" / ")}
+                          </span>
+                        ) : null}
                       </button>
                     );
                   })}
@@ -472,6 +482,11 @@ export function EdgesScreen() {
                         <span className="route-ratio">
                           {formatRatio(e.rate)}
                         </span>
+                        {e.requiredCardIds?.length ? (
+                          <span className="route-required-card" title="このルートを使うために保有が必要なカード">
+                            要 {e.requiredCardIds.map(cardName).join(" / ")}
+                          </span>
+                        ) : null}
                       </button>
                     );
                   })}
@@ -536,6 +551,38 @@ export function EdgesScreen() {
                 placeholder="(任意)"
               />
             </label>
+            <div>
+              <div className="edge-panel-section-label">
+                保有が必要なカード <span className="hint-inline">(任意・複数可)</span>
+              </div>
+              <div className="edge-required-cards-picker">
+                {cards.length === 0 ? (
+                  <span className="hint-inline">カードが登録されていません</span>
+                ) : (
+                  cards.map((c) => {
+                    const checked = selectedEdge.requiredCardIds?.includes(c.id) ?? false;
+                    return (
+                      <label key={c.id} className="edge-required-card-item">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            const cur = selectedEdge.requiredCardIds ?? [];
+                            const next = e.target.checked
+                              ? [...cur, c.id]
+                              : cur.filter((x) => x !== c.id);
+                            updateEdge(selectedEdge.id, {
+                              requiredCardIds: next.length > 0 ? next : undefined,
+                            });
+                          }}
+                        />
+                        <span>{c.name}</span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </div>
             <button
               className="danger"
               onClick={async () => {

@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 12;
+export const SEED_VERSION = 13;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -93,6 +93,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-12",
     summary:
       "三井住友カード ゴールド(NL) 7% 還元対象店舗を公式マスタから取り込み。新規 12 店舗 (セイコーマート/ポプラ/モスバーガー/ケンタッキーフライドチキン/吉野家/バーミヤン/ジョナサン/夢庵/はま寿司/ココス/エクセルシオール カフェ/かっぱ寿司) と 13 SMBC rules を追加。スシローは公式対象外となったため rule-smbc-sushiro を削除。",
+  },
+  {
+    version: 13,
+    date: "2026-05-12",
+    summary:
+      "ConversionEdge.requiredCardIds を追加。特定クレジットカード保有者のみ利用可能な交換ルートを表現できる。JRE → JALマイル (1500pt → 750マイル) を jal-suica 必須に設定 (一般 JRE 保有者には非表示)。bestPath / paymentApp / loyalty で availableCardIds による OR フィルタリング。EdgesScreen に「要 X」バッジと編集 UI (マルチ checkbox) を追加。",
   },
 ];
 

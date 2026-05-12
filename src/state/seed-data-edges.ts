@@ -137,7 +137,8 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "jre",
     toCurrencyId: "jal-mile",
     rate: 0.5,
-    notes: "1500pt → 750マイル",
+    requiredCardIds: ["jal-suica"],
+    notes: "1500pt → 750マイル (JALカードSuica 会員特典)",
   },
   {
     id: "jre-to-edy",

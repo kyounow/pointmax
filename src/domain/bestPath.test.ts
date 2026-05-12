@@ -99,4 +99,38 @@ describe("bestPath", () => {
     expect(result!.steps.map((e) => e.id)).toEqual(["ok"]);
     expect(result!.finalAmount).toBeCloseTo(40, 10);
   });
+
+  it("requiredCardIds: 必要なカードを持っていればエッジが採用される", () => {
+    const edges: ConversionEdge[] = [
+      { id: "e", fromCurrencyId: "A", toCurrencyId: "B", rate: 0.5, requiredCardIds: ["card1"] },
+    ];
+    const result = bestPath(edges, "A", "B", 100, new Set(["card1"]));
+    expect(result).not.toBeNull();
+    expect(result!.finalAmount).toBe(50);
+  });
+
+  it("requiredCardIds: 必要なカードを持っていなければエッジがスキップされる", () => {
+    const edges: ConversionEdge[] = [
+      { id: "e", fromCurrencyId: "A", toCurrencyId: "B", rate: 0.5, requiredCardIds: ["card1"] },
+    ];
+    const result = bestPath(edges, "A", "B", 100, new Set(["other"]));
+    expect(result).toBeNull();
+  });
+
+  it("requiredCardIds: availableCardIds が undefined なら制約は無視される (後方互換)", () => {
+    const edges: ConversionEdge[] = [
+      { id: "e", fromCurrencyId: "A", toCurrencyId: "B", rate: 0.5, requiredCardIds: ["card1"] },
+    ];
+    const result = bestPath(edges, "A", "B", 100); // 5th arg なし
+    expect(result).not.toBeNull();
+    expect(result!.finalAmount).toBe(50);
+  });
+
+  it("requiredCardIds: 複数のうち 1 枚でも持っていれば OR で通る", () => {
+    const edges: ConversionEdge[] = [
+      { id: "e", fromCurrencyId: "A", toCurrencyId: "B", rate: 0.5, requiredCardIds: ["card1", "card2"] },
+    ];
+    const result = bestPath(edges, "A", "B", 100, new Set(["card2"]));
+    expect(result).not.toBeNull();
+  });
 });

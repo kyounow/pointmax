@@ -63,6 +63,10 @@ export function rankCards(input: RankInput): CardRanking[] {
   // undefined / true はそのまま通す（後方互換）
   const enabledCards = cards.filter((c) => c.enabled !== false);
 
+  // enabled なカード id の集合。ConversionEdge.requiredCardIds のゲート判定に使う。
+  // 「カード保有 = state.cards にあり、かつ enabled !== false」と定義 (v2 step 1 と整合)。
+  const availableCardIds = new Set(enabledCards.map((c) => c.id));
+
   const store = stores.find((s) => s.id === payment.storeId);
   const maxStacks = Math.max(0, store?.maxLoyaltyStacks ?? 1);
   const loyalties = bestLoyalties(
@@ -74,6 +78,8 @@ export function rankCards(input: RankInput): CardRanking[] {
     edges,
     maxStacks,
     store?.preferredPointCardIds,
+    new Date(),
+    availableCardIds,
   );
   const loyaltyTotal = loyalties.reduce(
     (sum, r) => sum + (r.reachable ? r.finalAmount : 0),
@@ -91,6 +97,7 @@ export function rankCards(input: RankInput): CardRanking[] {
         earnedCurrencyId,
         targetCurrencyId,
         earnedAmount,
+        availableCardIds,
       );
       const baseFinal = path?.finalAmount ?? 0;
       const reachable = path !== null;
@@ -124,6 +131,7 @@ export function rankCards(input: RankInput): CardRanking[] {
       rules,
       stores,
       edges,
+      availableCardIds,
     );
     if (!best) {
       // 互換 PaymentApp 無し（例外的）→ resolveRate のみ
@@ -135,6 +143,7 @@ export function rankCards(input: RankInput): CardRanking[] {
         earnedCurrencyId,
         targetCurrencyId,
         earnedAmount,
+        availableCardIds,
       );
       const baseFinal = path?.finalAmount ?? 0;
       return {

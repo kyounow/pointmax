@@ -11,12 +11,22 @@ export function bestPath(
   fromId: string,
   toId: string,
   startAmount: number = 1,
+  availableCardIds?: ReadonlySet<string>,
 ): BestPathResult | null {
   if (fromId === toId) {
     return { finalAmount: startAmount, product: 1, steps: [] };
   }
 
-  const valid = edges.filter((e) => e.rate > 0);
+  // availableCardIds が渡されたら、requiredCardIds が制約を満たさないエッジを除外。
+  // undefined 時は従来通り全エッジを使う (テスト等の後方互換)。
+  const gated = availableCardIds
+    ? edges.filter(
+        (e) =>
+          !e.requiredCardIds?.length ||
+          e.requiredCardIds.some((id) => availableCardIds.has(id)),
+      )
+    : edges;
+  const valid = gated.filter((e) => e.rate > 0);
 
   const nodes = new Set<string>([fromId, toId]);
   for (const e of valid) {

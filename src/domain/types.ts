@@ -70,6 +70,12 @@ export type ConversionEdge = {
   fromCurrencyId: string;
   toCurrencyId: string;
   rate: number;
+  // この交換ルートを利用するために保有が必要なクレジットカードIDのリスト (任意)。
+  // undefined / 空配列 = 制約なし (誰でも利用可能)。
+  // 1件以上 = リスト内のいずれか1枚を「保有 (enabled !== false)」している場合のみ利用可 (OR semantics)。
+  // 例: JRE → JAL マイル の交換は JALカードSuica 保有者特典 → requiredCardIds: ["jal-suica"]
+  // 参照する id は Card.id (PointCard.id ではない)。
+  requiredCardIds?: string[];
   notes?: string;
 };
 

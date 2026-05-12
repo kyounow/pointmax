@@ -253,4 +253,38 @@ describe("rankCards", () => {
     expect(result[0].earnedAmount).toBe(150);
     expect(result[0].finalAmount).toBe(150);
   });
+
+  it("requiredCardIds: 必要なカードを持たないユーザーは制約エッジを経由したパスを取れない", () => {
+    // 楽天カードのみ保有 (jal-suica 無し)
+    const cards: Card[] = [rakuten];
+    const edges: ConversionEdge[] = [
+      {
+        id: "jre-to-jal",
+        fromCurrencyId: "jre",
+        toCurrencyId: "jal-mile",
+        rate: 0.5,
+        requiredCardIds: ["jal-suica"],
+      },
+    ];
+    // 楽天カードが JRE で貯まると仮定するルールを 1 件
+    const rules: StoreRule[] = [
+      {
+        id: "r1",
+        cardId: "rakuten",
+        storeId: "any",
+        rate: 0.01,
+        currencyId: "jre",
+      },
+    ];
+    const result = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "jal-mile",
+      cards,
+      stores: baseStores,
+      rules,
+      edges,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].reachable).toBe(false); // パスが見つからない
+  });
 });

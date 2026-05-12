@@ -41,6 +41,8 @@ export function bestLoyalty(
 // Top-N の重ね取り結果。同一 pointCard は1要素にまとめ、最終量降順で上位 maxStacks 件返す。
 // preferredPointCardIds: 店舗の優先指定。同点還元時にこの順で優先採用される。
 // now: キャンペーン期間判定の基準時刻 (テスト容易化のため引数化)
+// availableCardIds: ConversionEdge.requiredCardIds のゲート判定に使う enabled なカード id の集合。
+//   渡された場合のみ制約チェックが行われる (未指定 = 後方互換で全エッジ使用)。
 // 同一 (pointCard, store) で複数 rule active なら最高 rate を採用。
 export function bestLoyalties(
   storeId: string,
@@ -52,6 +54,7 @@ export function bestLoyalties(
   maxStacks: number,
   preferredPointCardIds?: string[],
   now: Date = new Date(),
+  availableCardIds?: ReadonlySet<string>,
 ): LoyaltyResult[] {
   if (maxStacks <= 0) return [];
 
@@ -74,6 +77,7 @@ export function bestLoyalties(
       earnedCurrencyId,
       targetCurrencyId,
       earnedAmount,
+      availableCardIds,
     );
     if (path === null) {
       return {
