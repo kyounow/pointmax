@@ -76,17 +76,44 @@ export function CardsScreen() {
     {
       key: "enabled",
       label: "使う",
-      width: 60,
-      view: (c) => (c.enabled !== false ? "☑" : "☐"),
-      edit: (c, set) => (
-        <input
-          type="checkbox"
-          checked={c.enabled !== false}
-          onChange={(e) =>
-            set({ enabled: e.target.checked ? undefined : false })
-          }
-        />
-      ),
+      width: 90,
+      // view モードでも編集を挟まず即トグルできるようにする。
+      // 単一 boolean は「編集→保存」より直接クリックの方が UX が良い。
+      view: (c) => {
+        const on = c.enabled !== false;
+        return (
+          <label
+            className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={on}
+              onChange={(e) =>
+                updateCard(c.id, {
+                  enabled: e.target.checked ? undefined : false,
+                })
+              }
+            />
+            <span>{on ? "使う" : "OFF"}</span>
+          </label>
+        );
+      },
+      edit: (c, set) => {
+        const on = c.enabled !== false;
+        return (
+          <label className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}>
+            <input
+              type="checkbox"
+              checked={on}
+              onChange={(e) =>
+                set({ enabled: e.target.checked ? undefined : false })
+              }
+            />
+            <span>{on ? "使う" : "OFF"}</span>
+          </label>
+        );
+      },
     },
   ];
 

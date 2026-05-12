@@ -1259,3 +1259,37 @@ details summary {
 .multi-store-picker-item input[type="checkbox"] {
   margin: 0;
 }
+
+/* CardsScreen の「使う」トグル。view モードでも即クリック可能。 */
+.card-enabled-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  font-size: 12px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.card-enabled-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.card-enabled-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--good);
+}
+.card-enabled-toggle.is-on {
+  border-color: var(--good);
+  color: var(--good);
+  background: rgba(87, 199, 133, 0.12);
+}
+.card-enabled-toggle.is-off {
+  color: var(--muted);
+}
