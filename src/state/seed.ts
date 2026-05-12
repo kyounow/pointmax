@@ -21,7 +21,7 @@ import { resolveCategory } from "./seed-category-aliases";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開。v1.0 までに各バージョンの差分を積み上げる。
-export const SEED_VERSION = 7;
+export const SEED_VERSION = 8;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -345,20 +345,6 @@ export const seed = (): {
       rate: 0.07,
       currencyId: "v-pt",
       notes: "Visaタッチ決済時(スマホタッチで+α)",
-    },
-    // ★ デモ用キャンペーン: 三井住友 × セブンイレブン (Visaタッチ) 通常7% → 10% 増額
-    // 計算画面で「🎯 キャンペーン中 (〜2026-12-31)」バッジが出るのを確認するためのテストデータ。
-    // 不要になったら削除して SEED_VERSION を上げる。
-    {
-      id: "campaign-smbc-7eleven-eoy",
-      cardId: "smbc-v",
-      storeId: "conv-7eleven",
-      paymentAppId: "pa-visa-touch",
-      rate: 0.1,
-      currencyId: "v-pt",
-      validFrom: "2026-05-01",
-      validTo: "2026-12-31",
-      notes: "[デモ] 通常7%→10% キャンペーン期間限定",
     },
     {
       id: "rule-smbc-lawson",
@@ -820,18 +806,6 @@ export const seed = (): {
       pointCardId: "d-pointcard",
       rate: 0.005,
       notes: "200円ごとに1pt",
-    },
-    // ★ デモ用キャンペーン: ローソン × dポイントカード 通常 0.5% → 2% 増額
-    // ポイントカード提示の二重取り側にもキャンペーンバッジが出るのを確認用。
-    // 不要になったら削除。
-    {
-      id: "campaign-loy-d-lawson-eoy",
-      storeId: "conv-lawson",
-      pointCardId: "d-pointcard",
-      rate: 0.02,
-      validFrom: "2026-05-01",
-      validTo: "2026-12-31",
-      notes: "[デモ] ローソンでdポイント4倍キャンペーン期間限定",
     },
     {
       id: "loy-d-familymart",
