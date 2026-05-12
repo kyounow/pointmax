@@ -6,6 +6,7 @@ import { formatRatio } from "../domain/currencyKind";
 import { formatNum } from "../domain/formatNum";
 import { groupBy } from "../domain/groupBy";
 import { NodePill } from "./NodePill";
+import { useNameResolvers } from "./hooks/useNameResolvers";
 
 export function CalculatorScreen() {
   const cards = useStore((s) => s.cards);
@@ -82,11 +83,11 @@ export function CalculatorScreen() {
     () => new Map(currencies.map((c) => [c.id, c])),
     [currencies],
   );
-  const currencyName = (id: string) => currencyById.get(id)?.name ?? id;
-  const cardName = useCallback(
-    (id: string) => cards.find((c) => c.id === id)?.name ?? id,
-    [cards],
+  const currencyName = useCallback(
+    (id: string) => currencyById.get(id)?.name ?? id,
+    [currencyById],
   );
+  const { cardName } = useNameResolvers();
 
   const result = useMemo(() => {
     if (!storeId || !targetCurrencyId || !amount) return null;

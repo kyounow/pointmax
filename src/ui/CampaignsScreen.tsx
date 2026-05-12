@@ -5,6 +5,7 @@ import { isRuleActiveAt } from "../domain/ruleActiveAt";
 import type { LoyaltyRule, StoreRule } from "../domain/types";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import { MultiStorePicker } from "./MultiStorePicker";
+import { useNameResolvers } from "./hooks/useNameResolvers";
 
 type CampaignStatus = "active" | "expired" | "future";
 
@@ -71,12 +72,9 @@ export function CampaignsScreen() {
     const c = cards.find((c) => c.id === id);
     return c ? cardLabel(c) : id;
   };
-  const storeName = (id: string) =>
-    stores.find((s) => s.id === id)?.name ?? id;
   const pointCardName = (id: string) =>
     pointCards.find((p) => p.id === id)?.name ?? id;
-  const currencyName = (id: string) =>
-    currencies.find((c) => c.id === id)?.name ?? id;
+  const { currencyName, storeName } = useNameResolvers();
   const paymentAppById = useMemo(
     () => new Map(paymentApps.map((p) => [p.id, p])),
     [paymentApps],

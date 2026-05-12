@@ -3,6 +3,7 @@ import { useStore } from "../state/store";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { PaymentApp } from "../domain/types";
 import { cardLabel } from "../domain/cardLabel";
+import { useNameResolvers } from "./hooks/useNameResolvers";
 
 export function PaymentAppsScreen() {
   const cards = useStore((s) => s.cards);
@@ -22,8 +23,7 @@ export function PaymentAppsScreen() {
     const c = cards.find((c) => c.id === id);
     return c ? cardLabel(c) : "?";
   };
-  const currencyName = (id: string) =>
-    currencies.find((c) => c.id === id)?.name ?? id;
+  const { currencyName } = useNameResolvers();
 
   const columns: ColumnDef<PaymentApp>[] = useMemo(
     () => [

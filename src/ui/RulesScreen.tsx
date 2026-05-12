@@ -4,6 +4,7 @@ import { cardLabel } from "../domain/cardLabel";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { StoreRule } from "../domain/types";
 import { groupBy } from "../domain/groupBy";
+import { useNameResolvers } from "./hooks/useNameResolvers";
 
 type RuleType = "store" | "category";
 
@@ -31,10 +32,7 @@ export function RulesScreen() {
     const c = cards.find((c) => c.id === id);
     return c ? cardLabel(c) : "?";
   };
-  const storeName = (id: string) =>
-    stores.find((s) => s.id === id)?.name ?? "?";
-  const currencyName = (id: string) =>
-    currencies.find((c) => c.id === id)?.name ?? "?";
+  const { currencyName, storeName } = useNameResolvers();
 
   const categories = useMemo(() => {
     const set = new Set<string>();

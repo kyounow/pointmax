@@ -3,6 +3,7 @@ import { useStore } from "../state/store";
 import { isMasterCard } from "../state/seed";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { Card } from "../domain/types";
+import { useNameResolvers } from "./hooks/useNameResolvers";
 
 export function CardsScreen() {
   const cards = useStore((s) => s.cards);
@@ -16,8 +17,7 @@ export function CardsScreen() {
   const [rate, setRate] = useState("0.01");
   const [currencyId, setCurrencyId] = useState("");
 
-  const currencyName = (id: string) =>
-    currencies.find((c) => c.id === id)?.name ?? id;
+  const { currencyName } = useNameResolvers();
 
   const columns: ColumnDef<Card>[] = [
     {

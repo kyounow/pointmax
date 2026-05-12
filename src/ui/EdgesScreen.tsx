@@ -25,6 +25,7 @@ import { nodeTypes, type CurrencyNodeType } from "./CurrencyNode";
 import { edgeTypes } from "./PointMaxEdge";
 import { useDialog } from "./dialog/DialogProvider";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
+import { useNameResolvers } from "./hooks/useNameResolvers";
 
 type Selection =
   | { type: "node"; id: string }
@@ -140,10 +141,7 @@ export function EdgesScreen() {
     (id: string) => currencyById.get(id)?.name ?? id,
     [currencyById],
   );
-  const cardName = useCallback(
-    (id: string) => cards.find((c) => c.id === id)?.name ?? id,
-    [cards],
-  );
+  const { cardName } = useNameResolvers();
 
   // 「保有 = state.cards にあり、かつ enabled !== false」(v2 step 1 整合)。
   // bestPath の availableCardIds と同じ定義。
