@@ -93,26 +93,22 @@ sources:
       ※ 昨夜 (2026-05-11 夜) は Gemini が混雑 + 思考散文応答で取得失敗、リトライ予定。
 
   - id: smbc-v-gold-7percent
-    label: 三井住友カード ゴールド(NL) コンビニ・飲食7%還元 (公式)
-    url: https://www.smbc-card.com/nyukai/merit/proper_p5.jsp
+    label: 三井住友カード ゴールド(NL) 対象店舗 (公式)
+    url: https://www.smbc-card.com/mem/cardinfo/cardinfo9001629.jsp
     extractor: card
     produces:
       - storeRules
       - categoryRules
     extractionScope: chains-only
-    enabled: false
+    enabled: true
     notes: |
-      ★ disabled: 2026-05-12 — URL Context Tool での取得は成功するが、
-      ページが「複数カードバリエーション × 複雑な還元体系」で記述されており
-      Gemini が思考プロセス散文応答に陥り JSON 出力前に終わる。
-      加えて free tier の daily quota (20 RPD?) と思われる 429 に頻繁に当たる。
-      対策候補:
-        - 別 URL: https://qa.smbc-card.com/mem/detail?site=4H4A00IO&category=16&id=1541 (FAQ ページ、よりシンプル)
-        - 別 URL: https://www.smbc-card.com/mem/cardinfo/cardinfo9001629.jsp (対象店舗一覧)
-        - もしくは page 内容を pre-fetch して plaintext で Gemini に渡す (URL Context 経由しない)
+      ★ 2026-05-12 成功: 対象店舗一覧ページ (cardinfo9001629.jsp) で URL Context Tool 取得成功。
+      Gemini が 22 storeRules を抽出 (旧 proper_p5.jsp の散文ループ問題を回避)。
+      ただし cardId: "smbc-v-gold" (架空) や storeId 命名差 (seven-eleven vs conv-7eleven 等)
+      があり、propose pipeline が全件 needsReview に振り分け。
+      実反映は extracted JSON を参照しながら seed-data-stores.ts に手動キュレートで実施。
       ---
       三井住友カード ゴールド(NL) の対象コンビニ・飲食店リスト。
       cardId は smbc-v を対象。
-      最大 8% 還元 (2025/9 以降アップ) との情報あり。
       タッチ決済 (Visa/Mastercard) 利用時の条件付き還元なので、
       storeRules の paymentAppId は pa-visa-touch / pa-quickpay 系を期待。

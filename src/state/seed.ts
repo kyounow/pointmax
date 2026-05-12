@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 11;
+export const SEED_VERSION = 12;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -87,6 +87,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-12",
     summary:
       "v2 step 2: マスター由来カードプール。SEED_CARDS / ADDED_CARDS の id を MASTER_CARD_IDS として export し、これらの id を持つカードは removeCard で削除不可 (mergeFromSeed 復活するため)。CardsScreen に「公式」バッジを表示し、master カードの削除ボタンを非表示。ResponsiveTable に汎用 canDelete prop を追加。",
+  },
+  {
+    version: 12,
+    date: "2026-05-12",
+    summary:
+      "三井住友カード ゴールド(NL) 7% 還元対象店舗を公式マスタから取り込み。新規 12 店舗 (セイコーマート/ポプラ/モスバーガー/ケンタッキーフライドチキン/吉野家/バーミヤン/ジョナサン/夢庵/はま寿司/ココス/エクセルシオール カフェ/かっぱ寿司) と 13 SMBC rules を追加。スシローは公式対象外となったため rule-smbc-sushiro を削除。",
   },
 ];
 
