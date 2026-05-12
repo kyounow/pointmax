@@ -59,6 +59,10 @@ export function rankCards(input: RankInput): CardRanking[] {
     paymentApps = [],
   } = input;
 
+  // enabled === false のカードは Calculator 順位付けから除外する。
+  // undefined / true はそのまま通す（後方互換）
+  const enabledCards = cards.filter((c) => c.enabled !== false);
+
   const store = stores.find((s) => s.id === payment.storeId);
   const maxStacks = Math.max(0, store?.maxLoyaltyStacks ?? 1);
   const loyalties = bestLoyalties(
@@ -76,7 +80,7 @@ export function rankCards(input: RankInput): CardRanking[] {
     0,
   );
 
-  const ranked: CardRanking[] = cards.map((card) => {
+  const ranked: CardRanking[] = enabledCards.map((card) => {
     // PaymentApp が登録されていない場合は従来通り (resolveRate のみ)
     if (paymentApps.length === 0) {
       const resolved = resolveRate(card, payment.storeId, rules, stores);

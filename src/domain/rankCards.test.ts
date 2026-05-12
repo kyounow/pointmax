@@ -211,6 +211,26 @@ describe("rankCards", () => {
     expect(result[0].totalFinalAmount).toBe(250);
   });
 
+  it("enabled=false のカードは順位付け結果に含まれない", () => {
+    const disabledCard: Card = {
+      id: "disabled-card",
+      name: "無効カード",
+      defaultRate: 0.05, // 高還元率でも除外される
+      defaultCurrencyId: "rakuten-pt",
+      enabled: false,
+    };
+    const result = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakuten, disabledCard],
+      stores: baseStores,
+      rules: [],
+      edges: [],
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].card.id).toBe("rakuten");
+  });
+
   it("カテゴリルールが店舗のカテゴリ経由で適用される", () => {
     const rules: StoreRule[] = [
       {

@@ -73,6 +73,21 @@ export function CardsScreen() {
         </select>
       ),
     },
+    {
+      key: "enabled",
+      label: "使う",
+      width: 60,
+      view: (c) => (c.enabled !== false ? "☑" : "☐"),
+      edit: (c, set) => (
+        <input
+          type="checkbox"
+          checked={c.enabled !== false}
+          onChange={(e) =>
+            set({ enabled: e.target.checked ? undefined : false })
+          }
+        />
+      ),
+    },
   ];
 
   return (

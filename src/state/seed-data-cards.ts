@@ -51,6 +51,7 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.01,
     defaultCurrencyId: "d-pt",
+    enabled: false,
   },
   {
     // 200円=2 PayPayポイント (1.0%)、PayPayカードゴールドなら 1.5%
@@ -59,6 +60,7 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.01,
     defaultCurrencyId: "paypay",
+    enabled: false,
   },
 ];
 

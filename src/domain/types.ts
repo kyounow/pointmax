@@ -14,12 +14,15 @@ export type Currency = {
 // クレジットカード。defaultCurrencyId に貯まる通貨を1つ持つ（仕様(b)）
 // グレード（普通/ゴールド/プラチナ等）は同一ブランド内で還元率が変わるため、
 // 任意フィールドで保持してUI上で区別表示する
+// enabled: undefined または true = 有効（デフォルト。既存 localStorage データとの後方互換）
+//          false = 無効（Calculator の順位付けから除外される）
 export type Card = {
   id: string;
   name: string;
   grade?: string;
   defaultRate: number; // 0.01 = 1%
   defaultCurrencyId: string;
+  enabled?: boolean;
 };
 
 // プルダウン用店舗マスタ

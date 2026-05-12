@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 9;
+export const SEED_VERSION = 10;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -75,6 +75,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-12",
     summary:
       "PointMax v1.0 リリース。① 支払方法のカード別還元 (d払い×dカード 1% 等) を表現する cardSpecificBonusRates、② キャンペーン期間限定ルール (validFrom/validTo) と専用画面、③ 自動同期パイプラインで楽天/d/Vポイント/Ponta から計 148 加盟店を取り込み済み。後方互換ポリシー発効。",
+  },
+  {
+    version: 10,
+    date: "2026-05-12",
+    summary:
+      "v2 step 1: カード有効化トグル (Card.enabled) を追加。dカード・PayPayカードをデフォルト無効化し Calculator 順位付けから除外。CardsScreen に「使う」列を追加。",
   },
 ];
 
