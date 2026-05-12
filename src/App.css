@@ -1163,3 +1163,28 @@ details summary {
   vertical-align: middle;
   box-shadow: 0 1px 3px rgba(255, 91, 142, 0.35);
 }
+
+/* キャンペーン画面のステータスバッジ */
+.campaign-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.campaign-status.active {
+  background: rgba(72, 187, 120, 0.18);
+  color: #48bb78;
+  border: 1px solid rgba(72, 187, 120, 0.35);
+}
+.campaign-status.expired {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+.campaign-status.future {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+}
