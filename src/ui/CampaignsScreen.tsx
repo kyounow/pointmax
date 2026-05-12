@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { cardLabel } from "../domain/cardLabel";
-import { groupBy } from "../domain/groupBy";
 import { isRuleActiveAt } from "../domain/ruleActiveAt";
 import type { LoyaltyRule, StoreRule } from "../domain/types";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
+import { MultiStorePicker } from "./MultiStorePicker";
 
 type CampaignStatus = "active" | "expired" | "future";
 
@@ -81,10 +81,6 @@ export function CampaignsScreen() {
     () => new Map(paymentApps.map((p) => [p.id, p])),
     [paymentApps],
   );
-  const storesByCategory = useMemo(
-    () => groupBy(stores, (s) => s.category ?? "その他"),
-    [stores],
-  );
 
   // ─── キャンペーン抽出 (validFrom or validTo が入っているもの) ───
   const campaignStoreRules = useMemo(
@@ -98,7 +94,7 @@ export function CampaignsScreen() {
 
   // ─── StoreRule キャンペーン追加フォーム ───
   const [srCardId, setSrCardId] = useState("");
-  const [srStoreId, setSrStoreId] = useState("");
+  const [srStoreIds, setSrStoreIds] = useState<Set<string>>(new Set());
   const [srPaymentAppId, setSrPaymentAppId] = useState("");
   const [srRate, setSrRate] = useState("0.05");
   const [srCurrencyId, setSrCurrencyId] = useState("");
@@ -108,7 +104,7 @@ export function CampaignsScreen() {
 
   // ─── LoyaltyRule キャンペーン追加フォーム ───
   const [lrPointCardId, setLrPointCardId] = useState("");
-  const [lrStoreId, setLrStoreId] = useState("");
+  const [lrStoreIds, setLrStoreIds] = useState<Set<string>>(new Set());
   const [lrRate, setLrRate] = useState("0.02");
   const [lrValidFrom, setLrValidFrom] = useState("");
   const [lrValidTo, setLrValidTo] = useState("");
@@ -297,19 +293,22 @@ export function CampaignsScreen() {
         className="row"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!srCardId || !srStoreId || !srCurrencyId) return;
-          addRule({
-            cardId: srCardId,
-            storeId: srStoreId,
-            paymentAppId: srPaymentAppId || undefined,
-            rate: Number(srRate),
-            currencyId: srCurrencyId,
-            validFrom: srValidFrom || undefined,
-            validTo: srValidTo || undefined,
-            notes: srNotes.trim() || undefined,
-          });
+          if (!srCardId || srStoreIds.size === 0 || !srCurrencyId) return;
+          // 選択した全店舗に対してルールを 1 件ずつ追加
+          for (const sid of srStoreIds) {
+            addRule({
+              cardId: srCardId,
+              storeId: sid,
+              paymentAppId: srPaymentAppId || undefined,
+              rate: Number(srRate),
+              currencyId: srCurrencyId,
+              validFrom: srValidFrom || undefined,
+              validTo: srValidTo || undefined,
+              notes: srNotes.trim() || undefined,
+            });
+          }
           setSrCardId("");
-          setSrStoreId("");
+          setSrStoreIds(new Set());
           setSrPaymentAppId("");
           setSrRate("0.05");
           setSrCurrencyId("");
@@ -326,21 +325,12 @@ export function CampaignsScreen() {
             </option>
           ))}
         </select>
-        <select
-          value={srStoreId}
-          onChange={(e) => setSrStoreId(e.target.value)}
-        >
-          <option value="">店舗</option>
-          {storesByCategory.map((g) => (
-            <optgroup key={g.key} label={g.key}>
-              {g.items.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        <MultiStorePicker
+          stores={stores}
+          selected={srStoreIds}
+          onChange={setSrStoreIds}
+          label="店舗"
+        />
         <select
           value={srPaymentAppId}
           onChange={(e) => setSrPaymentAppId(e.target.value)}
@@ -414,17 +404,19 @@ export function CampaignsScreen() {
         className="row"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!lrPointCardId || !lrStoreId) return;
-          addLoyaltyRule({
-            pointCardId: lrPointCardId,
-            storeId: lrStoreId,
-            rate: Number(lrRate),
-            validFrom: lrValidFrom || undefined,
-            validTo: lrValidTo || undefined,
-            notes: lrNotes.trim() || undefined,
-          });
+          if (!lrPointCardId || lrStoreIds.size === 0) return;
+          for (const sid of lrStoreIds) {
+            addLoyaltyRule({
+              pointCardId: lrPointCardId,
+              storeId: sid,
+              rate: Number(lrRate),
+              validFrom: lrValidFrom || undefined,
+              validTo: lrValidTo || undefined,
+              notes: lrNotes.trim() || undefined,
+            });
+          }
           setLrPointCardId("");
-          setLrStoreId("");
+          setLrStoreIds(new Set());
           setLrRate("0.02");
           setLrValidFrom("");
           setLrValidTo("");
@@ -442,21 +434,12 @@ export function CampaignsScreen() {
             </option>
           ))}
         </select>
-        <select
-          value={lrStoreId}
-          onChange={(e) => setLrStoreId(e.target.value)}
-        >
-          <option value="">店舗</option>
-          {storesByCategory.map((g) => (
-            <optgroup key={g.key} label={g.key}>
-              {g.items.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        <MultiStorePicker
+          stores={stores}
+          selected={lrStoreIds}
+          onChange={setLrStoreIds}
+          label="店舗"
+        />
         <input
           type="number"
           step="0.001"
