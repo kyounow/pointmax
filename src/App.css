@@ -1151,17 +1151,24 @@ details summary {
 
 /* キャンペーン期間限定ルールの badge */
 .campaign-badge {
+  /* base shape, color via variants */
   display: inline-block;
-  margin-left: 6px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #ff5b8e, #ff9933);
-  color: #fff;
+  padding: 1px 8px;
+  border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
   vertical-align: middle;
-  box-shadow: 0 1px 3px rgba(255, 91, 142, 0.35);
+}
+.campaign-badge.time-bound {
+  background: #f59e0b;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.35);
+}
+.campaign-badge.ongoing {
+  background: var(--panel-2);
+  color: var(--muted);
+  border: 1px solid var(--border);
 }
 
 /* キャンペーン画面のステータスバッジ */
@@ -1187,6 +1194,11 @@ details summary {
   background: rgba(96, 165, 250, 0.15);
   color: #60a5fa;
   border: 1px solid rgba(96, 165, 250, 0.35);
+}
+.campaign-status.ongoing {
+  background: var(--panel-2);
+  color: var(--muted);
+  border-color: var(--border);
 }
 
 /* MultiStorePicker (CampaignsScreen で使うポップオーバー型店舗選択) */

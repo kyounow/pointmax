@@ -7,7 +7,7 @@ import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import { MultiStorePicker } from "./MultiStorePicker";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 
-type CampaignStatus = "active" | "expired" | "future";
+type CampaignStatus = "active" | "expired" | "future" | "ongoing";
 
 function classifyCampaign(rule: {
   validFrom?: string;
@@ -23,6 +23,10 @@ function classifyCampaign(rule: {
   if (!isRuleActiveAt(rule, now)) {
     // validFrom 未来 (上で拾い済み) でなければ validTo 過去
     return "expired";
+  }
+  // validFrom のみ (validTo なし) かつ現在アクティブ → 長期公式プログラム
+  if (rule.validFrom && !rule.validTo) {
+    return "ongoing";
   }
   return "active";
 }
@@ -48,6 +52,15 @@ function statusBadge(s: CampaignStatus) {
       return (
         <span className="campaign-status future" title="開始前">
           🕒 未来開始
+        </span>
+      );
+    case "ongoing":
+      return (
+        <span
+          className="campaign-status ongoing"
+          title="公式プログラム (期限未告知)"
+        >
+          📌 公式プログラム
         </span>
       );
   }

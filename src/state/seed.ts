@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 13;
+export const SEED_VERSION = 14;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -99,6 +99,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-12",
     summary:
       "ConversionEdge.requiredCardIds を追加。特定クレジットカード保有者のみ利用可能な交換ルートを表現できる。JRE → JALマイル (1500pt → 750マイル) を jal-suica 必須に設定 (一般 JRE 保有者には非表示)。bestPath / paymentApp / loyalty で availableCardIds による OR フィルタリング。EdgesScreen に「要 X」バッジと編集 UI (マルチ checkbox) を追加。",
+  },
+  {
+    version: 14,
+    date: "2026-05-13",
+    summary:
+      "「長期公式プログラム」を validFrom のみで表現する規約を導入。SMBC 7% タッチ決済 21 ルールに validFrom: 2023-04-03 を付与。CalculatorScreen / CampaignsScreen の badge 表示を 2 段階に分け、validTo あり = 🎯 キャンペーン中 (期限色)、validFrom のみ = 📌 公式プログラム (情報色)。共通コンポネ RuleStatusBadge を追加。既存 localStorage ユーザは add-only mergeFromSeed の制約により validFrom が反映されない (= 既存挙動維持)。新規 install / 再 import で新表示。",
   },
 ];
 
