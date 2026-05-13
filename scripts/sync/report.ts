@@ -141,6 +141,8 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   multiSourceConflict: "🔴 multiSourceConflict",
   excludedCategory: "🟠 excludedCategory",
   userBlocked: "⚫ userBlocked",
+  selfReportedExclusion: "🟠 selfReportedExclusion",
+  unsupportedDateClaim: "🔴 unsupportedDateClaim",
 };
 
 const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
@@ -162,6 +164,10 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)。自動追加しない。",
   userBlocked:
     "seed-blocklist.ts でユーザが除外指定済み。意図した除外であれば無視してよい。",
+  selfReportedExclusion:
+    "Gemini 自身が evidenceQuote で「対象外」「見送り」「記載なし」等と表明。Gemini の良心 hallucination 抑制が機能した結果。基本は無視で OK。",
+  unsupportedDateClaim:
+    "validFrom/validTo が抽出されたが evidenceQuote に日付の根拠 (期間 / YYYY年 / まで 等) が見当たらない。日付の hallucination 疑い。元 URL を直接確認の上採否を判断。",
 };
 
 function formatProposalDetail(p: Proposal): string {
@@ -261,14 +267,16 @@ export function buildReviewQueue(report: ProposalReport): string {
     // Render each reason group
     // Sort by priority: lowConfidence first, then others, then userBlocked last
     const reasonOrder: ReviewReason[] = [
-      "lowConfidence",
+      "unsupportedDateClaim", // 🔴 hallucination 疑い、最優先で目を通す
       "rateDeltaTooLarge",
       "rateRatioOutOfRange",
       "multiSourceConflict",
       "referenceChange",
       "deletion",
+      "lowConfidence",
       "idCollision",
       "excludedCategory",
+      "selfReportedExclusion",
       "userBlocked",
     ];
 
