@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 15;
+export const SEED_VERSION = 16;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -111,6 +111,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-13",
     summary:
       "PaymentApp.cardSpecificBonusRates[] に validFrom/validTo を追加。d払い×dカード 1% 等の per-bonus 還元に有効期間を持たせ、期限切れ bonus は paymentApp 評価で自動除外。payment-app extractor を v1.1 化、card/point-partner と同等の hallucination ガード (detectUnsupportedDateClaim) を適用。スコープ外: PaymentApp top-level の validFrom/validTo、UI badge での期間表示は将来課題。",
+  },
+  {
+    version: 16,
+    date: "2026-05-13",
+    summary:
+      "PR #1 の review item 消化。しゃぶ葉 (すかいらーくグループ) を新規 store として追加 + SMBC 7% rule を追加 (validFrom 付き)。aliases.json に yumean→yumetoan / kappazushi→kappa-sushi 追加で次回 cron は既存と統合される予定。残 4 件 (11% 上振せ条件付き、lowson typo は alias 済、ファミマ・デイリーヤマザキ誤抽出) はスキップ。",
   },
 ];
 

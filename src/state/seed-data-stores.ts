@@ -60,6 +60,7 @@ export const SEED_STORES: Store[] = [
   { id: "cocos", name: "ココス", category: "飲食" },
   { id: "excelsior-cafe", name: "エクセルシオール カフェ", category: "飲食" },
   { id: "kappa-sushi", name: "かっぱ寿司", category: "飲食" },
+  { id: "shabuyo", name: "しゃぶ葉", category: "飲食" },
   // 交通 / 電子マネー
   { id: "suica-charge", name: "Suicaチャージ", category: "電子マネー" },
   {
@@ -305,6 +306,16 @@ export const SEED_STORE_RULES: StoreRule[] = [
     rate: 0.07,
     currencyId: "v-pt",
     notes: "Visaタッチ決済時",
+  },
+  {
+    id: "rule-smbc-shabuyo",
+    cardId: "smbc-v",
+    storeId: "shabuyo",
+    paymentAppId: "pa-visa-touch",
+    validFrom: "2023-04-03",
+    rate: 0.07,
+    currencyId: "v-pt",
+    notes: "Visaタッチ決済時 (すかいらーくグループ)",
   },
   {
     id: "rule-smbc-seicomart",
