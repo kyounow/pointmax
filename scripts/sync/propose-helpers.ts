@@ -33,7 +33,7 @@ import type {
   ReviewReason,
   UpdateFieldProposal,
 } from "./types";
-import { detectSelfReportedExclusion } from "./evidence-check";
+import { detectSelfReportedExclusion, detectUnsupportedDateClaim } from "./evidence-check";
 
 // Extracted* レコードから Evidence のみを抜き出す。
 // Extracted は各エンティティに Evidence のフィールドを混ぜている (型上のフラット化)
@@ -130,20 +130,27 @@ export function proposeStoreRules(
       if (detectSelfReportedExclusion(evidence.evidenceQuote)) {
         reviewReason = "selfReportedExclusion";
       }
+      // 日付主張があるのに evidenceQuote に日付根拠がない場合は hallucination 疑い
+      if (detectUnsupportedDateClaim(r, evidence.evidenceQuote)) {
+        reviewReason = "unsupportedDateClaim";
+      }
       const ruleId = `rule-${r.cardId}-${r.storeId}${r.paymentAppId ? `-${r.paymentAppId}` : ""}`;
+      const record: Record<string, unknown> = {
+        id: ruleId,
+        cardId: r.cardId,
+        storeId: r.storeId,
+        paymentAppId: r.paymentAppId,
+        rate: r.rate,
+        currencyId: r.currencyId,
+        monthlyCapAmountYen: r.monthlyCapAmountYen,
+        notes: r.notes,
+      };
+      if (r.validFrom !== undefined) record.validFrom = r.validFrom;
+      if (r.validTo !== undefined) record.validTo = r.validTo;
       result.push({
         type: "addRecord",
         collection: "rules",
-        record: {
-          id: ruleId,
-          cardId: r.cardId,
-          storeId: r.storeId,
-          paymentAppId: r.paymentAppId,
-          rate: r.rate,
-          currencyId: r.currencyId,
-          monthlyCapAmountYen: r.monthlyCapAmountYen,
-          notes: r.notes,
-        },
+        record,
         sourceId: data.sourceId,
         confidence,
         evidence,
@@ -208,23 +215,30 @@ export function proposeCategoryRules(
       const catRuleId = `catrule-${r.cardId}-${r.category}${r.paymentAppId ? `-${r.paymentAppId}` : ""}`;
       let catReviewReason: ReviewReason | undefined =
         confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined;
-      // evidence integrity check
+      // evidence integrity: Gemini 自身が除外と報告している場合は強制 needsReview
       if (detectSelfReportedExclusion(evidence.evidenceQuote)) {
         catReviewReason = "selfReportedExclusion";
       }
+      // 日付主張があるのに evidenceQuote に日付根拠がない場合は hallucination 疑い
+      if (detectUnsupportedDateClaim(r, evidence.evidenceQuote)) {
+        catReviewReason = "unsupportedDateClaim";
+      }
+      const catRecord: Record<string, unknown> = {
+        id: catRuleId,
+        cardId: r.cardId,
+        category: r.category,
+        paymentAppId: r.paymentAppId,
+        rate: r.rate,
+        currencyId: r.currencyId,
+        monthlyCapAmountYen: r.monthlyCapAmountYen,
+        notes: r.notes,
+      };
+      if (r.validFrom !== undefined) catRecord.validFrom = r.validFrom;
+      if (r.validTo !== undefined) catRecord.validTo = r.validTo;
       result.push({
         type: "addRecord",
         collection: "rules",
-        record: {
-          id: catRuleId,
-          cardId: r.cardId,
-          category: r.category,
-          paymentAppId: r.paymentAppId,
-          rate: r.rate,
-          currencyId: r.currencyId,
-          monthlyCapAmountYen: r.monthlyCapAmountYen,
-          notes: r.notes,
-        },
+        record: catRecord,
         sourceId: data.sourceId,
         confidence,
         evidence,
@@ -351,21 +365,28 @@ export function proposeLoyaltyRules(
       const loyaltyId = `loy-${r.pointCardId}-${r.storeId}`;
       let loyaltyReviewReason: ReviewReason | undefined =
         confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined;
-      // evidence integrity check
+      // evidence integrity: Gemini 自身が除外と報告している場合は強制 needsReview
       if (detectSelfReportedExclusion(evidence.evidenceQuote)) {
         loyaltyReviewReason = "selfReportedExclusion";
       }
+      // 日付主張があるのに evidenceQuote に日付根拠がない場合は hallucination 疑い
+      if (detectUnsupportedDateClaim(r, evidence.evidenceQuote)) {
+        loyaltyReviewReason = "unsupportedDateClaim";
+      }
+      const loyaltyRecord: Record<string, unknown> = {
+        id: loyaltyId,
+        storeId: r.storeId,
+        pointCardId: r.pointCardId,
+        rate: r.rate,
+        currencyId: r.currencyId,
+        notes: r.notes,
+      };
+      if (r.validFrom !== undefined) loyaltyRecord.validFrom = r.validFrom;
+      if (r.validTo !== undefined) loyaltyRecord.validTo = r.validTo;
       result.push({
         type: "addRecord",
         collection: "loyaltyRules",
-        record: {
-          id: loyaltyId,
-          storeId: r.storeId,
-          pointCardId: r.pointCardId,
-          rate: r.rate,
-          currencyId: r.currencyId,
-          notes: r.notes,
-        },
+        record: loyaltyRecord,
         sourceId: data.sourceId,
         confidence,
         evidence,

@@ -429,6 +429,74 @@ describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
   });
 });
 
+describe("proposeStoreRules: validFrom/validTo pass-through and unsupportedDateClaim guard", () => {
+  it("validFrom あり + evidence に日付根拠あり → autoApplicable で record に validFrom が含まれる", () => {
+    const data = baseSource({
+      storeRules: [
+        {
+          cardId: "smbc-v",
+          storeId: "lawson",
+          rate: 0.07,
+          currencyId: "v-pt",
+          validFrom: "2023-04-03",
+          evidenceQuote: "ご利用期間: 2023年4月3日(月)以降のお支払い分が対象",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeStoreRules(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].type).toBe("addRecord");
+    expect(ps[0].reviewReason).toBeUndefined();
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.validFrom).toBe("2023-04-03");
+    expect(record.validTo).toBeUndefined();
+  });
+
+  it("validFrom あり + evidence に日付根拠なし → needsReview with unsupportedDateClaim", () => {
+    const data = baseSource({
+      storeRules: [
+        {
+          cardId: "smbc-v",
+          storeId: "lawson",
+          rate: 0.07,
+          currencyId: "v-pt",
+          validFrom: "2023-04-03",
+          evidenceQuote: "セブン-イレブンで 7% 還元",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeStoreRules(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBe("unsupportedDateClaim");
+  });
+
+  it("validFrom/validTo 両方なし → record に含まれない (通常ルール)", () => {
+    const data = baseSource({
+      storeRules: [
+        {
+          cardId: "smbc-v",
+          storeId: "lawson",
+          rate: 0.07,
+          currencyId: "v-pt",
+          evidenceQuote: "ローソンで 7% 還元",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeStoreRules(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBeUndefined();
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.validFrom).toBeUndefined();
+    expect(record.validTo).toBeUndefined();
+  });
+});
+
 describe("applyCategoryCap", () => {
   const makeStore = (id: string, category: string): Proposal => ({
     type: "addRecord",

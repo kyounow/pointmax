@@ -168,6 +168,8 @@ export type ExtractedStoreRule = Evidence & {
   currencyId: string;
   monthlyCapAmountYen?: number;
   notes?: string;
+  validFrom?: string;      // ISO date (YYYY-MM-DD). 公式ページに明示された開始日のみ。
+  validTo?: string;        // ISO date (YYYY-MM-DD). 公式ページに明示された終了日のみ。
 };
 
 // (c) カテゴリ別ルール
@@ -179,6 +181,8 @@ export type ExtractedCategoryRule = Evidence & {
   currencyId: string;
   monthlyCapAmountYen?: number;
   notes?: string;
+  validFrom?: string;      // ISO date (YYYY-MM-DD). 公式ページに明示された開始日のみ。
+  validTo?: string;        // ISO date (YYYY-MM-DD). 公式ページに明示された終了日のみ。
 };
 
 // 新規店舗 (e に紐づくが、店舗マスタ自体の追加)
@@ -195,6 +199,8 @@ export type ExtractedLoyaltyRule = Evidence & {
   rate: number;
   currencyId?: string;     // 通常は省略 (PointCard.currencyId と同じ)
   notes?: string;
+  validFrom?: string;      // ISO date (YYYY-MM-DD). 公式ページに明示された開始日のみ。
+  validTo?: string;        // ISO date (YYYY-MM-DD). 公式ページに明示された終了日のみ。
 };
 
 // (i) 決済アプリ
@@ -251,7 +257,8 @@ export type ReviewReason =
   | "multiSourceConflict"     // 複数ソースで同じフィールドが矛盾
   | "excludedCategory"        // Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)
   | "userBlocked"             // src/state/seed-blocklist.ts でユーザが除外指定
-  | "selfReportedExclusion";  // evidenceQuote に Gemini 自身による除外記述を検知
+  | "selfReportedExclusion"   // evidenceQuote に Gemini 自身による除外記述を検知
+  | "unsupportedDateClaim";   // validFrom/validTo があるのに evidenceQuote に日付根拠がない
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";
