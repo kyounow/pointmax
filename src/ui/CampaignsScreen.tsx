@@ -66,6 +66,8 @@ function statusBadge(s: CampaignStatus) {
   }
 }
 
+type TabKey = "all" | "active" | "ongoing" | "expired" | "future";
+
 export function CampaignsScreen() {
   const cards = useStore((s) => s.cards);
   const stores = useStore((s) => s.stores);
@@ -80,6 +82,8 @@ export function CampaignsScreen() {
   const addLoyaltyRule = useStore((s) => s.addLoyaltyRule);
   const updateLoyaltyRule = useStore((s) => s.updateLoyaltyRule);
   const removeLoyaltyRule = useStore((s) => s.removeLoyaltyRule);
+
+  const [activeTab, setActiveTab] = useState<TabKey>("all");
 
   const cardName = (id: string) => {
     const c = cards.find((c) => c.id === id);
@@ -102,6 +106,40 @@ export function CampaignsScreen() {
     () => loyaltyRules.filter((r) => !!(r.validFrom || r.validTo)),
     [loyaltyRules],
   );
+
+  // ─── タブ別フィルター ───
+  const filteredStoreRules = useMemo(
+    () =>
+      activeTab === "all"
+        ? campaignStoreRules
+        : campaignStoreRules.filter(
+            (r) => classifyCampaign(r) === activeTab,
+          ),
+    [campaignStoreRules, activeTab],
+  );
+  const filteredLoyaltyRules = useMemo(
+    () =>
+      activeTab === "all"
+        ? campaignLoyaltyRules
+        : campaignLoyaltyRules.filter(
+            (r) => classifyCampaign(r) === activeTab,
+          ),
+    [campaignLoyaltyRules, activeTab],
+  );
+
+  // ─── タブごとの件数 (storeRules + loyaltyRules の合計) ───
+  const tabCounts = useMemo(() => {
+    const all = [...campaignStoreRules, ...campaignLoyaltyRules];
+    const count = (key: CampaignStatus) =>
+      all.filter((r) => classifyCampaign(r) === key).length;
+    return {
+      all: all.length,
+      active: count("active"),
+      ongoing: count("ongoing"),
+      expired: count("expired"),
+      future: count("future"),
+    };
+  }, [campaignStoreRules, campaignLoyaltyRules]);
 
   // ─── StoreRule キャンペーン追加フォーム ───
   const [srCardId, setSrCardId] = useState("");
@@ -294,6 +332,28 @@ export function CampaignsScreen() {
         </small>
       </p>
 
+      {/* ─── フィルタータブ ─── */}
+      <div className="campaign-tabs">
+        {(
+          [
+            { key: "all", label: "全て" },
+            { key: "active", label: "🎯 期限あり" },
+            { key: "ongoing", label: "📌 公式プログラム" },
+            { key: "expired", label: "⌛ 期限切れ" },
+            { key: "future", label: "🕒 未来開始" },
+          ] as { key: TabKey; label: string }[]
+        ).map(({ key, label }) => (
+          <button
+            key={key}
+            className={activeTab === key ? "active" : ""}
+            onClick={() => setActiveTab(key)}
+          >
+            {label}
+            <span className="count">({tabCounts[key]})</span>
+          </button>
+        ))}
+      </div>
+
       {/* ─── クレカ還元キャンペーン (StoreRule) ─── */}
       <h3 style={{ marginTop: 18 }}>クレカ還元キャンペーン</h3>
       <p className="hint" style={{ marginBottom: 6 }}>
@@ -398,11 +458,15 @@ export function CampaignsScreen() {
       </form>
 
       <ResponsiveTable
-        rows={campaignStoreRules}
+        rows={filteredStoreRules}
         columns={storeRuleColumns}
         onSave={(id, patch) => updateRule(id, patch)}
         onDelete={removeRule}
-        empty="クレカ還元のキャンペーンルールはまだ登録されていません"
+        empty={
+          activeTab === "all"
+            ? "クレカ還元のキャンペーンルールはまだ登録されていません"
+            : "このカテゴリの該当ルールはありません (タブを切り替えてください)"
+        }
       />
 
       {/* ─── ポイント提示キャンペーン (LoyaltyRule) ─── */}
@@ -484,11 +548,15 @@ export function CampaignsScreen() {
       </form>
 
       <ResponsiveTable
-        rows={campaignLoyaltyRules}
+        rows={filteredLoyaltyRules}
         columns={loyaltyRuleColumns}
         onSave={(id, patch) => updateLoyaltyRule(id, patch)}
         onDelete={removeLoyaltyRule}
-        empty="ポイント提示のキャンペーンルールはまだ登録されていません"
+        empty={
+          activeTab === "all"
+            ? "ポイント提示のキャンペーンルールはまだ登録されていません"
+            : "このカテゴリの該当ルールはありません (タブを切り替えてください)"
+        }
       />
     </section>
   );

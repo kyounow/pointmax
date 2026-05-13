@@ -1402,3 +1402,37 @@ details summary {
   margin-left: 2px;
   white-space: nowrap;
 }
+
+/* ==== CampaignsScreen: status filter tabs ==== */
+.campaign-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0 16px 0;
+}
+.campaign-tabs button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.campaign-tabs button:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+.campaign-tabs button.active {
+  color: var(--text);
+  background: var(--panel-2);
+  border-color: var(--border);
+}
+.campaign-tabs .count {
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.campaign-tabs button.active .count {
+  color: var(--text);
+}
