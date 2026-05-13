@@ -286,6 +286,112 @@ describe("chargeBased PaymentApp", () => {
   });
 });
 
+describe("cardSpecificBonusRates validFrom/validTo filtering", () => {
+  const dcard: Card = {
+    id: "dcard",
+    name: "dカード",
+    defaultRate: 0.01,
+    defaultCurrencyId: "d-pt",
+  };
+
+  it("期限切れの cardSpecificBonusRates エントリは無視され defaultBonusRate にフォールバック", () => {
+    const dPayExpired: PaymentApp = {
+      id: "pa-d-pay-expired",
+      name: "d払い",
+      chargeBased: true,
+      defaultBonusRate: 0,
+      defaultBonusCurrencyId: "d-pt",
+      cardSpecificBonusRates: [
+        {
+          cardId: "dcard",
+          rate: 0.01,
+          validFrom: "2020-01-01",
+          validTo: "2020-12-31", // 期限切れ
+        },
+      ],
+    };
+    const now = new Date("2026-01-01T12:00:00");
+    const result = evaluatePaymentApps(
+      dcard,
+      "general",
+      10000,
+      "d-pt",
+      [dPayExpired],
+      [],
+      stores,
+      [],
+      undefined,
+      now,
+    );
+    // 期限切れ → defaultBonusRate=0 が適用される
+    expect(result[0].appBonusEarnedAmount).toBe(0);
+  });
+
+  it("validFrom のみ (公式プログラム) のエントリは開始後は有効", () => {
+    const dPayProgram: PaymentApp = {
+      id: "pa-d-pay-program",
+      name: "d払い",
+      chargeBased: true,
+      defaultBonusRate: 0,
+      defaultBonusCurrencyId: "d-pt",
+      cardSpecificBonusRates: [
+        {
+          cardId: "dcard",
+          rate: 0.01,
+          validFrom: "2024-04-01", // 2024年4月1日以降は常時有効
+        },
+      ],
+    };
+    const now = new Date("2026-05-13T12:00:00"); // validFrom 以降
+    const result = evaluatePaymentApps(
+      dcard,
+      "general",
+      10000,
+      "d-pt",
+      [dPayProgram],
+      [],
+      stores,
+      [],
+      undefined,
+      now,
+    );
+    // 公式プログラム → 1% bonus が適用される
+    expect(result[0].appBonusEarnedAmount).toBeCloseTo(100, 6);
+  });
+
+  it("validFrom が未来のエントリは無視される", () => {
+    const dPayFuture: PaymentApp = {
+      id: "pa-d-pay-future",
+      name: "d払い",
+      chargeBased: true,
+      defaultBonusRate: 0,
+      defaultBonusCurrencyId: "d-pt",
+      cardSpecificBonusRates: [
+        {
+          cardId: "dcard",
+          rate: 0.01,
+          validFrom: "2030-01-01", // まだ始まっていない
+        },
+      ],
+    };
+    const now = new Date("2026-05-13T12:00:00"); // validFrom より前
+    const result = evaluatePaymentApps(
+      dcard,
+      "general",
+      10000,
+      "d-pt",
+      [dPayFuture],
+      [],
+      stores,
+      [],
+      undefined,
+      now,
+    );
+    // 未来開始 → defaultBonusRate=0 が適用される
+    expect(result[0].appBonusEarnedAmount).toBe(0);
+  });
+});
+
 describe("bestPaymentApp", () => {
   it("複数候補から totalFinalAmount が最大のものを返す", () => {
     const rules: StoreRule[] = [

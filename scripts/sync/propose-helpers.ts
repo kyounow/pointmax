@@ -426,21 +426,33 @@ export function proposePaymentApps(
     const confidence = computeConfidence(evidence);
     const existing = current.paymentApps.find((x) => x.id === a.paymentAppId);
     if (!existing) {
+      const newAppRecord: Record<string, unknown> = {
+        id: a.paymentAppId,
+        name: a.name ?? a.paymentAppId,
+        chargeBased: a.chargeBased,
+        defaultBonusRate: a.defaultBonusRate,
+        defaultBonusCurrencyId: a.defaultBonusCurrencyId,
+        compatibleCardIds: a.compatibleCardIds,
+      };
+      if (a.cardSpecificBonusRates !== undefined) {
+        newAppRecord.cardSpecificBonusRates = a.cardSpecificBonusRates;
+      }
+      let newAppReviewReason: ReviewReason = "idCollision";
+      // cardSpecificBonusRates に日付主張があるのに evidenceQuote に根拠がない場合は降格
+      const hasDateBearingBonus = a.cardSpecificBonusRates?.some(
+        (b) => b.validFrom || b.validTo,
+      );
+      if (hasDateBearingBonus && detectUnsupportedDateClaim({ validFrom: "x" }, evidence.evidenceQuote)) {
+        newAppReviewReason = "unsupportedDateClaim";
+      }
       result.push({
         type: "addRecord",
         collection: "paymentApps",
-        record: {
-          id: a.paymentAppId,
-          name: a.name ?? a.paymentAppId,
-          chargeBased: a.chargeBased,
-          defaultBonusRate: a.defaultBonusRate,
-          defaultBonusCurrencyId: a.defaultBonusCurrencyId,
-          compatibleCardIds: a.compatibleCardIds,
-        },
+        record: newAppRecord,
         sourceId: data.sourceId,
         confidence,
         evidence,
-        reviewReason: "idCollision",
+        reviewReason: newAppReviewReason,
       });
       continue;
     }

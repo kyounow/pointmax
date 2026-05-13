@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 14;
+export const SEED_VERSION = 15;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -105,6 +105,12 @@ export const SEED_CHANGELOG: {
     date: "2026-05-13",
     summary:
       "「長期公式プログラム」を validFrom のみで表現する規約を導入。SMBC 7% タッチ決済 21 ルールに validFrom: 2023-04-03 を付与。CalculatorScreen / CampaignsScreen の badge 表示を 2 段階に分け、validTo あり = 🎯 キャンペーン中 (期限色)、validFrom のみ = 📌 公式プログラム (情報色)。共通コンポネ RuleStatusBadge を追加。既存 localStorage ユーザは add-only mergeFromSeed の制約により validFrom が反映されない (= 既存挙動維持)。新規 install / 再 import で新表示。",
+  },
+  {
+    version: 15,
+    date: "2026-05-13",
+    summary:
+      "PaymentApp.cardSpecificBonusRates[] に validFrom/validTo を追加。d払い×dカード 1% 等の per-bonus 還元に有効期間を持たせ、期限切れ bonus は paymentApp 評価で自動除外。payment-app extractor を v1.1 化、card/point-partner と同等の hallucination ガード (detectUnsupportedDateClaim) を適用。スコープ外: PaymentApp top-level の validFrom/validTo、UI badge での期間表示は将来課題。",
   },
 ];
 

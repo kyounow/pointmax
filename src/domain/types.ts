@@ -128,11 +128,17 @@ export type PaymentApp = {
   defaultBonusCurrencyId?: string;
   chargeBased?: boolean;
   paymentMode?: "charge" | "direct" | "physical";
+  // 紐付けカードごとの bonus 還元率。
+  // validFrom/validTo: この bonus エントリの有効期間 (任意)。
+  //   両方なし → 常時有効。validFrom のみ → 公式プログラム。両方 → 期間限定。
+  //   解釈ルールは StoreRule.validFrom/validTo と同一。
   cardSpecificBonusRates?: {
     cardId: string;
     rate: number;
     currencyId?: string; // 省略時は defaultBonusCurrencyId
     notes?: string;
+    validFrom?: string;
+    validTo?: string;
   }[];
   notes?: string;
 };

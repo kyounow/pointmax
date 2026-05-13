@@ -211,6 +211,14 @@ export type ExtractedPaymentApp = Evidence & {
   defaultBonusCurrencyId?: string;
   chargeBased?: boolean;
   compatibleCardIds?: string[];
+  cardSpecificBonusRates?: {
+    cardId: string;
+    rate: number;
+    currencyId?: string;
+    notes?: string;
+    validFrom?: string;  // ISO date (YYYY-MM-DD). 公式ページに明示された開始日のみ。
+    validTo?: string;    // ISO date (YYYY-MM-DD). 公式ページに明示された終了日のみ。
+  }[];
 };
 
 // ===========================================================
