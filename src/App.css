@@ -1526,29 +1526,62 @@ details summary {
   color: var(--text);
 }
 
-/* === 今日 indicator + active count (CalculatorScreen) === */
+/* === 今日 indicator + active count (CalculatorScreen) ===
+   A 案: 合算 1 つを常時表示し、タップで内訳 (期間限定 / 公式プログラム /
+   毎月特定日) を展開する。 */
 .today-banner {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
   margin: 8px 0 16px 0;
-  padding: 8px 14px;
   background: var(--panel);
   border: 1px solid var(--accent);
-  border-radius: 999px;
-  font-size: 14px;
+  border-radius: 12px;
+  overflow: hidden;
   font-weight: 600;
+}
+.today-banner-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  width: 100%;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.today-banner-head:hover {
+  background: var(--panel-2);
+}
+.today-banner.is-open .today-banner-head {
+  border-bottom: 1px dashed var(--border);
 }
 .today-banner-date {
   color: var(--accent);
   font-size: 15px;
   white-space: nowrap;
 }
+.today-banner-summary {
+  font-size: 14px;
+  color: var(--text);
+}
+.today-banner-summary strong {
+  color: var(--accent);
+  font-size: 16px;
+  margin: 0 2px;
+}
+.today-banner-caret {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 14px;
+}
 .today-banner-counts {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: 6px 14px;
+  padding: 8px 14px;
+  background: var(--panel-2);
   font-size: 12px;
   font-weight: 500;
   color: var(--muted);
@@ -1560,19 +1593,22 @@ details summary {
   color: var(--text);
 }
 @media (max-width: 720px) {
-  /* モバイル: pill 形ではなく角丸矩形にして、横幅を超えたら自然に折り返す */
-  .today-banner {
-    display: flex;
-    width: 100%;
-    border-radius: 12px;
-    padding: 8px 12px;
+  .today-banner-head {
+    padding: 10px 12px;
     font-size: 13px;
   }
   .today-banner-date {
     font-size: 14px;
   }
+  .today-banner-summary {
+    font-size: 13px;
+  }
+  .today-banner-summary strong {
+    font-size: 15px;
+  }
   .today-banner-counts {
     font-size: 11px;
+    padding: 8px 12px;
   }
 }
 

@@ -34,6 +34,9 @@ export function CalculatorScreen() {
   const [targetCurrencyId, setTargetCurrencyId] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
+  // today-banner: 内訳の展開状態 (初期は折り畳み)
+  const [todayBreakdownOpen, setTodayBreakdownOpen] = useState(false);
+
   // 利用可能なカテゴリ一覧 (件数付き)
   const categoryOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -227,15 +230,47 @@ export function CalculatorScreen() {
         const recurringActive = [...allRules, ...programs].filter(
           (r) => "recurringDays" in r && r.recurringDays?.length && isRuleActiveAt(r, now)
         ).length;
+        const totalActive = timeBoundActive + ongoingActive + recurringActive;
 
         return (
-          <div className="today-banner">
-            <span className="today-banner-date">📅 今日 {dateStr}</span>
-            <span className="today-banner-counts">
-              <span>🎯 期間限定 <strong>{timeBoundActive}</strong> 件</span>
-              <span>📌 公式プログラム <strong>{ongoingActive}</strong> 件</span>
-              <span>🗓 毎月特定日 <strong>{recurringActive}</strong> 件</span>
-            </span>
+          <div
+            className={`today-banner${todayBreakdownOpen ? " is-open" : ""}`}
+          >
+            <button
+              type="button"
+              className="today-banner-head"
+              onClick={() => setTodayBreakdownOpen((v) => !v)}
+              aria-expanded={todayBreakdownOpen}
+              aria-controls="today-banner-breakdown"
+              title={todayBreakdownOpen ? "内訳を閉じる" : "内訳を表示"}
+            >
+              <span className="today-banner-date">📅 今日 {dateStr}</span>
+              <span className="today-banner-summary">
+                ✨ 今アクティブな割増 <strong>{totalActive}</strong> 件
+              </span>
+              <span
+                className="today-banner-caret"
+                aria-hidden="true"
+              >
+                {todayBreakdownOpen ? "▴" : "▾"}
+              </span>
+            </button>
+            {todayBreakdownOpen && (
+              <div
+                id="today-banner-breakdown"
+                className="today-banner-counts"
+              >
+                <span>
+                  🎯 期間限定 <strong>{timeBoundActive}</strong> 件
+                </span>
+                <span>
+                  📌 公式プログラム <strong>{ongoingActive}</strong> 件
+                </span>
+                <span>
+                  🗓 毎月特定日 <strong>{recurringActive}</strong> 件
+                </span>
+              </div>
+            )}
           </div>
         );
       })()}

@@ -2,9 +2,8 @@ import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { cardLabel } from "../domain/cardLabel";
 import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
-import type { BenefitProgram, LoyaltyRule, StoreRule } from "../domain/types";
+import type { BenefitProgram } from "../domain/types";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
-import { MultiStorePicker } from "./MultiStorePicker";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
 
@@ -82,19 +81,9 @@ type TabKey = "all" | "active" | "ongoing" | "expired" | "future";
 
 export function CampaignsScreen() {
   const cards = useStore((s) => s.cards);
-  const stores = useStore((s) => s.stores);
-  const currencies = useStore((s) => s.currencies);
   const pointCards = useStore((s) => s.pointCards);
-  const rules = useStore((s) => s.rules);
-  const loyaltyRules = useStore((s) => s.loyaltyRules);
   const programs = useStore((s) => s.programs);
   const paymentApps = useStore((s) => s.paymentApps);
-  const addRule = useStore((s) => s.addRule);
-  const updateRule = useStore((s) => s.updateRule);
-  const removeRule = useStore((s) => s.removeRule);
-  const addLoyaltyRule = useStore((s) => s.addLoyaltyRule);
-  const updateLoyaltyRule = useStore((s) => s.updateLoyaltyRule);
-  const removeLoyaltyRule = useStore((s) => s.removeLoyaltyRule);
 
   const [activeTab, setActiveTab] = useState<TabKey>("all");
 
@@ -104,13 +93,15 @@ export function CampaignsScreen() {
   };
   const pointCardName = (id: string) =>
     pointCards.find((p) => p.id === id)?.name ?? id;
-  const { currencyName, storeName } = useNameResolvers();
+  const { currencyName } = useNameResolvers();
   const paymentAppById = useMemo(
     () => new Map(paymentApps.map((p) => [p.id, p])),
     [paymentApps],
   );
 
   // ─── BenefitProgram キャンペーン (validFrom or validTo を持つ programs) ───
+  // v3 で 旧 StoreRule / LoyaltyRule のキャンペーン編集 UI は廃止。
+  // ユーザー追加のキャンペーンが必要な場合は将来 Program 直接編集を提供予定。
   const campaignPrograms = useMemo(
     () => programs.filter((p) => !!(p.validFrom || p.validTo)),
     [programs],
@@ -125,67 +116,18 @@ export function CampaignsScreen() {
     [campaignPrograms, activeTab],
   );
 
-  // ─── キャンペーン抽出 (validFrom or validTo が入っているもの) ───
-  const campaignStoreRules = useMemo(
-    () => rules.filter((r) => !!(r.validFrom || r.validTo)),
-    [rules],
-  );
-  const campaignLoyaltyRules = useMemo(
-    () => loyaltyRules.filter((r) => !!(r.validFrom || r.validTo)),
-    [loyaltyRules],
-  );
-
-  // ─── タブ別フィルター ───
-  const filteredStoreRules = useMemo(
-    () =>
-      activeTab === "all"
-        ? campaignStoreRules
-        : campaignStoreRules.filter(
-            (r) => classifyCampaign(r) === activeTab,
-          ),
-    [campaignStoreRules, activeTab],
-  );
-  const filteredLoyaltyRules = useMemo(
-    () =>
-      activeTab === "all"
-        ? campaignLoyaltyRules
-        : campaignLoyaltyRules.filter(
-            (r) => classifyCampaign(r) === activeTab,
-          ),
-    [campaignLoyaltyRules, activeTab],
-  );
-
-  // ─── タブごとの件数 (programs + storeRules + loyaltyRules の合計) ───
+  // ─── タブごとの件数 ───
   const tabCounts = useMemo(() => {
-    const all = [...campaignPrograms, ...campaignStoreRules, ...campaignLoyaltyRules];
     const count = (key: CampaignStatus) =>
-      all.filter((r) => classifyCampaign(r) === key).length;
+      campaignPrograms.filter((r) => classifyCampaign(r) === key).length;
     return {
-      all: all.length,
+      all: campaignPrograms.length,
       active: count("active"),
       ongoing: count("ongoing"),
       expired: count("expired"),
       future: count("future"),
     };
-  }, [campaignPrograms, campaignStoreRules, campaignLoyaltyRules]);
-
-  // ─── StoreRule キャンペーン追加フォーム ───
-  const [srCardId, setSrCardId] = useState("");
-  const [srStoreIds, setSrStoreIds] = useState<Set<string>>(new Set());
-  const [srPaymentAppId, setSrPaymentAppId] = useState("");
-  const [srRate, setSrRate] = useState("0.05");
-  const [srCurrencyId, setSrCurrencyId] = useState("");
-  const [srValidFrom, setSrValidFrom] = useState("");
-  const [srValidTo, setSrValidTo] = useState("");
-  const [srNotes, setSrNotes] = useState("");
-
-  // ─── LoyaltyRule キャンペーン追加フォーム ───
-  const [lrPointCardId, setLrPointCardId] = useState("");
-  const [lrStoreIds, setLrStoreIds] = useState<Set<string>>(new Set());
-  const [lrRate, setLrRate] = useState("0.02");
-  const [lrValidFrom, setLrValidFrom] = useState("");
-  const [lrValidTo, setLrValidTo] = useState("");
-  const [lrNotes, setLrNotes] = useState("");
+  }, [campaignPrograms]);
 
   // ─── 列定義: BenefitProgram ───
   const programColumns: ColumnDef<BenefitProgram>[] = [
@@ -204,10 +146,13 @@ export function CampaignsScreen() {
       label: "対象カード / ポイントカード",
       view: (p) => {
         const parts: string[] = [];
-        if (p.cardIds?.length) parts.push(p.cardIds.map((id) => cardName(id)).join(" / "));
+        if (p.cardIds?.length)
+          parts.push(p.cardIds.map((id) => cardName(id)).join(" / "));
         if (p.pointCardId) parts.push(pointCardName(p.pointCardId));
         if (p.paymentAppId) {
-          parts.push(paymentAppById.get(p.paymentAppId)?.name ?? p.paymentAppId);
+          parts.push(
+            paymentAppById.get(p.paymentAppId)?.name ?? p.paymentAppId,
+          );
         }
         return parts.join(" + ") || "-";
       },
@@ -252,189 +197,17 @@ export function CampaignsScreen() {
     },
   ];
 
-  // ─── 列定義: StoreRule ───
-  const storeRuleColumns: ColumnDef<StoreRule>[] = [
-    {
-      key: "status",
-      label: "状態",
-      view: (r) => statusBadge(classifyCampaign(r)),
-    },
-    {
-      key: "card",
-      label: "カード",
-      view: (r) => cardName(r.cardId),
-    },
-    {
-      key: "target",
-      label: "対象",
-      view: (r) =>
-        r.storeId
-          ? storeName(r.storeId)
-          : r.category
-            ? `[カテゴリ] ${r.category}`
-            : "-",
-    },
-    {
-      key: "paymentApp",
-      label: "支払方法",
-      view: (r) =>
-        r.paymentAppId
-          ? (paymentAppById.get(r.paymentAppId)?.name ?? r.paymentAppId)
-          : "全方法",
-    },
-    {
-      key: "rate",
-      label: "還元率",
-      view: (r) => `${(r.rate * 100).toFixed(2)}%`,
-      edit: (r, set) => (
-        <input
-          type="number"
-          step="0.001"
-          min="0"
-          value={r.rate}
-          onChange={(e) => set({ rate: Number(e.target.value) })}
-          style={{ width: 90 }}
-        />
-      ),
-    },
-    {
-      key: "currency",
-      label: "貯まる通貨",
-      view: (r) => currencyName(r.currencyId),
-    },
-    {
-      key: "validFrom",
-      label: "開始日",
-      view: (r) => r.validFrom ?? "-",
-      edit: (r, set) => (
-        <input
-          type="date"
-          value={r.validFrom ?? ""}
-          onChange={(e) => set({ validFrom: e.target.value || undefined })}
-          style={{ width: 140 }}
-        />
-      ),
-    },
-    {
-      key: "validTo",
-      label: "終了日",
-      view: (r) => r.validTo ?? "-",
-      edit: (r, set) => (
-        <input
-          type="date"
-          value={r.validTo ?? ""}
-          onChange={(e) => set({ validTo: e.target.value || undefined })}
-          style={{ width: 140 }}
-        />
-      ),
-    },
-    {
-      key: "period",
-      label: "期間",
-      view: (r) => {
-        const active = isRuleActiveAt(r);
-        return (
-          <span title={active ? "今日有効" : "今日は対象外"}>
-            {active ? "✓ " : "○ "}
-            {formatRulePeriod(r)}
-          </span>
-        );
-      },
-    },
-    {
-      key: "notes",
-      label: "メモ",
-      view: (r) => sanitizeNoteForDisplay(r.notes) ?? "-",
-      edit: (r, set) => (
-        <input
-          value={r.notes ?? ""}
-          onChange={(e) => set({ notes: e.target.value || undefined })}
-        />
-      ),
-    },
-  ];
-
-  // ─── 列定義: LoyaltyRule ───
-  const loyaltyRuleColumns: ColumnDef<LoyaltyRule>[] = [
-    {
-      key: "status",
-      label: "状態",
-      view: (r) => statusBadge(classifyCampaign(r)),
-    },
-    {
-      key: "pointCard",
-      label: "ポイントカード",
-      view: (r) => pointCardName(r.pointCardId),
-    },
-    {
-      key: "store",
-      label: "店舗",
-      view: (r) => storeName(r.storeId),
-    },
-    {
-      key: "rate",
-      label: "還元率",
-      view: (r) => `${(r.rate * 100).toFixed(2)}%`,
-      edit: (r, set) => (
-        <input
-          type="number"
-          step="0.001"
-          min="0"
-          value={r.rate}
-          onChange={(e) => set({ rate: Number(e.target.value) })}
-          style={{ width: 90 }}
-        />
-      ),
-    },
-    {
-      key: "validFrom",
-      label: "開始日",
-      view: (r) => r.validFrom ?? "-",
-      edit: (r, set) => (
-        <input
-          type="date"
-          value={r.validFrom ?? ""}
-          onChange={(e) => set({ validFrom: e.target.value || undefined })}
-          style={{ width: 140 }}
-        />
-      ),
-    },
-    {
-      key: "validTo",
-      label: "終了日",
-      view: (r) => r.validTo ?? "-",
-      edit: (r, set) => (
-        <input
-          type="date"
-          value={r.validTo ?? ""}
-          onChange={(e) => set({ validTo: e.target.value || undefined })}
-          style={{ width: 140 }}
-        />
-      ),
-    },
-    {
-      key: "notes",
-      label: "メモ",
-      view: (r) => sanitizeNoteForDisplay(r.notes) ?? "-",
-      edit: (r, set) => (
-        <input
-          value={r.notes ?? ""}
-          onChange={(e) => set({ notes: e.target.value || undefined })}
-        />
-      ),
-    },
-  ];
-
   return (
     <section>
       <h2>キャンペーン</h2>
       <p className="hint">
-        期間限定の還元率キャンペーンを登録します。
-        通常ルールと共存し、期間中は<strong>最高 rate</strong>が採用されます。
-        期間外は通常ルール / カードのデフォルトに戻ります。
+        期間限定 / 期限未告知のプログラム一覧。
+        通常還元と共存し、期間中は<strong>最高 rate</strong>が採用されます。
+        期間外は通常還元 / カードのデフォルトに戻ります。
         <br />
         <small>
-          開始日/終了日は両方とも省略可（省略時は無限に過去/未来扱い）。終了日はその日の 23:59:59 まで有効。
+          終了日 = その日の 23:59:59 まで有効。プログラム本体の追加・編集は
+          現在マスターデータ (seed) でのみ管理しています。
         </small>
       </p>
 
@@ -460,225 +233,17 @@ export function CampaignsScreen() {
         ))}
       </div>
 
-      {/* ─── BenefitProgram キャンペーン ─── */}
-      {campaignPrograms.length > 0 && (
-        <>
-          <h3 style={{ marginTop: 18 }}>プログラム (BenefitProgram)</h3>
-          <p className="hint" style={{ marginBottom: 6 }}>
-            マスターデータ由来のプログラム。期間限定 / 定期キャンペーンを含みます。
-          </p>
-          <ResponsiveTable
-            rows={filteredPrograms}
-            columns={programColumns}
-            empty="このカテゴリの該当プログラムはありません"
-          />
-        </>
+      {campaignPrograms.length === 0 ? (
+        <p className="hint" style={{ marginTop: 12 }}>
+          期間情報を持つプログラムはまだありません。
+        </p>
+      ) : (
+        <ResponsiveTable
+          rows={filteredPrograms}
+          columns={programColumns}
+          empty="このカテゴリの該当プログラムはありません (タブを切り替えてください)"
+        />
       )}
-
-      {/* ─── クレカ還元キャンペーン (StoreRule) ─── */}
-      <h3 style={{ marginTop: 18 }}>クレカ還元キャンペーン (ユーザー追加)</h3>
-      <p className="hint" style={{ marginBottom: 6 }}>
-        カード × 店舗 (or 支払方法) で還元率がアップするキャンペーン。
-      </p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!srCardId || srStoreIds.size === 0 || !srCurrencyId) return;
-          // 選択した全店舗に対してルールを 1 件ずつ追加
-          for (const sid of srStoreIds) {
-            addRule({
-              cardId: srCardId,
-              storeId: sid,
-              paymentAppId: srPaymentAppId || undefined,
-              rate: Number(srRate),
-              currencyId: srCurrencyId,
-              validFrom: srValidFrom || undefined,
-              validTo: srValidTo || undefined,
-              notes: srNotes.trim() || undefined,
-            });
-          }
-          setSrCardId("");
-          setSrStoreIds(new Set());
-          setSrPaymentAppId("");
-          setSrRate("0.05");
-          setSrCurrencyId("");
-          setSrValidFrom("");
-          setSrValidTo("");
-          setSrNotes("");
-        }}
-      >
-        <select value={srCardId} onChange={(e) => setSrCardId(e.target.value)}>
-          <option value="">カード</option>
-          {cards.map((c) => (
-            <option key={c.id} value={c.id}>
-              {cardLabel(c)}
-            </option>
-          ))}
-        </select>
-        <MultiStorePicker
-          stores={stores}
-          selected={srStoreIds}
-          onChange={setSrStoreIds}
-          label="店舗"
-        />
-        <select
-          value={srPaymentAppId}
-          onChange={(e) => setSrPaymentAppId(e.target.value)}
-          title="特定の支払方法のみ適用したい場合"
-        >
-          <option value="">全方法</option>
-          {paymentApps.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          step="0.001"
-          min="0"
-          placeholder="還元率 (0.05=5%)"
-          value={srRate}
-          onChange={(e) => setSrRate(e.target.value)}
-          style={{ width: 130 }}
-        />
-        <select
-          value={srCurrencyId}
-          onChange={(e) => setSrCurrencyId(e.target.value)}
-        >
-          <option value="">通貨</option>
-          {currencies.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="date"
-          value={srValidFrom}
-          onChange={(e) => setSrValidFrom(e.target.value)}
-          style={{ width: 130 }}
-          title="開始日 (省略可)"
-        />
-        <span>〜</span>
-        <input
-          type="date"
-          value={srValidTo}
-          onChange={(e) => setSrValidTo(e.target.value)}
-          style={{ width: 130 }}
-          title="終了日 (省略可)"
-        />
-        <input
-          placeholder="メモ (任意)"
-          value={srNotes}
-          onChange={(e) => setSrNotes(e.target.value)}
-        />
-        <button type="submit">追加</button>
-      </form>
-
-      <ResponsiveTable
-        rows={filteredStoreRules}
-        columns={storeRuleColumns}
-        onSave={(id, patch) => updateRule(id, patch)}
-        onDelete={removeRule}
-        empty={
-          activeTab === "all"
-            ? "クレカ還元のキャンペーンルールはまだ登録されていません"
-            : "このカテゴリの該当ルールはありません (タブを切り替えてください)"
-        }
-      />
-
-      {/* ─── ポイント提示キャンペーン (LoyaltyRule) ─── */}
-      <h3 style={{ marginTop: 22 }}>ポイント提示キャンペーン (ユーザー追加)</h3>
-      <p className="hint" style={{ marginBottom: 6 }}>
-        ポイントカード提示で店舗特典が一時的に増えるキャンペーン。
-      </p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!lrPointCardId || lrStoreIds.size === 0) return;
-          for (const sid of lrStoreIds) {
-            addLoyaltyRule({
-              pointCardId: lrPointCardId,
-              storeId: sid,
-              rate: Number(lrRate),
-              validFrom: lrValidFrom || undefined,
-              validTo: lrValidTo || undefined,
-              notes: lrNotes.trim() || undefined,
-            });
-          }
-          setLrPointCardId("");
-          setLrStoreIds(new Set());
-          setLrRate("0.02");
-          setLrValidFrom("");
-          setLrValidTo("");
-          setLrNotes("");
-        }}
-      >
-        <select
-          value={lrPointCardId}
-          onChange={(e) => setLrPointCardId(e.target.value)}
-        >
-          <option value="">ポイントカード</option>
-          {pointCards.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <MultiStorePicker
-          stores={stores}
-          selected={lrStoreIds}
-          onChange={setLrStoreIds}
-          label="店舗"
-        />
-        <input
-          type="number"
-          step="0.001"
-          min="0"
-          placeholder="還元率 (0.02=2%)"
-          value={lrRate}
-          onChange={(e) => setLrRate(e.target.value)}
-          style={{ width: 130 }}
-        />
-        <input
-          type="date"
-          value={lrValidFrom}
-          onChange={(e) => setLrValidFrom(e.target.value)}
-          style={{ width: 130 }}
-          title="開始日 (省略可)"
-        />
-        <span>〜</span>
-        <input
-          type="date"
-          value={lrValidTo}
-          onChange={(e) => setLrValidTo(e.target.value)}
-          style={{ width: 130 }}
-          title="終了日 (省略可)"
-        />
-        <input
-          placeholder="メモ (任意)"
-          value={lrNotes}
-          onChange={(e) => setLrNotes(e.target.value)}
-        />
-        <button type="submit">追加</button>
-      </form>
-
-      <ResponsiveTable
-        rows={filteredLoyaltyRules}
-        columns={loyaltyRuleColumns}
-        onSave={(id, patch) => updateLoyaltyRule(id, patch)}
-        onDelete={removeLoyaltyRule}
-        empty={
-          activeTab === "all"
-            ? "ポイント提示のキャンペーンルールはまだ登録されていません"
-            : "このカテゴリの該当ルールはありません (タブを切り替えてください)"
-        }
-      />
     </section>
   );
 }
