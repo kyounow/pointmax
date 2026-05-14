@@ -1,84 +1,269 @@
 {
   "sourceId": "d-point-partners",
   "sourceUrl": "https://dpoint.docomo.ne.jp/content/feature/point_realstore.html",
-  "fetchedAt": "2026-05-11T12:34:55.111Z",
-  "promptVersion": "point-partner-v1.0",
+  "fetchedAt": "2026-05-14T02:37:37.266Z",
+  "promptVersion": "point-partner-v1.1",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
   "stores": [
     {
-      "storeId": "lawson-store100",
-      "name": "ローソンストア100",
-      "category": "コンビニ",
-      "evidenceQuote": "ローソンストア100: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
       "storeId": "mister-donut",
       "name": "ミスタードーナツ",
       "category": "飲食",
-      "evidenceQuote": "ミスタードーナツ: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "mos-burger",
-      "name": "モスバーガー",
-      "category": "飲食",
-      "evidenceQuote": "モスバーガー: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "ミスタードーナツ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "wendys-first-kitchen",
       "name": "ウェンディーズ・ファーストキッチン",
       "category": "飲食",
-      "evidenceQuote": "ウェンディーズ・ファーストキッチン: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "ウェンディーズ・ファーストキッチン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "matsuya",
       "name": "松屋",
       "category": "飲食",
-      "evidenceQuote": "松屋: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "kappa-sushi",
-      "name": "かっぱ寿司",
-      "category": "飲食",
-      "evidenceQuote": "かっぱ寿司: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "hama-sushi",
-      "name": "はま寿司",
-      "category": "飲食",
-      "evidenceQuote": "はま寿司: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "松屋",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "kamakura-pasta",
       "name": "鎌倉パスタ",
       "category": "飲食",
-      "evidenceQuote": "鎌倉パスタ: dポイントをつかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "鎌倉パスタ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "hidakaya",
       "name": "日高屋",
       "category": "飲食",
-      "evidenceQuote": "日高屋: dポイントをつかえる",
+      "evidenceQuote": "日高屋",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "loyaltyRules": [
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "conv-lawson",
+      "rate": 0,
+      "evidenceQuote": "ローソン",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "conv-familymart",
+      "rate": 0,
+      "evidenceQuote": "ファミリーマート",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "lawson-store100",
+      "rate": 0,
+      "evidenceQuote": "ローソンストア100",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "poplar",
+      "rate": 0,
+      "evidenceQuote": "ポプラ",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "conv-7eleven",
+      "rate": 0,
+      "evidenceQuote": "セブン‐イレブン ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "conv-ministop",
+      "rate": 0,
+      "evidenceQuote": "ミニストップ ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "seicomart",
+      "rate": 0,
+      "evidenceQuote": "セイコーマート ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "daily-yamazaki",
+      "rate": 0,
+      "evidenceQuote": "デイリーヤマザキ ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "mcdonalds",
+      "rate": 0,
+      "evidenceQuote": "マクドナルド ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "sukiya",
+      "rate": 0,
+      "evidenceQuote": "すき家",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "mister-donut",
+      "rate": 0,
+      "evidenceQuote": "ミスタードーナツ",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "mos-burger",
+      "rate": 0,
+      "evidenceQuote": "モスバーガー",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "wendys-first-kitchen",
+      "rate": 0,
+      "evidenceQuote": "ウェンディーズ・ファーストキッチン",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "matsuya",
+      "rate": 0,
+      "evidenceQuote": "松屋",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "yoshinoya",
+      "rate": 0,
+      "evidenceQuote": "吉野家 ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "kfc",
+      "rate": 0,
+      "evidenceQuote": "ケンタッキーフライドチキン ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "kappa-sushi",
+      "rate": 0,
+      "evidenceQuote": "かっぱ寿司",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "gusto",
+      "rate": 0,
+      "evidenceQuote": "ガスト",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "hamazushi",
+      "rate": 0,
+      "evidenceQuote": "はま寿司",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "kamakura-pasta",
+      "rate": 0,
+      "evidenceQuote": "鎌倉パスタ",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "hidakaya",
+      "rate": 0,
+      "evidenceQuote": "日高屋",
+      "notes": "dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "gyukaku",
+      "rate": 0,
+      "evidenceQuote": "牛角 ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "uobei",
+      "rate": 0,
+      "evidenceQuote": "魚べい ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "kura-sushi",
+      "rate": 0,
+      "evidenceQuote": "くら寿司 ※の店舗はd払いのみご利用できます。",
+      "notes": "d払いのみ利用可能、dポイントカード提示で貯まる記載なし",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }
   ],
-  "loyaltyRules": [],
-  "notes": "このページはdポイントの『利用』可能店舗をリストしており、ポイントカード提示による『還元率』の明示がないため、loyaltyRulesは空です。また、『※』が付いている店舗はd払いのみ利用可能であり、dポイントカード提示の対象外です。"
+  "notes": "このページはdポイントが「使える」店舗一覧であり、「貯まる」還元率の記載がないため、rateは0.0とし、d払いのみの店舗はnotesに記載。主要なチェーン店のみ抽出、全数は未網羅。"
 }

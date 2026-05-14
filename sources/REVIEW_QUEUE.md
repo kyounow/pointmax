@@ -1,214 +1,297 @@
 # 📋 週次マスタ同期: 要レビュー項目
 
-(自動生成 2026-05-12。merge 前に項目を確認してください。)
+(自動生成 2026-05-14。merge 前に項目を確認してください。)
 
 ## サマリ
-- 要レビュー: 194 件
-- ソース別: ponta=68, smbc-v-gold-7percent=2, rakuten-point=77, v-point=46, d-point=1
-- 主な理由: lowConfidence=21, selfReportedExclusion=1, userBlocked=23, idCollision=121, excludedCategory=28
+- 要レビュー: 90 件
+- ソース別: d-point=15, jal-card-tokuyaku-list=1, smbc-v-gold-7percent=23, v-point=49, ponta=2
+- 主な理由: lowConfidence=15, rateRatioOutOfRange=1, unsupportedDateClaim=22, idCollision=22, excludedCategory=21, userBlocked=9
 
 ## 項目 (理由別)
 
-### 🟡 lowConfidence (21 件)
+### 🔴 unsupportedDateClaim (22 件)
+理由: validFrom/validTo が抽出されたが evidenceQuote に日付の根拠 (期間 / YYYY年 / まで 等) が見当たらない。日付の hallucination 疑い。元 URL を直接確認の上採否を判断。
+
+<details><summary>展開</summary>
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-seicomart-pa-default", cardId="smbc-v-gold-7percent", storeId="seicomart", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：セイコーマート"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-conv-7eleven-pa-default", cardId="smbc-v-gold-7percent", storeId="conv-7eleven", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：セブン-イレブン"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-poplar-pa-default", cardId="smbc-v-gold-7percent", storeId="poplar", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：ポプラ"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-conv-ministop-pa-default", cardId="smbc-v-gold-7percent", storeId="conv-ministop", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：ミニストップ"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-conv-lawson-pa-default", cardId="smbc-v-gold-7percent", storeId="conv-lawson", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：ローソン"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-mcdonalds-pa-default", cardId="smbc-v-gold-7percent", storeId="mcdonalds", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：マクドナルド"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-mos-burger-pa-default", cardId="smbc-v-gold-7percent", storeId="mos-burger", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：モスバーガー"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-kfc-pa-default", cardId="smbc-v-gold-7percent", storeId="kfc", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：ケンタッキーフライドチキン"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-yoshinoya-pa-default", cardId="smbc-v-gold-7percent", storeId="yoshinoya", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：吉野家"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-saizeriya-pa-default", cardId="smbc-v-gold-7percent", storeId="saizeriya", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：サイゼリヤ"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-gusto-pa-default", cardId="smbc-v-gold-7percent", storeId="gusto", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：ガスト"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-bamiyan-pa-default", cardId="smbc-v-gold-7percent", storeId="bamiyan", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：バーミヤン"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-shabu-yo-pa-default", cardId="smbc-v-gold-7percent", storeId="shabu-yo", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：しゃぶ葉"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-jonathans-pa-default", cardId="smbc-v-gold-7percent", storeId="jonathans", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：ジョナサン"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-yumetoan-pa-default", cardId="smbc-v-gold-7percent", storeId="yumetoan", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：夢庵"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-sukiya-pa-default", cardId="smbc-v-gold-7percent", storeId="sukiya", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：すき家"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-hamazushi-pa-default", cardId="smbc-v-gold-7percent", storeId="hamazushi", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：はま寿司"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-cocos-pa-default", cardId="smbc-v-gold-7percent", storeId="cocos", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：ココス"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-doutor-pa-default", cardId="smbc-v-gold-7percent", storeId="doutor", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：ドトールコーヒーショップ"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/rules` from `smbc-v-gold-7percent`
+- 内容: `id="rule-smbc-v-gold-7percent-excelsior-cafe-pa-default", cardId="smbc-v-gold-7percent", storeId="excelsior-cafe", paymentAppId="pa-default", rate=0.07, currencyId="v-pt", validFrom="2026-02-01"`
+- confidence: 0.90
+- 評価: `evidenceQuote="対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！
+対象店舗：エクセルシオール カフェ"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+_他 2 件は省略 (sources/proposed-migrations.json を参照)_
+
+</details>
+
+### 🟠 rateRatioOutOfRange (1 件)
+理由: 還元率の倍率が 0.5x〜2x の範囲外。大幅な変化は要確認。
+
+<details><summary>展開</summary>
+
+#### `updateField/loyaltyRules` `loy-d-mcdonalds` from `d-point-partners`
+- フィールド: `rate`
+- 変更: `1.000%` → `0.000%`
+- confidence: 0.90
+- 評価: `evidenceQuote="マクドナルド ※の店舗はd払いのみご利用できます。"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+</details>
+
+### 🟡 lowConfidence (15 件)
 理由: Gemini の評価で confidence < 0.9。エビデンス不明瞭・推測混入の疑い。
 
 <details><summary>展開</summary>
 
-#### `updateField/loyaltyRules` `loy-p-lawson` from `ponta-partners`
+#### `updateField/loyaltyRules` `loy-d-lawson` from `d-point-partners`
 - フィールド: `rate`
-- 変更: `0.500%` → `1.000%`
+- 変更: `0.500%` → `0.000%`
 - confidence: 0.64
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: ローソン"`
+- 評価: `evidenceQuote="ローソン"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-apollostation", storeId="apollostation", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: apollostation / レンタカー・ガソリンスタンド・駐車場: apollostation たまる つかえる アプリ"`
+#### `updateField/loyaltyRules` `loy-d-familymart` from `d-point-partners`
+- フィールド: `rate`
+- 変更: `0.500%` → `0.000%`
+- confidence: 0.64
+- 評価: `evidenceQuote="ファミリーマート"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-kentucky", storeId="kentucky", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: ケンタッキーフライドチキン / グルメ・飲食: ケンタッキーフライドチキン たまる つかえる アプリ"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-lawson-store100", storeId="lawson-store100", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="ローソンストア100"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-geo", storeId="geo", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: ゲオ / 音楽・映像・ゲーム: ゲオ たまる つかえる アプリ"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-poplar", storeId="poplar", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="ポプラ"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-ace-contact", storeId="ace-contact", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="百貨店・コンビニ・スーパー・ドラッグストア: エースコンタクト たまる つかえる アプリ"`
+#### `updateField/loyaltyRules` `loy-d-sukiya` from `d-point-partners`
+- フィールド: `rate`
+- 変更: `0.500%` → `0.000%`
+- confidence: 0.64
+- 評価: `evidenceQuote="すき家"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-takashimaya", storeId="takashimaya", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="百貨店・コンビニ・スーパー・ドラッグストア: 高島屋 たまる つかえる アプリ"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-mister-donut", storeId="mister-donut", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="ミスタードーナツ"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-suika", storeId="suika", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="グルメ・飲食: すき家 たまる つかえる アプリ"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-mos-burger", storeId="mos-burger", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="モスバーガー"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-doutor", storeId="doutor", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="グルメ・飲食: ドトールコーヒーショップ たまる つかえる アプリ"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-wendys-first-kitchen", storeId="wendys-first-kitchen", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="ウェンディーズ・ファーストキッチン"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-best-megane-contact", storeId="best-megane-contact", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="ファッション・美容: ベストメガネコンタクト たまる つかえる アプリ"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-matsuya", storeId="matsuya", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="松屋"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-joshin", storeId="joshin", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="音楽・映像・ゲーム: ジョーシン たまる つかえる アプリ / 家電・コンピューター・通信: ジョーシン たまる つかえる アプリ"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-kappa-sushi", storeId="kappa-sushi", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="かっぱ寿司"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-kojima", storeId="kojima", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="家電・コンピューター・通信: コジマ たまる つかえる アプリ"`
+#### `updateField/loyaltyRules` `loy-d-gusto` from `d-point-partners`
+- フィールド: `rate`
+- 変更: `0.500%` → `0.000%`
+- confidence: 0.64
+- 評価: `evidenceQuote="ガスト"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-sofmap", storeId="sofmap", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="家電・コンピューター・通信: ソフマップ たまる つかえる アプリ"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-hamazushi", storeId="hamazushi", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="はま寿司"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-bic-camera", storeId="bic-camera", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="家電・コンピューター・通信: ビックカメラ たまる つかえる アプリ"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-kamakura-pasta", storeId="kamakura-pasta", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="鎌倉パスタ"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-saibu-gas", storeId="saibu-gas", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="電気・ガス: 西部ガス たまる"`
+#### `addRecord/loyaltyRules` from `d-point-partners`
+- 内容: `id="loy-d-pointcard-hidakaya", storeId="hidakaya", pointCardId="d-pointcard", rate=0`
+- notes: dポイントは使えるが、貯まる記載なし（d払いのみかdポイントカード提示可だが還元率未記載）
+- confidence: 0.64
+- 評価: `evidenceQuote="日高屋"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-conv-familymart", storeId="conv-familymart", pointCardId="ponta-card", rate=0.005`
-- notes: PontaWebのトップページでFamilyMartのロゴがありPontaがたまる・つかえると記載。一般的なレートを推定。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: ファミリーマート"`
+#### `addRecord/rules` from `jal-card-tokuyaku-list`
+- 内容: `id="rule-jal-suica-royal-host-pa-default", cardId="jal-suica", storeId="royal-host", paymentAppId="pa-default", rate=0.02, currencyId="jal-mile"`
+- confidence: 0.85
+- 評価: `evidenceQuote="ロイヤルホスト JAL CARD 決済でマイルが2倍"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-au", storeId="au", pointCardId="ponta-card", rate=0.01`
-- notes: au利用料金での付与レートは別途確認が必要だが、汎用的なレートを設定。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: au / 家電・コンピューター・通信: au たまる"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-toku-taku", storeId="toku-taku", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="レジャー・旅行: 得タク たまる / 車・バイク: 得タク たまる"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-hotel-keihan-chain", storeId="hotel-keihan-chain", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="レジャー・旅行: ホテル京阪チェーン たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-sakai-hikkoshi", storeId="sakai-hikkoshi", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="引越し・住まい: サカイ引越センター たまる"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-heart-hikkoshi", storeId="heart-hikkoshi", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="引越し・住まい: ハート引越センター たまる"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-_他 1 件は省略 (sources/proposed-migrations.json を参照)_
 
 </details>
 
-### 🟠 idCollision (121 件)
+### 🟠 idCollision (22 件)
 理由: 新規追加だが既存 ID またはストア名と衝突。重複の可能性あり。
 
 <details><summary>展開</summary>
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="2ndstreet", name="セカンドストリート", category="ファッション"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ファッション・美容: セカンドストリート"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="a-pit-autobacs", name="A PIT AUTOBACS", category="車・バイク"`
-- confidence: 0.90
-- 評価: `evidenceQuote="A PIT AUTOBACS：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="ace-contact", name="エースコンタクト", category="コンタクト"`
-- confidence: 0.90
-- 評価: `evidenceQuote="エースコンタクト：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="ace-one", name="エースワン", category="スーパー"`
-- confidence: 0.90
-- 評価: `evidenceQuote="エースワン：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="adam-et-rope", name="ADAM ET ROPÉ", category="ファッション"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ADAM ET ROPÉ：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="aiya", name="藍屋", category="飲食"`
-- confidence: 0.90
-- 評価: `evidenceQuote="藍屋：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="akakabe-group", name="アカカベグループ", category="ドラッグストア"`
-- confidence: 0.90
-- 評価: `evidenceQuote="アカカベグループ：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="albis", name="アルビス", category="スーパー"`
-- confidence: 0.90
-- 評価: `evidenceQuote="百貨店・コンビニ・スーパー・ドラッグストア: アルビス"`
+#### `addRecord/cards` from `smbc-v-gold-7percent`
+- 内容: `id="smbc-v-gold-7percent", name="smbc-v-gold-7percent", defaultRate=0.005, defaultCurrencyId="v-pt"`
+- confidence: 0.49
+- 評価: `evidenceQuote="通常のポイント分 合計200円（税込）につき、0.5％～1％ポイント還元"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 #### `addRecord/stores` from `v-point-partners`
@@ -217,77 +300,119 @@ _他 1 件は省略 (sources/proposed-migrations.json を参照)_
 - 評価: `evidenceQuote="ALOOK: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="alpen", name="アルペン", category="スポーツ"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="asahiya-shoten", name="旭屋書店", category="書店"`
 - confidence: 0.90
-- 評価: `evidenceQuote="アルペン：楽天ポイントカードが使えるお店"`
+- 評価: `evidenceQuote="旭屋書店: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="alpen-mountains", name="アルペンマウンテンズ", category="スポーツ"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="booklive", name="ブックライブ", category="書店"`
 - confidence: 0.90
-- 評価: `evidenceQuote="アルペンマウンテンズ：楽天ポイントカードが使えるお店"`
+- 評価: `evidenceQuote="ブックライブ: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="alpen-outdoors", name="アルペンアウトドアーズ", category="スポーツ"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="books-misumi", name="BOOKSmisumi", category="書店"`
 - confidence: 0.90
-- 評価: `evidenceQuote="アルペンアウトドアーズ：楽天ポイントカードが使えるお店"`
+- 評価: `evidenceQuote="BOOKSmisumi: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="american-drug", name="アメリカンドラッグ", category="ドラッグストア"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="camera-no-kitamura", name="カメラのキタムラ", category="カメラ・写真"`
 - confidence: 0.90
-- 評価: `evidenceQuote="アメリカンドラッグ：楽天ポイントカードが使えるお店"`
+- 評価: `evidenceQuote="カメラのキタムラ: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="american-holic", name="AMERICAN HOLIC", category="ファッション"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="dept-ryubo", name="デパートリウボウ", category="百貨店"`
 - confidence: 0.90
-- 評価: `evidenceQuote="AMERICAN HOLIC：楽天ポイントカードが使えるお店"`
+- 評価: `evidenceQuote="デパートリウボウ: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="angie", name="ANGIE", category="美容"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="epark-relax-este", name="EPARKリラク＆エステ", category="美容"`
 - confidence: 0.90
-- 評価: `evidenceQuote="ANGIE：楽天ポイントカードが使えるお店"`
+- 評価: `evidenceQuote="EPARKリラク＆エステ: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="aoki", name="AOKI", category="ファッション"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="go-today-shaire-salon", name="GO TODAY SHAiRE SALON", category="美容"`
 - confidence: 0.90
-- 評価: `evidenceQuote="ファッション・美容: AOKI"`
+- 評価: `evidenceQuote="GO TODAY SHAiRE SALON: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="apollo-station", name="apollostation", category="ガソリンスタンド"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="green-dog-cat", name="GREEN DOG & CAT", category="ペット"`
 - confidence: 0.90
-- 評価: `evidenceQuote="apollostation：楽天ポイントカードが使えるお店"`
+- 評価: `evidenceQuote="GREEN DOG & CAT: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="arc-oasis", name="アークオアシス", category="雑貨"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="hamasushi", name="はま寿司", category="飲食"`
 - confidence: 0.90
-- 評価: `evidenceQuote="アークオアシス：楽天ポイントカードが使えるお店"`
+- 評価: `evidenceQuote="はま寿司: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="ari-san-hikkoshi", name="アリさんマークの引越社", category="引越し"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="hitachi-chain-store", name="日立チェーンストール", category="家電量販店"`
 - confidence: 0.90
-- 評価: `evidenceQuote="アリさんマークの引越社：楽天ポイントカードが使えるお店"`
+- 評価: `evidenceQuote="日立チェーンストール: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="art-hikkoshi-center", name="アート引越センター", category="引越し"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="iris-plaza", name="アイリスプラザ", category="ネット通販"`
 - confidence: 0.90
-- 評価: `evidenceQuote="引越し・住まい: アート引越センター"`
+- 評価: `evidenceQuote="アイリスプラザ: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-_他 101 件は省略 (sources/proposed-migrations.json を参照)_
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="kawatoku-dept", name="川徳百貨店", category="百貨店"`
+- confidence: 0.90
+- 評価: `evidenceQuote="川徳百貨店: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="lens-style", name="レンズスタイル", category="コンタクト"`
+- confidence: 0.90
+- 評価: `evidenceQuote="レンズスタイル: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="make-man", name="メイクマン", category="ホームセンター"`
+- confidence: 0.90
+- 評価: `evidenceQuote="メイクマン: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="megane-ichiba", name="眼鏡市場", category="メガネ"`
+- confidence: 0.90
+- 評価: `evidenceQuote="眼鏡市場: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="net-off", name="ネットオフ", category="買取"`
+- confidence: 0.90
+- 評価: `evidenceQuote="ネットオフ: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="shinseido", name="新星堂", category="音楽・映像"`
+- confidence: 0.90
+- 評価: `evidenceQuote="新星堂: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="tsutaya", name="TSUTAYA", category="エンタメ・チケット"`
+- confidence: 0.90
+- 評価: `evidenceQuote="TSUTAYA: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+_他 2 件は省略 (sources/proposed-migrations.json を参照)_
 
 </details>
 
-### 🟠 excludedCategory (28 件)
+### 🟠 excludedCategory (21 件)
 理由: Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)。自動追加しない。
 
 <details><summary>展開</summary>
@@ -298,22 +423,10 @@ _他 101 件は省略 (sources/proposed-migrations.json を参照)_
 - 評価: `evidenceQuote="アフラック: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="apamanshop", name="アパマンショップ", category="不動産・住宅"`
-- confidence: 0.90
-- 評価: `evidenceQuote="引越し・住まい: アパマンショップ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
 #### `addRecord/stores` from `v-point-partners`
 - 内容: `id="aplus", name="アプラス", category="金融"`
 - confidence: 0.90
 - 評価: `evidenceQuote="アプラス: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="caromama-plus", name="カロママ プラス", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="グルメ・飲食: カロママ プラス"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 #### `addRecord/stores` from `v-point-partners`
@@ -328,12 +441,6 @@ _他 101 件は省略 (sources/proposed-migrations.json を参照)_
 - 評価: `evidenceQuote="EPARK くすりの窓口: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="gaba-english", name="Gabaマンツーマン英会話", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ビジネス・英語・習い事: Gabaマンツーマン英会話"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
 #### `addRecord/stores` from `v-point-partners`
 - 内容: `id="jaccs", name="JACCS", category="金融"`
 - confidence: 0.90
@@ -344,12 +451,6 @@ _他 101 件は省略 (sources/proposed-migrations.json を参照)_
 - 内容: `id="kansai-mirai-bank", name="関西みらい銀行", category="金融"`
 - confidence: 0.90
 - 評価: `evidenceQuote="関西みらい銀行: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="life-net", name="Life Net", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: Life Net"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 #### `addRecord/stores` from `v-point-partners`
@@ -382,24 +483,6 @@ _他 101 件は省略 (sources/proposed-migrations.json を参照)_
 - 評価: `evidenceQuote="三井住友銀行: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="otocon", name="婚活支援サービス パートナーエージェント（OTOCON）", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: 婚活支援サービス パートナーエージェント（OTOCON）"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="plaly", name="プラリー", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: プラリー"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="ponta-kantan-hoken", name="Pontaかんたん保険", category="保険"`
-- confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: Pontaかんたん保険"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
 #### `addRecord/stores` from `v-point-partners`
 - 内容: `id="sbi-sonpo", name="SBI損保", category="保険"`
 - confidence: 0.90
@@ -412,20 +495,56 @@ _他 101 件は省略 (sources/proposed-migrations.json を参照)_
 - 評価: `evidenceQuote="しまうまプリント: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-_他 8 件は省略 (sources/proposed-migrations.json を参照)_
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="sokuyaku", name="SOKUYAKU", category="医療"`
+- confidence: 0.90
+- 評価: `evidenceQuote="SOKUYAKU: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="sompo-himawari-seimei", name="ＳＯＭＰＯひまわり生命", category="保険"`
+- confidence: 0.90
+- 評価: `evidenceQuote="ＳＯＭＰＯひまわり生命: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="studio-mario", name="スタジオマリオ（写真館）", category="サービス"`
+- confidence: 0.90
+- 評価: `evidenceQuote="スタジオマリオ（写真館）: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="tabelog", name="食べログ", category="ネットサービス"`
+- confidence: 0.90
+- 評価: `evidenceQuote="食べログ: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="tiktok-lite", name="TikTok Lite", category="ネットサービス"`
+- confidence: 0.90
+- 評価: `evidenceQuote="TikTok Lite: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="winticket", name="WINTICKET", category="ギャンブル"`
+- confidence: 0.90
+- 評価: `evidenceQuote="WINTICKET: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="yahoo-japan", name="Yahoo! JAPAN", category="ネットサービス"`
+- confidence: 0.90
+- 評価: `evidenceQuote="Yahoo! JAPAN: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+
+_他 1 件は省略 (sources/proposed-migrations.json を参照)_
 
 </details>
 
-### ⚫ userBlocked (23 件)
+### ⚫ userBlocked (9 件)
 理由: seed-blocklist.ts でユーザが除外指定済み。意図した除外であれば無視してよい。
 
 <details><summary>展開</summary>
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="17live", name="17LIVE(ワンセブンライブ)", category="エンタメ・チケット"`
-- confidence: 0.90
-- 評価: `evidenceQuote="音楽・映像・ゲーム: 17LIVE(ワンセブンライブ)"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 #### `addRecord/stores` from `v-point-partners`
 - 内容: `id="airbnb", name="Airbnb", category="宿泊"`
@@ -440,39 +559,15 @@ _他 8 件は省略 (sources/proposed-migrations.json を参照)_
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 #### `addRecord/stores` from `ponta-partners`
-- 内容: `id="aquaclara", name="アクアクララ", category="生活サービス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ネットショッピング・通販・宅配: アクアクララ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="au-bookpass", name="auブックパス", category="書店"`
-- confidence: 0.90
-- 評価: `evidenceQuote="本・電子書籍・新聞: auブックパス"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
 - 内容: `id="auto-info", name="オート・インフォ", category="車・バイク"`
 - confidence: 0.90
-- 評価: `evidenceQuote="車・バイク: オート・インフォ"`
+- 評価: `evidenceQuote="オート・インフォ たまる"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 #### `addRecord/stores` from `ponta-partners`
-- 内容: `id="denki-hikaku-insweb", name="でんきの比較インズウェブ", category="電気・ガス"`
+- 内容: `id="diamond-sha", name="ダイヤモンド社", category="書店"`
 - confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: でんきの比較インズウェブ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="enewan", name="エネワン（株式会社サイサン）", category="電気・ガス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="電気・ガス: エネワン（株式会社サイサン）"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="gasone", name="ガスワン（株式会社サイサン）", category="電気・ガス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="電気・ガス: ガスワン（株式会社サイサン）"`
+- 評価: `evidenceQuote="ダイヤモンド社 たまる"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 #### `addRecord/stores` from `v-point-partners`
@@ -481,52 +576,10 @@ _他 8 件は省略 (sources/proposed-migrations.json を参照)_
 - 評価: `evidenceQuote="Hyundai Mobility Japan: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="jal-mileage-bank", name="日本航空(JALマイレージバンク)", category="交通"`
-- confidence: 0.90
-- 評価: `evidenceQuote="日本航空(JALマイレージバンク)"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="kamei", name="カメイ株式会社", category="エネルギー"`
-- confidence: 0.90
-- 評価: `evidenceQuote="カメイ株式会社：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
 #### `addRecord/stores` from `v-point-partners`
 - 内容: `id="mercedes-benz", name="メルセデス・ベンツ", category="自動車"`
 - confidence: 0.90
 - 評価: `evidenceQuote="メルセデス・ベンツ: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="oishix", name="Oisix", category="ネット通販"`
-- confidence: 0.90
-- 評価: `evidenceQuote="百貨店・コンビニ・スーパー・ドラッグストア: Oisix"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="premium-water", name="プレミアムウォーター", category="生活サービス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ネットショッピング・通販・宅配: プレミアムウォーター"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="princess-cruises", name="プリンセスクルーズ", category="旅行"`
-- confidence: 0.90
-- 評価: `evidenceQuote="プリンセスクルーズ：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="rakuten-gora", name="楽天GORA", category="ネット通販"`
-- confidence: 0.90
-- 評価: `evidenceQuote="楽天GORA：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="sbinft-market", name="SBINFT Market", category="ネット通販"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ネットショッピング・通販・宅配: SBINFT Market"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 #### `addRecord/stores` from `v-point-partners`
@@ -535,13 +588,17 @@ _他 8 件は省略 (sources/proposed-migrations.json を参照)_
 - 評価: `evidenceQuote="シャディ・サラダ館: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="telasa", name="TELASA（テラサ）", category="エンタメ・チケット"`
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="tone-mobile", name="トーンモバイル", category="通信"`
 - confidence: 0.90
-- 評価: `evidenceQuote="音楽・映像・ゲーム: TELASA（テラサ）"`
+- 評価: `evidenceQuote="トーンモバイル: Vポイント加盟店"`
 - 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
-_他 3 件は省略 (sources/proposed-migrations.json を参照)_
+#### `addRecord/stores` from `v-point-partners`
+- 内容: `id="vip-liner", name="VIPライナー（高速バス）", category="交通"`
+- confidence: 0.90
+- 評価: `evidenceQuote="VIPライナー（高速バス）: Vポイント加盟店"`
+- 対応案: 手動で seed ファイルに反映するか、不要なら無視
 
 </details>
 
