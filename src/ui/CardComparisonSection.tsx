@@ -31,14 +31,12 @@ export function CardComparisonSection({
       <table className="card-comparison-table">
         <colgroup>
           <col className="col-card" />
-          <col className="col-state" />
           <col className="col-total" />
           <col className="col-diff" />
         </colgroup>
         <thead>
           <tr>
             <th>カード</th>
-            <th>状態</th>
             <th>合計</th>
             <th>#1 との差</th>
           </tr>
@@ -67,9 +65,6 @@ export function CardComparisonSection({
                     )}
                     {cardLabel(r.card)}
                   </span>
-                </td>
-                <td data-label="状態" className="card-state-cell">
-                  <span className="card-state-disabled">☐ 使う OFF</span>
                 </td>
                 <td data-label="合計" className="card-comparison-total">
                   {r.reachable

@@ -1767,10 +1767,9 @@ details summary {
 }
 /* 明示的な列幅 (デスクトップ): カード名を一番広く取り、長い名前でも 2-3 行で
    収まるバランス。モバイルでは card layout に変わるためここは影響しない。 */
-.card-comparison-table col.col-card { width: 44%; }
-.card-comparison-table col.col-state { width: 16%; }
-.card-comparison-table col.col-total { width: 22%; }
-.card-comparison-table col.col-diff { width: 18%; }
+.card-comparison-table col.col-card { width: 52%; }
+.card-comparison-table col.col-total { width: 26%; }
+.card-comparison-table col.col-diff { width: 22%; }
 .card-comparison-table th {
   text-align: left;
   padding: 6px 8px;
@@ -1821,10 +1820,7 @@ details summary {
 .card-comparison-diff.diff-zero {
   color: var(--muted);
 }
-.card-state-cell {
-  font-size: 11px;
-}
-/* モバイル: 4 列テーブル → カード layout (ResponsiveTable と同様の方針) */
+/* モバイル: 3 列テーブル → カード layout (ResponsiveTable と同様の方針) */
 @media (max-width: 720px) {
   .card-comparison {
     padding: 12px;
@@ -1879,10 +1875,6 @@ details summary {
     display: none;
   }
 }
-.card-state-disabled {
-  color: var(--muted);
-}
-
 /* ==== SchemaUpgradeModal ==== */
 .schema-upgrade-modal-overlay {
   position: fixed;
