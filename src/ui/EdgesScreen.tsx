@@ -2,11 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { Connection, Edge as RFEdge, Node as RFNode } from "@xyflow/react";
 
 import { useStore } from "../state/store";
-import { formatRatio } from "../domain/currencyKind";
-import { groupBy } from "../domain/groupBy";
-import type { ConversionEdge } from "../domain/types";
 import { useDialog } from "./dialog/DialogProvider";
-import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { EdgesGraph } from "./edges/EdgesGraph";
 import { EdgeDetailPanel } from "./edges/EdgeDetailPanel";
@@ -21,10 +17,6 @@ export function EdgesScreen() {
   const updateEdge = useStore((s) => s.updateEdge);
   const removeEdge = useStore((s) => s.removeEdge);
 
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [rate, setRate] = useState("1");
-  const [notes, setNotes] = useState("");
   const [sel, setSel] = useState<Selection>(null);
   const [showLabels, setShowLabels] = useState(false);
   const dialog = useDialog();
@@ -119,69 +111,6 @@ export function EdgesScreen() {
     [edges, sel],
   );
 
-  const currenciesByKind = useMemo(() => {
-    const kindLabel = (k?: string) => {
-      switch (k) {
-        case "mile":
-          return "マイル";
-        case "point":
-          return "ポイント";
-        case "cashlike":
-          return "現金相当";
-        default:
-          return "その他";
-      }
-    };
-    return groupBy(currencies, (c) => kindLabel(c.kind));
-  }, [currencies]);
-
-  const edgeColumns: ColumnDef<ConversionEdge>[] = [
-    {
-      key: "from",
-      label: "from",
-      view: (e) => currencyName(e.fromCurrencyId),
-    },
-    {
-      key: "to",
-      label: "to",
-      view: (e) => currencyName(e.toCurrencyId),
-    },
-    {
-      key: "rate",
-      label: "レート",
-      view: (e) => formatRatio(e.rate),
-      edit: (e, set) => (
-        <input
-          type="number"
-          step="0.0001"
-          min="0"
-          value={e.rate}
-          onChange={(ev) => set({ rate: Number(ev.target.value) })}
-        />
-      ),
-    },
-    {
-      key: "requiredCards",
-      label: "保有必須",
-      view: (e) =>
-        e.requiredCardIds?.length
-          ? e.requiredCardIds.map(cardName).join(" / ")
-          : "-",
-      // edit は edge-panel (グラフ上の選択) で行う。テーブル直編集は対応しない (UI が膨らむため)
-    },
-    {
-      key: "notes",
-      label: "メモ",
-      view: (e) => e.notes ?? "-",
-      edit: (e, set) => (
-        <input
-          value={e.notes ?? ""}
-          onChange={(ev) => set({ notes: ev.target.value || undefined })}
-        />
-      ),
-    },
-  ];
-
   return (
     <section>
       <h2>ポイント交換ルート</h2>
@@ -267,74 +196,6 @@ export function EdgesScreen() {
         />
       )}
 
-      <details style={{ marginTop: 18 }}>
-        <summary>フォームから追加 / 一覧</summary>
-
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!from || !to || from === to) return;
-            addEdge({
-              fromCurrencyId: from,
-              toCurrencyId: to,
-              rate: Number(rate),
-              notes: notes.trim() || undefined,
-            });
-            setFrom("");
-            setTo("");
-            setRate("1");
-            setNotes("");
-          }}
-        >
-          <select value={from} onChange={(e) => setFrom(e.target.value)}>
-            <option value="">from</option>
-            {currenciesByKind.map((g) => (
-              <optgroup key={g.key} label={g.key}>
-                {g.items.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          <span>→</span>
-          <select value={to} onChange={(e) => setTo(e.target.value)}>
-            <option value="">to</option>
-            {currenciesByKind.map((g) => (
-              <optgroup key={g.key} label={g.key}>
-                {g.items.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          <input
-            type="number"
-            step="0.0001"
-            min="0"
-            placeholder="レート"
-            value={rate}
-            onChange={(e) => setRate(e.target.value)}
-          />
-          <input
-            placeholder="メモ (任意)"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-          <button type="submit">追加</button>
-        </form>
-
-        <ResponsiveTable
-          rows={edges}
-          columns={edgeColumns}
-          onSave={(id, patch) => updateEdge(id, patch)}
-          onDelete={removeEdge}
-        />
-      </details>
     </section>
   );
 }

@@ -246,18 +246,13 @@ export function ProgramsScreen() {
 
                   {/* 展開行: 加盟店リスト */}
                   {isExpanded && (
-                    <tr key={`${p.id}-expanded`} style={{ background: "#f8fafc" }}>
-                      <td colSpan={7} style={{ padding: "6px 16px" }}>
-                        <div style={{ fontSize: 13 }}>
-                          <strong>加盟店一覧 ({mems.length} 件)</strong>
-                          <div
-                            style={{
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: 6,
-                              marginTop: 6,
-                            }}
-                          >
+                    <tr key={`${p.id}-expanded`} className="program-membership-row">
+                      <td colSpan={7} className="program-membership-cell">
+                        <div className="program-membership-body">
+                          <strong className="program-membership-title">
+                            加盟店一覧 ({mems.length} 件)
+                          </strong>
+                          <div className="program-membership-chips">
                             {mems.map((m) => {
                               const s = storeById.get(m.storeId);
                               const label = s?.name ?? m.storeId;
@@ -265,12 +260,7 @@ export function ProgramsScreen() {
                               return (
                                 <span
                                   key={m.storeId}
-                                  className="badge"
-                                  style={{
-                                    background: hasOverride ? "#7c3aed" : "#e5e7eb",
-                                    color: hasOverride ? "#fff" : "#374151",
-                                    fontSize: 12,
-                                  }}
+                                  className={`program-membership-chip${hasOverride ? " has-override" : ""}`}
                                   title={
                                     hasOverride
                                       ? `上書き: ${m.overrideRate != null ? `${(m.overrideRate * 100).toFixed(2)}%` : ""} ${m.overrideCurrencyId ?? ""}`.trim()
@@ -279,7 +269,7 @@ export function ProgramsScreen() {
                                 >
                                   {label}
                                   {hasOverride && m.overrideRate != null && (
-                                    <span style={{ marginLeft: 4, fontWeight: "bold" }}>
+                                    <span className="program-membership-chip-rate">
                                       {(m.overrideRate * 100).toFixed(2)}%
                                     </span>
                                   )}

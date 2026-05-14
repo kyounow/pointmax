@@ -8,7 +8,6 @@ import {
   conflictItems,
   type PlanItem,
 } from "../domain/migrations";
-import { useDialog } from "./dialog/DialogProvider";
 
 export function UpdateBanner() {
   const lastSeedVersion = useStore((s) => s.lastSeedVersion);
@@ -22,8 +21,6 @@ export function UpdateBanner() {
   const paymentApps = useStore((s) => s.paymentApps);
   const applySeedUpdate = useStore((s) => s.applySeedUpdate);
   const dismissSeedUpdate = useStore((s) => s.dismissSeedUpdate);
-  const loadSeed = useStore((s) => s.loadSeed);
-  const dialog = useDialog();
   const [showDetail, setShowDetail] = useState(false);
   const [overrideKeys, setOverrideKeys] = useState<Set<string>>(new Set());
 
@@ -107,17 +104,6 @@ export function UpdateBanner() {
     setOverrideKeys(new Set());
   };
 
-  const handleOverwrite = async () => {
-    const ok = await dialog.confirm({
-      title: "サンプルで全上書きしますか？",
-      message:
-        "現在のカスタム編集も含めて全データが最新サンプルで置き換えられます。",
-      okText: "全上書き",
-      danger: true,
-    });
-    if (ok) loadSeed();
-  };
-
   const toggleOverride = (key: string) => {
     setOverrideKeys((prev) => {
       const next = new Set(prev);
@@ -177,7 +163,6 @@ export function UpdateBanner() {
               ? `${totalChanges + overrideKeys.size}件適用`
               : `${totalChanges}件適用`}
           </button>
-          <button onClick={handleOverwrite}>全上書き</button>
           <button onClick={dismissSeedUpdate} className="dismiss">
             あとで
           </button>

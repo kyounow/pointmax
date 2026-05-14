@@ -566,6 +566,54 @@ details summary {
   letter-spacing: -0.5px;
   flex-shrink: 0;
 }
+/* === ProgramsScreen: 展開行 (加盟店一覧) のダークテーマ調整 ===
+   元はライトモードの色 (#f8fafc / #e5e7eb / #374151) が直接書かれていて
+   アプリ全体の dark theme と衝突していた。 */
+.program-membership-row {
+  background: var(--panel-2);
+}
+.program-membership-cell {
+  padding: 8px 16px !important;
+  border-top: 1px dashed var(--border);
+}
+.program-membership-body {
+  font-size: 13px;
+}
+.program-membership-title {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.program-membership-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.program-membership-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.program-membership-chip.has-override {
+  background: rgba(124, 58, 237, 0.18);
+  border-color: #7c3aed;
+  color: #c4b5fd;
+  font-weight: 600;
+}
+.program-membership-chip-rate {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 /* PaymentAppsScreen: 「支払方法」セル内のアイコン+名前のクラスタ */
 .payment-app-row-label {
   display: inline-flex;
