@@ -49,7 +49,7 @@ export function CardComparisonSection({
                   : "diff-zero";
             return (
               <tr key={r.card.id}>
-                <td>
+                <td data-label="カード">
                   <span className="card-name-with-badge">
                     {isMasterCard(r.card.id) && (
                       <span
@@ -62,15 +62,18 @@ export function CardComparisonSection({
                     {cardLabel(r.card)}
                   </span>
                 </td>
-                <td className="card-state-cell">
+                <td data-label="状態" className="card-state-cell">
                   <span className="card-state-disabled">☐ 使う OFF</span>
                 </td>
-                <td className="card-comparison-total">
+                <td data-label="合計" className="card-comparison-total">
                   {r.reachable
                     ? `${formatNum(r.totalFinalAmount)} ${targetCurrencyName}`
                     : "対象外"}
                 </td>
-                <td className={`card-comparison-diff ${diffClass}`}>
+                <td
+                  data-label="#1との差"
+                  className={`card-comparison-diff ${diffClass}`}
+                >
                   {r.reachable
                     ? `${diffSign}${formatNum(diff)}${diff > 0 ? " ✨" : ""}`
                     : "-"}

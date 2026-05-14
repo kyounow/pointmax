@@ -1760,6 +1760,61 @@ details summary {
 .card-state-cell {
   font-size: 11px;
 }
+/* モバイル: 4 列テーブル → カード layout (ResponsiveTable と同様の方針) */
+@media (max-width: 720px) {
+  .card-comparison {
+    padding: 12px;
+  }
+  .card-comparison-table,
+  .card-comparison-table thead,
+  .card-comparison-table tbody,
+  .card-comparison-table tr,
+  .card-comparison-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .card-comparison-table thead {
+    display: none;
+  }
+  .card-comparison-table tr {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: var(--panel-2);
+  }
+  .card-comparison-table td {
+    border: none;
+    padding: 4px 0;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    column-gap: 8px;
+    align-items: baseline;
+    font-size: 13px;
+  }
+  .card-comparison-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .card-comparison-table td.card-comparison-diff {
+    /* 差額は大きめに目立たせる */
+    font-size: 14px;
+  }
+  /* カード名行は単独で大きめに (label を非表示・名前を主役にする) */
+  .card-comparison-table td:first-child {
+    grid-template-columns: 1fr;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.08);
+    font-size: 14px;
+  }
+  .card-comparison-table td:first-child::before {
+    display: none;
+  }
+}
 .card-state-disabled {
   color: var(--muted);
 }
