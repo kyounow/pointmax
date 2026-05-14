@@ -10,6 +10,8 @@ import { RuleStatusBadge } from "./RuleStatusBadge";
 import { NoteChips } from "./NoteChips";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { isRuleActiveAt } from "../domain/ruleActiveAt";
+import { isMasterCard } from "../state/seed";
+import { CardComparisonSection } from "./CardComparisonSection";
 
 export function CalculatorScreen() {
   const cards = useStore((s) => s.cards);
@@ -92,21 +94,25 @@ export function CalculatorScreen() {
   );
   const { cardName } = useNameResolvers();
 
-  const result = useMemo(() => {
+  // includeDisabled: true で全カード試算、後で 2 つに分割
+  const allRanked = useMemo(() => {
     if (!storeId || !targetCurrencyId || !amount) return null;
     const amt = Number(amount);
     if (!Number.isFinite(amt) || amt <= 0) return null;
-    return rankCards({
-      payment: { storeId, amount: amt },
-      targetCurrencyId,
-      cards,
-      stores,
-      rules,
-      edges,
-      pointCards,
-      loyaltyRules,
-      paymentApps,
-    });
+    return rankCards(
+      {
+        payment: { storeId, amount: amt },
+        targetCurrencyId,
+        cards,
+        stores,
+        rules,
+        edges,
+        pointCards,
+        loyaltyRules,
+        paymentApps,
+      },
+      { includeDisabled: true },
+    );
   }, [
     storeId,
     amount,
@@ -119,6 +125,23 @@ export function CalculatorScreen() {
     loyaltyRules,
     paymentApps,
   ]);
+
+  // 主結果: enabled なカード (既存 result と同等)
+  const result = useMemo(
+    () => (allRanked ? allRanked.filter((r) => r.card.enabled !== false) : null),
+    [allRanked],
+  );
+
+  // 比較対象: enabled=false かつ master pool のカード
+  const comparisonItems = useMemo(
+    () =>
+      allRanked
+        ? allRanked.filter(
+            (r) => r.card.enabled === false && isMasterCard(r.card.id),
+          )
+        : [],
+    [allRanked],
+  );
 
   const loyalties = result && result.length > 0 ? result[0].loyalties : [];
 
@@ -604,6 +627,17 @@ export function CalculatorScreen() {
               </article>
             );
           })}
+          {comparisonItems.length > 0 && (() => {
+            const topReachable = result.find((r) => r.reachable);
+            const topTotal = topReachable?.totalFinalAmount ?? 0;
+            return (
+              <CardComparisonSection
+                comparisonItems={comparisonItems}
+                topReachableTotal={topTotal}
+                targetCurrencyName={currencyName(targetCurrencyId)}
+              />
+            );
+          })()}
         </div>
       )}
     </section>

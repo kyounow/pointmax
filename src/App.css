@@ -1594,3 +1594,61 @@ details summary {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
+
+/* CalculatorScreen 「他のカードと比較」セクション */
+.card-comparison {
+  margin-top: 24px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.card-comparison h3 {
+  margin: 0 0 4px 0;
+  font-size: 15px;
+}
+.card-comparison .hint {
+  margin: 0 0 12px 0;
+  font-size: 12px;
+}
+.card-comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.card-comparison-table th {
+  text-align: left;
+  padding: 6px 8px;
+  color: var(--muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+.card-comparison-table td {
+  padding: 6px 8px;
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+.card-comparison-total {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.card-comparison-diff {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.card-comparison-diff.diff-positive {
+  color: var(--good);
+}
+.card-comparison-diff.diff-negative {
+  color: var(--muted);
+}
+.card-comparison-diff.diff-zero {
+  color: var(--muted);
+}
+.card-state-cell {
+  font-size: 11px;
+}
+.card-state-disabled {
+  color: var(--muted);
+}

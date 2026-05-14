@@ -46,7 +46,11 @@ export type CardRanking = {
   totalFinalAmount: number;
 };
 
-export function rankCards(input: RankInput): CardRanking[] {
+export function rankCards(
+  input: RankInput,
+  options: { includeDisabled?: boolean } = {},
+): CardRanking[] {
+  const { includeDisabled = false } = options;
   const {
     payment,
     targetCurrencyId,
@@ -61,10 +65,15 @@ export function rankCards(input: RankInput): CardRanking[] {
 
   // enabled === false のカードは Calculator 順位付けから除外する。
   // undefined / true はそのまま通す（後方互換）
-  const enabledCards = cards.filter((c) => c.enabled !== false);
+  // includeDisabled: true なら disabled card も含める
+  const targetCards = includeDisabled
+    ? cards
+    : cards.filter((c) => c.enabled !== false);
 
   // enabled なカード id の集合。ConversionEdge.requiredCardIds のゲート判定に使う。
   // 「カード保有 = state.cards にあり、かつ enabled !== false」と定義 (v2 step 1 と整合)。
+  // NOTE: availableCardIds は常に enabled カードのみ (requiredCardIds ゲートは実保有カードで判定)
+  const enabledCards = cards.filter((c) => c.enabled !== false);
   const availableCardIds = new Set(enabledCards.map((c) => c.id));
 
   const store = stores.find((s) => s.id === payment.storeId);
@@ -86,7 +95,7 @@ export function rankCards(input: RankInput): CardRanking[] {
     0,
   );
 
-  const ranked: CardRanking[] = enabledCards.map((card) => {
+  const ranked: CardRanking[] = targetCards.map((card) => {
     // PaymentApp が登録されていない場合は従来通り (resolveRate のみ)
     if (paymentApps.length === 0) {
       const resolved = resolveRate(card, payment.storeId, rules, stores);

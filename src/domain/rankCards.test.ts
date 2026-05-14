@@ -367,6 +367,43 @@ describe("rankCards", () => {
     expect(result[1].totalFinalAmount).toBe(200);
   });
 
+  it("includeDisabled: true で disabled (enabled=false) カードも結果に含まれる", () => {
+    const cards: Card[] = [
+      { id: "active", name: "A", defaultRate: 0.01, defaultCurrencyId: "c1" },
+      { id: "disabled", name: "B", defaultRate: 0.05, defaultCurrencyId: "c1", enabled: false },
+    ];
+    const result = rankCards(
+      {
+        payment: { storeId: "any", amount: 10000 },
+        targetCurrencyId: "c1",
+        cards,
+        stores: baseStores,
+        rules: [],
+        edges: [],
+      },
+      { includeDisabled: true },
+    );
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.card.id)).toContain("disabled");
+  });
+
+  it("includeDisabled なし (デフォルト) は disabled を除外 (既存挙動)", () => {
+    const cards: Card[] = [
+      { id: "active", name: "A", defaultRate: 0.01, defaultCurrencyId: "c1" },
+      { id: "disabled", name: "B", defaultRate: 0.05, defaultCurrencyId: "c1", enabled: false },
+    ];
+    const result = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "c1",
+      cards,
+      stores: baseStores,
+      rules: [],
+      edges: [],
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].card.id).toBe("active");
+  });
+
   it("requiredCardIds: 必要なカードを持たないユーザーは制約エッジを経由したパスを取れない", () => {
     // 楽天カードのみ保有 (jal-suica 無し)
     const cards: Card[] = [rakuten];
