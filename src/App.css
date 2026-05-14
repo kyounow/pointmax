@@ -1544,3 +1544,53 @@ details summary {
   white-space: pre-wrap;
   flex-basis: 100%;
 }
+
+/* PointCardsScreen: 対象加盟店プレビュー */
+.pc-stores-preview {
+  display: inline-block;
+}
+.pc-stores-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+.pc-stores-toggle {
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+.pc-stores-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.pc-stores-list {
+  margin: 6px 0 0 0;
+  padding: 8px 12px;
+  list-style: none;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.pc-stores-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  gap: 12px;
+}
+.pc-stores-list li:not(:last-child) {
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
+}
+.pc-store-name {
+  color: var(--text);
+}
+.pc-store-rate {
+  color: var(--good);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}

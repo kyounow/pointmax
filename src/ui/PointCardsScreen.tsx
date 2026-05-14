@@ -4,6 +4,7 @@ import { CurrencyIcon } from "./CurrencyIcon";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { LoyaltyRule, PointCard } from "../domain/types";
 import { groupBy } from "../domain/groupBy";
+import { PointCardStoresPreview } from "./PointCardStoresPreview";
 
 export function PointCardsScreen() {
   const pointCards = useStore((s) => s.pointCards);
@@ -76,6 +77,19 @@ export function PointCardsScreen() {
           ))}
         </select>
       ),
+    },
+    {
+      key: "stores",
+      label: "対象加盟店",
+      view: (p) => {
+        const rules = loyaltyRules.filter((r) => r.pointCardId === p.id);
+        return (
+          <PointCardStoresPreview
+            rules={rules}
+            storeName={(id) => storeById.get(id)?.name ?? id}
+          />
+        );
+      },
     },
   ];
 
