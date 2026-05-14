@@ -120,28 +120,46 @@ export type LoyaltyRule = {
 //   要素あり = リスト内のカードのみ使用可能 (楽天Pay × 楽天カードなど)
 // chargeBased: true なら「カードからアプリ残高にチャージして決済」型 (楽天Pay/d払い/PayPay)
 //   false / undefined ならカードを直接使う型 (通常クレカ/Visaタッチ/QUICPay/iD)
+//   chargeBased=true の場合、カード自身の還元 (card.defaultRate) は加算しない。
+//   チャージ時の還元は通常ゼロ (例: 楽天カード→d払い残高チャージは還元対象外)。
 //   表示でカードとアプリの主従関係を切り替える + 店舗ルール(JAL特約店2%等)を bypass
 // paymentMode: チャージ式か直接連携かを明示 (UX 表示用)
 //   "charge": 残高にチャージしてから決済 (chargeBased=true と等価表現)
 //   "direct": カードを支払い元として紐付け (連携式)
 //   "physical": 物理カード or タッチ決済 (default)
 //   省略時は chargeBased から導出
-// defaultBonusRate / defaultBonusCurrencyId: 紐付けカードによらず付与される還元 (デフォルト)
-// cardSpecificBonusRates: 紐付けカード固有の還元 (cardId 一致時に default を上書き)
-//   例 d払い: 「dカードのみ 1.0%、他は 0%」 → defaultBonusRate=0,
-//        cardSpecificBonusRates=[{cardId:"dcard", rate:0.01}]
+// defaultBonusRate: ベース還元 (全カード共通の最低値)。
+//   chargeBased=true の場合、これが実質的なアプリ利用時の基本還元率となる。
+// defaultBonusCurrencyId: defaultBonusRate で貯まる通貨 (省略時は null)
+// cardSpecificBonusRates: defaultBonusRate に対する上乗せ加算分 (差分)。
+//   「特定カードを paymentApp で使った時の追加 bonus」を表現。
+//   例 d払い: defaultBonusRate=0、cardSpecific=[{cardId:"dcard", rate:0.01}]
+//     → 楽天カード × d払い = 0 (default) + 0 (該当 cardSpecific なし) = 0%
+//     → dカード × d払い   = 0 (default) + 0.01 (cardSpecific) = 1.0%
+//   例 au PAY: defaultBonusRate=0.005、cardSpecific=[{cardId:"au-pay-card", rate:0.01}]
+//     → 楽天カード × au PAY = 0.005 + 0 = 0.5%
+//     → au PAY カード × au PAY = 0.005 + 0.01 = 1.5%
 export type PaymentApp = {
   id: string;
   name: string;
   iconChar?: string;
   iconColor?: string;
   compatibleCardIds?: string[];
+  // ベース還元 (全カード共通の最低値)。chargeBased=true ではアプリ利用時の基本還元率。
   defaultBonusRate?: number;
   defaultBonusCurrencyId?: string;
   chargeBased?: boolean;
   paymentMode?: "charge" | "direct" | "physical";
-  // 紐付けカードごとの bonus 還元率。
-  // validFrom/validTo: この bonus エントリの有効期間 (任意)。
+  // PaymentApp のベース bonus (defaultBonusRate) に対する **上乗せ加算分**。
+  // 「特定カードを paymentApp で使った時の追加 bonus」を表現。
+  // 例: d払い defaultBonusRate=0、cardSpecific=[{cardId:"dcard", rate:0.01}]
+  //     → 楽天カード × d払い = 0 (default) + 0 (該当 cardSpecific なし) = 0%
+  //     → dカード × d払い = 0 (default) + 0.01 (cardSpecific) = 1.0%
+  // 例: au PAY defaultBonusRate=0.005、cardSpecific=[{cardId:"au-pay-card", rate:0.01}]
+  //     → 楽天カード × au PAY = 0.005 + 0 = 0.5%
+  //     → au PAY カード × au PAY = 0.005 + 0.01 = 1.5%
+  //
+  // validFrom/validTo は entry の有効期間 (任意)。期限切れ entry は無視される。
   //   両方なし → 常時有効。validFrom のみ → 公式プログラム。両方 → 期間限定。
   //   解釈ルールは StoreRule.validFrom/validTo と同一。
   cardSpecificBonusRates?: {

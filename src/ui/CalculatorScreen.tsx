@@ -553,7 +553,7 @@ export function CalculatorScreen() {
                         <NoteChips notes={r.resolved.notes} />
                       )}
                       {(() => {
-                        if (r.resolved.source === "default") return null;
+                        if (r.resolved.source === "default" || r.resolved.source === "charge") return null;
                         const ruleId = r.resolved.ruleId;
                         const rule = rules.find((rl) => rl.id === ruleId);
                         if (!rule?.monthlyCapAmountYen) return null;

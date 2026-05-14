@@ -130,24 +130,30 @@ export function evaluatePaymentApps(
   return compatible.map((pa) => {
     const resolved: ResolvedRate = pa.chargeBased
       ? {
-          rate: card.defaultRate,
+          // chargeBased=true (= チャージ式) はカード自身の還元が乗らない。
+          // 0 を入れて、bonus 計算で全てカバー。
+          rate: 0,
           currencyId: card.defaultCurrencyId,
-          source: "default",
+          source: "charge" as const,
         }
       : resolveRateForPaymentApp(card, storeId, rules, stores, pa, now);
-    // クレカ部分
+
+    // クレカ部分 (chargeBased=true なら 0)
     const cardEarned = amount * resolved.rate;
     const cardCurrency = resolved.currencyId;
     const cardPath = bestPath(edges, cardCurrency, targetCurrencyId, cardEarned, availableCardIds);
 
-    // アプリ自体のbonus還元
-    // 紐付けカード (card) に対応する cardSpecificBonusRates があればそれを使用
-    // (例: d払い × dカードは 1%、他社カードは 0%)
+    // アプリ bonus = ベース (defaultBonusRate) + 上乗せ (cardSpecific.rate)
+    // chargeBased=true: bonus = defaultBonusRate + cardSpecific.rate の累積で全てカバー
+    // chargeBased=false: bonus は追加ボーナス (カード還元との二重取り)
     // 有効期間 (validFrom/validTo) が設定されている場合は now 時点での active なエントリのみ参照
     const cardSpecific = pa.cardSpecificBonusRates?.find(
       (b) => b.cardId === card.id && isRuleActiveAt(b, now),
     );
-    const bonusRate = cardSpecific?.rate ?? pa.defaultBonusRate ?? 0;
+    const baseBonus = pa.defaultBonusRate ?? 0;
+    const addOnBonus = cardSpecific?.rate ?? 0;
+    const bonusRate = baseBonus + addOnBonus;
+    // bonusCurrency は cardSpecific 優先、なければ defaultBonusCurrencyId
     const bonusCurrency =
       cardSpecific?.currencyId ?? pa.defaultBonusCurrencyId ?? null;
     const bonusEarned = amount * bonusRate;

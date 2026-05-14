@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 23;
+export const SEED_VERSION = 24;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -190,6 +190,21 @@ export const SEED_CHANGELOG: {
       "誤って入れていた。JCB 公式 (https://www.jcb.co.jp/point/index.html#catalog) に基づき修正:" +
       "JAL/ANA マイル 0.6、楽天/d/Ponta/nanaco 各 0.7、MyJCB Pay 1.0 (現金相当)。" +
       "5倍換算後の J-POINT 単位として整合。新規 4 edges (j-point → rakuten / d / ponta / nanaco) も追加。",
+  },
+  {
+    version: 24,
+    date: "2026-05-14",
+    summary:
+      "paymentApp 計算モデルを「累積モデル」に修正 (重大バグ修正)。" +
+      "chargeBased=true の paymentApp (楽天Pay/d払い/PayPay/au PAY/ファミペイ/メルペイ) で、" +
+      "従来は card.defaultRate を別途加算していたが、これがチャージ時還元 0% の実態と乖離し、" +
+      "Calculator が 1pp 程度過大評価していた (例: dカード × d払い = 現実 1.0% を 2.0% と計算)。" +
+      "新モデル: chargeBased=true なら card.defaultRate は 0 扱い、" +
+      "bonus = defaultBonusRate (ベース) + cardSpecific.rate (上乗せ) の累積で表現。" +
+      "PaymentApp.cardSpecificBonusRates の意味を「上乗せ加算分」に確定 (doc 更新)。" +
+      "新カード 2 枚 (au-pay-card / famima-card) を master pool に追加し、" +
+      "pa-au-pay / pa-famipay の cardSpecific 補完。" +
+      "既存 4 paymentApp (rakuten/d-pay/paypay/merpay) は defaultBonusRate=0 のため値は変わらず。",
   },
 ];
 

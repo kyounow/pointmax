@@ -3,6 +3,7 @@ import { isRuleActiveAt } from "./ruleActiveAt";
 
 export type ResolvedRate =
   | { rate: number; currencyId: string; source: "default" }
+  | { rate: number; currencyId: string; source: "charge" }
   | {
       rate: number;
       currencyId: string;

@@ -143,7 +143,7 @@ describe("chargeBased PaymentApp", () => {
     defaultBonusCurrencyId: "d-pt",
   };
 
-  it("chargeBased=true なら店舗ルール/カテゴリルールは無視され、カードのdefaultRate のみ適用", () => {
+  it("chargeBased=true なら店舗ルール/カテゴリルールも card.defaultRate も無視され cardEarned=0", () => {
     // ツルハ × JAL特約店カテゴリで JAL Suica 2% のルール
     const jalSuica: Card = {
       id: "jal-suica",
@@ -176,7 +176,8 @@ describe("chargeBased PaymentApp", () => {
     );
     expect(directResults[0].cardEarnedAmount).toBeCloseTo(200, 6);
 
-    // d払い (chargeBased): カテゴリルール無視 → 1%
+    // d払い (chargeBased=true): カテゴリルールも defaultRate も無視 → cardEarned=0
+    // チャージ時はカード自身の還元ゼロ、bonus のみ (d払い defaultBonusRate=0.5%)
     const dpayResults = evaluatePaymentApps(
       jalSuica,
       "tsuruha",
@@ -187,7 +188,7 @@ describe("chargeBased PaymentApp", () => {
       [tsuruhaStore],
       [],
     );
-    expect(dpayResults[0].cardEarnedAmount).toBeCloseTo(100, 6);
+    expect(dpayResults[0].cardEarnedAmount).toBe(0);
   });
 
   it("cardSpecificBonusRates: 紐付けカードが一致したら default を上書き", () => {
@@ -265,7 +266,7 @@ describe("chargeBased PaymentApp", () => {
     expect(result[0].appBonusEarnedAmount).toBeCloseTo(200, 6);
   });
 
-  it("chargeBased=true でも アプリbonus自体は加算される", () => {
+  it("chargeBased=true ではカード還元は乗らず、アプリ bonus (defaultBonusRate) のみ加算", () => {
     const result = evaluatePaymentApps(
       rakutenCard,
       "general",
@@ -278,11 +279,66 @@ describe("chargeBased PaymentApp", () => {
         { id: "rp-to-d", fromCurrencyId: "rakuten-pt", toCurrencyId: "d-pt", rate: 1 },
       ],
     );
-    // クレカ: 楽天カード 1% で 100 楽天pt → d-pt 100
-    expect(result[0].cardFinalAmount).toBeCloseTo(100, 6);
-    // d払い bonus: 0.5% で 50 d-pt (直接target)
+    // 新モデル: chargeBased=true ではカード還元 (defaultRate) は乗らない
+    // → cardFinal = 0
+    expect(result[0].cardFinalAmount).toBe(0);
+    // d払い bonus: 0.5% で 50 d-pt (defaultBonusRate)
     expect(result[0].appBonusFinalAmount).toBeCloseTo(50, 6);
-    expect(result[0].totalFinalAmount).toBeCloseTo(150, 6);
+    expect(result[0].totalFinalAmount).toBeCloseTo(50, 6);
+  });
+});
+
+describe("累積モデル: baseBonus + cardSpecific.rate", () => {
+  it("累積モデル: baseBonus + cardSpecific.rate が加算される (上乗せ式)", () => {
+    // au PAY style: defaultBonusRate=0.5%、au-pay-card のみ +1% 上乗せ
+    const auPay: PaymentApp = {
+      id: "pa-au-pay-mock",
+      name: "au PAY (mock)",
+      chargeBased: true,
+      defaultBonusRate: 0.005,
+      defaultBonusCurrencyId: "ponta-pt",
+      cardSpecificBonusRates: [{ cardId: "au-pay-card-mock", rate: 0.01 }],
+    };
+    const auCard: Card = {
+      id: "au-pay-card-mock",
+      name: "au PAYカード",
+      defaultRate: 0.01,
+      defaultCurrencyId: "ponta-pt",
+    };
+    const otherCard: Card = {
+      id: "other",
+      name: "他のカード",
+      defaultRate: 0.005,
+      defaultCurrencyId: "ponta-pt",
+    };
+
+    // au-pay-card × au PAY: bonus = 0.005 + 0.01 = 1.5%
+    const withAu = evaluatePaymentApps(
+      auCard,
+      "general",
+      10000,
+      "ponta-pt",
+      [auPay],
+      [],
+      stores,
+      [],
+    );
+    expect(withAu[0].cardFinalAmount).toBe(0); // chargeBased でカード還元なし
+    expect(withAu[0].appBonusEarnedAmount).toBeCloseTo(150, 6); // 1.5%
+
+    // 他カード × au PAY: bonus = 0.005 + 0 = 0.5%
+    const withOther = evaluatePaymentApps(
+      otherCard,
+      "general",
+      10000,
+      "ponta-pt",
+      [auPay],
+      [],
+      stores,
+      [],
+    );
+    expect(withOther[0].cardFinalAmount).toBe(0);
+    expect(withOther[0].appBonusEarnedAmount).toBeCloseTo(50, 6); // 0.5%
   });
 });
 

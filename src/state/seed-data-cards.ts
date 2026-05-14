@@ -159,6 +159,28 @@ export const SEED_CARDS: Card[] = [
     defaultCurrencyId: "v-pt",
     enabled: false,
   },
+
+  // === v24: 累積モデル対応 — au PAY / ファミペイ の cardSpecific 補完用 ===
+  {
+    // au PAY カード、1000円=10 Ponta = 1.0% (利用時)
+    // au PAY 残高にチャージで pa-au-pay の cardSpecific に上乗せ +1.0% 含む
+    id: "au-pay-card",
+    name: "au PAYカード",
+    grade: "一般",
+    defaultRate: 0.01,
+    defaultCurrencyId: "ponta-pt",
+    enabled: false,
+  },
+  {
+    // ファミマカード (2025/9 新)、ファミペイチャージで +0.5% 上乗せ
+    // ファミマ店舗で 5% 割引 (PointMax モデル外、notes に記載のみ)
+    id: "famima-card",
+    name: "ファミマカード",
+    grade: "通常",
+    defaultRate: 0.005,
+    defaultCurrencyId: "v-pt",
+    enabled: false,
+  },
 ];
 
 // 店頭提示するポイントカード。
@@ -258,7 +280,7 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
         cardId: "rakuten-card",
         rate: 0.015,
         notes:
-          "楽天カードから楽天キャッシュへチャージ 0.5% + 楽天Pay 利用 1.0% = 1.5%",
+          "楽天Pay 利用 (defaultBonusRate=0) + 楽天カードチャージ +1.5% 上乗せ = 合計 1.5%",
       },
     ],
     notes:
@@ -279,7 +301,7 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       {
         cardId: "dcard",
         rate: 0.01,
-        notes: "d払い基本還元率 0.5% + dカード支払い特典 0.5% = 1.0%",
+        notes: "d払い利用 (defaultBonusRate=0) + dカード支払い特典 +1.0% 上乗せ = 合計 1.0%",
       },
     ],
     notes:
@@ -299,14 +321,14 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       {
         cardId: "paypay-card",
         rate: 0.005,
-        notes: "PayPayカードからチャージ + PayPay 利用で 0.5%",
+        notes: "PayPay 利用 (defaultBonusRate=0) + PayPayカード経由 +0.5% 上乗せ = 合計 0.5%",
       },
     ],
     notes:
       "PayPayカード連携で 0.5%、他社カードからのチャージは 2025/8 以降 還元対象外",
   },
   // au PAY (チャージ式)、200円=1 Ponta = 0.5% (コード支払い基本還元)
-  // au PAY カード連携で +1% (合算 1.5%) だが、au PAY カードは seed 未登録のため cardSpecific 省略
+  // au PAY カード連携で +1% 上乗せ (合計 1.5%) — v24 で au-pay-card 追加により cardSpecific 補完
   {
     id: "pa-au-pay",
     name: "au PAY",
@@ -316,14 +338,23 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
     defaultBonusCurrencyId: "ponta-pt",
     chargeBased: true,
     paymentMode: "charge",
+    cardSpecificBonusRates: [
+      {
+        cardId: "au-pay-card",
+        rate: 0.01, // 上乗せ 1% (チャージ +1% Ponta)
+        currencyId: "ponta-pt",
+        notes: "au PAY カードからチャージで +1% Ponta (au PAY 利用 0.5% に上乗せ = 合計 1.5%)",
+      },
+    ],
     notes:
-      "au PAY コード支払いで 0.5% Ponta 還元。au PAY カードからチャージ連動で +1% (合計 1.5%) だが、" +
-      "現状 au PAY カードは seed 未登録のため cardSpecificBonusRates は将来追加。",
+      "au PAY コード支払いで 0.5% Ponta 還元 (defaultBonusRate)。" +
+      "au PAY カード経由チャージで +1.0% 上乗せ (合計 1.5%)。" +
+      "au PAY ゴールド (年会費 11,000円) なら更に上振れ可能だが seed 未登録。",
   },
 
   // ファミペイ (チャージ式)、200円=1 FamiPayボーナス = 0.5%
   // FamiPay ボーナス専用通貨は未登録、edy (現金相当) で代用
-  // ファミマカード連携で 1.0% (チャージ 0.5% + 利用 0.5%) だが、ファミマカードも seed 未登録
+  // ファミマカード連携で +0.5% 上乗せ (合計 1.0%) — v24 で famima-card 追加により cardSpecific 補完
   {
     id: "pa-famipay",
     name: "ファミペイ",
@@ -333,9 +364,18 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
     defaultBonusCurrencyId: "edy",
     chargeBased: true,
     paymentMode: "charge",
+    cardSpecificBonusRates: [
+      {
+        cardId: "famima-card",
+        rate: 0.005, // 上乗せ 0.5% (ファミマカードチャージ 0.5%)
+        currencyId: "edy",
+        notes: "ファミマカード経由チャージで +0.5% ファミマポイント (ファミペイ利用 0.5% に上乗せ = 合計 1.0%)",
+      },
+    ],
     notes:
-      "ファミペイ支払いで 0.5% FamiPay ボーナス還元。ファミマカード連携で 1.0%、" +
-      "2025/9 新ファミマカードでは最大 5% 割引 (連携カード未登録のため未表現)。" +
+      "ファミペイ支払いで 0.5% FamiPay ボーナス還元 (defaultBonusRate)。" +
+      "ファミマカード経由チャージで +0.5% 上乗せ (合計 1.0%)。" +
+      "ファミマ店舗での 5% 割引はキャッシュバック式で PointMax の rate モデル外。" +
       "FamiPay ボーナス専用通貨は未登録、現状 edy (現金相当) で代用。",
   },
 
@@ -356,8 +396,7 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
         rate: 0.01,
         currencyId: "mercari-pt",
         notes:
-          "メルペイのあと払い設定で メルカード 1% 還元 (メルカリ外通常時)。" +
-          "メルカリ内利用は別途 rule-mercard-mercari で 4% / 毎月8日 8%。",
+          "メルペイ単独 0% + メルカード経由 +1.0% 上乗せ = 合計 1.0% (メルカリ内 4% や毎月8日 8% は別途 storeRule で表現)",
       },
     ],
     notes:
