@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 26;
+export const SEED_VERSION = 27;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -228,6 +228,15 @@ export const SEED_CHANGELOG: {
       "デフォルト OFF: pa-au-pay / pa-famipay / pa-merpay (特定ユーザ向け、auユーザ/ファミマユーザ/メルカリユーザ)。" +
       "PaymentAppsScreen に使う列 + 公式バッジ + master 削除ガード。" +
       "v17/18 で実装した Card.enabled パターンを PaymentApp に展開。",
+  },
+  {
+    version: 27,
+    date: "2026-05-14",
+    summary:
+      "PR #3 rakuten-point-partners から autoApplicable 194 件をフィルタ取り込み。" +
+      "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
+      "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
+      "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
   },
 ];
 
