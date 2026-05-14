@@ -359,6 +359,7 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "au PAY コード支払いで 0.5% Ponta 還元 (defaultBonusRate)。" +
       "au PAY カード経由チャージで +1.0% 上乗せ (合計 1.5%)。" +
       "au PAY ゴールド (年会費 11,000円) なら更に上振れ可能だが seed 未登録。",
+    enabled: false,
   },
 
   // ファミペイ (チャージ式)、200円=1 FamiPayボーナス = 0.5%
@@ -386,6 +387,7 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "ファミマカード経由チャージで +0.5% 上乗せ (合計 1.0%)。" +
       "ファミマ店舗での 5% 割引はキャッシュバック式で PointMax の rate モデル外。" +
       "FamiPay ボーナス専用通貨は未登録、現状 edy (現金相当) で代用。",
+    enabled: false,
   },
 
   // メルペイ (直接連携)、単体還元なし (0%)
@@ -411,5 +413,6 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
     notes:
       "メルペイ単体は還元なし (0%)。メルカード連携時のみ 1% 還元。" +
       "メルカリ売上金は自動的にメルペイ残高にチャージされる。",
+    enabled: false,
   },
 ];

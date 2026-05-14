@@ -124,8 +124,8 @@ export function evaluatePaymentApps(
   availableCardIds?: ReadonlySet<string>,
   now: Date = new Date(),
 ): PaymentEvalResult[] {
-  const compatible = paymentApps.filter((pa) =>
-    isPaymentAppCompatible(card, pa),
+  const compatible = paymentApps.filter(
+    (pa) => pa.enabled !== false && isPaymentAppCompatible(card, pa),
   );
   return compatible.map((pa) => {
     const resolved: ResolvedRate = pa.chargeBased

@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 25;
+export const SEED_VERSION = 26;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -219,6 +219,16 @@ export const SEED_CHANGELOG: {
       "実利的影響: 「Pay アプリ × 紐付け以外のカード」シナリオが現実通り 0.5%〜1% 評価になり、" +
       "「自社カード以外を持つ人」にも適切な還元計算が出る。",
   },
+  {
+    version: 26,
+    date: "2026-05-14",
+    summary:
+      "PaymentApp.enabled?: boolean を追加。Card と同じく「使う」OFF トグルで Calculator から除外可能に。" +
+      "MASTER_PAYMENT_APP_IDS / isMasterPaymentApp ヘルパを追加 (Card master pool の PaymentApp 版)。" +
+      "デフォルト OFF: pa-au-pay / pa-famipay / pa-merpay (特定ユーザ向け、auユーザ/ファミマユーザ/メルカリユーザ)。" +
+      "PaymentAppsScreen に使う列 + 公式バッジ + master 削除ガード。" +
+      "v17/18 で実装した Card.enabled パターンを PaymentApp に展開。",
+  },
 ];
 
 // マスター由来カード (seed-data-cards.ts + auto-sync) の id 集合。
@@ -232,6 +242,19 @@ export const MASTER_CARD_IDS = new Set<string>([
 ]);
 
 export const isMasterCard = (id: string): boolean => MASTER_CARD_IDS.has(id);
+
+// マスター由来 PaymentApp (SEED_PAYMENT_APPS + ADDED_PAYMENT_APPS) の id 集合。
+// この集合に含まれる id を持つ PaymentApp は:
+//   - removePaymentApp で削除されない (次回 mergeFromSeed で復活するだけなので)
+//   - PaymentAppsScreen でマスターバッジ表示 + 削除ボタン非表示
+// ユーザが addPaymentApp で追加した PaymentApp (UUID id) は集合に含まれない → 削除可能。
+export const MASTER_PAYMENT_APP_IDS = new Set<string>([
+  ...SEED_PAYMENT_APPS.map((p) => p.id),
+  ...ADDED_PAYMENT_APPS.map((p) => p.id),
+]);
+
+export const isMasterPaymentApp = (id: string): boolean =>
+  MASTER_PAYMENT_APP_IDS.has(id);
 
 // seed() の戻り値の型。状態保存時の SeedShape と一致する。
 type SeedReturn = {

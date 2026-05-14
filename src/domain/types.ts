@@ -170,5 +170,9 @@ export type PaymentApp = {
     validFrom?: string;
     validTo?: string;
   }[];
+  // enabled: undefined または true = 有効 (デフォルト。既存 localStorage との後方互換)
+  //          false = 無効 (Calculator の順位付けから除外される)
+  // 「使ってない決済アプリを表示から消す」用途。Card.enabled と同じセマンティクス。
+  enabled?: boolean;
   notes?: string;
 };

@@ -10,7 +10,7 @@ import type {
   Store,
   StoreRule,
 } from "../domain/types";
-import { seed, SEED_VERSION, DEFAULT_SYNC_URL, isMasterCard } from "./seed";
+import { seed, SEED_VERSION, DEFAULT_SYNC_URL, isMasterCard, isMasterPaymentApp } from "./seed";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
 import {
   MIGRATIONS,
@@ -245,14 +245,18 @@ export const useStore = create<State & Actions>()(
             p.id === id ? { ...p, ...patch } : p,
           ),
         })),
-      removePaymentApp: (id) =>
+      removePaymentApp: (id) => {
+        // マスター由来 PaymentApp は削除不可 (mergeFromSeed で復活するため意味がない)。
+        // UI 側で削除ボタンも隠すが、ここでも防御する。
+        if (isMasterPaymentApp(id)) return;
         set((s) => ({
           paymentApps: s.paymentApps.filter((p) => p.id !== id),
           // 削除した paymentApp を参照しているルールから paymentAppId をクリア
           rules: s.rules.map((r) =>
             r.paymentAppId === id ? { ...r, paymentAppId: undefined } : r,
           ),
-        })),
+        }));
+      },
 
       loadSeed: () => set(() => ({ ...seed(), lastSeedVersion: SEED_VERSION })),
       clearAll: () => set(() => empty),

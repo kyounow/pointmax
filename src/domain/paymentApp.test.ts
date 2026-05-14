@@ -448,6 +448,46 @@ describe("cardSpecificBonusRates validFrom/validTo filtering", () => {
   });
 });
 
+describe("PaymentApp.enabled フィルタリング", () => {
+  it("enabled=false の PaymentApp は evaluatePaymentApps の結果から除外される", () => {
+    const enabledPa: PaymentApp = {
+      id: "pa-on",
+      name: "On",
+    };
+    const disabledPa: PaymentApp = {
+      id: "pa-off",
+      name: "Off",
+      enabled: false,
+    };
+    const results = evaluatePaymentApps(
+      rakutenCard,
+      "general",
+      10000,
+      "rakuten-pt",
+      [enabledPa, disabledPa],
+      [],
+      stores,
+      [],
+    );
+    expect(results.map((r) => r.paymentApp.id)).toEqual(["pa-on"]);
+  });
+
+  it("enabled undefined は有効扱い (後方互換)", () => {
+    const pa: PaymentApp = { id: "pa-undef", name: "Undef" };
+    const results = evaluatePaymentApps(
+      rakutenCard,
+      "general",
+      10000,
+      "rakuten-pt",
+      [pa],
+      [],
+      stores,
+      [],
+    );
+    expect(results).toHaveLength(1);
+  });
+});
+
 describe("bestPaymentApp", () => {
   it("複数候補から totalFinalAmount が最大のものを返す", () => {
     const rules: StoreRule[] = [

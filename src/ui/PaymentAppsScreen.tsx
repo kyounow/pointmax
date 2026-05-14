@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
+import { isMasterPaymentApp } from "../state/seed";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { PaymentApp } from "../domain/types";
 import { cardLabel } from "../domain/cardLabel";
@@ -43,7 +44,15 @@ export function PaymentAppsScreen() {
       {
         key: "name",
         label: "名前",
-        view: (p) => p.name,
+        view: (p) =>
+          isMasterPaymentApp(p.id) ? (
+            <span className="card-name-with-badge">
+              <span className="card-master-badge" title="公式マスター由来">公式</span>
+              {p.name}
+            </span>
+          ) : (
+            p.name
+          ),
         edit: (p, set) => (
           <input
             value={p.name}
@@ -332,6 +341,46 @@ export function PaymentAppsScreen() {
           />
         ),
       },
+      {
+        key: "enabled",
+        label: "使う",
+        width: 90,
+        view: (p) => {
+          const on = p.enabled !== false;
+          return (
+            <label
+              className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                type="checkbox"
+                checked={on}
+                onChange={(e) =>
+                  updatePaymentApp(p.id, {
+                    enabled: e.target.checked ? undefined : false,
+                  })
+                }
+              />
+              <span>{on ? "使う" : "OFF"}</span>
+            </label>
+          );
+        },
+        edit: (p, set) => {
+          const on = p.enabled !== false;
+          return (
+            <label className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}>
+              <input
+                type="checkbox"
+                checked={on}
+                onChange={(e) =>
+                  set({ enabled: e.target.checked ? undefined : false })
+                }
+              />
+              <span>{on ? "使う" : "OFF"}</span>
+            </label>
+          );
+        },
+      },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [cards, currencies],
@@ -412,6 +461,7 @@ export function PaymentAppsScreen() {
         columns={columns}
         onSave={(id, patch) => updatePaymentApp(id, patch)}
         onDelete={removePaymentApp}
+        canDelete={(p) => !isMasterPaymentApp(p.id)}
       />
     </section>
   );
