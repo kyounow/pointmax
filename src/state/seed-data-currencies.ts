@@ -107,6 +107,13 @@ export const SEED_CURRENCIES: Currency[] = [
 
   // === クレカ・ホテル系プログラム (現在保有カードでは貯まらないが交換ハブとして実在) ===
   {
+    id: "j-point",
+    name: "J-POINT",
+    kind: "point",
+    iconChar: "J",
+    iconColor: "#003a80",  // JCB 公式青
+  },
+  {
     id: "epos",
     name: "エポスポイント",
     kind: "point",

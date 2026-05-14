@@ -385,6 +385,24 @@ export const SEED_STORE_RULES: StoreRule[] = [
     currencyId: "jal-mile",
     notes: "JAL CARD特約店 100円=2マイル (ファミマは特約店個別ルール)",
   },
+  // JALカード (普通) も同じく特約店 2% / ファミマ 2% (ショッピングマイル・プレミアム加入時)。
+  // Suica チャージ / えきねっと は jal-suica 特有 (ビューカード機能込み) なので複製しない。
+  {
+    id: "rule-jal-card-tokuyaku",
+    cardId: "jal-card",
+    category: "JAL特約店",
+    rate: 0.02,
+    currencyId: "jal-mile",
+    notes: "JAL CARD特約店 100円=2マイル (ショッピングマイル・プレミアム加入時)",
+  },
+  {
+    id: "rule-jal-card-familymart",
+    cardId: "jal-card",
+    storeId: "conv-familymart",
+    rate: 0.02,
+    currencyId: "jal-mile",
+    notes: "JAL CARD特約店 100円=2マイル (ファミマは特約店個別ルール)",
+  },
   // === 期間限定キャンペーン ===
   // d払い × dカード × ビックカメラ +5% (2026年5月のキャンペーン)
   // 詳細: NTTドコモ公式 https://service.smt.docomo.ne.jp/keitai_payment/campaign/dpay_biccamera_260507_7487/

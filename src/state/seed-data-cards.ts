@@ -62,6 +62,66 @@ export const SEED_CARDS: Card[] = [
     defaultCurrencyId: "paypay",
     enabled: false,
   },
+
+  // === v18: 発行枚数上位カードを master pool に追加 ===
+  // 既存 4 枚 (jal-suica/rakuten-card/saison-amex/smbc-v) + 参照 2 枚 (dcard/paypay-card) に
+  // 加えて、日本の発行枚数上位カードを enabled: false で導入。
+  // ユーザは CardsScreen の「使う」トグルで個別に有効化する。
+  {
+    // JAL カード普通 (ショッピングマイル・プレミアム加入前提で 100円=1マイル = 1.0%)
+    // JALカードSuica と違って Suica チャージ +1.5%/えきねっと +5%/+8% の優遇は受けられない
+    // (それらはビューカード機能込みの jal-suica 特有)
+    // 特約店 2% は同じ
+    id: "jal-card",
+    name: "JALカード",
+    grade: "普通 (ショッピングマイル・プレミアム加入前提)",
+    defaultRate: 0.01,
+    defaultCurrencyId: "jal-mile",
+    enabled: false,
+  },
+  {
+    // イオンカード (一般)、200円=1WAON POINT = 0.5%
+    // イオン店舗での 5% off (お客様感謝デー) は割引であり rate ではないので扱わない
+    id: "aeon-card",
+    name: "イオンカード",
+    grade: "一般",
+    defaultRate: 0.005,
+    defaultCurrencyId: "waon-pt",
+    enabled: false,
+  },
+  {
+    // JCB CARD W (39 歳以下限定、Web 申込限定、2倍ポイント特典)
+    // 200円=2 J-POINT = 1.0% (基本還元、J-POINT 1pt=1円相当)
+    // 2026年1月の Oki Doki ポイント → J-POINT リニューアル後の還元体系
+    id: "jcb-w",
+    name: "JCB CARD W",
+    grade: "通常 (39歳以下限定)",
+    defaultRate: 0.01,
+    defaultCurrencyId: "j-point",
+    enabled: false,
+  },
+  {
+    // エポスカード (年会費永年無料)、200円=1エポスポイント = 0.5%
+    // 丸井での 10% off 等の優遇は割引なので rate 計算では扱わない
+    id: "epos-card",
+    name: "エポスカード",
+    grade: "一般",
+    defaultRate: 0.005,
+    defaultCurrencyId: "epos",
+    enabled: false,
+  },
+  {
+    // ANA VISA カード (一般)、通常 200円=1 Vポイント = 0.5%
+    // 別途 ANA マイル変換可能: 10 マイルコース (年会費 6,600円) で 1pt=10マイル、
+    // 5 マイルコース (無料) で 1pt=5マイル
+    // defaultCurrencyId は v-pt にしておき、マイル換算は edge v-to-ana で行う
+    id: "ana-visa",
+    name: "ANA VISAカード",
+    grade: "一般",
+    defaultRate: 0.005,
+    defaultCurrencyId: "v-pt",
+    enabled: false,
+  },
 ];
 
 // 店頭提示するポイントカード。

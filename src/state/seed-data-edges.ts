@@ -305,4 +305,29 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "電子マネーnanacoへのチャージ 1pt=1円分 (Edyと同等の現金相当として登録)",
   },
+
+  // ============ J-POINT (旧 Oki Doki、2026/1 リニューアル後) ============
+  // JCB CARD W や ANA JCB ワイド等の JCB プロパー系で貯まる
+  // 公式 FAQ: https://j-faq.jcb.co.jp/
+  {
+    id: "j-point-to-jal",
+    fromCurrencyId: "j-point",
+    toCurrencyId: "jal-mile",
+    rate: 3,
+    notes: "1 J-POINT → 3 JAL マイル (500pt 単位)",
+  },
+  {
+    id: "j-point-to-ana",
+    fromCurrencyId: "j-point",
+    toCurrencyId: "ana-mile",
+    rate: 3,
+    notes: "1 J-POINT → 3 ANA マイル (500pt 単位、JCB プロパー)",
+  },
+  {
+    id: "j-point-to-edy",
+    fromCurrencyId: "j-point",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes: "MyJCB Pay で 1 J-POINT=1円 (Edy 等の現金相当と同等として登録)",
+  },
 ];

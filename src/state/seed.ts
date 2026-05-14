@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 17;
+export const SEED_VERSION = 18;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -129,6 +129,16 @@ export const SEED_CHANGELOG: {
       "(c) Calculator に「今日 YYYY/MM/DD 時点の還元率」インジケーター追加で日付依存を明示。" +
       "(d) RulesScreen / PaymentAppsScreen に期間/recurring 列を追加し、" +
       "アクティブ/非アクティブを視覚化。",
+  },
+  {
+    version: 18,
+    date: "2026-05-14",
+    summary:
+      "発行枚数上位カバー: master card pool に 5 枚追加 (全て enabled: false、ユーザは「使う」トグルで有効化)。" +
+      "jal-card (普通)、aeon-card、jcb-w、epos-card、ana-visa。" +
+      "JCB CARD W 用に新通貨 j-point (J-POINT、2026/1 Oki Doki リニューアル後) を追加。" +
+      "J-POINT → JAL/ANA マイル / MyJCB Pay の交換 edges 3 件、JAL カード普通版用の特約店/ファミマ rules 2 件も追加。" +
+      "これで日本の発行枚数上位 9 ブランド (楽天/三井住友/JAL/AEON/JCB/d/PayPay/エポス/ANA) ほぼカバー。",
   },
 ];
 
