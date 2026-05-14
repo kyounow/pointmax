@@ -14,20 +14,31 @@ function classifyCampaign(rule: {
   validTo?: string;
 }): CampaignStatus {
   const now = new Date();
+
+  // future: validFrom が未来
   if (rule.validFrom) {
     const from = new Date(rule.validFrom);
     if (!Number.isNaN(from.getTime()) && now.getTime() < from.getTime()) {
       return "future";
     }
   }
-  if (!isRuleActiveAt(rule, now)) {
-    // validFrom 未来 (上で拾い済み) でなければ validTo 過去
-    return "expired";
+
+  // expired: validTo が過去 (期間が明示的に終わってる場合のみ)
+  if (rule.validTo) {
+    const to = new Date(rule.validTo);
+    to.setHours(23, 59, 59, 999);
+    if (!Number.isNaN(to.getTime()) && now.getTime() > to.getTime()) {
+      return "expired";
+    }
   }
-  // validFrom のみ (validTo なし) かつ現在アクティブ → 長期公式プログラム
+
+  // ongoing: validFrom only (validTo なし、期限未告知の長期プログラム)
+  // recurringDays が今日 hit しなくても、期間自体は終わってないので ongoing 扱い
   if (rule.validFrom && !rule.validTo) {
     return "ongoing";
   }
+
+  // active: 両方 set + 期間範囲内
   return "active";
 }
 

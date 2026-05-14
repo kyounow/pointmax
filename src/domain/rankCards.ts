@@ -188,8 +188,27 @@ export function rankCards(input: RankInput): CardRanking[] {
   });
 
   ranked.sort((a, b) => {
+    // 0次: reachable を優先 (既存)
     if (a.reachable !== b.reachable) return a.reachable ? -1 : 1;
-    return b.totalFinalAmount - a.totalFinalAmount;
+
+    // 1次: totalFinalAmount 降順
+    if (a.totalFinalAmount !== b.totalFinalAmount) {
+      return b.totalFinalAmount - a.totalFinalAmount;
+    }
+
+    // 2次: 支払単独 (card + appBonus、loyalty 除く) 多い順
+    // 「支払単独で稼げる量」を優先 (loyalty に依存しない方がシンプル)
+    const aPay = a.finalAmount + a.appBonusFinalAmount;
+    const bPay = b.finalAmount + b.appBonusFinalAmount;
+    if (aPay !== bPay) return bPay - aPay;
+
+    // 3次: 構成要素少ない順 (シンプル優先)
+    // 計算に絡む要素が少ない方を上位に
+    const partCount = (r: CardRanking) =>
+      (r.finalAmount > 0 ? 1 : 0) +
+      (r.appBonusFinalAmount > 0 ? 1 : 0) +
+      r.loyalties.filter((l) => l.reachable).length;
+    return partCount(a) - partCount(b);
   });
 
   return ranked;

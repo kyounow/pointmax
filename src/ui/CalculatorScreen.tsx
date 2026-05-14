@@ -122,6 +122,22 @@ export function CalculatorScreen() {
 
   const loyalties = result && result.length > 0 ? result[0].loyalties : [];
 
+  // 同率 rank 表示: totalFinalAmount 同値カードに同じ rank を割り当てる (#1, #1, #3 ...)
+  const displayRankMap = useMemo(() => {
+    if (!result) return new Map<string, number>();
+    const map = new Map<string, number>();
+    let prevTotal = Number.POSITIVE_INFINITY;
+    let prevRank = 0;
+    result.forEach((r, i) => {
+      if (r.reachable && r.totalFinalAmount !== prevTotal) {
+        prevRank = i + 1;
+        prevTotal = r.totalFinalAmount;
+      }
+      map.set(r.card.id, r.reachable ? prevRank : -1);
+    });
+    return map;
+  }, [result]);
+
   // 入力が変わるたびに、最上位の reachable カードだけ展開状態にリセット
   useEffect(() => {
     if (!result) {
@@ -366,7 +382,7 @@ export function CalculatorScreen() {
             return (
               <article
                 key={r.card.id}
-                className={`result-card ${r.reachable ? "" : "unreachable"} ${i === 0 && r.reachable ? "best" : ""} ${expanded ? "expanded" : "collapsed"}`}
+                className={`result-card ${r.reachable ? "" : "unreachable"} ${displayRankMap.get(r.card.id) === 1 && r.reachable ? "best" : ""} ${expanded ? "expanded" : "collapsed"}`}
               >
                 <header
                   className="result-head clickable"
@@ -384,7 +400,7 @@ export function CalculatorScreen() {
                     {expanded ? "▾" : "▸"}
                   </span>
                   <span className="rank">
-                    {r.reachable ? `#${i + 1}` : "対象外"}
+                    {r.reachable ? `#${displayRankMap.get(r.card.id) ?? i + 1}` : "対象外"}
                   </span>
                   {(() => {
                     // paymentMode を優先、なければ chargeBased fallback

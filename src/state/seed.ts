@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 21;
+export const SEED_VERSION = 22;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -172,6 +172,15 @@ export const SEED_CHANGELOG: {
       "storeRules 3 (ビューカード × Suica チャージ 1.5% / メルカード × メルカリ 4% / " +
       "メルカード × メルカリ 毎月8日 8% = recurringDays 2 つ目の使用例)、edge 1。" +
       "Olive コンビニ・飲食 8% rules は smbc-v 21 rules 複製のため将来別 commit。",
+  },
+  {
+    version: 22,
+    date: "2026-05-14",
+    summary:
+      "バグ修正 + UI 改善: " +
+      "(1) ADDED_LOYALTY_RULES (Ponta) が参照していた 5 件の dangling store (jalannet / hotpepper-beauty / hotpepper-gourmet / jalan-golf / jal-rentacar) を seed に手書き追加して日本語 name + 正しい category を提供。apollo-station の name も「apollostation (アポロステーション)」に日本語化。" +
+      "(2) CampaignsScreen の classifyCampaign が recurringDays 外を expired 誤判定するバグを修正 (validTo 過去のみが expired、recurringDays 外は ongoing 維持)。" +
+      "(3) Calculator の順位ソートを 3 段 tie-break に拡張: 一次 totalFinalAmount 降順 / 二次 支払単独 (card+appBonus) 多い順 / 三次 構成要素少ない順。同 totalFinalAmount は同 rank 表示 (#1, #1, #3 ...) で表示も整合。",
   },
 ];
 

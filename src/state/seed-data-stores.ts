@@ -101,6 +101,17 @@ export const SEED_STORES: Store[] = [
   { id: "atre", name: "アトレ", category: "駅ナカ" },
   { id: "lumine", name: "ルミネ", category: "駅ナカ" },
   { id: "newoman", name: "ニュウマン", category: "駅ナカ" },
+  // dangling loyaltyRule (ponta-card) が指す Recruit/出光系の store。
+  // 手書きで追加して日本語 name + 正しい category を提供する。
+  { id: "jalannet", name: "じゃらん net", category: "旅行代理店" },
+  { id: "hotpepper-beauty", name: "ホットペッパービューティー", category: "美容" },
+  { id: "hotpepper-gourmet", name: "ホットペッパーグルメ", category: "飲食" },
+  { id: "jalan-golf", name: "じゃらんゴルフ", category: "旅行代理店" },
+  { id: "jal-rentacar", name: "JAL レンタカー (Tabitto)", category: "レンタカー" },
+
+  // 既存 ADDED_STORES の apollo-station (name="apollostation") を日本語に上書き
+  { id: "apollo-station", name: "apollostation (アポロステーション)", category: "ガソリンスタンド" },
+
   // 汎用 (デフォルト選択用。基本還元率を確認したい時に使う)
   { id: "general", name: "一般店舗 (規定還元)", category: "汎用" },
 ];
