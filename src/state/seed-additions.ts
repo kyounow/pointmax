@@ -11,7 +11,6 @@ import type {
   PaymentApp,
   Store,
   StoreProgramMembership,
-  StoreRule,
 } from "../domain/types";
 
 export const ADDED_STORES: Store[] = [
@@ -198,8 +197,6 @@ export const ADDED_STORES: Store[] = [
   { id: "suit-square", name: "SUIT SQUARE", category: "ファッション" },
   { id: "ucarpack", name: "ユーカーパック", category: "車・バイク" },
 ];
-
-export const ADDED_RULES: StoreRule[] = [];
 
 // PR 3 (2026-05-14): 全 62 件を SEED_STORE_PROGRAM_MEMBERSHIPS に吸収済み。
 //   57 件 (rakuten-pointcard 0.5%) → prog-rakuten-pointcard-0.5pc memberships

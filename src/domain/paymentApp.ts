@@ -14,7 +14,6 @@ import type {
   PaymentApp,
   Store,
   StoreProgramMembership,
-  StoreRule,
 } from "./types";
 import type { ResolvedRate } from "./resolveRate";
 import { bestPath } from "./bestPath";
@@ -56,7 +55,7 @@ export function evaluatePaymentApps(
   amount: number,
   targetCurrencyId: string,
   paymentApps: PaymentApp[],
-  _rules: StoreRule[], // kept for backward compat (unused, programs handle this)
+  _rules: unknown[], // kept for backward compat (unused, programs handle this)
   stores: Store[],
   edges: ConversionEdge[],
   availableCardIds?: ReadonlySet<string>,
@@ -211,7 +210,7 @@ export function bestPaymentApp(
   amount: number,
   targetCurrencyId: string,
   paymentApps: PaymentApp[],
-  rules: StoreRule[],
+  rules: unknown[],
   stores: Store[],
   edges: ConversionEdge[],
   availableCardIds?: ReadonlySet<string>,

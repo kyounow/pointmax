@@ -8,14 +8,12 @@ import type {
   PointCard,
   Store,
   StoreProgramMembership,
-  StoreRule,
 } from "./types";
 
 export type SeedShape = {
   cards: Card[];
   currencies: Currency[];
   stores: Store[];
-  rules: StoreRule[];
   edges: ConversionEdge[];
   pointCards: PointCard[];
   loyaltyRules: LoyaltyRule[];
@@ -58,7 +56,6 @@ export function mergeSeed(current: SeedShape, seed: SeedShape): MergeResult {
   const cards = mergeArray(current.cards, seed.cards);
   const currencies = mergeArray(current.currencies, seed.currencies);
   const stores = mergeArray(current.stores, seed.stores);
-  const rules = mergeArray(current.rules, seed.rules);
   const edges = mergeArray(current.edges, seed.edges);
   const pointCards = mergeArray(current.pointCards, seed.pointCards);
   const loyaltyRules = mergeArray(current.loyaltyRules, seed.loyaltyRules);
@@ -73,7 +70,6 @@ export function mergeSeed(current: SeedShape, seed: SeedShape): MergeResult {
     cards: cards.merged,
     currencies: currencies.merged,
     stores: stores.merged,
-    rules: rules.merged,
     edges: edges.merged,
     pointCards: pointCards.merged,
     loyaltyRules: loyaltyRules.merged,
@@ -84,7 +80,6 @@ export function mergeSeed(current: SeedShape, seed: SeedShape): MergeResult {
       cards: cards.added,
       currencies: currencies.added,
       stores: stores.added,
-      rules: rules.added,
       edges: edges.added,
       pointCards: pointCards.added,
       loyaltyRules: loyaltyRules.added,
@@ -100,7 +95,6 @@ export function diffCount(diff: Diff): number {
     diff.cards.length +
     diff.currencies.length +
     diff.stores.length +
-    diff.rules.length +
     diff.edges.length +
     diff.pointCards.length +
     diff.loyaltyRules.length +

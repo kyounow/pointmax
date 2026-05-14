@@ -7,14 +7,12 @@ import type {
   LoyaltyRule,
   PointCard,
   Store,
-  StoreRule,
 } from "./types";
 
 const empty = {
   cards: [] as Card[],
   currencies: [] as Currency[],
   stores: [] as Store[],
-  rules: [] as StoreRule[],
   edges: [] as ConversionEdge[],
   pointCards: [] as PointCard[],
   loyaltyRules: [] as LoyaltyRule[],
@@ -104,7 +102,6 @@ describe("diffCount", () => {
       cards: [card("a", "A")],
       currencies: [cur("c1"), cur("c2")],
       stores: [],
-      rules: [],
       edges: [],
       pointCards: [],
       loyaltyRules: [],
@@ -119,7 +116,6 @@ describe("diffCount", () => {
         cards: [],
         currencies: [],
         stores: [],
-        rules: [],
         edges: [],
         pointCards: [],
         loyaltyRules: [],

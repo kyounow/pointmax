@@ -5,10 +5,8 @@ import {
   dedupeAcrossProposals,
   isFailedExtraction,
   proposeCards,
-  proposeCategoryRules,
   proposeLoyaltyRules,
   proposePaymentApps,
-  proposeStoreRules,
   proposeStores,
 } from "./diff-and-propose";
 import type { ExtractedSource, Proposal } from "./types";
@@ -18,7 +16,6 @@ const emptySeed: SeedShape = {
   cards: [],
   currencies: [],
   stores: [],
-  rules: [],
   edges: [],
   pointCards: [],
   loyaltyRules: [],
@@ -234,130 +231,6 @@ describe("proposeStores", () => {
   });
 });
 
-describe("proposeStoreRules", () => {
-  it("新規ルールは addRecord", () => {
-    const data = baseSource({
-      storeRules: [
-        {
-          cardId: "smbc-v",
-          storeId: "lawson",
-          rate: 0.07,
-          currencyId: "v-pt",
-          evidenceQuote: "明示",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeStoreRules(data, emptySeed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].type).toBe("addRecord");
-  });
-
-  it("既存ルールの rate 変動 (微小) は auto", () => {
-    const seed: SeedShape = {
-      ...emptySeed,
-      rules: [
-        {
-          id: "r1",
-          cardId: "smbc-v",
-          storeId: "lawson",
-          rate: 0.07,
-          currencyId: "v-pt",
-        },
-      ],
-    };
-    const data = baseSource({
-      storeRules: [
-        {
-          cardId: "smbc-v",
-          storeId: "lawson",
-          rate: 0.075, // +0.5pp, ratio 1.07x → 両方OK
-          currencyId: "v-pt",
-          evidenceQuote: "明示",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeStoreRules(data, seed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].type).toBe("updateField");
-    expect(ps[0].reviewReason).toBeUndefined(); // auto
-  });
-
-  it("大幅な rate 変動 (1% → 50%) は要レビュー (pp 超過)", () => {
-    const seed: SeedShape = {
-      ...emptySeed,
-      rules: [
-        { id: "r1", cardId: "c", storeId: "s", rate: 0.01, currencyId: "p" },
-      ],
-    };
-    const data = baseSource({
-      storeRules: [
-        {
-          cardId: "c",
-          storeId: "s",
-          rate: 0.5,
-          currencyId: "p",
-          evidenceQuote: "x",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeStoreRules(data, seed);
-    expect(ps[0].reviewReason).toBe("rateDeltaTooLarge");
-  });
-
-  it("通貨変更 (currencyId) は referenceChange", () => {
-    const seed: SeedShape = {
-      ...emptySeed,
-      rules: [
-        { id: "r1", cardId: "c", storeId: "s", rate: 0.01, currencyId: "old" },
-      ],
-    };
-    const data = baseSource({
-      storeRules: [
-        {
-          cardId: "c",
-          storeId: "s",
-          rate: 0.01,
-          currencyId: "new",
-          evidenceQuote: "x",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeStoreRules(data, seed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].type).toBe("referenceChange");
-    expect(ps[0].reviewReason).toBe("referenceChange");
-  });
-});
-
-describe("proposeCategoryRules", () => {
-  it("新規カテゴリルール", () => {
-    const data = baseSource({
-      categoryRules: [
-        {
-          cardId: "jal-suica",
-          category: "JAL特約店",
-          rate: 0.02,
-          currencyId: "jal-mile",
-          evidenceQuote: "明示",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeCategoryRules(data, emptySeed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].type).toBe("addRecord");
-  });
-});
-
 describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
   it("既存 cardId に defaultRate 変動: auto", () => {
     const seed: SeedShape = {
@@ -465,93 +338,6 @@ describe("rate=0 guard: zeroOrInvalidRate", () => {
     expect(ps).toHaveLength(1);
     expect(ps[0].reviewReason).toBeUndefined();
   });
-
-  it("storeRule rate=0 → reviewReason zeroOrInvalidRate", () => {
-    const data = baseSource({
-      storeRules: [
-        {
-          cardId: "smbc-v",
-          storeId: "some-store",
-          rate: 0,
-          currencyId: "v-pt",
-          evidenceQuote: "加盟店リスト",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeStoreRules(data, emptySeed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
-  });
-});
-
-describe("proposeStoreRules: validFrom/validTo pass-through and unsupportedDateClaim guard", () => {
-  it("validFrom あり + evidence に日付根拠あり → autoApplicable で record に validFrom が含まれる", () => {
-    const data = baseSource({
-      storeRules: [
-        {
-          cardId: "smbc-v",
-          storeId: "lawson",
-          rate: 0.07,
-          currencyId: "v-pt",
-          validFrom: "2023-04-03",
-          evidenceQuote: "ご利用期間: 2023年4月3日(月)以降のお支払い分が対象",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeStoreRules(data, emptySeed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].type).toBe("addRecord");
-    expect(ps[0].reviewReason).toBeUndefined();
-    const record = (ps[0] as { record: Record<string, unknown> }).record;
-    expect(record.validFrom).toBe("2023-04-03");
-    expect(record.validTo).toBeUndefined();
-  });
-
-  it("validFrom あり + evidence に日付根拠なし → needsReview with unsupportedDateClaim", () => {
-    const data = baseSource({
-      storeRules: [
-        {
-          cardId: "smbc-v",
-          storeId: "lawson",
-          rate: 0.07,
-          currencyId: "v-pt",
-          validFrom: "2023-04-03",
-          evidenceQuote: "セブン-イレブンで 7% 還元",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeStoreRules(data, emptySeed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].reviewReason).toBe("unsupportedDateClaim");
-  });
-
-  it("validFrom/validTo 両方なし → record に含まれない (通常ルール)", () => {
-    const data = baseSource({
-      storeRules: [
-        {
-          cardId: "smbc-v",
-          storeId: "lawson",
-          rate: 0.07,
-          currencyId: "v-pt",
-          evidenceQuote: "ローソンで 7% 還元",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeStoreRules(data, emptySeed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].reviewReason).toBeUndefined();
-    const record = (ps[0] as { record: Record<string, unknown> }).record;
-    expect(record.validFrom).toBeUndefined();
-    expect(record.validTo).toBeUndefined();
-  });
 });
 
 describe("applyCategoryCap", () => {
@@ -598,9 +384,9 @@ describe("applyCategoryCap", () => {
       makeStore("foo", "飲食"),
       {
         type: "updateField",
-        collection: "rules",
-        id: "r1",
-        field: "rate",
+        collection: "cards",
+        id: "c1",
+        field: "defaultRate",
         from: 0.01,
         to: 0.02,
         sourceId: "s",
@@ -683,9 +469,9 @@ describe("dedupeAcrossProposals", () => {
       makeStore("a", "店A"),
       {
         type: "updateField",
-        collection: "rules",
-        id: "r1",
-        field: "rate",
+        collection: "cards",
+        id: "c1",
+        field: "defaultRate",
         from: 0.01,
         to: 0.02,
         sourceId: "x",

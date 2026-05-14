@@ -23,7 +23,6 @@ import type {
   PointCard,
   Store,
   StoreProgramMembership,
-  StoreRule,
 } from "../domain/types";
 import {
   ADDED_CARDS,
@@ -31,7 +30,6 @@ import {
   ADDED_MEMBERSHIPS,
   ADDED_PAYMENT_APPS,
   ADDED_PROGRAMS,
-  ADDED_RULES,
   ADDED_STORES,
 } from "./seed-additions";
 import { BLOCKED_STORE_IDS } from "./seed-blocklist";
@@ -44,7 +42,6 @@ import {
 } from "./seed-data-cards";
 import {
   SEED_LOYALTY_RULES,
-  SEED_STORE_RULES,
   SEED_STORES,
 } from "./seed-data-stores";
 import { SEED_EDGES } from "./seed-data-edges";
@@ -338,7 +335,6 @@ type SeedReturn = {
   cards: Card[];
   currencies: Currency[];
   stores: Store[];
-  rules: StoreRule[];
   edges: ConversionEdge[];
   pointCards: PointCard[];
   loyaltyRules: LoyaltyRule[];
@@ -363,7 +359,6 @@ export const seed = (): SeedReturn => {
   const pointCards = SEED_POINT_CARDS;
   const paymentApps = SEED_PAYMENT_APPS;
   const stores = SEED_STORES;
-  const rules = SEED_STORE_RULES;
   const loyaltyRules = SEED_LOYALTY_RULES;
   const edges = SEED_EDGES;
 
@@ -386,12 +381,6 @@ export const seed = (): SeedReturn => {
         ...s,
         category: resolveCategory(s.category),
       })),
-    ],
-    rules: [
-      ...rules,
-      ...ADDED_RULES.filter(
-        (r) => !r.storeId || !BLOCKED_STORE_IDS.has(r.storeId),
-      ),
     ],
     edges,
     pointCards,

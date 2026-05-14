@@ -22,12 +22,10 @@ describe("bucketProposals", () => {
     const ps: Proposal[] = [
       mkAdd("stores", { id: "s1", name: "S1" }),
       mkAdd("stores", { id: "s2", name: "S2" }),
-      mkAdd("rules", { id: "r1", cardId: "c", storeId: "s", rate: 0.01, currencyId: "p" }),
       mkAdd("loyaltyRules", { id: "l1", pointCardId: "p", storeId: "s", rate: 0.005 }),
     ];
     const { buckets, skipped } = bucketProposals(ps);
     expect(buckets.stores).toHaveLength(2);
-    expect(buckets.rules).toHaveLength(1);
     expect(buckets.loyaltyRules).toHaveLength(1);
     expect(buckets.cards).toHaveLength(0);
     expect(skipped).toEqual([]);
@@ -38,9 +36,9 @@ describe("bucketProposals", () => {
       mkAdd("stores", { id: "s1" }),
       {
         type: "updateField",
-        collection: "rules",
-        id: "r1",
-        field: "rate",
+        collection: "cards",
+        id: "c1",
+        field: "defaultRate",
         from: 0.01,
         to: 0.02,
         sourceId: "x",
@@ -49,9 +47,9 @@ describe("bucketProposals", () => {
       },
       {
         type: "referenceChange",
-        collection: "rules",
-        id: "r2",
-        field: "currencyId",
+        collection: "cards",
+        id: "c2",
+        field: "defaultCurrencyId",
         from: "a",
         to: "b",
         sourceId: "x",
@@ -64,8 +62,8 @@ describe("bucketProposals", () => {
     expect(buckets.stores).toHaveLength(1);
     expect(skipped).toEqual(
       expect.arrayContaining([
-        { type: "updateField", collection: "rules", count: 1 },
-        { type: "referenceChange", collection: "rules", count: 1 },
+        { type: "updateField", collection: "cards", count: 1 },
+        { type: "referenceChange", collection: "cards", count: 1 },
       ]),
     );
   });
@@ -131,7 +129,6 @@ describe("buildSeedAdditionsContent", () => {
   it("空配列なら ADDED_STORES: Store[] = []; を出力", () => {
     const out = buildSeedAdditionsContent({
       stores: [],
-      rules: [],
       loyaltyRules: [],
       cards: [],
       paymentApps: [],
@@ -148,7 +145,6 @@ describe("buildSeedAdditionsContent", () => {
   it("配列の要素は object literal として出力", () => {
     const out = buildSeedAdditionsContent({
       stores: [{ id: "kura-sushi", name: "くら寿司", category: "飲食" }],
-      rules: [],
       loyaltyRules: [],
       cards: [],
       paymentApps: [],

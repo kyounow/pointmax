@@ -7,7 +7,6 @@ import type {
   PointCard,
   Store,
   StoreProgramMembership,
-  StoreRule,
 } from "./types";
 import { bestPath } from "./bestPath";
 import { bestLoyalties, type LoyaltyResult } from "./loyalty";
@@ -29,7 +28,6 @@ export type RankInput = {
   targetCurrencyId: string;
   cards: Card[];
   stores: Store[];
-  rules: StoreRule[];
   edges: ConversionEdge[];
   pointCards?: PointCard[];
   loyaltyRules?: LoyaltyRule[];

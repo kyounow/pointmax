@@ -2,7 +2,6 @@
 //
 // v1.0 first cut の対応範囲:
 //   - addRecord/stores         → ADDED_STORES に追加
-//   - addRecord/rules          → ADDED_RULES に追加
 //   - addRecord/loyaltyRules   → ADDED_LOYALTY_RULES に追加
 //   - addRecord/cards          → ADDED_CARDS に追加
 //   - addRecord/paymentApps    → ADDED_PAYMENT_APPS に追加
@@ -29,7 +28,6 @@ import {
   ADDED_MEMBERSHIPS,
   ADDED_PAYMENT_APPS,
   ADDED_PROGRAMS,
-  ADDED_RULES,
   ADDED_STORES,
 } from "../../src/state/seed-additions";
 
@@ -80,7 +78,6 @@ function printUsage(): void {
 
 type Buckets = {
   stores: Record<string, unknown>[];
-  rules: Record<string, unknown>[];
   loyaltyRules: Record<string, unknown>[];
   cards: Record<string, unknown>[];
   paymentApps: Record<string, unknown>[];
@@ -93,7 +90,6 @@ export function bucketProposals(
 ): { buckets: Buckets; skipped: { type: string; collection: string; count: number }[] } {
   const buckets: Buckets = {
     stores: [],
-    rules: [],
     loyaltyRules: [],
     cards: [],
     paymentApps: [],
@@ -112,9 +108,6 @@ export function bucketProposals(
     switch (ap.collection) {
       case "stores":
         buckets.stores.push(ap.record);
-        break;
-      case "rules":
-        buckets.rules.push(ap.record);
         break;
       case "loyaltyRules":
         buckets.loyaltyRules.push(ap.record);
@@ -246,12 +239,9 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
     "  PaymentApp,",
     "  Store,",
     "  StoreProgramMembership,",
-    "  StoreRule,",
     "} from \"../domain/types\";",
     "",
     emitArrayConst("ADDED_STORES", "Store", buckets.stores),
-    "",
-    emitArrayConst("ADDED_RULES", "StoreRule", buckets.rules),
     "",
     emitArrayConst("ADDED_LOYALTY_RULES", "LoyaltyRule", buckets.loyaltyRules),
     "",
@@ -322,7 +312,6 @@ function main(): void {
   // 2. 既存 seed-additions.ts とマージ (id 重複は skip)
   const merge = {
     stores: mergeWithExisting(ADDED_STORES, buckets.stores),
-    rules: mergeWithExisting(ADDED_RULES, buckets.rules),
     loyaltyRules: mergeWithExisting(ADDED_LOYALTY_RULES, buckets.loyaltyRules),
     cards: mergeWithExisting(ADDED_CARDS, buckets.cards),
     paymentApps: mergeWithExisting(ADDED_PAYMENT_APPS, buckets.paymentApps),
@@ -332,9 +321,6 @@ function main(): void {
   console.log("📋 merge result (existing + new, deduped by id):");
   console.log(
     `     stores:        +${merge.stores.added} (skipped ${merge.stores.skipped}) → total ${merge.stores.merged.length}`,
-  );
-  console.log(
-    `     rules:         +${merge.rules.added} (skipped ${merge.rules.skipped}) → total ${merge.rules.merged.length}`,
   );
   console.log(
     `     loyaltyRules:  +${merge.loyaltyRules.added} (skipped ${merge.loyaltyRules.skipped}) → total ${merge.loyaltyRules.merged.length}`,
@@ -355,7 +341,6 @@ function main(): void {
   // 3. seed-additions.ts のコンテンツを構築
   const mergedBuckets: Buckets = {
     stores: merge.stores.merged as Record<string, unknown>[],
-    rules: merge.rules.merged as Record<string, unknown>[],
     loyaltyRules: merge.loyaltyRules.merged as Record<string, unknown>[],
     cards: merge.cards.merged as Record<string, unknown>[],
     paymentApps: merge.paymentApps.merged as Record<string, unknown>[],

@@ -14,7 +14,6 @@ export function SettingsScreen() {
       s.cards.length +
         s.currencies.length +
         s.stores.length +
-        s.rules.length +
         s.edges.length >
       0,
   );
@@ -55,7 +54,7 @@ export function SettingsScreen() {
     });
     if (!ok) return;
     setBusy(true);
-    const res = await syncFromUrl("overwrite");
+    const res = await syncFromUrl();
     setBusy(false);
     if (!res.ok) {
       await dialog.alert({

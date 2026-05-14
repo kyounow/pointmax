@@ -51,7 +51,6 @@ function App() {
       s.cards.length +
         s.currencies.length +
         s.stores.length +
-        s.rules.length +
         s.edges.length >
       0,
   );

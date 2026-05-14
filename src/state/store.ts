@@ -10,7 +10,6 @@ import type {
   PointCard,
   Store,
   StoreProgramMembership,
-  StoreRule,
 } from "../domain/types";
 import { seed, SEED_VERSION, DEFAULT_SYNC_URL, isMasterCard, isMasterPaymentApp } from "./seed";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
@@ -46,7 +45,6 @@ type State = {
   cards: Card[];
   currencies: Currency[];
   stores: Store[];
-  rules: StoreRule[];
   edges: ConversionEdge[];
   pointCards: PointCard[];
   loyaltyRules: LoyaltyRule[];
@@ -76,10 +74,6 @@ type Actions = {
   updateStore: (id: string, patch: Partial<Omit<Store, "id">>) => void;
   removeStore: (id: string) => void;
 
-  addRule: (r: Omit<StoreRule, "id">) => void;
-  updateRule: (id: string, patch: Partial<Omit<StoreRule, "id">>) => void;
-  removeRule: (id: string) => void;
-
   addEdge: (e: Omit<ConversionEdge, "id">) => void;
   updateEdge: (id: string, patch: Partial<Omit<ConversionEdge, "id">>) => void;
   removeEdge: (id: string) => void;
@@ -106,7 +100,6 @@ type Actions = {
   ) => void;
   removePaymentApp: (id: string) => void;
 
-  loadSeed: () => void;
   clearAll: () => void;
   mergeFromSeed: () => void;
   // 追加 + 自動適用可能なマイグレーション + ユーザー選択した衝突上書きをまとめて適用
@@ -118,11 +111,8 @@ type Actions = {
   // schema migration actions (SchemaUpgradeModal から呼ばれる)
   applySchemaMigration: () => void;
   exportLegacyState: () => string;
-  syncFromUrl: (
-    mode: "merge" | "overwrite",
-  ) => Promise<
-    | { ok: true; added?: number; mode: "merge" | "overwrite" }
-    | { ok: false; error: string }
+  syncFromUrl: () => Promise<
+    { ok: true } | { ok: false; error: string }
   >;
 };
 
@@ -130,7 +120,6 @@ const empty: State = {
   cards: [],
   currencies: [],
   stores: [],
-  rules: [],
   edges: [],
   pointCards: [],
   loyaltyRules: [],
@@ -161,7 +150,6 @@ export const useStore = create<State & Actions>()(
         if (isMasterCard(id)) return;
         set((s) => ({
           cards: s.cards.filter((c) => c.id !== id),
-          rules: s.rules.filter((r) => r.cardId !== id),
         }));
       },
 
@@ -192,18 +180,8 @@ export const useStore = create<State & Actions>()(
       removeStore: (id) =>
         set((s) => ({
           stores: s.stores.filter((st) => st.id !== id),
-          rules: s.rules.filter((r) => r.storeId !== id),
           loyaltyRules: s.loyaltyRules.filter((r) => r.storeId !== id),
         })),
-
-      addRule: (r) =>
-        set((s) => ({ rules: [...s.rules, { ...r, id: newId() }] })),
-      updateRule: (id, patch) =>
-        set((s) => ({
-          rules: s.rules.map((r) => (r.id === id ? { ...r, ...patch } : r)),
-        })),
-      removeRule: (id) =>
-        set((s) => ({ rules: s.rules.filter((r) => r.id !== id) })),
 
       addEdge: (e) =>
         set((s) => ({ edges: [...s.edges, { ...e, id: newId() }] })),
@@ -271,14 +249,9 @@ export const useStore = create<State & Actions>()(
         if (isMasterPaymentApp(id)) return;
         set((s) => ({
           paymentApps: s.paymentApps.filter((p) => p.id !== id),
-          // 削除した paymentApp を参照しているルールから paymentAppId をクリア
-          rules: s.rules.map((r) =>
-            r.paymentAppId === id ? { ...r, paymentAppId: undefined } : r,
-          ),
         }));
       },
 
-      loadSeed: () => set(() => ({ ...seed(), lastSeedVersion: SEED_VERSION })),
       clearAll: () => set(() => empty),
       mergeFromSeed: () =>
         set((s) => {
@@ -287,7 +260,6 @@ export const useStore = create<State & Actions>()(
               cards: s.cards,
               currencies: s.currencies,
               stores: s.stores,
-              rules: s.rules,
               edges: s.edges,
               pointCards: s.pointCards,
               loyaltyRules: s.loyaltyRules,
@@ -301,7 +273,6 @@ export const useStore = create<State & Actions>()(
             cards: result.cards,
             currencies: result.currencies,
             stores: result.stores,
-            rules: result.rules,
             edges: result.edges,
             pointCards: result.pointCards,
             loyaltyRules: result.loyaltyRules,
@@ -317,7 +288,6 @@ export const useStore = create<State & Actions>()(
             cards: s.cards,
             currencies: s.currencies,
             stores: s.stores,
-            rules: s.rules,
             edges: s.edges,
             pointCards: s.pointCards,
             loyaltyRules: s.loyaltyRules,
@@ -346,7 +316,6 @@ export const useStore = create<State & Actions>()(
               cards: merged.cards,
               currencies: merged.currencies,
               stores: merged.stores,
-              rules: merged.rules,
               edges: merged.edges,
               pointCards: merged.pointCards,
               loyaltyRules: merged.loyaltyRules,
@@ -360,7 +329,6 @@ export const useStore = create<State & Actions>()(
             cards: finalState.cards,
             currencies: finalState.currencies,
             stores: finalState.stores,
-            rules: finalState.rules,
             edges: finalState.edges,
             pointCards: finalState.pointCards,
             loyaltyRules: finalState.loyaltyRules,
@@ -398,7 +366,7 @@ export const useStore = create<State & Actions>()(
 
       setSyncUrl: (url) => set(() => ({ syncUrl: url.trim() })),
 
-      syncFromUrl: async (mode) => {
+      syncFromUrl: async () => {
         const url = get().syncUrl;
         if (!url) {
           return { ok: false, error: "同期URLが未設定です" };
@@ -420,7 +388,6 @@ export const useStore = create<State & Actions>()(
             "cards",
             "currencies",
             "stores",
-            "rules",
             "edges",
           ];
           for (const key of required) {
@@ -435,7 +402,6 @@ export const useStore = create<State & Actions>()(
             cards: data.cards,
             currencies: data.currencies,
             stores: data.stores,
-            rules: data.rules,
             edges: data.edges,
             pointCards: Array.isArray(data.pointCards) ? data.pointCards : [],
             loyaltyRules: Array.isArray(data.loyaltyRules)
@@ -447,55 +413,11 @@ export const useStore = create<State & Actions>()(
             programs: Array.isArray(data.programs) ? data.programs : [],
             memberships: Array.isArray(data.memberships) ? data.memberships : [],
           };
-          if (mode === "overwrite") {
-            set(() => ({
-              ...remote,
-              lastSyncAt: new Date().toISOString(),
-            }));
-            return { ok: true, mode };
-          }
-          // merge
-          const s = get();
-          const result = mergeSeedFn(
-            {
-              cards: s.cards,
-              currencies: s.currencies,
-              stores: s.stores,
-              rules: s.rules,
-              edges: s.edges,
-              pointCards: s.pointCards,
-              loyaltyRules: s.loyaltyRules,
-              paymentApps: s.paymentApps,
-              programs: s.programs,
-              memberships: s.memberships,
-            },
-            remote,
-          );
-          const addedCount =
-            result.diff.cards.length +
-            result.diff.currencies.length +
-            result.diff.stores.length +
-            result.diff.rules.length +
-            result.diff.edges.length +
-            result.diff.pointCards.length +
-            result.diff.loyaltyRules.length +
-            result.diff.paymentApps.length +
-            (result.diff.programs?.length ?? 0) +
-            (result.diff.memberships?.length ?? 0);
           set(() => ({
-            cards: result.cards,
-            currencies: result.currencies,
-            stores: result.stores,
-            rules: result.rules,
-            edges: result.edges,
-            pointCards: result.pointCards,
-            loyaltyRules: result.loyaltyRules,
-            paymentApps: result.paymentApps,
-            programs: result.programs ?? [],
-            memberships: result.memberships ?? [],
+            ...remote,
             lastSyncAt: new Date().toISOString(),
           }));
-          return { ok: true, added: addedCount, mode };
+          return { ok: true };
         } catch (e) {
           return {
             ok: false,
@@ -513,7 +435,6 @@ export const useStore = create<State & Actions>()(
             cards: s.cards,
             currencies: s.currencies,
             stores: s.stores,
-            rules: s.rules,
             edges: s.edges,
             pointCards: s.pointCards,
             loyaltyRules: s.loyaltyRules,
@@ -528,7 +449,7 @@ export const useStore = create<State & Actions>()(
           const data = JSON.parse(json);
           if (typeof data !== "object" || data == null)
             return { ok: false, error: "JSONが不正です" };
-          const required = ["cards", "currencies", "stores", "rules", "edges"];
+          const required = ["cards", "currencies", "stores", "edges"];
           for (const key of required) {
             if (!Array.isArray(data[key]))
               return { ok: false, error: `"${key}" が配列ではありません` };
@@ -538,7 +459,6 @@ export const useStore = create<State & Actions>()(
             cards: data.cards,
             currencies: data.currencies,
             stores: data.stores,
-            rules: data.rules,
             edges: data.edges,
             pointCards: Array.isArray(data.pointCards) ? data.pointCards : [],
             loyaltyRules: Array.isArray(data.loyaltyRules)
@@ -561,7 +481,7 @@ export const useStore = create<State & Actions>()(
       // v0.8 で世代交代。旧キー "pointmax-store" は無視 (孤児は起動時に削除)
       name: "pointmax-v08-store",
       storage: createJSONStorage(() => localStorage),
-      version: PERSIST_SCHEMA_VERSION,  // 1 → 2 (v3 で bump)
+      version: PERSIST_SCHEMA_VERSION,  // 2 → 3 (v3.3 で bump)
       migrate: (persistedState: unknown, fromVersion: number) => {
         // 新規 install (version フィールドが無い = fromVersion が undefined 扱い)
         // → そのまま通す (既存の empty+seed 初期化フローへ)

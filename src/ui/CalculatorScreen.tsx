@@ -17,7 +17,6 @@ export function CalculatorScreen() {
   const cards = useStore((s) => s.cards);
   const stores = useStore((s) => s.stores);
   const currencies = useStore((s) => s.currencies);
-  const rules = useStore((s) => s.rules);
   const edges = useStore((s) => s.edges);
   const pointCards = useStore((s) => s.pointCards);
   const loyaltyRules = useStore((s) => s.loyaltyRules);
@@ -110,7 +109,6 @@ export function CalculatorScreen() {
         targetCurrencyId,
         cards,
         stores,
-        rules,
         edges,
         pointCards,
         loyaltyRules,
@@ -126,7 +124,6 @@ export function CalculatorScreen() {
     targetCurrencyId,
     cards,
     stores,
-    rules,
     edges,
     pointCards,
     loyaltyRules,
@@ -217,8 +214,8 @@ export function CalculatorScreen() {
           weekday: "short",
         });
 
-        // アクティブ期間ルールの集計 (programs + 旧 rules/loyaltyRules)
-        const allRules = [...rules, ...loyaltyRules];
+        // アクティブ期間ルールの集計 (programs + loyaltyRules)
+        const allRules = [...loyaltyRules];
         const allProgramsWithDates = programs.filter((p) => p.validFrom || p.validTo);
 
         const timeBoundActive = [...allRules, ...allProgramsWithDates].filter(

@@ -14,7 +14,6 @@ export function UpdateBanner() {
   const cards = useStore((s) => s.cards);
   const currencies = useStore((s) => s.currencies);
   const stores = useStore((s) => s.stores);
-  const rules = useStore((s) => s.rules);
   const edges = useStore((s) => s.edges);
   const pointCards = useStore((s) => s.pointCards);
   const loyaltyRules = useStore((s) => s.loyaltyRules);
@@ -29,7 +28,6 @@ export function UpdateBanner() {
       cards,
       currencies,
       stores,
-      rules,
       edges,
       pointCards,
       loyaltyRules,
@@ -39,7 +37,6 @@ export function UpdateBanner() {
       cards,
       currencies,
       stores,
-      rules,
       edges,
       pointCards,
       loyaltyRules,
@@ -51,7 +48,6 @@ export function UpdateBanner() {
     cards.length +
       currencies.length +
       stores.length +
-      rules.length +
       edges.length +
       pointCards.length +
       loyaltyRules.length +
@@ -72,7 +68,6 @@ export function UpdateBanner() {
       cards: merged.cards,
       currencies: merged.currencies,
       stores: merged.stores,
-      rules: merged.rules,
       edges: merged.edges,
       pointCards: merged.pointCards,
       loyaltyRules: merged.loyaltyRules,
@@ -121,8 +116,6 @@ export function UpdateBanner() {
         return "通貨";
       case "stores":
         return "店舗";
-      case "rules":
-        return "店舗ルール";
       case "edges":
         return "交換ルート";
       case "pointCards":
@@ -194,9 +187,6 @@ export function UpdateBanner() {
                 )}
                 {merged.diff.stores.length > 0 && (
                   <li>店舗: {merged.diff.stores.length}件</li>
-                )}
-                {merged.diff.rules.length > 0 && (
-                  <li>ルール: {merged.diff.rules.length}件</li>
                 )}
                 {merged.diff.edges.length > 0 && (
                   <li>交換ルート: {merged.diff.edges.length}件</li>

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { rankCards } from "./rankCards";
-import type { BenefitProgram, Card, ConversionEdge, Store, StoreProgramMembership, StoreRule } from "./types";
+import type { BenefitProgram, Card, ConversionEdge, Store, StoreProgramMembership } from "./types";
 
 const rakuten: Card = {
   id: "rakuten",
@@ -35,7 +35,6 @@ describe("rankCards", () => {
       targetCurrencyId: "rakuten-pt",
       cards: [rakuten],
       stores: baseStores,
-      rules: [],
       edges: [],
     });
     expect(result).toHaveLength(1);
@@ -54,7 +53,6 @@ describe("rankCards", () => {
       targetCurrencyId: "ana-mile",
       cards: [rakuten],
       stores: baseStores,
-      rules: [],
       edges,
     });
     expect(result[0].earnedAmount).toBe(100);
@@ -73,7 +71,6 @@ describe("rankCards", () => {
       targetCurrencyId: "ana-mile",
       cards: [rakuten, jcb],
       stores: baseStores,
-      rules: [],
       edges,
     });
     expect(result.map((r) => r.card.id)).toEqual(["jcb", "rakuten"]);
@@ -101,7 +98,6 @@ describe("rankCards", () => {
       targetCurrencyId: "amazon-pt",
       cards: [rakuten],
       stores: baseStores,
-      rules: [],
       edges: [],
       programs,
       memberships,
@@ -119,7 +115,6 @@ describe("rankCards", () => {
       targetCurrencyId: "ana-mile",
       cards: [rakuten, jcb],
       stores: baseStores,
-      rules: [],
       edges,
     });
     expect(result[0].card.id).toBe("rakuten");
@@ -140,7 +135,6 @@ describe("rankCards", () => {
       targetCurrencyId: "ana-mile",
       cards: [rakuten],
       stores: baseStores,
-      rules: [],
       edges,
     });
     expect(result[0].finalAmount).toBeCloseTo(70, 10);
@@ -161,7 +155,6 @@ describe("rankCards", () => {
       targetCurrencyId: "d-pt",
       cards: [rakuten],
       stores: baseStores,
-      rules: [],
       edges: [
         edge("rakuten-to-d", "rakuten-pt", "d-pt", 1),
       ],
@@ -200,7 +193,6 @@ describe("rankCards", () => {
       targetCurrencyId: "d-pt",
       cards: [rakuten],
       stores: [...baseStores, stackStore],
-      rules: [],
       edges: [
         edge("rakuten-to-d", "rakuten-pt", "d-pt", 1),
       ],
@@ -231,7 +223,6 @@ describe("rankCards", () => {
       targetCurrencyId: "rakuten-pt",
       cards: [rakuten, disabledCard],
       stores: baseStores,
-      rules: [],
       edges: [],
     });
     expect(result).toHaveLength(1);
@@ -258,7 +249,6 @@ describe("rankCards", () => {
       targetCurrencyId: "rakuten-pt",
       cards: [rakuten],
       stores: baseStores,
-      rules: [],
       edges: [],
       programs,
       memberships,
@@ -289,7 +279,6 @@ describe("rankCards", () => {
       targetCurrencyId: "target-pt",
       cards: [cardB, cardA], // 意図的に B を先に渡す
       stores: baseStores,
-      rules: [],
       edges: [],
     });
 
@@ -324,7 +313,6 @@ describe("rankCards", () => {
       targetCurrencyId: "target-pt",
       cards: [cardB, cardA],
       stores: baseStores,
-      rules: [],
       edges: [],
     });
 
@@ -364,7 +352,6 @@ describe("rankCards", () => {
       targetCurrencyId: "target-pt",
       cards: [cardB, cardA],
       stores: [...baseStores, partsStore],
-      rules: [],
       edges: [],
       pointCards: [loyPtCard],
       loyaltyRules: [
@@ -392,7 +379,6 @@ describe("rankCards", () => {
         targetCurrencyId: "c1",
         cards,
         stores: baseStores,
-        rules: [],
         edges: [],
       },
       { includeDisabled: true },
@@ -411,7 +397,6 @@ describe("rankCards", () => {
       targetCurrencyId: "c1",
       cards,
       stores: baseStores,
-      rules: [],
       edges: [],
     });
     expect(result).toHaveLength(1);
@@ -430,23 +415,28 @@ describe("rankCards", () => {
         requiredCardIds: ["jal-suica"],
       },
     ];
-    // 楽天カードが JRE で貯まると仮定するルールを 1 件
-    const rules: StoreRule[] = [
+    // 楽天カードが JRE で貯まると仮定するプログラムを 1 件
+    const programs: BenefitProgram[] = [
       {
-        id: "r1",
-        cardId: "rakuten",
-        storeId: "any",
+        id: "prog-rakuten-jre",
+        name: "楽天 JRE",
+        cardIds: ["rakuten"],
         rate: 0.01,
         currencyId: "jre",
+        bonusType: "primary",
       },
+    ];
+    const memberships: StoreProgramMembership[] = [
+      { programId: "prog-rakuten-jre", storeId: "any" },
     ];
     const result = rankCards({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "jal-mile",
       cards,
       stores: baseStores,
-      rules,
       edges,
+      programs,
+      memberships,
     });
     expect(result).toHaveLength(1);
     expect(result[0].reachable).toBe(false); // パスが見つからない

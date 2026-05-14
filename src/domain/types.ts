@@ -39,40 +39,6 @@ export type Store = {
   preferredPointCardIds?: string[];
 };
 
-// カード×店舗(直接) または カード×カテゴリ(間接) のルール
-// storeId と category のいずれか一方を指定する。両方指定された場合は storeId が優先
-// paymentAppId が指定されている場合、その PaymentApp で決済した時のみ適用される
-//   未指定なら全ての (chargeBased=false) 支払方法で適用される汎用ルール
-// monthlyCapAmountYen は情報表示用（年/月の上限が決まっている特約） — 計算には影響しない
-//
-// validFrom / validTo: キャンペーン期間 (ISO 日付 YYYY-MM-DD)
-//   両方未指定 = 常時有効。validTo の日付の終わり (23:59:59) まで有効。
-//   期間外のルールは resolveRate / paymentApp / loyalty で無視される。
-//   同じ specificity (storeId / category) の active ルールが複数あれば
-//   最高 rate のものが選ばれる (通常 1% + キャンペーン 5% → 5%)。
-//
-// @deprecated v3 PR 3: BenefitProgram に統合。ユーザーカスタムルール (UI 経由追加) には引き続き使用。
-// seed データは programs/memberships に移行済み。master.json は rules: [] で出力。
-export type StoreRule = {
-  id: string;
-  cardId: string;
-  storeId?: string;
-  category?: string;
-  paymentAppId?: string;
-  rate: number;
-  currencyId: string;
-  monthlyCapAmountYen?: number;
-  notes?: string;
-  validFrom?: string;
-  validTo?: string;
-  // 月内の特定日にのみ有効になる繰り返しパターン (任意)。
-  // 値の範囲は 1〜31 (日付)。例: 楽天「5と0のつく日」→ [5, 10, 15, 20, 25, 30]。
-  // undefined / 空配列 = 日付制限なし (常時有効、既存挙動)。
-  // 1 件以上 = 「今日 (now.getDate())」がリスト内にある時のみアクティブ。
-  // validFrom/validTo の範囲チェックと **AND** で結合される (期間内かつ recurring 日付一致)。
-  recurringDays?: number[];
-};
-
 // ポイント交換エッジ。fromCurrencyId 1単位 → toCurrencyId rate単位
 export type ConversionEdge = {
   id: string;

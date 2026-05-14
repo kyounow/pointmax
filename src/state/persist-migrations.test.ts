@@ -14,7 +14,6 @@ const emptyBaseState = {
   cards: [],
   currencies: [],
   stores: [],
-  rules: [],
   edges: [],
   pointCards: [],
   loyaltyRules: [],
@@ -69,8 +68,8 @@ function runMigrate(
 // -----------------------------------------------------------------------
 
 describe("PERSIST_SCHEMA_VERSION", () => {
-  it("現在のスキーマバージョンは 2 である", () => {
-    expect(PERSIST_SCHEMA_VERSION).toBe(2);
+  it("現在のスキーマバージョンは 3 である", () => {
+    expect(PERSIST_SCHEMA_VERSION).toBe(3);
   });
 });
 
@@ -108,12 +107,12 @@ describe("schema migration: 旧 v1 検出 (reset strategy)", () => {
   it("reset 時は データ配列が空の empty state に戻る", () => {
     const legacyState = {
       cards: [{ id: "card-1" }],
-      rules: [{ id: "rule-1" }],
+      stores: [{ id: "store-1" }],
     };
     const result = runMigrate(legacyState, 1);
 
     expect(result.cards).toEqual([]);
-    expect((result as { rules?: unknown[] }).rules).toEqual([]);
+    expect(result.stores).toEqual([]);
     expect(result.programs).toEqual([]);
     expect(result.memberships).toEqual([]);
   });
@@ -150,20 +149,22 @@ describe("schema migration: transform strategy", () => {
     }));
 
     // 動的に SCHEMA_MIGRATIONS に transform entry を追加してテスト
-    const originalEntry = SCHEMA_MIGRATIONS[3];
-    SCHEMA_MIGRATIONS[3] = { type: "transform", fn: transformFn };
+    // PERSIST_SCHEMA_VERSION や他のテスト (v99 fallback) と被らない番号を使う
+    const TRANSFORM_TEST_VERSION = 100;
+    const originalEntry = SCHEMA_MIGRATIONS[TRANSFORM_TEST_VERSION];
+    SCHEMA_MIGRATIONS[TRANSFORM_TEST_VERSION] = { type: "transform", fn: transformFn };
 
     const inputState = { cards: [{ id: "c1" }] };
-    const result = runMigrate(inputState, 3);
+    const result = runMigrate(inputState, TRANSFORM_TEST_VERSION);
 
     expect(transformFn).toHaveBeenCalledWith(inputState);
     expect((result as { newField?: string }).newField).toBe("added");
 
     // テスト後はエントリを元に戻す (存在しなかった場合は削除)
     if (originalEntry === undefined) {
-      delete SCHEMA_MIGRATIONS[3];
+      delete SCHEMA_MIGRATIONS[TRANSFORM_TEST_VERSION];
     } else {
-      SCHEMA_MIGRATIONS[3] = originalEntry;
+      SCHEMA_MIGRATIONS[TRANSFORM_TEST_VERSION] = originalEntry;
     }
   });
 });
@@ -178,8 +179,14 @@ describe("SCHEMA_MIGRATIONS マップの整合性", () => {
     }
   });
 
-  it("PERSIST_SCHEMA_VERSION (2) のエントリは存在しない (自己移行は不要)", () => {
+  it("PERSIST_SCHEMA_VERSION (3) のエントリは存在しない (自己移行は不要)", () => {
     // 現バージョン自身に対する migration エントリは不要・無意味
     expect(SCHEMA_MIGRATIONS[PERSIST_SCHEMA_VERSION]).toBeUndefined();
+  });
+
+  it("SCHEMA_MIGRATIONS[2] は type='passthrough' (v3.3 で state.rules 物理削除)", () => {
+    const entry = SCHEMA_MIGRATIONS[2];
+    expect(entry).toBeDefined();
+    expect(entry.type).toBe("passthrough");
   });
 });

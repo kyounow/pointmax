@@ -11,7 +11,8 @@
 
 // 現在期待する persist schema のバージョン。
 // v3 (PR 4) で 1 → 2 に bump。
-export const PERSIST_SCHEMA_VERSION = 2;
+// v3.3 で 2 → 3 に bump (state.rules / addRule 系の物理削除)。
+export const PERSIST_SCHEMA_VERSION = 3;
 
 /**
  * schema migration の戦略型。
@@ -42,6 +43,7 @@ export const SCHEMA_MIGRATIONS: Record<number, SchemaMigrationStrategy> = {
       "既存設定は新しい形式と互換性がないため、公式マスタ + ユーザー選択で再初期化します。" +
       "手書き設定がなければ影響はほぼゼロです。JSON エクスポートで念のためバックアップを推奨します。",
   },
-  // 将来の例:
-  // 2: { type: "transform", fn: (old) => ({ ...(old as object), someNewField: [] }) },
+  // v3.3 で state.rules / addRule 系を物理削除。残存 rules フィールドは
+  // zustand persist が無視するため passthrough で安全。
+  2: { type: "passthrough" },
 };

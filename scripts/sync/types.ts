@@ -43,7 +43,6 @@ export type ExtractorKind =
 
 export type ProducesKind =
   | "cards"
-  | "storeRules"
   | "categoryRules"
   | "stores"
   | "loyaltyRules"
@@ -135,7 +134,6 @@ export type ExtractedSource = {
 
   // 抽出されたエンティティ群 (extractor によって埋まる配列が変わる)
   cards?: ExtractedCard[];
-  storeRules?: ExtractedStoreRule[];
   categoryRules?: ExtractedCategoryRule[];
   stores?: ExtractedStore[];
   loyaltyRules?: ExtractedLoyaltyRule[];
@@ -159,19 +157,6 @@ export type ExtractedCard = Evidence & {
   grade?: string;
   defaultRate?: number;    // 0.01 = 1%
   defaultCurrencyId?: string;
-};
-
-// (b) 店舗別ルール
-export type ExtractedStoreRule = Evidence & {
-  cardId: string;
-  storeId: string;         // seed.ts の Store.id と一致 (なければ stores[] にも追加)
-  paymentAppId?: string;   // 特定の決済方法限定の場合のみ
-  rate: number;
-  currencyId: string;
-  monthlyCapAmountYen?: number;
-  notes?: string;
-  validFrom?: string;      // ISO date (YYYY-MM-DD). 公式ページに明示された開始日のみ。
-  validTo?: string;        // ISO date (YYYY-MM-DD). 公式ページに明示された終了日のみ。
 };
 
 // (c) カテゴリ別ルール

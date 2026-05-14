@@ -4,7 +4,6 @@ export type CollectionName =
   | "cards"
   | "currencies"
   | "stores"
-  | "rules"
   | "edges"
   | "pointCards"
   | "loyaltyRules"

@@ -14,7 +14,6 @@ const emptyState = (): SeedShape => ({
   cards: [],
   currencies: [],
   stores: [],
-  rules: [],
   edges: [],
   pointCards: [],
   loyaltyRules: [],
@@ -311,7 +310,6 @@ describe("MIGRATIONS v13", () => {
       cards: [],
       currencies: [],
       stores: [],
-      rules: [],
       edges: [
         {
           id: "jre-to-jal",
@@ -337,7 +335,6 @@ describe("MIGRATIONS v13", () => {
       cards: [],
       currencies: [],
       stores: [],
-      rules: [],
       edges: [
         {
           id: "jre-to-jal",
