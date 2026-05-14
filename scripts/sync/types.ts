@@ -266,7 +266,8 @@ export type ReviewReason =
   | "excludedCategory"        // Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)
   | "userBlocked"             // src/state/seed-blocklist.ts でユーザが除外指定
   | "selfReportedExclusion"   // evidenceQuote に Gemini 自身による除外記述を検知
-  | "unsupportedDateClaim";   // validFrom/validTo があるのに evidenceQuote に日付根拠がない
+  | "unsupportedDateClaim"    // validFrom/validTo があるのに evidenceQuote に日付根拠がない
+  | "zeroOrInvalidRate";      // rate=0 または未定義。Gemini が還元率を抽出できなかった疑い
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";

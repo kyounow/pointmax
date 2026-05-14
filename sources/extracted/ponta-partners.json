@@ -1,40 +1,16 @@
 {
   "sourceId": "ponta-partners",
   "sourceUrl": "https://point.recruit.co.jp/point/?tab=pointUseService",
-  "fetchedAt": "2026-05-12T00:32:34.841Z",
-  "promptVersion": "point-partner-v1.0",
+  "fetchedAt": "2026-05-14T02:40:36.589Z",
+  "promptVersion": "point-partner-v1.1",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
   "stores": [
     {
-      "storeId": "albis",
-      "name": "アルビス",
-      "category": "スーパー",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: アルビス",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "uber-eats",
-      "name": "Uber Eats",
-      "category": "飲食",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: Uber Eats, ネットショッピング・通販・宅配: Uber Eats",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "oishix",
-      "name": "Oisix",
-      "category": "ネット通販",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: Oisix",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "ohga-pharmacy",
+      "storeId": "ooga-yakkyoku",
       "name": "大賀薬局",
       "category": "ドラッグストア",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: 大賀薬局",
+      "evidenceQuote": "大賀薬局 たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -42,15 +18,15 @@
       "storeId": "sunnymart",
       "name": "サニーマート",
       "category": "スーパー",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: サニーマート",
+      "evidenceQuote": "サニーマート たまる つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "sunlive",
+      "storeId": "sanriv",
       "name": "サンリブ",
       "category": "スーパー",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: サンリブ",
+      "evidenceQuote": "サンリブ たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -58,7 +34,7 @@
       "storeId": "seijo-ishii",
       "name": "成城石井",
       "category": "スーパー",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: 成城石井",
+      "evidenceQuote": "成城石井 たまる つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -66,15 +42,7 @@
       "storeId": "tomod-s",
       "name": "トモズ",
       "category": "ドラッグストア",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: トモズ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "natural-lawson",
-      "name": "ナチュラルローソン",
-      "category": "コンビニ",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: ナチュラルローソン",
+      "evidenceQuote": "トモズ たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -82,15 +50,15 @@
       "storeId": "nishimuta",
       "name": "ニシムタ",
       "category": "スーパー",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: ニシムタ",
+      "evidenceQuote": "ニシムタ たまる つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "minedrug",
+      "storeId": "mine-drug",
       "name": "ミネドラッグ",
       "category": "ドラッグストア",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: ミネドラッグ",
+      "evidenceQuote": "ミネドラッグ たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -98,7 +66,7 @@
       "storeId": "yakuodo",
       "name": "薬王堂",
       "category": "ドラッグストア",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: 薬王堂",
+      "evidenceQuote": "薬王堂 たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -106,23 +74,7 @@
       "storeId": "life",
       "name": "ライフ",
       "category": "スーパー",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: ライフ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "lawson-store-100",
-      "name": "ローソンストア100",
-      "category": "コンビニ",
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: ローソンストア100",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "willer-travel",
-      "name": "WILLER TRAVEL",
-      "category": "旅行代理店",
-      "evidenceQuote": "レジャー・旅行: WILLER TRAVEL",
+      "evidenceQuote": "ライフ たまる つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -130,79 +82,7 @@
       "storeId": "samsonite",
       "name": "サムソナイト",
       "category": "ファッション",
-      "evidenceQuote": "レジャー・旅行: サムソナイト",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "jal-mileage-bank",
-      "name": "日本航空(JALマイレージバンク)",
-      "category": "鉄道・交通",
-      "evidenceQuote": "日本航空(JALマイレージバンク)",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "relux",
-      "name": "Relux",
-      "category": "ホテル",
-      "evidenceQuote": "レジャー・旅行: Relux",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "route-inn-hotels",
-      "name": "ルートインホテルズ",
-      "category": "ホテル",
-      "evidenceQuote": "レジャー・旅行: ルートインホテルズ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "lawson-travel",
-      "name": "ローソントラベル",
-      "category": "旅行代理店",
-      "evidenceQuote": "レジャー・旅行: ローソントラベル",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "lawson-ticket-travel",
-      "name": "ローチケ旅行",
-      "category": "旅行代理店",
-      "evidenceQuote": "レジャー・旅行: ローチケ旅行",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "excelsior-cafe",
-      "name": "エクセルシオール カフェ",
-      "category": "飲食",
-      "evidenceQuote": "グルメ・飲食: エクセルシオール カフェ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "cafe-lexcel",
-      "name": "カフェ レクセル",
-      "category": "飲食",
-      "evidenceQuote": "グルメ・飲食: カフェ レクセル",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "caromama-plus",
-      "name": "カロママ プラス",
-      "category": "その他",
-      "evidenceQuote": "グルメ・飲食: カロママ プラス",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "jihampi",
-      "name": "ジハンピ",
-      "category": "飲食",
-      "evidenceQuote": "グルメ・飲食: ジハンピ",
+      "evidenceQuote": "サムソナイト たまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -210,23 +90,7 @@
       "storeId": "steak-asakuma",
       "name": "ステーキのあさくま",
       "category": "飲食",
-      "evidenceQuote": "グルメ・飲食: ステーキのあさくま",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "tabelog",
-      "name": "食べログ",
-      "category": "飲食",
-      "evidenceQuote": "グルメ・飲食: 食べログ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "doutor-coffee-farm",
-      "name": "ドトール珈琲農園・ドトール珈琲店",
-      "category": "飲食",
-      "evidenceQuote": "グルメ・飲食: ドトール珈琲農園・ドトール珈琲店",
+      "evidenceQuote": "ステーキのあさくま たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -234,23 +98,15 @@
       "storeId": "pan-no-tajima",
       "name": "パンの田島",
       "category": "飲食",
-      "evidenceQuote": "グルメ・飲食: パンの田島",
+      "evidenceQuote": "パンの田島 たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "fukurosho-sabo",
+      "storeId": "hon-to-coffee-fukurosho-sabou",
       "name": "本と珈琲 梟書茶房",
       "category": "飲食",
-      "evidenceQuote": "グルメ・飲食: 本と珈琲 梟書茶房",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "aoki",
-      "name": "AOKI",
-      "category": "ファッション",
-      "evidenceQuote": "ファッション・美容: AOKI",
+      "evidenceQuote": "本と珈琲 梟書茶房 たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -258,31 +114,7 @@
       "storeId": "orihica",
       "name": "ORIHICA",
       "category": "ファッション",
-      "evidenceQuote": "ファッション・美容: ORIHICA",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "jumble-store",
-      "name": "ジャンブルストア",
-      "category": "ファッション",
-      "evidenceQuote": "ファッション・美容: ジャンブルストア",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "2ndstreet",
-      "name": "セカンドストリート",
-      "category": "ファッション",
-      "evidenceQuote": "ファッション・美容: セカンドストリート",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "hot-pepper-beauty-clinic",
-      "name": "HOT PEPPER Beauty 美容クリニック",
-      "category": "美容",
-      "evidenceQuote": "ファッション・美容: HOT PEPPER Beauty 美容クリニック",
+      "evidenceQuote": "ORIHICA たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -290,15 +122,7 @@
       "storeId": "megane-salon-look",
       "name": "メガネサロンルック",
       "category": "メガネ",
-      "evidenceQuote": "ファッション・美容: メガネサロンルック",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "morecos-plus",
-      "name": "morecos+ (モアコス)",
-      "category": "美容",
-      "evidenceQuote": "ファッション・美容: morecos+ (モアコス)",
+      "evidenceQuote": "メガネサロンルック たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -306,127 +130,7 @@
       "storeId": "luckrack",
       "name": "LuckRack",
       "category": "ファッション",
-      "evidenceQuote": "ファッション・美容: LuckRack",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "aquaclara",
-      "name": "アクアクララ",
-      "category": "生活サービス",
-      "evidenceQuote": "ネットショッピング・通販・宅配: アクアクララ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "waterone",
-      "name": "ウォーターワン（株式会社サイサン）",
-      "category": "生活サービス",
-      "evidenceQuote": "ネットショッピング・通販・宅配: ウォーターワン（株式会社サイサン）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "sbinft-market",
-      "name": "SBINFT Market",
-      "category": "ネット通販",
-      "evidenceQuote": "ネットショッピング・通販・宅配: SBINFT Market",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "au-pay-market",
-      "name": "au PAY マーケット",
-      "category": "ネット通販",
-      "evidenceQuote": "ネットショッピング・通販・宅配: au PAY マーケット",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "geo-takuhai-rental",
-      "name": "ゲオ宅配レンタル",
-      "category": "音楽・映像",
-      "evidenceQuote": "ネットショッピング・通販・宅配: ゲオ宅配レンタル",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "smari",
-      "name": "スマリ SMARI",
-      "category": "生活サービス",
-      "evidenceQuote": "ネットショッピング・通販・宅配: スマリ SMARI",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "temu",
-      "name": "Temu",
-      "category": "ネット通販",
-      "evidenceQuote": "ネットショッピング・通販・宅配: Temu",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "premium-water",
-      "name": "プレミアムウォーター",
-      "category": "生活サービス",
-      "evidenceQuote": "ネットショッピング・通販・宅配: プレミアムウォーター",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "hmv-stores",
-      "name": "ＨＭＶ（店舗）",
-      "category": "音楽・映像",
-      "evidenceQuote": "音楽・映像・ゲーム: ＨＭＶ（店舗）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "hmv-books-online",
-      "name": "HMV&BOOKS online",
-      "category": "音楽・映像",
-      "evidenceQuote": "音楽・映像・ゲーム: HMV&BOOKS online",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "sanyodo-shoten",
-      "name": "三洋堂書店",
-      "category": "書店",
-      "evidenceQuote": "音楽・映像・ゲーム: 三洋堂書店",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "telasa",
-      "name": "TELASA（テラサ）",
-      "category": "エンタメ・チケット",
-      "evidenceQuote": "音楽・映像・ゲーム: TELASA（テラサ）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "ponta-bitcoin-farm",
-      "name": "Pontaビットコin牧場",
-      "category": "その他",
-      "evidenceQuote": "音楽・映像・ゲーム: Pontaビットコin牧場",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "ponta-play",
-      "name": "Ponta PLAY",
-      "category": "その他",
-      "evidenceQuote": "音楽・映像・ゲーム: Ponta PLAY",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "17live",
-      "name": "17LIVE(ワンセブンライブ)",
-      "category": "エンタメ・チケット",
-      "evidenceQuote": "音楽・映像・ゲーム: 17LIVE(ワンセブンライブ)",
+      "evidenceQuote": "LuckRack たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -434,39 +138,7 @@
       "storeId": "auto-info",
       "name": "オート・インフォ",
       "category": "車・バイク",
-      "evidenceQuote": "車・バイク: オート・インフォ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "onix",
-      "name": "ONIX",
-      "category": "車・バイク",
-      "evidenceQuote": "車・バイク: ONIX",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "carseven",
-      "name": "カーセブン",
-      "category": "車・バイク",
-      "evidenceQuote": "車・バイク: カーセブン",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "carnext",
-      "name": "カーネクスト",
-      "category": "車・バイク",
-      "evidenceQuote": "車・バイク: カーネクスト",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "japan-road-service",
-      "name": "日本ロードサービス（JRS）",
-      "category": "車・バイク",
-      "evidenceQuote": "車・バイク: 日本ロードサービス（JRS）",
+      "evidenceQuote": "オート・インフォ たまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -474,55 +146,31 @@
       "storeId": "hokkaido-kei-park",
       "name": "北海道軽パーク",
       "category": "車・バイク",
-      "evidenceQuote": "車・バイク: 北海道軽パーク",
+      "evidenceQuote": "北海道軽パーク たまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "ponta-gasshuku-menkyo",
-      "name": "Ponta合宿免許",
-      "category": "その他",
-      "evidenceQuote": "車・バイク: Ponta合宿免許",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "asahi-shimbun-digital",
-      "name": "朝日新聞（デジタル版）",
-      "category": "本・電子書籍・新聞",
-      "evidenceQuote": "本・電子書籍・新聞: 朝日新聞（デジタル版）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "au-bookpass",
-      "name": "auブックパス",
-      "category": "本・電子書籍・新聞",
-      "evidenceQuote": "本・電子書籍・新聞: auブックパス",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "sokuyomi",
-      "name": "ソク読み",
-      "category": "本・電子書籍・新聞",
-      "evidenceQuote": "本・電子書籍・新聞: ソク読み",
+      "storeId": "sanyodo-shoten",
+      "name": "三洋堂書店",
+      "category": "書店",
+      "evidenceQuote": "三洋堂書店 たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "storeId": "diamond-sha",
       "name": "ダイヤモンド社",
-      "category": "本・電子書籍・新聞",
-      "evidenceQuote": "本・電子書籍・新聞: ダイヤモンド社",
+      "category": "書店",
+      "evidenceQuote": "ダイヤモンド社 たまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "storeId": "president-sha",
       "name": "プレジデント社",
-      "category": "本・電子書籍・新聞",
-      "evidenceQuote": "本・電子書籍・新聞: プレジデント社",
+      "category": "書店",
+      "evidenceQuote": "プレジデント社 たまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -530,7 +178,7 @@
       "storeId": "maruzen-junkudo-shoten",
       "name": "丸善ジュンク堂書店",
       "category": "書店",
-      "evidenceQuote": "本・電子書籍・新聞: 丸善ジュンク堂書店",
+      "evidenceQuote": "丸善ジュンク堂書店 たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -538,23 +186,7 @@
       "storeId": "yaesu-book-center",
       "name": "八重洲ブックセンター",
       "category": "書店",
-      "evidenceQuote": "本・電子書籍・新聞: 八重洲ブックセンター",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "winticket",
-      "name": "WINTICKET(ウィンチケット)",
-      "category": "ギャンブル",
-      "evidenceQuote": "エンタメ・チケット・お出かけ: WINTICKET(ウィンチケット)",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "lawson-ticket",
-      "name": "ローソンチケット",
-      "category": "エンタメ・チケット",
-      "evidenceQuote": "エンタメ・チケット・お出かけ: ローソンチケット",
+      "evidenceQuote": "八重洲ブックセンター たまる つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -562,15 +194,15 @@
       "storeId": "sapporo-regent-golf-club",
       "name": "札幌リージェントゴルフ倶楽部",
       "category": "スポーツ",
-      "evidenceQuote": "スポーツ・ゴルフ: 札幌リージェントゴルフ倶楽部",
+      "evidenceQuote": "札幌リージェントゴルフ倶楽部 たまる つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "renaissance",
+      "storeId": "sports-club-renaissance",
       "name": "スポーツクラブ ルネサンス",
       "category": "スポーツ",
-      "evidenceQuote": "スポーツ・ゴルフ: スポーツクラブ ルネサンス",
+      "evidenceQuote": "スポーツクラブ ルネサンス たまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -578,413 +210,19 @@
       "storeId": "himalaya",
       "name": "ヒマラヤ",
       "category": "スポーツ",
-      "evidenceQuote": "スポーツ・ゴルフ: ヒマラヤ",
+      "evidenceQuote": "ヒマラヤ たまる つかえる アプリ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "au-denki",
-      "name": "auでんき",
-      "category": "電気・ガス",
-      "evidenceQuote": "生活・暮らし・ペット: auでんき",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "otocon",
-      "name": "婚活支援サービス パートナーエージェント（OTOCON）",
-      "category": "その他",
-      "evidenceQuote": "生活・暮らし・ペット: 婚活支援サービス パートナーエージェント（OTOCON）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "suntory-account",
-      "name": "サントリーアカウント",
-      "category": "その他",
-      "evidenceQuote": "生活・暮らし・ペット: サントリーアカウント",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "denki-hikaku-insweb",
-      "name": "でんきの比較インズウェブ",
-      "category": "電気・ガス",
-      "evidenceQuote": "生活・暮らし・ペット: でんきの比較インズウェブ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "plaly",
-      "name": "プラリー",
-      "category": "その他",
-      "evidenceQuote": "生活・暮らし・ペット: プラリー",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "ponta-kantan-hoken",
-      "name": "Pontaかんたん保険",
-      "category": "保険",
-      "evidenceQuote": "生活・暮らし・ペット: Pontaかんたん保険",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "ponta-question",
-      "name": "Pontaクエスチョン",
-      "category": "その他",
-      "evidenceQuote": "生活・暮らし・ペット: Pontaクエスチョン",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "ponta-denki",
-      "name": "Pontaでんき",
-      "category": "電気・ガス",
-      "evidenceQuote": "生活・暮らし・ペット: Pontaでんき",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "life-net",
-      "name": "Life Net",
-      "category": "その他",
-      "evidenceQuote": "生活・暮らし・ペット: Life Net",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "receipt-de-ponta",
-      "name": "レシート de Ponta",
-      "category": "その他",
-      "evidenceQuote": "生活・暮らし・ペット: レシート de Ponta",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "art-hikkoshi-center",
-      "name": "アート引越センター",
-      "category": "引越し",
-      "evidenceQuote": "引越し・住まい: アート引越センター",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "apamanshop",
-      "name": "アパマンショップ",
-      "category": "不動産・住宅",
-      "evidenceQuote": "引越し・住まい: アパマンショップ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "ur-chintai-jutaku",
-      "name": "UR賃貸住宅",
-      "category": "不動産・住宅",
-      "evidenceQuote": "引越し・住まい: UR賃貸住宅",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "commufa",
-      "name": "コミュファ",
-      "category": "通信",
-      "evidenceQuote": "家電・コンピューター・通信: コミュファ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "bbic",
-      "name": "BBIQ（QTnet）",
-      "category": "通信",
-      "evidenceQuote": "家電・コンピューター・通信: BBIQ（QTnet）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "gaba-english",
+      "storeId": "gaba",
       "name": "Gabaマンツーマン英会話",
-      "category": "その他",
-      "evidenceQuote": "ビジネス・英語・習い事: Gabaマンツーマン英会話",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "studysapuri-english",
-      "name": "スタディサプリENGLISH",
-      "category": "その他",
-      "evidenceQuote": "ビジネス・英語・習い事: スタディサプリENGLISH",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "riskmonster",
-      "name": "リスクモンスター",
-      "category": "その他",
-      "evidenceQuote": "ビジネス・英語・習い事: リスクモンスター",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "enewan",
-      "name": "エネワン（株式会社サイサン）",
-      "category": "電気・ガス",
-      "evidenceQuote": "電気・ガス: エネワン（株式会社サイサン）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "gasone",
-      "name": "ガスワン（株式会社サイサン）",
-      "category": "電気・ガス",
-      "evidenceQuote": "電気・ガス: ガスワン（株式会社サイサン）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "machi-ene",
-      "name": "まちエネ",
-      "category": "電気・ガス",
-      "evidenceQuote": "電気・ガス: まちエネ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "mitsuuroko-denki-toshigas",
-      "name": "ミツウロコでんき・都市ガス",
-      "category": "電気・ガス",
-      "evidenceQuote": "電気・ガス: ミツウロコでんき・都市ガス",
+      "category": "ビジネス・教育",
+      "evidenceQuote": "Gabaマンツーマン英会話 たまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }
   ],
-  "loyaltyRules": [
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "conv-lawson",
-      "rate": 0.01,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ローソン",
-      "notes": "通常100円(税抜)につき1ポイント、一部店舗・商品除く。詳細は不明なため汎用的なレート設定。",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "apollostation",
-      "rate": 0.005,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: apollostation / レンタカー・ガソリンスタンド・駐車場: apollostation たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "kentucky",
-      "rate": 0.01,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ケンタッキーフライドチキン / グルメ・飲食: ケンタッキーフライドチキン たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常100円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "geo",
-      "rate": 0.01,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ゲオ / 音楽・映像・ゲーム: ゲオ たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常100円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "ace-contact",
-      "rate": 0.005,
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: エースコンタクト たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "takashimaya",
-      "rate": 0.005,
-      "evidenceQuote": "百貨店・コンビニ・スーパー・ドラッグストア: 高島屋 たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "suika",
-      "rate": 0.005,
-      "evidenceQuote": "グルメ・飲食: すき家 たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "doutor",
-      "rate": 0.01,
-      "evidenceQuote": "グルメ・飲食: ドトールコーヒーショップ たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常100円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "best-megane-contact",
-      "rate": 0.005,
-      "evidenceQuote": "ファッション・美容: ベストメガネコンタクト たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "joshin",
-      "rate": 0.005,
-      "evidenceQuote": "音楽・映像・ゲーム: ジョーシン たまる つかえる アプリ / 家電・コンピューター・通信: ジョーシン たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "kojima",
-      "rate": 0.005,
-      "evidenceQuote": "家電・コンピューター・通信: コジマ たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sofmap",
-      "rate": 0.005,
-      "evidenceQuote": "家電・コンピューター・通信: ソフマップ たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "bic-camera",
-      "rate": 0.005,
-      "evidenceQuote": "家電・コンピューター・通信: ビックカメラ たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "saibu-gas",
-      "rate": 0.005,
-      "evidenceQuote": "電気・ガス: 西部ガス たまる",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "conv-familymart",
-      "rate": 0.005,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ファミリーマート",
-      "notes": "PontaWebのトップページでFamilyMartのロゴがありPontaがたまる・つかえると記載。一般的なレートを推定。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "jalannet",
-      "rate": 0.01,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: じゃらんnet / レジャー・旅行: じゃらんnet たまる つかえる リクルートID",
-      "notes": "じゃらんnetでの宿泊予約でPontaポイントがたまる。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "au",
-      "rate": 0.01,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: au / 家電・コンピューター・通信: au たまる",
-      "notes": "au利用料金での付与レートは別途確認が必要だが、汎用的なレートを設定。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hotpepper-beauty",
-      "rate": 0.01,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ホットペッパービューティー / ファッション・美容: ホットペッパービューティー たまる つかえる リクルートID",
-      "notes": "ホットペッパービューティーの利用でPontaポイントがたまる。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hotpepper-gourmet",
-      "rate": 0.01,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: ホットペッパーグルメ / グルメ・飲食: ホットペッパーグルメ たまる つかえる リクルートID",
-      "notes": "ホットペッパーグルメの利用でPontaポイントがたまる。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "jalan-golf",
-      "rate": 0.01,
-      "evidenceQuote": "PickUpたまる・つかえるサービス、お店: じゃらんゴルフ / スポーツ・ゴルフ: じゃらんゴルフ たまる つかえる リクルートID",
-      "notes": "じゃらんゴルフの利用でPontaポイントがたまる。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "toku-taku",
-      "rate": 0.01,
-      "evidenceQuote": "レジャー・旅行: 得タク たまる / 車・バイク: 得タク たまる",
-      "notes": "Web上ではレート記載なし。通常100円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hotel-keihan-chain",
-      "rate": 0.005,
-      "evidenceQuote": "レジャー・旅行: ホテル京阪チェーン たまる つかえる アプリ",
-      "notes": "Web上ではレート記載なし。通常200円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "jal-rentacar",
-      "rate": 0.01,
-      "evidenceQuote": "レンタカー・ガソリンスタンド・駐車場: じゃらんレンタカー たまる つかえる リクルートID",
-      "notes": "じゃらんレンタカーの利用でPontaポイントがたまる。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sakai-hikkoshi",
-      "rate": 0.01,
-      "evidenceQuote": "引越し・住まい: サカイ引越センター たまる",
-      "notes": "Web上ではレート記載なし。通常100円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "heart-hikkoshi",
-      "rate": 0.01,
-      "evidenceQuote": "引越し・住まい: ハート引越センター たまる",
-      "notes": "Web上ではレート記載なし。通常100円につき1ポイント。",
-      "explicitness": 0.7,
-      "ambiguity": 0.3
-    }
-  ],
-  "notes": "総150件以上のチェーン・サービスが掲載されている中、主要・知名度の高いチェーンを中心に60件を抽出しました。還元率の記載がない店舗については、Pontaポイントの一般的な還元率（100円で1ポイント、または200円で1ポイント）を推定し、ambiguityを高く設定しています。金融・保険・医療・ギャンブル・葬儀・不動産・ネットサービスのみのカテゴリは抽出対象外としました。また、特定店舗のみの記載（例：リラヘアー、south ave. new 仙臺ＺＡ）も抽出対象外です。"
+  "loyaltyRules": [],
+  "notes": "ページにPontaポイントの還元率（例: 100円につき1ポイント）が明示されていないため、loyaltyRulesは抽出できません。chains-onlyスコープで、PointMax既存にない全国/広域チェーン店のみをstoresに追加しました。金融、保険、医療、ギャンブル、葬儀、不動産/住宅、ネットサービスのみ、漠然カテゴリは抽出対象外としました。"
 }

@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 18;
+export const SEED_VERSION = 19;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -139,6 +139,17 @@ export const SEED_CHANGELOG: {
       "JCB CARD W 用に新通貨 j-point (J-POINT、2026/1 Oki Doki リニューアル後) を追加。" +
       "J-POINT → JAL/ANA マイル / MyJCB Pay の交換 edges 3 件、JAL カード普通版用の特約店/ファミマ rules 2 件も追加。" +
       "これで日本の発行枚数上位 9 ブランド (楽天/三井住友/JAL/AEON/JCB/d/PayPay/エポス/ANA) ほぼカバー。",
+  },
+  {
+    version: 19,
+    date: "2026-05-14",
+    summary:
+      "PR #2 (週次 cron review queue) Step 1 消化: stores 34 件を seed-additions.ts に取り込み " +
+      "(牛角・くら寿司・ドラッグユタカ・samsonite 等、v/d/ponta 加盟店リストより)。" +
+      "propose pipeline に rate=0 ガード追加 (Gemini 抽出失敗時の意味のない rule が auto 適用される事故を防止)。" +
+      "新 review reason 'zeroOrInvalidRate' を導入。aliases.json に sourceId hallucination 対策で " +
+      "smbc-v-gold-7percent → smbc-v エイリアスを追加 (次回 cron で 22 件の hallucinated rules が " +
+      "正しく既存 smbc-v に正規化される予定)。",
   },
 ];
 

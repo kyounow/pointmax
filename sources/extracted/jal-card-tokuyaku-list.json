@@ -1,12 +1,33 @@
 {
   "sourceId": "jal-card-tokuyaku-list",
-  "sourceUrl": "https://www.jal.co.jp/jalcard/use/jaltokuyaku/list/",
-  "fetchedAt": "2026-05-11T11:37:49.191Z",
-  "promptVersion": "jal-tokuyaku-v1.0",
+  "sourceUrl": "https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201",
+  "fetchedAt": "2026-05-14T02:29:03.797Z",
+  "promptVersion": "jal-tokuyaku-v1.1",
   "extractor": "jal-tokuyaku",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Source URL could not be fetched. Unable to extract any information from the page.",
-  "categoryRules": [],
-  "storeRules": [],
-  "stores": []
+  "notes": "JALカード特約店は「JALカードでの決済でショッピングマイルが2倍たまる」と明記されています。抽出スコープchains-onlyに基づき、広域チェーン店のみを対象とした結果、既存のロイヤルホストのみが確認できました。その他の表示店舗は地域限定の個店と判断し、stores[]には追加していません。",
+  "categoryRules": [
+    {
+      "cardId": "jal-suica",
+      "category": "JAL特約店",
+      "rate": 0.02,
+      "currencyId": "jal-mile",
+      "evidenceQuote": "JALカードでの決済でショッピングマイルが2倍たまる（JALカード特約店）",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    }
+  ],
+  "stores": [],
+  "storeRules": [
+    {
+      "cardId": "jal-suica",
+      "storeId": "royal-host",
+      "rate": 0.02,
+      "currencyId": "jal-mile",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "ロイヤルホスト JAL CARD 決済でマイルが2倍",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    }
+  ]
 }

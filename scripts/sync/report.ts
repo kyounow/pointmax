@@ -143,6 +143,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   userBlocked: "⚫ userBlocked",
   selfReportedExclusion: "🟠 selfReportedExclusion",
   unsupportedDateClaim: "🔴 unsupportedDateClaim",
+  zeroOrInvalidRate: "🔴 zeroOrInvalidRate",
 };
 
 const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
@@ -168,6 +169,8 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "Gemini 自身が evidenceQuote で「対象外」「見送り」「記載なし」等と表明。Gemini の良心 hallucination 抑制が機能した結果。基本は無視で OK。",
   unsupportedDateClaim:
     "validFrom/validTo が抽出されたが evidenceQuote に日付の根拠 (期間 / YYYY年 / まで 等) が見当たらない。日付の hallucination 疑い。元 URL を直接確認の上採否を判断。",
+  zeroOrInvalidRate:
+    "rate=0 抽出。Gemini が還元率を読み取れなかった疑い。実際の値を URL で確認の上、手動キュレートで取り込むか、prompt 改善後に再 fetch すること。",
 };
 
 function formatProposalDetail(p: Proposal): string {
@@ -267,6 +270,7 @@ export function buildReviewQueue(report: ProposalReport): string {
     // Render each reason group
     // Sort by priority: lowConfidence first, then others, then userBlocked last
     const reasonOrder: ReviewReason[] = [
+      "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を最優先確認
       "unsupportedDateClaim", // 🔴 hallucination 疑い、最優先で目を通す
       "rateDeltaTooLarge",
       "rateRatioOutOfRange",

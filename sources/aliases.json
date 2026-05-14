@@ -3,7 +3,8 @@
   "_comment": "Gemini 抽出時の id 揺れを正規化するエイリアス辞書。propose 時に左→右に変換される。新しい揺れを観測したら追加。",
   "cardIds": {
     "smbc-v-gold": "smbc-v",
-    "smbc-v-gold-nl": "smbc-v"
+    "smbc-v-gold-nl": "smbc-v",
+    "smbc-v-gold-7percent": "smbc-v"
   },
   "storeIds": {
     "seven-eleven": "conv-7eleven",

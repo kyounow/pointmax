@@ -429,6 +429,63 @@ describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
   });
 });
 
+describe("rate=0 guard: zeroOrInvalidRate", () => {
+  it("loyaltyRule rate=0 → reviewReason zeroOrInvalidRate", () => {
+    const data = baseSource({
+      loyaltyRules: [
+        {
+          pointCardId: "d-point",
+          storeId: "some-store",
+          rate: 0,
+          evidenceQuote: "dポイント加盟店",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeLoyaltyRules(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
+  });
+
+  it("loyaltyRule rate=0.005 → reviewReason なし (正常抽出)", () => {
+    const data = baseSource({
+      loyaltyRules: [
+        {
+          pointCardId: "d-point",
+          storeId: "some-store",
+          rate: 0.005,
+          evidenceQuote: "0.5%還元",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeLoyaltyRules(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("storeRule rate=0 → reviewReason zeroOrInvalidRate", () => {
+    const data = baseSource({
+      storeRules: [
+        {
+          cardId: "smbc-v",
+          storeId: "some-store",
+          rate: 0,
+          currencyId: "v-pt",
+          evidenceQuote: "加盟店リスト",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeStoreRules(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
+  });
+});
+
 describe("proposeStoreRules: validFrom/validTo pass-through and unsupportedDateClaim guard", () => {
   it("validFrom あり + evidence に日付根拠あり → autoApplicable で record に validFrom が含まれる", () => {
     const data = baseSource({

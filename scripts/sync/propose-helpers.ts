@@ -134,6 +134,10 @@ export function proposeStoreRules(
       if (detectUnsupportedDateClaim(r, evidence.evidenceQuote)) {
         reviewReason = "unsupportedDateClaim";
       }
+      // rate=0 は Gemini 抽出失敗の証拠。自動マージ防止のため強制 review。
+      if (!r.rate || r.rate === 0) {
+        reviewReason = "zeroOrInvalidRate";
+      }
       const ruleId = `rule-${r.cardId}-${r.storeId}${r.paymentAppId ? `-${r.paymentAppId}` : ""}`;
       const record: Record<string, unknown> = {
         id: ruleId,
@@ -222,6 +226,10 @@ export function proposeCategoryRules(
       // 日付主張があるのに evidenceQuote に日付根拠がない場合は hallucination 疑い
       if (detectUnsupportedDateClaim(r, evidence.evidenceQuote)) {
         catReviewReason = "unsupportedDateClaim";
+      }
+      // rate=0 は Gemini 抽出失敗の証拠。自動マージ防止のため強制 review。
+      if (!r.rate || r.rate === 0) {
+        catReviewReason = "zeroOrInvalidRate";
       }
       const catRecord: Record<string, unknown> = {
         id: catRuleId,
@@ -372,6 +380,10 @@ export function proposeLoyaltyRules(
       // 日付主張があるのに evidenceQuote に日付根拠がない場合は hallucination 疑い
       if (detectUnsupportedDateClaim(r, evidence.evidenceQuote)) {
         loyaltyReviewReason = "unsupportedDateClaim";
+      }
+      // rate=0 は Gemini 抽出失敗の証拠。自動マージ防止のため強制 review。
+      if (!r.rate || r.rate === 0) {
+        loyaltyReviewReason = "zeroOrInvalidRate";
       }
       const loyaltyRecord: Record<string, unknown> = {
         id: loyaltyId,
