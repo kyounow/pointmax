@@ -102,6 +102,34 @@ jobs:
             echo "✓ auto-merged ${{ steps.counts.outputs.auto }} changes to main"
           fi
 
+      # ===== Safety fallback: autoApplicable を needsReview に降格 =====
+      # safety check が失敗した時 (件数超過 / test/build 失敗)、
+      # autoApplicable アイテムがそのまま proposed-migrations.json に留まり
+      # REVIEW_QUEUE.md に出てこない問題を解消する。
+      # → 全 autoApplicable に reviewReason="safetyFailed" を付けて needsReview に移動し
+      #   sync:report を再実行することで REVIEW_QUEUE.md に可視化される。
+      - name: Downgrade auto to review on safety failure
+        if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome != 'success'
+        run: |
+          node -e "
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('sources/proposed-migrations.json', 'utf-8'));
+            const downgraded = m.autoApplicable.map(p => ({
+              ...p,
+              reviewReason: 'safetyFailed',
+            }));
+            m.needsReview = [...m.needsReview, ...downgraded];
+            m.autoApplicable = [];
+            m.summary.needsReviewCount = m.needsReview.length;
+            m.summary.autoApplicableCount = 0;
+            fs.writeFileSync('sources/proposed-migrations.json', JSON.stringify(m, null, 2));
+            console.log('Downgraded', downgraded.length, 'auto items to review (safetyFailed)');
+          "
+
+      - name: Regenerate reports (after safety-failed downgrade)
+        if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome != 'success'
+        run: npm run sync:report
+
       # ===== Tier 2: Review PR =====
       # 条件:
       #   needsReview > 0   OR

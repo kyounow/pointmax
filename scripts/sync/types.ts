@@ -267,7 +267,8 @@ export type ReviewReason =
   | "userBlocked"             // src/state/seed-blocklist.ts でユーザが除外指定
   | "selfReportedExclusion"   // evidenceQuote に Gemini 自身による除外記述を検知
   | "unsupportedDateClaim"    // validFrom/validTo があるのに evidenceQuote に日付根拠がない
-  | "zeroOrInvalidRate";      // rate=0 または未定義。Gemini が還元率を抽出できなかった疑い
+  | "zeroOrInvalidRate"       // rate=0 または未定義。Gemini が還元率を抽出できなかった疑い
+  | "safetyFailed";           // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";

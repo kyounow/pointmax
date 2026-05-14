@@ -132,6 +132,7 @@ export function buildAutoSummary(report: ProposalReport): string {
 // ───────────────────────────────────────────────────────────────
 
 const REASON_LABELS: Record<ReviewReason, string> = {
+  safetyFailed: "🛡 safetyFailed (auto-merge 件数オーバー降格)",
   lowConfidence: "🟡 lowConfidence",
   rateDeltaTooLarge: "🟠 rateDeltaTooLarge",
   rateRatioOutOfRange: "🟠 rateRatioOutOfRange",
@@ -147,6 +148,9 @@ const REASON_LABELS: Record<ReviewReason, string> = {
 };
 
 const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
+  safetyFailed:
+    "auto-merge 候補だが、件数が maxAutoChangesPerRun を超えたため安全弁で review に降格。" +
+    "内容は健全な auto 候補なので、個別精査の上 maxAutoChangesPerRun を一時 bump して再実行 or 手動で取り込み判断。",
   lowConfidence:
     "Gemini の評価で confidence < 0.9。エビデンス不明瞭・推測混入の疑い。",
   rateDeltaTooLarge:
@@ -268,10 +272,12 @@ export function buildReviewQueue(report: ProposalReport): string {
     lines.push("");
 
     // Render each reason group
-    // Sort by priority: lowConfidence first, then others, then userBlocked last
+    // Sort by priority: safetyFailed first (healthy auto items, easy to act on),
+    // then data-quality issues, then others, then userBlocked last
     const reasonOrder: ReviewReason[] = [
-      "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を最優先確認
-      "unsupportedDateClaim", // 🔴 hallucination 疑い、最優先で目を通す
+      "safetyFailed",         // 🛡 件数超過で降格された健全な auto 候補。内容確認の上 bump 判断
+      "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
+      "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
       "rateDeltaTooLarge",
       "rateRatioOutOfRange",
       "multiSourceConflict",
