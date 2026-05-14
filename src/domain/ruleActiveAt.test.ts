@@ -79,4 +79,36 @@ describe("isRuleActiveAt", () => {
       }),
     ).toBe(true);
   });
+
+  // ─── recurringDays ───
+
+  it("recurringDays [5,10,15,20,25,30] かつ now.getDate() === 10 → active", () => {
+    const day10 = new Date("2026-06-10T12:00:00");
+    expect(
+      isRuleActiveAt({ recurringDays: [5, 10, 15, 20, 25, 30] }, day10),
+    ).toBe(true);
+  });
+
+  it("recurringDays [5,10,15,20,25,30] かつ now.getDate() === 11 → not active", () => {
+    const day11 = new Date("2026-06-11T12:00:00");
+    expect(
+      isRuleActiveAt({ recurringDays: [5, 10, 15, 20, 25, 30] }, day11),
+    ).toBe(false);
+  });
+
+  it("recurringDays + validFrom 期限切れ → not active (AND 結合)", () => {
+    // validFrom が未来 → validFrom チェックで弾かれる
+    const day10 = new Date("2026-06-10T12:00:00");
+    expect(
+      isRuleActiveAt(
+        { validFrom: "2026-07-01", recurringDays: [5, 10, 15, 20, 25, 30] },
+        day10,
+      ),
+    ).toBe(false);
+  });
+
+  it("recurringDays 空配列 → 制限なし扱い (常時 active)", () => {
+    const day11 = new Date("2026-06-11T12:00:00");
+    expect(isRuleActiveAt({ recurringDays: [] }, day11)).toBe(true);
+  });
 });

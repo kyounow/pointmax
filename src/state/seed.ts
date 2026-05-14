@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 16;
+export const SEED_VERSION = 17;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -117,6 +117,18 @@ export const SEED_CHANGELOG: {
     date: "2026-05-13",
     summary:
       "PR #1 の review item 消化。しゃぶ葉 (すかいらーくグループ) を新規 store として追加 + SMBC 7% rule を追加 (validFrom 付き)。aliases.json に yumean→yumetoan / kappazushi→kappa-sushi 追加で次回 cron は既存と統合される予定。残 4 件 (11% 上振せ条件付き、lowson typo は alias 済、ファミマ・デイリーヤマザキ誤抽出) はスキップ。",
+  },
+  {
+    version: 17,
+    date: "2026-05-14",
+    summary:
+      "(a) 初の期間限定キャンペーン rule-dcard-bic-camera-d-pay-202605 を追加 (2026/5/16〜5/31)。" +
+      "(b) StoreRule / LoyaltyRule に optional recurringDays?: number[] を追加。" +
+      "月内の特定日にのみ有効な rule を表現可能に。isRuleActiveAt が validFrom/validTo と" +
+      "AND 結合で日付チェック。楽天市場「5と0のつく日」+1% rule を [5,10,15,20,25,30] で登録 (1 件目の使用例)。" +
+      "(c) Calculator に「今日 YYYY/MM/DD 時点の還元率」インジケーター追加で日付依存を明示。" +
+      "(d) RulesScreen / PaymentAppsScreen に期間/recurring 列を追加し、" +
+      "アクティブ/非アクティブを視覚化。",
   },
 ];
 

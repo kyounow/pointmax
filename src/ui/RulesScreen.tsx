@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { cardLabel } from "../domain/cardLabel";
+import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { StoreRule } from "../domain/types";
 import { groupBy } from "../domain/groupBy";
@@ -200,6 +201,19 @@ export function RulesScreen() {
           />
         </span>
       ),
+    },
+    {
+      key: "period",
+      label: "期間",
+      view: (r) => {
+        const active = isRuleActiveAt(r);
+        return (
+          <span title={active ? "今日有効" : "今日は対象外"}>
+            {active ? "✓ " : "○ "}
+            {formatRulePeriod(r)}
+          </span>
+        );
+      },
     },
     {
       key: "notes",

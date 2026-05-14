@@ -4,6 +4,7 @@ import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { PaymentApp } from "../domain/types";
 import { cardLabel } from "../domain/cardLabel";
 import { useNameResolvers } from "./hooks/useNameResolvers";
+import { isRuleActiveAt } from "../domain/ruleActiveAt";
 
 export function PaymentAppsScreen() {
   const cards = useStore((s) => s.cards);
@@ -183,9 +184,27 @@ export function PaymentAppsScreen() {
         view: (p) => {
           const list = p.cardSpecificBonusRates ?? [];
           if (list.length === 0) return "-";
-          return list
-            .map((b) => `${cardLabelById(b.cardId)}: ${(b.rate * 100).toFixed(2)}%`)
-            .join(" / ");
+          return (
+            <span>
+              {list.map((b, i) => (
+                <span key={b.cardId}>
+                  {i > 0 && " / "}
+                  {cardLabelById(b.cardId)}: {(b.rate * 100).toFixed(2)}%
+                  {(b.validFrom || b.validTo) && (
+                    <small
+                      style={{
+                        color: isRuleActiveAt(b) ? "var(--accent, #3a86ff)" : "var(--muted)",
+                        marginLeft: 4,
+                      }}
+                      title={isRuleActiveAt(b) ? "今日有効" : "今日は対象外"}
+                    >
+                      ({b.validFrom ?? ""}〜{b.validTo ?? "(未告知)"})
+                    </small>
+                  )}
+                </span>
+              ))}
+            </span>
+          );
         },
         edit: (p, set) => (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

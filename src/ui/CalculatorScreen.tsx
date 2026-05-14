@@ -151,6 +151,12 @@ export function CalculatorScreen() {
       <p className="hint">
         支払い情報と「最終的に貯めたい通貨」を選ぶと、保有カード別に最適な交換ルートと最終取得量を表示します。ポイントカード併用ボーナスがある店舗ではクレカ還元と合算されます。
       </p>
+      <p className="hint" style={{ marginBottom: 12 }}>
+        📅 <strong>{new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" })}</strong> 時点の還元率を表示中
+        <small style={{ marginLeft: 8, color: "var(--muted)" }}>
+          (期間限定 🎯 / 公式プログラム 📌 / 5/0 のつく日 等の日付依存ルールはこの日に有効なものだけ反映)
+        </small>
+      </p>
 
       <form className="row" onSubmit={(e) => e.preventDefault()}>
         <label>

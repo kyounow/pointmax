@@ -88,6 +88,7 @@ export const SEED_STORES: Store[] = [
   // 百貨店・家電量販店・ドラッグストア (主にdポイント加盟)
   { id: "takashimaya", name: "高島屋", category: "百貨店" },
   { id: "nojima", name: "ノジマ", category: "家電量販店" },
+  { id: "bic-camera", name: "ビックカメラ", category: "家電量販店" },
   { id: "cocokara", name: "ココカラファイン", category: "ドラッグストア" },
   { id: "seiyu", name: "西友", category: "スーパー" },
   // 汎用 (デフォルト選択用。基本還元率を確認したい時に使う)
@@ -383,6 +384,36 @@ export const SEED_STORE_RULES: StoreRule[] = [
     rate: 0.02,
     currencyId: "jal-mile",
     notes: "JAL CARD特約店 100円=2マイル (ファミマは特約店個別ルール)",
+  },
+  // === 期間限定キャンペーン ===
+  // d払い × dカード × ビックカメラ +5% (2026年5月のキャンペーン)
+  // 詳細: NTTドコモ公式 https://service.smt.docomo.ne.jp/keitai_payment/campaign/dpay_biccamera_260507_7487/
+  {
+    id: "rule-dcard-bic-camera-d-pay-202605",
+    cardId: "dcard",
+    storeId: "bic-camera",
+    paymentAppId: "pa-d-pay",
+    rate: 0.06, // 通常 1% + キャンペーン 5%
+    currencyId: "d-pt",
+    validFrom: "2026-05-16", // ビックカメラ全店 (Select 那覇国際通り店のみ 5/7〜だが、簡略化)
+    validTo: "2026-05-31",
+    notes: "d払い+5% ビックカメラ限定キャンペーン (要エントリー、進呈上限 2000pt)",
+  },
+  // === 長期公式プログラム (recurringDays) ===
+  // 楽天市場「5と0のつく日」: 毎月 5,10,15,20,25,30 日にエントリー & 楽天カード決済で +1%
+  // 既存 rule-rakuten-ichiba (rate 0.03 = 1% + SPU 2%) との合算で実質 4%。
+  // 同 storeId+cardId で複数 rule は resolveRate で最大値が採用される設計のため、
+  // 5/0 のつく日のみ rate=0.04 がアクティブになり、それ以外の日は既存 0.03 ルールが採用される。
+  {
+    id: "rule-rakuten-ichiba-zero-five-day",
+    cardId: "rakuten-card",
+    storeId: "rakuten-ichiba",
+    rate: 0.04,
+    currencyId: "rakuten-pt",
+    validFrom: "2020-01-01", // 「5/0 のつく日」プログラム自体は長く実施されている、概算
+    recurringDays: [5, 10, 15, 20, 25, 30],
+    notes:
+      "5と0のつく日 (毎月 5/10/15/20/25/30) のみ、要エントリー。SPU 基本 +2% 込みで実質 +4% 還元。",
   },
 ];
 

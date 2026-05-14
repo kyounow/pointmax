@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { cardLabel } from "../domain/cardLabel";
-import { isRuleActiveAt } from "../domain/ruleActiveAt";
+import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
 import type { LoyaltyRule, StoreRule } from "../domain/types";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import { MultiStorePicker } from "./MultiStorePicker";
@@ -234,6 +234,19 @@ export function CampaignsScreen() {
           style={{ width: 140 }}
         />
       ),
+    },
+    {
+      key: "period",
+      label: "期間",
+      view: (r) => {
+        const active = isRuleActiveAt(r);
+        return (
+          <span title={active ? "今日有効" : "今日は対象外"}>
+            {active ? "✓ " : "○ "}
+            {formatRulePeriod(r)}
+          </span>
+        );
+      },
     },
     {
       key: "notes",

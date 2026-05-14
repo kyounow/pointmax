@@ -62,6 +62,12 @@ export type StoreRule = {
   notes?: string;
   validFrom?: string;
   validTo?: string;
+  // 月内の特定日にのみ有効になる繰り返しパターン (任意)。
+  // 値の範囲は 1〜31 (日付)。例: 楽天「5と0のつく日」→ [5, 10, 15, 20, 25, 30]。
+  // undefined / 空配列 = 日付制限なし (常時有効、既存挙動)。
+  // 1 件以上 = 「今日 (now.getDate())」がリスト内にある時のみアクティブ。
+  // validFrom/validTo の範囲チェックと **AND** で結合される (期間内かつ recurring 日付一致)。
+  recurringDays?: number[];
 };
 
 // ポイント交換エッジ。fromCurrencyId 1単位 → toCurrencyId rate単位
@@ -99,6 +105,12 @@ export type LoyaltyRule = {
   notes?: string;
   validFrom?: string;
   validTo?: string;
+  // 月内の特定日にのみ有効になる繰り返しパターン (任意)。
+  // 値の範囲は 1〜31 (日付)。例: 楽天「5と0のつく日」→ [5, 10, 15, 20, 25, 30]。
+  // undefined / 空配列 = 日付制限なし (常時有効、既存挙動)。
+  // 1 件以上 = 「今日 (now.getDate())」がリスト内にある時のみアクティブ。
+  // validFrom/validTo の範囲チェックと **AND** で結合される (期間内かつ recurring 日付一致)。
+  recurringDays?: number[];
 };
 
 // 支払アプリ（楽天Pay/d払い/PayPay/Visaタッチ等）
