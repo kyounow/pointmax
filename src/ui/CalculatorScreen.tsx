@@ -23,6 +23,7 @@ export function CalculatorScreen() {
   const loyaltyRules = useStore((s) => s.loyaltyRules);
   const paymentApps = useStore((s) => s.paymentApps);
   const programs = useStore((s) => s.programs);
+  const memberships = useStore((s) => s.memberships);
 
   // デフォルトは「一般店舗 (規定還元)」。基本還元率の確認用。
   // store-id "general" が存在しない場合 (極端なリセット直後) は空文字フォールバック
@@ -111,6 +112,8 @@ export function CalculatorScreen() {
         pointCards,
         loyaltyRules,
         paymentApps,
+        programs,
+        memberships,
       },
       { includeDisabled: true },
     );
@@ -125,6 +128,8 @@ export function CalculatorScreen() {
     pointCards,
     loyaltyRules,
     paymentApps,
+    programs,
+    memberships,
   ]);
 
   // 主結果: enabled なカード (既存 result と同等)

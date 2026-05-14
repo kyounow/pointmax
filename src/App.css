@@ -371,6 +371,28 @@ details summary {
   font-size: 12px;
   margin-top: -4px;
 }
+/* NodeDetailPanel: 出口/入口を 2 列に並べる (広い画面)。
+   モバイル (<= 720px) では @media で 1 列に戻す。 */
+.edge-panel-body.node-routes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.edge-panel-body.node-routes .empty {
+  grid-column: 1 / -1;
+}
+.edge-panel-body.node-routes .node-routes-col {
+  min-width: 0; /* grid セル内で route-name の ellipsis を効かせるため */
+}
+.edge-panel-body.node-routes .route-section-title {
+  margin-top: 0;
+}
+@media (max-width: 720px) {
+  .edge-panel-body.node-routes {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
 .arrow-large {
   color: var(--accent);
   font-size: 22px;
@@ -455,6 +477,10 @@ details summary {
 }
 .route-name {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .route-ratio {
   color: var(--muted);

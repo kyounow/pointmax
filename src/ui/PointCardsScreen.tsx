@@ -11,6 +11,8 @@ export function PointCardsScreen() {
   const currencies = useStore((s) => s.currencies);
   const stores = useStore((s) => s.stores);
   const loyaltyRules = useStore((s) => s.loyaltyRules);
+  const programs = useStore((s) => s.programs);
+  const memberships = useStore((s) => s.memberships);
   const addPointCard = useStore((s) => s.addPointCard);
   const updatePointCard = useStore((s) => s.updatePointCard);
   const removePointCard = useStore((s) => s.removePointCard);
@@ -43,6 +45,42 @@ export function PointCardsScreen() {
     () => groupBy(stores, (s) => s.category ?? "その他"),
     [stores],
   );
+
+  // v3 では loyalty 情報の主要な置き場が BenefitProgram + StoreProgramMembership に
+  // 移った。表示用にカードごとに「旧 LoyaltyRule + program × membership を LoyaltyRule
+  // 形式に合成したもの」をまとめる。ここで作る合成 rule は id を `prog:<programId>:<storeId>`
+  // 形式にして本物の LoyaltyRule (`lr-*`) と衝突しないようにする。
+  const programBasedRulesByPointCard = useMemo(() => {
+    const map = new Map<string, LoyaltyRule[]>();
+    const membershipsByProgram = new Map<string, typeof memberships>();
+    for (const m of memberships) {
+      const arr = membershipsByProgram.get(m.programId);
+      if (arr) arr.push(m);
+      else membershipsByProgram.set(m.programId, [m]);
+    }
+    for (const prog of programs) {
+      if (!prog.pointCardId) continue;
+      const mems = membershipsByProgram.get(prog.id) ?? [];
+      // membership がない program は「全店共通」なので店舗一覧には載せない
+      if (mems.length === 0) continue;
+      const list = map.get(prog.pointCardId) ?? [];
+      for (const m of mems) {
+        list.push({
+          id: `prog:${prog.id}:${m.storeId}`,
+          pointCardId: prog.pointCardId,
+          storeId: m.storeId,
+          rate: m.overrideRate ?? prog.rate,
+          currencyId: m.overrideCurrencyId ?? prog.currencyId,
+          validFrom: prog.validFrom,
+          validTo: prog.validTo,
+          recurringDays: prog.recurringDays,
+          notes: prog.notes ?? m.notes,
+        });
+      }
+      map.set(prog.pointCardId, list);
+    }
+    return map;
+  }, [programs, memberships]);
 
   const pointCardColumns: ColumnDef<PointCard>[] = [
     {
@@ -82,7 +120,10 @@ export function PointCardsScreen() {
       key: "stores",
       label: "対象加盟店",
       view: (p) => {
-        const rules = loyaltyRules.filter((r) => r.pointCardId === p.id);
+        // 旧 LoyaltyRule + Program ベースの両方をマージして表示
+        const legacy = loyaltyRules.filter((r) => r.pointCardId === p.id);
+        const fromPrograms = programBasedRulesByPointCard.get(p.id) ?? [];
+        const rules = [...legacy, ...fromPrograms];
         return (
           <PointCardStoresPreview
             rules={rules}

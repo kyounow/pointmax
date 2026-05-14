@@ -34,12 +34,12 @@ export function NodeDetailPanel({
         </span>
         <button onClick={onDismiss}>選択解除</button>
       </div>
-      <div className="edge-panel-body">
+      <div className="edge-panel-body node-routes">
         {outgoing.length === 0 && incoming.length === 0 && (
           <p className="empty">関連エッジがありません。</p>
         )}
         {outgoing.length > 0 && (
-          <div>
+          <div className="node-routes-col">
             <h4 className="route-section-title">
               出口（このポイントから交換できる先）
             </h4>
@@ -78,7 +78,7 @@ export function NodeDetailPanel({
           </div>
         )}
         {incoming.length > 0 && (
-          <div>
+          <div className="node-routes-col">
             <h4 className="route-section-title">
               入口（このポイントへ変換できる元）
             </h4>

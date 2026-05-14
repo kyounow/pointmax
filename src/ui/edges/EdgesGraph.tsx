@@ -18,7 +18,10 @@ import { nodeTypes, type CurrencyNodeType } from "../CurrencyNode";
 import { edgeTypes } from "../PointMaxEdge";
 import type { Selection } from "./types";
 
-// kind 別に行を分けて配置 (point上段 / mile中段 / cashlike下段 / 未分類最下段)
+// kind 別に行を分けて配置 (point上段 / mile中段 / cashlike下段 / 未分類最下段)。
+// 各 kind 内のノードが多い場合は MAX_PER_ROW で折り返して縦に積み、
+// 1 つの kind の subrow 数に応じて次の kind の y 位置を動的に決める。
+// これにより、ノードが多くても横スクロールが大幅に減って fitView の縮尺が改善される。
 function layoutByKind(
   currencies: Currency[],
 ): Map<string, { x: number; y: number }> {
@@ -31,18 +34,32 @@ function layoutByKind(
   for (const c of currencies) {
     buckets[c.kind ?? "other"].push(c);
   }
-  const rows: { items: Currency[]; y: number }[] = [
-    { items: buckets.point, y: 30 },
-    { items: buckets.mile, y: 220 },
-    { items: buckets.cashlike, y: 380 },
-    { items: buckets.other, y: 540 },
+  const MAX_PER_ROW = 6;
+  const COL_GAP = 140;
+  const SUBROW_GAP = 110;
+  const KIND_GAP = 70;
+  const X_BASE = 30;
+  const orderedKinds: (keyof typeof buckets)[] = [
+    "point",
+    "mile",
+    "cashlike",
+    "other",
   ];
   const map = new Map<string, { x: number; y: number }>();
-  for (const row of rows) {
-    if (row.items.length === 0) continue;
-    row.items.forEach((c, i) => {
-      map.set(c.id, { x: 30 + i * 150, y: row.y });
+  let currentY = 30;
+  for (const kind of orderedKinds) {
+    const items = buckets[kind];
+    if (items.length === 0) continue;
+    items.forEach((c, i) => {
+      const row = Math.floor(i / MAX_PER_ROW);
+      const col = i % MAX_PER_ROW;
+      map.set(c.id, {
+        x: X_BASE + col * COL_GAP,
+        y: currentY + row * SUBROW_GAP,
+      });
     });
+    const subrows = Math.ceil(items.length / MAX_PER_ROW);
+    currentY += subrows * SUBROW_GAP + KIND_GAP;
   }
   return map;
 }
