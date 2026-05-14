@@ -138,14 +138,22 @@ export function CalculatorScreen() {
     return map;
   }, [result]);
 
-  // 入力が変わるたびに、最上位の reachable カードだけ展開状態にリセット
+  // 入力が変わるたびに、同率 1 位の reachable カード全部を展開状態にリセット
+  // (totalFinalAmount が最上位値と等しい全カード = displayRank 1 の集合)
   useEffect(() => {
     if (!result) {
       setExpandedIds(new Set());
       return;
     }
-    const topReachable = result.find((r) => r.reachable);
-    setExpandedIds(topReachable ? new Set([topReachable.card.id]) : new Set());
+    const topTotal = result.find((r) => r.reachable)?.totalFinalAmount;
+    if (topTotal === undefined) {
+      setExpandedIds(new Set());
+      return;
+    }
+    const tiedTop = result.filter(
+      (r) => r.reachable && r.totalFinalAmount === topTotal,
+    );
+    setExpandedIds(new Set(tiedTop.map((r) => r.card.id)));
   }, [storeId, targetCurrencyId, amount, result]);
 
   const toggleExpand = (id: string) => {
