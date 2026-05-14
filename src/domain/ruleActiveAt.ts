@@ -86,3 +86,28 @@ function parseDateEnd(s: string): number | null {
   );
   return d.getTime();
 }
+
+/**
+ * validTo までの残日数を計算。
+ * - validTo 当日: 0
+ * - validTo 翌日 (期限切れ): -1 (呼び出し側で「期限切れ」扱いを判断)
+ * - validTo 未来: 正の数
+ *
+ * 引数 validTo が undefined or 不正フォーマット → null
+ */
+export function daysUntilValidTo(
+  validTo: string | undefined,
+  now: Date = new Date(),
+): number | null {
+  if (!validTo) return null;
+  const m = validTo.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const target = new Date(
+    Number(m[1]),
+    Number(m[2]) - 1,
+    Number(m[3]),
+    23, 59, 59, 999,
+  );
+  const diffMs = target.getTime() - now.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}

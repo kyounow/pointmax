@@ -10,6 +10,7 @@ export type ResolvedRate =
       ruleId: string;
       validFrom?: string;
       validTo?: string;
+      notes?: string;
     }
   | {
       rate: number;
@@ -18,6 +19,7 @@ export type ResolvedRate =
       ruleId: string;
       validFrom?: string;
       validTo?: string;
+      notes?: string;
     };
 
 // カード × 店舗 (or カテゴリ) を解決して還元率と通貨を返す。
@@ -49,6 +51,7 @@ export function resolveRate(
       ruleId: best.id,
       validFrom: best.validFrom,
       validTo: best.validTo,
+      notes: best.notes,
     };
   }
 
@@ -70,6 +73,7 @@ export function resolveRate(
         ruleId: best.id,
         validFrom: best.validFrom,
         validTo: best.validTo,
+        notes: best.notes,
       };
     }
   }

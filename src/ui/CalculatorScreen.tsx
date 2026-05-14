@@ -7,7 +7,9 @@ import { formatNum } from "../domain/formatNum";
 import { groupBy } from "../domain/groupBy";
 import { NodePill } from "./NodePill";
 import { RuleStatusBadge } from "./RuleStatusBadge";
+import { NoteChips } from "./NoteChips";
 import { useNameResolvers } from "./hooks/useNameResolvers";
+import { isRuleActiveAt } from "../domain/ruleActiveAt";
 
 export function CalculatorScreen() {
   const cards = useStore((s) => s.cards);
@@ -151,12 +153,42 @@ export function CalculatorScreen() {
       <p className="hint">
         支払い情報と「最終的に貯めたい通貨」を選ぶと、保有カード別に最適な交換ルートと最終取得量を表示します。ポイントカード併用ボーナスがある店舗ではクレカ還元と合算されます。
       </p>
-      <p className="hint" style={{ marginBottom: 12 }}>
-        📅 <strong>{new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" })}</strong> 時点の還元率を表示中
-        <small style={{ marginLeft: 8, color: "var(--muted)" }}>
-          (期間限定 🎯 / 公式プログラム 📌 / 5/0 のつく日 等の日付依存ルールはこの日に有効なものだけ反映)
-        </small>
-      </p>
+      {(() => {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("ja-JP", {
+          month: "long",
+          day: "numeric",
+          weekday: "short",
+        });
+
+        // アクティブ期間ルールの集計
+        const allRules = [...rules, ...loyaltyRules];
+        // PaymentApp の cardSpecificBonusRates 期間も集計
+        const paymentAppBonuses = paymentApps.flatMap((p) =>
+          p.cardSpecificBonusRates ?? []
+        );
+
+        const timeBoundActive = [...allRules, ...paymentAppBonuses].filter(
+          (r) => r.validTo && isRuleActiveAt(r, now)
+        ).length;
+        const ongoingActive = [...allRules, ...paymentAppBonuses].filter(
+          (r) => !r.validTo && r.validFrom && isRuleActiveAt(r, now)
+        ).length;
+        const recurringActive = allRules.filter(
+          (r) => "recurringDays" in r && r.recurringDays?.length && isRuleActiveAt(r, now)
+        ).length;
+
+        return (
+          <div className="today-banner">
+            <span className="today-banner-date">📅 今日 {dateStr}</span>
+            <span className="today-banner-counts">
+              <span>🎯 期間限定 <strong>{timeBoundActive}</strong> 件</span>
+              <span>📌 公式プログラム <strong>{ongoingActive}</strong> 件</span>
+              <span>🗓 recurring <strong>{recurringActive}</strong> 件</span>
+            </span>
+          </div>
+        );
+      })()}
 
       <form className="row" onSubmit={(e) => e.preventDefault()}>
         <label>
@@ -270,6 +302,7 @@ export function CalculatorScreen() {
                   validTo={loyalty.rule.validTo}
                   style={{ marginLeft: 6 }}
                 />
+                <NoteChips notes={loyalty.rule.notes} />
               </span>
               <span className="path-line">
                 <NodePill
@@ -467,6 +500,10 @@ export function CalculatorScreen() {
                           validTo={r.resolved.validTo}
                           style={{ marginLeft: 4 }}
                         />
+                      )}
+                      {(r.resolved.source === "rule" ||
+                        r.resolved.source === "category") && (
+                        <NoteChips notes={r.resolved.notes} />
                       )}
                       {(() => {
                         if (r.resolved.source === "default") return null;

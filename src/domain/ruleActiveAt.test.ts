@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isRuleActiveAt } from "./ruleActiveAt";
+import { isRuleActiveAt, daysUntilValidTo } from "./ruleActiveAt";
 
 describe("isRuleActiveAt", () => {
   const now = new Date("2026-06-15T12:00:00");
@@ -110,5 +110,30 @@ describe("isRuleActiveAt", () => {
   it("recurringDays 空配列 → 制限なし扱い (常時 active)", () => {
     const day11 = new Date("2026-06-11T12:00:00");
     expect(isRuleActiveAt({ recurringDays: [] }, day11)).toBe(true);
+  });
+});
+
+describe("daysUntilValidTo", () => {
+  // 今日 2026-05-14 の正午を基準に
+  const today = new Date("2026-05-14T12:00:00");
+
+  it("validTo=2026-05-31 → 17 日", () => {
+    expect(daysUntilValidTo("2026-05-31", today)).toBe(17);
+  });
+
+  it("同日 (validTo=2026-05-14) → 0 (23:59:59 まで有効)", () => {
+    expect(daysUntilValidTo("2026-05-14", today)).toBe(0);
+  });
+
+  it("1 日経過後 (validTo=2026-05-13) → -1", () => {
+    expect(daysUntilValidTo("2026-05-13", today)).toBe(-1);
+  });
+
+  it("undefined → null", () => {
+    expect(daysUntilValidTo(undefined, today)).toBeNull();
+  });
+
+  it("不正フォーマット (例 '2026/05/31') → null", () => {
+    expect(daysUntilValidTo("2026/05/31", today)).toBeNull();
   });
 });

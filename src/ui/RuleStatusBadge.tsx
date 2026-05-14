@@ -7,6 +7,7 @@
 //   呼び出し側で isRuleActiveAt を済ませた上で表示すること。
 //   (CalculatorScreen は active rule しか rule に入れないので OK)
 import type { CSSProperties } from "react";
+import { daysUntilValidTo } from "../domain/ruleActiveAt";
 
 type Props = {
   validFrom?: string;
@@ -16,6 +17,14 @@ type Props = {
 
 export function RuleStatusBadge({ validFrom, validTo, style }: Props) {
   if (validTo) {
+    const days = daysUntilValidTo(validTo);
+    let daysClass = "";
+    let daysLabel = "";
+    if (days !== null && days >= 0) {
+      if (days <= 3) daysClass = "urgent";
+      else if (days <= 7) daysClass = "warning";
+      daysLabel = `あと${days}日`;
+    }
     return (
       <span
         className="campaign-badge time-bound"
@@ -23,6 +32,9 @@ export function RuleStatusBadge({ validFrom, validTo, style }: Props) {
         title="期間限定キャンペーン"
       >
         🎯 キャンペーン中 (〜{validTo})
+        {daysLabel && (
+          <span className={`days-remaining ${daysClass}`}>{daysLabel}</span>
+        )}
       </span>
     );
   }

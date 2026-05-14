@@ -1436,3 +1436,111 @@ details summary {
 .campaign-tabs button.active .count {
   color: var(--text);
 }
+
+/* === 今日 indicator + active count (CalculatorScreen) === */
+.today-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 16px 0;
+  padding: 8px 14px;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.today-banner-date {
+  color: var(--accent);
+  font-size: 15px;
+}
+.today-banner-counts {
+  display: inline-flex;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.today-banner-counts strong {
+  color: var(--text);
+}
+
+/* === 残日数カウントダウン (RuleStatusBadge 拡張) === */
+.campaign-badge.time-bound .days-remaining {
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+.campaign-badge.time-bound .days-remaining.urgent {
+  /* 0-3 日: 赤系 */
+  background: rgba(255, 100, 100, 0.4);
+  color: #fff;
+}
+.campaign-badge.time-bound .days-remaining.warning {
+  /* 4-7 日: 黄系 */
+  background: rgba(255, 200, 0, 0.4);
+  color: #fff;
+}
+
+/* === Note chips (CalculatorScreen result rule) === */
+.note-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+}
+.note-chip {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.note-chip-entry {
+  background: rgba(255, 100, 100, 0.2);
+  color: #ff6464;
+  border: 1px solid #ff6464;
+}
+.note-chip-cap {
+  background: rgba(255, 200, 0, 0.15);
+  color: #d4a017;
+  border: 1px solid #d4a017;
+}
+.note-chip-exclusion {
+  background: rgba(155, 155, 155, 0.15);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.note-chip-limited {
+  background: rgba(78, 161, 255, 0.15);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.note-chip-detail {
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.note-chip-detail:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.note-chip-full {
+  display: block;
+  margin-top: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--panel-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  white-space: pre-wrap;
+  flex-basis: 100%;
+}
