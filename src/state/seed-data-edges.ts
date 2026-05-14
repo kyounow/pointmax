@@ -330,4 +330,16 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 1,
     notes: "MyJCB Pay で 1 J-POINT=1円 (Edy 等の現金相当と同等として登録)",
   },
+
+  // ============ メルカリポイント ============
+  // メルペイ残高/メルカリ内で 1pt=1円相当として利用可能
+  {
+    id: "mercari-pt-to-edy",
+    fromCurrencyId: "mercari-pt",
+    toCurrencyId: "edy",
+    rate: 1,
+    notes:
+      "メルカリポイント 1pt=1円相当 (メルカリ内ショッピング / メルペイ残高での街使い等。" +
+      "Edy 等の現金相当として登録)",
+  },
 ];

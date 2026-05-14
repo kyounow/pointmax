@@ -15,6 +15,7 @@ export const SEED_STORES: Store[] = [
   // ネット通販
   { id: "rakuten-ichiba", name: "楽天市場", category: "ネット通販" },
   { id: "amazon", name: "Amazon", category: "ネット通販" },
+  { id: "mercari", name: "メルカリ", category: "ネット通販" },
   // コンビニ
   {
     id: "conv-7eleven",
@@ -432,6 +433,47 @@ export const SEED_STORE_RULES: StoreRule[] = [
     recurringDays: [5, 10, 15, 20, 25, 30],
     notes:
       "5と0のつく日 (毎月 5/10/15/20/25/30) のみ、要エントリー。SPU 基本 +2% 込みで実質 +4% 還元。",
+  },
+
+  // === v20: ビューカード + メルカード 関連 rules ===
+
+  // ビューカード × Suica チャージ: Suica オートチャージ/モバイルチャージで 1.5% JRE POINT
+  // jal-suica の rule-jal-suica-charge と同じ構造、別カード版
+  {
+    id: "rule-viewcard-suica-charge",
+    cardId: "viewcard",
+    storeId: "suica-charge",
+    rate: 0.015,
+    currencyId: "jre",
+    notes:
+      "Suica オートチャージ または モバイル Suica チャージで 1.5% JRE POINT 還元 " +
+      "(ビューカード機能標準特典)",
+  },
+
+  // メルカード × メルカリ内: 定常最大 4% (利用額連動)
+  {
+    id: "rule-mercard-mercari",
+    cardId: "mercard",
+    storeId: "mercari",
+    rate: 0.04,
+    currencyId: "mercari-pt",
+    notes:
+      "メルカリ内お買い物で最大 4% メルカリポイント還元 (利用額連動、定常最大)。" +
+      "初期は 2% 上限、過去 6 ヶ月の利用実績で 4 月 1 日/10 月 1 日に判定。" +
+      "還元上限 5,000pt/月。",
+  },
+
+  // メルカード × メルカリ × 毎月 8 日: 8% 還元 (recurringDays 2 つ目の使用例)
+  {
+    id: "rule-mercard-mercari-day8",
+    cardId: "mercard",
+    storeId: "mercari",
+    rate: 0.08,
+    currencyId: "mercari-pt",
+    recurringDays: [8],
+    notes:
+      "メルカード毎月 8 日: メルカリ内お買い物で +8% 還元キャンペーン (常設)。" +
+      "rule-mercard-mercari (4%) と同時 active な日は resolveRate の最大値選択で 8% が採用される。",
   },
 ];
 

@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 19;
+export const SEED_VERSION = 20;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -150,6 +150,17 @@ export const SEED_CHANGELOG: {
       "新 review reason 'zeroOrInvalidRate' を導入。aliases.json に sourceId hallucination 対策で " +
       "smbc-v-gold-7percent → smbc-v エイリアスを追加 (次回 cron で 22 件の hallucinated rules が " +
       "正しく既存 smbc-v に正規化される予定)。",
+  },
+  {
+    version: 20,
+    date: "2026-05-14",
+    summary:
+      "主要決済・特殊カード・JRE ポイント追加でカバー範囲を大幅拡張。" +
+      "Cards 3 (viewcard / mercard / olive)、PaymentApps 3 (au PAY / ファミペイ / メルペイ)、" +
+      "PointCard 1 (jre-pointcard)、通貨 1 (mercari-pt)、store 1 (mercari)、" +
+      "storeRules 3 (ビューカード × Suica チャージ 1.5% / メルカード × メルカリ 4% / " +
+      "メルカード × メルカリ 毎月8日 8% = recurringDays 2 つ目の使用例)、edge 1。" +
+      "Olive コンビニ・飲食 8% rules は smbc-v 21 rules 複製のため将来別 commit。",
   },
 ];
 

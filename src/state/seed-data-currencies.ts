@@ -148,4 +148,11 @@ export const SEED_CURRENCIES: Currency[] = [
     iconChar: "九",
     iconColor: "#cb0d2a",
   },
+  {
+    id: "mercari-pt",
+    name: "メルカリポイント",
+    kind: "point",
+    iconChar: "M",
+    iconColor: "#ff0211",  // メルカリブランド赤
+  },
 ];

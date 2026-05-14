@@ -122,6 +122,43 @@ export const SEED_CARDS: Card[] = [
     defaultCurrencyId: "v-pt",
     enabled: false,
   },
+
+  // === v20: 主要決済・特殊カバー追加 ===
+
+  {
+    // ビューカード スタンダード (JR東日本)、通常 0.5% (1000円=2.5 JREポイント)
+    // Suica オートチャージ/モバイルチャージ時 1.5% (rule-viewcard-suica-charge で別途定義)
+    // JR東日本利用者の定番カード
+    id: "viewcard",
+    name: "ビューカード スタンダード",
+    grade: "通常",
+    defaultRate: 0.005,
+    defaultCurrencyId: "jre",
+    enabled: false,
+  },
+  {
+    // メルカード (メルカリ系)、通常 1.0% (メルカリ外)
+    // メルカリ内: 1.0%〜4.0% (利用額連動、定常最大 4%)
+    // 毎月 8 日: +8% (メルカリ内、recurringDays で表現)
+    id: "mercard",
+    name: "メルカード",
+    grade: "通常",
+    defaultRate: 0.01,
+    defaultCurrencyId: "mercari-pt",
+    enabled: false,
+  },
+  {
+    // Olive フレキシブルペイ (一般)、三井住友グループの統合金融カード
+    // 通常 0.5% (200円=1 Vポイント)
+    // コンビニ・飲食タッチ決済時 8% (smbc-v 7% + Olive 連携 +1%)
+    // -> 21 rules 複製のスコープ大、本 commit はカード本体のみ。8% rules は将来追加。
+    id: "olive",
+    name: "Oliveフレキシブルペイ",
+    grade: "一般 (フレキシブルペイ)",
+    defaultRate: 0.005,
+    defaultCurrencyId: "v-pt",
+    enabled: false,
+  },
 ];
 
 // 店頭提示するポイントカード。
@@ -157,6 +194,14 @@ export const SEED_POINT_CARDS: PointCard[] = [
     id: "waon-card",
     name: "WAONカード",
     currencyId: "waon-pt",
+  },
+  {
+    // JRE POINT カード (JR東日本)、駅ナカ加盟店で提示すると 200円=1pt = 0.5% 還元
+    // 加盟店: NewDays / KIOSK / acure / エキュート / グランスタ / アトレ / ルミネ / ニュウマン 等
+    // 加盟店 loyaltyRules の追加は別 commit (駅ナカ stores が未登録のため)
+    id: "jre-pointcard",
+    name: "JRE POINT カード",
+    currencyId: "jre",
   },
 ];
 
@@ -259,5 +304,64 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
     ],
     notes:
       "PayPayカード連携で 0.5%、他社カードからのチャージは 2025/8 以降 還元対象外",
+  },
+  // au PAY (チャージ式)、200円=1 Ponta = 0.5% (コード支払い基本還元)
+  // au PAY カード連携で +1% (合算 1.5%) だが、au PAY カードは seed 未登録のため cardSpecific 省略
+  {
+    id: "pa-au-pay",
+    name: "au PAY",
+    iconChar: "au",
+    iconColor: "#ff6600",
+    defaultBonusRate: 0.005,
+    defaultBonusCurrencyId: "ponta-pt",
+    chargeBased: true,
+    paymentMode: "charge",
+    notes:
+      "au PAY コード支払いで 0.5% Ponta 還元。au PAY カードからチャージ連動で +1% (合計 1.5%) だが、" +
+      "現状 au PAY カードは seed 未登録のため cardSpecificBonusRates は将来追加。",
+  },
+
+  // ファミペイ (チャージ式)、200円=1 FamiPayボーナス = 0.5%
+  // FamiPay ボーナス専用通貨は未登録、edy (現金相当) で代用
+  // ファミマカード連携で 1.0% (チャージ 0.5% + 利用 0.5%) だが、ファミマカードも seed 未登録
+  {
+    id: "pa-famipay",
+    name: "ファミペイ",
+    iconChar: "FP",
+    iconColor: "#0072ce",
+    defaultBonusRate: 0.005,
+    defaultBonusCurrencyId: "edy",
+    chargeBased: true,
+    paymentMode: "charge",
+    notes:
+      "ファミペイ支払いで 0.5% FamiPay ボーナス還元。ファミマカード連携で 1.0%、" +
+      "2025/9 新ファミマカードでは最大 5% 割引 (連携カード未登録のため未表現)。" +
+      "FamiPay ボーナス専用通貨は未登録、現状 edy (現金相当) で代用。",
+  },
+
+  // メルペイ (直接連携)、単体還元なし (0%)
+  // メルカード経由のあと払い時のみ 1% (メルカードの還元率に準じる)
+  {
+    id: "pa-merpay",
+    name: "メルペイ",
+    iconChar: "MP",
+    iconColor: "#ff0211",
+    defaultBonusRate: 0,
+    defaultBonusCurrencyId: "mercari-pt",
+    chargeBased: false,
+    paymentMode: "direct",
+    cardSpecificBonusRates: [
+      {
+        cardId: "mercard",
+        rate: 0.01,
+        currencyId: "mercari-pt",
+        notes:
+          "メルペイのあと払い設定で メルカード 1% 還元 (メルカリ外通常時)。" +
+          "メルカリ内利用は別途 rule-mercard-mercari で 4% / 毎月8日 8%。",
+      },
+    ],
+    notes:
+      "メルペイ単体は還元なし (0%)。メルカード連携時のみ 1% 還元。" +
+      "メルカリ売上金は自動的にメルペイ残高にチャージされる。",
   },
 ];
