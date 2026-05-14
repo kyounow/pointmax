@@ -1,5 +1,5 @@
 {
-  "autoMergeEnabled": false,
+  "autoMergeEnabled": true,
   "maxAutoChangesPerRun": 50,
   "comment": "autoMergeEnabled を true にすると、autoApplicable な変更が main に自動 push される。false の間は全件 review PR に流れる。maxAutoChangesPerRun は安全弁: 1 週間で auto 件数がこれを超えたら全件 review 降格。"
 }
