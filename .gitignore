@@ -26,6 +26,9 @@ public/master.json
 .gemini/
 .gemini-cli/
 
+# Claude Code のローカル状態 (セッションログ・worktree・memory)
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
