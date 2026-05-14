@@ -6,6 +6,7 @@ import type { BenefitProgram, LoyaltyRule, StoreRule } from "../domain/types";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import { MultiStorePicker } from "./MultiStorePicker";
 import { useNameResolvers } from "./hooks/useNameResolvers";
+import { sanitizeNoteForDisplay } from "../domain/noteParser";
 
 type CampaignStatus = "active" | "expired" | "future" | "ongoing";
 
@@ -247,7 +248,7 @@ export function CampaignsScreen() {
     {
       key: "notes",
       label: "メモ",
-      view: (p) => p.notes ?? "-",
+      view: (p) => sanitizeNoteForDisplay(p.notes) ?? "-",
     },
   ];
 
@@ -343,7 +344,7 @@ export function CampaignsScreen() {
     {
       key: "notes",
       label: "メモ",
-      view: (r) => r.notes ?? "-",
+      view: (r) => sanitizeNoteForDisplay(r.notes) ?? "-",
       edit: (r, set) => (
         <input
           value={r.notes ?? ""}
@@ -414,7 +415,7 @@ export function CampaignsScreen() {
     {
       key: "notes",
       label: "メモ",
-      view: (r) => r.notes ?? "-",
+      view: (r) => sanitizeNoteForDisplay(r.notes) ?? "-",
       edit: (r, set) => (
         <input
           value={r.notes ?? ""}

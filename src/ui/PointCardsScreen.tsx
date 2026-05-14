@@ -5,6 +5,7 @@ import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { LoyaltyRule, PointCard } from "../domain/types";
 import { groupBy } from "../domain/groupBy";
 import { PointCardStoresPreview } from "./PointCardStoresPreview";
+import { sanitizeNoteForDisplay } from "../domain/noteParser";
 
 export function PointCardsScreen() {
   const pointCards = useStore((s) => s.pointCards);
@@ -190,7 +191,7 @@ export function PointCardsScreen() {
     {
       key: "notes",
       label: "メモ",
-      view: (r) => r.notes ?? "-",
+      view: (r) => sanitizeNoteForDisplay(r.notes) ?? "-",
       edit: (r, set) => (
         <input
           value={r.notes ?? ""}

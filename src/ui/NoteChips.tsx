@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { extractNoteChips, type NoteChip } from "../domain/noteParser";
+import {
+  extractNoteChips,
+  sanitizeNoteForDisplay,
+  type NoteChip,
+} from "../domain/noteParser";
 
 const CHIP_ICONS: Record<NoteChip["kind"], string> = {
   entry: "🔔",
@@ -15,18 +19,24 @@ type Props = {
 /**
  * notes フィールドから重要条件をチップ化して表示。
  * 加えて [詳細] ボタンで全 notes を展開可能。
+ *
+ * 内部マイグレーション metadata (旧 rule-... から移行 / [v3 PR 2] ...) は
+ * sanitizeNoteForDisplay で除去してから扱う。
  */
 export function NoteChips({ notes }: Props) {
   const [expanded, setExpanded] = useState(false);
-  if (!notes) return null;
-  const chips = extractNoteChips(notes);
+  const cleaned = sanitizeNoteForDisplay(notes);
+  if (!cleaned) return null;
+  const chips = extractNoteChips(cleaned);
+  // chip も詳細もない (= 取り立てて表示する内容がない) ときは何も出さない
+  if (chips.length === 0 && cleaned.length < 4) return null;
   return (
     <span className="note-chips">
       {chips.map((c) => (
         <span
           key={c.kind}
           className={`note-chip note-chip-${c.kind}`}
-          title={notes}
+          title={cleaned}
         >
           {CHIP_ICONS[c.kind]} {c.label}
         </span>
@@ -38,13 +48,13 @@ export function NoteChips({ notes }: Props) {
           e.stopPropagation();
           setExpanded((v) => !v);
         }}
-        title="この rule の notes 全文"
+        title="メモを表示"
       >
         {expanded ? "▴ 閉じる" : "ⓘ 詳細"}
       </button>
       {expanded && (
         <div className="note-chip-full">
-          📋 {notes}
+          📋 {cleaned}
         </div>
       )}
     </span>

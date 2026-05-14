@@ -234,7 +234,7 @@ export function CalculatorScreen() {
             <span className="today-banner-counts">
               <span>🎯 期間限定 <strong>{timeBoundActive}</strong> 件</span>
               <span>📌 公式プログラム <strong>{ongoingActive}</strong> 件</span>
-              <span>🗓 recurring <strong>{recurringActive}</strong> 件</span>
+              <span>🗓 毎月特定日 <strong>{recurringActive}</strong> 件</span>
             </span>
           </div>
         );

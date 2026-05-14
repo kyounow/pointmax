@@ -4,6 +4,7 @@ import { isMasterPaymentApp } from "../state/seed";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { PaymentApp } from "../domain/types";
 import { cardLabel } from "../domain/cardLabel";
+import { sanitizeNoteForDisplay } from "../domain/noteParser";
 
 export function PaymentAppsScreen() {
   const cards = useStore((s) => s.cards);
@@ -24,73 +25,65 @@ export function PaymentAppsScreen() {
   const columns: ColumnDef<PaymentApp>[] = useMemo(
     () => [
       {
-        key: "icon",
-        label: "アイコン",
+        key: "app",
+        label: "支払方法",
         view: (p) => (
-          <span
-            className="payment-app-icon"
-            style={{ background: p.iconColor ?? "#6b7280" }}
-          >
-            {p.iconChar ?? p.name.charAt(0)}
+          <span className="payment-app-row-label">
+            <span
+              className="payment-app-icon"
+              style={{ background: p.iconColor ?? "#6b7280" }}
+            >
+              {p.iconChar ?? p.name.charAt(0)}
+            </span>
+            {isMasterPaymentApp(p.id) ? (
+              <span className="card-name-with-badge">
+                <span
+                  className="card-master-badge"
+                  title="公式マスター由来"
+                >
+                  公式
+                </span>
+                {p.name}
+              </span>
+            ) : (
+              <span>{p.name}</span>
+            )}
           </span>
         ),
-      },
-      {
-        key: "name",
-        label: "名前",
-        view: (p) =>
-          isMasterPaymentApp(p.id) ? (
-            <span className="card-name-with-badge">
-              <span className="card-master-badge" title="公式マスター由来">公式</span>
-              {p.name}
+        edit: (p, set) => (
+          <span className="payment-app-edit-cluster">
+            <span
+              className="payment-app-icon"
+              style={{ background: p.iconColor ?? "#6b7280" }}
+              title="プレビュー"
+            >
+              {p.iconChar ?? p.name.charAt(0)}
             </span>
-          ) : (
-            p.name
-          ),
-        edit: (p, set) => (
-          <input
-            value={p.name}
-            onChange={(e) => set({ name: e.target.value })}
-          />
-        ),
-      },
-      {
-        key: "iconChar",
-        label: "アイコン文字",
-        view: (p) => p.iconChar ?? "-",
-        edit: (p, set) => (
-          <input
-            value={p.iconChar ?? ""}
-            placeholder={p.name.charAt(0)}
-            onChange={(e) =>
-              set({ iconChar: e.target.value || undefined })
-            }
-            style={{ width: 100 }}
-          />
-        ),
-      },
-      {
-        key: "iconColor",
-        label: "色",
-        view: (p) => (
-          <span
-            style={{
-              display: "inline-block",
-              width: 22,
-              height: 22,
-              borderRadius: 4,
-              background: p.iconColor ?? "transparent",
-              border: "1px solid var(--border)",
-            }}
-          />
-        ),
-        edit: (p, set) => (
-          <input
-            type="color"
-            value={p.iconColor ?? "#6b7280"}
-            onChange={(e) => set({ iconColor: e.target.value })}
-            style={{ width: 50, padding: 2 }}
-          />
+            <input
+              value={p.name}
+              onChange={(e) => set({ name: e.target.value })}
+              placeholder="名前"
+              style={{ flex: 1, minWidth: 120 }}
+            />
+            <input
+              value={p.iconChar ?? ""}
+              placeholder={p.name.charAt(0)}
+              onChange={(e) =>
+                set({ iconChar: e.target.value || undefined })
+              }
+              style={{ width: 60 }}
+              title="アイコン文字"
+              aria-label="アイコン文字"
+            />
+            <input
+              type="color"
+              value={p.iconColor ?? "#6b7280"}
+              onChange={(e) => set({ iconColor: e.target.value })}
+              style={{ width: 40, padding: 2 }}
+              title="アイコン色"
+              aria-label="アイコン色"
+            />
+          </span>
         ),
       },
       {
@@ -178,7 +171,7 @@ export function PaymentAppsScreen() {
       {
         key: "notes",
         label: "メモ",
-        view: (p) => p.notes ?? "-",
+        view: (p) => sanitizeNoteForDisplay(p.notes) ?? "-",
         edit: (p, set) => (
           <input
             value={p.notes ?? ""}

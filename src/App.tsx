@@ -245,7 +245,7 @@ function App() {
                 className="hint"
                 style={{ padding: "8px 14px", fontSize: 11 }}
               >
-                サンプル投入・データ初期化は「設定」タブから
+                データ初期化・URL同期は「設定」タブから
               </small>
             </div>
           </aside>

@@ -564,6 +564,21 @@ details summary {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+/* PaymentAppsScreen: 「支払方法」セル内のアイコン+名前のクラスタ */
+.payment-app-row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.payment-app-edit-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
 }
 .cap-warn {
   display: inline-block;
@@ -1467,7 +1482,8 @@ details summary {
 .today-banner {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   margin: 8px 0 16px 0;
   padding: 8px 14px;
   background: var(--panel);
@@ -1479,16 +1495,37 @@ details summary {
 .today-banner-date {
   color: var(--accent);
   font-size: 15px;
+  white-space: nowrap;
 }
 .today-banner-counts {
   display: inline-flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 4px 10px;
   font-size: 12px;
   font-weight: 500;
   color: var(--muted);
 }
+.today-banner-counts > span {
+  white-space: nowrap;
+}
 .today-banner-counts strong {
   color: var(--text);
+}
+@media (max-width: 720px) {
+  /* モバイル: pill 形ではなく角丸矩形にして、横幅を超えたら自然に折り返す */
+  .today-banner {
+    display: flex;
+    width: 100%;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .today-banner-date {
+    font-size: 14px;
+  }
+  .today-banner-counts {
+    font-size: 11px;
+  }
 }
 
 /* === 残日数カウントダウン (RuleStatusBadge 拡張) === */

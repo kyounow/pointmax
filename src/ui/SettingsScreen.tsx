@@ -8,7 +8,6 @@ export function SettingsScreen() {
   const lastSyncAt = useStore((s) => s.lastSyncAt);
   const setSyncUrl = useStore((s) => s.setSyncUrl);
   const syncFromUrl = useStore((s) => s.syncFromUrl);
-  const loadSeed = useStore((s) => s.loadSeed);
   const clearAll = useStore((s) => s.clearAll);
   const hasData = useStore(
     (s) =>
@@ -34,8 +33,11 @@ export function SettingsScreen() {
     setSyncUrl(draftUrl);
   };
 
-  const handleSync = async (mode: "merge" | "overwrite") => {
-    setSyncUrl(draftUrl); // URL入力中の値も同時保存
+  // 「URL から取得して全上書き」: 別端末で共有マスタ JSON をホストしている場合の
+  // クロスデバイス同期用。差分マージはアプリ起動時の UpdateBanner で行うため
+  // ここでは destructive な全上書きのみ残す。
+  const handleOverwrite = async () => {
+    setSyncUrl(draftUrl); // URL 入力中の値も同時保存
     if (!draftUrl.trim()) {
       await dialog.alert({
         title: "URL未入力",
@@ -44,18 +46,16 @@ export function SettingsScreen() {
       });
       return;
     }
-    if (mode === "overwrite") {
-      const ok = await dialog.confirm({
-        title: "URLから取得して全上書きしますか？",
-        message:
-          "現在の編集内容は失われ、URLの内容が反映されます。バックアップを取りたい場合は先にエクスポートしてください。",
-        okText: "全上書き",
-        danger: true,
-      });
-      if (!ok) return;
-    }
+    const ok = await dialog.confirm({
+      title: "URLから取得して全上書きしますか？",
+      message:
+        "現在の編集内容は失われ、URLの内容が反映されます。バックアップを取りたい場合は先にエクスポートしてください。",
+      okText: "全上書き",
+      danger: true,
+    });
+    if (!ok) return;
     setBusy(true);
-    const res = await syncFromUrl(mode);
+    const res = await syncFromUrl("overwrite");
     setBusy(false);
     if (!res.ok) {
       await dialog.alert({
@@ -66,10 +66,7 @@ export function SettingsScreen() {
     } else {
       await dialog.alert({
         title: "同期完了",
-        message:
-          mode === "overwrite"
-            ? "URLの内容で上書きしました。"
-            : `${res.added ?? 0} 件の追加項目をマージしました。`,
+        message: "URLの内容で上書きしました。",
         level: "success",
       });
     }
@@ -78,25 +75,6 @@ export function SettingsScreen() {
   const formattedSyncTime = lastSyncAt
     ? new Date(lastSyncAt).toLocaleString("ja-JP")
     : "未実施";
-
-  const handleLoadSeed = async () => {
-    if (hasData) {
-      const ok = await dialog.confirm({
-        title: "サンプル投入で上書きしますか？",
-        message:
-          "現在のデータをアプリにバンドルされた最新サンプルで上書きします。\n編集中の内容は失われます。",
-        okText: "上書き",
-        danger: true,
-      });
-      if (!ok) return;
-    }
-    loadSeed();
-    await dialog.alert({
-      title: "サンプル投入完了",
-      message: "バンドル済みサンプルを反映しました。",
-      level: "success",
-    });
-  };
 
   const handleClearLocal = async () => {
     const ok = await dialog.confirm({
@@ -115,13 +93,10 @@ export function SettingsScreen() {
 
       <h3 style={{ marginTop: 8 }}>データ管理</h3>
       <p className="hint">
-        サンプル投入はアプリにバンドルされた既定データを反映します（オフラインでも動作）。
-        <br />
-        ローカルデータの初期化はブラウザ内に保存された編集内容を全消去します。
-        公式マスタは下の「外部URLからのデータ同期」で再取得できます。
+        ブラウザに保存されたこのアプリのデータを全削除します。
+        公式マスタはアプリ起動時の更新バナー（または下の URL 同期）から再取得できます。
       </p>
       <div className="row" style={{ gap: 8, marginBottom: 16 }}>
-        <button onClick={handleLoadSeed}>サンプル投入</button>
         <button
           onClick={handleClearLocal}
           disabled={!hasData}
@@ -133,12 +108,11 @@ export function SettingsScreen() {
 
       <h3 style={{ marginTop: 8 }}>外部URLからのデータ同期</h3>
       <p className="hint">
-        マスタJSON（エクスポート形式と同じ）を公開URLに置けば、複数端末から取り込めます。
+        マスタJSON（エクスポート形式と同じ）を公開URLに置けば、複数端末からまとめて取り込めます。
         <br />
-        デフォルトでは
-        本アプリの <strong>公式マスタ（このリポジトリのseedをビルド時に生成）</strong>
-        が設定されています。push毎にGitHub Pagesから自動配信されるので、
-        <strong>「差分のみマージ」を押すたび最新サンプルが取り込まれます</strong>。
+        通常の差分マージはアプリ起動時の更新バナーで行えるため、ここでは
+        <strong>「URL から取得して全上書き」</strong>のみを残しています
+        （別端末で編集した内容を取り込みたいときに使用）。
       </p>
 
       <div className="row" style={{ marginBottom: 8 }}>
@@ -172,13 +146,10 @@ export function SettingsScreen() {
       <div className="row" style={{ gap: 8, marginBottom: 12 }}>
         <button
           className="primary"
-          onClick={() => handleSync("merge")}
+          onClick={handleOverwrite}
           disabled={busy}
         >
-          {busy ? "同期中..." : "差分のみマージ"}
-        </button>
-        <button onClick={() => handleSync("overwrite")} disabled={busy}>
-          全上書き
+          {busy ? "同期中..." : "URLから取得して全上書き"}
         </button>
       </div>
 
@@ -203,7 +174,7 @@ export function SettingsScreen() {
           <li>JSON内容をペースト → Save</li>
           <li>「Raw」ボタンを右クリック → URLをコピー (Raw URL)</li>
           <li>このURLを上欄に貼り付けて保存</li>
-          <li>別端末で同URLを設定 → 「差分のみマージ」または「全上書き」</li>
+          <li>別端末で同URLを設定 → 「URLから取得して全上書き」</li>
         </ol>
         <p className="hint">
           ※ Gist URLは更新するとハッシュが変わる場合があるので、最新版を再取得することを推奨。

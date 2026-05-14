@@ -9,6 +9,7 @@ import { isMasterProgram } from "../state/seed";
 import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { cardLabel } from "../domain/cardLabel";
+import { sanitizeNoteForDisplay } from "../domain/noteParser";
 
 type BonusTypeKey = "primary" | "addOn";
 
@@ -170,7 +171,14 @@ export function ProgramsScreen() {
                           <span className="badge" style={{ background: "#9ca3af", fontSize: 11 }}>非アクティブ</span>
                         )}
                       </span>
-                      {p.notes && <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{p.notes}</div>}
+                      {(() => {
+                        const cleaned = sanitizeNoteForDisplay(p.notes);
+                        return cleaned ? (
+                          <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>
+                            {cleaned}
+                          </div>
+                        ) : null;
+                      })()}
                     </td>
 
                     {/* 対象カード / ポイントカード / 支払方法 */}
