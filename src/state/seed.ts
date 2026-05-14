@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 24;
+export const SEED_VERSION = 25;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -205,6 +205,19 @@ export const SEED_CHANGELOG: {
       "新カード 2 枚 (au-pay-card / famima-card) を master pool に追加し、" +
       "pa-au-pay / pa-famipay の cardSpecific 補完。" +
       "既存 4 paymentApp (rakuten/d-pay/paypay/merpay) は defaultBonusRate=0 のため値は変わらず。",
+  },
+  {
+    version: 25,
+    date: "2026-05-14",
+    summary:
+      "Pay アプリのベース還元率 (defaultBonusRate) を実態に合わせて更新。" +
+      "v24 でデフォルト 0 のままだった 楽天Pay / d払い / PayPay に正しい基本還元率を反映。" +
+      "楽天Pay: 0 → 0.01 (1%、楽天Pay 利用は誰でも 1% / 楽天カード経由で +0.5% = 1.5%)。" +
+      "d払い: 0 → 0.005 (0.5%、200円1pt 誰でも / dカード設定で +0.5% = 1.0%)。" +
+      "PayPay: 0 → 0.005 (0.5%、残高払い誰でも / PayPayクレジット連携で +0.5% = 1.0%)。" +
+      "cardSpecific.rate も上乗せ単独値に修正 (合計値は同じ、上乗せ式 + ベース で正しい累積)。" +
+      "実利的影響: 「Pay アプリ × 紐付け以外のカード」シナリオが現実通り 0.5%〜1% 評価になり、" +
+      "「自社カード以外を持つ人」にも適切な還元計算が出る。",
   },
 ];
 

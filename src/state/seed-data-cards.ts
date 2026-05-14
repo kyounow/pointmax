@@ -265,67 +265,76 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
     paymentMode: "physical",
     notes: "ドコモ系の非接触決済",
   },
-  // 楽天Pay (チャージ式)。楽天カード経由のみ還元、他社カードは 0% 進呈なし
+  // 楽天Pay (チャージ式)、楽天キャッシュ/楽天カード/楽天銀行口座払い 1% (誰でも乗るベース還元)
+  // 楽天カード経由で楽天キャッシュにチャージすると +0.5% 上乗せ = 合計 1.5%
+  // (2026/3 の引き下げ予定は見合わせ、引き続き 1.5% を維持)
   {
     id: "pa-rakuten-pay",
     name: "楽天Pay",
     iconChar: "RP",
     iconColor: "#bf0000",
-    defaultBonusRate: 0,
+    defaultBonusRate: 0.01, // 楽天Pay 基本還元 1% (どのカードでも乗る)
     defaultBonusCurrencyId: "rakuten-pt",
     chargeBased: true,
     paymentMode: "charge",
     cardSpecificBonusRates: [
       {
         cardId: "rakuten-card",
-        rate: 0.015,
+        rate: 0.005, // 上乗せ 0.5% (楽天カード経由チャージ特典)
         notes:
-          "楽天Pay 利用 (defaultBonusRate=0) + 楽天カードチャージ +1.5% 上乗せ = 合計 1.5%",
+          "楽天カードから楽天キャッシュへチャージで +0.5% 上乗せ (楽天Pay 1% に追加で合計 1.5%)",
       },
     ],
     notes:
-      "楽天カードからチャージで 1.5%、他社カードからのチャージ/連携は 0% (進呈なし)",
+      "ベース 1% (楽天Pay 利用、誰でも)。楽天カード経由チャージで +0.5% 上乗せ = 1.5%。",
   },
-  // d払い (チャージ式 or 直接連携)。dカード連携時のみ還元、他社カードは 0% 進呈なし
+  // d払い (チャージ式 or 直接連携)、ベース 0.5% (200円1pt、誰でも)
+  // dカード/GOLD/GOLD U/PLATINUM 連携時 +0.5% 上乗せ = 合計 1.0%
   // 公式: https://service.smt.docomo.ne.jp/keitai_payment/guide/wallet/payment.html
   {
     id: "pa-d-pay",
     name: "d払い",
     iconChar: "dP",
     iconColor: "#cc0033",
-    defaultBonusRate: 0,
+    defaultBonusRate: 0.005, // d払い 基本還元 0.5% (200円1pt、誰でも)
     defaultBonusCurrencyId: "d-pt",
     chargeBased: true,
     paymentMode: "charge",
     cardSpecificBonusRates: [
       {
         cardId: "dcard",
-        rate: 0.01,
-        notes: "d払い利用 (defaultBonusRate=0) + dカード支払い特典 +1.0% 上乗せ = 合計 1.0%",
+        rate: 0.005, // 上乗せ 0.5% (dカード支払い特典)
+        notes:
+          "dカード設定時 +0.5% 上乗せ (d払い 0.5% に追加で合計 1.0%)。GOLD/GOLD U/PLATINUM も同等",
       },
     ],
     notes:
-      "dカード連携で 1.0%、dカード以外のクレジットカードでは d払い還元は 進呈なし (0%)",
+      "ベース 0.5% (d払い 利用、誰でも 200円1pt)。dカード設定で +0.5% 上乗せ = 1.0%。" +
+      "街のお店は dポイントクラブ ランクで最大 4% (本モデルには未反映)。",
   },
-  // PayPay (チャージ式)。PayPayカード連携時のみ還元、他社カードは 0%
+  // PayPay (チャージ式)、ベース 0.5% (残高払い、誰でも)
+  // PayPayクレジット連携 (= PayPayカード設定) で +0.5% 上乗せ = 合計 1.0%
+  // 2026/6 以降 PayPayステップ条件変更予定だが、本モデルは基本還元のみ反映
   {
     id: "pa-paypay",
     name: "PayPay",
     iconChar: "PP",
     iconColor: "#ff0033",
-    defaultBonusRate: 0,
+    defaultBonusRate: 0.005, // PayPay 基本還元 0.5% (残高払い、誰でも)
     defaultBonusCurrencyId: "paypay",
     chargeBased: true,
     paymentMode: "charge",
     cardSpecificBonusRates: [
       {
         cardId: "paypay-card",
-        rate: 0.005,
-        notes: "PayPay 利用 (defaultBonusRate=0) + PayPayカード経由 +0.5% 上乗せ = 合計 0.5%",
+        rate: 0.005, // 上乗せ 0.5% (PayPayクレジット連携)
+        notes:
+          "PayPayクレジット連携 (= PayPayカード設定) で +0.5% 上乗せ (PayPay 0.5% に追加で合計 1.0%)",
       },
     ],
     notes:
-      "PayPayカード連携で 0.5%、他社カードからのチャージは 2025/8 以降 還元対象外",
+      "ベース 0.5% (PayPay 残高払い、誰でも)。PayPayクレジット連携で +0.5% 上乗せ = 1.0%。" +
+      "PayPayステップ条件達成で最大 1.5% だが、本モデルは基本還元のみ反映。",
   },
   // au PAY (チャージ式)、200円=1 Ponta = 0.5% (コード支払い基本還元)
   // au PAY カード連携で +1% 上乗せ (合計 1.5%) — v24 で au-pay-card 追加により cardSpecific 補完
