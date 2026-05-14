@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 20;
+export const SEED_VERSION = 21;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -150,6 +150,17 @@ export const SEED_CHANGELOG: {
       "新 review reason 'zeroOrInvalidRate' を導入。aliases.json に sourceId hallucination 対策で " +
       "smbc-v-gold-7percent → smbc-v エイリアスを追加 (次回 cron で 22 件の hallucinated rules が " +
       "正しく既存 smbc-v に正規化される予定)。",
+  },
+  {
+    version: 21,
+    date: "2026-05-14",
+    summary:
+      "v2.1.0 で deferred したカバー範囲を実装。" +
+      "(1) Olive フレキシブルペイのコンビニ・飲食 8% rules を 22 件追加 " +
+      "(smbc-v 7% rules を Olive 用に複製、+1% 上乗せ、validFrom 2023-04-03 で長期公式プログラム扱い)。" +
+      "(2) JRE POINT カード × 駅ナカ加盟店 8 件 (NewDays/KIOSK/acure/エキュート/グランスタ/" +
+      "アトレ/ルミネ/ニュウマン) + 対応 loyaltyRules 8 件を追加。新カテゴリ「駅ナカ」を導入。" +
+      "JR東日本利用者の駅ナカ支出が正確に PointMax で評価できるようになる。",
   },
   {
     version: 20,
