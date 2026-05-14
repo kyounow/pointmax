@@ -56,7 +56,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 30;
+export const SEED_VERSION = 31;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -245,6 +245,18 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 31,
+    date: "2026-05-14",
+    summary:
+      "PR 4 (Schema Migration Framework): localStorage の persist schema 版管理を本格導入。" +
+      "src/state/persist-versions.ts で SCHEMA_MIGRATIONS マップを集中管理、" +
+      "strategy 別 (passthrough / reset / transform) で旧 version への対応を declarative に。" +
+      "PointMax v3 リリース時、既存 v2.x localStorage を持つユーザーは V3UpgradeModal で" +
+      "JSON Export → Apply の手順を明示。" +
+      "persist.version 1 → 2 に bump、SCHEMA_MIGRATIONS[1] = reset (= v3 で完全初期化)。" +
+      "これで今後の v4, v5 でも同じ framework で schema 変更に対応可能。",
   },
   {
     version: 30,

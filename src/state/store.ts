@@ -20,6 +20,11 @@ import {
   planMigrations,
   autoApplicableKeys,
 } from "../domain/migrations";
+import {
+  PERSIST_SCHEMA_VERSION,
+  SCHEMA_MIGRATIONS,
+  type SchemaMigrationStrategy,
+} from "./persist-versions";
 
 // v0.8 リリース時に persist 階層を世代交代した。旧 v0.x キーは一度きりクリーンアップ。
 // （次回 v1.0 以降は migrate / mergeFromSeed で吸収する）
@@ -51,6 +56,11 @@ type State = {
   lastSeedVersion: number;
   syncUrl: string;
   lastSyncAt: string | null;
+  // schema migration 中フラグ。旧 version 検出時に migrate callback がセットし、
+  // SchemaUpgradeModal で Apply 後にクリアされる。
+  _pendingSchemaMigration?: SchemaMigrationStrategy;
+  // Apply 前のバックアップ用 (Export ボタンで JSON 出力する)
+  _legacyPersistedState?: unknown;
 };
 
 type Actions = {
@@ -105,6 +115,9 @@ type Actions = {
   exportJson: () => string;
   importJson: (json: string) => { ok: true } | { ok: false; error: string };
   setSyncUrl: (url: string) => void;
+  // schema migration actions (SchemaUpgradeModal から呼ばれる)
+  applySchemaMigration: () => void;
+  exportLegacyState: () => string;
   syncFromUrl: (
     mode: "merge" | "overwrite",
   ) => Promise<
@@ -128,6 +141,7 @@ const empty: State = {
   // 初期値はビルトインの公式マスタURL。ユーザーが空に戻すと再びデフォルトを参照する想定
   syncUrl: DEFAULT_SYNC_URL,
   lastSyncAt: null,
+  // _pendingSchemaMigration / _legacyPersistedState は undefined で初期化
 };
 
 export const useStore = create<State & Actions>()(
@@ -359,6 +373,29 @@ export const useStore = create<State & Actions>()(
       dismissSeedUpdate: () =>
         set(() => ({ lastSeedVersion: SEED_VERSION })),
 
+      applySchemaMigration: () =>
+        set(() => ({
+          ...empty,
+          ...seed(),
+          lastSeedVersion: SEED_VERSION,
+          _pendingSchemaMigration: undefined,
+          _legacyPersistedState: undefined,
+        })),
+
+      exportLegacyState: () => {
+        const s = get();
+        return JSON.stringify(
+          {
+            version: "v2.x (legacy)",
+            exportedAt: new Date().toISOString(),
+            note: "PointMax v3 リリース直前の localStorage 全データ。手動復元には parser が必要。",
+            data: s._legacyPersistedState ?? s,
+          },
+          null,
+          2,
+        );
+      },
+
       setSyncUrl: (url) => set(() => ({ syncUrl: url.trim() })),
 
       syncFromUrl: async (mode) => {
@@ -524,7 +561,44 @@ export const useStore = create<State & Actions>()(
       // v0.8 で世代交代。旧キー "pointmax-store" は無視 (孤児は起動時に削除)
       name: "pointmax-v08-store",
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: PERSIST_SCHEMA_VERSION,  // 1 → 2 (v3 で bump)
+      migrate: (persistedState: unknown, fromVersion: number) => {
+        // 新規 install (version フィールドが無い = fromVersion が undefined 扱い)
+        // → そのまま通す (既存の empty+seed 初期化フローへ)
+        if (fromVersion === PERSIST_SCHEMA_VERSION) {
+          return persistedState;
+        }
+
+        // 旧 version 検出 → SCHEMA_MIGRATIONS で strategy を引く
+        const strategy = SCHEMA_MIGRATIONS[fromVersion];
+        if (!strategy) {
+          // 想定外の旧 version → 安全側として reset 扱い
+          return {
+            ...empty,
+            _pendingSchemaMigration: {
+              type: "reset" as const,
+              reason: `不明な旧 schema (v${fromVersion}) を検出しました。v3 にリセットします。`,
+            },
+          };
+        }
+
+        if (strategy.type === "reset") {
+          // ユーザーに明示同意を求めるため、empty + pending flag + legacy backup をセット
+          // 実際の reset は SchemaUpgradeModal で Apply ボタンを押した後
+          return {
+            ...empty,
+            _pendingSchemaMigration: strategy,
+            _legacyPersistedState: persistedState,
+          };
+        }
+
+        if (strategy.type === "transform") {
+          return strategy.fn(persistedState);
+        }
+
+        // passthrough
+        return persistedState;
+      },
     },
   ),
 );

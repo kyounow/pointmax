@@ -11,6 +11,7 @@ import { PointCardsScreen } from "./ui/PointCardsScreen";
 import { PaymentAppsScreen } from "./ui/PaymentAppsScreen";
 import { SettingsScreen } from "./ui/SettingsScreen";
 import { UpdateBanner } from "./ui/UpdateBanner";
+import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
 import { useStore } from "./state/store";
 import { useDialog } from "./ui/dialog/DialogProvider";
 
@@ -44,6 +45,7 @@ function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const exportJson = useStore((s) => s.exportJson);
   const importJson = useStore((s) => s.importJson);
+  const pendingMigration = useStore((s) => s._pendingSchemaMigration);
   const hasData = useStore(
     (s) =>
       s.cards.length +
@@ -141,6 +143,7 @@ function App() {
 
   return (
     <div className="app">
+      {pendingMigration && <SchemaUpgradeModal strategy={pendingMigration} />}
       <header className="appbar">
         <button
           className="hamburger"

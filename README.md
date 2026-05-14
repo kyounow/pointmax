@@ -145,6 +145,24 @@ npm run sync:apply                 # autoApplicable を seed-additions.ts へ
 
 ---
 
+## バージョン管理
+
+PointMax は 2 つの version を独立管理:
+
+| 種類 | 用途 |
+|---|---|
+| `SEED_VERSION` (seed.ts) | データ版。新キャンペーン追加・rate 修正の通知 (UpdateBanner)。週次 cron で bump |
+| `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump。1 → 2 (v3) |
+
+schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
+- `passthrough`: 互換あり、何もしない
+- `reset`: 全消去 + 新 seed で初期化 (= v3 で採用)
+- `transform`: 個別変換 (best-effort migration)
+
+今後 schema を変更する場合は `PERSIST_SCHEMA_VERSION` を bump し、`SCHEMA_MIGRATIONS` に対応するエントリを追加する。
+
+---
+
 ## バージョニング方針
 
 ### v1.0（現行・安定運用）
