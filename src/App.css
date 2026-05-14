@@ -1762,7 +1762,15 @@ details summary {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  /* fixed layout で列幅を強制し、長いカード名がセル幅を超えても確実に折り返させる */
+  table-layout: fixed;
 }
+/* 明示的な列幅 (デスクトップ): カード名を一番広く取り、長い名前でも 2-3 行で
+   収まるバランス。モバイルでは card layout に変わるためここは影響しない。 */
+.card-comparison-table col.col-card { width: 44%; }
+.card-comparison-table col.col-state { width: 16%; }
+.card-comparison-table col.col-total { width: 22%; }
+.card-comparison-table col.col-diff { width: 18%; }
 .card-comparison-table th {
   text-align: left;
   padding: 6px 8px;
@@ -1774,8 +1782,11 @@ details summary {
   padding: 6px 8px;
   border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
   vertical-align: middle;
-  word-break: break-word;
+  /* 半角/全角混在 + 「(普通 (...))」のような括弧入り長文も任意位置で折り返す */
   overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  min-width: 0;
 }
 /* カード名セル: inline-flex で wrap させると text node が折れないので、
    block 化して通常テキストとして折り返させる。badge は inline-block で
@@ -1783,6 +1794,9 @@ details summary {
 .card-comparison-table .card-name-with-badge {
   display: block;
   line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
 }
 .card-comparison-table .card-name-with-badge .card-master-badge {
   display: inline-block;

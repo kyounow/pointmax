@@ -29,6 +29,12 @@ export function CardComparisonSection({
         ON にしたり新規入会する判断材料に。
       </p>
       <table className="card-comparison-table">
+        <colgroup>
+          <col className="col-card" />
+          <col className="col-state" />
+          <col className="col-total" />
+          <col className="col-diff" />
+        </colgroup>
         <thead>
           <tr>
             <th>カード</th>
