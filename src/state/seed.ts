@@ -48,7 +48,7 @@ import { SEED_EDGES } from "./seed-data-edges";
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 22;
+export const SEED_VERSION = 23;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -181,6 +181,15 @@ export const SEED_CHANGELOG: {
       "(1) ADDED_LOYALTY_RULES (Ponta) が参照していた 5 件の dangling store (jalannet / hotpepper-beauty / hotpepper-gourmet / jalan-golf / jal-rentacar) を seed に手書き追加して日本語 name + 正しい category を提供。apollo-station の name も「apollostation (アポロステーション)」に日本語化。" +
       "(2) CampaignsScreen の classifyCampaign が recurringDays 外を expired 誤判定するバグを修正 (validTo 過去のみが expired、recurringDays 外は ongoing 維持)。" +
       "(3) Calculator の順位ソートを 3 段 tie-break に拡張: 一次 totalFinalAmount 降順 / 二次 支払単独 (card+appBonus) 多い順 / 三次 構成要素少ない順。同 totalFinalAmount は同 rank 表示 (#1, #1, #3 ...) で表示も整合。",
+  },
+  {
+    version: 23,
+    date: "2026-05-14",
+    summary:
+      "J-POINT 交換レート修正: v17 で追加した時、旧 Oki Doki 時代の値 (1pt=3マイル) を" +
+      "誤って入れていた。JCB 公式 (https://www.jcb.co.jp/point/index.html#catalog) に基づき修正:" +
+      "JAL/ANA マイル 0.6、楽天/d/Ponta/nanaco 各 0.7、MyJCB Pay 1.0 (現金相当)。" +
+      "5倍換算後の J-POINT 単位として整合。新規 4 edges (j-point → rakuten / d / ponta / nanaco) も追加。",
   },
 ];
 

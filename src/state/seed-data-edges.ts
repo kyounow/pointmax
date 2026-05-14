@@ -309,26 +309,59 @@ export const SEED_EDGES: ConversionEdge[] = [
   // ============ J-POINT (旧 Oki Doki、2026/1 リニューアル後) ============
   // JCB CARD W や ANA JCB ワイド等の JCB プロパー系で貯まる
   // 公式 FAQ: https://j-faq.jcb.co.jp/
+  // 2026-05-14 修正: 旧 seed は Oki Doki 時代 (1pt=3マイル) の値を誤って入れていた。
+  // J-POINT は 5倍換算後の単位で、JCB 公式 (https://www.jcb.co.jp/point/index.html#catalog)
+  // に基づき再設定。
   {
     id: "j-point-to-jal",
     fromCurrencyId: "j-point",
     toCurrencyId: "jal-mile",
-    rate: 3,
-    notes: "1 J-POINT → 3 JAL マイル (500pt 単位)",
+    rate: 0.6,
+    notes: "1 J-POINT → 0.6 JAL マイル (JCB 公式レート、5倍換算後 J-POINT 単位)",
   },
   {
     id: "j-point-to-ana",
     fromCurrencyId: "j-point",
     toCurrencyId: "ana-mile",
-    rate: 3,
-    notes: "1 J-POINT → 3 ANA マイル (500pt 単位、JCB プロパー)",
+    rate: 0.6,
+    notes: "1 J-POINT → 0.6 ANA マイル / スカイコイン (JCB 公式)",
   },
   {
     id: "j-point-to-edy",
     fromCurrencyId: "j-point",
     toCurrencyId: "edy",
     rate: 1,
-    notes: "MyJCB Pay で 1 J-POINT=1円 (Edy 等の現金相当と同等として登録)",
+    notes:
+      "MyJCB Pay で 1 J-POINT=1円 (現金相当として edy に登録)。" +
+      "JCB ギフトカード/カード支払い充当 も 1pt=1円 (公式最高レート)",
+  },
+  {
+    id: "j-point-to-rakuten",
+    fromCurrencyId: "j-point",
+    toCurrencyId: "rakuten-pt",
+    rate: 0.7,
+    notes: "1 J-POINT → 0.7 楽天ポイント (JCB 公式)",
+  },
+  {
+    id: "j-point-to-d",
+    fromCurrencyId: "j-point",
+    toCurrencyId: "d-pt",
+    rate: 0.7,
+    notes: "1 J-POINT → 0.7 dポイント (JCB 公式)",
+  },
+  {
+    id: "j-point-to-ponta",
+    fromCurrencyId: "j-point",
+    toCurrencyId: "ponta-pt",
+    rate: 0.7,
+    notes: "1 J-POINT → 0.7 Ponta ポイント (JCB 公式、au Ponta 経路)",
+  },
+  {
+    id: "j-point-to-nanaco",
+    fromCurrencyId: "j-point",
+    toCurrencyId: "nanaco-pt",
+    rate: 0.7,
+    notes: "1 J-POINT → 0.7 nanaco ポイント (JCB 公式)",
   },
 
   // ============ メルカリポイント ============
