@@ -267,152 +267,116 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
   },
   // 楽天Pay (チャージ式)、楽天キャッシュ/楽天カード/楽天銀行口座払い 1% (誰でも乗るベース還元)
   // 楽天カード経由で楽天キャッシュにチャージすると +0.5% 上乗せ = 合計 1.5%
-  // (2026/3 の引き下げ予定は見合わせ、引き続き 1.5% を維持)
+  // v3 PR 2 で BenefitProgram に移行:
+  //   prog-rakuten-pay-base (primary, 1%) + prog-rakuten-pay-rakuten-card-addon (addOn, 0.5%)
   {
     id: "pa-rakuten-pay",
     name: "楽天Pay",
     iconChar: "RP",
     iconColor: "#bf0000",
-    defaultBonusRate: 0.01, // 楽天Pay 基本還元 1% (どのカードでも乗る)
-    defaultBonusCurrencyId: "rakuten-pt",
     chargeBased: true,
     paymentMode: "charge",
-    cardSpecificBonusRates: [
-      {
-        cardId: "rakuten-card",
-        rate: 0.005, // 上乗せ 0.5% (楽天カード経由チャージ特典)
-        notes:
-          "楽天カードから楽天キャッシュへチャージで +0.5% 上乗せ (楽天Pay 1% に追加で合計 1.5%)",
-      },
-    ],
+    // defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates 削除
+    // → v3 で BenefitProgram (prog-rakuten-pay-base / prog-rakuten-pay-rakuten-card-addon) で表現
     notes:
-      "ベース 1% (楽天Pay 利用、誰でも)。楽天カード経由チャージで +0.5% 上乗せ = 1.5%。",
+      "ベース 1% (楽天Pay 利用、誰でも)。楽天カード経由チャージで +0.5% 上乗せ = 1.5%。" +
+      "[v3 PR 2] BenefitProgram で評価: prog-rakuten-pay-base + prog-rakuten-pay-rakuten-card-addon",
   },
   // d払い (チャージ式 or 直接連携)、ベース 0.5% (200円1pt、誰でも)
   // dカード/GOLD/GOLD U/PLATINUM 連携時 +0.5% 上乗せ = 合計 1.0%
-  // 公式: https://service.smt.docomo.ne.jp/keitai_payment/guide/wallet/payment.html
+  // v3 PR 2 で BenefitProgram に移行:
+  //   prog-d-pay-base (primary, 0.5%) + prog-d-pay-dcard-addon (addOn, 0.5%)
   {
     id: "pa-d-pay",
     name: "d払い",
     iconChar: "dP",
     iconColor: "#cc0033",
-    defaultBonusRate: 0.005, // d払い 基本還元 0.5% (200円1pt、誰でも)
-    defaultBonusCurrencyId: "d-pt",
     chargeBased: true,
     paymentMode: "charge",
-    cardSpecificBonusRates: [
-      {
-        cardId: "dcard",
-        rate: 0.005, // 上乗せ 0.5% (dカード支払い特典)
-        notes:
-          "dカード設定時 +0.5% 上乗せ (d払い 0.5% に追加で合計 1.0%)。GOLD/GOLD U/PLATINUM も同等",
-      },
-    ],
+    // defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates 削除
+    // → v3 で BenefitProgram (prog-d-pay-base / prog-d-pay-dcard-addon) で表現
     notes:
       "ベース 0.5% (d払い 利用、誰でも 200円1pt)。dカード設定で +0.5% 上乗せ = 1.0%。" +
-      "街のお店は dポイントクラブ ランクで最大 4% (本モデルには未反映)。",
+      "街のお店は dポイントクラブ ランクで最大 4% (本モデルには未反映)。" +
+      "[v3 PR 2] BenefitProgram で評価: prog-d-pay-base + prog-d-pay-dcard-addon",
   },
   // PayPay (チャージ式)、ベース 0.5% (残高払い、誰でも)
   // PayPayクレジット連携 (= PayPayカード設定) で +0.5% 上乗せ = 合計 1.0%
-  // 2026/6 以降 PayPayステップ条件変更予定だが、本モデルは基本還元のみ反映
+  // v3 PR 2 で BenefitProgram に移行:
+  //   prog-paypay-base (primary, 0.5%) + prog-paypay-card-addon (addOn, 0.5%)
   {
     id: "pa-paypay",
     name: "PayPay",
     iconChar: "PP",
     iconColor: "#ff0033",
-    defaultBonusRate: 0.005, // PayPay 基本還元 0.5% (残高払い、誰でも)
-    defaultBonusCurrencyId: "paypay",
     chargeBased: true,
     paymentMode: "charge",
-    cardSpecificBonusRates: [
-      {
-        cardId: "paypay-card",
-        rate: 0.005, // 上乗せ 0.5% (PayPayクレジット連携)
-        notes:
-          "PayPayクレジット連携 (= PayPayカード設定) で +0.5% 上乗せ (PayPay 0.5% に追加で合計 1.0%)",
-      },
-    ],
+    // defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates 削除
+    // → v3 で BenefitProgram (prog-paypay-base / prog-paypay-card-addon) で表現
     notes:
       "ベース 0.5% (PayPay 残高払い、誰でも)。PayPayクレジット連携で +0.5% 上乗せ = 1.0%。" +
-      "PayPayステップ条件達成で最大 1.5% だが、本モデルは基本還元のみ反映。",
+      "PayPayステップ条件達成で最大 1.5% だが、本モデルは基本還元のみ反映。" +
+      "[v3 PR 2] BenefitProgram で評価: prog-paypay-base + prog-paypay-card-addon",
   },
   // au PAY (チャージ式)、200円=1 Ponta = 0.5% (コード支払い基本還元)
-  // au PAY カード連携で +1% 上乗せ (合計 1.5%) — v24 で au-pay-card 追加により cardSpecific 補完
+  // au PAY カード連携で +1% 上乗せ (合計 1.5%)
+  // v3 PR 2 で BenefitProgram に移行:
+  //   prog-au-pay-base (primary, 0.5%) + prog-au-pay-card-addon (addOn, 1%)
   {
     id: "pa-au-pay",
     name: "au PAY",
     iconChar: "au",
     iconColor: "#ff6600",
-    defaultBonusRate: 0.005,
-    defaultBonusCurrencyId: "ponta-pt",
     chargeBased: true,
     paymentMode: "charge",
-    cardSpecificBonusRates: [
-      {
-        cardId: "au-pay-card",
-        rate: 0.01, // 上乗せ 1% (チャージ +1% Ponta)
-        currencyId: "ponta-pt",
-        notes: "au PAY カードからチャージで +1% Ponta (au PAY 利用 0.5% に上乗せ = 合計 1.5%)",
-      },
-    ],
+    // defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates 削除
+    // → v3 で BenefitProgram (prog-au-pay-base / prog-au-pay-card-addon) で表現
     notes:
-      "au PAY コード支払いで 0.5% Ponta 還元 (defaultBonusRate)。" +
+      "au PAY コード支払いで 0.5% Ponta 還元。" +
       "au PAY カード経由チャージで +1.0% 上乗せ (合計 1.5%)。" +
-      "au PAY ゴールド (年会費 11,000円) なら更に上振れ可能だが seed 未登録。",
+      "au PAY ゴールド (年会費 11,000円) なら更に上振れ可能だが seed 未登録。" +
+      "[v3 PR 2] BenefitProgram で評価: prog-au-pay-base + prog-au-pay-card-addon",
     enabled: false,
   },
 
   // ファミペイ (チャージ式)、200円=1 FamiPayボーナス = 0.5%
-  // FamiPay ボーナス専用通貨は未登録、edy (現金相当) で代用
-  // ファミマカード連携で +0.5% 上乗せ (合計 1.0%) — v24 で famima-card 追加により cardSpecific 補完
+  // ファミマカード連携で +0.5% 上乗せ (合計 1.0%)
+  // v3 PR 2 で BenefitProgram に移行:
+  //   prog-famipay-base (primary, 0.5%) + prog-famima-card-addon (addOn, 0.5%)
   {
     id: "pa-famipay",
     name: "ファミペイ",
     iconChar: "FP",
     iconColor: "#0072ce",
-    defaultBonusRate: 0.005,
-    defaultBonusCurrencyId: "edy",
     chargeBased: true,
     paymentMode: "charge",
-    cardSpecificBonusRates: [
-      {
-        cardId: "famima-card",
-        rate: 0.005, // 上乗せ 0.5% (ファミマカードチャージ 0.5%)
-        currencyId: "edy",
-        notes: "ファミマカード経由チャージで +0.5% ファミマポイント (ファミペイ利用 0.5% に上乗せ = 合計 1.0%)",
-      },
-    ],
+    // defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates 削除
+    // → v3 で BenefitProgram (prog-famipay-base / prog-famima-card-addon) で表現
     notes:
-      "ファミペイ支払いで 0.5% FamiPay ボーナス還元 (defaultBonusRate)。" +
+      "ファミペイ支払いで 0.5% FamiPay ボーナス還元。" +
       "ファミマカード経由チャージで +0.5% 上乗せ (合計 1.0%)。" +
       "ファミマ店舗での 5% 割引はキャッシュバック式で PointMax の rate モデル外。" +
-      "FamiPay ボーナス専用通貨は未登録、現状 edy (現金相当) で代用。",
+      "[v3 PR 2] BenefitProgram で評価: prog-famipay-base + prog-famima-card-addon",
     enabled: false,
   },
 
   // メルペイ (直接連携)、単体還元なし (0%)
   // メルカード経由のあと払い時のみ 1% (メルカードの還元率に準じる)
+  // v3 PR 2 で BenefitProgram に移行:
+  //   prog-merpay-mercard-addon (addOn, 1%) ※ defaultBonusRate=0 なので base program は不要
   {
     id: "pa-merpay",
     name: "メルペイ",
     iconChar: "MP",
     iconColor: "#ff0211",
-    defaultBonusRate: 0,
-    defaultBonusCurrencyId: "mercari-pt",
     chargeBased: false,
     paymentMode: "direct",
-    cardSpecificBonusRates: [
-      {
-        cardId: "mercard",
-        rate: 0.01,
-        currencyId: "mercari-pt",
-        notes:
-          "メルペイ単独 0% + メルカード経由 +1.0% 上乗せ = 合計 1.0% (メルカリ内 4% や毎月8日 8% は別途 storeRule で表現)",
-      },
-    ],
+    // defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates 削除
+    // → v3 で BenefitProgram (prog-merpay-mercard-addon) で表現
     notes:
       "メルペイ単体は還元なし (0%)。メルカード連携時のみ 1% 還元。" +
-      "メルカリ売上金は自動的にメルペイ残高にチャージされる。",
+      "メルカリ売上金は自動的にメルペイ残高にチャージされる。" +
+      "[v3 PR 2] BenefitProgram で評価: prog-merpay-mercard-addon",
     enabled: false,
   },
 ];

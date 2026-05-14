@@ -54,7 +54,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 28;
+export const SEED_VERSION = 29;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -243,6 +243,17 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 29,
+    date: "2026-05-14",
+    summary:
+      "PR 2 (Migration): 旧 StoreRule / LoyaltyRule / PaymentApp.cardSpecificBonusRates の" +
+      "全件を BenefitProgram に統合。Program 約 33 件 (SMBC 7% / Olive 8% / 楽天市場 / d払い × ビックカメラ / " +
+      "メルカード × メルカリ / ビューカード Suica チャージ / JAL Suica えきねっと等 11 件、" +
+      "Loyalty 系 10 件 (pointCard × rate group)、PaymentApp 系 11 件 (base + addOn))。" +
+      "Memberships 約 200+ 件。Calculator は programEvaluator が主な評価源、旧 rule 配列は空。" +
+      "PR 3 で旧型 (StoreRule / LoyaltyRule / cardSpecificBonusRates 等) と旧 evaluator を削除予定。",
   },
   {
     version: 28,
