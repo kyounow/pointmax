@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { cardLabel } from "../domain/cardLabel";
 import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
-import type { LoyaltyRule, StoreRule } from "../domain/types";
+import type { BenefitProgram, LoyaltyRule, StoreRule } from "../domain/types";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import { MultiStorePicker } from "./MultiStorePicker";
 import { useNameResolvers } from "./hooks/useNameResolvers";
@@ -86,6 +86,7 @@ export function CampaignsScreen() {
   const pointCards = useStore((s) => s.pointCards);
   const rules = useStore((s) => s.rules);
   const loyaltyRules = useStore((s) => s.loyaltyRules);
+  const programs = useStore((s) => s.programs);
   const paymentApps = useStore((s) => s.paymentApps);
   const addRule = useStore((s) => s.addRule);
   const updateRule = useStore((s) => s.updateRule);
@@ -106,6 +107,21 @@ export function CampaignsScreen() {
   const paymentAppById = useMemo(
     () => new Map(paymentApps.map((p) => [p.id, p])),
     [paymentApps],
+  );
+
+  // ─── BenefitProgram キャンペーン (validFrom or validTo を持つ programs) ───
+  const campaignPrograms = useMemo(
+    () => programs.filter((p) => !!(p.validFrom || p.validTo)),
+    [programs],
+  );
+
+  // ─── タブ別フィルター (programs) ───
+  const filteredPrograms = useMemo(
+    () =>
+      activeTab === "all"
+        ? campaignPrograms
+        : campaignPrograms.filter((p) => classifyCampaign(p) === activeTab),
+    [campaignPrograms, activeTab],
   );
 
   // ─── キャンペーン抽出 (validFrom or validTo が入っているもの) ───
@@ -138,9 +154,9 @@ export function CampaignsScreen() {
     [campaignLoyaltyRules, activeTab],
   );
 
-  // ─── タブごとの件数 (storeRules + loyaltyRules の合計) ───
+  // ─── タブごとの件数 (programs + storeRules + loyaltyRules の合計) ───
   const tabCounts = useMemo(() => {
-    const all = [...campaignStoreRules, ...campaignLoyaltyRules];
+    const all = [...campaignPrograms, ...campaignStoreRules, ...campaignLoyaltyRules];
     const count = (key: CampaignStatus) =>
       all.filter((r) => classifyCampaign(r) === key).length;
     return {
@@ -150,7 +166,7 @@ export function CampaignsScreen() {
       expired: count("expired"),
       future: count("future"),
     };
-  }, [campaignStoreRules, campaignLoyaltyRules]);
+  }, [campaignPrograms, campaignStoreRules, campaignLoyaltyRules]);
 
   // ─── StoreRule キャンペーン追加フォーム ───
   const [srCardId, setSrCardId] = useState("");
@@ -169,6 +185,71 @@ export function CampaignsScreen() {
   const [lrValidFrom, setLrValidFrom] = useState("");
   const [lrValidTo, setLrValidTo] = useState("");
   const [lrNotes, setLrNotes] = useState("");
+
+  // ─── 列定義: BenefitProgram ───
+  const programColumns: ColumnDef<BenefitProgram>[] = [
+    {
+      key: "status",
+      label: "状態",
+      view: (p) => statusBadge(classifyCampaign(p)),
+    },
+    {
+      key: "name",
+      label: "プログラム名",
+      view: (p) => p.name,
+    },
+    {
+      key: "target",
+      label: "対象カード / ポイントカード",
+      view: (p) => {
+        const parts: string[] = [];
+        if (p.cardIds?.length) parts.push(p.cardIds.map((id) => cardName(id)).join(" / "));
+        if (p.pointCardId) parts.push(pointCardName(p.pointCardId));
+        if (p.paymentAppId) {
+          parts.push(paymentAppById.get(p.paymentAppId)?.name ?? p.paymentAppId);
+        }
+        return parts.join(" + ") || "-";
+      },
+    },
+    {
+      key: "rate",
+      label: "還元率",
+      view: (p) => `${(p.rate * 100).toFixed(2)}%`,
+    },
+    {
+      key: "currency",
+      label: "貯まる通貨",
+      view: (p) => currencyName(p.currencyId),
+    },
+    {
+      key: "validFrom",
+      label: "開始日",
+      view: (p) => p.validFrom ?? "-",
+    },
+    {
+      key: "validTo",
+      label: "終了日",
+      view: (p) => p.validTo ?? "-",
+    },
+    {
+      key: "period",
+      label: "期間",
+      view: (p) => {
+        const active = isRuleActiveAt(p);
+        return (
+          <span title={active ? "今日有効" : "今日は対象外"}>
+            {active ? "✓ " : "○ "}
+            {formatRulePeriod(p)}
+          </span>
+        );
+      },
+    },
+    {
+      key: "notes",
+      label: "メモ",
+      view: (p) => p.notes ?? "-",
+    },
+  ];
 
   // ─── 列定義: StoreRule ───
   const storeRuleColumns: ColumnDef<StoreRule>[] = [
@@ -378,8 +459,23 @@ export function CampaignsScreen() {
         ))}
       </div>
 
+      {/* ─── BenefitProgram キャンペーン ─── */}
+      {campaignPrograms.length > 0 && (
+        <>
+          <h3 style={{ marginTop: 18 }}>プログラム (BenefitProgram)</h3>
+          <p className="hint" style={{ marginBottom: 6 }}>
+            マスターデータ由来のプログラム。期間限定 / 定期キャンペーンを含みます。
+          </p>
+          <ResponsiveTable
+            rows={filteredPrograms}
+            columns={programColumns}
+            empty="このカテゴリの該当プログラムはありません"
+          />
+        </>
+      )}
+
       {/* ─── クレカ還元キャンペーン (StoreRule) ─── */}
-      <h3 style={{ marginTop: 18 }}>クレカ還元キャンペーン</h3>
+      <h3 style={{ marginTop: 18 }}>クレカ還元キャンペーン (ユーザー追加)</h3>
       <p className="hint" style={{ marginBottom: 6 }}>
         カード × 店舗 (or 支払方法) で還元率がアップするキャンペーン。
       </p>
@@ -494,7 +590,7 @@ export function CampaignsScreen() {
       />
 
       {/* ─── ポイント提示キャンペーン (LoyaltyRule) ─── */}
-      <h3 style={{ marginTop: 22 }}>ポイント提示キャンペーン</h3>
+      <h3 style={{ marginTop: 22 }}>ポイント提示キャンペーン (ユーザー追加)</h3>
       <p className="hint" style={{ marginBottom: 6 }}>
         ポイントカード提示で店舗特典が一時的に増えるキャンペーン。
       </p>

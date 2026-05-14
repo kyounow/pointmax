@@ -135,9 +135,13 @@ describe("buildSeedAdditionsContent", () => {
       loyaltyRules: [],
       cards: [],
       paymentApps: [],
+      programs: [],
+      memberships: [],
     });
     expect(out).toContain("export const ADDED_STORES: Store[] = [];");
     expect(out).toContain("export const ADDED_PAYMENT_APPS: PaymentApp[] = [];");
+    expect(out).toContain("export const ADDED_PROGRAMS: BenefitProgram[] = [];");
+    expect(out).toContain("export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [];");
     expect(out).toContain("AUTO-GENERATED");
   });
 
@@ -148,6 +152,8 @@ describe("buildSeedAdditionsContent", () => {
       loyaltyRules: [],
       cards: [],
       paymentApps: [],
+      programs: [],
+      memberships: [],
     });
     expect(out).toContain(
       'export const ADDED_STORES: Store[] = [\n  { id: "kura-sushi", name: "くら寿司", category: "飲食" },\n];',

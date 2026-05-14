@@ -1,13 +1,24 @@
+// paymentApp.ts - v3 PR 3
+// PaymentApp の評価は programEvaluator.ts (evaluatePrograms) が担う。
+// このファイルは後方互換のため PaymentEvalResult 型と
+// evaluatePaymentApps / bestPaymentApp の シグネチャを維持するが、
+// 実装は programEvaluator ベースに統一されている。
+//
+// 旧フィールド (defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates) は
+// BenefitProgram に移行済み。PaymentApp 型からは削除された。
+
 import type {
+  BenefitProgram,
   Card,
   ConversionEdge,
   PaymentApp,
   Store,
+  StoreProgramMembership,
   StoreRule,
 } from "./types";
-import { resolveRate, type ResolvedRate } from "./resolveRate";
+import type { ResolvedRate } from "./resolveRate";
 import { bestPath } from "./bestPath";
-import { isRuleActiveAt } from "./ruleActiveAt";
+import { evaluatePrograms } from "./programEvaluator";
 
 export type PaymentEvalResult = {
   paymentApp: PaymentApp;
@@ -15,157 +26,163 @@ export type PaymentEvalResult = {
   // クレカ部分の還元
   cardEarnedAmount: number;
   cardEarnedCurrencyId: string;
-  cardFinalAmount: number; // target通貨換算
+  cardFinalAmount: number;
   cardPathSteps: ConversionEdge[];
   cardReachable: boolean;
-  // 決済アプリ自体のbonus還元
-  appBonusRate: number; // 実際に適用された bonus 還元率 (cardSpecific があれば反映)
+  // 決済アプリ自体のbonus還元 (addOn programs の合計)
+  appBonusRate: number;
   appBonusEarnedAmount: number;
   appBonusEarnedCurrencyId: string | null;
-  appBonusFinalAmount: number; // target通貨換算
+  appBonusFinalAmount: number;
   appBonusPathSteps: ConversionEdge[];
   appBonusReachable: boolean;
   // 合計
   totalFinalAmount: number;
-  reachable: boolean; // どちらか一方でも到達可能なら true
+  reachable: boolean;
 };
 
-// このカード × この支払アプリが使えるか判定
-function isPaymentAppCompatible(
-  card: Card,
-  paymentApp: PaymentApp,
-): boolean {
-  if (
-    !paymentApp.compatibleCardIds ||
-    paymentApp.compatibleCardIds.length === 0
-  ) {
-    return true; // 互換制約なし = 全カードOK
+function isPaymentAppCompatible(card: Card, paymentApp: PaymentApp): boolean {
+  if (!paymentApp.compatibleCardIds || paymentApp.compatibleCardIds.length === 0) {
+    return true;
   }
   return paymentApp.compatibleCardIds.includes(card.id);
 }
 
-// 指定の paymentApp に紐づくルールを優先的に解決
-// (paymentAppId 一致 > 汎用 > デフォルト)
-// active なルールが複数あれば最高 rate を採用
-function resolveRateForPaymentApp(
-  card: Card,
-  storeId: string,
-  rules: StoreRule[],
-  stores: Store[],
-  paymentApp: PaymentApp,
-  now: Date = new Date(),
-): ResolvedRate {
-  // paymentAppId が一致する直接ルール (storeId) のうち active なもの
-  const directMatches = rules.filter(
-    (r) =>
-      r.cardId === card.id &&
-      r.storeId === storeId &&
-      r.paymentAppId === paymentApp.id &&
-      isRuleActiveAt(r, now),
-  );
-  if (directMatches.length > 0) {
-    const best = pickHighestRate(directMatches);
-    return {
-      rate: best.rate,
-      currencyId: best.currencyId,
-      source: "rule",
-      ruleId: best.id,
-      validFrom: best.validFrom,
-      validTo: best.validTo,
-    };
-  }
-  // paymentAppId が一致するカテゴリルール
-  const store = stores.find((s) => s.id === storeId);
-  if (store?.category) {
-    const catMatches = rules.filter(
-      (r) =>
-        r.cardId === card.id &&
-        r.category === store.category &&
-        r.paymentAppId === paymentApp.id &&
-        isRuleActiveAt(r, now),
-    );
-    if (catMatches.length > 0) {
-      const best = pickHighestRate(catMatches);
-      return {
-        rate: best.rate,
-        currencyId: best.currencyId,
-        source: "category",
-        ruleId: best.id,
-        validFrom: best.validFrom,
-        validTo: best.validTo,
-      };
-    }
-  }
-  // paymentAppId 指定なし (汎用) ルールにフォールバック
-  // paymentAppId を持つルールは「特定支払方法専用」なので除外
-  const universalRules = rules.filter((r) => !r.paymentAppId);
-  return resolveRate(card, storeId, universalRules, stores, now);
-}
-
-function pickHighestRate(rules: StoreRule[]): StoreRule {
-  return [...rules].sort((a, b) => {
-    if (b.rate !== a.rate) return b.rate - a.rate;
-    return a.id.localeCompare(b.id);
-  })[0];
-}
-
 // このカードで使える各 PaymentApp について試算
-// chargeBased=true (楽天Pay/d払い/PayPay 等) はカード直接決済ではないため、
-// JAL特約店2% 等の店舗別ルール/カテゴリルールは適用されない。カード本来の還元率のみ。
+// programEvaluator ベース: programs / memberships から PaymentApp bonus を評価
 export function evaluatePaymentApps(
   card: Card,
   storeId: string,
   amount: number,
   targetCurrencyId: string,
   paymentApps: PaymentApp[],
-  rules: StoreRule[],
+  _rules: StoreRule[], // kept for backward compat (unused, programs handle this)
   stores: Store[],
   edges: ConversionEdge[],
   availableCardIds?: ReadonlySet<string>,
   now: Date = new Date(),
+  programs?: BenefitProgram[],
+  memberships?: StoreProgramMembership[],
 ): PaymentEvalResult[] {
   const compatible = paymentApps.filter(
     (pa) => pa.enabled !== false && isPaymentAppCompatible(card, pa),
   );
+
+  const store = stores.find((s) => s.id === storeId);
+
   return compatible.map((pa) => {
     const resolved: ResolvedRate = pa.chargeBased
-      ? {
-          // chargeBased=true (= チャージ式) はカード自身の還元が乗らない。
-          // 0 を入れて、bonus 計算で全てカバー。
-          rate: 0,
-          currencyId: card.defaultCurrencyId,
-          source: "charge" as const,
-        }
-      : resolveRateForPaymentApp(card, storeId, rules, stores, pa, now);
+      ? { rate: 0, currencyId: card.defaultCurrencyId, source: "charge" as const }
+      : { rate: card.defaultRate, currencyId: card.defaultCurrencyId, source: "default" as const };
 
-    // クレカ部分 (chargeBased=true なら 0)
     const cardEarned = amount * resolved.rate;
     const cardCurrency = resolved.currencyId;
     const cardPath = bestPath(edges, cardCurrency, targetCurrencyId, cardEarned, availableCardIds);
 
-    // アプリ bonus = ベース (defaultBonusRate) + 上乗せ (cardSpecific.rate)
-    // chargeBased=true: bonus = defaultBonusRate + cardSpecific.rate の累積で全てカバー
-    // chargeBased=false: bonus は追加ボーナス (カード還元との二重取り)
-    // 有効期間 (validFrom/validTo) が設定されている場合は now 時点での active なエントリのみ参照
-    const cardSpecific = pa.cardSpecificBonusRates?.find(
-      (b) => b.cardId === card.id && isRuleActiveAt(b, now),
-    );
-    const baseBonus = pa.defaultBonusRate ?? 0;
-    const addOnBonus = cardSpecific?.rate ?? 0;
-    const bonusRate = baseBonus + addOnBonus;
-    // bonusCurrency は cardSpecific 優先、なければ defaultBonusCurrencyId
-    const bonusCurrency =
-      cardSpecific?.currencyId ?? pa.defaultBonusCurrencyId ?? null;
-    const bonusEarned = amount * bonusRate;
-    const bonusPath =
-      bonusRate > 0 && bonusCurrency
-        ? bestPath(edges, bonusCurrency, targetCurrencyId, bonusEarned, availableCardIds)
-        : null;
+    // programEvaluator ベース: PaymentApp × card の addOn programs
+    let appBonusRate = 0;
+    let appBonusEarned = 0;
+    let appBonusCurrency: string | null = null;
+    let appBonusPath: { finalAmount: number; steps: ConversionEdge[]; product: number } | null = null;
+
+    if (store && programs && memberships) {
+      const result = evaluatePrograms({ card, store, paymentApp: pa, programs, memberships, now });
+      // primary: カード rate (non-chargeBased の場合、更新する)
+      if (!pa.chargeBased && result.primary) {
+        // resolvedRate を更新 (参照型なので new object)
+        const primaryRate = result.primary.effectiveRate;
+        const primaryCurrency = result.primary.effectiveCurrencyId;
+        // update cardEarned with program rate
+        const programEarned = amount * primaryRate;
+        const programPath = bestPath(edges, primaryCurrency, targetCurrencyId, programEarned, availableCardIds);
+        // addOns on top
+        for (const addOn of result.addOns) {
+          const ae = amount * addOn.effectiveRate;
+          const ap = bestPath(edges, addOn.effectiveCurrencyId, targetCurrencyId, ae, availableCardIds);
+          if (ap) {
+            appBonusRate += addOn.effectiveRate;
+            appBonusEarned += ae;
+            appBonusCurrency = appBonusCurrency ?? addOn.effectiveCurrencyId;
+            if (!appBonusPath) {
+              appBonusPath = ap;
+            } else {
+              appBonusPath = {
+                finalAmount: appBonusPath.finalAmount + ap.finalAmount,
+                steps: [...appBonusPath.steps, ...ap.steps],
+                product: appBonusPath.product,
+              };
+            }
+          }
+        }
+        const cardFinal = programPath?.finalAmount ?? 0;
+        const appFinal = appBonusPath?.finalAmount ?? 0;
+        return {
+          paymentApp: pa,
+          resolved: { rate: primaryRate, currencyId: primaryCurrency, source: "rule" as const, ruleId: result.primary.program.id },
+          cardEarnedAmount: programEarned,
+          cardEarnedCurrencyId: primaryCurrency,
+          cardFinalAmount: cardFinal,
+          cardPathSteps: programPath?.steps ?? [],
+          cardReachable: programPath !== null,
+          appBonusRate,
+          appBonusEarnedAmount: appBonusEarned,
+          appBonusEarnedCurrencyId: appBonusCurrency,
+          appBonusFinalAmount: appFinal,
+          appBonusPathSteps: appBonusPath?.steps ?? [],
+          appBonusReachable: appBonusPath !== null,
+          totalFinalAmount: cardFinal + appFinal,
+          reachable: programPath !== null || appBonusPath !== null,
+        };
+      }
+      // chargeBased or no primary: addOns only
+      for (const addOn of result.addOns) {
+        const ae = amount * addOn.effectiveRate;
+        const ap = bestPath(edges, addOn.effectiveCurrencyId, targetCurrencyId, ae, availableCardIds);
+        if (ap) {
+          appBonusRate += addOn.effectiveRate;
+          appBonusEarned += ae;
+          appBonusCurrency = appBonusCurrency ?? addOn.effectiveCurrencyId;
+          if (!appBonusPath) {
+            appBonusPath = ap;
+          } else {
+            appBonusPath = {
+              finalAmount: appBonusPath.finalAmount + ap.finalAmount,
+              steps: [...appBonusPath.steps, ...ap.steps],
+              product: appBonusPath.product,
+            };
+          }
+        }
+      }
+      // For chargeBased: primary is the app base bonus (paymentApp base rate)
+      if (pa.chargeBased && result.primary) {
+        const primaryRate = result.primary.effectiveRate;
+        const primaryCurrency = result.primary.effectiveCurrencyId;
+        const primaryEarned = amount * primaryRate;
+        const primaryPath = bestPath(edges, primaryCurrency, targetCurrencyId, primaryEarned, availableCardIds);
+        const cardFinal = primaryPath?.finalAmount ?? 0;
+        const appFinal = appBonusPath?.finalAmount ?? 0;
+        return {
+          paymentApp: pa,
+          resolved,
+          cardEarnedAmount: primaryEarned,
+          cardEarnedCurrencyId: primaryCurrency,
+          cardFinalAmount: cardFinal,
+          cardPathSteps: primaryPath?.steps ?? [],
+          cardReachable: primaryPath !== null,
+          appBonusRate,
+          appBonusEarnedAmount: appBonusEarned,
+          appBonusEarnedCurrencyId: appBonusCurrency,
+          appBonusFinalAmount: appFinal,
+          appBonusPathSteps: appBonusPath?.steps ?? [],
+          appBonusReachable: appBonusPath !== null,
+          totalFinalAmount: cardFinal + appFinal,
+          reachable: primaryPath !== null || appBonusPath !== null,
+        };
+      }
+    }
 
     const cardFinal = cardPath?.finalAmount ?? 0;
-    const appFinal = bonusPath?.finalAmount ?? 0;
-    const cardReachable = cardPath !== null;
-    const appReachable = bonusPath !== null;
+    const appFinal = appBonusPath?.finalAmount ?? 0;
 
     return {
       paymentApp: pa,
@@ -174,20 +191,20 @@ export function evaluatePaymentApps(
       cardEarnedCurrencyId: cardCurrency,
       cardFinalAmount: cardFinal,
       cardPathSteps: cardPath?.steps ?? [],
-      cardReachable,
-      appBonusRate: bonusRate,
-      appBonusEarnedAmount: bonusEarned,
-      appBonusEarnedCurrencyId: bonusCurrency,
+      cardReachable: cardPath !== null,
+      appBonusRate,
+      appBonusEarnedAmount: appBonusEarned,
+      appBonusEarnedCurrencyId: appBonusCurrency,
       appBonusFinalAmount: appFinal,
-      appBonusPathSteps: bonusPath?.steps ?? [],
-      appBonusReachable: appReachable,
+      appBonusPathSteps: appBonusPath?.steps ?? [],
+      appBonusReachable: appBonusPath !== null,
       totalFinalAmount: cardFinal + appFinal,
-      reachable: cardReachable || appReachable,
+      reachable: cardPath !== null || appBonusPath !== null,
     };
   });
 }
 
-// このカードで使える PaymentApp の中で最良 (totalFinalAmount 最大) を返す
+// このカードで使える PaymentApp の中で最良を返す
 export function bestPaymentApp(
   card: Card,
   storeId: string,
@@ -197,25 +214,16 @@ export function bestPaymentApp(
   rules: StoreRule[],
   stores: Store[],
   edges: ConversionEdge[],
-  // ConversionEdge.requiredCardIds によるゲート判定に使う enabled なカード id の集合。
-  // 渡された場合のみ制約チェックが行われる (未指定 = 後方互換で全エッジ使用)。
   availableCardIds?: ReadonlySet<string>,
   now: Date = new Date(),
+  programs?: BenefitProgram[],
+  memberships?: StoreProgramMembership[],
 ): PaymentEvalResult | null {
   const results = evaluatePaymentApps(
-    card,
-    storeId,
-    amount,
-    targetCurrencyId,
-    paymentApps,
-    rules,
-    stores,
-    edges,
-    availableCardIds,
-    now,
+    card, storeId, amount, targetCurrencyId, paymentApps, rules, stores, edges,
+    availableCardIds, now, programs, memberships,
   );
   if (results.length === 0) return null;
-  // reachable 優先 / totalFinalAmount 降順
   results.sort((a, b) => {
     if (a.reachable !== b.reachable) return a.reachable ? -1 : 1;
     return b.totalFinalAmount - a.totalFinalAmount;

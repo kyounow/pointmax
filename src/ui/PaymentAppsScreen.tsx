@@ -4,12 +4,9 @@ import { isMasterPaymentApp } from "../state/seed";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { PaymentApp } from "../domain/types";
 import { cardLabel } from "../domain/cardLabel";
-import { useNameResolvers } from "./hooks/useNameResolvers";
-import { isRuleActiveAt } from "../domain/ruleActiveAt";
 
 export function PaymentAppsScreen() {
   const cards = useStore((s) => s.cards);
-  const currencies = useStore((s) => s.currencies);
   const paymentApps = useStore((s) => s.paymentApps);
   const addPaymentApp = useStore((s) => s.addPaymentApp);
   const updatePaymentApp = useStore((s) => s.updatePaymentApp);
@@ -18,14 +15,11 @@ export function PaymentAppsScreen() {
   const [name, setName] = useState("");
   const [iconChar, setIconChar] = useState("");
   const [iconColor, setIconColor] = useState("#6b7280");
-  const [bonusRate, setBonusRate] = useState("");
-  const [bonusCurrencyId, setBonusCurrencyId] = useState("");
 
   const cardLabelById = (id: string) => {
     const c = cards.find((c) => c.id === id);
     return c ? cardLabel(c) : "?";
   };
-  const { currencyName } = useNameResolvers();
 
   const columns: ColumnDef<PaymentApp>[] = useMemo(
     () => [
@@ -100,56 +94,6 @@ export function PaymentAppsScreen() {
         ),
       },
       {
-        key: "bonusRate",
-        label: "アプリ自体の還元率",
-        view: (p) =>
-          p.defaultBonusRate
-            ? `${(p.defaultBonusRate * 100).toFixed(2)}%`
-            : "-",
-        edit: (p, set) => (
-          <input
-            type="number"
-            step="0.001"
-            min="0"
-            placeholder="0.01 (=1%)"
-            value={p.defaultBonusRate ?? ""}
-            onChange={(e) =>
-              set({
-                defaultBonusRate: e.target.value
-                  ? Number(e.target.value)
-                  : undefined,
-              })
-            }
-            style={{ width: 90 }}
-          />
-        ),
-      },
-      {
-        key: "bonusCurrency",
-        label: "還元通貨",
-        view: (p) =>
-          p.defaultBonusCurrencyId
-            ? currencyName(p.defaultBonusCurrencyId)
-            : "-",
-        edit: (p, set) => (
-          <select
-            value={p.defaultBonusCurrencyId ?? ""}
-            onChange={(e) =>
-              set({
-                defaultBonusCurrencyId: e.target.value || undefined,
-              })
-            }
-          >
-            <option value="">なし</option>
-            {currencies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        ),
-      },
-      {
         key: "paymentMode",
         label: "決済形態",
         view: (p) => {
@@ -185,105 +129,6 @@ export function PaymentAppsScreen() {
             <option value="direct">直接連携 (カードを支払い元に紐付け)</option>
             <option value="physical">物理/タッチ (カードそのまま提示・タッチ)</option>
           </select>
-        ),
-      },
-      {
-        key: "cardSpecific",
-        label: "カード別還元",
-        view: (p) => {
-          const list = p.cardSpecificBonusRates ?? [];
-          if (list.length === 0) return "-";
-          return (
-            <span>
-              {list.map((b, i) => (
-                <span key={b.cardId}>
-                  {i > 0 && " / "}
-                  {cardLabelById(b.cardId)}: {(b.rate * 100).toFixed(2)}%
-                  {(b.validFrom || b.validTo) && (
-                    <small
-                      style={{
-                        color: isRuleActiveAt(b) ? "var(--accent, #3a86ff)" : "var(--muted)",
-                        marginLeft: 4,
-                      }}
-                      title={isRuleActiveAt(b) ? "今日有効" : "今日は対象外"}
-                    >
-                      ({b.validFrom ?? ""}〜{b.validTo ?? "(未告知)"})
-                    </small>
-                  )}
-                </span>
-              ))}
-            </span>
-          );
-        },
-        edit: (p, set) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {cards.map((c) => {
-              const entry = p.cardSpecificBonusRates?.find(
-                (b) => b.cardId === c.id,
-              );
-              const enabled = !!entry;
-              return (
-                <label
-                  key={c.id}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontSize: 12,
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={enabled}
-                    onChange={(e) => {
-                      const list = p.cardSpecificBonusRates ?? [];
-                      const filtered = list.filter((b) => b.cardId !== c.id);
-                      const next = e.target.checked
-                        ? [
-                            ...filtered,
-                            {
-                              cardId: c.id,
-                              rate: entry?.rate ?? 0.01,
-                            },
-                          ]
-                        : filtered;
-                      set({
-                        cardSpecificBonusRates:
-                          next.length > 0 ? next : undefined,
-                      });
-                    }}
-                  />
-                  <span style={{ minWidth: 130 }}>{cardLabel(c)}:</span>
-                  <input
-                    type="number"
-                    step="0.001"
-                    min="0"
-                    placeholder="0.01 = 1%"
-                    value={entry?.rate ?? ""}
-                    disabled={!enabled}
-                    onChange={(e) => {
-                      const list = p.cardSpecificBonusRates ?? [];
-                      const filtered = list.filter((b) => b.cardId !== c.id);
-                      const rate = e.target.value
-                        ? Number(e.target.value)
-                        : 0;
-                      set({
-                        cardSpecificBonusRates: [
-                          ...filtered,
-                          { cardId: c.id, rate },
-                        ],
-                      });
-                    }}
-                    style={{ width: 90 }}
-                  />
-                </label>
-              );
-            })}
-            <small className="hint" style={{ fontSize: 11 }}>
-              チェック有りのカードを紐付け時、そのカード固有の還元率を使用
-              (例: d払い × dカード = 1%、他は 0%)
-            </small>
-          </div>
         ),
       },
       {
@@ -383,7 +228,7 @@ export function PaymentAppsScreen() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cards, currencies],
+    [cards],
   );
 
   return (
@@ -394,7 +239,7 @@ export function PaymentAppsScreen() {
         自動で最良の支払方法が選ばれます。
         <br />
         「対応カード」を指定すると、その支払方法はそのカードでのみ使われます（楽天Payは楽天カードチャージ必須など）。
-        「アプリ自体の還元率」は決済アプリ自身の還元（楽天Payの1%等）。
+        還元率は「プログラム」タブで BenefitProgram として管理されています。
       </p>
 
       <form
@@ -406,14 +251,10 @@ export function PaymentAppsScreen() {
             name: name.trim(),
             iconChar: iconChar.trim() || undefined,
             iconColor: iconColor || undefined,
-            defaultBonusRate: bonusRate ? Number(bonusRate) : undefined,
-            defaultBonusCurrencyId: bonusCurrencyId || undefined,
           });
           setName("");
           setIconChar("");
           setIconColor("#6b7280");
-          setBonusRate("");
-          setBonusCurrencyId("");
         }}
       >
         <input
@@ -433,26 +274,6 @@ export function PaymentAppsScreen() {
           onChange={(e) => setIconColor(e.target.value)}
           style={{ width: 40, padding: 2 }}
         />
-        <input
-          type="number"
-          step="0.001"
-          min="0"
-          placeholder="bonus率 (任意)"
-          value={bonusRate}
-          onChange={(e) => setBonusRate(e.target.value)}
-          style={{ width: 110 }}
-        />
-        <select
-          value={bonusCurrencyId}
-          onChange={(e) => setBonusCurrencyId(e.target.value)}
-        >
-          <option value="">bonus通貨なし</option>
-          {currencies.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
         <button type="submit">追加</button>
       </form>
 

@@ -3,7 +3,7 @@ import "./App.css";
 import { CardsScreen } from "./ui/CardsScreen";
 import { CurrenciesScreen } from "./ui/CurrenciesScreen";
 import { StoresScreen } from "./ui/StoresScreen";
-import { RulesScreen } from "./ui/RulesScreen";
+import { ProgramsScreen } from "./ui/ProgramsScreen";
 import { CampaignsScreen } from "./ui/CampaignsScreen";
 import { EdgesScreen } from "./ui/EdgesScreen";
 import { CalculatorScreen } from "./ui/CalculatorScreen";
@@ -21,7 +21,7 @@ type Tab =
   | "paymentapps"
   | "currencies"
   | "stores"
-  | "rules"
+  | "programs"
   | "campaigns"
   | "edges"
   | "settings";
@@ -33,7 +33,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "paymentapps", label: "支払方法" },
   { id: "currencies", label: "通貨" },
   { id: "stores", label: "店舗" },
-  { id: "rules", label: "ルール" },
+  { id: "programs", label: "プログラム" },
   { id: "campaigns", label: "キャンペーン" },
   { id: "edges", label: "交換ルート" },
   { id: "settings", label: "設定" },
@@ -257,7 +257,7 @@ function App() {
         {tab === "paymentapps" && <PaymentAppsScreen />}
         {tab === "currencies" && <CurrenciesScreen />}
         {tab === "stores" && <StoresScreen />}
-        {tab === "rules" && <RulesScreen />}
+        {tab === "programs" && <ProgramsScreen />}
         {tab === "campaigns" && <CampaignsScreen />}
         {tab === "edges" && <EdgesScreen />}
         {tab === "settings" && <SettingsScreen />}

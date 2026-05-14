@@ -47,7 +47,9 @@ export type ProducesKind =
   | "categoryRules"
   | "stores"
   | "loyaltyRules"
-  | "paymentApps";
+  | "paymentApps"
+  | "programs"
+  | "memberships";
 
 // 抽出範囲。ローカル個店まで含めると膨大になるソース (JAL特約店、楽天加盟店等)
 // で「チェーン店だけ拾う」を明示できるようにする。

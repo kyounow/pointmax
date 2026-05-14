@@ -50,6 +50,9 @@ export type Store = {
 //   期間外のルールは resolveRate / paymentApp / loyalty で無視される。
 //   同じ specificity (storeId / category) の active ルールが複数あれば
 //   最高 rate のものが選ばれる (通常 1% + キャンペーン 5% → 5%)。
+//
+// @deprecated v3 PR 3: BenefitProgram に統合。ユーザーカスタムルール (UI 経由追加) には引き続き使用。
+// seed データは programs/memberships に移行済み。master.json は rules: [] で出力。
 export type StoreRule = {
   id: string;
   cardId: string;
@@ -96,6 +99,10 @@ export type PointCard = {
 
 // 「店舗 × ポイントカード」の還元ルール。クレカ決済還元と二重取りで使う
 // validFrom / validTo: StoreRule と同じくキャンペーン期間
+//
+// @deprecated v3 PR 3: BenefitProgram (pointCardId フィールド) に統合。
+// ユーザーカスタムルール (UI 経由追加) には引き続き使用可。
+// seed データは programs/memberships に移行済み。master.json は loyaltyRules: [] で出力。
 export type LoyaltyRule = {
   id: string;
   storeId: string;
@@ -180,48 +187,18 @@ export type StoreProgramMembership = {
 //   "direct": カードを支払い元として紐付け (連携式)
 //   "physical": 物理カード or タッチ決済 (default)
 //   省略時は chargeBased から導出
-// defaultBonusRate: ベース還元 (全カード共通の最低値)。
-//   chargeBased=true の場合、これが実質的なアプリ利用時の基本還元率となる。
-// defaultBonusCurrencyId: defaultBonusRate で貯まる通貨 (省略時は null)
-// cardSpecificBonusRates: defaultBonusRate に対する上乗せ加算分 (差分)。
-//   「特定カードを paymentApp で使った時の追加 bonus」を表現。
-//   例 d払い: defaultBonusRate=0、cardSpecific=[{cardId:"dcard", rate:0.01}]
-//     → 楽天カード × d払い = 0 (default) + 0 (該当 cardSpecific なし) = 0%
-//     → dカード × d払い   = 0 (default) + 0.01 (cardSpecific) = 1.0%
-//   例 au PAY: defaultBonusRate=0.005、cardSpecific=[{cardId:"au-pay-card", rate:0.01}]
-//     → 楽天カード × au PAY = 0.005 + 0 = 0.5%
-//     → au PAY カード × au PAY = 0.005 + 0.01 = 1.5%
+//
+// @deprecated v3 PR 3: defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates は
+// BenefitProgram (prog-*-base / prog-*-addon) に移行済み。
+// 後方互換のためフィールドは残すが、programEvaluator が評価源。
 export type PaymentApp = {
   id: string;
   name: string;
   iconChar?: string;
   iconColor?: string;
   compatibleCardIds?: string[];
-  // ベース還元 (全カード共通の最低値)。chargeBased=true ではアプリ利用時の基本還元率。
-  defaultBonusRate?: number;
-  defaultBonusCurrencyId?: string;
   chargeBased?: boolean;
   paymentMode?: "charge" | "direct" | "physical";
-  // PaymentApp のベース bonus (defaultBonusRate) に対する **上乗せ加算分**。
-  // 「特定カードを paymentApp で使った時の追加 bonus」を表現。
-  // 例: d払い defaultBonusRate=0、cardSpecific=[{cardId:"dcard", rate:0.01}]
-  //     → 楽天カード × d払い = 0 (default) + 0 (該当 cardSpecific なし) = 0%
-  //     → dカード × d払い = 0 (default) + 0.01 (cardSpecific) = 1.0%
-  // 例: au PAY defaultBonusRate=0.005、cardSpecific=[{cardId:"au-pay-card", rate:0.01}]
-  //     → 楽天カード × au PAY = 0.005 + 0 = 0.5%
-  //     → au PAY カード × au PAY = 0.005 + 0.01 = 1.5%
-  //
-  // validFrom/validTo は entry の有効期間 (任意)。期限切れ entry は無視される。
-  //   両方なし → 常時有効。validFrom のみ → 公式プログラム。両方 → 期間限定。
-  //   解釈ルールは StoreRule.validFrom/validTo と同一。
-  cardSpecificBonusRates?: {
-    cardId: string;
-    rate: number;
-    currencyId?: string; // 省略時は defaultBonusCurrencyId
-    notes?: string;
-    validFrom?: string;
-    validTo?: string;
-  }[];
   // enabled: undefined または true = 有効 (デフォルト。既存 localStorage との後方互換)
   //          false = 無効 (Calculator の順位付けから除外される)
   // 「使ってない決済アプリを表示から消す」用途。Card.enabled と同じセマンティクス。

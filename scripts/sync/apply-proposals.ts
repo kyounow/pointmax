@@ -26,7 +26,9 @@ import type {
 import {
   ADDED_CARDS,
   ADDED_LOYALTY_RULES,
+  ADDED_MEMBERSHIPS,
   ADDED_PAYMENT_APPS,
+  ADDED_PROGRAMS,
   ADDED_RULES,
   ADDED_STORES,
 } from "../../src/state/seed-additions";
@@ -82,6 +84,8 @@ type Buckets = {
   loyaltyRules: Record<string, unknown>[];
   cards: Record<string, unknown>[];
   paymentApps: Record<string, unknown>[];
+  programs: Record<string, unknown>[];
+  memberships: Record<string, unknown>[];
 };
 
 export function bucketProposals(
@@ -93,6 +97,8 @@ export function bucketProposals(
     loyaltyRules: [],
     cards: [],
     paymentApps: [],
+    programs: [],
+    memberships: [],
   };
   const skippedMap = new Map<string, number>();
 
@@ -118,6 +124,12 @@ export function bucketProposals(
         break;
       case "paymentApps":
         buckets.paymentApps.push(ap.record);
+        break;
+      case "programs":
+        buckets.programs.push(ap.record);
+        break;
+      case "memberships":
+        buckets.memberships.push(ap.record);
         break;
       default: {
         const key = `${p.type}/${ap.collection}`;
@@ -156,6 +168,32 @@ export function mergeWithExisting<T extends Identifiable>(
     }
     newOnes.push(r as unknown as T);
     if (id) existingIds.add(id);
+    added += 1;
+  }
+  return { merged: [...existing, ...newOnes], added, skipped };
+}
+
+// Merge StoreProgramMembership records (dedupe by programId+storeId composite key)
+type MembershipLike = { programId?: string; storeId?: string };
+
+export function mergeMemberships<T extends MembershipLike>(
+  existing: T[],
+  newRecords: Record<string, unknown>[],
+): { merged: T[]; added: number; skipped: number } {
+  const existingKeys = new Set(
+    existing.map((m) => `${m.programId}|${m.storeId}`).filter((k) => !k.startsWith("|")),
+  );
+  let added = 0;
+  let skipped = 0;
+  const newOnes: T[] = [];
+  for (const r of newRecords) {
+    const key = `${r.programId}|${r.storeId}`;
+    if (existingKeys.has(key)) {
+      skipped += 1;
+      continue;
+    }
+    newOnes.push(r as unknown as T);
+    existingKeys.add(key);
     added += 1;
   }
   return { merged: [...existing, ...newOnes], added, skipped };
@@ -202,10 +240,12 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
     `// Last regenerated: ${timestamp}`,
     "// ─────────────────────────────────────────────────────────────────────",
     "import type {",
+    "  BenefitProgram,",
     "  Card,",
     "  LoyaltyRule,",
     "  PaymentApp,",
     "  Store,",
+    "  StoreProgramMembership,",
     "  StoreRule,",
     "} from \"../domain/types\";",
     "",
@@ -218,6 +258,10 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
     emitArrayConst("ADDED_CARDS", "Card", buckets.cards),
     "",
     emitArrayConst("ADDED_PAYMENT_APPS", "PaymentApp", buckets.paymentApps),
+    "",
+    emitArrayConst("ADDED_PROGRAMS", "BenefitProgram", buckets.programs),
+    "",
+    emitArrayConst("ADDED_MEMBERSHIPS", "StoreProgramMembership", buckets.memberships),
     "",
   ].join("\n");
 }
@@ -282,6 +326,8 @@ function main(): void {
     loyaltyRules: mergeWithExisting(ADDED_LOYALTY_RULES, buckets.loyaltyRules),
     cards: mergeWithExisting(ADDED_CARDS, buckets.cards),
     paymentApps: mergeWithExisting(ADDED_PAYMENT_APPS, buckets.paymentApps),
+    programs: mergeWithExisting(ADDED_PROGRAMS, buckets.programs),
+    memberships: mergeMemberships(ADDED_MEMBERSHIPS, buckets.memberships),
   };
   console.log("📋 merge result (existing + new, deduped by id):");
   console.log(
@@ -299,6 +345,12 @@ function main(): void {
   console.log(
     `     paymentApps:   +${merge.paymentApps.added} (skipped ${merge.paymentApps.skipped}) → total ${merge.paymentApps.merged.length}`,
   );
+  console.log(
+    `     programs:      +${merge.programs.added} (skipped ${merge.programs.skipped}) → total ${merge.programs.merged.length}`,
+  );
+  console.log(
+    `     memberships:   +${merge.memberships.added} (skipped ${merge.memberships.skipped}) → total ${merge.memberships.merged.length}`,
+  );
 
   // 3. seed-additions.ts のコンテンツを構築
   const mergedBuckets: Buckets = {
@@ -307,6 +359,8 @@ function main(): void {
     loyaltyRules: merge.loyaltyRules.merged as Record<string, unknown>[],
     cards: merge.cards.merged as Record<string, unknown>[],
     paymentApps: merge.paymentApps.merged as Record<string, unknown>[],
+    programs: merge.programs.merged as Record<string, unknown>[],
+    memberships: merge.memberships.merged as Record<string, unknown>[],
   };
   const newContent = buildSeedAdditionsContent(mergedBuckets);
 

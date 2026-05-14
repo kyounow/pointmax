@@ -28,7 +28,9 @@ import type {
 import {
   ADDED_CARDS,
   ADDED_LOYALTY_RULES,
+  ADDED_MEMBERSHIPS,
   ADDED_PAYMENT_APPS,
+  ADDED_PROGRAMS,
   ADDED_RULES,
   ADDED_STORES,
 } from "./seed-additions";
@@ -54,7 +56,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 29;
+export const SEED_VERSION = 30;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -245,6 +247,18 @@ export const SEED_CHANGELOG: {
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
   },
   {
+    version: 30,
+    date: "2026-05-14",
+    summary:
+      "PR 3 (Cleanup): 旧型 (StoreRule / LoyaltyRule / PaymentApp deprecated fields) を完全廃止。" +
+      "旧 evaluator (resolveRate / loyalty / paymentApp の旧ロジック) を削除し、programEvaluator が唯一の評価源に。" +
+      "新画面 ProgramsScreen を追加 (Program 一覧 + 加盟店表示)。" +
+      "RulesScreen を廃止 (ProgramsScreen に統合)。CampaignsScreen は Program ベースに改修。" +
+      "ADDED_LOYALTY_RULES 62 件を Program memberships に吸収。" +
+      "cron pipeline (auto-sync) も Program ベースに更新 (ADDED_MEMBERSHIPS / ADDED_PROGRAMS 等)。" +
+      "SEED_VERSION 30 で型レベル schema 完全切替。次の PR 4 で localStorage migration framework + V3UpgradeModal。",
+  },
+  {
     version: 29,
     date: "2026-05-14",
     summary:
@@ -296,6 +310,16 @@ export const MASTER_PAYMENT_APP_IDS = new Set<string>([
 
 export const isMasterPaymentApp = (id: string): boolean =>
   MASTER_PAYMENT_APP_IDS.has(id);
+
+// マスター由来 BenefitProgram (SEED_BENEFIT_PROGRAMS) の id 集合。
+// この集合に含まれる id を持つ Program は公式マスターバッジを表示する。
+// ユーザーが追加したプログラム (UUID id) は含まれない。
+export const MASTER_PROGRAM_IDS = new Set<string>(
+  SEED_BENEFIT_PROGRAMS.map((p) => p.id),
+);
+
+export const isMasterProgram = (id: string): boolean =>
+  MASTER_PROGRAM_IDS.has(id);
 
 // seed() の戻り値の型。状態保存時の SeedShape と一致する。
 type SeedReturn = {
@@ -367,7 +391,19 @@ export const seed = (): SeedReturn => {
       ...paymentApps,
       ...ADDED_PAYMENT_APPS.filter((p) => !handwrittenPaymentAppIds.has(p.id)),
     ],
-    programs: SEED_BENEFIT_PROGRAMS,
-    memberships: SEED_STORE_PROGRAM_MEMBERSHIPS,
+    programs: [
+      ...SEED_BENEFIT_PROGRAMS,
+      ...ADDED_PROGRAMS.filter(
+        (p) => !SEED_BENEFIT_PROGRAMS.some((sp) => sp.id === p.id),
+      ),
+    ],
+    memberships: [
+      ...SEED_STORE_PROGRAM_MEMBERSHIPS,
+      ...ADDED_MEMBERSHIPS.filter(
+        (m) => !SEED_STORE_PROGRAM_MEMBERSHIPS.some(
+          (sm) => sm.programId === m.programId && sm.storeId === m.storeId,
+        ),
+      ),
+    ],
   };
 };

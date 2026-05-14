@@ -8,7 +8,9 @@ export type CollectionName =
   | "edges"
   | "pointCards"
   | "loyaltyRules"
-  | "paymentApps";
+  | "paymentApps"
+  | "programs"
+  | "memberships";
 
 // 既存レコードの特定フィールドを from → to に更新
 // 現在値が from と一致する時のみ自動適用、それ以外は衝突として個別確認

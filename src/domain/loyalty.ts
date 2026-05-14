@@ -1,9 +1,16 @@
-import type { ConversionEdge, LoyaltyRule, PointCard } from "./types";
+import type {
+  BenefitProgram,
+  ConversionEdge,
+  LoyaltyRule,
+  PointCard,
+  StoreProgramMembership,
+} from "./types";
 import { bestPath } from "./bestPath";
 import { isRuleActiveAt } from "./ruleActiveAt";
 
 export type LoyaltyResult = {
   pointCard: PointCard;
+  // rule は LoyaltyRule (旧型、ユーザーカスタム) か BenefitProgram (v3 プログラムベース) のいずれか
   rule: LoyaltyRule;
   earnedAmount: number;
   earnedCurrencyId: string;
@@ -43,6 +50,7 @@ export function bestLoyalty(
 // now: キャンペーン期間判定の基準時刻 (テスト容易化のため引数化)
 // availableCardIds: ConversionEdge.requiredCardIds のゲート判定に使う enabled なカード id の集合。
 //   渡された場合のみ制約チェックが行われる (未指定 = 後方互換で全エッジ使用)。
+// programs / memberships: v3 BenefitProgram ベースの loyalty 評価 (pointCardId を持つ programs)
 // 同一 (pointCard, store) で複数 rule active なら最高 rate を採用。
 export function bestLoyalties(
   storeId: string,
@@ -55,17 +63,61 @@ export function bestLoyalties(
   preferredPointCardIds?: string[],
   now: Date = new Date(),
   availableCardIds?: ReadonlySet<string>,
+  programs?: BenefitProgram[],
+  memberships?: StoreProgramMembership[],
 ): LoyaltyResult[] {
   if (maxStacks <= 0) return [];
 
   const ownedById = new Map(ownedPointCards.map((p) => [p.id, p]));
-  // 店舗一致 + 保有 pointCard + active な (キャンペーン期間内 or 期間指定なし) ルールのみ
-  const applicable = loyaltyRules.filter(
+
+  // 旧型 LoyaltyRule (ユーザーカスタム) からの候補
+  const loyaltyApplicable = loyaltyRules.filter(
     (r) =>
       r.storeId === storeId &&
       ownedById.has(r.pointCardId) &&
       isRuleActiveAt(r, now),
   );
+
+  // v3 BenefitProgram ベースの loyalty 候補 (pointCardId を持つ programs)
+  const programApplicable: LoyaltyRule[] = [];
+  if (programs && memberships) {
+    // この store の membership を持つ programs + 全 store 適用 programs
+    const storeMembers = memberships.filter((m) => m.storeId === storeId);
+    const memberProgramIds = new Set(storeMembers.map((m) => m.programId));
+    const allMemberProgramIds = new Set(memberships.map((m) => m.programId));
+
+    for (const p of programs) {
+      if (!p.pointCardId) continue;
+      if (!isRuleActiveAt(p, now)) continue;
+      if (!ownedById.has(p.pointCardId)) continue;
+
+      // store membership チェック
+      const hasMembershipForStore = memberProgramIds.has(p.id);
+      const isGlobalProgram = !allMemberProgramIds.has(p.id);
+      if (!hasMembershipForStore && !isGlobalProgram) continue;
+
+      const membership = storeMembers.find((m) => m.programId === p.id);
+      const effectiveRate = membership?.overrideRate ?? p.rate;
+      const effectiveCurrencyId = membership?.overrideCurrencyId ?? p.currencyId;
+
+      // BenefitProgram を LoyaltyRule 形式に変換 (id は program.id で衝突回避)
+      programApplicable.push({
+        id: p.id,
+        storeId,
+        pointCardId: p.pointCardId,
+        rate: effectiveRate,
+        currencyId: effectiveCurrencyId,
+        validFrom: p.validFrom,
+        validTo: p.validTo,
+        recurringDays: p.recurringDays,
+        notes: p.notes,
+      });
+    }
+  }
+
+  // 全候補: 旧型 + プログラムベース
+  // 同一 (pointCardId, store) で両方あれば最高 rate が採用される
+  const applicable = [...loyaltyApplicable, ...programApplicable];
   if (applicable.length === 0) return [];
 
   const evaluated: LoyaltyResult[] = applicable.map((rule) => {
@@ -104,8 +156,8 @@ export function bestLoyalties(
   });
 
   // 1) reachable 優先 / 2) finalAmount 降順
-  // 3) 店舗の preferredPointCardIds 順 (店舗別優先)
-  // 4) ownedPointCards 配列順 (ユーザー全体優先順)
+  // 3) 店舗の preferredPointCardIds 順
+  // 4) ownedPointCards 配列順
   // 5) earnedAmount 降順
   const userPriorityIndex = new Map(ownedPointCards.map((p, i) => [p.id, i]));
   const storePriorityIndex = new Map(

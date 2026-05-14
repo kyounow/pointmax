@@ -22,6 +22,7 @@ export function CalculatorScreen() {
   const pointCards = useStore((s) => s.pointCards);
   const loyaltyRules = useStore((s) => s.loyaltyRules);
   const paymentApps = useStore((s) => s.paymentApps);
+  const programs = useStore((s) => s.programs);
 
   // デフォルトは「一般店舗 (規定還元)」。基本還元率の確認用。
   // store-id "general" が存在しない場合 (極端なリセット直後) は空文字フォールバック
@@ -208,20 +209,17 @@ export function CalculatorScreen() {
           weekday: "short",
         });
 
-        // アクティブ期間ルールの集計
+        // アクティブ期間ルールの集計 (programs + 旧 rules/loyaltyRules)
         const allRules = [...rules, ...loyaltyRules];
-        // PaymentApp の cardSpecificBonusRates 期間も集計
-        const paymentAppBonuses = paymentApps.flatMap((p) =>
-          p.cardSpecificBonusRates ?? []
-        );
+        const allProgramsWithDates = programs.filter((p) => p.validFrom || p.validTo);
 
-        const timeBoundActive = [...allRules, ...paymentAppBonuses].filter(
+        const timeBoundActive = [...allRules, ...allProgramsWithDates].filter(
           (r) => r.validTo && isRuleActiveAt(r, now)
         ).length;
-        const ongoingActive = [...allRules, ...paymentAppBonuses].filter(
+        const ongoingActive = [...allRules, ...allProgramsWithDates].filter(
           (r) => !r.validTo && r.validFrom && isRuleActiveAt(r, now)
         ).length;
-        const recurringActive = allRules.filter(
+        const recurringActive = [...allRules, ...programs].filter(
           (r) => "recurringDays" in r && r.recurringDays?.length && isRuleActiveAt(r, now)
         ).length;
 
@@ -534,38 +532,32 @@ export function CalculatorScreen() {
                       クレカ還元率 {(r.resolved.rate * 100).toFixed(2)}% で{" "}
                       {formatNum(r.earnedAmount)}{" "}
                       {currencyName(r.earnedCurrencyId)}
-                      {r.resolved.source === "rule" && (
-                        <span className="badge">店舗ルール適用</span>
+                      {r.resolved.source === "program" && (
+                        <span className="badge">プログラム適用</span>
                       )}
-                      {r.resolved.source === "category" && (
-                        <span className="badge">カテゴリルール適用</span>
-                      )}
-                      {(r.resolved.source === "rule" ||
-                        r.resolved.source === "category") && (
-                        <RuleStatusBadge
-                          validFrom={r.resolved.validFrom}
-                          validTo={r.resolved.validTo}
-                          style={{ marginLeft: 4 }}
-                        />
-                      )}
-                      {(r.resolved.source === "rule" ||
-                        r.resolved.source === "category") && (
-                        <NoteChips notes={r.resolved.notes} />
-                      )}
-                      {(() => {
-                        if (r.resolved.source === "default" || r.resolved.source === "charge") return null;
-                        const ruleId = r.resolved.ruleId;
-                        const rule = rules.find((rl) => rl.id === ruleId);
-                        if (!rule?.monthlyCapAmountYen) return null;
+                      {r.resolved.source === "program" && (() => {
+                        const resolved = r.resolved;
+                        const prog = resolved.source === "program" ? programs.find((p) => p.id === resolved.programId) : null;
+                        if (!prog) return null;
                         return (
-                          <span
-                            className="cap-warn"
-                            title="この還元率には月間/年間の上限があります"
-                          >
-                            ⚠ 上限{" "}
-                            {rule.monthlyCapAmountYen.toLocaleString()}
-                            円/月
-                          </span>
+                          <>
+                            <RuleStatusBadge
+                              validFrom={prog.validFrom}
+                              validTo={prog.validTo}
+                              style={{ marginLeft: 4 }}
+                            />
+                            <NoteChips notes={prog.notes} />
+                            {prog.monthlyCapAmountYen && (
+                              <span
+                                className="cap-warn"
+                                title="この還元率には月間/年間の上限があります"
+                              >
+                                ⚠ 上限{" "}
+                                {prog.monthlyCapAmountYen.toLocaleString()}
+                                円/月
+                              </span>
+                            )}
+                          </>
                         );
                       })()}
                     </div>

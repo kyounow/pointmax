@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { rankCards } from "./rankCards";
-import type { Card, ConversionEdge, Store, StoreRule } from "./types";
+import type { BenefitProgram, Card, ConversionEdge, Store, StoreProgramMembership, StoreRule } from "./types";
 
 const rakuten: Card = {
   id: "rakuten",
@@ -81,28 +81,35 @@ describe("rankCards", () => {
     expect(result[1].finalAmount).toBe(50);
   });
 
-  it("店舗ルールが還元率と通貨の両方を上書きする", () => {
-    const rules: StoreRule[] = [
+  it("BenefitProgram が還元率と通貨の両方を上書きする (旧: 店舗ルール)", () => {
+    // StoreRule の代わりに BenefitProgram + StoreProgramMembership を使用
+    const programs: BenefitProgram[] = [
       {
-        id: "amzn-rule",
-        cardId: "rakuten",
-        storeId: "amazon",
+        id: "prog-amzn-rule",
+        name: "Amazon 楽天 2%",
+        cardIds: ["rakuten"],
         rate: 0.02,
         currencyId: "amazon-pt",
+        bonusType: "primary",
       },
+    ];
+    const memberships: StoreProgramMembership[] = [
+      { programId: "prog-amzn-rule", storeId: "amazon" },
     ];
     const result = rankCards({
       payment: { storeId: "amazon", amount: 10000 },
       targetCurrencyId: "amazon-pt",
       cards: [rakuten],
       stores: baseStores,
-      rules,
+      rules: [],
       edges: [],
+      programs,
+      memberships,
     });
     expect(result[0].earnedCurrencyId).toBe("amazon-pt");
     expect(result[0].earnedAmount).toBe(200);
     expect(result[0].finalAmount).toBe(200);
-    expect(result[0].resolved.source).toBe("rule");
+    expect(result[0].resolved.source).toBe("program");
   });
 
   it("目標通貨に到達できないカードは reachable=false で末尾に入る", () => {
@@ -231,25 +238,32 @@ describe("rankCards", () => {
     expect(result[0].card.id).toBe("rakuten");
   });
 
-  it("カテゴリルールが店舗のカテゴリ経由で適用される", () => {
-    const rules: StoreRule[] = [
+  it("BenefitProgram が Amazon の還元率を上書きする (旧: カテゴリルール)", () => {
+    // StoreRule category の代わりに BenefitProgram + StoreProgramMembership を使用
+    const programs: BenefitProgram[] = [
       {
-        id: "cat-net",
-        cardId: "rakuten",
-        category: "ネット通販",
+        id: "prog-cat-net",
+        name: "ネット通販 楽天 1.5%",
+        cardIds: ["rakuten"],
         rate: 0.015,
         currencyId: "rakuten-pt",
+        bonusType: "primary",
       },
+    ];
+    const memberships: StoreProgramMembership[] = [
+      { programId: "prog-cat-net", storeId: "amazon" },
     ];
     const result = rankCards({
       payment: { storeId: "amazon", amount: 10000 },
       targetCurrencyId: "rakuten-pt",
       cards: [rakuten],
       stores: baseStores,
-      rules,
+      rules: [],
       edges: [],
+      programs,
+      memberships,
     });
-    expect(result[0].resolved.source).toBe("category");
+    expect(result[0].resolved.source).toBe("program");
     expect(result[0].earnedAmount).toBe(150);
     expect(result[0].finalAmount).toBe(150);
   });
