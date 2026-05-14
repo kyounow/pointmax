@@ -2,15 +2,7 @@ import { useState } from "react";
 import {
   extractNoteChips,
   sanitizeNoteForDisplay,
-  type NoteChip,
 } from "../domain/noteParser";
-
-const CHIP_ICONS: Record<NoteChip["kind"], string> = {
-  entry: "🔔",
-  cap: "💎",
-  exclusion: "🚫",
-  limited: "🗓",
-};
 
 type Props = {
   notes?: string;
@@ -22,6 +14,9 @@ type Props = {
  *
  * 内部マイグレーション metadata (旧 rule-... から移行 / [v3 PR 2] ...) は
  * sanitizeNoteForDisplay で除去してから扱う。
+ *
+ * v3.2.x: A 案 = 絵文字撤廃。色違いバッジ (note-chip-{kind}) + テキストのみで識別。
+ * スマホでの行高ブレを抑え、横幅をコンパクトに保つ。
  */
 export function NoteChips({ notes }: Props) {
   const [expanded, setExpanded] = useState(false);
@@ -38,7 +33,7 @@ export function NoteChips({ notes }: Props) {
           className={`note-chip note-chip-${c.kind}`}
           title={cleaned}
         >
-          {CHIP_ICONS[c.kind]} {c.label}
+          {c.label}
         </span>
       ))}
       <button
@@ -50,13 +45,9 @@ export function NoteChips({ notes }: Props) {
         }}
         title="メモを表示"
       >
-        {expanded ? "▴ 閉じる" : "ⓘ 詳細"}
+        {expanded ? "閉じる" : "詳細"}
       </button>
-      {expanded && (
-        <div className="note-chip-full">
-          📋 {cleaned}
-        </div>
-      )}
+      {expanded && <div className="note-chip-full">{cleaned}</div>}
     </span>
   );
 }

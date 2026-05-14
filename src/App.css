@@ -1774,6 +1774,20 @@ details summary {
   padding: 6px 8px;
   border-bottom: 1px dotted rgba(255, 255, 255, 0.05);
   vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+/* カード名セル: inline-flex で wrap させると text node が折れないので、
+   block 化して通常テキストとして折り返させる。badge は inline-block で
+   先頭にラベル風に置く。 */
+.card-comparison-table .card-name-with-badge {
+  display: block;
+  line-height: 1.45;
+}
+.card-comparison-table .card-name-with-badge .card-master-badge {
+  display: inline-block;
+  vertical-align: 0.05em;
+  margin-right: 6px;
 }
 .card-comparison-total {
   font-variant-numeric: tabular-nums;
