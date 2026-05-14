@@ -1,16 +1,19 @@
 import type {
+  BenefitProgram,
   Card,
   ConversionEdge,
   LoyaltyRule,
   PaymentApp,
   PointCard,
   Store,
+  StoreProgramMembership,
   StoreRule,
 } from "./types";
 import { resolveRate, type ResolvedRate } from "./resolveRate";
 import { bestPath } from "./bestPath";
 import { bestLoyalties, type LoyaltyResult } from "./loyalty";
 import { bestPaymentApp, type PaymentEvalResult } from "./paymentApp";
+import { evaluatePrograms } from "./programEvaluator";
 
 export type RankInput = {
   payment: { storeId: string; amount: number };
@@ -22,6 +25,8 @@ export type RankInput = {
   pointCards?: PointCard[];
   loyaltyRules?: LoyaltyRule[];
   paymentApps?: PaymentApp[];
+  programs?: BenefitProgram[];
+  memberships?: StoreProgramMembership[];
 };
 
 export type CardRanking = {
@@ -61,6 +66,8 @@ export function rankCards(
     pointCards = [],
     loyaltyRules = [],
     paymentApps = [],
+    programs = [],
+    memberships = [],
   } = input;
 
   // enabled === false のカードは Calculator 順位付けから除外する。
@@ -95,12 +102,37 @@ export function rankCards(
     0,
   );
 
+  // programs/memberships 評価用のダミー PaymentApp (paymentApp 引数が必要だが未選択の場合)
+  const DIRECT_PAYMENT_APP: PaymentApp = { id: "__direct__", name: "直接決済" };
+
   const ranked: CardRanking[] = targetCards.map((card) => {
-    // PaymentApp が登録されていない場合は従来通り (resolveRate のみ)
+    // PaymentApp が登録されていない場合は従来通り (resolveRate のみ) + program 評価
     if (paymentApps.length === 0) {
       const resolved = resolveRate(card, payment.storeId, rules, stores);
-      const earnedAmount = payment.amount * resolved.rate;
-      const earnedCurrencyId = resolved.currencyId;
+
+      // PR 1 並行運用: 旧 resolveRate rate と新 program rate を比較して大きい方を採用
+      const storeObj = stores.find((s) => s.id === payment.storeId);
+      const programResult = storeObj
+        ? evaluatePrograms({
+            card,
+            store: storeObj,
+            paymentApp: DIRECT_PAYMENT_APP,
+            programs,
+            memberships,
+          })
+        : null;
+      const programRate = programResult?.primary?.effectiveRate ?? 0;
+      const programCurrencyId = programResult?.primary?.effectiveCurrencyId;
+
+      const effectiveRate =
+        programRate > resolved.rate ? programRate : resolved.rate;
+      const effectiveCurrencyId =
+        programRate > resolved.rate
+          ? (programCurrencyId ?? resolved.currencyId)
+          : resolved.currencyId;
+
+      const earnedAmount = payment.amount * effectiveRate;
+      const earnedCurrencyId = effectiveCurrencyId;
       const path = bestPath(
         edges,
         earnedCurrencyId,
@@ -143,10 +175,31 @@ export function rankCards(
       availableCardIds,
     );
     if (!best) {
-      // 互換 PaymentApp 無し（例外的）→ resolveRate のみ
+      // 互換 PaymentApp 無し（例外的）→ resolveRate のみ + program 評価
       const resolved = resolveRate(card, payment.storeId, rules, stores);
-      const earnedAmount = payment.amount * resolved.rate;
-      const earnedCurrencyId = resolved.currencyId;
+
+      const storeObj = stores.find((s) => s.id === payment.storeId);
+      const programResult = storeObj
+        ? evaluatePrograms({
+            card,
+            store: storeObj,
+            paymentApp: DIRECT_PAYMENT_APP,
+            programs,
+            memberships,
+          })
+        : null;
+      const programRate = programResult?.primary?.effectiveRate ?? 0;
+      const programCurrencyId = programResult?.primary?.effectiveCurrencyId;
+
+      const effectiveRate =
+        programRate > resolved.rate ? programRate : resolved.rate;
+      const effectiveCurrencyId =
+        programRate > resolved.rate
+          ? (programCurrencyId ?? resolved.currencyId)
+          : resolved.currencyId;
+
+      const earnedAmount = payment.amount * effectiveRate;
+      const earnedCurrencyId = effectiveCurrencyId;
       const path = bestPath(
         edges,
         earnedCurrencyId,
@@ -172,6 +225,61 @@ export function rankCards(
         appBonusReachable: false,
         loyalties,
         totalFinalAmount: baseFinal + loyaltyTotal,
+      };
+    }
+
+    // PaymentApp あり: program rate を best.cardEarnedRate と比較
+    // chargeBased=true の場合は JAL特約店 等の店舗 program は bypass しない
+    // (program は paymentApp に依存しない rate として別途評価)
+    const storeObj = stores.find((s) => s.id === payment.storeId);
+    const programResult = storeObj
+      ? evaluatePrograms({
+          card,
+          store: storeObj,
+          paymentApp: best.paymentApp,
+          programs,
+          memberships,
+        })
+      : null;
+    const programRate = programResult?.primary?.effectiveRate ?? 0;
+    const programCurrencyId = programResult?.primary?.effectiveCurrencyId;
+
+    // chargeBased=true の場合、best.resolved.rate=0 なので program rate があれば採用
+    const cardBaseRate = best.resolved.rate;
+    const useProgram = programRate > cardBaseRate;
+    const finalCardRate = useProgram ? programRate : cardBaseRate;
+    const finalCardCurrencyId = useProgram
+      ? (programCurrencyId ?? best.cardEarnedCurrencyId)
+      : best.cardEarnedCurrencyId;
+
+    if (useProgram) {
+      // program rate 採用: cardEarnedAmount を再計算
+      const earnedAmount = payment.amount * finalCardRate;
+      const path = bestPath(
+        edges,
+        finalCardCurrencyId,
+        targetCurrencyId,
+        earnedAmount,
+        availableCardIds,
+      );
+      const cardFinal = path?.finalAmount ?? 0;
+      return {
+        card,
+        resolved: best.resolved,
+        earnedAmount,
+        earnedCurrencyId: finalCardCurrencyId,
+        pathSteps: path?.steps ?? [],
+        pathProduct: 0,
+        finalAmount: cardFinal,
+        reachable: path !== null,
+        paymentApp: best.paymentApp,
+        appBonusRate: best.appBonusRate,
+        appBonusFinalAmount: best.appBonusFinalAmount,
+        appBonusEarnedAmount: best.appBonusEarnedAmount,
+        appBonusCurrencyId: best.appBonusEarnedCurrencyId,
+        appBonusReachable: best.appBonusReachable,
+        loyalties,
+        totalFinalAmount: cardFinal + best.appBonusFinalAmount + loyaltyTotal,
       };
     }
 

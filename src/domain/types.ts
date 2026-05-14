@@ -113,6 +113,58 @@ export type LoyaltyRule = {
   recurringDays?: number[];
 };
 
+// PointMax v3: 還元プログラム
+// 「(発動者 × 場所 × 還元率)」を統一表現。
+// 旧 StoreRule / LoyaltyRule / PaymentApp.cardSpecificBonusRates の上位概念。
+//
+// 発動条件は cardIds / pointCardId / paymentAppId のいずれか or 組合せで指定。
+// 該当しない program はその場面で無視される。
+//
+// store への加盟関係は StoreProgramMembership (M2M) で別管理。
+// membership が一件も無い program は「全 store に適用」と解釈 (= PaymentApp の上乗せ系で使う)。
+export type BenefitProgram = {
+  id: string;                      // 例: "prog-jal-tokuyaku"
+  name: string;                    // 例: "JALカード特約店"
+
+  // ─── 発動要件 ───
+  cardIds?: string[];              // クレカ保有者 (OR セマンティクス)
+  pointCardId?: string;            // 提示するポイントカード (loyalty 系)
+  paymentAppId?: string;           // 特定 paymentApp 経由限定
+
+  // ─── 還元内容 ───
+  rate: number;
+  currencyId: string;
+
+  // bonusType: 加算方式
+  //   "primary" (default): 候補同士で最大 rate を選んで採用 (排他的)
+  //   "addOn":             既存還元の上に上乗せ加算
+  bonusType?: "primary" | "addOn";
+
+  // ─── 期間 ───
+  validFrom?: string;
+  validTo?: string;
+  recurringDays?: number[];
+
+  // ─── Meta ───
+  description?: string;
+  officialUrl?: string;
+  conditions?: string;             // 「ショッピングマイル・プレミアム加入時」等
+  monthlyCapAmountYen?: number;
+  notes?: string;
+};
+
+// 店舗 × プログラム M2M
+// program.id (= BenefitProgram.id) と store.id を結ぶ。
+// override は店舗ごとの個別 rate/currency 上書き (例: 同 program で大半 0.5% だが
+// 一部店舗だけ 1% の override が必要なケース)。
+export type StoreProgramMembership = {
+  programId: string;
+  storeId: string;
+  overrideRate?: number;
+  overrideCurrencyId?: string;
+  notes?: string;
+};
+
 // 支払アプリ（楽天Pay/d払い/PayPay/Visaタッチ等）
 // クレジットカードに紐づいた決済方法で、決済アプリ自体の還元（bonus）を持つ
 // compatibleCardIds: このアプリで決済する際に使えるカード（チャージ/紐づけ元）

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type {
+  BenefitProgram,
   Card,
   ConversionEdge,
   Currency,
@@ -8,6 +9,7 @@ import type {
   PaymentApp,
   PointCard,
   Store,
+  StoreProgramMembership,
   StoreRule,
 } from "../domain/types";
 import { seed, SEED_VERSION, DEFAULT_SYNC_URL, isMasterCard, isMasterPaymentApp } from "./seed";
@@ -44,6 +46,8 @@ type State = {
   pointCards: PointCard[];
   loyaltyRules: LoyaltyRule[];
   paymentApps: PaymentApp[];
+  programs: BenefitProgram[];
+  memberships: StoreProgramMembership[];
   lastSeedVersion: number;
   syncUrl: string;
   lastSyncAt: string | null;
@@ -118,6 +122,8 @@ const empty: State = {
   pointCards: [],
   loyaltyRules: [],
   paymentApps: [],
+  programs: [],
+  memberships: [],
   lastSeedVersion: 0,
   // 初期値はビルトインの公式マスタURL。ユーザーが空に戻すと再びデフォルトを参照する想定
   syncUrl: DEFAULT_SYNC_URL,
@@ -272,6 +278,8 @@ export const useStore = create<State & Actions>()(
               pointCards: s.pointCards,
               loyaltyRules: s.loyaltyRules,
               paymentApps: s.paymentApps,
+              programs: s.programs,
+              memberships: s.memberships,
             },
             seed(),
           );
@@ -284,6 +292,8 @@ export const useStore = create<State & Actions>()(
             pointCards: result.pointCards,
             loyaltyRules: result.loyaltyRules,
             paymentApps: result.paymentApps,
+            programs: result.programs ?? [],
+            memberships: result.memberships ?? [],
             lastSeedVersion: SEED_VERSION,
           };
         }),
@@ -298,6 +308,8 @@ export const useStore = create<State & Actions>()(
             pointCards: s.pointCards,
             loyaltyRules: s.loyaltyRules,
             paymentApps: s.paymentApps,
+            programs: s.programs,
+            memberships: s.memberships,
           };
           // 1. 追加分マージ (mergeSeed; add-only)
           const merged = mergeSeedFn(currentShape, seed());
@@ -339,6 +351,8 @@ export const useStore = create<State & Actions>()(
             pointCards: finalState.pointCards,
             loyaltyRules: finalState.loyaltyRules,
             paymentApps: finalState.paymentApps,
+            programs: merged.programs ?? [],
+            memberships: merged.memberships ?? [],
             lastSeedVersion: SEED_VERSION,
           };
         }),
@@ -393,6 +407,8 @@ export const useStore = create<State & Actions>()(
             paymentApps: Array.isArray(data.paymentApps)
               ? data.paymentApps
               : [],
+            programs: Array.isArray(data.programs) ? data.programs : [],
+            memberships: Array.isArray(data.memberships) ? data.memberships : [],
           };
           if (mode === "overwrite") {
             set(() => ({
@@ -413,6 +429,8 @@ export const useStore = create<State & Actions>()(
               pointCards: s.pointCards,
               loyaltyRules: s.loyaltyRules,
               paymentApps: s.paymentApps,
+              programs: s.programs,
+              memberships: s.memberships,
             },
             remote,
           );
@@ -424,7 +442,9 @@ export const useStore = create<State & Actions>()(
             result.diff.edges.length +
             result.diff.pointCards.length +
             result.diff.loyaltyRules.length +
-            result.diff.paymentApps.length;
+            result.diff.paymentApps.length +
+            (result.diff.programs?.length ?? 0) +
+            (result.diff.memberships?.length ?? 0);
           set(() => ({
             cards: result.cards,
             currencies: result.currencies,
@@ -434,6 +454,8 @@ export const useStore = create<State & Actions>()(
             pointCards: result.pointCards,
             loyaltyRules: result.loyaltyRules,
             paymentApps: result.paymentApps,
+            programs: result.programs ?? [],
+            memberships: result.memberships ?? [],
             lastSyncAt: new Date().toISOString(),
           }));
           return { ok: true, added: addedCount, mode };

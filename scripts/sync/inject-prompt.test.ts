@@ -20,14 +20,15 @@ placeholder
     expect(out).toContain("<!-- /INJECT -->");
   });
 
-  it("filter=category:JAL特約店 で店舗が絞り込まれる", () => {
+  it("filter=category:ガソリンスタンド で店舗が絞り込まれる", () => {
+    // v3 PR 1: 旧 JAL特約店カテゴリは業種別に変更済み (ENEOS → ガソリンスタンド)
     const input = `
-<!-- INJECT:stores filter=category:JAL特約店 columns=id,name -->
+<!-- INJECT:stores filter=category:ガソリンスタンド columns=id,name -->
 <!-- /INJECT -->
 `;
     const out = injectExistingEntities(input);
     expect(out).toContain("ENEOS");
-    expect(out).toContain("ツルハドラッグ");
+    expect(out).toContain("出光");
     // 飲食カテゴリの店は含まれないはず
     expect(out).not.toContain("スターバックス");
     expect(out).not.toContain("マクドナルド");

@@ -1,4 +1,5 @@
 import type {
+  BenefitProgram,
   Card,
   ConversionEdge,
   Currency,
@@ -6,6 +7,7 @@ import type {
   PaymentApp,
   PointCard,
   Store,
+  StoreProgramMembership,
   StoreRule,
 } from "./types";
 
@@ -18,6 +20,8 @@ export type SeedShape = {
   pointCards: PointCard[];
   loyaltyRules: LoyaltyRule[];
   paymentApps: PaymentApp[];
+  programs?: BenefitProgram[];
+  memberships?: StoreProgramMembership[];
 };
 
 export type Diff = SeedShape;
@@ -35,6 +39,20 @@ function mergeArray<T extends Identifiable>(
   return { merged: [...current, ...added], added };
 }
 
+// StoreProgramMembership は id を持たないため (programId, storeId) の複合キーで重複排除
+function mergeMemberships(
+  current: StoreProgramMembership[],
+  next: StoreProgramMembership[],
+): { merged: StoreProgramMembership[]; added: StoreProgramMembership[] } {
+  const existingKeys = new Set(
+    current.map((m) => `${m.programId}:${m.storeId}`),
+  );
+  const added = next.filter(
+    (m) => !existingKeys.has(`${m.programId}:${m.storeId}`),
+  );
+  return { merged: [...current, ...added], added };
+}
+
 // add-only マージ: seed にあって current に無いID を追加。既存は変更しない。
 export function mergeSeed(current: SeedShape, seed: SeedShape): MergeResult {
   const cards = mergeArray(current.cards, seed.cards);
@@ -45,6 +63,11 @@ export function mergeSeed(current: SeedShape, seed: SeedShape): MergeResult {
   const pointCards = mergeArray(current.pointCards, seed.pointCards);
   const loyaltyRules = mergeArray(current.loyaltyRules, seed.loyaltyRules);
   const paymentApps = mergeArray(current.paymentApps, seed.paymentApps);
+  const programs = mergeArray(current.programs ?? [], seed.programs ?? []);
+  const memberships = mergeMemberships(
+    current.memberships ?? [],
+    seed.memberships ?? [],
+  );
 
   return {
     cards: cards.merged,
@@ -55,6 +78,8 @@ export function mergeSeed(current: SeedShape, seed: SeedShape): MergeResult {
     pointCards: pointCards.merged,
     loyaltyRules: loyaltyRules.merged,
     paymentApps: paymentApps.merged,
+    programs: programs.merged,
+    memberships: memberships.merged,
     diff: {
       cards: cards.added,
       currencies: currencies.added,
@@ -64,6 +89,8 @@ export function mergeSeed(current: SeedShape, seed: SeedShape): MergeResult {
       pointCards: pointCards.added,
       loyaltyRules: loyaltyRules.added,
       paymentApps: paymentApps.added,
+      programs: programs.added,
+      memberships: memberships.added,
     },
   };
 }
@@ -77,6 +104,8 @@ export function diffCount(diff: Diff): number {
     diff.edges.length +
     diff.pointCards.length +
     diff.loyaltyRules.length +
-    diff.paymentApps.length
+    diff.paymentApps.length +
+    (diff.programs?.length ?? 0) +
+    (diff.memberships?.length ?? 0)
   );
 }

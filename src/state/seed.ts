@@ -14,6 +14,7 @@
 // 自動同期 (scripts/sync/apply-proposals.ts) は seed-additions.ts に書き込む。
 // この seed.ts や seed-data-*.ts を直接書き換えるのは「手書きで永続化する」時のみ。
 import type {
+  BenefitProgram,
   Card,
   ConversionEdge,
   Currency,
@@ -21,6 +22,7 @@ import type {
   PaymentApp,
   PointCard,
   Store,
+  StoreProgramMembership,
   StoreRule,
 } from "../domain/types";
 import {
@@ -44,11 +46,15 @@ import {
   SEED_STORES,
 } from "./seed-data-stores";
 import { SEED_EDGES } from "./seed-data-edges";
+import {
+  SEED_BENEFIT_PROGRAMS,
+  SEED_STORE_PROGRAM_MEMBERSHIPS,
+} from "./seed-data-programs";
 
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 27;
+export const SEED_VERSION = 28;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -238,6 +244,21 @@ export const SEED_CHANGELOG: {
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
   },
+  {
+    version: 28,
+    date: "2026-05-14",
+    summary:
+      "PR 1 (Foundation): BenefitProgram モデル導入。" +
+      "旧 StoreRule / LoyaltyRule / PaymentApp.cardSpecificBonusRates の 3 種の還元 rule を統合する上位概念 " +
+      "BenefitProgram 型を新規定義 (id / cardIds / pointCardId / paymentAppId / rate / currencyId / " +
+      "validFrom/validTo/recurringDays / bonusType / meta)。StoreProgramMembership で 店舗 × プログラム M2M。" +
+      "programEvaluator.ts で統一評価エンジン (PR 1 期は JAL特約店 のみ Program 化、他は旧 rule 維持)。" +
+      "JAL特約店 11 stores の category を業種別 (ガソリンスタンド/ドラッグストア/書店/百貨店/ファッション/" +
+      "スーパー/飲食) に変更。prog-jal-tokuyaku program + 12 memberships を seed 追加。" +
+      "旧 rule-jal-suica-tokuyaku / rule-jal-card-tokuyaku / rule-jal-suica-familymart / " +
+      "rule-jal-card-familymart の 4 rules を削除。Calculator は旧 resolveRate + 新 programEvaluator " +
+      "両方の rate を比較して最大採用で動作。",
+  },
 ];
 
 // マスター由来カード (seed-data-cards.ts + auto-sync) の id 集合。
@@ -275,6 +296,8 @@ type SeedReturn = {
   pointCards: PointCard[];
   loyaltyRules: LoyaltyRule[];
   paymentApps: PaymentApp[];
+  programs: BenefitProgram[];
+  memberships: StoreProgramMembership[];
 };
 
 /**
@@ -333,5 +356,7 @@ export const seed = (): SeedReturn => {
       ...paymentApps,
       ...ADDED_PAYMENT_APPS.filter((p) => !handwrittenPaymentAppIds.has(p.id)),
     ],
+    programs: SEED_BENEFIT_PROGRAMS,
+    memberships: SEED_STORE_PROGRAM_MEMBERSHIPS,
   };
 };

@@ -7,8 +7,8 @@
 //   - cardId / pointCardId は seed-data-cards.ts に存在する id を参照
 //   - storeId / category は SEED_STORES と整合させる
 //   - paymentAppId は seed-data-cards.ts の SEED_PAYMENT_APPS の id を参照
-//   - 「JAL特約店」カテゴリは多数の店舗が属するため、SEED_STORE_RULES では
-//     category 指定で 1 ルール → 全 JAL特約店に適用される
+//   - v3 PR 1 以降、JAL特約店の還元は BenefitProgram (seed-data-programs.ts) で管理。
+//     旧 category="JAL特約店" の StoreRule は削除済み。
 import type { LoyaltyRule, Store, StoreRule } from "../domain/types";
 
 export const SEED_STORES: Store[] = [
@@ -74,18 +74,18 @@ export const SEED_STORES: Store[] = [
     name: "えきねっと(在来線特急)",
     category: "交通",
   },
-  // JAL特約店 (JALカードSuicaで2%還元になる店舗群)
-  { id: "eneos", name: "ENEOS", category: "JAL特約店" },
-  { id: "idemitsu", name: "出光", category: "JAL特約店" },
-  { id: "welcia", name: "ウエルシア", category: "JAL特約店" },
-  { id: "matsukiyo", name: "マツモトキヨシ", category: "JAL特約店" },
-  { id: "kinokuniya", name: "紀伊國屋書店", category: "JAL特約店" },
-  { id: "aeon", name: "イオン", category: "JAL特約店" },
-  { id: "daimaru-matsuzakaya", name: "大丸・松坂屋", category: "JAL特約店" },
-  { id: "muji", name: "無印良品 (一部店舗)", category: "JAL特約店" },
-  { id: "uniqlo", name: "ユニクロ (一部店舗)", category: "JAL特約店" },
-  { id: "royal-host", name: "ロイヤルホスト", category: "JAL特約店" },
-  { id: "tsuruha", name: "ツルハドラッグ", category: "JAL特約店" },
+  // 旧 JAL特約店カテゴリ → v3 で業種別 category に変更 (加盟関係は StoreProgramMembership で管理)
+  { id: "eneos", name: "ENEOS", category: "ガソリンスタンド" },
+  { id: "idemitsu", name: "出光", category: "ガソリンスタンド" },
+  { id: "welcia", name: "ウエルシア", category: "ドラッグストア" },
+  { id: "matsukiyo", name: "マツモトキヨシ", category: "ドラッグストア" },
+  { id: "kinokuniya", name: "紀伊國屋書店", category: "書店" },
+  { id: "aeon", name: "イオン", category: "スーパー" },
+  { id: "daimaru-matsuzakaya", name: "大丸・松坂屋", category: "百貨店" },
+  { id: "muji", name: "無印良品 (一部店舗)", category: "ファッション" },
+  { id: "uniqlo", name: "ユニクロ (一部店舗)", category: "ファッション" },
+  { id: "royal-host", name: "ロイヤルホスト", category: "飲食" },
+  { id: "tsuruha", name: "ツルハドラッグ", category: "ドラッグストア" },
   // 百貨店・家電量販店・ドラッグストア (主にdポイント加盟)
   { id: "takashimaya", name: "高島屋", category: "百貨店" },
   { id: "nojima", name: "ノジマ", category: "家電量販店" },
@@ -614,44 +614,8 @@ export const SEED_STORE_RULES: StoreRule[] = [
     currencyId: "jre",
     notes: "ビューカード会員 在来線チケットレス特急券 5%還元",
   },
-  // JALカードSuica × カテゴリ「JAL特約店」: 100円=2マイル (2%)
-  // ENEOS / 出光 / ウエルシア / 紀伊國屋 / イオン / 大丸松坂屋 / 無印 / ユニクロ / ロイヤルホスト
-  {
-    id: "rule-jal-suica-tokuyaku",
-    cardId: "jal-suica",
-    category: "JAL特約店",
-    rate: 0.02,
-    currencyId: "jal-mile",
-    notes:
-      "JAL CARD特約店 100円=2マイル (CLUB-Aゴールド・ショッピングマイルプレミアム込み)",
-  },
-  // JALカードSuica × ファミマ: 個別ルール (ファミマは category="コンビニ" のため上のカテゴリルールが当たらない)
-  {
-    id: "rule-jal-suica-familymart",
-    cardId: "jal-suica",
-    storeId: "conv-familymart",
-    rate: 0.02,
-    currencyId: "jal-mile",
-    notes: "JAL CARD特約店 100円=2マイル (ファミマは特約店個別ルール)",
-  },
-  // JALカード (普通) も同じく特約店 2% / ファミマ 2% (ショッピングマイル・プレミアム加入時)。
-  // Suica チャージ / えきねっと は jal-suica 特有 (ビューカード機能込み) なので複製しない。
-  {
-    id: "rule-jal-card-tokuyaku",
-    cardId: "jal-card",
-    category: "JAL特約店",
-    rate: 0.02,
-    currencyId: "jal-mile",
-    notes: "JAL CARD特約店 100円=2マイル (ショッピングマイル・プレミアム加入時)",
-  },
-  {
-    id: "rule-jal-card-familymart",
-    cardId: "jal-card",
-    storeId: "conv-familymart",
-    rate: 0.02,
-    currencyId: "jal-mile",
-    notes: "JAL CARD特約店 100円=2マイル (ファミマは特約店個別ルール)",
-  },
+  // rule-jal-suica-tokuyaku / rule-jal-card-tokuyaku / rule-jal-suica-familymart / rule-jal-card-familymart は
+  // v3 PR 1 で prog-jal-tokuyaku + StoreProgramMembership 12 件に移行済み → 削除。
   // === 期間限定キャンペーン ===
   // d払い × dカード × ビックカメラ +5% (2026年5月のキャンペーン)
   // 詳細: NTTドコモ公式 https://service.smt.docomo.ne.jp/keitai_payment/campaign/dpay_biccamera_260507_7487/
