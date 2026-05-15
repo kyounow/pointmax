@@ -284,6 +284,48 @@ export function EdgesScreen() {
         )}
       </div>
 
+      {/* ===== 選択中の詳細パネル (グラフより上に配置: グラフの下まで
+              スクロールせずに済むよう、選択直後にすぐ見られる位置に置く) ===== */}
+      {selectedCurrency && (
+        <NodeDetailPanel
+          currency={selectedCurrency}
+          outgoing={outgoing}
+          incoming={incoming}
+          currencyById={currencyById}
+          cardName={cardName}
+          isEdgeAccessible={isEdgeAccessible}
+          onSelectEdge={(id) => setSel({ type: "edge", id })}
+          onDismiss={() => setSel(null)}
+          isRouteFrom={selectedCurrency.id === routeFromId}
+          isRouteTo={selectedCurrency.id === routeToId}
+          onSetAsRouteFrom={() => setRouteFromId(selectedCurrency.id)}
+          onSetAsRouteTo={() => setRouteToId(selectedCurrency.id)}
+        />
+      )}
+      {selectedEdge && (
+        <EdgeDetailPanel
+          edge={selectedEdge}
+          cards={cards}
+          currencyById={currencyById}
+          currencyName={currencyName}
+          isEdgeAccessible={isEdgeAccessible}
+          onUpdate={(patch) => updateEdge(selectedEdge.id, patch)}
+          onDelete={async () => {
+            const ok = await dialog.confirm({
+              title: "このエッジを削除しますか？",
+              message: `${currencyName(selectedEdge.fromCurrencyId)} → ${currencyName(selectedEdge.toCurrencyId)}`,
+              okText: "削除",
+              danger: true,
+            });
+            if (ok) {
+              removeEdge(selectedEdge.id);
+              setSel(null);
+            }
+          }}
+          onDismiss={() => setSel(null)}
+        />
+      )}
+
       <div className="graph-toolbar">
         <label
           style={{
@@ -323,49 +365,6 @@ export function EdgesScreen() {
         routeFromId={routeFromId || undefined}
         routeToId={routeToId || undefined}
       />
-
-      {/* ===== ノード選択時: 関連ルート一覧 ===== */}
-      {selectedCurrency && (
-        <NodeDetailPanel
-          currency={selectedCurrency}
-          outgoing={outgoing}
-          incoming={incoming}
-          currencyById={currencyById}
-          cardName={cardName}
-          isEdgeAccessible={isEdgeAccessible}
-          onSelectEdge={(id) => setSel({ type: "edge", id })}
-          onDismiss={() => setSel(null)}
-          isRouteFrom={selectedCurrency.id === routeFromId}
-          isRouteTo={selectedCurrency.id === routeToId}
-          onSetAsRouteFrom={() => setRouteFromId(selectedCurrency.id)}
-          onSetAsRouteTo={() => setRouteToId(selectedCurrency.id)}
-        />
-      )}
-
-      {/* ===== エッジ選択時: レート編集 ===== */}
-      {selectedEdge && (
-        <EdgeDetailPanel
-          edge={selectedEdge}
-          cards={cards}
-          currencyById={currencyById}
-          currencyName={currencyName}
-          isEdgeAccessible={isEdgeAccessible}
-          onUpdate={(patch) => updateEdge(selectedEdge.id, patch)}
-          onDelete={async () => {
-            const ok = await dialog.confirm({
-              title: "このエッジを削除しますか？",
-              message: `${currencyName(selectedEdge.fromCurrencyId)} → ${currencyName(selectedEdge.toCurrencyId)}`,
-              okText: "削除",
-              danger: true,
-            });
-            if (ok) {
-              removeEdge(selectedEdge.id);
-              setSel(null);
-            }
-          }}
-          onDismiss={() => setSel(null)}
-        />
-      )}
 
     </section>
   );
