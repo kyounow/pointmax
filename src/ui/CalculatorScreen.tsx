@@ -566,9 +566,27 @@ export function CalculatorScreen() {
                 {expanded && (
                   <>
                     <div className="result-meta">
-                      クレカ還元率 {(r.resolved.rate * 100).toFixed(2)}% で{" "}
-                      {formatNum(r.earnedAmount)}{" "}
-                      {currencyName(r.earnedCurrencyId)}
+                      {r.resolved.source === "charge" && r.paymentApp ? (
+                        <>
+                          {r.paymentApp.name} ベース還元{" "}
+                          {(r.resolved.rate * 100).toFixed(2)}% で{" "}
+                          {formatNum(r.earnedAmount)}{" "}
+                          {currencyName(r.earnedCurrencyId)}
+                          <small
+                            className="hint"
+                            title="チャージ式の支払アプリは、カード単体での還元は 0% (チャージ時には還元されない)。表示は支払アプリのベース還元率。"
+                            style={{ marginLeft: 6 }}
+                          >
+                            (クレカ単体 0%、{r.paymentApp.name} 側で還元)
+                          </small>
+                        </>
+                      ) : (
+                        <>
+                          クレカ還元率 {(r.resolved.rate * 100).toFixed(2)}% で{" "}
+                          {formatNum(r.earnedAmount)}{" "}
+                          {currencyName(r.earnedCurrencyId)}
+                        </>
+                      )}
                       {r.resolved.source === "program" && (
                         <span className="badge">プログラム適用</span>
                       )}

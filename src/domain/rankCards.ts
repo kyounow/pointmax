@@ -270,7 +270,10 @@ export function rankCards(
         const baseCurrency = primary?.effectiveCurrencyId ?? card.defaultCurrencyId;
         cardRate = baseRate;
         cardCurrencyId = baseCurrency;
-        resolved = { rate: 0, currencyId: card.defaultCurrencyId, source: "charge" };
+        // resolved.rate は「実際に earnedAmount を生んだレート」= cardRate に揃える。
+        // 以前は 0 をハードコードしていたため UI で「クレカ還元率 0.00% で 100 楽天pt」
+        // のような矛盾表示が出ていた。source=charge で UI 側が paymentApp 由来と判別する。
+        resolved = { rate: baseRate, currencyId: baseCurrency, source: "charge" };
       } else {
         // 通常: primary program rate (card × store) or defaultRate
         cardRate = primary?.effectiveRate ?? card.defaultRate;
