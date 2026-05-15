@@ -11,7 +11,21 @@ import type {
   Store,
   StoreProgramMembership,
 } from "../domain/types";
-import { seed, SEED_VERSION, DEFAULT_SYNC_URL, isMasterCard, isMasterPaymentApp } from "./seed";
+import {
+  seed,
+  SEED_VERSION,
+  DEFAULT_SYNC_URL,
+  isMasterCard,
+  isMasterPaymentApp,
+  getSeedCard,
+  getSeedPaymentApp,
+} from "./seed";
+import {
+  applyCardPatch,
+  applyPaymentAppPatch,
+  resetCardToSeedValues,
+  resetPaymentAppToSeedValues,
+} from "./userModified";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
 import {
   MIGRATIONS,
@@ -65,6 +79,10 @@ type Actions = {
   addCard: (c: Omit<Card, "id">) => void;
   updateCard: (id: string, patch: Partial<Omit<Card, "id">>) => void;
   removeCard: (id: string) => void;
+  // master 由来カードのデータ部分 (name/grade/defaultRate/defaultCurrencyId) を
+  // seed 値に戻し、userModifiedAt をクリアして「公式」バッジを復活させる。
+  // enabled は preference として保持。non-master id (= UUID) は no-op。
+  resetCardToSeed: (id: string) => void;
 
   addCurrency: (c: Omit<Currency, "id">) => void;
   updateCurrency: (id: string, patch: Partial<Omit<Currency, "id">>) => void;
@@ -99,6 +117,9 @@ type Actions = {
     patch: Partial<Omit<PaymentApp, "id">>,
   ) => void;
   removePaymentApp: (id: string) => void;
+  // master 由来 PaymentApp のデータ部分を seed 値に戻し、userModifiedAt をクリア。
+  // enabled は保持。non-master id は no-op。
+  resetPaymentAppToSeed: (id: string) => void;
 
   clearAll: () => void;
   mergeFromSeed: () => void;
@@ -142,7 +163,9 @@ export const useStore = create<State & Actions>()(
         set((s) => ({ cards: [...s.cards, { ...c, id: newId() }] })),
       updateCard: (id, patch) =>
         set((s) => ({
-          cards: s.cards.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+          cards: s.cards.map((c) =>
+            c.id === id ? applyCardPatch(c, patch, new Date()) : c,
+          ),
         })),
       removeCard: (id) => {
         // マスター由来カードは削除不可 (mergeFromSeed で復活するため意味がない)。
@@ -150,6 +173,16 @@ export const useStore = create<State & Actions>()(
         if (isMasterCard(id)) return;
         set((s) => ({
           cards: s.cards.filter((c) => c.id !== id),
+        }));
+      },
+      resetCardToSeed: (id) => {
+        // non-master (UUID 由来) は seed lookup できないので no-op
+        const original = getSeedCard(id);
+        if (!original) return;
+        set((s) => ({
+          cards: s.cards.map((c) =>
+            c.id === id ? resetCardToSeedValues(c, original) : c,
+          ),
         }));
       },
 
@@ -240,7 +273,7 @@ export const useStore = create<State & Actions>()(
       updatePaymentApp: (id, patch) =>
         set((s) => ({
           paymentApps: s.paymentApps.map((p) =>
-            p.id === id ? { ...p, ...patch } : p,
+            p.id === id ? applyPaymentAppPatch(p, patch, new Date()) : p,
           ),
         })),
       removePaymentApp: (id) => {
@@ -249,6 +282,15 @@ export const useStore = create<State & Actions>()(
         if (isMasterPaymentApp(id)) return;
         set((s) => ({
           paymentApps: s.paymentApps.filter((p) => p.id !== id),
+        }));
+      },
+      resetPaymentAppToSeed: (id) => {
+        const original = getSeedPaymentApp(id);
+        if (!original) return;
+        set((s) => ({
+          paymentApps: s.paymentApps.map((p) =>
+            p.id === id ? resetPaymentAppToSeedValues(p, original) : p,
+          ),
         }));
       },
 

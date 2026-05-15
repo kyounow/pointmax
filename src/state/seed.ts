@@ -330,6 +330,35 @@ export const MASTER_PROGRAM_IDS = new Set<string>(
 export const isMasterProgram = (id: string): boolean =>
   MASTER_PROGRAM_IDS.has(id);
 
+// 「公式値に戻す」機能用の seed lookup ヘルパー。
+// 編集前の master 値を返す。userModifiedAt クリアと合わせて使う (src/state/userModified.ts)。
+// 初回呼び出しで lazy にキャッシュ (seed-data-cards.ts / seed-additions.ts は
+// import 時に static なので safe)。
+let _seedCardLookup: Map<string, Card> | null = null;
+export const getSeedCard = (id: string): Card | undefined => {
+  if (!_seedCardLookup) {
+    _seedCardLookup = new Map();
+    for (const c of SEED_CARDS) _seedCardLookup.set(c.id, c);
+    for (const c of ADDED_CARDS) {
+      // 手書きが優先 (seed() と同じセマンティクス)
+      if (!_seedCardLookup.has(c.id)) _seedCardLookup.set(c.id, c);
+    }
+  }
+  return _seedCardLookup.get(id);
+};
+
+let _seedPaymentAppLookup: Map<string, PaymentApp> | null = null;
+export const getSeedPaymentApp = (id: string): PaymentApp | undefined => {
+  if (!_seedPaymentAppLookup) {
+    _seedPaymentAppLookup = new Map();
+    for (const p of SEED_PAYMENT_APPS) _seedPaymentAppLookup.set(p.id, p);
+    for (const p of ADDED_PAYMENT_APPS) {
+      if (!_seedPaymentAppLookup.has(p.id)) _seedPaymentAppLookup.set(p.id, p);
+    }
+  }
+  return _seedPaymentAppLookup.get(id);
+};
+
 // seed() の戻り値の型。状態保存時の SeedShape と一致する。
 type SeedReturn = {
   cards: Card[];
