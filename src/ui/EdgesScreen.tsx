@@ -240,17 +240,17 @@ export function EdgesScreen() {
                         <span className="arrow">
                           →<small>{formatRatio(step.rate)}</small>
                         </span>
-                        <NodePill
-                          currency={currencyById.get(step.toCurrencyId)}
-                        />
                         {step.requiredCardIds?.length ? (
                           <small
                             className="step-required-card"
-                            title="このステップはこのカード保有を前提とします"
+                            title="この交換ステップにこのカード保有が必要です"
                           >
                             (要 {step.requiredCardIds.map(cardName).join(" / ")})
                           </small>
                         ) : null}
+                        <NodePill
+                          currency={currencyById.get(step.toCurrencyId)}
+                        />
                       </span>
                     ))}
                   </div>
