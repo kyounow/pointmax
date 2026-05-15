@@ -53,7 +53,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 31;
+export const SEED_VERSION = 32;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -242,6 +242,23 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 32,
+    date: "2026-05-15",
+    summary:
+      "ポイントカード提携 memberships の不足を補充 (27 件)。" +
+      "Phase A (高信頼度 5 件、Sonnet + Gemini 両方支持): d-point × 吉野家/ウエルシア/ツルハ、楽天 × ウエルシア/ニコペット。" +
+      "Phase 2 (Gemini 示唆 + Sonnet 検証 22 件): " +
+      "Ponta × KFC/ドトール/ジョーシン/apollostation (4 件)、" +
+      "Vポイント × 吉野家/すき家/すかいらーく系 6 店/ゼンショー系 4 店/エディオン/TSUTAYA/ENEOS (15 件)、" +
+      "WAON × ウエルシア/ツルハ/コスモ石油 (3 件、いずれも loyalty 提示加盟)。" +
+      "重要設計: nanaco/WAON は「カード提示 loyalty」と「電子マネー決済」で別概念。 " +
+      "初版で吉野家/マック/ファミマ/ローソン等 (電子マネー決済のみ対応の店) を loyalty 加盟に誤分類していたため除外。 " +
+      "ツルハ・コスモ石油は Gemini 検証で「提示でも貯まる」が判明、loyalty 加盟として残した。 " +
+      "nanaco-card / waon-card に notes 追加で再発防止。 " +
+      "電子マネー決済側 (支払で 1pt/100円) は将来 PaymentApp として別モデル化する別議題。" +
+      "aliases.json に nicopet → nico-pet を追加。",
   },
   {
     version: 31,

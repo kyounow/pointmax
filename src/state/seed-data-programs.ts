@@ -616,6 +616,11 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "excel-hotel-tokyu" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "princess-cruises" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "hotel-keihan-chain" },
+  // v3.5.0: Phase A 楽天 追加
+  // welcia: ウエルシアは楽天ポイントカード加盟 (Sonnet 検証)
+  // nico-pet: 公式 JSON にあるが storeId mismatch (`nicopet` → `nico-pet`) で漏れていた
+  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "welcia" },
+  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "nico-pet" },
 
   // B-2: 楽天ポイントカード 1% memberships
   { programId: "prog-rakuten-pointcard-1pc", storeId: "mcdonalds" },
@@ -628,6 +633,10 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-d-pointcard-0.5pc", storeId: "eneos" },
   { programId: "prog-d-pointcard-0.5pc", storeId: "gusto" },
   { programId: "prog-d-pointcard-0.5pc", storeId: "takashimaya" },
+  // v3.5.0: Phase A 高信頼度追加 (Sonnet + Gemini 両方が支持)
+  { programId: "prog-d-pointcard-0.5pc", storeId: "yoshinoya" },
+  { programId: "prog-d-pointcard-0.5pc", storeId: "welcia" },
+  { programId: "prog-d-pointcard-0.5pc", storeId: "tsuruha" },
 
   // B-4: dポイントカード 1% memberships
   { programId: "prog-d-pointcard-1pc", storeId: "mcdonalds" },
@@ -639,6 +648,11 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-ponta-card-0.5pc", storeId: "conv-lawson" },
   { programId: "prog-ponta-card-0.5pc", storeId: "sukiya" },
   { programId: "prog-ponta-card-0.5pc", storeId: "idemitsu" },
+  // v3.5.0: Phase 2 Ponta 拡張 (Gemini が示唆、Sonnet が store 存在を確認)
+  { programId: "prog-ponta-card-0.5pc", storeId: "kfc" },
+  { programId: "prog-ponta-card-0.5pc", storeId: "doutor" },
+  { programId: "prog-ponta-card-0.5pc", storeId: "joshin" },
+  { programId: "prog-ponta-card-0.5pc", storeId: "apollo-station" },
 
   // B-6: Pontaカード 1% memberships (ADDED_LOYALTY_RULES)
   { programId: "prog-ponta-card-1pc", storeId: "jalannet" },
@@ -650,13 +664,49 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   // B-7: Vポイントカード 0.5% memberships
   { programId: "prog-vpoint-card-0.5pc", storeId: "conv-familymart" },
   { programId: "prog-vpoint-card-0.5pc", storeId: "welcia" },
+  // v3.5.0: Phase 2 V 拡張
+  // 飲食大手 (旧Tポイント時代からの主要加盟先)
+  { programId: "prog-vpoint-card-0.5pc", storeId: "yoshinoya" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "sukiya" },
+  // すかいらーくグループ
+  { programId: "prog-vpoint-card-0.5pc", storeId: "gusto" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "jonathan" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "shabuyo" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "yumetoan" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "bamiyan" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "aiya" },
+  // ゼンショーグループ
+  { programId: "prog-vpoint-card-0.5pc", storeId: "cocos" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "hamazushi" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "big-boy" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "hanaya-yohei" },
+  // 家電・書店・GS
+  { programId: "prog-vpoint-card-0.5pc", storeId: "edion" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "tsutaya" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "eneos" },
 
   // B-8: nanacoカード 1% memberships
+  // 注: nanaco は「カード提示で貯まる loyalty」と「電子マネー決済で貯まる」の
+  // 2 モードがある。ここは loyalty (提示で貯まる) 加盟店のみ = セブン&アイグループ。
+  // 「電子マネーとして使えるだけ」の店 (吉野家・マック等) はここに入れない。
+  // 電子マネー支払側の還元は将来 PaymentApp として nanaco をモデル化する別議題。
   { programId: "prog-nanaco-card-1pc", storeId: "conv-7eleven" },
 
   // B-9: WAONカード 0.5% memberships
+  // 注: WAON も nanaco と同じく loyalty / 電子マネー の 2 モードがある。
+  // ここは loyalty (提示で貯まる) 加盟店のみ = イオングループ系。
+  // ウエルシアはイオングループ傘下のドラッグなので loyalty 加盟。
+  // ファミマ・ローソン・ガスト・吉野家・ビックカメラ・コスモ石油は WAON 電子マネー
+  // 決済は可能だが loyalty 提示加盟ではないため除外。
   { programId: "prog-waon-card-0.5pc", storeId: "aeon" },
   { programId: "prog-waon-card-0.5pc", storeId: "conv-ministop" },
+  // v3.5.0: WAON loyalty 拡張 (カード提示でポイントが貯まる加盟店)
+  // - welcia: イオン系ドラッグ、WAON POINT 提示加盟 (確認済)
+  // - tsuruha: 提示・支払どちらでも WAON POINT 加盟 (Gemini 検証で確認)
+  // - cosmo-oil: 提示のみで WAON POINT 加盟 (e-money 支払では貯まらないので注意)
+  { programId: "prog-waon-card-0.5pc", storeId: "welcia" },
+  { programId: "prog-waon-card-0.5pc", storeId: "tsuruha" },
+  { programId: "prog-waon-card-0.5pc", storeId: "cosmo-oil" },
 
   // B-10: JRE POINT カード 0.5% memberships (8 件)
   { programId: "prog-jre-pointcard-0.5pc", storeId: "newdays" },
