@@ -53,7 +53,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 32;
+export const SEED_VERSION = 33;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -242,6 +242,26 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 33,
+    date: "2026-05-15",
+    summary:
+      "nanaco / WAON 電子マネー支払いを PaymentApp として追加 (v3.5.0 の宿題消化)。" +
+      "新規 SEED_PAYMENT_APPS: pa-nanaco / pa-waon (chargeBased=true, 既定 enabled=false)。" +
+      "新規 BenefitProgram: prog-pa-nanaco-base (0.5%) / prog-pa-waon-base (0.5%) addOn。" +
+      "(nanaco-pt / waon-pt は edges が限定的なため primary 採用すると cardCurrencyId が " +
+      "上書きされて他通貨カードの表示が壊れる。addOn にすればカード本来の通貨を維持して " +
+      "WAON/nanaco 還元は独立加算される)。" +
+      "Memberships は loyalty 加盟店と二重取りにならないよう排他配置:" +
+      "nanaco e-money (5 件): yoshinoya / mcdonalds / tsuruha / eneos / bic-camera。" +
+      "WAON e-money (6 件): conv-familymart / conv-lawson / gusto / yoshinoya / mcdonalds / bic-camera。" +
+      "整合性ガードとして seed.test.ts に nanaco/WAON loyalty × e-money の" +
+      "membership 重複検査テストを追加 (現状 conflict 0 件)。" +
+      "店舗別特殊レート (ENEOS 燃料油 2L/1pt 等) は overrideRate で別途調整可能 (今回未調整)。" +
+      "rankCards.ts の reachable 判定を拡張: addOn / loyalty 単独で earn できる場合も " +
+      "reachable=true (以前は card primary のみ判定で『対象外なのに +5 WAON 表示』の" +
+      "矛盾が発生していた)。回帰テスト 2 件追加。",
   },
   {
     version: 32,

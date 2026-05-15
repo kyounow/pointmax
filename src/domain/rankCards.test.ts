@@ -441,4 +441,61 @@ describe("rankCards", () => {
     expect(result).toHaveLength(1);
     expect(result[0].reachable).toBe(false); // パスが見つからない
   });
+
+  // v3.6.0 で発覚したバグの回帰テスト:
+  // 「target 通貨に primary 経路で到達できないが、chargeBased paymentApp の
+  //   addOn 経由で earn できる場合、reachable=true で earn 量を正しく表示する」
+  // 以前は reachable=best.cardReachable のみだったので header に「対象外」と
+  // 表示されつつ詳細パネルで「+5 WAON POINT」が出る矛盾が発生していた。
+  it("primary 不到達でも addOn で target 通貨が earn できれば reachable=true", () => {
+    // pa-waon を模した chargeBased paymentApp + addOn program。
+    // target=waon-pt、card は rakuten-pt 起源で waon-pt への path 無し。
+    const waonPay = {
+      id: "pa-test-waon",
+      name: "WAON e-money",
+      chargeBased: true,
+      paymentMode: "charge" as const,
+    };
+    const programs: BenefitProgram[] = [
+      {
+        id: "prog-test-waon-base",
+        name: "WAON e-money base",
+        paymentAppId: "pa-test-waon",
+        rate: 0.005,
+        currencyId: "waon-pt",
+        bonusType: "addOn",
+      },
+    ];
+    const memberships: StoreProgramMembership[] = [
+      { programId: "prog-test-waon-base", storeId: "any" },
+    ];
+
+    const result = rankCards({
+      payment: { storeId: "any", amount: 1000 },
+      targetCurrencyId: "waon-pt",
+      cards: [rakuten], // defaultCurrencyId="rakuten-pt"
+      stores: baseStores,
+      edges: [], // rakuten-pt → waon-pt の path 無し
+      programs,
+      memberships,
+      paymentApps: [waonPay],
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].reachable).toBe(true); // addOn 単独でも earn してる
+    expect(result[0].appBonusFinalAmount).toBe(5); // 1000 * 0.005
+    expect(result[0].totalFinalAmount).toBe(5);
+  });
+
+  it("primary も addOn も loyalty も発火しなければ reachable=false", () => {
+    const result = rankCards({
+      payment: { storeId: "any", amount: 1000 },
+      targetCurrencyId: "waon-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [], // path 無し、何も加算されない
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].reachable).toBe(false);
+    expect(result[0].totalFinalAmount).toBe(0);
+  });
 });

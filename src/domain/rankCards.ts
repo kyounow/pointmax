@@ -147,7 +147,8 @@ export function rankCards(
       const baseFinal = path?.finalAmount ?? 0;
 
       // addOn programs の合計 (paymentApp なし時は appBonus として表現)
-      let appBonusTotal = 0;
+      let appBonusTotal = 0; // post-conversion (target 通貨)
+      let appBonusEarned = 0; // pre-conversion (addOn の通貨)
       let appBonusRate = 0;
       let appBonusCurrencyId: string | null = null;
       for (const addOn of addOns) {
@@ -156,7 +157,12 @@ export function rankCards(
         if (addOnPath) {
           appBonusTotal += addOnPath.finalAmount;
           appBonusRate += addOn.effectiveRate;
-          appBonusCurrencyId = appBonusCurrencyId ?? addOn.effectiveCurrencyId;
+          if (appBonusCurrencyId === null) {
+            appBonusCurrencyId = addOn.effectiveCurrencyId;
+          }
+          if (addOn.effectiveCurrencyId === appBonusCurrencyId) {
+            appBonusEarned += addOnEarned;
+          }
         }
       }
 
@@ -172,7 +178,7 @@ export function rankCards(
         paymentApp: null,
         appBonusRate,
         appBonusFinalAmount: appBonusTotal,
-        appBonusEarnedAmount: appBonusTotal,
+        appBonusEarnedAmount: appBonusEarned,
         appBonusCurrencyId,
         appBonusReachable: appBonusTotal > 0,
         loyalties,
@@ -230,9 +236,12 @@ export function rankCards(
       cardCurrencyId: string;
       resolved: ResolvedRate;
       cardFinal: number;
+      cardPathSteps: ConversionEdge[];
+      cardPathProduct: number;
       cardReachable: boolean;
       appBonusRate: number;
-      appBonusFinal: number;
+      appBonusFinal: number; // post-conversion (target 通貨)
+      appBonusEarned: number; // pre-conversion (addOn の通貨)
       appBonusCurrencyId: string | null;
       appBonusReachable: boolean;
       total: number;
@@ -261,7 +270,10 @@ export function rankCards(
         const baseCurrency = primary?.effectiveCurrencyId ?? card.defaultCurrencyId;
         cardRate = baseRate;
         cardCurrencyId = baseCurrency;
-        resolved = { rate: 0, currencyId: card.defaultCurrencyId, source: "charge" };
+        // resolved.rate は「実際に earnedAmount を生んだレート」= cardRate に揃える。
+        // 以前は 0 をハードコードしていたため UI で「クレカ還元率 0.00% で 100 楽天pt」
+        // のような矛盾表示が出ていた。source=charge で UI 側が paymentApp 由来と判別する。
+        resolved = { rate: baseRate, currencyId: baseCurrency, source: "charge" };
       } else {
         // 通常: primary program rate (card × store) or defaultRate
         cardRate = primary?.effectiveRate ?? card.defaultRate;
@@ -276,7 +288,8 @@ export function rankCards(
       const cardFinal = cardPath?.finalAmount ?? 0;
 
       // addOn programs の合計
-      let appBonusTotal = 0;
+      let appBonusTotal = 0; // post-conversion (target 通貨)
+      let appBonusEarned = 0; // pre-conversion (addOn の通貨)
       let appBonusRateTotal = 0;
       let appBonusCurrencyId: string | null = null;
       for (const addOn of addOns) {
@@ -285,7 +298,12 @@ export function rankCards(
         if (addOnPath) {
           appBonusTotal += addOnPath.finalAmount;
           appBonusRateTotal += addOn.effectiveRate;
-          appBonusCurrencyId = appBonusCurrencyId ?? addOn.effectiveCurrencyId;
+          if (appBonusCurrencyId === null) {
+            appBonusCurrencyId = addOn.effectiveCurrencyId;
+          }
+          if (addOn.effectiveCurrencyId === appBonusCurrencyId) {
+            appBonusEarned += addOnEarned;
+          }
         }
       }
 
@@ -295,9 +313,12 @@ export function rankCards(
         cardCurrencyId,
         resolved,
         cardFinal,
+        cardPathSteps: cardPath?.steps ?? [],
+        cardPathProduct: cardPath?.product ?? 0,
         cardReachable: cardPath !== null,
         appBonusRate: appBonusRateTotal,
         appBonusFinal: appBonusTotal,
+        appBonusEarned,
         appBonusCurrencyId,
         appBonusReachable: appBonusTotal > 0,
         total: cardFinal + appBonusTotal,
@@ -319,14 +340,26 @@ export function rankCards(
       resolved: best.resolved,
       earnedAmount: payment.amount * best.cardRate,
       earnedCurrencyId: best.cardCurrencyId,
-      pathSteps: [],
-      pathProduct: 0,
+      // 以前ハードコードで [] / 0 だったため、chargeBased paymentApp 利用時 (楽天Pay等)
+      // でも UI に「変換不要 (同一通貨)」と誤表示されていた。実際の cardPath からコピー。
+      pathSteps: best.cardPathSteps,
+      pathProduct: best.cardPathProduct,
       finalAmount: best.cardFinal,
-      reachable: best.cardReachable,
+      // reachable: target 通貨で何らかの earn (card primary / addOn / loyalty のいずれか) が
+      // 発生する場合は true。以前は best.cardReachable のみだったため、chargeBased な
+      // paymentApp (例: pa-waon) + 孤立通貨 target (waon-pt) で「addOn 単独で earn する
+      // のに header は 対象外」という矛盾表示が出ていた (v3.6.0 で発覚した bug)。
+      reachable:
+        best.cardReachable ||
+        best.appBonusReachable ||
+        loyaltyTotal > 0,
       paymentApp: best.pa,
       appBonusRate: best.appBonusRate,
       appBonusFinalAmount: best.appBonusFinal,
-      appBonusEarnedAmount: best.appBonusFinal,
+      // 以前 best.appBonusFinal (post-conversion) を入れていたため UI に
+      // 「25 楽天ポイント → +25 WAONポイント」のように同値表示 = 変換が見えない状態
+      // だった。pre-conversion (addOn の通貨での earn) を正しく入れる。
+      appBonusEarnedAmount: best.appBonusEarned,
       appBonusCurrencyId: best.appBonusCurrencyId,
       appBonusReachable: best.appBonusReachable,
       loyalties,
