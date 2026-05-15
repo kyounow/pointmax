@@ -10,10 +10,25 @@ export function CurrenciesScreen() {
   const addCurrency = useStore((s) => s.addCurrency);
   const updateCurrency = useStore((s) => s.updateCurrency);
   const removeCurrency = useStore((s) => s.removeCurrency);
+  // v4.0.0 ②: 優先通貨リスト管理
+  const preferredCurrencyIds = useStore((s) => s.preferredCurrencyIds);
+  const addPreferredCurrency = useStore((s) => s.addPreferredCurrency);
+  const removePreferredCurrency = useStore((s) => s.removePreferredCurrency);
+  const movePreferredCurrency = useStore((s) => s.movePreferredCurrency);
   const [name, setName] = useState("");
   const [kind, setKind] = useState<CurrencyKind | "">("point");
   const [iconChar, setIconChar] = useState("");
   const [iconColor, setIconColor] = useState("#4ea1ff");
+
+  const currencyById = new Map(currencies.map((c) => [c.id, c]));
+  // 優先リストに入っている通貨 (順序保持)
+  const preferred = preferredCurrencyIds
+    .map((id) => currencyById.get(id))
+    .filter((c): c is Currency => c != null);
+  // まだ優先リストに無い通貨 (追加 select 用)
+  const notPreferred = currencies.filter(
+    (c) => !preferredCurrencyIds.includes(c.id),
+  );
 
   const columns: ColumnDef<Currency>[] = [
     {
@@ -112,6 +127,96 @@ export function CurrenciesScreen() {
       <p className="hint">
         貯まるポイントの種類とマイルを登録します。「種別」は色分け用、「アイコン文字／色」はノード表示用です。
       </p>
+
+      {/* ─── v4.0.0 ②: 優先通貨リスト ───
+          ここで設定した順序が Calculator の通貨タブ並び順になる。 */}
+      <div className="preferred-currencies" style={{ marginBottom: 20 }}>
+        <h3 style={{ marginBottom: 6 }}>⭐ 優先通貨 (計算結果の表示順)</h3>
+        <p className="hint" style={{ marginTop: 0 }}>
+          普段「最終的に貯めたい通貨」を選んで並べると、計算画面でこの順に
+          タブ表示されます。上位ほど優先 (先頭タブが既定)。
+        </p>
+
+        {preferred.length === 0 ? (
+          <p className="hint" style={{ fontSize: 13 }}>
+            まだ優先通貨が未設定です。下から追加してください。
+            (未設定の場合、計算画面では通貨を都度選びます)
+          </p>
+        ) : (
+          <ol className="preferred-currency-list" style={{ paddingLeft: 0, listStyle: "none", margin: "8px 0" }}>
+            {preferred.map((c, i) => (
+              <li
+                key={c.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 8px",
+                  border: "1px solid var(--border)",
+                  borderRadius: 6,
+                  marginBottom: 6,
+                }}
+              >
+                <span
+                  style={{
+                    width: 22,
+                    textAlign: "right",
+                    color: "var(--muted)",
+                    fontSize: 13,
+                  }}
+                >
+                  {i + 1}.
+                </span>
+                <CurrencyIcon currency={c} size={26} />
+                <span style={{ flex: 1 }}>{c.name}</span>
+                <button
+                  onClick={() => movePreferredCurrency(c.id, "up")}
+                  disabled={i === 0}
+                  title="優先度を上げる"
+                  style={{ fontSize: 12 }}
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => movePreferredCurrency(c.id, "down")}
+                  disabled={i === preferred.length - 1}
+                  title="優先度を下げる"
+                  style={{ fontSize: 12 }}
+                >
+                  ↓
+                </button>
+                <button
+                  className="danger"
+                  onClick={() => removePreferredCurrency(c.id)}
+                  title="優先通貨から外す"
+                  style={{ fontSize: 12 }}
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {notPreferred.length > 0 && (
+          <label style={{ fontSize: 13, color: "var(--muted)" }}>
+            追加:{" "}
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value) addPreferredCurrency(e.target.value);
+              }}
+            >
+              <option value="">通貨を選択して追加</option>
+              {notPreferred.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
 
       <form
         className="row"
