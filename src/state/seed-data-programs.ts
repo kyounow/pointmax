@@ -616,6 +616,11 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "excel-hotel-tokyu" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "princess-cruises" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "hotel-keihan-chain" },
+  // v3.5.0: Phase A 楽天 追加
+  // welcia: ウエルシアは楽天ポイントカード加盟 (Sonnet 検証)
+  // nico-pet: 公式 JSON にあるが storeId mismatch (`nicopet` → `nico-pet`) で漏れていた
+  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "welcia" },
+  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "nico-pet" },
 
   // B-2: 楽天ポイントカード 1% memberships
   { programId: "prog-rakuten-pointcard-1pc", storeId: "mcdonalds" },
@@ -628,6 +633,10 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-d-pointcard-0.5pc", storeId: "eneos" },
   { programId: "prog-d-pointcard-0.5pc", storeId: "gusto" },
   { programId: "prog-d-pointcard-0.5pc", storeId: "takashimaya" },
+  // v3.5.0: Phase A 高信頼度追加 (Sonnet + Gemini 両方が支持)
+  { programId: "prog-d-pointcard-0.5pc", storeId: "yoshinoya" },
+  { programId: "prog-d-pointcard-0.5pc", storeId: "welcia" },
+  { programId: "prog-d-pointcard-0.5pc", storeId: "tsuruha" },
 
   // B-4: dポイントカード 1% memberships
   { programId: "prog-d-pointcard-1pc", storeId: "mcdonalds" },
