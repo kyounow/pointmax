@@ -76,6 +76,12 @@ export function EdgesScreen() {
     );
   }, [edges, routeFromId, routeToId, routeAmount, accessibleCardIds]);
 
+  // ルート path に含まれる edge id 集合 (グラフでハイライト用)
+  const routePathEdgeIds = useMemo(
+    () => new Set(routeResult?.steps.map((s) => s.id) ?? []),
+    [routeResult],
+  );
+
   const focusedNodeId = sel?.type === "node" ? sel.id : null;
 
   const onConnect = useCallback(
@@ -313,6 +319,9 @@ export function EdgesScreen() {
         onEdgeClick={onEdgeClick}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
+        routePathEdgeIds={routePathEdgeIds}
+        routeFromId={routeFromId || undefined}
+        routeToId={routeToId || undefined}
       />
 
       {/* ===== ノード選択時: 関連ルート一覧 ===== */}
@@ -326,6 +335,10 @@ export function EdgesScreen() {
           isEdgeAccessible={isEdgeAccessible}
           onSelectEdge={(id) => setSel({ type: "edge", id })}
           onDismiss={() => setSel(null)}
+          isRouteFrom={selectedCurrency.id === routeFromId}
+          isRouteTo={selectedCurrency.id === routeToId}
+          onSetAsRouteFrom={() => setRouteFromId(selectedCurrency.id)}
+          onSetAsRouteTo={() => setRouteToId(selectedCurrency.id)}
         />
       )}
 

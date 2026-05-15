@@ -130,7 +130,15 @@ type Props = {
   onEdgeClick: (evt: React.MouseEvent, e: RFEdge) => void;
   onNodeClick: (evt: React.MouseEvent, n: RFNode) => void;
   onPaneClick: () => void;
+  // v4.0.0 ③: ルート検索結果との連動。
+  // routePathEdgeIds に含まれる edge id は紫でハイライト、太さ増。
+  // routeFromId / routeToId が一致するノードに「起点」「終点」バッジ表示。
+  routePathEdgeIds?: ReadonlySet<string>;
+  routeFromId?: string;
+  routeToId?: string;
 };
+
+const ROUTE_PATH_STROKE = "#a855f7"; // purple-500
 
 export function EdgesGraph({
   currencies,
@@ -143,6 +151,9 @@ export function EdgesGraph({
   onEdgeClick,
   onNodeClick,
   onPaneClick,
+  routePathEdgeIds,
+  routeFromId,
+  routeToId,
 }: Props) {
   const focusedNodeId = sel?.type === "node" ? sel.id : null;
 
@@ -172,14 +183,20 @@ export function EdgesGraph({
     return visibleCurrencies.map((c) => {
       const pos = positions.get(c.id) ?? { x: 0, y: 0 };
       const isSelected = focusedNodeId === c.id;
+      const routeRole =
+        c.id === routeFromId
+          ? ("from" as const)
+          : c.id === routeToId
+            ? ("to" as const)
+            : undefined;
       return {
         id: c.id,
         type: "currency",
         position: pos,
-        data: { currency: c, selected: isSelected, dimmed: false },
+        data: { currency: c, selected: isSelected, dimmed: false, routeRole },
       };
     });
-  }, [currencies, positions, focusedNodeId]);
+  }, [currencies, positions, focusedNodeId, routeFromId, routeToId]);
 
   const rfEdges: RFEdge[] = useMemo(() => {
     // フォーカス時は関連エッジのみ表示
@@ -189,11 +206,26 @@ export function EdgesGraph({
     return visibleEdges.map((e) => {
       const isSelectedEdge = sel?.type === "edge" && sel.id === e.id;
       const related = isEdgeRelated(e);
+      const inRoutePath = routePathEdgeIds?.has(e.id) ?? false;
       const locked =
         !!e.requiredCardIds?.length &&
         !e.requiredCardIds.some((id) => accessibleCardIds.has(id));
-      const baseStroke = isSelectedEdge || related ? "#f59e0b" : "#4ea1ff";
-      const stroke = locked ? "#6b7280" : baseStroke;
+      // 優先度: routePath (紫、最強調) > selected/related (橙) > locked (灰) > default (青)
+      let stroke: string;
+      let strokeWidth: number;
+      if (inRoutePath) {
+        stroke = ROUTE_PATH_STROKE;
+        strokeWidth = 3.5;
+      } else if (locked) {
+        stroke = "#6b7280";
+        strokeWidth = isSelectedEdge || related ? 2.5 : 1.5;
+      } else if (isSelectedEdge || related) {
+        stroke = "#f59e0b";
+        strokeWidth = 2.5;
+      } else {
+        stroke = "#4ea1ff";
+        strokeWidth = 1.5;
+      }
       return {
         id: e.id,
         source: e.fromCurrencyId,
@@ -203,9 +235,9 @@ export function EdgesGraph({
         markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
         style: {
           stroke,
-          strokeWidth: isSelectedEdge || related ? 2.5 : 1.5,
-          strokeDasharray: locked ? "6 4" : undefined,
-          opacity: locked ? 0.55 : 1,
+          strokeWidth,
+          strokeDasharray: locked && !inRoutePath ? "6 4" : undefined,
+          opacity: locked && !inRoutePath ? 0.55 : 1,
         },
         labelStyle: {
           fill: "#e6e6e6",
@@ -213,14 +245,26 @@ export function EdgesGraph({
           fontWeight: 600,
         },
         labelBgStyle: {
-          fill: isSelectedEdge || related ? "#3a2a10" : "#181b22",
+          fill: inRoutePath
+            ? "#2a1a3a"
+            : isSelectedEdge || related
+              ? "#3a2a10"
+              : "#181b22",
         },
         labelBgPadding: [6, 4] as [number, number],
         labelBgBorderRadius: 4,
-        zIndex: isSelectedEdge || related ? 100 : 0,
+        zIndex: inRoutePath ? 200 : isSelectedEdge || related ? 100 : 0,
       };
     });
-  }, [edges, sel, isEdgeRelated, focusedNodeId, showLabels, accessibleCardIds]);
+  }, [
+    edges,
+    sel,
+    isEdgeRelated,
+    focusedNodeId,
+    showLabels,
+    accessibleCardIds,
+    routePathEdgeIds,
+  ]);
 
   return (
     <div className="graph-wrap" style={{ height: 580 }}>
