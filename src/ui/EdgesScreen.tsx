@@ -364,6 +364,7 @@ export function EdgesScreen() {
         routePathEdgeIds={routePathEdgeIds}
         routeFromId={routeFromId || undefined}
         routeToId={routeToId || undefined}
+        routeResultSteps={routeResult?.steps}
       />
 
     </section>
