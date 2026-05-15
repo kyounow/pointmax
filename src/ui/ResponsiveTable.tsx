@@ -19,6 +19,10 @@ type Props<T extends { id: string }> = {
   columns: ColumnDef<T>[];
   // 保存時のコールバック (差分のみのパッチが渡される)
   onSave?: (id: string, patch: Partial<T>) => void;
+  // 保存直前の確認フック。falsy / Promise<false> を返すと保存中止 (編集モード維持)。
+  // 「公式」表記が外れる substantive 編集の確認ダイアログ等に使う。
+  // 省略時は常に保存続行。
+  onBeforeSave?: (id: string, patch: Partial<T>) => boolean | Promise<boolean>;
   // 削除時のコールバック (省略時は削除ボタン非表示)
   onDelete?: (id: string) => void;
   // 行ごとの削除可否。省略時は onDelete が定義されていれば全行削除可能。
@@ -37,6 +41,7 @@ export function ResponsiveTable<T extends { id: string }>({
   rows,
   columns,
   onSave,
+  onBeforeSave,
   onDelete,
   canDelete,
   extraActions,
@@ -46,6 +51,8 @@ export function ResponsiveTable<T extends { id: string }>({
 }: Props<T>) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<T | null>(null);
+  // 確認ダイアログ表示中の二重クリック防止
+  const [saving, setSaving] = useState(false);
 
   const startEdit = (row: T) => {
     setEditingId(row.id);
@@ -55,18 +62,37 @@ export function ResponsiveTable<T extends { id: string }>({
     setEditingId(null);
     setDraft(null);
   };
-  const saveEdit = (original: T) => {
+  const saveEdit = async (original: T) => {
     if (!draft) return;
-    if (onSave) {
-      // diff 計算: 値が変わったキーだけ送る
-      const patch: Partial<T> = {};
-      (Object.keys(draft) as (keyof T)[]).forEach((k) => {
-        if (draft[k] !== original[k]) {
-          patch[k] = draft[k];
-        }
-      });
-      if (Object.keys(patch).length > 0) onSave(original.id, patch);
+    if (!onSave) {
+      cancelEdit();
+      return;
     }
+    // diff 計算: 値が変わったキーだけ送る
+    const patch: Partial<T> = {};
+    (Object.keys(draft) as (keyof T)[]).forEach((k) => {
+      if (draft[k] !== original[k]) {
+        patch[k] = draft[k];
+      }
+    });
+    if (Object.keys(patch).length === 0) {
+      cancelEdit();
+      return;
+    }
+    if (onBeforeSave) {
+      setSaving(true);
+      try {
+        const ok = await onBeforeSave(original.id, patch);
+        if (!ok) {
+          // 確認モーダルでキャンセル → 編集モードを維持してユーザに再選択させる
+          setSaving(false);
+          return;
+        }
+      } finally {
+        setSaving(false);
+      }
+    }
+    onSave(original.id, patch);
     cancelEdit();
   };
   const setField = (patch: Partial<T>) => {
@@ -112,10 +138,13 @@ export function ResponsiveTable<T extends { id: string }>({
                           <button
                             className="primary"
                             onClick={() => saveEdit(row)}
+                            disabled={saving}
                           >
                             保存
                           </button>
-                          <button onClick={cancelEdit}>キャンセル</button>
+                          <button onClick={cancelEdit} disabled={saving}>
+                            キャンセル
+                          </button>
                           {onDelete && deletable && (
                             <button
                               className="danger"

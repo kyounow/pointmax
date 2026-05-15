@@ -16,6 +16,11 @@ export type Currency = {
 // 任意フィールドで保持してUI上で区別表示する
 // enabled: undefined または true = 有効（デフォルト。既存 localStorage データとの後方互換）
 //          false = 無効（Calculator の順位付けから除外される）
+// userModifiedAt: ユーザが substantive フィールド (name/grade/defaultRate/defaultCurrencyId)
+//   を編集した日時 (ISO 8601)。セットされていると master であっても「公式」バッジが外れる。
+//   定義は SUBSTANTIVE_CARD_FIELDS (src/state/userModified.ts) を参照。
+//   undefined = 編集されていない (=「公式」表記そのまま) / 文字列 = 編集済み。
+//   enabled トグル等の preference 変更は substantive ではないので変化なし。
 export type Card = {
   id: string;
   name: string;
@@ -23,6 +28,7 @@ export type Card = {
   defaultRate: number; // 0.01 = 1%
   defaultCurrencyId: string;
   enabled?: boolean;
+  userModifiedAt?: string;
 };
 
 // プルダウン用店舗マスタ
@@ -124,6 +130,9 @@ export type BenefitProgram = {
   conditions?: string;             // 「ショッピングマイル・プレミアム加入時」等
   monthlyCapAmountYen?: number;
   notes?: string;
+  // ユーザ編集トラッキング (Card.userModifiedAt と同じセマンティクス)。
+  // ProgramsScreen は現状 read-only なので将来の編集動線追加に備えた future-proof フィールド。
+  userModifiedAt?: string;
 };
 
 // 店舗 × プログラム M2M
@@ -170,4 +179,8 @@ export type PaymentApp = {
   // 「使ってない決済アプリを表示から消す」用途。Card.enabled と同じセマンティクス。
   enabled?: boolean;
   notes?: string;
+  // ユーザ編集トラッキング。Card.userModifiedAt と同じセマンティクス。
+  // 対象 substantive フィールド: name / paymentMode / chargeBased / compatibleCardIds / notes。
+  // iconChar / iconColor / enabled は cosmetic or preference 扱いで対象外。
+  userModifiedAt?: string;
 };
