@@ -700,8 +700,13 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   // 決済は可能だが loyalty 提示加盟ではないため除外。
   { programId: "prog-waon-card-0.5pc", storeId: "aeon" },
   { programId: "prog-waon-card-0.5pc", storeId: "conv-ministop" },
-  // v3.5.0: WAON loyalty 拡張 (welcia はイオン系で WAON POINT 提示加盟)
+  // v3.5.0: WAON loyalty 拡張 (カード提示でポイントが貯まる加盟店)
+  // - welcia: イオン系ドラッグ、WAON POINT 提示加盟 (確認済)
+  // - tsuruha: 提示・支払どちらでも WAON POINT 加盟 (Gemini 検証で確認)
+  // - cosmo-oil: 提示のみで WAON POINT 加盟 (e-money 支払では貯まらないので注意)
   { programId: "prog-waon-card-0.5pc", storeId: "welcia" },
+  { programId: "prog-waon-card-0.5pc", storeId: "tsuruha" },
+  { programId: "prog-waon-card-0.5pc", storeId: "cosmo-oil" },
 
   // B-10: JRE POINT カード 0.5% memberships (8 件)
   { programId: "prog-jre-pointcard-0.5pc", storeId: "newdays" },

@@ -247,14 +247,15 @@ export const SEED_CHANGELOG: {
     version: 32,
     date: "2026-05-15",
     summary:
-      "ポイントカード提携 memberships の不足を補充 (25 件)。" +
+      "ポイントカード提携 memberships の不足を補充 (27 件)。" +
       "Phase A (高信頼度 5 件、Sonnet + Gemini 両方支持): d-point × 吉野家/ウエルシア/ツルハ、楽天 × ウエルシア/ニコペット。" +
-      "Phase 2 (Gemini 示唆 + Sonnet 検証 20 件): " +
+      "Phase 2 (Gemini 示唆 + Sonnet 検証 22 件): " +
       "Ponta × KFC/ドトール/ジョーシン/apollostation (4 件)、" +
       "Vポイント × 吉野家/すき家/すかいらーく系 6 店/ゼンショー系 4 店/エディオン/TSUTAYA/ENEOS (15 件)、" +
-      "WAON × ウエルシア (1 件、イオン系で loyalty 加盟)。" +
-      "重要修正: nanaco/WAON は「カード提示 loyalty」と「電子マネー決済」で別概念。 " +
+      "WAON × ウエルシア/ツルハ/コスモ石油 (3 件、いずれも loyalty 提示加盟)。" +
+      "重要設計: nanaco/WAON は「カード提示 loyalty」と「電子マネー決済」で別概念。 " +
       "初版で吉野家/マック/ファミマ/ローソン等 (電子マネー決済のみ対応の店) を loyalty 加盟に誤分類していたため除外。 " +
+      "ツルハ・コスモ石油は Gemini 検証で「提示でも貯まる」が判明、loyalty 加盟として残した。 " +
       "nanaco-card / waon-card に notes 追加で再発防止。 " +
       "電子マネー決済側 (支払で 1pt/100円) は将来 PaymentApp として別モデル化する別議題。" +
       "aliases.json に nicopet → nico-pet を追加。",
