@@ -258,7 +258,10 @@ export const SEED_CHANGELOG: {
       "WAON e-money (6 件): conv-familymart / conv-lawson / gusto / yoshinoya / mcdonalds / bic-camera。" +
       "整合性ガードとして seed.test.ts に nanaco/WAON loyalty × e-money の" +
       "membership 重複検査テストを追加 (現状 conflict 0 件)。" +
-      "店舗別特殊レート (ENEOS 燃料油 2L/1pt 等) は overrideRate で別途調整可能 (今回未調整)。",
+      "店舗別特殊レート (ENEOS 燃料油 2L/1pt 等) は overrideRate で別途調整可能 (今回未調整)。" +
+      "rankCards.ts の reachable 判定を拡張: addOn / loyalty 単独で earn できる場合も " +
+      "reachable=true (以前は card primary のみ判定で『対象外なのに +5 WAON 表示』の" +
+      "矛盾が発生していた)。回帰テスト 2 件追加。",
   },
   {
     version: 32,

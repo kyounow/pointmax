@@ -322,7 +322,14 @@ export function rankCards(
       pathSteps: [],
       pathProduct: 0,
       finalAmount: best.cardFinal,
-      reachable: best.cardReachable,
+      // reachable: target 通貨で何らかの earn (card primary / addOn / loyalty のいずれか) が
+      // 発生する場合は true。以前は best.cardReachable のみだったため、chargeBased な
+      // paymentApp (例: pa-waon) + 孤立通貨 target (waon-pt) で「addOn 単独で earn する
+      // のに header は 対象外」という矛盾表示が出ていた (v3.6.0 で発覚した bug)。
+      reachable:
+        best.cardReachable ||
+        best.appBonusReachable ||
+        loyaltyTotal > 0,
       paymentApp: best.pa,
       appBonusRate: best.appBonusRate,
       appBonusFinalAmount: best.appBonusFinal,
