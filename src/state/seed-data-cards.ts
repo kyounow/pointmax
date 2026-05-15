@@ -414,7 +414,7 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "セブン-イレブン等は nanacoカード提示=支払いなので、loyalty 経路で計上 (二重取り回避)。" +
       "ENEOS の燃料油は 2L1pt の特殊レートだが今版は 0.5% 統一 (実態より若干高め)。" +
       "チャージ時のカード還元 (セブンカード 0.5% 等) は未モデル化。" +
-      "[v3.6.0] BenefitProgram で評価: prog-pa-nanaco-base",
+      "[v3.6.0] BenefitProgram で評価: prog-pa-nanaco-base (addOn、cardCurrencyId 上書き回避)",
     enabled: false,
   },
 
@@ -437,7 +437,7 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "コスモ石油は提示のみで貯まる loyalty 経路、e-money では貯まらないため pa-waon 加盟ではない。" +
       "ENEOS は WAON 給油非対応のため対象外 (EV充電のみ可能)。" +
       "チャージ時のカード還元 (イオンカード 1% 等) は未モデル化。" +
-      "[v3.6.0] BenefitProgram で評価: prog-pa-waon-base",
+      "[v3.6.0] BenefitProgram で評価: prog-pa-waon-base (addOn、cardCurrencyId 上書き回避)",
     enabled: false,
   },
 ];

@@ -249,7 +249,10 @@ export const SEED_CHANGELOG: {
     summary:
       "nanaco / WAON 電子マネー支払いを PaymentApp として追加 (v3.5.0 の宿題消化)。" +
       "新規 SEED_PAYMENT_APPS: pa-nanaco / pa-waon (chargeBased=true, 既定 enabled=false)。" +
-      "新規 BenefitProgram: prog-pa-nanaco-base (0.5%) / prog-pa-waon-base (0.5%) primary。" +
+      "新規 BenefitProgram: prog-pa-nanaco-base (0.5%) / prog-pa-waon-base (0.5%) addOn。" +
+      "(nanaco-pt / waon-pt は edges が限定的なため primary 採用すると cardCurrencyId が " +
+      "上書きされて他通貨カードの表示が壊れる。addOn にすればカード本来の通貨を維持して " +
+      "WAON/nanaco 還元は独立加算される)。" +
       "Memberships は loyalty 加盟店と二重取りにならないよう排他配置:" +
       "nanaco e-money (5 件): yoshinoya / mcdonalds / tsuruha / eneos / bic-camera。" +
       "WAON e-money (6 件): conv-familymart / conv-lawson / gusto / yoshinoya / mcdonalds / bic-camera。" +
