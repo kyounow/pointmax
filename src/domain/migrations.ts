@@ -56,9 +56,13 @@ function migrationKey(version: number, index: number): string {
   return `v${version}-${index}`;
 }
 
-// 配列を ID で検索しレコードを返す共通ヘルパ
+// 配列を ID で検索しレコードを返す共通ヘルパ。
+// arr が undefined のケースを防御 (SeedShape の programs/memberships は optional、
+// UpdateBanner の afterMerge 等で当該 collection が欠落しうる。
+// 欠落 = そのレコードは存在しない、として扱う)。
 type IdRecord = { id: string; [k: string]: unknown };
-function findById(arr: unknown[], id: string): IdRecord | undefined {
+function findById(arr: unknown[] | undefined, id: string): IdRecord | undefined {
+  if (!Array.isArray(arr)) return undefined;
   return (arr as IdRecord[]).find((x) => x.id === id);
 }
 
@@ -109,15 +113,17 @@ export function planMigrations(
 }
 
 export function applyMigration(state: SeedShape, m: Migration): SeedShape {
+  // collection が欠落 (undefined) のときは空配列扱い。
+  // updateField → 対象なしで何もしない / delete → 既に無いので no-op。
   if (m.type === "updateField") {
-    const arr = state[m.collection] as IdRecord[];
+    const arr = (state[m.collection] as IdRecord[] | undefined) ?? [];
     const next = arr.map((r) =>
       r.id === m.id ? { ...r, [m.field]: m.to } : r,
     );
     return { ...state, [m.collection]: next } as SeedShape;
   }
   if (m.type === "delete") {
-    const arr = state[m.collection] as IdRecord[];
+    const arr = (state[m.collection] as IdRecord[] | undefined) ?? [];
     const next = arr.filter((r) => r.id !== m.id);
     return { ...state, [m.collection]: next } as SeedShape;
   }
