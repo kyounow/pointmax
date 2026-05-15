@@ -572,13 +572,6 @@ export function CalculatorScreen() {
                           {(r.resolved.rate * 100).toFixed(2)}% で{" "}
                           {formatNum(r.earnedAmount)}{" "}
                           {currencyName(r.earnedCurrencyId)}
-                          <small
-                            className="hint"
-                            title="チャージ式の支払アプリは、カード単体での還元は 0% (チャージ時には還元されない)。表示は支払アプリのベース還元率。"
-                            style={{ marginLeft: 6 }}
-                          >
-                            (クレカ単体 0%、{r.paymentApp.name} 側で還元)
-                          </small>
                         </>
                       ) : (
                         <>
@@ -616,6 +609,20 @@ export function CalculatorScreen() {
                         );
                       })()}
                     </div>
+
+                    {r.resolved.source === "charge" && r.paymentApp && (
+                      <div
+                        className="hint"
+                        style={{
+                          marginTop: 2,
+                          fontSize: 11,
+                          paddingLeft: 0,
+                        }}
+                        title="チャージ式の支払アプリは、カード単体での還元は 0% (チャージ時には還元されない)。表示は支払アプリのベース還元率。"
+                      >
+                        ※ クレカ単体 0%、{r.paymentApp.name} 側で還元
+                      </div>
+                    )}
 
                     <div className="path">
                       <div className="path-line">
