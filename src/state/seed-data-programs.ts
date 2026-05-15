@@ -445,6 +445,42 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description: "メルカード連携時 +1% 上乗せ (メルペイ単体は 0%)",
     notes: "旧 pa-merpay.cardSpecificBonusRates[mercard] から移行 (v3 PR 2)",
   },
+
+  // ─── v3.6.0: nanaco / WAON 電子マネー支払い側の base 還元 ───
+  // PointCard モデル (nanaco-card / waon-card) は「カード提示 loyalty」専用なので、
+  // 「電子マネー支払で還元」側を PaymentApp + BenefitProgram で別経路化。
+  //
+  // 設計判断: pointCard loyalty と pa-* PaymentApp 経路は二重取りされうるので
+  // membership を排他的に持つ (loyalty 加盟店は e-money の membership に入れない)。
+  // 例: セブン-イレブンは nanaco-card loyalty 加盟、pa-nanaco の membership には入れない。
+
+  // C-12: nanaco 電子マネー ベース還元 0.5%
+  {
+    id: "prog-pa-nanaco-base",
+    name: "nanaco 電子マネー ベース還元",
+    paymentAppId: "pa-nanaco",
+    rate: 0.005,
+    currencyId: "nanaco-pt",
+    bonusType: "primary",
+    description:
+      "nanaco 電子マネー支払いで 200円1pt (0.5%) 還元。" +
+      "セブン-イレブン等 loyalty 加盟店は nanaco-card 経路で計上、ここは非 loyalty 店のみ。",
+    notes: "v3.6.0 で追加。loyalty/e-money の混同を解消する設計",
+  },
+
+  // C-13: WAON 電子マネー ベース還元 0.5%
+  {
+    id: "prog-pa-waon-base",
+    name: "WAON 電子マネー ベース還元",
+    paymentAppId: "pa-waon",
+    rate: 0.005,
+    currencyId: "waon-pt",
+    bonusType: "primary",
+    description:
+      "WAON 電子マネー支払いで 200円1pt (0.5%) 還元。" +
+      "イオン系等 loyalty 加盟店は waon-card 経路で計上、ここは非 loyalty 店のみ。",
+    notes: "v3.6.0 で追加。loyalty/e-money の混同を解消する設計",
+  },
 ];
 
 // 店舗 × プログラムの加盟関係 (M2M)
@@ -720,7 +756,32 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
 
   // ═══════════════════════════════════════════════════════════════
   // PR 2 C: PaymentApp 系 memberships
-  // PaymentApp 系 programs は membership 無し = 全 store 適用 (global program)
-  // → memberships なし (空のまま)
+  // 既存の PaymentApp 系 programs (楽天Pay / d払い / PayPay 等) は membership 無し
+  // = 全 store 適用 (global program)。
+  //
+  // ─── v3.6.0: nanaco / WAON 電子マネー memberships ───
+  // PointCard モデル (nanaco-card / waon-card) loyalty と二重取りを避けるため、
+  // loyalty 加盟店 (= SEED_STORE_PROGRAM_MEMBERSHIPS の B-8 / B-9 セクション) は
+  // ここに含めない。「e-money 支払いのみで貯まる」店だけ列挙。
   // ═══════════════════════════════════════════════════════════════
+
+  // C-12: nanaco 電子マネー memberships
+  // セブン-イレブン (loyalty 加盟) は除外。e-money のみで貯まる店:
+  // - 吉野家 / マクドナルド / ツルハ / ENEOS / ビックカメラ (Gemini 検証)
+  { programId: "prog-pa-nanaco-base", storeId: "yoshinoya" },
+  { programId: "prog-pa-nanaco-base", storeId: "mcdonalds" },
+  { programId: "prog-pa-nanaco-base", storeId: "tsuruha" },
+  { programId: "prog-pa-nanaco-base", storeId: "eneos" },
+  { programId: "prog-pa-nanaco-base", storeId: "bic-camera" },
+
+  // C-13: WAON 電子マネー memberships
+  // イオン系 (aeon/ministop/welcia/tsuruha/cosmo-oil) は loyalty 加盟なので除外。
+  // ENEOS は WAON 給油非対応のため対象外。
+  // e-money のみで貯まる店 = ファミマ/ローソン/ガスト/吉野家/マクドナルド/ビックカメラ
+  { programId: "prog-pa-waon-base", storeId: "conv-familymart" },
+  { programId: "prog-pa-waon-base", storeId: "conv-lawson" },
+  { programId: "prog-pa-waon-base", storeId: "gusto" },
+  { programId: "prog-pa-waon-base", storeId: "yoshinoya" },
+  { programId: "prog-pa-waon-base", storeId: "mcdonalds" },
+  { programId: "prog-pa-waon-base", storeId: "bic-camera" },
 ];
