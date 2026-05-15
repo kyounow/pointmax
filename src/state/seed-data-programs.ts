@@ -648,6 +648,11 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-ponta-card-0.5pc", storeId: "conv-lawson" },
   { programId: "prog-ponta-card-0.5pc", storeId: "sukiya" },
   { programId: "prog-ponta-card-0.5pc", storeId: "idemitsu" },
+  // v3.5.0: Phase 2 Ponta 拡張 (Gemini が示唆、Sonnet が store 存在を確認)
+  { programId: "prog-ponta-card-0.5pc", storeId: "kfc" },
+  { programId: "prog-ponta-card-0.5pc", storeId: "doutor" },
+  { programId: "prog-ponta-card-0.5pc", storeId: "joshin" },
+  { programId: "prog-ponta-card-0.5pc", storeId: "apollo-station" },
 
   // B-6: Pontaカード 1% memberships (ADDED_LOYALTY_RULES)
   { programId: "prog-ponta-card-1pc", storeId: "jalannet" },
@@ -659,13 +664,47 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   // B-7: Vポイントカード 0.5% memberships
   { programId: "prog-vpoint-card-0.5pc", storeId: "conv-familymart" },
   { programId: "prog-vpoint-card-0.5pc", storeId: "welcia" },
+  // v3.5.0: Phase 2 V 拡張
+  // 飲食大手 (旧Tポイント時代からの主要加盟先)
+  { programId: "prog-vpoint-card-0.5pc", storeId: "yoshinoya" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "sukiya" },
+  // すかいらーくグループ
+  { programId: "prog-vpoint-card-0.5pc", storeId: "gusto" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "jonathan" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "shabuyo" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "yumetoan" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "bamiyan" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "aiya" },
+  // ゼンショーグループ
+  { programId: "prog-vpoint-card-0.5pc", storeId: "cocos" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "hamazushi" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "big-boy" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "hanaya-yohei" },
+  // 家電・書店・GS
+  { programId: "prog-vpoint-card-0.5pc", storeId: "edion" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "tsutaya" },
+  { programId: "prog-vpoint-card-0.5pc", storeId: "eneos" },
 
   // B-8: nanacoカード 1% memberships
   { programId: "prog-nanaco-card-1pc", storeId: "conv-7eleven" },
+  // v3.5.0: Phase 2 nanaco 拡張
+  { programId: "prog-nanaco-card-1pc", storeId: "yoshinoya" },
+  { programId: "prog-nanaco-card-1pc", storeId: "mcdonalds" },
+  { programId: "prog-nanaco-card-1pc", storeId: "tsuruha" },
+  { programId: "prog-nanaco-card-1pc", storeId: "eneos" },
 
   // B-9: WAONカード 0.5% memberships
   { programId: "prog-waon-card-0.5pc", storeId: "aeon" },
   { programId: "prog-waon-card-0.5pc", storeId: "conv-ministop" },
+  // v3.5.0: Phase 2 WAON 拡張
+  // (Gemini が「ツルハ要確認」と注釈したものは除外)
+  { programId: "prog-waon-card-0.5pc", storeId: "conv-familymart" },
+  { programId: "prog-waon-card-0.5pc", storeId: "conv-lawson" },
+  { programId: "prog-waon-card-0.5pc", storeId: "gusto" },
+  { programId: "prog-waon-card-0.5pc", storeId: "yoshinoya" },
+  { programId: "prog-waon-card-0.5pc", storeId: "welcia" },
+  { programId: "prog-waon-card-0.5pc", storeId: "bic-camera" },
+  { programId: "prog-waon-card-0.5pc", storeId: "cosmo-oil" },
 
   // B-10: JRE POINT カード 0.5% memberships (8 件)
   { programId: "prog-jre-pointcard-0.5pc", storeId: "newdays" },
