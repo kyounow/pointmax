@@ -56,9 +56,13 @@ function migrationKey(version: number, index: number): string {
   return `v${version}-${index}`;
 }
 
-// 配列を ID で検索しレコードを返す共通ヘルパ
+// 配列を ID で検索しレコードを返す共通ヘルパ。
+// arr が undefined のケースを防御 (SeedShape の programs/memberships は optional、
+// UpdateBanner の afterMerge 等で当該 collection が欠落しうる。
+// 欠落 = そのレコードは存在しない、として扱う)。
 type IdRecord = { id: string; [k: string]: unknown };
-function findById(arr: unknown[], id: string): IdRecord | undefined {
+function findById(arr: unknown[] | undefined, id: string): IdRecord | undefined {
+  if (!Array.isArray(arr)) return undefined;
   return (arr as IdRecord[]).find((x) => x.id === id);
 }
 
@@ -109,15 +113,17 @@ export function planMigrations(
 }
 
 export function applyMigration(state: SeedShape, m: Migration): SeedShape {
+  // collection が欠落 (undefined) のときは空配列扱い。
+  // updateField → 対象なしで何もしない / delete → 既に無いので no-op。
   if (m.type === "updateField") {
-    const arr = state[m.collection] as IdRecord[];
+    const arr = (state[m.collection] as IdRecord[] | undefined) ?? [];
     const next = arr.map((r) =>
       r.id === m.id ? { ...r, [m.field]: m.to } : r,
     );
     return { ...state, [m.collection]: next } as SeedShape;
   }
   if (m.type === "delete") {
-    const arr = state[m.collection] as IdRecord[];
+    const arr = (state[m.collection] as IdRecord[] | undefined) ?? [];
     const next = arr.filter((r) => r.id !== m.id);
     return { ...state, [m.collection]: next } as SeedShape;
   }
@@ -194,6 +200,33 @@ export const MIGRATIONS: VersionMigration[] = [
         id: "d-to-ponta",
         notes:
           "同上 (d → Ponta 方向)。2020/9 終了済の相互交換。",
+      },
+    ],
+  },
+  {
+    toVersion: 35,
+    date: "2026-05-15",
+    changes: [
+      {
+        type: "delete",
+        collection: "paymentApps",
+        id: "pa-famipay",
+        notes:
+          "ファミペイ廃止 (v4.0.1)。ポイント付与が d/楽天/V 選択式で単一通貨" +
+          "PaymentApp モデルに馴染まないため。ファミマでの d/楽天/V 還元は" +
+          "pointCard loyalty membership でカバー済。",
+      },
+      {
+        type: "delete",
+        collection: "programs",
+        id: "prog-famipay-base",
+        notes: "ファミペイ廃止に伴う関連 BenefitProgram 削除 (base)。",
+      },
+      {
+        type: "delete",
+        collection: "programs",
+        id: "prog-famima-card-addon",
+        notes: "ファミペイ廃止に伴う関連 BenefitProgram 削除 (addOn)。",
       },
     ],
   },

@@ -172,8 +172,9 @@ export const SEED_CARDS: Card[] = [
     enabled: false,
   },
   {
-    // ファミマカード (2025/9 新)、ファミペイチャージで +0.5% 上乗せ
-    // ファミマ店舗で 5% 割引 (PointMax モデル外、notes に記載のみ)
+    // ファミマカード (2025/9 新)。クレカ単体は 200円=1 Vポイント = 0.5%。
+    // (旧: ファミペイチャージ +0.5% 上乗せ → v4.0.1 でファミペイ廃止に伴い該当
+    //  addOn program も削除。カード自体は v-pt 還元として存続)
     id: "famima-card",
     name: "ファミマカード",
     grade: "通常",
@@ -379,26 +380,12 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
     enabled: false,
   },
 
-  // ファミペイ (チャージ式)、200円=1 FamiPayボーナス = 0.5%
-  // ファミマカード連携で +0.5% 上乗せ (合計 1.0%)
-  // v3 PR 2 で BenefitProgram に移行:
-  //   prog-famipay-base (primary, 0.5%) + prog-famima-card-addon (addOn, 0.5%)
-  {
-    id: "pa-famipay",
-    name: "ファミペイ",
-    iconChar: "FP",
-    iconColor: "#0072ce",
-    chargeBased: true,
-    paymentMode: "charge",
-    // defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates 削除
-    // → v3 で BenefitProgram (prog-famipay-base / prog-famima-card-addon) で表現
-    notes:
-      "ファミペイ支払いで 0.5% FamiPay ボーナス還元。" +
-      "ファミマカード経由チャージで +0.5% 上乗せ (合計 1.0%)。" +
-      "ファミマ店舗での 5% 割引はキャッシュバック式で PointMax の rate モデル外。" +
-      "[v3 PR 2] BenefitProgram で評価: prog-famipay-base + prog-famima-card-addon",
-    enabled: false,
-  },
+  // 【削除済 v4.0.1】pa-famipay (ファミペイ):
+  // ファミペイのポイント付与は d/楽天/V から選ぶ方式で、PointMax の単一通貨
+  // PaymentApp モデルでは正確に表現できない。ファミマでの d/楽天/V 還元は
+  // 既に prog-{d,rakuten,vpoint}-pointcard × conv-familymart の loyalty membership
+  // でカバー済のため、ファミペイ PaymentApp 自体を廃止。
+  // prog-famipay-base / prog-famima-card-addon も削除 (seed-data-programs.ts)。
 
   // メルペイ (直接連携)、単体還元なし (0%)
   // メルカード経由のあと払い時のみ 1% (メルカードの還元率に準じる)

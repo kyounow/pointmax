@@ -72,6 +72,11 @@ export function UpdateBanner() {
       pointCards: merged.pointCards,
       loyaltyRules: merged.loyaltyRules,
       paymentApps: merged.paymentApps,
+      // v4.0.1: programs / memberships も含める。これが無いと
+      // programs/paymentApps を対象にする migration (v35 ファミペイ削除等) の
+      // plan 計算で当該 collection が undefined になりクラッシュ・誤判定する。
+      programs: merged.programs,
+      memberships: merged.memberships,
     };
     return planMigrations(
       afterMerge,

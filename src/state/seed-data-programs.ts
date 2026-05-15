@@ -407,30 +407,11 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     notes: "旧 pa-au-pay.cardSpecificBonusRates[au-pay-card] から移行 (v3 PR 2)",
   },
 
-  // C-9: ファミペイ ベース還元 0.5% (全 store、primary)
-  {
-    id: "prog-famipay-base",
-    name: "ファミペイ ベース還元",
-    paymentAppId: "pa-famipay",
-    rate: 0.005,
-    currencyId: "edy",
-    bonusType: "primary",
-    description: "ファミペイ支払いで 0.5% FamiPayボーナス還元 (誰でも)",
-    notes: "旧 pa-famipay.defaultBonusRate=0.005 から移行 (v3 PR 2)",
-  },
-
-  // C-10: ファミペイ × ファミマカード 上乗せ 0.5% (addOn)
-  {
-    id: "prog-famima-card-addon",
-    name: "ファミペイ × ファミマカード 上乗せ",
-    paymentAppId: "pa-famipay",
-    cardIds: ["famima-card"],
-    rate: 0.005,
-    currencyId: "edy",
-    bonusType: "addOn",
-    description: "ファミマカード経由チャージで +0.5% 上乗せ (ファミペイ 0.5% と合わせて 1.0%)",
-    notes: "旧 pa-famipay.cardSpecificBonusRates[famima-card] から移行 (v3 PR 2)",
-  },
+  // 【削除済 v4.0.1】C-9 prog-famipay-base / C-10 prog-famima-card-addon:
+  // ファミペイ廃止に伴い削除。ファミペイのポイント付与は d/楽天/V 選択式で
+  // 単一通貨 program では正確に表せず、ファミマでの d/楽天/V 還元は
+  // prog-{d,rakuten,vpoint}-pointcard × conv-familymart の loyalty で
+  // カバー済のため不要。pa-famipay 自体も seed-data-cards.ts から削除。
 
   // C-11: メルペイ × メルカード 上乗せ 1% (addOn)
   // ※ メルペイ defaultBonusRate=0 なので primary program は不要

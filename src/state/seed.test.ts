@@ -36,10 +36,13 @@ describe("MASTER_PAYMENT_APP_IDS / isMasterPaymentApp", () => {
     }
   });
 
-  it("pa-au-pay / pa-famipay / pa-merpay は master 判定される", () => {
+  it("pa-au-pay / pa-merpay は master 判定される", () => {
     expect(isMasterPaymentApp("pa-au-pay")).toBe(true);
-    expect(isMasterPaymentApp("pa-famipay")).toBe(true);
     expect(isMasterPaymentApp("pa-merpay")).toBe(true);
+  });
+
+  it("pa-famipay は v4.0.1 で廃止済 (master 判定されない)", () => {
+    expect(isMasterPaymentApp("pa-famipay")).toBe(false);
   });
 
   it("ランダムな UUID は master 判定されない", () => {
