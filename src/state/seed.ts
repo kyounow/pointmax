@@ -53,7 +53,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 31;
+export const SEED_VERSION = 32;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -242,6 +242,21 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 32,
+    date: "2026-05-15",
+    summary:
+      "ポイントカード提携 memberships の不足を補充 (35 件)。" +
+      "Phase A (高信頼度 5 件、Sonnet + Gemini 両方支持): d-point × 吉野家/ウエルシア/ツルハ、楽天 × ウエルシア/ニコペット。" +
+      "Phase 2 (Gemini 示唆 + Sonnet 検証 30 件): " +
+      "Ponta × KFC/ドトール/ジョーシン/apollostation (4 件)、" +
+      "Vポイント × 吉野家/すき家/すかいらーく系 6 店/ゼンショー系 4 店/エディオン/TSUTAYA/ENEOS (15 件)、" +
+      "nanaco × 吉野家/マクドナルド/ツルハ/ENEOS (4 件)、" +
+      "WAON × ファミマ/ローソン/ガスト/吉野家/ウエルシア/ビックカメラ/コスモ石油 (7 件)。" +
+      "aliases.json に nicopet → nico-pet を追加。" +
+      "レートは各 program 既定値 (V/Ponta/WAON=0.5%, nanaco=1%)。" +
+      "店舗ごとの特殊レートが必要なら overrideRate で個別調整可能。",
   },
   {
     version: 31,
