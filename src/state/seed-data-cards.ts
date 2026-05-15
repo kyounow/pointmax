@@ -208,14 +208,30 @@ export const SEED_POINT_CARDS: PointCard[] = [
     currencyId: "ponta-pt",
   },
   {
+    // nanaco / WAON はカード提示で貯まる loyalty と、電子マネー決済で貯まる
+    // 支払いの 2 モードがある。本 PointCard モデルは loyalty (提示で貯まる) 用。
+    // - nanaco loyalty 加盟店: セブン&アイグループ系 (セブン-イレブン / イトーヨーカドー /
+    //   デニーズ / ヨークマート 等)。
+    // - 吉野家・マクドナルド・ENEOS 等は nanaco 電子マネー決済は可能だが
+    //   loyalty 加盟ではないので memberships に入れないこと。
+    // - 電子マネー支払い側の還元 (支払うと自動で 1pt/100円) は将来 PaymentApp
+    //   として nanaco を別途モデル化する別議題。
     id: "nanaco-card",
     name: "nanacoカード",
     currencyId: "nanaco-pt",
+    notes: "loyalty (カード提示) 用。電子マネー決済での還元は別モデル予定",
   },
   {
+    // WAON も nanaco と同じく loyalty / 電子マネー 2 モード。
+    // - WAON loyalty 加盟店: イオングループ系 (イオン / ミニストップ / ウエルシア /
+    //   マックスバリュ / ダイエー 等)。
+    // - ファミマ・ローソン・吉野家・ガスト・ビックカメラ・コスモ石油 は WAON 電子マネー
+    //   決済可能だが loyalty 加盟ではない。
+    // - 電子マネー支払い側は将来 PaymentApp 化で対応。
     id: "waon-card",
     name: "WAONカード",
     currencyId: "waon-pt",
+    notes: "loyalty (カード提示) 用。電子マネー決済での還元は別モデル予定",
   },
   {
     // JRE POINT カード (JR東日本)、駅ナカ加盟店で提示すると 200円=1pt = 0.5% 還元

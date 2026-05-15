@@ -686,25 +686,22 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-vpoint-card-0.5pc", storeId: "eneos" },
 
   // B-8: nanacoカード 1% memberships
+  // 注: nanaco は「カード提示で貯まる loyalty」と「電子マネー決済で貯まる」の
+  // 2 モードがある。ここは loyalty (提示で貯まる) 加盟店のみ = セブン&アイグループ。
+  // 「電子マネーとして使えるだけ」の店 (吉野家・マック等) はここに入れない。
+  // 電子マネー支払側の還元は将来 PaymentApp として nanaco をモデル化する別議題。
   { programId: "prog-nanaco-card-1pc", storeId: "conv-7eleven" },
-  // v3.5.0: Phase 2 nanaco 拡張
-  { programId: "prog-nanaco-card-1pc", storeId: "yoshinoya" },
-  { programId: "prog-nanaco-card-1pc", storeId: "mcdonalds" },
-  { programId: "prog-nanaco-card-1pc", storeId: "tsuruha" },
-  { programId: "prog-nanaco-card-1pc", storeId: "eneos" },
 
   // B-9: WAONカード 0.5% memberships
+  // 注: WAON も nanaco と同じく loyalty / 電子マネー の 2 モードがある。
+  // ここは loyalty (提示で貯まる) 加盟店のみ = イオングループ系。
+  // ウエルシアはイオングループ傘下のドラッグなので loyalty 加盟。
+  // ファミマ・ローソン・ガスト・吉野家・ビックカメラ・コスモ石油は WAON 電子マネー
+  // 決済は可能だが loyalty 提示加盟ではないため除外。
   { programId: "prog-waon-card-0.5pc", storeId: "aeon" },
   { programId: "prog-waon-card-0.5pc", storeId: "conv-ministop" },
-  // v3.5.0: Phase 2 WAON 拡張
-  // (Gemini が「ツルハ要確認」と注釈したものは除外)
-  { programId: "prog-waon-card-0.5pc", storeId: "conv-familymart" },
-  { programId: "prog-waon-card-0.5pc", storeId: "conv-lawson" },
-  { programId: "prog-waon-card-0.5pc", storeId: "gusto" },
-  { programId: "prog-waon-card-0.5pc", storeId: "yoshinoya" },
+  // v3.5.0: WAON loyalty 拡張 (welcia はイオン系で WAON POINT 提示加盟)
   { programId: "prog-waon-card-0.5pc", storeId: "welcia" },
-  { programId: "prog-waon-card-0.5pc", storeId: "bic-camera" },
-  { programId: "prog-waon-card-0.5pc", storeId: "cosmo-oil" },
 
   // B-10: JRE POINT カード 0.5% memberships (8 件)
   { programId: "prog-jre-pointcard-0.5pc", storeId: "newdays" },
