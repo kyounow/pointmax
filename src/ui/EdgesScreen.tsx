@@ -7,7 +7,11 @@ import { useNameResolvers } from "./hooks/useNameResolvers";
 import { EdgesGraph } from "./edges/EdgesGraph";
 import { EdgeDetailPanel } from "./edges/EdgeDetailPanel";
 import { NodeDetailPanel } from "./edges/NodeDetailPanel";
+import { NodePill } from "./NodePill";
 import type { Selection } from "./edges/types";
+import { bestPath } from "../domain/bestPath";
+import { formatRatio } from "../domain/currencyKind";
+import { formatNum } from "../domain/formatNum";
 
 export function EdgesScreen() {
   const currencies = useStore((s) => s.currencies);
@@ -20,6 +24,13 @@ export function EdgesScreen() {
   const [sel, setSel] = useState<Selection>(null);
   const [showLabels, setShowLabels] = useState(false);
   const dialog = useDialog();
+
+  // ルート検索 (v4.0.0 ③): 起点・終点を選ぶと bestPath で最効率 path を表示。
+  // デフォルト startAmount=10000 で「10000 単位を交換したら何単位になるか」を可視化。
+  // 起点・終点未選択時は path 計算しない。同一通貨選択時は変換不要 (rate 1.0)。
+  const [routeFromId, setRouteFromId] = useState<string>("");
+  const [routeToId, setRouteToId] = useState<string>("");
+  const [routeAmountStr, setRouteAmountStr] = useState<string>("10000");
 
   const currencyById = useMemo(
     () => new Map(currencies.map((c) => [c.id, c])),
@@ -46,6 +57,24 @@ export function EdgesScreen() {
     },
     [accessibleCardIds],
   );
+
+  // ルート検索 結果: 起点・終点が両方選択されているときに bestPath を実行。
+  // accessibleCardIds を渡すことで「保有していないカード必須の edge」を除外する。
+  const routeAmount = useMemo(() => {
+    const n = Number(routeAmountStr);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }, [routeAmountStr]);
+
+  const routeResult = useMemo(() => {
+    if (!routeFromId || !routeToId || routeAmount <= 0) return null;
+    return bestPath(
+      edges,
+      routeFromId,
+      routeToId,
+      routeAmount,
+      accessibleCardIds,
+    );
+  }, [edges, routeFromId, routeToId, routeAmount, accessibleCardIds]);
 
   const focusedNodeId = sel?.type === "node" ? sel.id : null;
 
@@ -119,6 +148,135 @@ export function EdgesScreen() {
         入口は上・出口は下・双方向は左右に自動配置されます。
         端をドラッグして別ノードに接続で新しい交換ルートを作成。
       </p>
+
+      {/* ─── ルート検索 (v4.0.0 ③) ───
+          起点・終点を選ぶと bestPath で最効率 path を表示。
+          requiredCardIds 付きの edge は保有カードのみ通過させる
+          (accessibleCardIds を bestPath に渡しているので、UI 側で追加 filter 不要)。 */}
+      <div className="route-finder">
+        <h3 style={{ marginTop: 16, marginBottom: 8 }}>🔍 ルート検索</h3>
+        <p className="hint" style={{ marginTop: 0 }}>
+          起点と終点の通貨を選ぶと、最も効率的な交換ルートを表示します。
+          保有カードが必須の edge は自動で除外されます。
+        </p>
+        <div
+          className="route-finder-form"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
+          <label>
+            起点:{" "}
+            <select
+              value={routeFromId}
+              onChange={(e) => setRouteFromId(e.target.value)}
+            >
+              <option value="">通貨を選択</option>
+              {currencies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            終点:{" "}
+            <select
+              value={routeToId}
+              onChange={(e) => setRouteToId(e.target.value)}
+            >
+              <option value="">通貨を選択</option>
+              {currencies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            金額:{" "}
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={routeAmountStr}
+              onChange={(e) => setRouteAmountStr(e.target.value)}
+              style={{ width: 100 }}
+            />
+          </label>
+          {(routeFromId || routeToId) && (
+            <button
+              onClick={() => {
+                setRouteFromId("");
+                setRouteToId("");
+              }}
+              style={{ fontSize: 12 }}
+            >
+              クリア
+            </button>
+          )}
+        </div>
+
+        {/* ルート検索 結果 */}
+        {routeFromId && routeToId && (
+          <div className="route-finder-result">
+            {routeResult ? (
+              <>
+                <div className="path">
+                  <div className="path-line">
+                    <NodePill currency={currencyById.get(routeFromId)} />
+                    {routeResult.steps.map((step) => (
+                      <span key={step.id} className="path-segment">
+                        <span className="arrow">
+                          →<small>{formatRatio(step.rate)}</small>
+                        </span>
+                        <NodePill
+                          currency={currencyById.get(step.toCurrencyId)}
+                        />
+                        {step.requiredCardIds?.length ? (
+                          <small
+                            className="step-required-card"
+                            title="このステップはこのカード保有を前提とします"
+                          >
+                            (要 {step.requiredCardIds.map(cardName).join(" / ")})
+                          </small>
+                        ) : null}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div
+                  className="hint"
+                  style={{ marginTop: 6, fontSize: 13 }}
+                >
+                  {routeResult.steps.length === 0 ? (
+                    <>変換不要 (同一通貨): {formatNum(routeAmount)} {currencyName(routeFromId)}</>
+                  ) : (
+                    <>
+                      {formatNum(routeAmount)} {currencyName(routeFromId)} →{" "}
+                      <strong>
+                        {formatNum(routeResult.finalAmount)} {currencyName(routeToId)}
+                      </strong>{" "}
+                      (合計 ×{formatRatio(routeResult.product)},{" "}
+                      {routeResult.steps.length} ホップ)
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="hint">
+                {currencyName(routeFromId)} から {currencyName(routeToId)}{" "}
+                への交換ルートが見つかりません。
+                保有カードが必須の edge をブロックしている場合があります — カード設定を確認してください。
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="graph-toolbar">
         <label
