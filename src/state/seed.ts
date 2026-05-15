@@ -53,7 +53,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 33;
+export const SEED_VERSION = 34;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -242,6 +242,19 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 34,
+    date: "2026-05-15",
+    summary:
+      "v4 ① ルーティングテーブル拡充: オリコポイント / 三菱UFJグローバルポイントを" +
+      "通貨 + カード + 公式交換 edges で追加。" +
+      "オリコカード THE POINT (1%, orico-pt)、三菱UFJカード (1000円1pt, mufg-pt、" +
+      "1pt≈4〜5円の高価値設計) を master pool に追加 (既定 enabled=false)。" +
+      "edges 11 件は全て公式ポイント移行ページ由来の実レート: " +
+      "orico → waon(1.0)/ponta(0.833)/d(0.833)/ana(0.6)/jal(0.5)、" +
+      "mufg → ponta(4.0)/d(4.0)/rakuten(3.0)/nanaco(3.0)/waon(3.0)/jal(2.0)。" +
+      "公式ポイント移行に無い交換先 (楽天/V/Suica/Edy 等) は架空回避のため未登録。",
   },
   {
     version: 33,

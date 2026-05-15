@@ -155,4 +155,23 @@ export const SEED_CURRENCIES: Currency[] = [
     iconChar: "M",
     iconColor: "#ff0211",  // メルカリブランド赤
   },
+  // v4.0.0 ①: ルーティングテーブル拡充
+  {
+    // オリコポイント。1pt=1円相当。オリコカード THE POINT 等で貯まる。
+    id: "orico-pt",
+    name: "オリコポイント",
+    kind: "point",
+    iconChar: "Or",
+    iconColor: "#e60012", // オリコブランド赤
+  },
+  {
+    // 三菱UFJ グローバルポイント。1pt ≈ 4〜5円相当の高価値設計
+    // (共通ポイントへ 200pt→600〜800pt、JALマイル 200pt→400)。
+    // 三菱UFJカードは 1000円=1pt なので defaultRate=0.001、価値は edge で換算。
+    id: "mufg-pt",
+    name: "三菱UFJグローバルポイント",
+    kind: "point",
+    iconChar: "UFJ",
+    iconColor: "#d4001a", // 三菱UFJニコス赤
+  },
 ];

@@ -375,4 +375,91 @@ export const SEED_EDGES: ConversionEdge[] = [
       "メルカリポイント 1pt=1円相当 (メルカリ内ショッピング / メルペイ残高での街使い等。" +
       "Edy 等の現金相当として登録)",
   },
+
+  // ============ オリコポイント (v4.0.0 ①) ============
+  // 公式: https://www.orico.co.jp/creditcard/pointservice/pointlist/
+  // オリコポイントは 1pt=1円相当。下記は公式「ポイント移行」掲載分のみ。
+  // 楽天/V/Suica/Edy/nanaco は公式ポイント移行に無いため未登録 (架空回避)。
+  {
+    id: "orico-to-waon",
+    fromCurrencyId: "orico-pt",
+    toCurrencyId: "waon-pt",
+    rate: 1,
+    notes: "1,000オリコP → 1,000 WAON POINT (公式ポイント移行、最低1,000P)",
+  },
+  {
+    id: "orico-to-ponta",
+    fromCurrencyId: "orico-pt",
+    toCurrencyId: "ponta-pt",
+    rate: 0.8333,
+    notes: "1,200オリコP → 1,000 Pontaポイント (公式、最低1,200P)",
+  },
+  {
+    id: "orico-to-d",
+    fromCurrencyId: "orico-pt",
+    toCurrencyId: "d-pt",
+    rate: 0.8333,
+    notes: "1,200オリコP → 1,000 dポイント (公式、最低1,200P)",
+  },
+  {
+    id: "orico-to-ana",
+    fromCurrencyId: "orico-pt",
+    toCurrencyId: "ana-mile",
+    rate: 0.6,
+    notes: "1,000オリコP → 600 ANAマイル (公式、最低1,000P)",
+  },
+  {
+    id: "orico-to-jal",
+    fromCurrencyId: "orico-pt",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    notes: "1,000オリコP → 500 JALマイル (公式、最低1,000P)",
+  },
+
+  // ============ 三菱UFJ グローバルポイント (v4.0.0 ①) ============
+  // 公式: https://www.cr.mufg.jp/mufgcard/point/shift/index.html
+  // グローバルポイントは 1pt≈4〜5円の高価値設計。下記は公式「ポイント移行」掲載分のみ。
+  // V/Amazon/Edy/Suica/ANA は公式ページに無いため未登録 (架空回避)。
+  {
+    id: "mufg-to-ponta",
+    fromCurrencyId: "mufg-pt",
+    toCurrencyId: "ponta-pt",
+    rate: 4,
+    notes: "200グローバルP → 800 Pontaポイント (公式、200P以上100P単位)",
+  },
+  {
+    id: "mufg-to-d",
+    fromCurrencyId: "mufg-pt",
+    toCurrencyId: "d-pt",
+    rate: 4,
+    notes: "200グローバルP → 800 dポイント (公式、200P以上100P単位)",
+  },
+  {
+    id: "mufg-to-rakuten",
+    fromCurrencyId: "mufg-pt",
+    toCurrencyId: "rakuten-pt",
+    rate: 3,
+    notes: "200グローバルP → 600 楽天ポイント (公式、200P以上100P単位)",
+  },
+  {
+    id: "mufg-to-nanaco",
+    fromCurrencyId: "mufg-pt",
+    toCurrencyId: "nanaco-pt",
+    rate: 3,
+    notes: "200グローバルP → 600 nanacoポイント (公式、200P以上100P単位)",
+  },
+  {
+    id: "mufg-to-waon",
+    fromCurrencyId: "mufg-pt",
+    toCurrencyId: "waon-pt",
+    rate: 3,
+    notes: "200グローバルP → 600 WAON POINT (公式、200P以上100P単位)",
+  },
+  {
+    id: "mufg-to-jal",
+    fromCurrencyId: "mufg-pt",
+    toCurrencyId: "jal-mile",
+    rate: 2,
+    notes: "200グローバルP → 400 JALマイル (公式、200P以上100P単位)",
+  },
 ];

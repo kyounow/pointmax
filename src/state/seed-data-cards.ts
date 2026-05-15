@@ -181,6 +181,30 @@ export const SEED_CARDS: Card[] = [
     defaultCurrencyId: "v-pt",
     enabled: false,
   },
+  // v4.0.0 ①: ルーティングテーブル拡充で追加した通貨に紐づくカード
+  {
+    // オリコカード THE POINT。100円=1オリコポイント = 1.0% (1pt=1円)。
+    // オリコポイントは WAON 1:1 / Ponta・d 1200→1000 / ANA 1000→600 / JAL 1000→500
+    // へ移行可能 (edges 参照)。
+    id: "orico-card",
+    name: "オリコカード THE POINT",
+    grade: "通常",
+    defaultRate: 0.01,
+    defaultCurrencyId: "orico-pt",
+    enabled: false,
+  },
+  {
+    // 三菱UFJカード。1000円=1グローバルポイント なので defaultRate=0.001。
+    // グローバルポイントは 1pt≈4〜5円の高価値 (Ponta/d 200→800、楽天/nanaco/WAON
+    // 200→600、JAL 200→400)。raw 0.1% 表示だが edge ×2〜4 換算で実質 ~0.4%。
+    // マイル系カードと同じく bestPath が価値を解決する。
+    id: "mufg-card",
+    name: "三菱UFJカード",
+    grade: "通常",
+    defaultRate: 0.001,
+    defaultCurrencyId: "mufg-pt",
+    enabled: false,
+  },
 ];
 
 // 店頭提示するポイントカード。

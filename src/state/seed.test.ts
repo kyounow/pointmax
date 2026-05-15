@@ -144,3 +144,50 @@ describe("nanaco/WAON の loyalty × e-money 排他制約 (二重取り防止)",
     },
   );
 });
+
+// v4.0.0 ①: ルーティングテーブル拡充に伴い、edges の参照整合性を CI で保証する。
+// 通貨を追加 / リネームしたとき、edge の from/to が dangling になるのを検出。
+describe("SEED_EDGES の通貨参照整合性", () => {
+  it("全 edge の fromCurrencyId / toCurrencyId が SEED_CURRENCIES に存在する", () => {
+    const { edges, currencies } = seed();
+    const currencyIds = new Set(currencies.map((c) => c.id));
+    const dangling: string[] = [];
+    for (const e of edges) {
+      if (!currencyIds.has(e.fromCurrencyId)) {
+        dangling.push(`${e.id}: from='${e.fromCurrencyId}' が未定義`);
+      }
+      if (!currencyIds.has(e.toCurrencyId)) {
+        dangling.push(`${e.id}: to='${e.toCurrencyId}' が未定義`);
+      }
+    }
+    expect(dangling, dangling.join("\n")).toEqual([]);
+  });
+
+  it("全 edge の rate は正の有限数", () => {
+    const { edges } = seed();
+    const bad = edges
+      .filter((e) => !(Number.isFinite(e.rate) && e.rate > 0))
+      .map((e) => `${e.id}: rate=${e.rate}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
+  it("v4.0.0 で追加した orico-pt / mufg-pt の edges が存在する", () => {
+    const { edges } = seed();
+    const ids = new Set(edges.map((e) => e.id));
+    for (const id of [
+      "orico-to-waon",
+      "orico-to-ponta",
+      "orico-to-d",
+      "orico-to-ana",
+      "orico-to-jal",
+      "mufg-to-ponta",
+      "mufg-to-d",
+      "mufg-to-rakuten",
+      "mufg-to-nanaco",
+      "mufg-to-waon",
+      "mufg-to-jal",
+    ]) {
+      expect(ids.has(id), `edge ${id} が未登録`).toBe(true);
+    }
+  });
+});
