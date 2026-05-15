@@ -12,7 +12,8 @@
 // 現在期待する persist schema のバージョン。
 // v3 (PR 4) で 1 → 2 に bump。
 // v3.3 で 2 → 3 に bump (state.rules / addRule 系の物理削除)。
-export const PERSIST_SCHEMA_VERSION = 3;
+// v4.0.0 で 3 → 4 に bump (preferredCurrencyIds 新設)。
+export const PERSIST_SCHEMA_VERSION = 4;
 
 /**
  * schema migration の戦略型。
@@ -46,4 +47,9 @@ export const SCHEMA_MIGRATIONS: Record<number, SchemaMigrationStrategy> = {
   // v3.3 で state.rules / addRule 系を物理削除。残存 rules フィールドは
   // zustand persist が無視するため passthrough で安全。
   2: { type: "passthrough" },
+  // v4.0.0 で preferredCurrencyIds を新設。旧 localStorage には当該キーが
+  // 無く、store の初期 state (empty.preferredCurrencyIds = []) で埋まるため
+  // passthrough で安全。targetCurrencyId は元々 component local state で
+  // 非永続だったため移行対象なし。
+  3: { type: "passthrough" },
 };

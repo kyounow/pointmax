@@ -64,6 +64,24 @@ function layoutByKind(
   return map;
 }
 
+// v4.0.0 ③: ルート選択時のレイアウト。
+// 起点 → step1 → step2 → ... → 終点 を一直線に並べる。
+// path 以外のノードは map に含まれず、呼び出し側で非表示にする。
+function computeRouteLayout(
+  fromId: string,
+  steps: ConversionEdge[],
+): Map<string, { x: number; y: number }> {
+  const path = [fromId, ...steps.map((s) => s.toCurrencyId)];
+  const xStart = 80;
+  const xSpacing = 220;
+  const y = 260;
+  const map = new Map<string, { x: number; y: number }>();
+  path.forEach((id, i) => {
+    map.set(id, { x: xStart + i * xSpacing, y });
+  });
+  return map;
+}
+
 // ノード選択時のフォーカスレイアウト
 // 選択ノードを中心に、入口=上 / 出口=下 / 双方向=左右に配置
 // 戻り値: 表示すべきノードIDのみ含むマップ
@@ -130,7 +148,18 @@ type Props = {
   onEdgeClick: (evt: React.MouseEvent, e: RFEdge) => void;
   onNodeClick: (evt: React.MouseEvent, n: RFNode) => void;
   onPaneClick: () => void;
+  // v4.0.0 ③: ルート検索結果との連動。
+  // routePathEdgeIds に含まれる edge id は紫でハイライト、太さ増。
+  // routeFromId / routeToId が一致するノードに「起点」「終点」バッジ表示。
+  // routeResultSteps があれば「ルート表示モード」が発動し、path を一直線に
+  // 配置 + path 以外のノード/edge を非表示にして視認性を最大化する。
+  routePathEdgeIds?: ReadonlySet<string>;
+  routeFromId?: string;
+  routeToId?: string;
+  routeResultSteps?: ConversionEdge[];
 };
+
+const ROUTE_PATH_STROKE = "#a855f7"; // purple-500
 
 export function EdgesGraph({
   currencies,
@@ -143,15 +172,30 @@ export function EdgesGraph({
   onEdgeClick,
   onNodeClick,
   onPaneClick,
+  routePathEdgeIds,
+  routeFromId,
+  routeToId,
+  routeResultSteps,
 }: Props) {
   const focusedNodeId = sel?.type === "node" ? sel.id : null;
 
+  // ルート表示モード: 起点・終点が両方セットされて、bestPath が steps を返したとき
+  // 発動。focus mode より優先される (= path 表示が一番見たい情報)。
+  const isRouteMode = !!(
+    routeFromId &&
+    routeResultSteps &&
+    routeResultSteps.length > 0
+  );
+
   const positions = useMemo(() => {
+    if (isRouteMode && routeFromId && routeResultSteps) {
+      return computeRouteLayout(routeFromId, routeResultSteps);
+    }
     if (focusedNodeId) {
       return computeFocusedLayout(focusedNodeId, edges);
     }
     return layoutByKind(currencies);
-  }, [currencies, edges, focusedNodeId]);
+  }, [currencies, edges, focusedNodeId, isRouteMode, routeFromId, routeResultSteps]);
 
   const isEdgeRelated = useCallback(
     (e: { fromCurrencyId: string; toCurrencyId: string }) => {
@@ -165,35 +209,62 @@ export function EdgesGraph({
   );
 
   const rfNodes: CurrencyNodeType[] = useMemo(() => {
-    // フォーカス時は positions に含まれるノードのみ表示（無関係ノードは完全に隠す）
-    const visibleCurrencies = focusedNodeId
-      ? currencies.filter((c) => positions.has(c.id))
-      : currencies;
+    // フォーカス時 / ルート表示モード時は positions に含まれるノードのみ表示
+    // (= 関係ない通貨は非表示にして視認性を最大化)
+    const visibleCurrencies =
+      isRouteMode || focusedNodeId
+        ? currencies.filter((c) => positions.has(c.id))
+        : currencies;
     return visibleCurrencies.map((c) => {
       const pos = positions.get(c.id) ?? { x: 0, y: 0 };
       const isSelected = focusedNodeId === c.id;
+      const routeRole =
+        c.id === routeFromId
+          ? ("from" as const)
+          : c.id === routeToId
+            ? ("to" as const)
+            : undefined;
       return {
         id: c.id,
         type: "currency",
         position: pos,
-        data: { currency: c, selected: isSelected, dimmed: false },
+        data: { currency: c, selected: isSelected, dimmed: false, routeRole },
       };
     });
-  }, [currencies, positions, focusedNodeId]);
+  }, [currencies, positions, focusedNodeId, routeFromId, routeToId, isRouteMode]);
 
   const rfEdges: RFEdge[] = useMemo(() => {
-    // フォーカス時は関連エッジのみ表示
-    const visibleEdges = focusedNodeId
-      ? edges.filter((e) => isEdgeRelated(e))
-      : edges;
+    // ルート表示モード: path に含まれる edge のみ表示
+    // フォーカス時: 関連 edge のみ表示
+    // それ以外: 全 edge 表示
+    const visibleEdges = isRouteMode
+      ? edges.filter((e) => routePathEdgeIds?.has(e.id))
+      : focusedNodeId
+        ? edges.filter((e) => isEdgeRelated(e))
+        : edges;
     return visibleEdges.map((e) => {
       const isSelectedEdge = sel?.type === "edge" && sel.id === e.id;
       const related = isEdgeRelated(e);
+      const inRoutePath = routePathEdgeIds?.has(e.id) ?? false;
       const locked =
         !!e.requiredCardIds?.length &&
         !e.requiredCardIds.some((id) => accessibleCardIds.has(id));
-      const baseStroke = isSelectedEdge || related ? "#f59e0b" : "#4ea1ff";
-      const stroke = locked ? "#6b7280" : baseStroke;
+      // 優先度: routePath (紫、最強調) > selected/related (橙) > locked (灰) > default (青)
+      let stroke: string;
+      let strokeWidth: number;
+      if (inRoutePath) {
+        stroke = ROUTE_PATH_STROKE;
+        strokeWidth = 3.5;
+      } else if (locked) {
+        stroke = "#6b7280";
+        strokeWidth = isSelectedEdge || related ? 2.5 : 1.5;
+      } else if (isSelectedEdge || related) {
+        stroke = "#f59e0b";
+        strokeWidth = 2.5;
+      } else {
+        stroke = "#4ea1ff";
+        strokeWidth = 1.5;
+      }
       return {
         id: e.id,
         source: e.fromCurrencyId,
@@ -203,9 +274,9 @@ export function EdgesGraph({
         markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
         style: {
           stroke,
-          strokeWidth: isSelectedEdge || related ? 2.5 : 1.5,
-          strokeDasharray: locked ? "6 4" : undefined,
-          opacity: locked ? 0.55 : 1,
+          strokeWidth,
+          strokeDasharray: locked && !inRoutePath ? "6 4" : undefined,
+          opacity: locked && !inRoutePath ? 0.55 : 1,
         },
         labelStyle: {
           fill: "#e6e6e6",
@@ -213,14 +284,27 @@ export function EdgesGraph({
           fontWeight: 600,
         },
         labelBgStyle: {
-          fill: isSelectedEdge || related ? "#3a2a10" : "#181b22",
+          fill: inRoutePath
+            ? "#2a1a3a"
+            : isSelectedEdge || related
+              ? "#3a2a10"
+              : "#181b22",
         },
         labelBgPadding: [6, 4] as [number, number],
         labelBgBorderRadius: 4,
-        zIndex: isSelectedEdge || related ? 100 : 0,
+        zIndex: inRoutePath ? 200 : isSelectedEdge || related ? 100 : 0,
       };
     });
-  }, [edges, sel, isEdgeRelated, focusedNodeId, showLabels, accessibleCardIds]);
+  }, [
+    edges,
+    sel,
+    isEdgeRelated,
+    focusedNodeId,
+    showLabels,
+    accessibleCardIds,
+    routePathEdgeIds,
+    isRouteMode,
+  ]);
 
   return (
     <div className="graph-wrap" style={{ height: 580 }}>

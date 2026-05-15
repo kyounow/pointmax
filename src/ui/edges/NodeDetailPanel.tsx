@@ -11,6 +11,12 @@ type Props = {
   isEdgeAccessible: (e: { requiredCardIds?: string[] }) => boolean;
   onSelectEdge: (id: string) => void;
   onDismiss: () => void;
+  // v4.0.0 ③: ルート検索との連動。current node が起点/終点として設定されているか、
+  // 設定するためのコールバック (省略時は対応 UI を非表示)。
+  isRouteFrom?: boolean;
+  isRouteTo?: boolean;
+  onSetAsRouteFrom?: () => void;
+  onSetAsRouteTo?: () => void;
 };
 
 export function NodeDetailPanel({
@@ -22,6 +28,10 @@ export function NodeDetailPanel({
   isEdgeAccessible,
   onSelectEdge,
   onDismiss,
+  isRouteFrom,
+  isRouteTo,
+  onSetAsRouteFrom,
+  onSetAsRouteTo,
 }: Props) {
   return (
     <div className="edge-panel">
@@ -31,8 +41,46 @@ export function NodeDetailPanel({
         >
           <CurrencyIcon currency={currency} size={22} />
           <strong>{currency.name}</strong> の関連ルート
+          {isRouteFrom && (
+            <span
+              className="badge"
+              style={{ background: "#10b981", marginLeft: 4 }}
+              title="ルート検索の起点に設定中"
+            >
+              起点
+            </span>
+          )}
+          {isRouteTo && (
+            <span
+              className="badge"
+              style={{ background: "#f43f5e", marginLeft: 4 }}
+              title="ルート検索の終点に設定中"
+            >
+              終点
+            </span>
+          )}
         </span>
-        <button onClick={onDismiss}>選択解除</button>
+        <span style={{ display: "inline-flex", gap: 6 }}>
+          {onSetAsRouteFrom && !isRouteFrom && (
+            <button
+              onClick={onSetAsRouteFrom}
+              style={{ fontSize: 12 }}
+              title="ルート検索の起点として設定"
+            >
+              起点に設定
+            </button>
+          )}
+          {onSetAsRouteTo && !isRouteTo && (
+            <button
+              onClick={onSetAsRouteTo}
+              style={{ fontSize: 12 }}
+              title="ルート検索の終点として設定"
+            >
+              終点に設定
+            </button>
+          )}
+          <button onClick={onDismiss}>選択解除</button>
+        </span>
       </div>
       <div className="edge-panel-body node-routes">
         {outgoing.length === 0 && incoming.length === 0 && (

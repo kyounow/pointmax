@@ -23,6 +23,8 @@ export function CalculatorScreen() {
   const paymentApps = useStore((s) => s.paymentApps);
   const programs = useStore((s) => s.programs);
   const memberships = useStore((s) => s.memberships);
+  // v4.0.0 ②: 優先通貨 (CurrenciesScreen で設定、順序あり)。
+  const preferredCurrencyIds = useStore((s) => s.preferredCurrencyIds);
 
   // デフォルトは「一般店舗 (規定還元)」。基本還元率の確認用。
   // store-id "general" が存在しない場合 (極端なリセット直後) は空文字フォールバック
@@ -30,8 +32,20 @@ export function CalculatorScreen() {
   const [storeSearch, setStoreSearch] = useState("");
   const [storeCategory, setStoreCategory] = useState(""); // "" = 全カテゴリ
   const [amount, setAmount] = useState("10000");
-  const [targetCurrencyId, setTargetCurrencyId] = useState("");
+  // activeCurrencyId = 現在表示中の対象通貨 (= 通貨タブの選択中タブ)。
+  // preferred があれば既定で先頭、無ければ fallback select で都度選択。
+  const [activeCurrencyId, setActiveCurrencyId] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  // preferred が変わったら activeCurrencyId を整合させる:
+  // - preferred 非空 かつ activeCurrencyId が preferred に無い → 先頭にリセット
+  // - preferred から現在のタブ通貨が消えた場合も先頭に戻る
+  useEffect(() => {
+    if (preferredCurrencyIds.length === 0) return;
+    if (!preferredCurrencyIds.includes(activeCurrencyId)) {
+      setActiveCurrencyId(preferredCurrencyIds[0]);
+    }
+  }, [preferredCurrencyIds, activeCurrencyId]);
 
   // today-banner: 内訳の展開状態 (初期は折り畳み)
   const [todayBreakdownOpen, setTodayBreakdownOpen] = useState(false);
@@ -100,13 +114,13 @@ export function CalculatorScreen() {
 
   // includeDisabled: true で全カード試算、後で 2 つに分割
   const allRanked = useMemo(() => {
-    if (!storeId || !targetCurrencyId || !amount) return null;
+    if (!storeId || !activeCurrencyId || !amount) return null;
     const amt = Number(amount);
     if (!Number.isFinite(amt) || amt <= 0) return null;
     return rankCards(
       {
         payment: { storeId, amount: amt },
-        targetCurrencyId,
+        targetCurrencyId: activeCurrencyId,
         cards,
         stores,
         edges,
@@ -121,7 +135,7 @@ export function CalculatorScreen() {
   }, [
     storeId,
     amount,
-    targetCurrencyId,
+    activeCurrencyId,
     cards,
     stores,
     edges,
@@ -183,7 +197,7 @@ export function CalculatorScreen() {
       (r) => r.reachable && r.totalFinalAmount === topTotal,
     );
     setExpandedIds(new Set(tiedTop.map((r) => r.card.id)));
-  }, [storeId, targetCurrencyId, amount, result]);
+  }, [storeId, activeCurrencyId, amount, result]);
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -331,29 +345,67 @@ export function CalculatorScreen() {
           />
           円
         </label>
-        <label>
-          目標通貨:
-          <select
-            value={targetCurrencyId}
-            onChange={(e) => setTargetCurrencyId(e.target.value)}
-          >
-            <option value="">選択</option>
-            {currenciesByKind.map((g) => (
-              <optgroup key={g.key} label={g.key}>
-                {g.items.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
+        {preferredCurrencyIds.length === 0 && (
+          // 優先通貨 未設定時の fallback: 従来どおり都度選択
+          <label>
+            目標通貨:
+            <select
+              value={activeCurrencyId}
+              onChange={(e) => setActiveCurrencyId(e.target.value)}
+            >
+              <option value="">選択</option>
+              {currenciesByKind.map((g) => (
+                <optgroup key={g.key} label={g.key}>
+                  {g.items.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+        )}
       </form>
+
+      {preferredCurrencyIds.length === 0 ? (
+        <p className="hint" style={{ fontSize: 13 }}>
+          💡 「通貨」画面で<strong>優先通貨</strong>を設定すると、ここがタブ切替に
+          なって毎回選ばずに済みます。
+        </p>
+      ) : (
+        // v4.0.0 ② 案C: 優先通貨をタブで切替 (選択タブの通貨で結果表示)
+        <div
+          className="campaign-tabs currency-tabs"
+          style={{ marginBottom: 12 }}
+          role="tablist"
+          aria-label="目標通貨"
+        >
+          {preferredCurrencyIds.map((cid) => {
+            const c = currencyById.get(cid);
+            if (!c) return null;
+            const active = cid === activeCurrencyId;
+            return (
+              <button
+                key={cid}
+                role="tab"
+                aria-selected={active}
+                className={active ? "active" : ""}
+                onClick={() => setActiveCurrencyId(cid)}
+                title={`${c.name} で表示`}
+              >
+                {c.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {!result && (
         <p className="empty">
-          店舗・金額・目標通貨を選択すると結果が表示されます。
+          {preferredCurrencyIds.length === 0
+            ? "店舗・金額・目標通貨を選択すると結果が表示されます。"
+            : "店舗・金額を入力すると結果が表示されます。"}
         </p>
       )}
 
@@ -395,24 +447,24 @@ export function CalculatorScreen() {
                     <span className="arrow">
                       →<small>{formatRatio(step.rate)}</small>
                     </span>
-                    <NodePill currency={currencyById.get(step.toCurrencyId)} />
                     {step.requiredCardIds?.length ? (
-                      <small className="step-required-card" title="このステップはこのカード保有を前提とします">
+                      <small className="step-required-card" title="この交換ステップにこのカード保有が必要です">
                         (要 {step.requiredCardIds.map(cardName).join(" / ")})
                       </small>
                     ) : null}
+                    <NodePill currency={currencyById.get(step.toCurrencyId)} />
                   </span>
                 ))}
               </span>
               {loyalty.reachable ? (
                 <strong className="final" style={{ marginLeft: "auto" }}>
                   +{formatNum(loyalty.finalAmount)}{" "}
-                  {currencyName(targetCurrencyId)}
+                  {currencyName(activeCurrencyId)}
                 </strong>
               ) : (
                 <small className="hint">
                   {currencyName(loyalty.earnedCurrencyId)} から{" "}
-                  {currencyName(targetCurrencyId)}{" "}
+                  {currencyName(activeCurrencyId)}{" "}
                   へのルート未登録（合算は0扱い）
                 </small>
               )}
@@ -534,7 +586,7 @@ export function CalculatorScreen() {
                           return (
                             <>
                               最終: {formatNum(r.finalAmount)}{" "}
-                              {currencyName(targetCurrencyId)}
+                              {currencyName(activeCurrencyId)}
                             </>
                           );
                         }
@@ -552,7 +604,7 @@ export function CalculatorScreen() {
                         return (
                           <>
                             合計 {formatNum(r.totalFinalAmount)}{" "}
-                            {currencyName(targetCurrencyId)}
+                            {currencyName(activeCurrencyId)}
                             <small className="loyalty-breakdown">
                               （{parts.join(" + ")}）
                             </small>
@@ -634,14 +686,14 @@ export function CalculatorScreen() {
                             <span className="arrow">
                               →<small>{formatRatio(step.rate)}</small>
                             </span>
-                            <NodePill
-                              currency={currencyById.get(step.toCurrencyId)}
-                            />
                             {step.requiredCardIds?.length ? (
-                              <small className="step-required-card" title="このステップはこのカード保有を前提とします">
+                              <small className="step-required-card" title="この交換ステップにこのカード保有が必要です">
                                 (要 {step.requiredCardIds.map(cardName).join(" / ")})
                               </small>
                             ) : null}
+                            <NodePill
+                              currency={currencyById.get(step.toCurrencyId)}
+                            />
                           </span>
                         ))}
                       </div>
@@ -651,7 +703,7 @@ export function CalculatorScreen() {
                       {!r.reachable && (
                         <small className="hint">
                           {currencyName(r.earnedCurrencyId)} から{" "}
-                          {currencyName(targetCurrencyId)}{" "}
+                          {currencyName(activeCurrencyId)}{" "}
                           への交換ルートが未登録です
                         </small>
                       )}
@@ -671,7 +723,7 @@ export function CalculatorScreen() {
                             <>
                               {" "}
                               → +{formatNum(r.appBonusFinalAmount)}{" "}
-                              {currencyName(targetCurrencyId)}
+                              {currencyName(activeCurrencyId)}
                             </>
                           )}
                         </div>
@@ -688,7 +740,7 @@ export function CalculatorScreen() {
               <CardComparisonSection
                 comparisonItems={comparisonItems}
                 topReachableTotal={topTotal}
-                targetCurrencyName={currencyName(targetCurrencyId)}
+                targetCurrencyName={currencyName(activeCurrencyId)}
               />
             );
           })()}

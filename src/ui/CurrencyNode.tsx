@@ -7,16 +7,26 @@ export type CurrencyNodeData = {
   currency: Currency;
   selected?: boolean;
   dimmed?: boolean;
+  // v4.0.0 ③: ルート検索の起点/終点ハイライト用。
+  // "from" = 起点 (緑)、"to" = 終点 (赤)。selected (orange) よりも優先表示。
+  routeRole?: "from" | "to";
 };
 
 export type CurrencyNodeType = Node<CurrencyNodeData, "currency">;
 
+const ROUTE_ROLE_COLOR = {
+  from: "#10b981", // emerald-500
+  to: "#f43f5e", // rose-500
+} as const;
+
 export function CurrencyNode({ data }: NodeProps<CurrencyNodeType>) {
   const s = styleOf(data.currency.kind);
+  const routeColor = data.routeRole ? ROUTE_ROLE_COLOR[data.routeRole] : null;
   const cls = [
     "currency-node",
     data.selected ? "selected" : "",
     data.dimmed ? "dimmed" : "",
+    data.routeRole ? `route-${data.routeRole}` : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -24,11 +34,33 @@ export function CurrencyNode({ data }: NodeProps<CurrencyNodeType>) {
     <div
       className={cls}
       style={{
-        borderColor: data.selected ? "#f59e0b" : s.border,
+        // routeRole > selected > default の優先度で borderColor を決定
+        borderColor: routeColor ?? (data.selected ? "#f59e0b" : s.border),
+        borderWidth: data.routeRole ? 3 : undefined,
         background: s.bg,
         color: s.text,
+        position: "relative",
       }}
     >
+      {data.routeRole && (
+        <span
+          style={{
+            position: "absolute",
+            top: -10,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: routeColor!,
+            color: "#fff",
+            fontSize: 10,
+            fontWeight: 700,
+            padding: "1px 6px",
+            borderRadius: 4,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {data.routeRole === "from" ? "起点" : "終点"}
+        </span>
+      )}
       <Handle
         type="target"
         position={Position.Top}

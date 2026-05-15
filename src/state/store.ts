@@ -68,6 +68,11 @@ type State = {
   lastSeedVersion: number;
   syncUrl: string;
   lastSyncAt: string | null;
+  // v4.0.0 ②: ユーザが「普段使う通貨」を順序付きで保持。
+  // 先頭ほど優先 (Calculator のタブ並び順 = この配列順)。
+  // 空配列なら Calculator は通貨未選択状態 (ユーザに選択を促す)。
+  // PointCard preferredOrder と同じ「順序あり配列」パターン。
+  preferredCurrencyIds: string[];
   // schema migration 中フラグ。旧 version 検出時に migrate callback がセットし、
   // SchemaUpgradeModal で Apply 後にクリアされる。
   _pendingSchemaMigration?: SchemaMigrationStrategy;
@@ -103,6 +108,14 @@ type Actions = {
   ) => void;
   removePointCard: (id: string) => void;
   movePointCard: (id: string, direction: "up" | "down") => void;
+
+  // v4.0.0 ②: 優先通貨リスト操作。重複追加は無視、順序保持。
+  addPreferredCurrency: (currencyId: string) => void;
+  removePreferredCurrency: (currencyId: string) => void;
+  movePreferredCurrency: (
+    currencyId: string,
+    direction: "up" | "down",
+  ) => void;
 
   addLoyaltyRule: (r: Omit<LoyaltyRule, "id">) => void;
   updateLoyaltyRule: (
@@ -151,6 +164,7 @@ const empty: State = {
   // 初期値はビルトインの公式マスタURL。ユーザーが空に戻すと再びデフォルトを参照する想定
   syncUrl: DEFAULT_SYNC_URL,
   lastSyncAt: null,
+  preferredCurrencyIds: [],
   // _pendingSchemaMigration / _legacyPersistedState は undefined で初期化
 };
 
@@ -199,6 +213,10 @@ export const useStore = create<State & Actions>()(
           currencies: s.currencies.filter((c) => c.id !== id),
           edges: s.edges.filter(
             (e) => e.fromCurrencyId !== id && e.toCurrencyId !== id,
+          ),
+          // v4.0.0 ②: 削除された通貨が優先リストに残ると dangling になるので除外
+          preferredCurrencyIds: s.preferredCurrencyIds.filter(
+            (cid) => cid !== id,
           ),
         })),
 
@@ -249,6 +267,35 @@ export const useStore = create<State & Actions>()(
           const arr = [...s.pointCards];
           [arr[idx], arr[next]] = [arr[next], arr[idx]];
           return { pointCards: arr };
+        }),
+
+      // v4.0.0 ②: 優先通貨リスト操作 (movePointCard と同じ並べ替えパターン)
+      addPreferredCurrency: (currencyId) =>
+        set((s) =>
+          s.preferredCurrencyIds.includes(currencyId)
+            ? s // 重複は無視
+            : {
+                preferredCurrencyIds: [
+                  ...s.preferredCurrencyIds,
+                  currencyId,
+                ],
+              },
+        ),
+      removePreferredCurrency: (currencyId) =>
+        set((s) => ({
+          preferredCurrencyIds: s.preferredCurrencyIds.filter(
+            (id) => id !== currencyId,
+          ),
+        })),
+      movePreferredCurrency: (currencyId, direction) =>
+        set((s) => {
+          const idx = s.preferredCurrencyIds.indexOf(currencyId);
+          if (idx < 0) return s;
+          const next = direction === "up" ? idx - 1 : idx + 1;
+          if (next < 0 || next >= s.preferredCurrencyIds.length) return s;
+          const arr = [...s.preferredCurrencyIds];
+          [arr[idx], arr[next]] = [arr[next], arr[idx]];
+          return { preferredCurrencyIds: arr };
         }),
 
       addLoyaltyRule: (r) =>
@@ -523,7 +570,7 @@ export const useStore = create<State & Actions>()(
       // v0.8 で世代交代。旧キー "pointmax-store" は無視 (孤児は起動時に削除)
       name: "pointmax-v08-store",
       storage: createJSONStorage(() => localStorage),
-      version: PERSIST_SCHEMA_VERSION,  // 2 → 3 (v3.3 で bump)
+      version: PERSIST_SCHEMA_VERSION,  // 3 → 4 (v4.0.0 で preferredCurrencyIds 新設)
       migrate: (persistedState: unknown, fromVersion: number) => {
         // 新規 install (version フィールドが無い = fromVersion が undefined 扱い)
         // → そのまま通す (既存の empty+seed 初期化フローへ)

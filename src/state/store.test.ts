@@ -152,3 +152,61 @@ describe("store: updateCard / updatePaymentApp の userModifiedAt スタンプ (
     expect(after.userModifiedAt).toBeUndefined();
   });
 });
+
+describe("store: preferredCurrencyIds (v4.0.0 ②)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("初期状態は空配列", () => {
+    expect(useStore.getState().preferredCurrencyIds).toEqual([]);
+  });
+
+  it("addPreferredCurrency で末尾に追加 (順序保持)", () => {
+    useStore.getState().addPreferredCurrency("rakuten-pt");
+    useStore.getState().addPreferredCurrency("ana-mile");
+    expect(useStore.getState().preferredCurrencyIds).toEqual([
+      "rakuten-pt",
+      "ana-mile",
+    ]);
+  });
+
+  it("重複 add は無視される", () => {
+    useStore.getState().addPreferredCurrency("rakuten-pt");
+    useStore.getState().addPreferredCurrency("rakuten-pt");
+    expect(useStore.getState().preferredCurrencyIds).toEqual(["rakuten-pt"]);
+  });
+
+  it("removePreferredCurrency で除外", () => {
+    useStore.setState({ preferredCurrencyIds: ["a", "b", "c"] });
+    useStore.getState().removePreferredCurrency("b");
+    expect(useStore.getState().preferredCurrencyIds).toEqual(["a", "c"]);
+  });
+
+  it("movePreferredCurrency up/down で並べ替え", () => {
+    useStore.setState({ preferredCurrencyIds: ["a", "b", "c"] });
+    useStore.getState().movePreferredCurrency("c", "up");
+    expect(useStore.getState().preferredCurrencyIds).toEqual(["a", "c", "b"]);
+    useStore.getState().movePreferredCurrency("a", "down");
+    expect(useStore.getState().preferredCurrencyIds).toEqual(["c", "a", "b"]);
+  });
+
+  it("先頭を up / 末尾を down は no-op (境界)", () => {
+    useStore.setState({ preferredCurrencyIds: ["a", "b"] });
+    useStore.getState().movePreferredCurrency("a", "up");
+    useStore.getState().movePreferredCurrency("b", "down");
+    expect(useStore.getState().preferredCurrencyIds).toEqual(["a", "b"]);
+  });
+
+  it("removeCurrency で通貨削除すると preferred からも除外される (dangling 防止)", () => {
+    useStore.setState({
+      currencies: [
+        { id: "cur-x", name: "X" },
+        { id: "cur-y", name: "Y" },
+      ],
+      preferredCurrencyIds: ["cur-x", "cur-y"],
+    });
+    useStore.getState().removeCurrency("cur-x");
+    expect(useStore.getState().preferredCurrencyIds).toEqual(["cur-y"]);
+  });
+});

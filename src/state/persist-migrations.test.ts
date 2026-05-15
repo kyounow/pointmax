@@ -68,8 +68,8 @@ function runMigrate(
 // -----------------------------------------------------------------------
 
 describe("PERSIST_SCHEMA_VERSION", () => {
-  it("現在のスキーマバージョンは 3 である", () => {
-    expect(PERSIST_SCHEMA_VERSION).toBe(3);
+  it("現在のスキーマバージョンは 4 である (v4.0.0 preferredCurrencyIds 新設)", () => {
+    expect(PERSIST_SCHEMA_VERSION).toBe(4);
   });
 });
 
@@ -179,13 +179,19 @@ describe("SCHEMA_MIGRATIONS マップの整合性", () => {
     }
   });
 
-  it("PERSIST_SCHEMA_VERSION (3) のエントリは存在しない (自己移行は不要)", () => {
+  it("PERSIST_SCHEMA_VERSION (4) のエントリは存在しない (自己移行は不要)", () => {
     // 現バージョン自身に対する migration エントリは不要・無意味
     expect(SCHEMA_MIGRATIONS[PERSIST_SCHEMA_VERSION]).toBeUndefined();
   });
 
   it("SCHEMA_MIGRATIONS[2] は type='passthrough' (v3.3 で state.rules 物理削除)", () => {
     const entry = SCHEMA_MIGRATIONS[2];
+    expect(entry).toBeDefined();
+    expect(entry.type).toBe("passthrough");
+  });
+
+  it("SCHEMA_MIGRATIONS[3] は type='passthrough' (v4.0.0 preferredCurrencyIds 新設)", () => {
+    const entry = SCHEMA_MIGRATIONS[3];
     expect(entry).toBeDefined();
     expect(entry.type).toBe("passthrough");
   });
