@@ -262,20 +262,9 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.5,
     notes: "2pt → 1マイル",
   },
-  {
-    id: "ponta-to-d",
-    fromCurrencyId: "ponta-pt",
-    toCurrencyId: "d-pt",
-    rate: 1,
-    notes: "Pontaポイント ⇄ dポイント 1:1 相互交換",
-  },
-  {
-    id: "d-to-ponta",
-    fromCurrencyId: "d-pt",
-    toCurrencyId: "ponta-pt",
-    rate: 1,
-    notes: "dポイント ⇄ Pontaポイント 1:1 相互交換",
-  },
+  // 【削除済 v4.0.0 ①】ponta-to-d / d-to-ponta:
+  // dポイント ⇄ Pontaポイント の相互交換は 2020/9 にサービス終了済。
+  // 架空ルートになるため削除 (公式裏取り: ponta.jp / 各種ポイント解説)。
   {
     id: "ponta-to-edy",
     fromCurrencyId: "ponta-pt",

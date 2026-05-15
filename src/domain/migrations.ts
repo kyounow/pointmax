@@ -176,4 +176,25 @@ export const MIGRATIONS: VersionMigration[] = [
       },
     ],
   },
+  {
+    toVersion: 34,
+    date: "2026-05-15",
+    changes: [
+      {
+        type: "delete",
+        collection: "edges",
+        id: "ponta-to-d",
+        notes:
+          "dポイント ⇄ Pontaポイント 相互交換は 2020/9 にサービス終了済。" +
+          "架空ルートになるため既存ユーザの localStorage からも削除。",
+      },
+      {
+        type: "delete",
+        collection: "edges",
+        id: "d-to-ponta",
+        notes:
+          "同上 (d → Ponta 方向)。2020/9 終了済の相互交換。",
+      },
+    ],
+  },
 ];

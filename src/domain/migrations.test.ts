@@ -358,3 +358,54 @@ describe("MIGRATIONS v13", () => {
     expect(plan[0].currentValue).toEqual(["jal-suica"]);
   });
 });
+
+describe("MIGRATIONS v34 (ponta⇄d 相互交換廃止)", () => {
+  it("v34: ponta-to-d / d-to-ponta が既存ユーザの edges から削除される", () => {
+    const state: SeedShape = {
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [
+        { id: "ponta-to-d", fromCurrencyId: "ponta-pt", toCurrencyId: "d-pt", rate: 1 },
+        { id: "d-to-ponta", fromCurrencyId: "d-pt", toCurrencyId: "ponta-pt", rate: 1 },
+        { id: "ponta-to-jal", fromCurrencyId: "ponta-pt", toCurrencyId: "jal-mile", rate: 0.5 },
+      ],
+      pointCards: [],
+      loyaltyRules: [],
+      paymentApps: [],
+    };
+    // v33 → v34 で v34 の delete migration が適用対象になる
+    const plan = planMigrations(state, 33, 34, MIGRATIONS);
+    const deletePlan = plan.filter((p) => p.migration.type === "delete");
+    expect(deletePlan).toHaveLength(2);
+    expect(deletePlan.every((p) => p.status === "applicable")).toBe(true);
+
+    const applied = applyMigrationsByKey(state, plan, autoApplicableKeys(plan));
+    const ids = applied.edges.map((e) => e.id);
+    expect(ids).not.toContain("ponta-to-d");
+    expect(ids).not.toContain("d-to-ponta");
+    // 無関係 edge は残る
+    expect(ids).toContain("ponta-to-jal");
+  });
+
+  it("v34: 既に該当 edge が無いユーザは alreadyApplied (no-op)", () => {
+    const state: SeedShape = {
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [
+        { id: "ponta-to-jal", fromCurrencyId: "ponta-pt", toCurrencyId: "jal-mile", rate: 0.5 },
+      ],
+      pointCards: [],
+      loyaltyRules: [],
+      paymentApps: [],
+    };
+    const plan = planMigrations(state, 33, 34, MIGRATIONS);
+    const deletePlan = plan.filter((p) => p.migration.type === "delete");
+    // delete 対象が既に無い → alreadyApplied (planMigrations - delete の仕様)
+    expect(deletePlan.every((p) => p.status === "alreadyApplied")).toBe(true);
+    // 適用しても ponta-to-jal は残る
+    const applied = applyMigrationsByKey(state, plan, autoApplicableKeys(plan));
+    expect(applied.edges.map((e) => e.id)).toEqual(["ponta-to-jal"]);
+  });
+});
