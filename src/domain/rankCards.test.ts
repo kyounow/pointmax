@@ -288,13 +288,10 @@ describe("rankCards", () => {
     expect(result[1].totalFinalAmount).toBe(100);
   });
 
-  it("tie-break 2次: 同 totalFinalAmount で支払単独 (card+appBonus) が多い方が前", () => {
-    // loyalty は全カード共通なので totalFinalAmount を同じにするには finalAmount も同じにする必要がある。
-    // cardA と cardB が同じ store ルールで同じ rate → totalFinalAmount 等しい。
-    // loyalty なし時: totalFinalAmount = finalAmount なので pay も同じ → 2次の差が生まれない。
-    // 2次 tie-break が実際に機能するのは paymentApps 経由で appBonusFinalAmount が異なる場合。
-    // ここでは「同 totalFinalAmount かつ同 pay のカードは入力順序に左右されない」ことを確認し、
-    // 実際の 2次/3次 tie-break は sort が stable であることを保証するための追加確認とする。
+  it("同 totalFinalAmount のカードは reachable / 値とも一致する (sort stability)", () => {
+    // 注: 旧テスト名「tie-break 2次」は誤解を招くため改名。
+    // 真の 2次 tie-break (同 total / 異 pay) は paymentApps + addOn が違うときに
+    // 発生するが、その複雑な setup は paymentApp 系の独立テストでカバー済。
     const cardA: Card = {
       id: "cardA",
       name: "カード A",
@@ -316,20 +313,14 @@ describe("rankCards", () => {
       edges: [],
     });
 
-    // 同率: totalFinalAmount が同じ
     expect(result[0].totalFinalAmount).toBe(result[1].totalFinalAmount);
-    // どちらも reachable
     expect(result[0].reachable).toBe(true);
     expect(result[1].reachable).toBe(true);
   });
 
-  it("tie-break 3次: 同 totalFinalAmount かつ同 pay で、構成要素少ない方が前 (finalAmount>0 のみ vs finalAmount=0 のケース)", () => {
-    // loyalty は全カード共通のため、parts の差を生むには finalAmount/appBonusFinalAmount の差が必要。
-    // paymentApps なし → appBonusFinalAmount=0 (全カード同じ)。
-    // finalAmount > 0 のカード: parts=1; finalAmount = 0 (reachable=false) のカード: parts=0。
-    // ただし reachable=false カードは reachable 優先 (0次) で後ろに来るためケースとして不適。
-    // 実用上、3次が機能するのは appBonusFinalAmount が異なる paymentApps 結合のみ。
-    // このテストでは「新しい sort ロジックが既存の sort を壊していない」ことを確認する。
+  it("loyalty が共通で加算される場合、1次 (totalFinalAmount) で順序が決まる", () => {
+    // 注: 旧テスト名「tie-break 3次」は誤解を招くため改名。
+    // loyalty が全カードに共通加算されても、relative order は card 側の差で決まる。
     const cardA: Card = {
       id: "cardA",
       name: "カード A",
@@ -343,7 +334,6 @@ describe("rankCards", () => {
       defaultCurrencyId: "target-pt",
     };
 
-    // loyalty あり: 共通の loyaltyTotal が加算されるので relative order は totalFinalAmount で決まる
     const loyPtCard = { id: "loy-pt", name: "ポイントカード", currencyId: "target-pt" };
     const partsStore: Store = { id: "parts-shop", name: "構成要素店", maxLoyaltyStacks: 1 };
 
@@ -361,7 +351,6 @@ describe("rankCards", () => {
 
     // cardA: finalAmount=200, loyaltyTotal=100 → total=300
     // cardB: finalAmount=100, loyaltyTotal=100 → total=200
-    // 1次で A > B なので A が先
     expect(result[0].card.id).toBe("cardA");
     expect(result[1].card.id).toBe("cardB");
     expect(result[0].totalFinalAmount).toBe(300);
@@ -497,5 +486,88 @@ describe("rankCards", () => {
     expect(result).toHaveLength(1);
     expect(result[0].reachable).toBe(false);
     expect(result[0].totalFinalAmount).toBe(0);
+  });
+
+  // v3.6.0 で修正された別バグ: appBonusEarnedAmount に post-conversion 値
+  // (= appBonusFinal) が入っていたため UI で「earn → final」が同値表示になり
+  // 変換ロスが見えなかった。pre-conversion 値が入ることをテスト。
+  it("appBonusEarnedAmount は pre-conversion、appBonusFinalAmount は post-conversion", () => {
+    // addOn currency = rakuten-pt → target ana-mile (0.5 倍 path)
+    const testPa = {
+      id: "pa-test",
+      name: "Test Pay",
+      chargeBased: true,
+      paymentMode: "charge" as const,
+    };
+    const programs: BenefitProgram[] = [
+      {
+        id: "prog-test-addon",
+        name: "Test addOn",
+        paymentAppId: "pa-test",
+        rate: 0.005,
+        currencyId: "rakuten-pt",
+        bonusType: "addOn",
+      },
+    ];
+    const memberships: StoreProgramMembership[] = [
+      { programId: "prog-test-addon", storeId: "any" },
+    ];
+    const edges = [edge("rakuten-to-ana", "rakuten-pt", "ana-mile", 0.5)];
+
+    const result = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "ana-mile",
+      cards: [rakuten],
+      stores: baseStores,
+      edges,
+      programs,
+      memberships,
+      paymentApps: [testPa],
+    });
+
+    // addOn の raw earn (rakuten-pt 通貨): 10000 * 0.005 = 50
+    expect(result[0].appBonusEarnedAmount).toBe(50);
+    // 変換後 (ana-mile 通貨): 50 * 0.5 = 25
+    expect(result[0].appBonusFinalAmount).toBe(25);
+    // appBonusCurrencyId は earn 側の通貨
+    expect(result[0].appBonusCurrencyId).toBe("rakuten-pt");
+  });
+
+  // V4 prep: 単一 target currency 呼び出しの contract snapshot。
+  // V4 で multi-currency 対応のため return shape が変わる可能性があるが、
+  // 単一 target で呼び出した場合の挙動を pin して回帰を検出する。
+  it("contract: 単一 target 呼び出しの CardRanking 完全 shape", () => {
+    const result = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [],
+    });
+
+    expect(result).toHaveLength(1);
+    const r = result[0];
+
+    // CardRanking 型の必須フィールドが全て存在し、想定の型を持っている
+    expect(r.card).toEqual(rakuten);
+    expect(r.resolved).toEqual({
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      source: "default",
+    });
+    expect(r.earnedAmount).toBe(100);
+    expect(r.earnedCurrencyId).toBe("rakuten-pt");
+    expect(r.pathSteps).toEqual([]);
+    expect(r.pathProduct).toBe(1);
+    expect(r.finalAmount).toBe(100);
+    expect(r.reachable).toBe(true);
+    expect(r.paymentApp).toBeNull();
+    expect(r.appBonusRate).toBe(0);
+    expect(r.appBonusFinalAmount).toBe(0);
+    expect(r.appBonusEarnedAmount).toBe(0);
+    expect(r.appBonusCurrencyId).toBeNull();
+    expect(r.appBonusReachable).toBe(false);
+    expect(r.loyalties).toEqual([]);
+    expect(r.totalFinalAmount).toBe(100);
   });
 });

@@ -1,0 +1,154 @@
+// store.ts の action の薄い integration テスト。
+// pure helper (userModified.ts / seed.ts のルックアップ) は別ファイルで個別テスト済み。
+// ここでは store action 固有の「ガード条件」「ストア state への反映」のみ検査。
+import { describe, it, expect, beforeEach } from "vitest";
+import { useStore } from "./store";
+import type { Card, PaymentApp } from "../domain/types";
+
+const MASTER_CARD_ID = "rakuten-card";
+const MASTER_PAYMENT_APP_ID = "pa-rakuten-pay";
+
+describe("store: resetCardToSeed", () => {
+  // 各テスト前に seed() 由来の clean state にリセット (clearAll で empty に戻し、
+  // 必要な部分だけ setState で詰める)
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("non-master id (UUID) を渡すと no-op (state 不変)", () => {
+    const customCard: Card = {
+      id: "custom-uuid-123",
+      name: "ユーザ追加カード",
+      defaultRate: 0.02,
+      defaultCurrencyId: "rakuten-pt",
+      userModifiedAt: "2026-05-15T00:00:00.000Z",
+    };
+    useStore.setState({ cards: [customCard] });
+
+    useStore.getState().resetCardToSeed("custom-uuid-123");
+
+    // ガード条件 `if (!original) return;` で early return、変化なし
+    const after = useStore.getState().cards[0];
+    expect(after).toEqual(customCard);
+    expect(after.userModifiedAt).toBe("2026-05-15T00:00:00.000Z");
+  });
+
+  it("master id を渡すと seed 値で上書き、userModifiedAt クリア、enabled 保持", () => {
+    const editedRakuten: Card = {
+      id: MASTER_CARD_ID,
+      name: "編集された名前",
+      defaultRate: 0.99,
+      defaultCurrencyId: "edited-currency",
+      enabled: false,
+      userModifiedAt: "2026-05-15T00:00:00.000Z",
+    };
+    useStore.setState({ cards: [editedRakuten] });
+
+    useStore.getState().resetCardToSeed(MASTER_CARD_ID);
+
+    const after = useStore.getState().cards[0];
+    expect(after.id).toBe(MASTER_CARD_ID);
+    expect(after.name).not.toBe("編集された名前"); // seed の名前に戻る
+    expect(after.defaultRate).not.toBe(0.99); // seed の rate に戻る
+    expect(after.enabled).toBe(false); // preference 保持
+    expect(after.userModifiedAt).toBeUndefined();
+  });
+
+  it("存在しない id を渡しても crash しない (no-op)", () => {
+    useStore.setState({ cards: [] });
+    expect(() => {
+      useStore.getState().resetCardToSeed("nonexistent");
+    }).not.toThrow();
+    expect(useStore.getState().cards).toEqual([]);
+  });
+});
+
+describe("store: resetPaymentAppToSeed", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("non-master id を渡すと no-op", () => {
+    const customApp: PaymentApp = {
+      id: "custom-pa-uuid",
+      name: "ユーザ追加 Pay",
+      userModifiedAt: "2026-05-15T00:00:00.000Z",
+    };
+    useStore.setState({ paymentApps: [customApp] });
+
+    useStore.getState().resetPaymentAppToSeed("custom-pa-uuid");
+
+    const after = useStore.getState().paymentApps[0];
+    expect(after).toEqual(customApp);
+  });
+
+  it("master id を渡すと seed 値で上書き", () => {
+    const editedApp: PaymentApp = {
+      id: MASTER_PAYMENT_APP_ID,
+      name: "編集された名前",
+      iconChar: "X",
+      enabled: false,
+      userModifiedAt: "2026-05-15T00:00:00.000Z",
+    };
+    useStore.setState({ paymentApps: [editedApp] });
+
+    useStore.getState().resetPaymentAppToSeed(MASTER_PAYMENT_APP_ID);
+
+    const after = useStore.getState().paymentApps[0];
+    expect(after.id).toBe(MASTER_PAYMENT_APP_ID);
+    expect(after.name).not.toBe("編集された名前");
+    expect(after.enabled).toBe(false); // preference 保持
+    expect(after.userModifiedAt).toBeUndefined();
+  });
+});
+
+describe("store: updateCard / updatePaymentApp の userModifiedAt スタンプ (integration)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("substantive な updateCard で userModifiedAt がスタンプされる", () => {
+    const card: Card = {
+      id: "test-card",
+      name: "テスト",
+      defaultRate: 0.01,
+      defaultCurrencyId: "rakuten-pt",
+    };
+    useStore.setState({ cards: [card] });
+
+    useStore.getState().updateCard("test-card", { defaultRate: 0.02 });
+
+    const after = useStore.getState().cards[0];
+    expect(after.defaultRate).toBe(0.02);
+    expect(after.userModifiedAt).toBeDefined();
+    // ISO 8601 形式
+    expect(after.userModifiedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("enabled トグルのみの updateCard では userModifiedAt はスタンプされない", () => {
+    const card: Card = {
+      id: "test-card",
+      name: "テスト",
+      defaultRate: 0.01,
+      defaultCurrencyId: "rakuten-pt",
+    };
+    useStore.setState({ cards: [card] });
+
+    useStore.getState().updateCard("test-card", { enabled: false });
+
+    const after = useStore.getState().cards[0];
+    expect(after.enabled).toBe(false);
+    expect(after.userModifiedAt).toBeUndefined();
+  });
+
+  it("iconColor のみの updatePaymentApp は cosmetic なのでスタンプされない", () => {
+    const pa: PaymentApp = { id: "test-pa", name: "テスト Pay" };
+    useStore.setState({ paymentApps: [pa] });
+
+    useStore.getState().updatePaymentApp("test-pa", { iconColor: "#ff0000" });
+
+    const after = useStore.getState().paymentApps[0];
+    expect(after.iconColor).toBe("#ff0000");
+    expect(after.userModifiedAt).toBeUndefined();
+  });
+});

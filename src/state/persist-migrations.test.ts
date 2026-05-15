@@ -189,4 +189,16 @@ describe("SCHEMA_MIGRATIONS マップの整合性", () => {
     expect(entry).toBeDefined();
     expect(entry.type).toBe("passthrough");
   });
+
+  // V4 等で PERSIST_SCHEMA_VERSION を bump したとき、旧バージョンの migration
+  // 登録忘れを CI で検出する smoke test。1..PERSIST_SCHEMA_VERSION-1 までの
+  // 全てに entry が必要 (= 既存ユーザの localStorage 移行漏れを防ぐ)。
+  it("1..PERSIST_SCHEMA_VERSION-1 の全 version に migration entry が登録されている", () => {
+    for (let v = 1; v < PERSIST_SCHEMA_VERSION; v++) {
+      expect(
+        SCHEMA_MIGRATIONS[v],
+        `SCHEMA_MIGRATIONS[${v}] が未登録: PERSIST_SCHEMA_VERSION=${PERSIST_SCHEMA_VERSION} にしたなら v=${v} の移行戦略 (passthrough / reset / transform) を必ず登録すること`,
+      ).toBeDefined();
+    }
+  });
 });
