@@ -395,4 +395,49 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "[v3 PR 2] BenefitProgram で評価: prog-merpay-mercard-addon",
     enabled: false,
   },
+
+  // nanaco 電子マネー (v3.6.0)
+  // チャージ式、200円1pt = 0.5% (店舗・支払一律ベース)
+  // セブン-イレブン等 loyalty 加盟店は nanaco-card (PointCard) 経路で還元されるため
+  // ここでは「e-money 支払いで貯まる」非 loyalty 加盟店のみ membership 化:
+  // 吉野家・マクドナルド・ツルハ・ENEOS・ビックカメラ等。
+  // チャージ時還元はカード別 (例: セブンカード 0.5% / 他カード 0%) だが今版は未モデル化。
+  {
+    id: "pa-nanaco",
+    name: "nanaco",
+    iconChar: "n",
+    iconColor: "#ffae00",
+    chargeBased: true,
+    paymentMode: "charge",
+    notes:
+      "nanaco 電子マネーで支払うと 200円1pt = 0.5% (店舗一律ベース)。" +
+      "セブン-イレブン等は nanacoカード提示=支払いなので、loyalty 経路で計上 (二重取り回避)。" +
+      "ENEOS の燃料油は 2L1pt の特殊レートだが今版は 0.5% 統一 (実態より若干高め)。" +
+      "チャージ時のカード還元 (セブンカード 0.5% 等) は未モデル化。" +
+      "[v3.6.0] BenefitProgram で評価: prog-pa-nanaco-base",
+    enabled: false,
+  },
+
+  // WAON 電子マネー (v3.6.0)
+  // チャージ式、200円1pt = 0.5% (店舗・支払一律ベース)
+  // イオン系・ウエルシア・ツルハ・コスモ石油等 loyalty 加盟店は waon-card (PointCard) 経路で
+  // 還元されるため、ここでは「e-money 支払いで貯まる」非 loyalty 加盟店のみ membership 化:
+  // ファミマ・ローソン・ガスト・吉野家・マクドナルド・ビックカメラ等。
+  // ※ ENEOS は WAON 給油非対応のため除外。
+  {
+    id: "pa-waon",
+    name: "WAON",
+    iconChar: "W",
+    iconColor: "#ec1c24",
+    chargeBased: true,
+    paymentMode: "charge",
+    notes:
+      "WAON 電子マネーで支払うと 200円1pt = 0.5% (店舗一律ベース)。" +
+      "イオン系等 loyalty 加盟店は waon-card 経路で計上 (二重取り回避)。" +
+      "コスモ石油は提示のみで貯まる loyalty 経路、e-money では貯まらないため pa-waon 加盟ではない。" +
+      "ENEOS は WAON 給油非対応のため対象外 (EV充電のみ可能)。" +
+      "チャージ時のカード還元 (イオンカード 1% 等) は未モデル化。" +
+      "[v3.6.0] BenefitProgram で評価: prog-pa-waon-base",
+    enabled: false,
+  },
 ];
