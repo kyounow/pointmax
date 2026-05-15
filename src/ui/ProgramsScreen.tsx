@@ -163,7 +163,7 @@ export function ProgramsScreen() {
                     {/* プログラム名 */}
                     <td data-label="プログラム名">
                       <span style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                        {isMasterProgram(p.id) && (
+                        {isMasterProgram(p.id) && !p.userModifiedAt && (
                           <span className="card-master-badge" title="公式マスター由来">公式</span>
                         )}
                         <span>{p.name}</span>

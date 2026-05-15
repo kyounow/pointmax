@@ -55,7 +55,7 @@ export function CardComparisonSection({
               <tr key={r.card.id}>
                 <td data-label="カード">
                   <span className="card-name-with-badge">
-                    {isMasterCard(r.card.id) && (
+                    {isMasterCard(r.card.id) && !r.card.userModifiedAt && (
                       <span
                         className="card-master-badge"
                         title="公式マスター由来"

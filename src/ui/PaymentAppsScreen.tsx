@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { isMasterPaymentApp } from "../state/seed";
+import { isSubstantivePaymentAppPatch } from "../state/userModified";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { PaymentApp } from "../domain/types";
 import { cardLabel } from "../domain/cardLabel";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
+import { useDialog } from "./dialog/DialogProvider";
 
 export function PaymentAppsScreen() {
   const cards = useStore((s) => s.cards);
@@ -12,6 +14,8 @@ export function PaymentAppsScreen() {
   const addPaymentApp = useStore((s) => s.addPaymentApp);
   const updatePaymentApp = useStore((s) => s.updatePaymentApp);
   const removePaymentApp = useStore((s) => s.removePaymentApp);
+  const resetPaymentAppToSeed = useStore((s) => s.resetPaymentAppToSeed);
+  const { confirm } = useDialog();
 
   const [name, setName] = useState("");
   const [iconChar, setIconChar] = useState("");
@@ -35,7 +39,7 @@ export function PaymentAppsScreen() {
             >
               {p.iconChar ?? p.name.charAt(0)}
             </span>
-            {isMasterPaymentApp(p.id) ? (
+            {isMasterPaymentApp(p.id) && !p.userModifiedAt ? (
               <span className="card-name-with-badge">
                 <span
                   className="card-master-badge"
@@ -274,8 +278,44 @@ export function PaymentAppsScreen() {
         rows={paymentApps}
         columns={columns}
         onSave={(id, patch) => updatePaymentApp(id, patch)}
+        onBeforeSave={async (id, patch) => {
+          const app = paymentApps.find((p) => p.id === id);
+          if (!app) return true;
+          if (!isMasterPaymentApp(id)) return true;
+          if (app.userModifiedAt) return true;
+          if (!isSubstantivePaymentAppPatch(patch)) return true;
+          return await confirm({
+            title: "「公式」表示が外れます",
+            message:
+              `${app.name} を保存すると、編集後の値はあなたのカスタム値になり、` +
+              `「公式」バッジが外れます。後で「公式に戻す」ボタンで復帰できます。`,
+            okText: "保存する",
+            cancelText: "キャンセル",
+          });
+        }}
         onDelete={removePaymentApp}
         canDelete={(p) => !isMasterPaymentApp(p.id)}
+        extraActions={(p) =>
+          isMasterPaymentApp(p.id) && p.userModifiedAt ? (
+            <button
+              className="reset-to-official-btn"
+              title="公式マスターの値に戻す (使う設定は保持されます)"
+              onClick={async () => {
+                const ok = await confirm({
+                  title: `${p.name} を公式の値に戻しますか？`,
+                  message:
+                    "編集した「名前・決済形態・対応カード・メモ」が公式マスターの値に置き換わります。アイコンと「使う」設定はそのまま保持されます。",
+                  okText: "公式に戻す",
+                  cancelText: "キャンセル",
+                  danger: true,
+                });
+                if (ok) resetPaymentAppToSeed(p.id);
+              }}
+            >
+              公式に戻す
+            </button>
+          ) : null
+        }
       />
     </section>
   );

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
 import { isMasterCard } from "../state/seed";
+import { isSubstantiveCardPatch } from "../state/userModified";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { Card } from "../domain/types";
 import { useNameResolvers } from "./hooks/useNameResolvers";
+import { useDialog } from "./dialog/DialogProvider";
 
 export function CardsScreen() {
   const cards = useStore((s) => s.cards);
@@ -11,6 +13,8 @@ export function CardsScreen() {
   const addCard = useStore((s) => s.addCard);
   const updateCard = useStore((s) => s.updateCard);
   const removeCard = useStore((s) => s.removeCard);
+  const resetCardToSeed = useStore((s) => s.resetCardToSeed);
+  const { confirm } = useDialog();
 
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
@@ -24,7 +28,7 @@ export function CardsScreen() {
       key: "name",
       label: "カード名",
       view: (c) =>
-        isMasterCard(c.id) ? (
+        isMasterCard(c.id) && !c.userModifiedAt ? (
           <span className="card-name-with-badge">
             <span className="card-master-badge" title="公式マスター由来">公式</span>
             {c.name}
@@ -186,8 +190,45 @@ export function CardsScreen() {
         rows={cards}
         columns={columns}
         onSave={(id, patch) => updateCard(id, patch)}
+        onBeforeSave={async (id, patch) => {
+          const card = cards.find((c) => c.id === id);
+          if (!card) return true;
+          // 「公式」が外れる契機 = master かつ未編集 かつ substantive 変更
+          if (!isMasterCard(id)) return true;
+          if (card.userModifiedAt) return true;
+          if (!isSubstantiveCardPatch(patch)) return true;
+          return await confirm({
+            title: "「公式」表示が外れます",
+            message:
+              `${card.name} を保存すると、編集後の値はあなたのカスタム値になり、` +
+              `「公式」バッジが外れます。後で「公式に戻す」ボタンで復帰できます。`,
+            okText: "保存する",
+            cancelText: "キャンセル",
+          });
+        }}
         onDelete={removeCard}
         canDelete={(c) => !isMasterCard(c.id)}
+        extraActions={(c) =>
+          isMasterCard(c.id) && c.userModifiedAt ? (
+            <button
+              className="reset-to-official-btn"
+              title="公式マスターの値に戻す (使う設定は保持されます)"
+              onClick={async () => {
+                const ok = await confirm({
+                  title: `${c.name} を公式の値に戻しますか？`,
+                  message:
+                    "編集した「カード名・グレード・基本還元率・貯まる通貨」が公式マスターの値に置き換わります。「使う」設定はそのまま保持されます。",
+                  okText: "公式に戻す",
+                  cancelText: "キャンセル",
+                  danger: true,
+                });
+                if (ok) resetCardToSeed(c.id);
+              }}
+            >
+              公式に戻す
+            </button>
+          ) : null
+        }
         empty="まだありません"
       />
     </section>
