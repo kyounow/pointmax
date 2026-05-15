@@ -409,3 +409,56 @@ describe("MIGRATIONS v34 (ponta⇄d 相互交換廃止)", () => {
     expect(applied.edges.map((e) => e.id)).toEqual(["ponta-to-jal"]);
   });
 });
+
+describe("MIGRATIONS v35 (ファミペイ廃止)", () => {
+  it("v35: pa-famipay / prog-famipay-base / prog-famima-card-addon が削除される", () => {
+    const state: SeedShape = {
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [],
+      pointCards: [],
+      loyaltyRules: [],
+      paymentApps: [
+        { id: "pa-famipay", name: "ファミペイ" },
+        { id: "pa-rakuten-pay", name: "楽天Pay" },
+      ],
+      programs: [
+        { id: "prog-famipay-base", name: "x", rate: 0.005, currencyId: "edy" },
+        {
+          id: "prog-famima-card-addon",
+          name: "y",
+          rate: 0.005,
+          currencyId: "edy",
+        },
+        { id: "prog-keep", name: "z", rate: 0.01, currencyId: "rakuten-pt" },
+      ],
+    };
+    const plan = planMigrations(state, 34, 35, MIGRATIONS);
+    const deletePlan = plan.filter((p) => p.migration.type === "delete");
+    expect(deletePlan).toHaveLength(3);
+    expect(deletePlan.every((p) => p.status === "applicable")).toBe(true);
+
+    const applied = applyMigrationsByKey(state, plan, autoApplicableKeys(plan));
+    expect(applied.paymentApps.map((p) => p.id)).toEqual(["pa-rakuten-pay"]);
+    expect((applied.programs ?? []).map((p) => p.id)).toEqual(["prog-keep"]);
+  });
+
+  it("v35: 既に無いユーザは alreadyApplied (no-op)", () => {
+    const state: SeedShape = {
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [],
+      pointCards: [],
+      loyaltyRules: [],
+      paymentApps: [{ id: "pa-rakuten-pay", name: "楽天Pay" }],
+      programs: [
+        { id: "prog-keep", name: "z", rate: 0.01, currencyId: "rakuten-pt" },
+      ],
+    };
+    const plan = planMigrations(state, 34, 35, MIGRATIONS);
+    const deletePlan = plan.filter((p) => p.migration.type === "delete");
+    expect(deletePlan.every((p) => p.status === "alreadyApplied")).toBe(true);
+  });
+});

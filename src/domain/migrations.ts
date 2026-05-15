@@ -197,4 +197,31 @@ export const MIGRATIONS: VersionMigration[] = [
       },
     ],
   },
+  {
+    toVersion: 35,
+    date: "2026-05-15",
+    changes: [
+      {
+        type: "delete",
+        collection: "paymentApps",
+        id: "pa-famipay",
+        notes:
+          "ファミペイ廃止 (v4.0.1)。ポイント付与が d/楽天/V 選択式で単一通貨" +
+          "PaymentApp モデルに馴染まないため。ファミマでの d/楽天/V 還元は" +
+          "pointCard loyalty membership でカバー済。",
+      },
+      {
+        type: "delete",
+        collection: "programs",
+        id: "prog-famipay-base",
+        notes: "ファミペイ廃止に伴う関連 BenefitProgram 削除 (base)。",
+      },
+      {
+        type: "delete",
+        collection: "programs",
+        id: "prog-famima-card-addon",
+        notes: "ファミペイ廃止に伴う関連 BenefitProgram 削除 (addOn)。",
+      },
+    ],
+  },
 ];

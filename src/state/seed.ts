@@ -53,7 +53,7 @@ import {
 // シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
 // アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 34;
+export const SEED_VERSION = 35;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -242,6 +242,18 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 35,
+    date: "2026-05-15",
+    summary:
+      "ファミペイ (pa-famipay) を支払方法から廃止。ファミペイのポイント付与は " +
+      "d/楽天/V から選ぶ方式で単一通貨 PaymentApp モデルに馴染まないため。" +
+      "ファミマでの d/楽天/V 還元は prog-{d,rakuten,vpoint}-pointcard × " +
+      "conv-familymart の loyalty membership で従来どおりカバー。" +
+      "prog-famipay-base / prog-famima-card-addon も削除。" +
+      "ファミマカード (famima-card) はクレカ単体 v-pt 0.5% 還元として存続。" +
+      "既存ユーザは migration v35 で pa-famipay + 2 program を localStorage から除去。",
   },
   {
     version: 34,
