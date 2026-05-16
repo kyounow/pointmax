@@ -15,41 +15,51 @@
 ### 計算（メイン画面）
 - **店舗・金額・目標通貨（例: JALマイル）** を選ぶだけ。
 - 保有カードごとに最終取得量を比較表示。**支払方法はユーザーが選ばずに自動で最良が選ばれます**
-  （楽天Pay／d払い／PayPay／Visaタッチ／QUICPay／iD／通常クレカ決済を内部で全部評価）。
-- 支払アプリは紐付けカード別の還元率を持てる（例: d払い × dカード = 1%、d払い × 楽天カード = 0%）。
+  （楽天Pay／d払い／PayPay／au PAY／メルペイ／Visaタッチ／QUICPay／iD／通常クレカ決済を内部で全部評価）。
+- 還元は **BenefitProgram** という単一モデルに統合。1 つのプログラムが
+  カード／ポイントカード／決済アプリのいずれかに紐づき、`primary`（排他・最高採用）と
+  `addOn`（上乗せ）の 2 種類で重ね合わせを表現する。
+- 支払アプリは紐付けカード別の還元率を持てる（例: d払い × dカード = 1%、d払い × 他社 = 0%）。
 - カードからのチャージ式アプリ（楽天Pay/d払い/PayPay 等）と直接決済（Visaタッチ/iD等）は
   主従関係をUIで切り替え表示。例：「**[d払い] の残高にカードからチャージ、dカード**」
-- 店舗別の **ポイントカード二重取り／三重取り** にも対応（紀伊國屋など複数提示可能な店舗）。
-- カテゴリルール（例: JAL特約店 = 2%）を1個のルールで全店舗一括設定。
+- 店舗別の **ポイントカード二重取り／三重取り** にも対応（複数提示可能な店舗）。
 - 店舗 select は **文字列検索 + カテゴリ絞り込み** で多数の店舗から素早く選択可能。
 
+### 優先通貨（v4.0.0）
+- 「普段ためたい通貨」を **順序付きリスト** で登録（CurrenciesScreen で ↑↓× 管理）。
+- Calculator は **通貨タブ切替** で、選んだ対象通貨ごとの最終取得量を単一表示。
+- 優先通貨が未設定の場合は従来どおり対象通貨 select にフォールバック。
+
 ### キャンペーン（期間限定ルール）
-- 開始日・終了日付きのルールを「クレカ還元」「ポイント提示」両方で登録可能。
-- 通常ルールと共存し、期間中は **最高 rate を採用**。期間外は通常 rate に戻る。
-- 計算結果に **「🎯 キャンペーン中 (〜2026/06/30)」** バッジ表示。
-- 専用タブで「有効中／期限切れ／未来開始」のステータス確認。
-- **複数店舗をまとめて選択**して 1 回の登録で N 件のルール一括追加。
+- 開始日・終了日付き、または曜日指定（`recurringDays`）の BenefitProgram を登録可能。
+- 通常プログラムと共存し、期間中のみ有効化（`primary` は最高 rate を採用、`addOn` は上乗せ）。
+- 計算結果にキャンペーンバッジを表示。専用タブで「有効中／期限切れ／未来開始」を確認。
+- **複数店舗をまとめて選択**して 1 回の登録で N 件のメンバーシップを一括追加。
 
 ### 交換ルート（グラフ表示）
 - 通貨ノード間のレートを **@xyflow/react** で図示。
-- 特定ノードを選択するとそのノードを中心に **入力↑/出力↓** で再配置。
-- クロスするエッジでもラベル位置を ID ハッシュで分散して見やすく。
+- **ルート検索**: 起点／終点通貨を選ぶと `bestPath()` で最効率ルートを表示。
+  グラフとルート検索は双方向連動し、選択 path を中心に直線レイアウトへ自動再配置。
+- EdgeDetailPanel は閲覧／編集の 2 段階（誤編集防止）。
+- v4.0.0 でオリコポイント／三菱UFJグローバルポイントと公式交換 edge を追加。
 
 ### マスタデータ管理
 - 起動時に GitHub Pages 上の公式マスタ JSON (`master.json`) と差分マージ可能。
-- ユーザー独自のカード／ルール／店舗を保持したまま「新しいマスタの追加分だけ取り込み」できる
+- ユーザー独自のカード／プログラム／店舗を保持したまま「新しいマスタの追加分だけ取り込み」できる
   **add-only マージ**。
-- 既存ユーザーの編集と公式マスタの値が衝突したら、項目単位で **採用するかをダイアログで個別確認**。
+- 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
+  （substantive な編集のみ判定、`src/state/userModified.ts`）。
 - 「サンプル投入」「ローカルデータ初期化」「JSONエクスポート/インポート」は設定画面から。
 
-### マスタ自動アップデート（Phase A〜D 完了）
+### マスタ自動アップデート
 - `sources/registry.yaml` に各カード・ポイント・決済アプリの公式 URL を登録。
-- `npm run sync:fetch <id>` で Gemini に渡し、構造化 JSON を `sources/extracted/<id>.json` に出力。
+- `npm run sync:fetch -- <id>` で Gemini に渡し、構造化 JSON を `sources/extracted/<id>.json` に出力。
 - `npm run sync:propose` で現在 seed と diff、`autoApplicable`/`needsReview` に分類:
   - confidence ≥ 0.9 / rate 変動 ±10pp 以内 / 倍率 0.5x〜2x / 既存と衝突なし → auto
-  - それ以外 (excludedCategory / lowConfidence / referenceChange 等) → review
+  - それ以外 (excludedCategory / lowConfidence / referenceChange / unsupportedDateClaim 等) → review
 - `npm run sync:apply` で autoApplicable を `src/state/seed-additions.ts` に書き出し。
-- 楽天/d/Vポイント/Ponta から **計 148 加盟店** が seed にマージ済み (v1.0 時点)。
+- Gemini が schema 外プロパティを混ぜた場合も、違反アイテムのみ除去して残りを救済
+  （ソース全体のクラッシュを防ぐ段階的降格）。
 
 ### モバイルUX
 - レスポンシブテーブル（PC=表 / モバイル=カード）と編集モード分離（誤操作防止）。
@@ -67,7 +77,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（165ケース） |
+| テスト | Vitest（**344 ケース / 22 ファイル**） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
 
@@ -75,41 +85,74 @@
 
 ```
 src/domain/
-  types.ts          # 全エンティティの型 (Card, Currency, Store, StoreRule, ...)
-  resolveRate.ts    # カード×店舗 → 還元率/通貨 を決定する汎用関数
-  paymentApp.ts     # PaymentApp ごとに評価し最良を返す (cardSpecific 対応)
-  loyalty.ts        # ポイントカード提示分（重取り）の最良を返す
-  rankCards.ts      # 上記を統合してカード別ランキングを生成
-  bestPath.ts       # 通貨間の最大積交換ルートを探索
-  mergeSeed.ts      # add-only マージ（ユーザー編集保護）
-  migrations.ts     # 既存レコードへの宣言型マイグレーション基盤
-  ruleActiveAt.ts   # キャンペーン期間 (validFrom/validTo) のアクティブ判定
-  formatNum.ts      # 数値フォーマッタ
+  types.ts            # 全エンティティの型 (Card, Currency, Store, BenefitProgram,
+                       #   StoreProgramMembership, ConversionEdge, PointCard, PaymentApp ...)
+  programEvaluator.ts # ★ 還元評価の中核。BenefitProgram を評価し primary/addOns を返す
+  rankCards.ts        # loyalty + paymentApp 評価を統合しカード別ランキング生成
+  loyalty.ts          # ポイントカード提示分（重取り）の最良を返す
+  paymentApp.ts       # PaymentApp 評価アダプタ (programEvaluator へ委譲)
+  bestPath.ts         # 通貨間の最大積交換ルートを探索
+  mergeSeed.ts        # add-only マージ（ユーザー編集保護）
+  migrations.ts       # 既存レコードへの宣言型マイグレーション基盤
+  ruleActiveAt.ts     # キャンペーン期間 (validFrom/validTo/recurringDays) のアクティブ判定
+  noteParser.ts       # notes から条件チップ (入会/上限/除外/期間) を抽出
+  cardLabel.ts        # カード名 + グレード表示整形
+  currencyKind.ts     # 通貨種別 (point/mile/cashlike) のスタイル
+  formatNum.ts        # 数値フォーマッタ
+  groupBy.ts          # 汎用グルーピング
+  resolveRate.ts      # 型のみ (実装は v3 で programEvaluator に移管、ResolvedRate 型を後方互換維持)
 ```
 
-### Seed データの構造 (v1.0 で分割整理)
+> 旧 `StoreRule` / `LoyaltyRule` / `PaymentApp.cardSpecificBonusRates` は v3 で
+> **BenefitProgram + StoreProgramMembership** に統合済み。`StoreRule` 型は物理削除、
+> `LoyaltyRule` 型はユーザー独自ルール用に残るが seed では未使用（空配列）。
+
+### Seed データの構造
 
 ```
 src/state/
   seed.ts                       # SEED_VERSION / SEED_CHANGELOG / seed() 関数
+  persist-versions.ts           # PERSIST_SCHEMA_VERSION + SCHEMA_MIGRATIONS
+  store.ts                      # Zustand store (state mutation / selector)
+  userModified.ts               # 「公式」バッジの substantive 編集判定 (純関数)
   seed-data-currencies.ts       # 通貨マスタ
   seed-data-cards.ts            # Card / PointCard / PaymentApp
-  seed-data-stores.ts           # Store / StoreRule / LoyaltyRule
+  seed-data-stores.ts           # Store（LoyaltyRule 配列は空）
+  seed-data-programs.ts         # BenefitProgram / StoreProgramMembership
   seed-data-edges.ts            # 通貨間交換レート
   seed-additions.ts             # 自動同期で追加されたデータ (auto-generated)
   seed-blocklist.ts             # 自動同期で除外したい storeId
   seed-category-aliases.ts      # カテゴリ統合マップ (旧名 → 新名)
 ```
 
+`seed()` が組み立てる現在のマスタ（手キュレート + 自動同期分の合算）:
+
+| エンティティ | 件数 |
+|---|---|
+| 通貨 (currencies) | 22 |
+| カード (cards) | 18 |
+| ポイントカード (pointCards) | 7 |
+| 決済アプリ (paymentApps) | 11 |
+| 店舗 (stores) | 214（手キュレート 61 + 自動同期分） |
+| BenefitProgram (programs) | 33 |
+| StoreProgramMembership (memberships) | 199 |
+| 交換エッジ (edges) | 54 |
+
 ### 自動同期パイプライン
 
 ```
 scripts/sync/
-  fetch-source.ts      # 1 ソース取得 (Gemini URL Context Tool 経由)
+  fetch-source.ts      # 1 ソース取得 (Gemini URL Context Tool + pre-fetch fallback + retry)
+  fetch-all.ts         # 週次 cron 用: 全 enabled ソースを順次取得
+  fetch-response.ts    # Gemini レスポンス分類 (success/retryable/error)
   diff-and-propose.ts  # seed vs extracted の差分 → ProposalReport
   propose-helpers.ts   # propose<Entity> 個別関数群
   apply-proposals.ts   # autoApplicable を seed-additions.ts に書き出し
   inject-prompt.ts     # extractor プロンプトに seed 内容を動的注入
+  aliases.ts           # cardId / storeId の表記揺れ正規化
+  evidence-check.ts    # hallucination guard (日付主張の根拠検証 等)
+  filter-auto-rakuten.ts # 既存店舗のみ参照する loyalty 系フィルタ
+  report.ts            # AUTO_SUMMARY.md / REVIEW_QUEUE.md 生成
   types.ts             # 共通型 + 閾値定数 + scope ディレクティブ
 ```
 
@@ -117,17 +160,20 @@ scripts/sync/
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173 （prebuild で master.json も再生成される）
-npm run test         # Vitest
+npm run dev          # http://localhost:5173 （predev で master.json も再生成）
+npm run test         # Vitest (344 ケース)
 npm run build        # 本番ビルド
 npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出
 npm run sync:propose               # 全 extracted vs seed の差分提案
 npm run sync:apply                 # autoApplicable を seed-additions.ts へ
+npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE 生成
 ```
 
 `scripts/generate-master.ts` がビルド時に走り、`src/state/seed.ts` の内容を
 `public/master.json` として出力します。これが GitHub Pages から
 `https://kyounow.github.io/pointmax/master.json` として配信されます。
+
+`npm run sync:*` には `.env.local` の `GEMINI_API_KEY` が必要です（gitignore 済）。
 
 ## デプロイ
 
@@ -137,10 +183,13 @@ npm run sync:apply                 # autoApplicable を seed-additions.ts へ
 
 ## 自動アップデート (cron)
 
-- 毎週月曜 06:00 JST に GitHub Actions が自動で同期パイプラインを実行 (`workflow_dispatch` でも手動実行可)
-- 高信頼項目 (autoApplicable) は main に自動 push → GitHub Pages が再デプロイ。要レビュー項目は `chore/sync-review-queue` ブランチの長寿命 PR に集約
-- `sync.config.json` の `autoMergeEnabled` フラグで自動 push の ON/OFF を制御。`maxAutoChangesPerRun` が安全弁 (超過時は全件 review 降格)
-- 初期値は `autoMergeEnabled: false` (慣らし運用)。数回の cron を `chore/sync-review-queue` PR で確認してから `true` に切り替える想定
+- 毎週月曜 06:00 JST に GitHub Actions が同期パイプラインを実行 (`workflow_dispatch` で手動実行可)
+- 高信頼項目 (autoApplicable) は main に自動 push → GitHub Pages が再デプロイ。要レビュー項目は
+  `chore/sync-review-queue` ブランチの長寿命 PR に集約
+- `sync.config.json` の `autoMergeEnabled` で自動 push の ON/OFF、`maxAutoChangesPerRun` が安全弁
+  （超過時は全件 review 降格）
+- inject-prompt は実行時に `seed()` をライブ参照するため、seed に追加した新カード/通貨は
+  自動でプロンプトへ反映される（回帰契約テストで保証）
 - ローカル PC は完全に無関係 — GitHub のサーバー上で実行される
 
 ---
@@ -149,42 +198,39 @@ npm run sync:apply                 # autoApplicable を seed-additions.ts へ
 
 PointMax は 2 つの version を独立管理:
 
-| 種類 | 用途 |
-|---|---|
-| `SEED_VERSION` (seed.ts) | データ版。新キャンペーン追加・rate 修正の通知 (UpdateBanner)。週次 cron で bump |
-| `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump。1 → 2 (v3) |
+| 種類 | 用途 | 現在値 |
+|---|---|---|
+| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner)。週次 cron で bump | **35** |
+| `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **4** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
 - `passthrough`: 互換あり、何もしない
-- `reset`: 全消去 + 新 seed で初期化 (= v3 で採用)
-- `transform`: 個別変換 (best-effort migration)
+- `reset`: 全消去 + 新 seed で初期化（ユーザに明示同意を求める）
+- `transform`: 個別変換関数を適用 (best-effort migration)
+
+登録済み migration:
+
+| from version | 戦略 | 契機 |
+|---|---|---|
+| 1 | `reset` | v3.0.0 BenefitProgram モデル刷新（旧構造と非互換） |
+| 2 | `passthrough` | v3.3.0 `state.rules` / `addRule` 系の物理削除（残存フィールドは無視される） |
+| 3 | `passthrough` | v4.0.0 `preferredCurrencyIds` 新設（初期 state で埋まる） |
 
 今後 schema を変更する場合は `PERSIST_SCHEMA_VERSION` を bump し、`SCHEMA_MIGRATIONS` に対応するエントリを追加する。
 
 ---
 
-## バージョニング方針
+## これまでの歩み
 
-### v1.0（現行・安定運用）
-2 つの大きなフィーチャー + マスタ自動アップデートが揃いました。
-**この v1.0 から後方互換ポリシーが発効** します（既存ユーザの localStorage を保護）。
+- **v3.0.0** — `StoreRule` / `LoyaltyRule` / `cardSpecificBonusRates` を **BenefitProgram** 統合モデルへ刷新（評価エンジンを `programEvaluator.ts` に一本化）
+- **v3.3.0** — 死蔵コード一掃（`state.rules` 系・`resolveRate` 実装・旧型を物理削除、-1100 行超）
+- **v3.4.0** — 「公式」バッジ正確化（substantive 編集で badge が外れる・「公式に戻す」）
+- **v3.5〜v3.6** — ポイントカード提携の補充、nanaco/WAON を電子マネー PaymentApp 化
+- **v4.0.0** — EdgesScreen ルート検索 / 優先通貨タブ / オリコ・三菱UFJ 通貨・カード追加
+- **v4.0.1** — ファミペイ廃止、migration クラッシュ修正と全 migration 耐性の回帰テスト
 
-達成済みフィーチャー:
-1. **キャンペーン期間限定ルール** ✓ — 期間付きの還元率上振れ／下振れ。専用タブ + バッジ表示。
-2. **マスタ自動アップデート** ✓ — Gemini で公式ページから抽出 → 構造化 JSON → seed-additions に append。
-   楽天/d/V/Ponta の 148 加盟店を取り込み済み。
-3. **支払アプリのカード別還元** ✓ — d払い × dカード = 1.0% / d払い × 他社 = 0% を正しく表現。
-
-### v0.8（v1.0 までの開発フェーズ・終了）
-- 後方互換性なしの「テスター」フェーズ。
-- v1.0 リリースで pointmax-v08-store キーは継続使用 (互換維持)。
-
-### v2.0 ロードマップ
-1. **カード情報の有効化機能** — マスター由来のカードプール（dカード/PayPayカード等）を持ち、
-   ユーザーが「使う/使わない」をトグルで選択。現状は手動 add/remove のみ。
-2. **GitHub Actions cron** — 週次自動同期 + 自動 PR/Issue 化。
-3. **更なる加盟店ソース拡張** — JAL特約店（要新 URL）/ 三井住友カード対象店舗等。
-4. **Gemini 抽出のロバスト化** — pre-fetch + URL Context Tool ハイブリッド、リトライ強化。
+リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
+詳細な開発履歴はリポジトリの git log / リリースノートを参照。
 
 ---
 
@@ -192,9 +238,9 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 
 - **個人情報は一切扱いません**。カード名・利用店舗・金額入力は全て端末ローカル。
 - 還元率・交換レートは公式情報に基づく**概算値**です。会員ステータスや期間限定キャンペーンは
-  反映していないため、**実利用前には必ず各社の公式条件をご確認ください**。
+  完全には反映していないため、**実利用前には必ず各社の公式条件をご確認ください**。
 - `localStorage` は端末／ブラウザごとに別。複数端末で共有したい場合は
-  「エクスポート」→ GitHub Gist などに保存 → 別端末で「同期URL」設定、が想定フロー。
+  「エクスポート」→ 保存 → 別端末で「同期URL」設定、が想定フロー。
 
 ## ライセンス
 
