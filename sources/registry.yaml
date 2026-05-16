@@ -119,3 +119,39 @@ sources:
       cardId は smbc-v を対象。
       タッチ決済 (Visa/Mastercard) 利用時の条件付き還元なので、
       storeRules の paymentAppId は pa-visa-touch / pa-quickpay 系を期待。
+
+  - id: mufg-card-global-point
+    label: 三菱UFJカード グローバルポイント (公式)
+    url: https://www.cr.mufg.jp/mufgcard/point/global/index.html
+    extractor: card
+    produces:
+      - cards
+      - categoryRules
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-05-16 追加 (V4 #A / post-cron 追加カードの sync カバレッジ)。
+      v4.0.0 で seed に追加した mufg-card / mufg-pt が cron で
+      refresh されるよう、グローバルポイント公式ページを登録。
+      cardId は mufg-card を対象 (defaultRate / defaultCurrencyId=mufg-pt の確認)。
+      初回 fetch 後、Gemini が cardId を別 slug (mufgcard / mufg-global 等) で
+      返した場合は sources/aliases.json に正規化エントリ追加 (smbc-v の前例参照)。
+      カテゴリ別ポイント優遇が明示されていれば categoryRules も拾う。
+
+  - id: orico-card-member-point
+    label: オリコカード 会員向けポイント (公式)
+    url: https://www.orico.co.jp/creditcard/for/member/orico/
+    extractor: card
+    produces:
+      - cards
+      - categoryRules
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-05-16 追加 (V4 #A / post-cron 追加カードの sync カバレッジ)。
+      v4.0.0 で seed に追加した orico-card / orico-pt が cron で
+      refresh されるよう、会員向けポイント公式ページを登録。
+      cardId は orico-card を対象 (defaultRate / defaultCurrencyId=orico-pt の確認)。
+      初回 fetch 後、Gemini が cardId を別 slug (orico / oricard 等) で
+      返した場合は sources/aliases.json に正規化エントリ追加 (smbc-v の前例参照)。
+      カテゴリ別ポイント優遇が明示されていれば categoryRules も拾う。
