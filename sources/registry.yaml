@@ -122,7 +122,7 @@ sources:
 
   - id: mufg-card-global-point
     label: 三菱UFJカード グローバルポイント (公式)
-    url: https://www.cr.mufg.jp/mufgcard/point/global/index.html
+    url: https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html
     extractor: card
     produces:
       - cards
@@ -130,38 +130,39 @@ sources:
     extractionScope: chains-only
     enabled: true
     notes: |
+      ★ 2026-05-16 url をルールページに差し替え。
+      旧 overview ページ (/mufgcard/point/global/index.html) は
+      「1ポイント5円相当」表記から Gemini が defaultRate 0.005 と誤読し、
+      seed の 0.001 (1000円=1pt、ユーザ確認済で正) と乖離した。
+      ポイント付与ルールを直接記載するルールページに変更。
+      cardId 揺れ (Gemini が sourceId をそのまま返す) は aliases.json で
+      正規化済 (mufg-card-global-point → mufg-card)。
+      defaultCurrencyId=mufg-pt は初回 fetch で正しく抽出 (動的注入が機能)。
+      ---
       ★ 2026-05-16 追加 (V4 #A / post-cron 追加カードの sync カバレッジ)。
       v4.0.0 で seed に追加した mufg-card / mufg-pt が cron で
-      refresh されるよう、グローバルポイント公式ページを登録。
-      cardId は mufg-card を対象 (defaultRate / defaultCurrencyId=mufg-pt の確認)。
-      2026-05-16 初回 fetch: Gemini は cardId に sourceId をそのまま返したため
-      aliases.json に mufg-card-global-point → mufg-card を追加済。
-      defaultCurrencyId=mufg-pt は正しく抽出された (動的注入が機能)。
-      defaultRate は seed 0.001 に対し 0.005 (1000円1pt=5円相当) を抽出 →
-      ratio 5.0 で rateRatioOutOfRange → needsReview 行き (安全側、要人手判断)。
+      refresh されるよう登録。cardId は mufg-card を対象。
       カテゴリ別ポイント優遇が明示されていれば categoryRules も拾う。
 
   - id: orico-card-member-point
     label: オリコカード 会員向けポイント (公式)
-    url: https://www.orico.co.jp/creditcard/for/member/orico/
+    url: https://www.orico.co.jp/creditcard/list/thepoint/
     extractor: card
     produces:
       - cards
       - categoryRules
     extractionScope: chains-only
-    enabled: false
+    enabled: true
     notes: |
-      ★ 2026-05-16 一旦無効化 (enabled:false)。
-      初回 fetch で本汎用会員ページは「全体付与率 0.5% (200円1pt)」を返すが、
-      seed の orico-card は「オリコカード THE POINT」固有の 1% を意図した値。
-      別概念のレートのため、このソースを有効にすると alias 適用後
-      THE POINT を 1%→0.5% に誤 auto-downgrade する (confidence 0.9025,
-      ratio 0.5 で auto 閾値内)。THE POINT 専用の公式スペックページ URL が
-      入手でき次第 url 差し替え + enabled:true に戻すこと。
-      cardId 揺れ (sourceId をそのまま返す) は aliases.json で正規化済
-      (orico-card-member-point → orico-card)。
+      ★ 2026-05-16 url を THE POINT 専用ページに差し替え + enabled:true 復帰。
+      旧汎用会員ページ (/for/member/orico/) は「全体付与率 0.5% (200円1pt)」を
+      返し THE POINT 固有の 1% を誤 downgrade する問題があったため、
+      ユーザ提供の THE POINT カード公式ページに変更。
+      seed の orico-card は「オリコカード THE POINT」(defaultRate 0.01 = 1%)。
+      cardId 揺れ (Gemini が sourceId をそのまま返す) は aliases.json で
+      正規化済 (orico-card-member-point → orico-card)。
       ---
       ★ 2026-05-16 追加 (V4 #A / post-cron 追加カードの sync カバレッジ)。
       v4.0.0 で seed に追加した orico-card / orico-pt が cron で
-      refresh されるよう、会員向けポイント公式ページを登録。
-      cardId は orico-card を対象 (defaultRate / defaultCurrencyId=orico-pt の確認)。
+      refresh されるよう登録。cardId は orico-card を対象
+      (defaultRate / defaultCurrencyId=orico-pt の確認)。
