@@ -1,0 +1,19 @@
+{
+  "sourceId": "mufg-card-global-point",
+  "sourceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
+  "fetchedAt": "2026-05-16T14:40:40.434Z",
+  "promptVersion": "card-v1.1",
+  "extractor": "card",
+  "geminiModel": "gemini-2.5-flash",
+  "notes": "本ページはグローバルポイントの利用規程であり、基本ポイント付与に関する記述はあるが、具体的なチェーン店やカテゴリ別の優遇還元率に関する情報は記載されていないため、storesおよびcategoryRulesは抽出していません。",
+  "cards": [
+    {
+      "cardId": "mufg-card",
+      "defaultRate": 0.001,
+      "defaultCurrencyId": "mufg-pt",
+      "evidenceQuote": "1千円につき1ポイントを約定支払日に本会員に付与します。",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ]
+}

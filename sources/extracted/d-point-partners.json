@@ -1,9 +1,68 @@
 {
   "sourceId": "d-point-partners",
   "sourceUrl": "https://dpoint.docomo.ne.jp/content/feature/point_realstore.html",
-  "fetchedAt": "2026-05-14T11:00:36.397Z",
-  "promptVersion": "point-partner-vUnknown",
+  "fetchedAt": "2026-05-16T14:37:16.235Z",
+  "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided URL lists various stores where d-points can be *used* (1ポイント=1円としてつかえる！), but it primarily focuses on using d-points for payment (d払い利用対象外の店舗を除き、dポイントやd払いを利用できる). It does not explicitly state the point *earning* rates for presenting a d-point card. Many stores are marked with \"※の店舗はd払いの"
+  "stores": [
+    {
+      "storeId": "mister-donut",
+      "name": "ミスタードーナツ",
+      "category": "飲食",
+      "evidenceQuote": "ミスタードーナツ: dポイントをつかう",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "wendys-first-kitchen",
+      "name": "ウェンディーズ・ファーストキッチン",
+      "category": "飲食",
+      "evidenceQuote": "ウェンディーズ・ファーストキッチン: dポイントをつかう",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "matsuya",
+      "name": "松屋",
+      "category": "飲食",
+      "evidenceQuote": "松屋: dポイントをつかう",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "kamakura-pasta",
+      "name": "鎌倉パスタ",
+      "category": "飲食",
+      "evidenceQuote": "鎌倉パスタ: dポイントをつかう",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "hidakaya",
+      "name": "日高屋",
+      "category": "飲食",
+      "evidenceQuote": "日高屋: dポイントをつかう",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "uobei",
+      "name": "魚べい",
+      "category": "飲食",
+      "evidenceQuote": "魚べい: d払いのみご利用できます",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "kura-sushi",
+      "name": "くら寿司",
+      "category": "飲食",
+      "evidenceQuote": "くら寿司: d払いのみご利用できます",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "loyaltyRules": [],
+  "notes": "ページにdポイントカード提示によるポイント還元率の明確な記載がないため、loyaltyRulesは抽出していません。※印の店舗はd払いのみ利用可能と記載あり。"
 }

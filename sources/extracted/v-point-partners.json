@@ -1,9 +1,490 @@
 {
   "sourceId": "v-point-partners",
   "sourceUrl": "https://t-point.tsite.jp/store/list/",
-  "fetchedAt": "2026-05-14T11:00:56.479Z",
-  "promptVersion": "point-partner-vUnknown",
+  "fetchedAt": "2026-05-16T14:38:14.841Z",
+  "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "stores": [
+    {
+      "storeId": "hakku-drug",
+      "name": "ハックドラッグ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "ハックドラッグ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "konko-yakkyoku",
+      "name": "金光薬品",
+      "category": "ドラッグストア",
+      "evidenceQuote": "金光薬品",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tooshiya-yakkyoku",
+      "name": "とをしや薬局",
+      "category": "ドラッグストア",
+      "evidenceQuote": "とをしや薬局",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "welcia-ducks",
+      "name": "ウエルシア ダックス",
+      "category": "ドラッグストア",
+      "evidenceQuote": "ウエルシア ダックス",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "happy-drug",
+      "name": "ハッピー・ドラッグ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "ハッピー・ドラッグ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "marue-drug",
+      "name": "マルエドラッグ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "マルエドラッグ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "yodoya-drug",
+      "name": "よどやドラッグ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "よどやドラッグ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "kokumin",
+      "name": "コクミン",
+      "category": "ドラッグストア",
+      "evidenceQuote": "コクミン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "fuku-yakuhin",
+      "name": "ふく薬品",
+      "category": "ドラッグストア",
+      "evidenceQuote": "ふく薬品",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "super-drug-himawari",
+      "name": "スーパードラッグひまわり",
+      "category": "ドラッグストア",
+      "evidenceQuote": "スーパードラッグひまわり",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "b-b-on",
+      "name": "B.B.ON",
+      "category": "ドラッグストア",
+      "evidenceQuote": "B.B.ON",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "narcis",
+      "name": "NARCIS",
+      "category": "ドラッグストア",
+      "evidenceQuote": "NARCIS",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "color-studio-masaya",
+      "name": "COLOR STUDIO・MASAYA",
+      "category": "美容",
+      "evidenceQuote": "COLOR STUDIO・MASAYA",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "zoomore",
+      "name": "Zoomore",
+      "category": "ペット",
+      "evidenceQuote": "Zoomore",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "eneos-denki",
+      "name": "ENEOSでんき",
+      "category": "電気・ガス",
+      "evidenceQuote": "ＥＮＥＯＳでんき",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "eneos-toshigas",
+      "name": "ENEOS都市ガス",
+      "category": "電気・ガス",
+      "evidenceQuote": "ＥＮＥＯＳ都市ガス",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "maruetsu",
+      "name": "マルエツ",
+      "category": "スーパー",
+      "evidenceQuote": "マルエツ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "steak-gusto",
+      "name": "ステーキガスト",
+      "category": "飲食",
+      "evidenceQuote": "ステーキガスト",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "kara-yoshi",
+      "name": "から好し",
+      "category": "飲食",
+      "evidenceQuote": "から好し",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "musashino-mori-coffee",
+      "name": "むさしの森珈琲",
+      "category": "飲食",
+      "evidenceQuote": "むさしの森珈琲",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "uoyaro",
+      "name": "魚屋路",
+      "category": "飲食",
+      "evidenceQuote": "魚屋路",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "la-ohana",
+      "name": "ラ・オハナ",
+      "category": "飲食",
+      "evidenceQuote": "ラ・オハナ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tonkaratei",
+      "name": "とんから亭",
+      "category": "飲食",
+      "evidenceQuote": "とんから亭",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "momoka",
+      "name": "桃菜",
+      "category": "飲食",
+      "evidenceQuote": "桃菜",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "yumean-shokudo",
+      "name": "ゆめあん食堂",
+      "category": "飲食",
+      "evidenceQuote": "ゆめあん食堂",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "hachiro-soba",
+      "name": "八郎そば",
+      "category": "飲食",
+      "evidenceQuote": "八郎そば",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "skylark-group-delivery",
+      "name": "すかいらーくグループの宅配",
+      "category": "飲食",
+      "evidenceQuote": "すかいらーくグループの宅配",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "grand-buffet",
+      "name": "グランブッフェ",
+      "category": "飲食",
+      "evidenceQuote": "グランブッフェ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "festa-garden",
+      "name": "フェスタガーデン",
+      "category": "飲食",
+      "evidenceQuote": "フェスタガーデン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "new-market",
+      "name": "ニューマーケット",
+      "category": "飲食",
+      "evidenceQuote": "ニューマーケット",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "hakken",
+      "name": "八献",
+      "category": "飲食",
+      "evidenceQuote": "八献",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "pertica",
+      "name": "ペルティカ",
+      "category": "飲食",
+      "evidenceQuote": "ペルティカ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tomato-onion",
+      "name": "トマト＆オニオン",
+      "category": "飲食",
+      "evidenceQuote": "トマト＆オニオン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "juju-karubi",
+      "name": "じゅうじゅうカルビ",
+      "category": "飲食",
+      "evidenceQuote": "じゅうじゅうカルビ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "nakau",
+      "name": "なか卯",
+      "category": "飲食",
+      "evidenceQuote": "なか卯",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "victoria-station",
+      "name": "ヴィクトリアステーション",
+      "category": "飲食",
+      "evidenceQuote": "ヴィクトリアステーション",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "jolly-pasta",
+      "name": "ジョリーパスタ",
+      "category": "飲食",
+      "evidenceQuote": "ジョリーパスタ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "jukusei-yakiniku-ichiban",
+      "name": "熟成焼肉いちばん",
+      "category": "飲食",
+      "evidenceQuote": "熟成焼肉いちばん",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "olive-no-oka",
+      "name": "オリーブの丘",
+      "category": "飲食",
+      "evidenceQuote": "オリーブの丘",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "katsuan",
+      "name": "かつ庵",
+      "category": "飲食",
+      "evidenceQuote": "かつ庵",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "kyubee-ya",
+      "name": "久兵衛屋",
+      "category": "飲食",
+      "evidenceQuote": "久兵衛屋",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "zetteria",
+      "name": "ZETTERIA",
+      "category": "飲食",
+      "evidenceQuote": "ZETTERIA",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tsutaya-shoten",
+      "name": "蔦屋書店",
+      "category": "書店",
+      "evidenceQuote": "蔦屋書店",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "mito-hollyhock",
+      "name": "水戸ホーリーホック",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "水戸ホーリーホック",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "kagoshima-takamaki-cc",
+      "name": "鹿児島高牧カントリークラブ",
+      "category": "スポーツ",
+      "evidenceQuote": "鹿児島高牧カントリークラブ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "hitachi-kashiwa-reisol",
+      "name": "日立柏レイソル",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "日立柏レイソル",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "utsunomiya-brex",
+      "name": "宇都宮ブレックス",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "宇都宮ブレックス",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tryhoop-okayama",
+      "name": "トライフープ岡山",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "トライフープ岡山",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "steak-88",
+      "name": "ステーキ88",
+      "category": "飲食",
+      "evidenceQuote": "ステーキ88",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "takahashi",
+      "name": "タカハシ",
+      "category": "ファッション",
+      "evidenceQuote": "タカハシ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "la-cittadella",
+      "name": "ラ チッタデッラ",
+      "category": "複合施設",
+      "evidenceQuote": "ラ チッタデッラ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "toshin-hochoki-center",
+      "name": "トーシン補聴器センター",
+      "category": "医療",
+      "evidenceQuote": "トーシン補聴器センター",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "seibunkan-shoten",
+      "name": "精文館書店",
+      "category": "書店",
+      "evidenceQuote": "精文館書店",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "hirata-bokujo",
+      "name": "平田牧場",
+      "category": "飲食",
+      "evidenceQuote": "平田牧場",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "umai-sushikan",
+      "name": "うまい鮨勘",
+      "category": "飲食",
+      "evidenceQuote": "うまい鮨勘",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "taya",
+      "name": "TAYA",
+      "category": "美容",
+      "evidenceQuote": "TAYA",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "central-park",
+      "name": "セントラルパーク",
+      "category": "複合施設",
+      "evidenceQuote": "セントラルパーク",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "fujimaru-park",
+      "name": "藤丸パーク",
+      "category": "複合施設",
+      "evidenceQuote": "藤丸パーク",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "riubo-store",
+      "name": "リウボウストア",
+      "category": "スーパー",
+      "evidenceQuote": "リウボウストア",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "all-sports-community",
+      "name": "オールスポーツコミュニティ",
+      "category": "スポーツ",
+      "evidenceQuote": "オールスポーツコミュニティ／スナップスナップ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ]
 }

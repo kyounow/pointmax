@@ -1,9 +1,340 @@
 {
   "sourceId": "ponta-partners",
   "sourceUrl": "https://point.recruit.co.jp/point/?tab=pointUseService",
-  "fetchedAt": "2026-05-14T11:01:23.224Z",
-  "promptVersion": "point-partner-vUnknown",
+  "fetchedAt": "2026-05-16T14:39:56.287Z",
+  "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "stores": [
+    {
+      "storeId": "sunnymart",
+      "name": "サニーマート",
+      "category": "スーパー",
+      "evidenceQuote": "サニーマート たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sanrib",
+      "name": "サンリブ",
+      "category": "スーパー",
+      "evidenceQuote": "サンリブ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "seijo-ishii",
+      "name": "成城石井",
+      "category": "スーパー",
+      "evidenceQuote": "成城石井 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tomod-s",
+      "name": "トモズ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "トモズ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "nishimuta",
+      "name": "ニシムタ",
+      "category": "スーパー",
+      "evidenceQuote": "ニシムタ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "yakodo",
+      "name": "薬王堂",
+      "category": "ドラッグストア",
+      "evidenceQuote": "薬王堂 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "jal-mileage-bank",
+      "name": "日本航空(JALマイレージバンク)",
+      "category": "鉄道・交通",
+      "evidenceQuote": "日本航空(JALマイレージバンク) たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "steak-asakuma",
+      "name": "ステーキのあさくま",
+      "category": "飲食",
+      "evidenceQuote": "ステーキのあさくま たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tabelog",
+      "name": "食べログ",
+      "category": "飲食",
+      "evidenceQuote": "食べログ たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "pan-no-tajima",
+      "name": "パンの田島",
+      "category": "飲食",
+      "evidenceQuote": "パンの田島 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "hukuro-shosabo",
+      "name": "本と珈琲 梟書茶房",
+      "category": "飲食",
+      "evidenceQuote": "本と珈琲 梟書茶房 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "jumble-store",
+      "name": "ジャンブルストア",
+      "category": "ファッション",
+      "evidenceQuote": "ジャンブルストア たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "aquaclara",
+      "name": "アクアクララ",
+      "category": "生活サービス",
+      "evidenceQuote": "アクアクララ たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "water-one",
+      "name": "ウォーターワン（株式会社サイサン）",
+      "category": "生活サービス",
+      "evidenceQuote": "ウォーターワン（株式会社サイサン） たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sbnft-market",
+      "name": "SBINFT Market",
+      "category": "ネット通販",
+      "evidenceQuote": "SBINFT Market たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "temu",
+      "name": "Temu",
+      "category": "ネット通販",
+      "evidenceQuote": "Temu たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "premium-water",
+      "name": "プレミアムウォーター",
+      "category": "生活サービス",
+      "evidenceQuote": "プレミアムウォーター たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sanyodo-shoten",
+      "name": "三洋堂書店",
+      "category": "書店",
+      "evidenceQuote": "三洋堂書店 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "telasa",
+      "name": "TELASA",
+      "category": "音楽・映像",
+      "evidenceQuote": "TELASA（テラサ） たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "17live",
+      "name": "17LIVE(ワンセブンライブ)",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "17LIVE(ワンセブンライブ) たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "auto-info",
+      "name": "オート・インフォ",
+      "category": "車・バイク",
+      "evidenceQuote": "オート・インフォ たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "onix",
+      "name": "ONIX",
+      "category": "車・バイク",
+      "evidenceQuote": "ONIX たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "nihon-road-service",
+      "name": "日本ロードサービス（JRS）",
+      "category": "車・バイク",
+      "evidenceQuote": "日本ロードサービス（JRS） たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-gasshuku-menkyo",
+      "name": "Ponta合宿免許",
+      "category": "ビジネス・教育",
+      "evidenceQuote": "Ponta合宿免許 たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "au-bookpass",
+      "name": "auブックパス",
+      "category": "書店",
+      "evidenceQuote": "auブックパス たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "diamond-sha",
+      "name": "ダイヤモンド社",
+      "category": "書店",
+      "evidenceQuote": "ダイヤモンド社 たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "president-sha",
+      "name": "プレジデント社",
+      "category": "書店",
+      "evidenceQuote": "プレジデント社 たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "yaesu-book-center",
+      "name": "八重洲ブックセンター",
+      "category": "書店",
+      "evidenceQuote": "八重洲ブックセンター たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "winticket",
+      "name": "WINTICKET(ウィンチケット)",
+      "category": "ギャンブル",
+      "evidenceQuote": "WINTICKET(ウィンチケット) たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "au-denki",
+      "name": "auでんき",
+      "category": "電気・ガス",
+      "evidenceQuote": "auでんき たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "saison",
+      "name": "サイサン",
+      "category": "電気・ガス",
+      "evidenceQuote": "エネワン（株式会社サイサン） たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "saibugas",
+      "name": "西部ガス",
+      "category": "電気・ガス",
+      "evidenceQuote": "西部ガス たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-denki",
+      "name": "Pontaでんき",
+      "category": "電気・ガス",
+      "evidenceQuote": "Pontaでんき たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "machi-ene",
+      "name": "まちエネ",
+      "category": "電気・ガス",
+      "evidenceQuote": "まちエネ たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "mitsuuroko-denki",
+      "name": "ミツウロコでんき・都市ガス",
+      "category": "電気・ガス",
+      "evidenceQuote": "ミツウロコでんき・都市ガス たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "apamanshop",
+      "name": "アパマンショップ",
+      "category": "不動産・住宅",
+      "evidenceQuote": "アパマンショップ たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ur-rental-housing",
+      "name": "UR賃貸住宅",
+      "category": "不動産・住宅",
+      "evidenceQuote": "UR賃貸住宅 たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "au",
+      "name": "au",
+      "category": "通信",
+      "evidenceQuote": "au たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "soffmap",
+      "name": "ソフマップ",
+      "category": "家電量販店",
+      "evidenceQuote": "ソフマップ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "studysapuri-english",
+      "name": "スタディサプリENGLISH",
+      "category": "ビジネス・教育",
+      "evidenceQuote": "スタディサプリENGLISH たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "riskmonsater",
+      "name": "リスクモンスター",
+      "category": "ビジネス・教育",
+      "evidenceQuote": "リスクモンスター たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "loyaltyRules": [],
+  "notes": "このページにはPontaポイントの還元率（例: 200円につき1ポイント）の明確な記載がないため、loyaltyRulesは生成していません。金融、保険、医療、ギャンブル、不動産、ネットサービス単体の加盟店は抽出対象外としています。総60件以上ある加盟店から主要チェーン店を中心に41件を抽出しています。"
 }
