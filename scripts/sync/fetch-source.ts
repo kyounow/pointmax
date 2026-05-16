@@ -358,16 +358,76 @@ function loadSchema(): object {
   return JSON.parse(readFileSync(SCHEMA_PATH, "utf-8"));
 }
 
-function validateAgainstSchema(data: unknown, schema: object): void {
+function formatAjvErrors(errors: unknown[] | null | undefined): string[] {
+  return (errors ?? []).map((e) => {
+    const err = e as { instancePath?: string; message?: string };
+    return `  ${err.instancePath || "/"} ${err.message ?? ""}`;
+  });
+}
+
+// schema.properties から type:array かつ items を持つキーを列挙。
+// ハードコードせず schema 追加に追従する。
+function arrayPropertyKeys(schema: unknown): string[] {
+  const props = (schema as { properties?: Record<string, { type?: string; items?: unknown }> })
+    .properties;
+  if (!props) return [];
+  return Object.entries(props)
+    .filter(([, v]) => v?.type === "array" && v?.items != null)
+    .map(([k]) => k);
+}
+
+export type SalvageResult =
+  | { ok: true; data: ExtractedSource; droppedByKey: Record<string, number> }
+  | { ok: false; errors: string[] };
+
+// schema 違反時の段階的降格:
+//   1. オブジェクト全体が valid ならそのまま返す (ハッピーパス)
+//   2. 各配列プロパティを「アイテム単位」で検証し、違反アイテムだけ落とす
+//      (空になった配列はキー自体を削除)。残りで再検証して valid なら採用
+//   3. それでも invalid (= 配列アイテム以外の構造破損) なら ok:false を返し、
+//      呼び出し側が空 fallback を書く
+//
+// gemini-2.5-flash が稀に 1 アイテムだけ schema 外プロパティを足したり
+// required を欠かす事象で、ソース全体の抽出を失わないための防御。
+export function salvageBySchema(
+  data: ExtractedSource,
+  schema: object,
+): SalvageResult {
   const ajv = new Ajv({ allErrors: true, strict: false });
   addFormats(ajv);
-  const validate = ajv.compile(schema);
-  if (!validate(data)) {
-    const errs = (validate.errors ?? [])
-      .map((e) => `  ${e.instancePath || "/"} ${e.message}`)
-      .join("\n");
-    throw new Error(`schema 違反:\n${errs}`);
+  const fullValidate = ajv.compile(schema);
+
+  if (fullValidate(data)) {
+    return { ok: true, data, droppedByKey: {} };
   }
+
+  const cloned: ExtractedSource = { ...data };
+  const droppedByKey: Record<string, number> = {};
+  const props = (schema as { properties?: Record<string, { items?: object }> })
+    .properties;
+
+  for (const key of arrayPropertyKeys(schema)) {
+    const arr = (cloned as unknown as Record<string, unknown>)[key];
+    if (!Array.isArray(arr)) continue;
+    const itemSchema = props?.[key]?.items;
+    if (!itemSchema) continue;
+    const itemValidate = ajv.compile(itemSchema);
+    const kept = arr.filter((it) => itemValidate(it));
+    const dropped = arr.length - kept.length;
+    if (dropped > 0) {
+      droppedByKey[key] = dropped;
+      if (kept.length > 0) {
+        (cloned as unknown as Record<string, unknown>)[key] = kept;
+      } else {
+        delete (cloned as unknown as Record<string, unknown>)[key];
+      }
+    }
+  }
+
+  if (fullValidate(cloned)) {
+    return { ok: true, data: cloned, droppedByKey };
+  }
+  return { ok: false, errors: formatAjvErrors(fullValidate.errors) };
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -497,26 +557,64 @@ async function main(): Promise<void> {
 
   console.log("✅ schema 検証中...");
   const schema = loadSchema();
-  validateAgainstSchema(parsed, schema);
+  const salvage = salvageBySchema(parsed, schema);
 
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const outPath = resolve(OUTPUT_DIR, `${source.id}.json`);
-  writeFileSync(outPath, JSON.stringify(parsed, null, 2));
+
+  // 配列アイテム以外の構造破損 → 空 fallback (空応答/非JSON と同じ降格)。
+  // crash させず exit 0 で週次 cron を止めない。
+  if (!salvage.ok) {
+    console.log("⚠️ schema 違反 (アイテム除去後も不正)。空 fallback を書き出します。");
+    for (const e of salvage.errors) console.log(`     ${e}`);
+    const fallback: ExtractedSource = {
+      sourceId: source.id,
+      sourceUrl: source.url,
+      fetchedAt: new Date().toISOString(),
+      promptVersion: parsed.promptVersion || `${source.extractor}-vUnknown`,
+      extractor: source.extractor,
+      geminiModel: GEMINI_MODEL,
+      notes:
+        `Schema validation failed even after per-item salvage; source skipped. ` +
+        `Errors: ${salvage.errors.join("; ").slice(0, 400)}`,
+    };
+    writeFileSync(outPath, JSON.stringify(fallback, null, 2));
+    console.log(`✓ wrote ${outPath} (schema fallback)`);
+    return;
+  }
+
+  const finalData = salvage.data;
+  const droppedEntries = Object.entries(salvage.droppedByKey);
+  if (droppedEntries.length > 0) {
+    const summaryStr = droppedEntries.map(([k, n]) => `${k}:${n}`).join(", ");
+    console.log(`⚠️ schema 違反アイテムを除去 (残りは保持): ${summaryStr}`);
+    const dropNote = `[sync] schema 違反で除去したアイテム: ${summaryStr}。`;
+    finalData.notes = finalData.notes
+      ? `${finalData.notes} ${dropNote}`
+      : dropNote;
+  }
+
+  writeFileSync(outPath, JSON.stringify(finalData, null, 2));
   console.log(`✓ wrote ${outPath}`);
 
   // 抽出件数のサマリ
   const summary = {
-    cards: parsed.cards?.length ?? 0,
-    storeRules: parsed.storeRules?.length ?? 0,
-    categoryRules: parsed.categoryRules?.length ?? 0,
-    stores: parsed.stores?.length ?? 0,
-    loyaltyRules: parsed.loyaltyRules?.length ?? 0,
-    paymentApps: parsed.paymentApps?.length ?? 0,
+    cards: finalData.cards?.length ?? 0,
+    storeRules: finalData.storeRules?.length ?? 0,
+    categoryRules: finalData.categoryRules?.length ?? 0,
+    stores: finalData.stores?.length ?? 0,
+    loyaltyRules: finalData.loyaltyRules?.length ?? 0,
+    paymentApps: finalData.paymentApps?.length ?? 0,
   };
   console.log("📊 summary:", JSON.stringify(summary));
 }
 
-main().catch((err) => {
-  console.error("💥 Error:", err instanceof Error ? err.message : String(err));
-  process.exit(1);
-});
+// CLI として実行された場合のみ main を呼ぶ (テストからの import 時は呼ばない)
+const isMain =
+  process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+if (isMain) {
+  main().catch((err) => {
+    console.error("💥 Error:", err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  });
+}
