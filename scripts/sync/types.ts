@@ -39,7 +39,8 @@ export type ExtractorKind =
   | "card"          // 単一カード詳細
   | "jal-tokuyaku"  // JAL 特約店リスト系
   | "point-partner" // ポイントカード加盟店系
-  | "payment-app";  // 決済アプリ詳細
+  | "payment-app"   // 決済アプリ詳細
+  | "campaign";     // 期間限定キャンペーン一覧系 (loyaltyRules + validFrom/validTo)
 
 export type ProducesKind =
   | "cards"

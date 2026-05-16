@@ -166,3 +166,32 @@ sources:
       v4.0.0 で seed に追加した orico-card / orico-pt が cron で
       refresh されるよう登録。cardId は orico-card を対象
       (defaultRate / defaultCurrencyId=orico-pt の確認)。
+
+  - id: jre-point-campaigns
+    label: JRE POINT キャンペーン一覧 (公式)
+    url: https://www.jrepoint.jp/campaign/list/
+    extractor: campaign
+    produces:
+      - stores
+      - loyaltyRules
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-05-17 追加 (#B キャンペーン取り込み 第1弾、JRE のみ)。
+      pointCardId は jre-pointcard を対象 (通貨 jre)。
+      期間限定の店舗 × JRE POINT 提示上振れ還元を loyaltyRules
+      (validFrom/validTo 付き) として抽出。campaign extractor は
+      日付明記が無い／店舗非依存のキャンペーンは出力しない方針。
+      新規 loyaltyRule + 日付主張のため propose では基本 needsReview
+      (zeroOrInvalidRate / unsupportedDateClaim / lowConfidence ガード)
+      に落ち、無確認での本番 auto-merge はされない。
+      決済アプリ系キャンペーン (楽天Pay/d払い) は今後検討 (要 proposePrograms
+      新設、SESSION_LOG「決済系キャンペーン deferral」参照)。
+      ---
+      ★ 2026-05-17 初回 fetch 検証: このリスト URL は索引ハブで、個別
+      キャンペーンの店舗/還元率/期間は子ページにあり当ページから抽出不可
+      (Gemini 0 件、URL Context 2回 nonJson → pre-fetch fallback でも空)。
+      JAL特約店の "navigation hub" 問題と同型。extractor/パイプラインは
+      正常 (厳格方針どおり具体データ無し→0件)。実データを取るには個別
+      キャンペーン詳細ページの URL が必要 (ユーザ提供待ち)。それまで本
+      ソースは no-op (0 提案・crash なし) なので enabled のまま温存。
