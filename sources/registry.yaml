@@ -119,3 +119,50 @@ sources:
       cardId は smbc-v を対象。
       タッチ決済 (Visa/Mastercard) 利用時の条件付き還元なので、
       storeRules の paymentAppId は pa-visa-touch / pa-quickpay 系を期待。
+
+  - id: mufg-card-global-point
+    label: 三菱UFJカード グローバルポイント (公式)
+    url: https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html
+    extractor: card
+    produces:
+      - cards
+      - categoryRules
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-05-16 url をルールページに差し替え。
+      旧 overview ページ (/mufgcard/point/global/index.html) は
+      「1ポイント5円相当」表記から Gemini が defaultRate 0.005 と誤読し、
+      seed の 0.001 (1000円=1pt、ユーザ確認済で正) と乖離した。
+      ポイント付与ルールを直接記載するルールページに変更。
+      cardId 揺れ (Gemini が sourceId をそのまま返す) は aliases.json で
+      正規化済 (mufg-card-global-point → mufg-card)。
+      defaultCurrencyId=mufg-pt は初回 fetch で正しく抽出 (動的注入が機能)。
+      ---
+      ★ 2026-05-16 追加 (V4 #A / post-cron 追加カードの sync カバレッジ)。
+      v4.0.0 で seed に追加した mufg-card / mufg-pt が cron で
+      refresh されるよう登録。cardId は mufg-card を対象。
+      カテゴリ別ポイント優遇が明示されていれば categoryRules も拾う。
+
+  - id: orico-card-member-point
+    label: オリコカード 会員向けポイント (公式)
+    url: https://www.orico.co.jp/creditcard/list/thepoint/
+    extractor: card
+    produces:
+      - cards
+      - categoryRules
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-05-16 url を THE POINT 専用ページに差し替え + enabled:true 復帰。
+      旧汎用会員ページ (/for/member/orico/) は「全体付与率 0.5% (200円1pt)」を
+      返し THE POINT 固有の 1% を誤 downgrade する問題があったため、
+      ユーザ提供の THE POINT カード公式ページに変更。
+      seed の orico-card は「オリコカード THE POINT」(defaultRate 0.01 = 1%)。
+      cardId 揺れ (Gemini が sourceId をそのまま返す) は aliases.json で
+      正規化済 (orico-card-member-point → orico-card)。
+      ---
+      ★ 2026-05-16 追加 (V4 #A / post-cron 追加カードの sync カバレッジ)。
+      v4.0.0 で seed に追加した orico-card / orico-pt が cron で
+      refresh されるよう登録。cardId は orico-card を対象
+      (defaultRate / defaultCurrencyId=orico-pt の確認)。

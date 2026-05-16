@@ -4,7 +4,9 @@
   "cardIds": {
     "smbc-v-gold": "smbc-v",
     "smbc-v-gold-nl": "smbc-v",
-    "smbc-v-gold-7percent": "smbc-v"
+    "smbc-v-gold-7percent": "smbc-v",
+    "mufg-card-global-point": "mufg-card",
+    "orico-card-member-point": "orico-card"
   },
   "storeIds": {
     "seven-eleven": "conv-7eleven",

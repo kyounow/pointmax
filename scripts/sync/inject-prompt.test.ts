@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { injectExistingEntities } from "./inject-prompt";
+import { seed } from "../../src/state/seed";
 
 describe("injectExistingEntities", () => {
   it("INJECT:stores マーカーが Markdown テーブルに置換される", () => {
@@ -105,4 +106,63 @@ describe("全プロンプトファイルが解決可能", () => {
       expect(resolved).not.toContain("ビルド時に scripts/sync/inject-prompt.ts が seed.ts から最新一覧を注入");
     },
   );
+});
+
+// cron 構築後に seed へ追加されたカード/通貨 (例: v4 の orico-pt/mufg-pt,
+// orico-card/mufg-card) が、動的注入から漏れず Gemini プロンプトに必ず現れることの
+// 回帰契約。注入は seed() のライブ参照なので本来自動反映されるが、将来の
+// seed shape 変更・filter バグ・INJECT マーカー消失で静かに欠落しても気付けるよう、
+// 「全 seed エンティティが注入テーブルに存在する」ことをハードコードでなく
+// seed を走査して検証する。v5+ で通貨/カードを足した時もこの契約が自動で守る。
+describe("post-cron 追加エンティティのカバレッジ契約", () => {
+  const promptsDir = resolve(__dirname, "../../sources/extractors");
+
+  // columns=id 単一列にすると各行が `| <id> |` になり、id の部分一致誤検知を避けられる
+  function injectedIds(entity: string): string[] {
+    const out = injectExistingEntities(
+      `<!-- INJECT:${entity} columns=id -->\n<!-- /INJECT -->`,
+    );
+    return [...out.matchAll(/^\|\s*([^\s|]+)\s*\|$/gm)].map((m) => m[1]);
+  }
+
+  it.each([
+    ["currencies", () => seed().currencies.map((c) => c.id)],
+    ["cards", () => seed().cards.map((c) => c.id)],
+    ["pointCards", () => seed().pointCards.map((p) => p.id)],
+    ["paymentApps", () => seed().paymentApps.map((a) => a.id)],
+  ] as const)(
+    "INJECT:%s は全 seed エンティティ ID を漏れなく含む",
+    (entity, getSeedIds) => {
+      const injected = new Set(injectedIds(entity));
+      const seedIds = getSeedIds();
+      expect(seedIds.length).toBeGreaterThan(0);
+      const missing = seedIds.filter((id) => !injected.has(id));
+      expect(missing).toEqual([]);
+    },
+  );
+
+  it("v4 で追加した orico/mufg 通貨・カードが明示的に注入される", () => {
+    // 本契約を導入する直接の動機 (セッションログ #3(b))。
+    // 一般ループでも捕捉されるが、退行時にこの名前付きテストが理由を即示す。
+    const currencyIds = new Set(injectedIds("currencies"));
+    const cardIds = new Set(injectedIds("cards"));
+    expect(currencyIds).toContain("orico-pt");
+    expect(currencyIds).toContain("mufg-pt");
+    expect(cardIds).toContain("orico-card");
+    expect(cardIds).toContain("mufg-card");
+  });
+
+  it("card extractor の実プロンプトが全 seed 通貨を含む (defaultCurrencyId マッピング用)", () => {
+    // card extractor は cards[].defaultCurrencyId を既存通貨へ対応付ける。
+    // 新通貨が card.prompt.md の INJECT:currencies から漏れると、Gemini が
+    // 正規 ID を知らず referenceChange / 誤抽出ノイズの原因になる。
+    const content = readFileSync(
+      resolve(promptsDir, "card.prompt.md"),
+      "utf-8",
+    );
+    const resolved = injectExistingEntities(content);
+    for (const c of seed().currencies) {
+      expect(resolved).toContain(c.id);
+    }
+  });
 });
