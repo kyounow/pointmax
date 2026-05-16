@@ -183,7 +183,7 @@ npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE 生成
 
 ## 自動アップデート (cron)
 
-- 毎週月曜 06:00 JST に GitHub Actions が同期パイプラインを実行 (`workflow_dispatch` で手動実行可)
+- 週2回（毎週月曜・木曜 06:00 JST）GitHub Actions が同期パイプラインを実行 (`workflow_dispatch` で手動実行可)
 - 高信頼項目 (autoApplicable) は main に自動 push → GitHub Pages が再デプロイ。要レビュー項目は
   `chore/sync-review-queue` ブランチの長寿命 PR に集約
 - `sync.config.json` の `autoMergeEnabled` で自動 push の ON/OFF、`maxAutoChangesPerRun` が安全弁

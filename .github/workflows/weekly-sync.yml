@@ -2,8 +2,8 @@ name: Weekly Master Sync
 
 on:
   schedule:
-    # 日曜 21:00 UTC = 月曜 06:00 JST
-    - cron: '0 21 * * 0'
+    # 週2回。日曜・水曜 21:00 UTC = 月曜・木曜 06:00 JST
+    - cron: '0 21 * * 0,3'
   workflow_dispatch:
     inputs:
       force_review_only:
