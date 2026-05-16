@@ -241,7 +241,3 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
   完全には反映していないため、**実利用前には必ず各社の公式条件をご確認ください**。
 - `localStorage` は端末／ブラウザごとに別。複数端末で共有したい場合は
   「エクスポート」→ 保存 → 別端末で「同期URL」設定、が想定フロー。
-
-## ライセンス
-
-MIT License（予定）
