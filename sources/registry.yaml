@@ -215,6 +215,13 @@ sources:
       店舗 membership として抽出。店舗非依存の全体施策・日付なしは出力
       しない方針。新規 program は base "idCollision" で必ず needsReview
       (ライブ還元計算に効くため無確認 auto-merge されない)。
+      ★ 実 fetch 検証 (2026-05-17、独立 2 回とも clean success):
+      抽出 0 件。当一覧 URL は抽選・「最大」・店舗指定なしの全体施策
+      中心で「固定還元率+対象店舗+期間」が揃うキャンペーンを含まない
+      (d払いと違い構造的に抽出対象なし)。thinking-leak ではなく Gemini
+      が 2 回とも正しく「対象外」判定=extractor の保守動作が正常。
+      実データには別 URL (個別詳細 or 店舗特定の一覧) が必要。現状
+      no-op で enabled 温存。
 
   - id: d-pay-campaigns
     label: d払い キャンペーン一覧 (公式)
