@@ -28,7 +28,9 @@ import type {
 import {
   proposeCards,
   proposeLoyaltyRules,
+  proposeMemberships,
   proposePaymentApps,
+  proposePrograms,
   proposeStores,
 } from "./propose-helpers";
 import { resolveCardId, resolveStoreId } from "./aliases";
@@ -37,7 +39,9 @@ import { resolveCardId, resolveStoreId } from "./aliases";
 export {
   proposeCards,
   proposeLoyaltyRules,
+  proposeMemberships,
   proposePaymentApps,
+  proposePrograms,
   proposeStores,
 };
 
@@ -109,6 +113,14 @@ export function normalizeIds(ex: ExtractedSource): ExtractedSource {
     loyaltyRules: ex.loyaltyRules?.map((r) => ({
       ...r,
       storeId: r.storeId ? resolveStoreId(r.storeId) : r.storeId,
+    })),
+    programs: ex.programs?.map((p) => ({
+      ...p,
+      cardIds: p.cardIds?.map((id) => resolveCardId(id)),
+    })),
+    memberships: ex.memberships?.map((m) => ({
+      ...m,
+      storeId: m.storeId ? resolveStoreId(m.storeId) : m.storeId,
     })),
   };
 }
@@ -229,6 +241,8 @@ function main(): void {
     allProposals.push(...proposeCards(data, current));
     allProposals.push(...proposeLoyaltyRules(data, current));
     allProposals.push(...proposePaymentApps(data, current));
+    allProposals.push(...proposePrograms(data, current));
+    allProposals.push(...proposeMemberships(data, current));
   }
 
   // within-run dedup: 異なるソースから同 name/id の store が提案された場合、

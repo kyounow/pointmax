@@ -173,18 +173,19 @@ sources:
     extractor: campaign
     produces:
       - stores
-      - loyaltyRules
+      - programs
+      - memberships
     extractionScope: chains-only
     enabled: true
     notes: |
       ★ 2026-05-17 追加 (#B キャンペーン取り込み 第1弾、JRE のみ)。
-      pointCardId は jre-pointcard を対象 (通貨 jre)。
-      期間限定の店舗 × JRE POINT 提示上振れ還元を loyaltyRules
-      (validFrom/validTo 付き) として抽出。campaign extractor は
-      日付明記が無い／店舗非依存のキャンペーンは出力しない方針。
-      新規 loyaltyRule + 日付主張のため propose では基本 needsReview
-      (zeroOrInvalidRate / unsupportedDateClaim / lowConfidence ガード)
-      に落ち、無確認での本番 auto-merge はされない。
+      ★ PR-D1: 出力を loyaltyRules → programs+memberships (v3+ 正準
+      BenefitProgram モデル) に再ポイント。pointCardId は jre-pointcard
+      を対象 (通貨 jre)。期間限定の店舗 × JRE POINT 上振れ還元を
+      1 キャンペーン=1 program (validFrom/validTo) + 対象店舗ごとの
+      membership として抽出。日付明記が無い／店舗非依存は出力しない方針。
+      新規 program は base "idCollision" で必ず needsReview に回り
+      (ライブ還元計算に直接効くため)、無確認での本番 auto-merge はされない。
       決済アプリ系キャンペーン (楽天Pay/d払い) は今後検討 (要 proposePrograms
       新設、SESSION_LOG「決済系キャンペーン deferral」参照)。
       ---
