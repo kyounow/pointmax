@@ -431,6 +431,33 @@ export function salvageBySchema(
 }
 
 // ───────────────────────────────────────────────────────────────
+// Fallback writer (空応答 / 非JSON / schema救済不能 で共通)
+// ───────────────────────────────────────────────────────────────
+// 旧: 3 箇所で同形の ExtractedSource リテラル + mkdir + write + log を
+// コピペしていた。生成 JSON は呼出側が notes/promptVersion を渡すため
+// 各サイトでバイト不変 (mkdirSync は recursive で冪等、outPath 同値)。
+function writeFallback(args: {
+  source: RegistrySource;
+  notes: string;
+  promptVersion: string;
+  logSuffix: string;
+}): void {
+  const fallback: ExtractedSource = {
+    sourceId: args.source.id,
+    sourceUrl: args.source.url,
+    fetchedAt: new Date().toISOString(),
+    promptVersion: args.promptVersion,
+    extractor: args.source.extractor,
+    geminiModel: GEMINI_MODEL,
+    notes: args.notes,
+  };
+  mkdirSync(OUTPUT_DIR, { recursive: true });
+  const outPath = resolve(OUTPUT_DIR, `${args.source.id}.json`);
+  writeFileSync(outPath, JSON.stringify(fallback, null, 2));
+  console.log(`✓ wrote ${outPath} ${args.logSuffix}`);
+}
+
+// ───────────────────────────────────────────────────────────────
 // Main
 // ───────────────────────────────────────────────────────────────
 
@@ -485,20 +512,12 @@ async function main(): Promise<void> {
       ? "URL retrieval failed (URL_RETRIEVAL_STATUS_ERROR)"
       : "Gemini empty response (output cut or model refusal)";
     console.log(`⚠️ ${reason}。空の ExtractedSource を書き出します。`);
-    const fallback: ExtractedSource = {
-      sourceId: source.id,
-      sourceUrl: source.url,
-      fetchedAt: new Date().toISOString(),
+    writeFallback({
+      source,
+      notes: `${reason}. URL を確認するか、ソースを enabled: false に設定してください。`,
       promptVersion: `${source.extractor}-vUnknown`,
-      extractor: source.extractor,
-      geminiModel: GEMINI_MODEL,
-      notes:
-        `${reason}. URL を確認するか、ソースを enabled: false に設定してください。`,
-    };
-    mkdirSync(OUTPUT_DIR, { recursive: true });
-    const outPath = resolve(OUTPUT_DIR, `${source.id}.json`);
-    writeFileSync(outPath, JSON.stringify(fallback, null, 2));
-    console.log(`✓ wrote ${outPath} (空)`);
+      logSuffix: "(空)",
+    });
     return;
   }
 
@@ -526,22 +545,15 @@ async function main(): Promise<void> {
     // crash せず空の ExtractedSource を書き出し、proposed-migrations 側で skip 判定。
     console.log("⚠️ Gemini レスポンスが JSON でない (取得には成功したが抽出失敗)");
     console.log(`     raw (first 300 chars): ${rawJson.slice(0, 300)}`);
-    const fallback: ExtractedSource = {
-      sourceId: source.id,
-      sourceUrl: source.url,
-      fetchedAt: new Date().toISOString(),
-      promptVersion: `${source.extractor}-vUnknown`,
-      extractor: source.extractor,
-      geminiModel: GEMINI_MODEL,
+    writeFallback({
+      source,
       notes:
         `Gemini could not extract structured data from this URL. ` +
         `Likely cause: page is a navigation hub, not the partner list itself. ` +
         `Raw response (first 300 chars): ${rawJson.slice(0, 300).replace(/\s+/g, " ")}`,
-    };
-    mkdirSync(OUTPUT_DIR, { recursive: true });
-    const outPath = resolve(OUTPUT_DIR, `${source.id}.json`);
-    writeFileSync(outPath, JSON.stringify(fallback, null, 2));
-    console.log(`✓ wrote ${outPath} (空 + 失敗 notes)`);
+      promptVersion: `${source.extractor}-vUnknown`,
+      logSuffix: "(空 + 失敗 notes)",
+    });
     return;
   }
 
@@ -567,19 +579,14 @@ async function main(): Promise<void> {
   if (!salvage.ok) {
     console.log("⚠️ schema 違反 (アイテム除去後も不正)。空 fallback を書き出します。");
     for (const e of salvage.errors) console.log(`     ${e}`);
-    const fallback: ExtractedSource = {
-      sourceId: source.id,
-      sourceUrl: source.url,
-      fetchedAt: new Date().toISOString(),
-      promptVersion: parsed.promptVersion || `${source.extractor}-vUnknown`,
-      extractor: source.extractor,
-      geminiModel: GEMINI_MODEL,
+    writeFallback({
+      source,
       notes:
         `Schema validation failed even after per-item salvage; source skipped. ` +
         `Errors: ${salvage.errors.join("; ").slice(0, 400)}`,
-    };
-    writeFileSync(outPath, JSON.stringify(fallback, null, 2));
-    console.log(`✓ wrote ${outPath} (schema fallback)`);
+      promptVersion: parsed.promptVersion || `${source.extractor}-vUnknown`,
+      logSuffix: "(schema fallback)",
+    });
     return;
   }
 
