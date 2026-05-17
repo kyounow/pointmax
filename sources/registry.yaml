@@ -196,3 +196,54 @@ sources:
       正常 (厳格方針どおり具体データ無し→0件)。実データを取るには個別
       キャンペーン詳細ページの URL が必要 (ユーザ提供待ち)。それまで本
       ソースは no-op (0 提案・crash なし) なので enabled のまま温存。
+
+  - id: rakuten-pay-campaigns
+    label: 楽天Pay キャンペーン一覧 (公式)
+    url: https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-05-17 追加 (#B 決済系キャンペーン、PR-D1 で proposePrograms
+      が通ったので解禁)。paymentAppId=pa-rakuten-pay、還元通貨 rakuten-pt。
+      campaign-v3.0 extractor が「対象店舗 × 楽天Pay 期間限定上振れ」を
+      1 キャンペーン=1 program (paymentAppId+validFrom/validTo) + 対象
+      店舗 membership として抽出。店舗非依存の全体施策・日付なしは出力
+      しない方針。新規 program は base "idCollision" で必ず needsReview
+      (ライブ還元計算に効くため無確認 auto-merge されない)。
+      ★ 実 fetch 検証 (2026-05-17、独立 2 回とも clean success):
+      抽出 0 件。当一覧 URL は抽選・「最大」・店舗指定なしの全体施策
+      中心で「固定還元率+対象店舗+期間」が揃うキャンペーンを含まない
+      (d払いと違い構造的に抽出対象なし)。thinking-leak ではなく Gemini
+      が 2 回とも正しく「対象外」判定=extractor の保守動作が正常。
+      実データには別 URL (個別詳細 or 店舗特定の一覧) が必要。現状
+      no-op で enabled 温存。
+
+  - id: d-pay-campaigns
+    label: d払い キャンペーン一覧 (公式)
+    url: https://service.smt.docomo.ne.jp/keitai_payment/campaign/
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-05-17 追加 (#B 決済系キャンペーン)。paymentAppId=pa-d-pay、
+      還元通貨 d-pt。扱いは rakuten-pay-campaigns と同じ (campaign-v3.0、
+      店舗特定+期間明記のみ、新規 program は needsReview)。
+      ★ 実 fetch 検証: 当ページは抽出可能な実データ豊富 (索引ハブでない)。
+      gemini-2.5-flash が時折 thinking-leak で nonJson を返す非決定的
+      失敗があるが、成功時は bic-camera +5% / toysrus 3倍 /
+      有賀園ゴルフ 10% 等を期間付き paymentAppId program +
+      membership + 新規 store として正しく抽出 (全 needsReview、迷子0)。
+      週次 cron は 3-attempt retry で吸収。信頼性重視なら campaign 系を
+      GEMINI_MODEL=gemini-2.5-pro 等にする選択肢あり。
+      注: Gemini が稀に pointCardId/paymentAppId 双方未設定の program を
+      出すが (prompt XOR は schema 強制でない)、idCollision→needsReview
+      で人手 catch されるため auto-merge 安全網は機能。
