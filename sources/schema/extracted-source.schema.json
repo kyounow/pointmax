@@ -257,6 +257,84 @@
           "ambiguity": { "type": "number", "minimum": 0, "maximum": 1 }
         }
       }
+    },
+
+    "programs": {
+      "type": "array",
+      "description": "New BenefitProgram proposals (v3+ canonical model). Used by the campaign extractor for period-limited promotions (validFrom/validTo) and any program-shaped benefit.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "programId",
+          "rate",
+          "currencyId",
+          "evidenceQuote",
+          "explicitness",
+          "ambiguity"
+        ],
+        "properties": {
+          "programId": { "type": "string", "description": "Proposed BenefitProgram.id (kebab-case slug, e.g. prog-jre-campaign-...)." },
+          "name": { "type": "string" },
+          "cardIds": { "type": "array", "items": { "type": "string" }, "description": "クレカ保有要件 (OR)。" },
+          "pointCardId": { "type": "string", "description": "提示するポイントカード (loyalty 系)。" },
+          "paymentAppId": { "type": "string", "description": "特定 paymentApp 経由限定。" },
+          "rate": { "type": "number", "minimum": 0, "maximum": 1, "description": "0.01 = 1%." },
+          "currencyId": { "type": "string" },
+          "bonusType": { "type": "string", "enum": ["primary", "addOn"] },
+          "validFrom": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "ISO date (YYYY-MM-DD). 公式ページに明示された開始日のみ。"
+          },
+          "validTo": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "ISO date (YYYY-MM-DD). 公式ページに明示された終了日のみ。"
+          },
+          "recurringDays": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0, "maximum": 6 },
+            "description": "曜日限定 (0=日 .. 6=土)。明示時のみ。"
+          },
+          "description": { "type": "string" },
+          "officialUrl": { "type": "string", "format": "uri" },
+          "conditions": { "type": "string" },
+          "monthlyCapAmountYen": { "type": "integer", "minimum": 0 },
+          "notes": { "type": "string" },
+          "evidenceQuote": { "type": "string", "minLength": 1 },
+          "evidenceUrl": { "type": "string", "format": "uri" },
+          "explicitness": { "type": "number", "minimum": 0, "maximum": 1 },
+          "ambiguity": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+
+    "memberships": {
+      "type": "array",
+      "description": "StoreProgramMembership proposals: M2M join of a BenefitProgram (programId) to a Store (storeId).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "programId",
+          "storeId",
+          "evidenceQuote",
+          "explicitness",
+          "ambiguity"
+        ],
+        "properties": {
+          "programId": { "type": "string", "description": "対象 BenefitProgram.id (既存 or 同抽出の programs[] で追加)。" },
+          "storeId": { "type": "string", "description": "既存 Store.id、または同抽出の stores[] で追加。" },
+          "overrideRate": { "type": "number", "minimum": 0, "maximum": 1 },
+          "overrideCurrencyId": { "type": "string" },
+          "notes": { "type": "string" },
+          "evidenceQuote": { "type": "string", "minLength": 1 },
+          "evidenceUrl": { "type": "string", "format": "uri" },
+          "explicitness": { "type": "number", "minimum": 0, "maximum": 1 },
+          "ambiguity": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
     }
   }
 }

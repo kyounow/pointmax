@@ -361,6 +361,134 @@ export function proposePaymentApps(
 }
 
 // ───────────────────────────────────────────────────────────────
+// programs: BenefitProgram (v3+ 正準モデル)。campaign extractor 等が
+// 期間限定プロモを programs[] として出力。新規は安全側で要レビュー。
+// ───────────────────────────────────────────────────────────────
+
+export function proposePrograms(
+  data: ExtractedSource,
+  current: SeedShape,
+): Proposal[] {
+  if (!data.programs || data.programs.length === 0) return [];
+  const existing = current.programs ?? [];
+  const result: Proposal[] = [];
+  for (const p of data.programs) {
+    const { evidence, confidence } = evidenceAndConfidence(p);
+    const found = existing.find((x) => x.id === p.programId);
+    if (!found) {
+      // 新規 program はライブ還元計算に直接効くため、proposeCards /
+      // proposePaymentApps と同じく base "idCollision" で必ず人手レビュー。
+      // 順序は loyaltyRules と同一: selfReported → unsupportedDate → zeroRate。
+      const reviewReason = resolveReviewReason("idCollision", [
+        () =>
+          detectSelfReportedExclusion(evidence.evidenceQuote)
+            ? "selfReportedExclusion"
+            : undefined,
+        () =>
+          detectUnsupportedDateClaim(p, evidence.evidenceQuote)
+            ? "unsupportedDateClaim"
+            : undefined,
+        () => (!p.rate || p.rate === 0 ? "zeroOrInvalidRate" : undefined),
+      ]);
+      // 定義済みフィールドのみ詰める (apply の emitObjectLiteral が
+      // undefined/null を除外するのと整合、loyaltyRecord と同方式)
+      const rec: Record<string, unknown> = {
+        id: p.programId,
+        name: p.name ?? p.programId,
+        rate: p.rate,
+        currencyId: p.currencyId,
+      };
+      if (p.cardIds !== undefined) rec.cardIds = p.cardIds;
+      if (p.pointCardId !== undefined) rec.pointCardId = p.pointCardId;
+      if (p.paymentAppId !== undefined) rec.paymentAppId = p.paymentAppId;
+      if (p.bonusType !== undefined) rec.bonusType = p.bonusType;
+      if (p.validFrom !== undefined) rec.validFrom = p.validFrom;
+      if (p.validTo !== undefined) rec.validTo = p.validTo;
+      if (p.recurringDays !== undefined) rec.recurringDays = p.recurringDays;
+      if (p.description !== undefined) rec.description = p.description;
+      if (p.officialUrl !== undefined) rec.officialUrl = p.officialUrl;
+      if (p.conditions !== undefined) rec.conditions = p.conditions;
+      if (p.monthlyCapAmountYen !== undefined)
+        rec.monthlyCapAmountYen = p.monthlyCapAmountYen;
+      if (p.notes !== undefined) rec.notes = p.notes;
+      result.push({
+        type: "addRecord",
+        collection: "programs",
+        record: rec,
+        sourceId: data.sourceId,
+        confidence,
+        evidence,
+        reviewReason,
+      });
+      continue;
+    }
+    // 既存 program: rate 変動のみ提案 (proposeLoyaltyRules と同方式の最小経路)
+    if (found.rate !== p.rate) {
+      result.push(
+        buildRateUpdate(
+          found.id,
+          "programs",
+          found.rate,
+          p.rate,
+          data.sourceId,
+          confidence,
+          evidence,
+        ),
+      );
+    }
+  }
+  return result;
+}
+
+// ───────────────────────────────────────────────────────────────
+// memberships: StoreProgramMembership (program ↔ store の M2M join)。
+// join なので loyaltyRules と同じ分類 (idCollision ではなく lowConfidence base)。
+// ───────────────────────────────────────────────────────────────
+
+export function proposeMemberships(
+  data: ExtractedSource,
+  current: SeedShape,
+): Proposal[] {
+  if (!data.memberships || data.memberships.length === 0) return [];
+  const existing = current.memberships ?? [];
+  const result: Proposal[] = [];
+  for (const m of data.memberships) {
+    const { evidence, confidence } = evidenceAndConfidence(m);
+    const found = existing.find(
+      (x) => x.programId === m.programId && x.storeId === m.storeId,
+    );
+    if (found) continue; // 既存 membership は更新経路なし (PR-D1 は最小)
+    const reviewReason = resolveReviewReason(
+      confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
+      [
+        () =>
+          detectSelfReportedExclusion(evidence.evidenceQuote)
+            ? "selfReportedExclusion"
+            : undefined,
+      ],
+    );
+    const rec: Record<string, unknown> = {
+      programId: m.programId,
+      storeId: m.storeId,
+    };
+    if (m.overrideRate !== undefined) rec.overrideRate = m.overrideRate;
+    if (m.overrideCurrencyId !== undefined)
+      rec.overrideCurrencyId = m.overrideCurrencyId;
+    if (m.notes !== undefined) rec.notes = m.notes;
+    result.push({
+      type: "addRecord",
+      collection: "memberships",
+      record: rec,
+      sourceId: data.sourceId,
+      confidence,
+      evidence,
+      reviewReason,
+    });
+  }
+  return result;
+}
+
+// ───────────────────────────────────────────────────────────────
 // 共通: rate 変更の autoMergeable 判定
 // pp 差 / 倍率 / confidence のチェックを集約
 // ───────────────────────────────────────────────────────────────

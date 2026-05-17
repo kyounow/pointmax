@@ -154,4 +154,54 @@ describe("salvageBySchema", () => {
       expect(r.data.loyaltyRules?.[0].validTo).toBe("2026-06-30");
     }
   });
+
+  it("campaign extractor + programs/memberships が schema 通過 (PR-D1 正準モデル)", () => {
+    const data: ExtractedSource = {
+      ...baseSource(),
+      extractor: "campaign",
+      promptVersion: "campaign-v2.0",
+      stores: [
+        {
+          storeId: "newdays",
+          name: "NewDays",
+          category: "コンビニ",
+          evidenceQuote: "対象店舗 NewDays",
+          explicitness: 0.9,
+          ambiguity: 0.1,
+        },
+      ],
+      programs: [
+        {
+          programId: "prog-jre-campaign-newdays-2026-06",
+          name: "JRE POINT NewDays 3%",
+          pointCardId: "jre-pointcard",
+          rate: 0.03,
+          currencyId: "jre",
+          bonusType: "addOn",
+          validFrom: "2026-06-01",
+          validTo: "2026-06-30",
+          evidenceQuote:
+            "キャンペーン期間：2026年6月1日〜6月30日、NewDaysでJRE POINT3%",
+          explicitness: 0.9,
+          ambiguity: 0.1,
+        },
+      ],
+      memberships: [
+        {
+          programId: "prog-jre-campaign-newdays-2026-06",
+          storeId: "newdays",
+          evidenceQuote: "対象店舗：NewDays",
+          explicitness: 0.9,
+          ambiguity: 0.1,
+        },
+      ],
+    };
+    const r = salvageBySchema(data, schema);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.droppedByKey).toEqual({});
+      expect(r.data.programs?.[0].bonusType).toBe("addOn");
+      expect(r.data.memberships?.[0].storeId).toBe("newdays");
+    }
+  });
 });

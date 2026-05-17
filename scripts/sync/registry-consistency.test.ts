@@ -62,10 +62,11 @@ describe("registry.yaml 整合性契約", () => {
     expect(bad.map((s) => `${s.id}:${s.extractionScope}`)).toEqual([]);
   });
 
-  it("JRE campaign source が登録されている (#B 第1弾)", () => {
+  it("JRE campaign source が登録されている (#B 第1弾、PR-D1 で programs 化)", () => {
     const jre = registry.sources.find((s) => s.id === "jre-point-campaigns");
     expect(jre).toBeDefined();
     expect(jre?.extractor).toBe("campaign");
-    expect(jre?.produces).toContain("loyaltyRules");
+    expect(jre?.produces).toContain("programs");
+    expect(jre?.produces).toContain("memberships");
   });
 });

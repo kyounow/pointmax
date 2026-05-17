@@ -6,7 +6,9 @@ import {
   isFailedExtraction,
   proposeCards,
   proposeLoyaltyRules,
+  proposeMemberships,
   proposePaymentApps,
+  proposePrograms,
   proposeStores,
 } from "./diff-and-propose";
 import type { ExtractedSource, Proposal } from "./types";
@@ -492,5 +494,136 @@ describe("dedupeAcrossProposals", () => {
     expect(collisions).toBe(0);
     expect(proposals[0].reviewReason).toBeUndefined();
     expect(proposals[1].reviewReason).toBeUndefined();
+  });
+});
+
+describe("proposePrograms (PR-D1)", () => {
+  it("programs 無しは空配列", () => {
+    expect(proposePrograms(baseSource({}), emptySeed)).toEqual([]);
+  });
+
+  it("新規 program は addRecord + base idCollision (ライブ評価系のため要レビュー)", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-jre-camp-x",
+          name: "JREキャンペX",
+          pointCardId: "jre-pointcard",
+          rate: 0.03,
+          currencyId: "jre",
+          bonusType: "addOn",
+          validFrom: "2026-06-01",
+          validTo: "2026-06-30",
+          evidenceQuote: "期間 2026年6月1日〜6月30日 対象店で3%",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].type).toBe("addRecord");
+    expect(ps[0].collection).toBe("programs");
+    expect(ps[0].reviewReason).toBe("idCollision");
+    expect(
+      (ps[0] as { record: { validTo: string } }).record.validTo,
+    ).toBe("2026-06-30");
+  });
+
+  it("rate=0 の program は zeroOrInvalidRate", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-bad",
+          rate: 0,
+          currencyId: "jre",
+          evidenceQuote: "JRE POINT 加盟",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, emptySeed);
+    expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
+  });
+
+  it("既存 program の rate 変動は updateField", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      programs: [
+        {
+          id: "prog-existing",
+          name: "既存",
+          pointCardId: "jre-pointcard",
+          rate: 0.01,
+          currencyId: "jre",
+        },
+      ],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-existing",
+          rate: 0.012, // +0.2pp, 1.2x → auto
+          currencyId: "jre",
+          evidenceQuote: "明示",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, seed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].type).toBe("updateField");
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+});
+
+describe("proposeMemberships (PR-D1)", () => {
+  it("memberships 無しは空配列", () => {
+    expect(proposeMemberships(baseSource({}), emptySeed)).toEqual([]);
+  });
+
+  it("新規 membership は addRecord/memberships", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [
+        {
+          programId: "prog-jre-camp-x",
+          storeId: "newdays",
+          evidenceQuote: "対象店舗 NewDays",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeMemberships(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].type).toBe("addRecord");
+    expect(ps[0].collection).toBe("memberships");
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("既存 (programId+storeId 一致) membership は提案しない", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [{ programId: "prog-a", storeId: "store-a" }],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [
+        {
+          programId: "prog-a",
+          storeId: "store-a",
+          evidenceQuote: "x",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    expect(proposeMemberships(data, seed)).toEqual([]);
   });
 });

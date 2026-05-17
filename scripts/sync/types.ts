@@ -139,6 +139,8 @@ export type ExtractedSource = {
   stores?: ExtractedStore[];
   loyaltyRules?: ExtractedLoyaltyRule[];
   paymentApps?: ExtractedPaymentApp[];
+  programs?: ExtractedProgram[];      // v3+ 正準モデル (campaign extractor 等)
+  memberships?: ExtractedMembership[]; // program ↔ store の M2M join
 };
 
 // 各抽出項目に必ず付くエビデンス・自己評価。
@@ -189,6 +191,36 @@ export type ExtractedLoyaltyRule = Evidence & {
   notes?: string;
   validFrom?: string;      // ISO date (YYYY-MM-DD). 公式ページに明示された開始日のみ。
   validTo?: string;        // ISO date (YYYY-MM-DD). 公式ページに明示された終了日のみ。
+};
+
+// (g) BenefitProgram (v3+ 正準モデル)。campaign extractor が期間限定
+// プロモを programs[] として出力。schema の programs item と対応。
+export type ExtractedProgram = Evidence & {
+  programId: string;        // 提案 BenefitProgram.id (slug)
+  name?: string;
+  cardIds?: string[];       // クレカ保有要件 (OR)
+  pointCardId?: string;     // 提示ポイントカード (loyalty 系)
+  paymentAppId?: string;    // 特定 paymentApp 経由限定
+  rate: number;             // 0.01 = 1%
+  currencyId: string;
+  bonusType?: "primary" | "addOn";
+  validFrom?: string;       // ISO date (YYYY-MM-DD). 公式明示時のみ。
+  validTo?: string;         // ISO date (YYYY-MM-DD). 公式明示時のみ。
+  recurringDays?: number[]; // 曜日限定 (0=日..6=土)
+  description?: string;
+  officialUrl?: string;
+  conditions?: string;
+  monthlyCapAmountYen?: number;
+  notes?: string;
+};
+
+// (h) StoreProgramMembership: program ↔ store の M2M join
+export type ExtractedMembership = Evidence & {
+  programId: string;        // 既存 or 同抽出 programs[] の id
+  storeId: string;          // 既存 or 同抽出 stores[] の id
+  overrideRate?: number;
+  overrideCurrencyId?: string;
+  notes?: string;
 };
 
 // (i) 決済アプリ
