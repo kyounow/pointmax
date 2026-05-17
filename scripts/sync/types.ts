@@ -135,6 +135,7 @@ export type ExtractedSource = {
 
   // 抽出されたエンティティ群 (extractor によって埋まる配列が変わる)
   cards?: ExtractedCard[];
+  storeRules?: ExtractedStoreRule[];
   categoryRules?: ExtractedCategoryRule[];
   stores?: ExtractedStore[];
   loyaltyRules?: ExtractedLoyaltyRule[];
@@ -160,6 +161,21 @@ export type ExtractedCard = Evidence & {
   grade?: string;
   defaultRate?: number;    // 0.01 = 1%
   defaultCurrencyId?: string;
+};
+
+// (b) 店舗別ルール (legacy extractor I/O。card/jal-tokuyaku が出力。
+// propose 層は消費しない=手動キュレ用情報。schema の storeRules item と対応。
+// 方式B: legacy 配列は extractor I/O として温存するため型も schema と整合させる)
+export type ExtractedStoreRule = Evidence & {
+  cardId: string;
+  storeId: string;
+  paymentAppId?: string;
+  rate: number;
+  currencyId: string;
+  monthlyCapAmountYen?: number;
+  notes?: string;
+  validFrom?: string;      // ISO date (YYYY-MM-DD). 公式ページに明示された開始日のみ。
+  validTo?: string;        // ISO date (YYYY-MM-DD). 公式ページに明示された終了日のみ。
 };
 
 // (c) カテゴリ別ルール

@@ -151,7 +151,6 @@ scripts/sync/
   inject-prompt.ts     # extractor プロンプトに seed 内容を動的注入
   aliases.ts           # cardId / storeId の表記揺れ正規化
   evidence-check.ts    # hallucination guard (日付主張の根拠検証 等)
-  filter-auto-rakuten.ts # 既存店舗のみ参照する loyalty 系フィルタ
   report.ts            # AUTO_SUMMARY.md / REVIEW_QUEUE.md 生成
   types.ts             # 共通型 + 閾値定数 + scope ディレクティブ
 ```
