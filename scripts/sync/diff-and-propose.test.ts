@@ -11,6 +11,10 @@ import {
   proposePrograms,
   proposeStores,
 } from "./diff-and-propose";
+import {
+  deriveLoyaltyProgramId,
+  rateToProgramSlug,
+} from "./propose-helpers";
 import type { ExtractedSource, Proposal } from "./types";
 
 // テスト用の最小 SeedShape
@@ -263,7 +267,7 @@ describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
     expect(ps[0].reviewReason).toBeUndefined();
   });
 
-  it("新規 loyaltyRule は addRecord", () => {
+  it("PR-D2a: 未存在 rate バケツ → 新規 program(idCollision) + membership", () => {
     const data = baseSource({
       loyaltyRules: [
         {
@@ -277,7 +281,92 @@ describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
       ],
     });
     const ps = proposeLoyaltyRules(data, emptySeed);
-    expect(ps[0].type).toBe("addRecord");
+    expect(ps).toHaveLength(2);
+    const prog = ps.find((p) => p.collection === "programs");
+    const mem = ps.find((p) => p.collection === "memberships");
+    expect(prog?.type).toBe("addRecord");
+    // 決定論 slug 規約: prog-{pointCardId}-{rate%}pc
+    expect((prog as { record: { id: string } }).record.id).toBe(
+      "prog-rakuten-pointcard-0.5pc",
+    );
+    // 新規 program はライブ計算に効くため必ず needsReview
+    expect(prog?.reviewReason).toBe("idCollision");
+    expect(mem?.type).toBe("addRecord");
+    expect((mem as { record: { programId: string; storeId: string } }).record)
+      .toEqual({ programId: "prog-rakuten-pointcard-0.5pc", storeId: "kura-sushi" });
+    // clean・高 confidence の membership は auto 可 (reviewReason なし)
+    expect(mem?.reviewReason).toBeUndefined();
+  });
+
+  it("PR-D2a: 既存 rate バケツ program あり → membership のみ (program 重複なし)", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      pointCards: [
+        { id: "rakuten-pointcard", name: "楽天ポイントカード", currencyId: "rakuten-pt" },
+      ],
+      programs: [
+        {
+          id: "prog-rakuten-pointcard-0.5pc",
+          name: "楽天ポイントカード提示 0.5%",
+          pointCardId: "rakuten-pointcard",
+          rate: 0.005,
+          currencyId: "rakuten-pt",
+          bonusType: "primary",
+        },
+      ],
+      memberships: [],
+    };
+    const data = baseSource({
+      loyaltyRules: [
+        {
+          pointCardId: "rakuten-pointcard",
+          storeId: "kura-sushi",
+          rate: 0.005,
+          evidenceQuote: "明示 0.5%",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeLoyaltyRules(data, seed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].collection).toBe("memberships");
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("PR-D2a: 既存 membership は重複提案しない", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      pointCards: [
+        { id: "rakuten-pointcard", name: "楽天ポイントカード", currencyId: "rakuten-pt" },
+      ],
+      programs: [
+        {
+          id: "prog-rakuten-pointcard-0.5pc",
+          name: "x",
+          pointCardId: "rakuten-pointcard",
+          rate: 0.005,
+          currencyId: "rakuten-pt",
+          bonusType: "primary",
+        },
+      ],
+      memberships: [
+        { programId: "prog-rakuten-pointcard-0.5pc", storeId: "kura-sushi" },
+      ],
+    };
+    const data = baseSource({
+      loyaltyRules: [
+        {
+          pointCardId: "rakuten-pointcard",
+          storeId: "kura-sushi",
+          rate: 0.005,
+          evidenceQuote: "x",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    expect(proposeLoyaltyRules(data, seed)).toEqual([]);
   });
 
   it("paymentApp の chargeBased 変更は要レビュー", () => {
@@ -319,11 +408,13 @@ describe("rate=0 guard: zeroOrInvalidRate", () => {
       ],
     });
     const ps = proposeLoyaltyRules(data, emptySeed);
+    // rate 不正 → 迷子 membership を作らず program 1件で可視化 (auto 不可)
     expect(ps).toHaveLength(1);
+    expect(ps[0].collection).toBe("programs");
     expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
   });
 
-  it("loyaltyRule rate=0.005 → reviewReason なし (正常抽出)", () => {
+  it("loyaltyRule rate=0.005 → membership は reviewReason なし (正常抽出)", () => {
     const data = baseSource({
       loyaltyRules: [
         {
@@ -337,8 +428,10 @@ describe("rate=0 guard: zeroOrInvalidRate", () => {
       ],
     });
     const ps = proposeLoyaltyRules(data, emptySeed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].reviewReason).toBeUndefined();
+    // 未存在バケツなので program(idCollision) + membership(clean)
+    const mem = ps.find((p) => p.collection === "memberships");
+    expect(mem).toBeDefined();
+    expect(mem?.reviewReason).toBeUndefined();
   });
 });
 
@@ -625,5 +718,43 @@ describe("proposeMemberships (PR-D1)", () => {
       ],
     });
     expect(proposeMemberships(data, seed)).toEqual([]);
+  });
+});
+
+describe("rateToProgramSlug / deriveLoyaltyProgramId (PR-D2a 決定論採番)", () => {
+  // seed の既存 10 program で確認した規約を固定するベクタ。
+  // ここが seed と 1 文字でもズレると迷子 membership が発生するため最重要。
+  it.each([
+    [0.005, "0.5pc"],
+    [0.01, "1pc"],
+    [0.015, "1.5pc"],
+    [0.02, "2pc"],
+    [0.025, "2.5pc"],
+    [0.1, "10pc"],
+  ] as const)("rate %s → slug %s", (rate, slug) => {
+    expect(rateToProgramSlug(rate)).toBe(slug);
+  });
+
+  it.each([0, -0.01, NaN, Infinity] as const)(
+    "不正 rate %s は null",
+    (rate) => {
+      expect(rateToProgramSlug(rate)).toBeNull();
+      expect(deriveLoyaltyProgramId("rakuten-pointcard", rate)).toBeNull();
+    },
+  );
+
+  it("seed の既存 program id と一致する (回帰固定)", () => {
+    expect(deriveLoyaltyProgramId("rakuten-pointcard", 0.005)).toBe(
+      "prog-rakuten-pointcard-0.5pc",
+    );
+    expect(deriveLoyaltyProgramId("rakuten-pointcard", 0.01)).toBe(
+      "prog-rakuten-pointcard-1pc",
+    );
+    expect(deriveLoyaltyProgramId("jre-pointcard", 0.005)).toBe(
+      "prog-jre-pointcard-0.5pc",
+    );
+    expect(deriveLoyaltyProgramId("nanaco-card", 0.01)).toBe(
+      "prog-nanaco-card-1pc",
+    );
   });
 });
