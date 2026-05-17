@@ -27,6 +27,7 @@ import type {
 } from "./types";
 import {
   proposeCards,
+  proposeJalTokuyakuMemberships,
   proposeLoyaltyRules,
   proposeMemberships,
   proposePaymentApps,
@@ -38,6 +39,7 @@ import { resolveCardId, resolveStoreId } from "./aliases";
 // 再エクスポート (テスト互換性のため diff-and-propose 経由で参照される旧APIを温存)
 export {
   proposeCards,
+  proposeJalTokuyakuMemberships,
   proposeLoyaltyRules,
   proposeMemberships,
   proposePaymentApps,
@@ -243,6 +245,7 @@ function main(): void {
     allProposals.push(...proposePaymentApps(data, current));
     allProposals.push(...proposePrograms(data, current));
     allProposals.push(...proposeMemberships(data, current));
+    allProposals.push(...proposeJalTokuyakuMemberships(data, current));
   }
 
   // within-run dedup: 異なるソースから同 name/id の store が提案された場合、

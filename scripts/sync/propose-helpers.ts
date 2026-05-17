@@ -567,6 +567,82 @@ export function proposeMemberships(
 }
 
 // ───────────────────────────────────────────────────────────────
+// jal-tokuyaku: 新規 JAL特約店 store → 既存 prog-jal-tokuyaku への
+// membership を決定論的に提案 (PR-D2b)。
+//
+// card 系 program は ID が bespoke で自動採番不可だが、JAL特約店だけは
+// 「prog-jal-tokuyaku」という既知の定数 program (rate 0.02 / cardIds
+// [jal-suica,jal-card]) があり、特約店 store をそこへ繋ぐのは決定論的に安全。
+//
+// 安全策:
+//  - data.extractor==="jal-tokuyaku" のソースのみ対象 (他に影響なし)
+//  - prog-jal-tokuyaku が seed.programs に無ければ何もしない (迷子防止)
+//  - 抽出 categoryRule の JAL特約店 rate が program.rate と食い違う場合は
+//    基本レート変更の疑い → 一括リンクしない (誤クレジット防止)
+//  - storeRules で標準レート≠の例外店は対象外 (手動キュレーション領域、
+//    従来どおり drop。silent loss でない=元々 consumer 無し)
+// ───────────────────────────────────────────────────────────────
+
+const JAL_TOKUYAKU_PROGRAM_ID = "prog-jal-tokuyaku";
+
+export function proposeJalTokuyakuMemberships(
+  data: ExtractedSource,
+  current: SeedShape,
+): Proposal[] {
+  if (data.extractor !== "jal-tokuyaku") return [];
+  if (!data.stores || data.stores.length === 0) return [];
+  const prog = (current.programs ?? []).find(
+    (p) => p.id === JAL_TOKUYAKU_PROGRAM_ID,
+  );
+  if (!prog) return []; // 定数 program 不在: 迷子を作らないため何もしない
+
+  // 抽出 categoryRule の JAL特約店 基本レート。program.rate と乖離したら
+  // 基本レート変更の疑いなので一括 membership 化しない (誤クレジット防止)。
+  const baseCat = (data.categoryRules ?? []).find(
+    (c) => c.category === "JAL特約店",
+  );
+  if (baseCat && baseCat.rate !== prog.rate) return [];
+
+  // 例外レート店 (storeRules で rate≠program.rate) は対象外
+  const exceptionStoreIds = new Set(
+    (data.storeRules ?? [])
+      .filter((r) => r.rate !== prog.rate)
+      .map((r) => r.storeId),
+  );
+
+  const seenMemberships = new Set(
+    (current.memberships ?? []).map((m) => `${m.programId}__${m.storeId}`),
+  );
+  const result: Proposal[] = [];
+  for (const st of data.stores) {
+    if (exceptionStoreIds.has(st.storeId)) continue;
+    const mkey = `${JAL_TOKUYAKU_PROGRAM_ID}__${st.storeId}`;
+    if (seenMemberships.has(mkey)) continue;
+    const { evidence, confidence } = evidenceAndConfidence(st);
+    const reviewReason = resolveReviewReason(
+      confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
+      [
+        () =>
+          detectSelfReportedExclusion(evidence.evidenceQuote)
+            ? "selfReportedExclusion"
+            : undefined,
+      ],
+    );
+    result.push({
+      type: "addRecord",
+      collection: "memberships",
+      record: { programId: JAL_TOKUYAKU_PROGRAM_ID, storeId: st.storeId },
+      sourceId: data.sourceId,
+      confidence,
+      evidence,
+      reviewReason,
+    });
+    seenMemberships.add(mkey);
+  }
+  return result;
+}
+
+// ───────────────────────────────────────────────────────────────
 // 共通: rate 変更の autoMergeable 判定
 // pp 差 / 倍率 / confidence のチェックを集約
 // ───────────────────────────────────────────────────────────────
