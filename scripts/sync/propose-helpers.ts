@@ -47,6 +47,38 @@ function toEvidence(x: Evidence): Evidence {
   };
 }
 
+// 全 proposeX で同一の 2 行 (evidence 抽出 + confidence 計算) を共通化。
+// 純粋なホイストで挙動は不変。PR-D の proposePrograms 等も再利用する。
+function evidenceAndConfidence(x: Evidence): {
+  evidence: Evidence;
+  confidence: number;
+} {
+  const evidence = toEvidence(x);
+  return { evidence, confidence: computeConfidence(evidence) };
+}
+
+// reviewReason の「base 判定 → evidence-integrity による上書き」ラダーを共通化。
+//
+// 現行コードは `let rr = base; if (A) rr = a; if (B) rr = b; ...` という
+// 逐次・無条件の last-wins 上書きだった。これと**完全に同義**:
+//   - base は呼出側が従来どおり算出 (関数ごとに分岐が異なるので一切変えない)
+//   - overrides は呼出側が**現行と同じ順序**で渡す。各 check が値を返せば上書き、
+//     undefined なら据え置き。最後に返した非 undefined が勝つ (= 逐次 if と同一)
+// 順序の責任は呼出側に残るため、抽出による挙動変化は構造的に起こらない。
+type IntegrityCheck = () => ReviewReason | undefined;
+
+function resolveReviewReason(
+  base: ReviewReason | undefined,
+  overrides: IntegrityCheck[],
+): ReviewReason | undefined {
+  let rr = base;
+  for (const check of overrides) {
+    const r = check();
+    if (r) rr = r;
+  }
+  return rr;
+}
+
 // ───────────────────────────────────────────────────────────────
 // stores: 新規追加のみ (既存 store の更新提案は現状なし)
 // ───────────────────────────────────────────────────────────────
@@ -61,28 +93,31 @@ export function proposeStores(
   const result: Proposal[] = [];
 
   for (const s of data.stores) {
-    const evidence = toEvidence(s);
-    const confidence = computeConfidence(evidence);
+    const { evidence, confidence } = evidenceAndConfidence(s);
     // alias 適用: 旧名 (e.g., "鉄道・交通") は新名 ("交通") に正規化
     const normalizedCategory = resolveCategory(s.category);
-    let reviewReason: ReviewReason | undefined;
 
+    // base 判定 (現行の if/else-if を一切変えず維持)
+    let baseReason: ReviewReason | undefined;
     if (BLOCKED_STORE_IDS.has(s.storeId)) {
-      reviewReason = "userBlocked";
+      baseReason = "userBlocked";
     } else if (
       normalizedCategory &&
       EXCLUDED_CATEGORIES.has(normalizedCategory)
     ) {
-      reviewReason = "excludedCategory";
+      baseReason = "excludedCategory";
     } else if (existingIds.has(s.storeId) || existingNames.has(s.name)) {
-      reviewReason = "idCollision";
+      baseReason = "idCollision";
     } else if (confidence < CONFIDENCE_AUTO_THRESHOLD) {
-      reviewReason = "lowConfidence";
+      baseReason = "lowConfidence";
     }
     // evidence integrity: Gemini 自身が除外と報告している場合は強制 needsReview
-    if (detectSelfReportedExclusion(evidence.evidenceQuote)) {
-      reviewReason = "selfReportedExclusion";
-    }
+    const reviewReason = resolveReviewReason(baseReason, [
+      () =>
+        detectSelfReportedExclusion(evidence.evidenceQuote)
+          ? "selfReportedExclusion"
+          : undefined,
+    ]);
 
     const prop: AddRecordProposal = {
       type: "addRecord",
@@ -113,8 +148,7 @@ export function proposeCards(
   if (!data.cards || data.cards.length === 0) return [];
   const result: Proposal[] = [];
   for (const c of data.cards) {
-    const evidence = toEvidence(c);
-    const confidence = computeConfidence(evidence);
+    const { evidence, confidence } = evidenceAndConfidence(c);
     const existing = current.cards.find((x) => x.id === c.cardId);
     if (!existing) {
       // 既存にない cardId が抽出された (通常想定外)
@@ -181,27 +215,29 @@ export function proposeLoyaltyRules(
   if (!data.loyaltyRules || data.loyaltyRules.length === 0) return [];
   const result: Proposal[] = [];
   for (const r of data.loyaltyRules) {
-    const evidence = toEvidence(r);
-    const confidence = computeConfidence(evidence);
+    const { evidence, confidence } = evidenceAndConfidence(r);
     const existing = current.loyaltyRules.find(
       (x) => x.storeId === r.storeId && x.pointCardId === r.pointCardId,
     );
     if (!existing) {
       const loyaltyId = `loy-${r.pointCardId}-${r.storeId}`;
-      let loyaltyReviewReason: ReviewReason | undefined =
-        confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined;
-      // evidence integrity: Gemini 自身が除外と報告している場合は強制 needsReview
-      if (detectSelfReportedExclusion(evidence.evidenceQuote)) {
-        loyaltyReviewReason = "selfReportedExclusion";
-      }
-      // 日付主張があるのに evidenceQuote に日付根拠がない場合は hallucination 疑い
-      if (detectUnsupportedDateClaim(r, evidence.evidenceQuote)) {
-        loyaltyReviewReason = "unsupportedDateClaim";
-      }
-      // rate=0 は Gemini 抽出失敗の証拠。自動マージ防止のため強制 review。
-      if (!r.rate || r.rate === 0) {
-        loyaltyReviewReason = "zeroOrInvalidRate";
-      }
+      // base + override 順序は現行の逐次 if と完全に同一:
+      //   base: lowConfidence → selfReportedExclusion → unsupportedDateClaim
+      //         → zeroOrInvalidRate (後勝ち)
+      const loyaltyReviewReason = resolveReviewReason(
+        confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
+        [
+          () =>
+            detectSelfReportedExclusion(evidence.evidenceQuote)
+              ? "selfReportedExclusion"
+              : undefined,
+          () =>
+            detectUnsupportedDateClaim(r, evidence.evidenceQuote)
+              ? "unsupportedDateClaim"
+              : undefined,
+          () => (!r.rate || r.rate === 0 ? "zeroOrInvalidRate" : undefined),
+        ],
+      );
       const loyaltyRecord: Record<string, unknown> = {
         id: loyaltyId,
         storeId: r.storeId,
@@ -251,8 +287,7 @@ export function proposePaymentApps(
   if (!data.paymentApps || data.paymentApps.length === 0) return [];
   const result: Proposal[] = [];
   for (const a of data.paymentApps) {
-    const evidence = toEvidence(a);
-    const confidence = computeConfidence(evidence);
+    const { evidence, confidence } = evidenceAndConfidence(a);
     const existing = current.paymentApps.find((x) => x.id === a.paymentAppId);
     if (!existing) {
       const newAppRecord: Record<string, unknown> = {
@@ -266,14 +301,18 @@ export function proposePaymentApps(
       if (a.cardSpecificBonusRates !== undefined) {
         newAppRecord.cardSpecificBonusRates = a.cardSpecificBonusRates;
       }
-      let newAppReviewReason: ReviewReason = "idCollision";
       // cardSpecificBonusRates に日付主張があるのに evidenceQuote に根拠がない場合は降格
       const hasDateBearingBonus = a.cardSpecificBonusRates?.some(
         (b) => b.validFrom || b.validTo,
       );
-      if (hasDateBearingBonus && detectUnsupportedDateClaim({ validFrom: "x" }, evidence.evidenceQuote)) {
-        newAppReviewReason = "unsupportedDateClaim";
-      }
+      // base "idCollision" を unsupportedDateClaim が条件付き上書き (現行と同一)
+      const newAppReviewReason = resolveReviewReason("idCollision", [
+        () =>
+          hasDateBearingBonus &&
+          detectUnsupportedDateClaim({ validFrom: "x" }, evidence.evidenceQuote)
+            ? "unsupportedDateClaim"
+            : undefined,
+      ]);
       result.push({
         type: "addRecord",
         collection: "paymentApps",
