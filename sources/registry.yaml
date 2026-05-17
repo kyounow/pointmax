@@ -196,3 +196,37 @@ sources:
       正常 (厳格方針どおり具体データ無し→0件)。実データを取るには個別
       キャンペーン詳細ページの URL が必要 (ユーザ提供待ち)。それまで本
       ソースは no-op (0 提案・crash なし) なので enabled のまま温存。
+
+  - id: rakuten-pay-campaigns
+    label: 楽天Pay キャンペーン一覧 (公式)
+    url: https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-05-17 追加 (#B 決済系キャンペーン、PR-D1 で proposePrograms
+      が通ったので解禁)。paymentAppId=pa-rakuten-pay、還元通貨 rakuten-pt。
+      campaign-v3.0 extractor が「対象店舗 × 楽天Pay 期間限定上振れ」を
+      1 キャンペーン=1 program (paymentAppId+validFrom/validTo) + 対象
+      店舗 membership として抽出。店舗非依存の全体施策・日付なしは出力
+      しない方針。新規 program は base "idCollision" で必ず needsReview
+      (ライブ還元計算に効くため無確認 auto-merge されない)。
+
+  - id: d-pay-campaigns
+    label: d払い キャンペーン一覧 (公式)
+    url: https://service.smt.docomo.ne.jp/keitai_payment/campaign/
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-05-17 追加 (#B 決済系キャンペーン)。paymentAppId=pa-d-pay、
+      還元通貨 d-pt。扱いは rakuten-pay-campaigns と同じ (campaign-v3.0、
+      店舗特定+期間明記のみ、新規 program は needsReview)。
