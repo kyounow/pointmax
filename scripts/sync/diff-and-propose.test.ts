@@ -5,6 +5,7 @@ import {
   dedupeAcrossProposals,
   isFailedExtraction,
   proposeCards,
+  proposeJalTokuyakuMemberships,
   proposeLoyaltyRules,
   proposeMemberships,
   proposePaymentApps,
@@ -756,5 +757,129 @@ describe("rateToProgramSlug / deriveLoyaltyProgramId (PR-D2a 決定論採番)", 
     expect(deriveLoyaltyProgramId("nanaco-card", 0.01)).toBe(
       "prog-nanaco-card-1pc",
     );
+  });
+});
+
+describe("proposeJalTokuyakuMemberships (PR-D2b)", () => {
+  const jalSeed: SeedShape = {
+    ...emptySeed,
+    programs: [
+      {
+        id: "prog-jal-tokuyaku",
+        name: "JALカード特約店",
+        cardIds: ["jal-suica", "jal-card"],
+        rate: 0.02,
+        currencyId: "jal-mile",
+        bonusType: "primary",
+      },
+    ],
+    memberships: [],
+  };
+  const jalStore = (storeId: string) => ({
+    storeId,
+    name: storeId,
+    category: "飲食",
+    evidenceQuote: "JALカード特約店",
+    explicitness: 0.95,
+    ambiguity: 0.05,
+  });
+
+  it("jal 以外の extractor は対象外 ([])", () => {
+    const data = baseSource({
+      extractor: "point-partner",
+      stores: [jalStore("kura-sushi")],
+    });
+    expect(proposeJalTokuyakuMemberships(data, jalSeed)).toEqual([]);
+  });
+
+  it("新規特約店 store → prog-jal-tokuyaku への membership (clean=auto)", () => {
+    const data = baseSource({
+      extractor: "jal-tokuyaku",
+      categoryRules: [
+        {
+          cardId: "jal-suica",
+          category: "JAL特約店",
+          rate: 0.02,
+          currencyId: "jal-mile",
+          evidenceQuote: "2倍",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+      stores: [jalStore("royal-host"), jalStore("orix-rentacar")],
+    });
+    const ps = proposeJalTokuyakuMemberships(data, jalSeed);
+    expect(ps).toHaveLength(2);
+    expect(ps.every((p) => p.collection === "memberships")).toBe(true);
+    expect(
+      ps.map(
+        (p) => (p as { record: { programId: string } }).record.programId,
+      ),
+    ).toEqual(["prog-jal-tokuyaku", "prog-jal-tokuyaku"]);
+    expect(ps.every((p) => p.reviewReason === undefined)).toBe(true);
+  });
+
+  it("迷子防止: prog-jal-tokuyaku が seed に無ければ [] ", () => {
+    const data = baseSource({
+      extractor: "jal-tokuyaku",
+      stores: [jalStore("royal-host")],
+    });
+    expect(proposeJalTokuyakuMemberships(data, emptySeed)).toEqual([]);
+  });
+
+  it("基本レート乖離 (categoryRule 1.5% ≠ program 2%) → 一括リンクしない", () => {
+    const data = baseSource({
+      extractor: "jal-tokuyaku",
+      categoryRules: [
+        {
+          cardId: "jal-suica",
+          category: "JAL特約店",
+          rate: 0.015,
+          currencyId: "jal-mile",
+          evidenceQuote: "x",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+      stores: [jalStore("royal-host")],
+    });
+    expect(proposeJalTokuyakuMemberships(data, jalSeed)).toEqual([]);
+  });
+
+  it("例外レート店 (storeRules rate≠2%) は対象外", () => {
+    const data = baseSource({
+      extractor: "jal-tokuyaku",
+      storeRules: [
+        {
+          cardId: "jal-suica",
+          storeId: "eneos",
+          rate: 0.01,
+          currencyId: "jal-mile",
+          evidenceQuote: "ENEOS 1%",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+      stores: [jalStore("eneos"), jalStore("royal-host")],
+    });
+    const ps = proposeJalTokuyakuMemberships(data, jalSeed);
+    expect(ps).toHaveLength(1);
+    expect(
+      (ps[0] as { record: { storeId: string } }).record.storeId,
+    ).toBe("royal-host");
+  });
+
+  it("既存 membership は重複提案しない", () => {
+    const seed: SeedShape = {
+      ...jalSeed,
+      memberships: [
+        { programId: "prog-jal-tokuyaku", storeId: "royal-host" },
+      ],
+    };
+    const data = baseSource({
+      extractor: "jal-tokuyaku",
+      stores: [jalStore("royal-host")],
+    });
+    expect(proposeJalTokuyakuMemberships(data, seed)).toEqual([]);
   });
 });
