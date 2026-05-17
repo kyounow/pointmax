@@ -1,9 +1,178 @@
 {
   "sourceId": "d-point-partners",
   "sourceUrl": "https://dpoint.docomo.ne.jp/content/feature/point_realstore.html",
-  "fetchedAt": "2026-05-14T11:00:36.397Z",
-  "promptVersion": "point-partner-vUnknown",
+  "fetchedAt": "2026-05-17T21:57:57.993Z",
+  "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided URL lists various stores where d-points can be *used* (1ポイント=1円としてつかえる！), but it primarily focuses on using d-points for payment (d払い利用対象外の店舗を除き、dポイントやd払いを利用できる). It does not explicitly state the point *earning* rates for presenting a d-point card. Many stores are marked with \"※の店舗はd払いの"
+  "stores": [
+    {
+      "storeId": "mister-donut",
+      "name": "ミスタードーナツ",
+      "category": "飲食",
+      "evidenceQuote": "ミスタードーナツ：dポイントがつかえるお店",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "wendys-first-kitchen",
+      "name": "ウェンディーズ・ファーストキッチン",
+      "category": "飲食",
+      "evidenceQuote": "ウェンディーズ・ファーストキッチン：dポイントがつかえるお店",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "matsuya",
+      "name": "松屋",
+      "category": "飲食",
+      "evidenceQuote": "松屋：dポイントがつかえるお店",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "kamakura-pasta",
+      "name": "鎌倉パスタ",
+      "category": "飲食",
+      "evidenceQuote": "鎌倉パスタ：dポイントがつかえるお店",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "hidakaya",
+      "name": "日高屋",
+      "category": "飲食",
+      "evidenceQuote": "日高屋：dポイントがつかえるお店",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "loyaltyRules": [
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "conv-lawson",
+      "rate": 0.005,
+      "evidenceQuote": "ローソン：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "conv-familymart",
+      "rate": 0.005,
+      "evidenceQuote": "ファミリーマート：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "lawson-store100",
+      "rate": 0.005,
+      "evidenceQuote": "ローソンストア100：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "poplar",
+      "rate": 0.005,
+      "evidenceQuote": "ポプラ：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "sukiya",
+      "rate": 0.005,
+      "evidenceQuote": "すき家：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "mister-donut",
+      "rate": 0.005,
+      "evidenceQuote": "ミスタードーナツ：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "mos-burger",
+      "rate": 0.005,
+      "evidenceQuote": "モスバーガー：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "wendys-first-kitchen",
+      "rate": 0.005,
+      "evidenceQuote": "ウェンディーズ・ファーストキッチン：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "matsuya",
+      "rate": 0.005,
+      "evidenceQuote": "松屋：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "kappa-sushi",
+      "rate": 0.005,
+      "evidenceQuote": "かっぱ寿司：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "gusto",
+      "rate": 0.005,
+      "evidenceQuote": "ガスト：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "hamazushi",
+      "rate": 0.005,
+      "evidenceQuote": "はま寿司：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "kamakura-pasta",
+      "rate": 0.005,
+      "evidenceQuote": "鎌倉パスタ：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    },
+    {
+      "pointCardId": "d-pointcard",
+      "storeId": "hidakaya",
+      "rate": 0.005,
+      "evidenceQuote": "日高屋：dポイントをつかおう",
+      "explicitness": 0.8,
+      "ambiguity": 0.2,
+      "notes": "dポイントが『つかえる』お店としての記載のため、還元率は一般的な200円につき1ポイントと推測。還元率の明示的な記載なし。"
+    }
+  ]
 }

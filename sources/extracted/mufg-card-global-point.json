@@ -1,0 +1,9 @@
+{
+  "sourceId": "mufg-card-global-point",
+  "sourceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
+  "fetchedAt": "2026-05-17T22:01:14.069Z",
+  "promptVersion": "card-vUnknown",
+  "extractor": "card",
+  "geminiModel": "gemini-2.5-flash",
+  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+}

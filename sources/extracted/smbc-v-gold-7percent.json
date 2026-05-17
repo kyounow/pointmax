@@ -1,9 +1,9 @@
 {
   "sourceId": "smbc-v-gold-7percent",
   "sourceUrl": "https://www.smbc-card.com/mem/cardinfo/cardinfo9001629.jsp",
-  "fetchedAt": "2026-05-14T11:01:54.843Z",
+  "fetchedAt": "2026-05-17T22:01:02.622Z",
   "promptVersion": "card-vUnknown",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars):  The page title is \"対象のコンビニ・飲食店で最大8％還元！｜クレジットカードの三井 ...\". The cardId is `smbc-v-gold-7percent`. This suggests the primary focus is on a 7% (or 8%)還元 rate for specific categories. First, let's find the default rate and currency. The page mentions \"合計200円（税込）につき、0.5％～1％ポイント還元\". For \"三井住友カード ゴールド VISA"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars):  The page title is \"対象のコンビニ・飲食店で最大8％還元！\". The page explicitly mentions \"三井住友カード ゴールド VISA/ Mastercard\" which is the card for `smbc-v-gold-7percent` (though the ID naming suggests 7%, the page shows it's part of the 7% group, and Olive has 8%). Let's break down the extraction: **1. `cards` array ("
 }
