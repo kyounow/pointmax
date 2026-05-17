@@ -80,6 +80,35 @@ function resolveReviewReason(
 }
 
 // ───────────────────────────────────────────────────────────────
+// pointCard ロイヤリティ → 正準モデル (BenefitProgram) への決定論変換
+//
+// seed の既存規約 (10 件で確認):
+//   id          : prog-{pointCardId}-{rate%}pc
+//                 0.005→"0.5pc" / 0.01→"1pc" / 0.015→"1.5pc"
+//   currencyId  : その pointCard の通貨
+//   bonusType   : "primary"
+//   店舗との紐付けは StoreProgramMembership (programId↔storeId)
+//
+// ★ ID 採番を AI ではなくこの純関数に閉じ込めることで、迷子 membership
+//   (存在しない program を指す) を構造的に防ぐ。テストベクタで固定。
+// ───────────────────────────────────────────────────────────────
+
+export function rateToProgramSlug(rate: number): string | null {
+  if (!Number.isFinite(rate) || rate <= 0) return null;
+  // 浮動小数誤差回避のため整数化してから %（小数1桁まで）に整形
+  const pct = Math.round(rate * 100000) / 1000; // 0.005→0.5, 0.01→1, 0.015→1.5
+  return `${pct}pc`;
+}
+
+export function deriveLoyaltyProgramId(
+  pointCardId: string,
+  rate: number,
+): string | null {
+  const slug = rateToProgramSlug(rate);
+  return slug ? `prog-${pointCardId}-${slug}` : null;
+}
+
+// ───────────────────────────────────────────────────────────────
 // stores: 新規追加のみ (既存 store の更新提案は現状なし)
 // ───────────────────────────────────────────────────────────────
 
@@ -214,63 +243,112 @@ export function proposeLoyaltyRules(
 ): Proposal[] {
   if (!data.loyaltyRules || data.loyaltyRules.length === 0) return [];
   const result: Proposal[] = [];
+  const pcCurrency = new Map(
+    current.pointCards.map((p) => [p.id, p.currencyId]),
+  );
+  const pcName = new Map(current.pointCards.map((p) => [p.id, p.name]));
+  // 既存 + 同 run 内で出した program / membership を覚えて重複提案を防ぐ
+  const seenPrograms = new Set((current.programs ?? []).map((p) => p.id));
+  const seenMemberships = new Set(
+    (current.memberships ?? []).map((m) => `${m.programId}__${m.storeId}`),
+  );
   for (const r of data.loyaltyRules) {
     const { evidence, confidence } = evidenceAndConfidence(r);
-    const existing = current.loyaltyRules.find(
-      (x) => x.storeId === r.storeId && x.pointCardId === r.pointCardId,
+    // guard ラダー (現行 proposeLoyaltyRules と同一の base+override 順序)
+    const guardReason = resolveReviewReason(
+      confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
+      [
+        () =>
+          detectSelfReportedExclusion(evidence.evidenceQuote)
+            ? "selfReportedExclusion"
+            : undefined,
+        () =>
+          detectUnsupportedDateClaim(r, evidence.evidenceQuote)
+            ? "unsupportedDateClaim"
+            : undefined,
+        () => (!r.rate || r.rate === 0 ? "zeroOrInvalidRate" : undefined),
+      ],
     );
-    if (!existing) {
-      const loyaltyId = `loy-${r.pointCardId}-${r.storeId}`;
-      // base + override 順序は現行の逐次 if と完全に同一:
-      //   base: lowConfidence → selfReportedExclusion → unsupportedDateClaim
-      //         → zeroOrInvalidRate (後勝ち)
-      const loyaltyReviewReason = resolveReviewReason(
-        confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
-        [
-          () =>
-            detectSelfReportedExclusion(evidence.evidenceQuote)
-              ? "selfReportedExclusion"
-              : undefined,
-          () =>
-            detectUnsupportedDateClaim(r, evidence.evidenceQuote)
-              ? "unsupportedDateClaim"
-              : undefined,
-          () => (!r.rate || r.rate === 0 ? "zeroOrInvalidRate" : undefined),
-        ],
-      );
-      const loyaltyRecord: Record<string, unknown> = {
-        id: loyaltyId,
-        storeId: r.storeId,
-        pointCardId: r.pointCardId,
-        rate: r.rate,
-        currencyId: r.currencyId,
-        notes: r.notes,
-      };
-      if (r.validFrom !== undefined) loyaltyRecord.validFrom = r.validFrom;
-      if (r.validTo !== undefined) loyaltyRecord.validTo = r.validTo;
+
+    const programId = deriveLoyaltyProgramId(r.pointCardId, r.rate);
+    if (!programId) {
+      // rate 不正。現行同様 needsReview 1 件で可視化 (auto-merge 不可)。
+      // 迷子 membership を作らないよう program addRecord として残す。
       result.push({
         type: "addRecord",
-        collection: "loyaltyRules",
-        record: loyaltyRecord,
+        collection: "programs",
+        record: {
+          id: `prog-${r.pointCardId}-invalid-${r.storeId}`,
+          name: `${pcName.get(r.pointCardId) ?? r.pointCardId} 提示 (rate不正)`,
+          pointCardId: r.pointCardId,
+          rate: r.rate ?? 0,
+          currencyId: r.currencyId ?? pcCurrency.get(r.pointCardId) ?? "",
+          bonusType: "primary",
+        },
         sourceId: data.sourceId,
         confidence,
         evidence,
-        reviewReason: loyaltyReviewReason,
+        reviewReason: guardReason ?? "zeroOrInvalidRate",
       });
       continue;
     }
-    if (existing.rate !== r.rate) {
-      result.push(
-        buildRateUpdate(
-          existing.id,
-          "loyaltyRules",
-          existing.rate,
-          r.rate,
-          data.sourceId,
-          confidence,
-          evidence,
-        ),
-      );
+
+    const currencyId =
+      r.currencyId ?? pcCurrency.get(r.pointCardId) ?? "";
+
+    // rate バケツ program が未存在なら新規提案。ライブ還元計算に直接
+    // 効くため base "idCollision" で必ず needsReview (proposePrograms と同規約)。
+    // ※ point-partner は常時レート。validFrom/validTo は共有 program に
+    //   載せない (期間物は campaign extractor の担当)。
+    if (!seenPrograms.has(programId)) {
+      const pct = Math.round(r.rate * 100000) / 1000;
+      const programReason = resolveReviewReason("idCollision", [
+        () =>
+          detectSelfReportedExclusion(evidence.evidenceQuote)
+            ? "selfReportedExclusion"
+            : undefined,
+        () =>
+          detectUnsupportedDateClaim(r, evidence.evidenceQuote)
+            ? "unsupportedDateClaim"
+            : undefined,
+      ]);
+      result.push({
+        type: "addRecord",
+        collection: "programs",
+        record: {
+          id: programId,
+          name: `${pcName.get(r.pointCardId) ?? r.pointCardId} 提示 ${pct}%`,
+          pointCardId: r.pointCardId,
+          rate: r.rate,
+          currencyId,
+          bonusType: "primary",
+        },
+        sourceId: data.sourceId,
+        confidence,
+        evidence,
+        reviewReason: programReason,
+      });
+      seenPrograms.add(programId);
+    }
+
+    // store ↔ rate-program の membership。既存/同 run 重複は skip。
+    const mkey = `${programId}__${r.storeId}`;
+    if (!seenMemberships.has(mkey)) {
+      const rec: Record<string, unknown> = {
+        programId,
+        storeId: r.storeId,
+      };
+      if (r.notes !== undefined) rec.notes = r.notes;
+      result.push({
+        type: "addRecord",
+        collection: "memberships",
+        record: rec,
+        sourceId: data.sourceId,
+        confidence,
+        evidence,
+        reviewReason: guardReason,
+      });
+      seenMemberships.add(mkey);
     }
   }
   return result;
