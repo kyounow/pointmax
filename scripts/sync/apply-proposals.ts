@@ -8,7 +8,9 @@
 //   - 上記以外 (updateField / referenceChange / delete) は console.warn して skip
 //
 // 既存の seed-additions.ts に登録済みの id は重複排除。
-// SEED_VERSION は regex で +1 bump。
+// SEED_VERSION には触れない: 版数は手動リリース粒度。cron は
+// seed-additions.ts への add-only のみ。既存ユーザーへの通知は
+// SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 //
 // Usage:
 //   npm run sync:apply              # 適用
@@ -35,7 +37,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
 const PROPOSAL_PATH = resolve(REPO_ROOT, "sources/proposed-migrations.json");
 const SEED_ADDITIONS_PATH = resolve(REPO_ROOT, "src/state/seed-additions.ts");
-const SEED_PATH = resolve(REPO_ROOT, "src/state/seed.ts");
 
 // ───────────────────────────────────────────────────────────────
 // CLI
@@ -65,7 +66,7 @@ function printUsage(): void {
       "Usage: tsx scripts/sync/apply-proposals.ts [--dry-run]",
       "",
       "sources/proposed-migrations.json の autoApplicable を",
-      "src/state/seed-additions.ts と src/state/seed.ts に反映します。",
+      "src/state/seed-additions.ts に反映します (SEED_VERSION には触れません)。",
       "",
       "  --dry-run  ファイルを書かず、ログだけ表示",
     ].join("\n"),
@@ -257,28 +258,6 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
 }
 
 // ───────────────────────────────────────────────────────────────
-// SEED_VERSION bump
-// ───────────────────────────────────────────────────────────────
-
-const SEED_VERSION_RE = /export const SEED_VERSION = (\d+);/;
-
-export function bumpSeedVersion(seedSource: string): {
-  updated: string;
-  from: number;
-  to: number;
-} {
-  const m = seedSource.match(SEED_VERSION_RE);
-  if (!m) throw new Error("seed.ts に SEED_VERSION の行が見つからない");
-  const from = parseInt(m[1], 10);
-  const to = from + 1;
-  const updated = seedSource.replace(
-    SEED_VERSION_RE,
-    `export const SEED_VERSION = ${to};`,
-  );
-  return { updated, from, to };
-}
-
-// ───────────────────────────────────────────────────────────────
 // Main
 // ───────────────────────────────────────────────────────────────
 
@@ -349,11 +328,6 @@ function main(): void {
   };
   const newContent = buildSeedAdditionsContent(mergedBuckets);
 
-  // 4. SEED_VERSION bump
-  const seedSource = readFileSync(SEED_PATH, "utf-8");
-  const { updated: newSeedSource, from, to } = bumpSeedVersion(seedSource);
-  console.log(`🔢 SEED_VERSION: ${from} → ${to}`);
-
   if (args.dryRun) {
     console.log("✋ --dry-run: ファイル書き込み無し");
     return;
@@ -361,8 +335,6 @@ function main(): void {
 
   writeFileSync(SEED_ADDITIONS_PATH, newContent);
   console.log(`✓ wrote ${SEED_ADDITIONS_PATH}`);
-  writeFileSync(SEED_PATH, newSeedSource);
-  console.log(`✓ updated SEED_VERSION in ${SEED_PATH}`);
   console.log("📦 次は npm run build で master.json を再生成、commit してください。");
 }
 

@@ -50,8 +50,12 @@ import {
   SEED_STORE_PROGRAM_MEMBERSHIPS,
 } from "./seed-data-programs";
 
-// シードデータの版数。新しいカード/通貨/レートを追加した時に上げる。
-// アプリは保存済の lastSeedVersion とこの値を比較してアップデート通知を出す。
+// シードデータの版数。**手動リリース粒度**でのみ bump する
+// (型構造変更や大きなデータ追加を伴うリリース時に人手で +1)。
+// 週次 cron auto-sync は seed-additions.ts への add-only のみで
+// この値には触れない。既存ユーザーへの cron 追加分の通知は
+// SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
+// UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
 export const SEED_VERSION = 35;
 

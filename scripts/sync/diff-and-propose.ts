@@ -291,8 +291,10 @@ function main(): void {
 
   const report: ProposalReport = {
     generatedAt: new Date().toISOString(),
+    // cron は SEED_VERSION を bump しない (リリース粒度)。
+    // from == to で「版数は据え置き」を正直に表す。
     fromSeedVersion: SEED_VERSION,
-    toSeedVersion: SEED_VERSION + 1,
+    toSeedVersion: SEED_VERSION,
     autoApplicable,
     needsReview,
     summary: {
