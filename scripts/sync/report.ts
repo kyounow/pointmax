@@ -39,16 +39,71 @@ function loadReport(): ProposalReport {
   return JSON.parse(text) as ProposalReport;
 }
 
+// cron は日曜/水曜 21:00 UTC (= 月曜/木曜 06:00 JST) に走るため、
+// toISOString() の UTC 日付だと JST では翌日になり 1 日ずれる。
+// レポートの日付ラベルは運用者 (JST) の暦日に揃える。
+function jstDate(iso: string): string {
+  // en-CA ロケールは YYYY-MM-DD 形式を返す
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
 // ───────────────────────────────────────────────────────────────
 // AUTO_SUMMARY.md generator
 // ───────────────────────────────────────────────────────────────
+
+// 自動適用された 1 レコードを「後から読み解ける」1 行に整形する。
+// AUTO_SUMMARY.md は commit message としてのみ使われ git には残らないため、
+// このコミットメッセージ本文が唯一の永続的な監査記録になる。
+function formatAutoItem(p: Proposal): string {
+  if (p.type === "updateField") {
+    const u = p as UpdateFieldProposal;
+    const fmt = (v: unknown) =>
+      typeof v === "number" ? `${(v * 100).toFixed(2)}%` : String(v);
+    return `${u.collection} ${u.id}.${u.field}: ${fmt(u.from)} → ${fmt(u.to)}`;
+  }
+  if (p.type === "delete") {
+    const d = p as { collection: string; id: string };
+    return `${d.collection} 削除 ${d.id}`;
+  }
+  if (p.type === "referenceChange") {
+    const r = p as { collection: string; id: string; field: string; from: unknown; to: unknown };
+    return `${r.collection} ${r.id}.${r.field}: ${JSON.stringify(r.from)} → ${JSON.stringify(r.to)}`;
+  }
+
+  const rec = (p as AddRecordProposal).record;
+  const pct = (v: unknown) =>
+    typeof v === "number" ? `${(v * 100).toFixed(2)}%` : String(v);
+  const period =
+    rec.validFrom || rec.validTo
+      ? ` [${rec.validFrom ?? "?"}〜${rec.validTo ?? "?"}]`
+      : "";
+
+  switch (p.collection) {
+    case "stores":
+      return `${rec.id} — ${rec.name}${rec.category ? ` (${rec.category})` : ""}`;
+    case "memberships":
+      return `${rec.programId} → ${rec.storeId}${rec.overrideRate != null ? ` (率上書き ${pct(rec.overrideRate)})` : ""}`;
+    case "programs":
+    case "campaigns":
+      return `${rec.id} — ${rec.name} ${pct(rec.rate)} ${rec.currencyId ?? ""}${period}`.trim();
+    case "loyaltyRules":
+      return `${rec.id} ${rec.storeId} → ${rec.pointCardId} ${pct(rec.rate)}`;
+    default:
+      return `${rec.id ?? JSON.stringify(rec)}`;
+  }
+}
 
 /**
  * Build the auto-merge commit message markdown.
  * Used directly as a git commit message via `git commit -F sources/AUTO_SUMMARY.md`.
  */
 export function buildAutoSummary(report: ProposalReport): string {
-  const date = new Date(report.generatedAt).toISOString().slice(0, 10);
+  const date = jstDate(report.generatedAt);
   const n = report.autoApplicable.length;
 
   if (n === 0) {
@@ -110,12 +165,30 @@ export function buildAutoSummary(report: ProposalReport): string {
         ).toFixed(2)
       : "N/A";
 
+  // 追加項目を「ソース / collection」ごとに 1 行ずつ列挙する監査セクション。
+  // commit message 本文が唯一の永続記録なので、何が入ったか後から追える。
+  const auditLines: string[] = [];
+  const groupKey = (p: Proposal) => `${p.sourceId} / ${p.collection ?? "unknown"}`;
+  const grouped = new Map<string, Proposal[]>();
+  for (const p of report.autoApplicable) {
+    const k = groupKey(p);
+    if (!grouped.has(k)) grouped.set(k, []);
+    grouped.get(k)!.push(p);
+  }
+  for (const [k, items] of grouped.entries()) {
+    auditLines.push(`### ${k} (${items.length})`);
+    for (const p of items) auditLines.push(`- ${formatAutoItem(p)}`);
+    auditLines.push("");
+  }
+
   const lines: string[] = [
     `auto-sync: ${n} 件の変更を自動反映 (${date})`,
     "",
     "## 内訳",
     ...detailLines,
     "",
+    "## 追加項目",
+    ...auditLines,
     "## 統計",
     `- autoApplicable: ${n} 件`,
     `- 平均 confidence: ${avgConfidence}`,
@@ -226,7 +299,7 @@ function formatProposalDetail(p: Proposal): string {
  * Build the review queue PR body markdown.
  */
 export function buildReviewQueue(report: ProposalReport): string {
-  const date = new Date(report.generatedAt).toISOString().slice(0, 10);
+  const date = jstDate(report.generatedAt);
   const n = report.needsReview.length;
 
   // Group by reviewReason
