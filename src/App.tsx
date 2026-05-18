@@ -153,7 +153,15 @@ function App() {
         >
           <span aria-hidden="true">☰</span>
         </button>
-        <div className="brand">PointMax</div>
+        <button
+          type="button"
+          className="brand"
+          onClick={() => setTab("calculator")}
+          aria-label="計算画面に戻る"
+          title="計算画面に戻る"
+        >
+          PointMax
+        </button>
         <nav className="tabs desktop-only">
           {TABS.map((t) => (
             <button
