@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   bucketProposals,
-  bumpSeedVersion,
   buildSeedAdditionsContent,
   emitObjectLiteral,
   mergeWithExisting,
@@ -154,25 +153,5 @@ describe("buildSeedAdditionsContent", () => {
     expect(out).toContain(
       'export const ADDED_STORES: Store[] = [\n  { id: "kura-sushi", name: "くら寿司", category: "飲食" },\n];',
     );
-  });
-});
-
-describe("bumpSeedVersion", () => {
-  it("SEED_VERSION を +1", () => {
-    const src = `// header\nexport const SEED_VERSION = 1;\nconst other = 5;\n`;
-    const { updated, from, to } = bumpSeedVersion(src);
-    expect(from).toBe(1);
-    expect(to).toBe(2);
-    expect(updated).toContain("export const SEED_VERSION = 2;");
-    expect(updated).not.toContain("export const SEED_VERSION = 1;");
-  });
-
-  it("SEED_VERSION が見つからないと例外", () => {
-    expect(() => bumpSeedVersion("no version here")).toThrow(/SEED_VERSION/);
-  });
-
-  it("3 桁版数でも正しく bump", () => {
-    const { to } = bumpSeedVersion("export const SEED_VERSION = 142;");
-    expect(to).toBe(143);
   });
 });

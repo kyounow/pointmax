@@ -93,6 +93,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # src/state/seed.ts は意図的に対象外: SEED_VERSION はリリース粒度で
+          # cron は bump しない (apply-proposals は seed.ts を書き換えない)。
+          # 既存ユーザーへの追加分通知は SyncUpdateModal が差分検知で担う。
           git add src/state/seed-additions.ts sources/extracted/ sources/proposed-migrations.json
           if git diff --cached --quiet; then
             echo "ℹ️ no changes to commit"
