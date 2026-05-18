@@ -83,6 +83,50 @@ describe("buildAutoSummary", () => {
     expect(md).toContain("🤖 GitHub Actions weekly sync");
   });
 
+  it("日付ラベルは UTC ではなく JST 暦日 (cron 21:00 UTC → 翌日 JST のずれを補正)", () => {
+    // 日曜 21:00 UTC 過ぎ = 月曜 06:00 JST。UTC だと 05-17 だが JST では 05-18。
+    const md = buildAutoSummary(
+      baseReport({ generatedAt: "2026-05-17T22:02:02.758Z" }),
+    );
+    expect(md).toContain("2026-05-18");
+    expect(md).not.toContain("2026-05-17");
+  });
+
+  it("自動適用された各レコードが「追加項目」に 1 行ずつ列挙される", () => {
+    const report = baseReport({
+      autoApplicable: [
+        {
+          type: "addRecord",
+          collection: "stores",
+          record: { id: "bic-camera", name: "ビックカメラ", category: "家電量販店" },
+          sourceId: "ponta-partners",
+          confidence: 0.92,
+          evidence: { evidenceQuote: "ビックカメラ", explicitness: 0.95, ambiguity: 0.05 },
+        },
+        {
+          type: "addRecord",
+          collection: "memberships",
+          record: { programId: "prog-ponta-card-0.5pc", storeId: "bic-camera" },
+          sourceId: "ponta-partners",
+          confidence: 0.9,
+          evidence: { evidenceQuote: "ビックカメラ たまる", explicitness: 0.9, ambiguity: 0.1 },
+        },
+      ],
+      summary: {
+        autoApplicableCount: 2,
+        needsReviewCount: 0,
+        sourcesProcessed: 5,
+        sourcesFailed: 0,
+      },
+    });
+    const md = buildAutoSummary(report);
+    expect(md).toContain("## 追加項目");
+    expect(md).toContain("ponta-partners / stores");
+    expect(md).toContain("bic-camera — ビックカメラ (家電量販店)");
+    expect(md).toContain("ponta-partners / memberships");
+    expect(md).toContain("prog-ponta-card-0.5pc → bic-camera");
+  });
+
   it("updateField の場合は変更内容が表示される", () => {
     const report = baseReport({
       autoApplicable: [
