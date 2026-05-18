@@ -1972,3 +1972,98 @@ details summary {
     width: 100%;
   }
 }
+
+/* ── 週次 cron 同期通知モーダル ── */
+.sync-update-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: dialog-fade-in 0.15s ease-out;
+}
+.sync-update-modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 24px 28px 20px;
+  min-width: 340px;
+  max-width: 520px;
+  width: calc(100% - 32px);
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  animation: dialog-slide-up 0.18s ease-out;
+}
+.sync-update-title {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  color: var(--accent);
+}
+.sync-update-lead {
+  margin: 0 0 14px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.sync-update-body {
+  overflow-y: auto;
+  margin: 0 0 18px 0;
+  padding-right: 4px;
+}
+.sync-update-group {
+  margin-bottom: 14px;
+}
+.sync-update-group-title {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sync-update-count {
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.sync-update-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.sync-update-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sync-update-primary {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  color: white;
+}
+.sync-update-primary:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+@media (max-width: 480px) {
+  .sync-update-modal {
+    padding: 18px 16px 16px;
+  }
+  .sync-update-actions {
+    flex-direction: column;
+  }
+  .sync-update-actions button {
+    width: 100%;
+  }
+}

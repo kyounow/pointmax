@@ -12,6 +12,7 @@ import { PaymentAppsScreen } from "./ui/PaymentAppsScreen";
 import { SettingsScreen } from "./ui/SettingsScreen";
 import { UpdateBanner } from "./ui/UpdateBanner";
 import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
+import { SyncUpdateModal } from "./ui/SyncUpdateModal";
 import { useStore } from "./state/store";
 import { useDialog } from "./ui/dialog/DialogProvider";
 
@@ -143,6 +144,7 @@ function App() {
   return (
     <div className="app">
       {pendingMigration && <SchemaUpgradeModal strategy={pendingMigration} />}
+      {!pendingMigration && <SyncUpdateModal />}
       <header className="appbar">
         <button
           className="hamburger"
