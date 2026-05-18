@@ -23,7 +23,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "JALカード ショッピングマイル・プレミアム (年会費 4,950円) 加入要。" +
       "CLUB-A 系は自動付帯。100円=2 マイル積算。",
     officialUrl: "https://www.jal.co.jp/jp/ja/jalcard/service/tokuyakuten/",
-    notes: "v3 で JAL特約店 category を program 化 (旧 rule-jal-suica-tokuyaku / rule-jal-card-tokuyaku)",
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -39,7 +38,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "rakuten-pt",
     bonusType: "primary",
     description: "楽天カード × 楽天市場 通常 + SPU 基本 = 3%",
-    notes: "旧 rule-rakuten-ichiba から移行 (v3 PR 2)",
   },
 
   // A-2: 楽天カード × 楽天市場「5と0のつく日」4% (recurringDays)
@@ -54,8 +52,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     recurringDays: [5, 10, 15, 20, 25, 30],
     description: "楽天市場「5と0のつく日」+1% (毎月 5/10/15/20/25/30 日)",
     notes:
-      "5と0のつく日 (毎月 5/10/15/20/25/30) のみ、要エントリー。SPU 基本 +2% 込みで実質 +4% 還元。" +
-      "旧 rule-rakuten-ichiba-zero-five-day から移行 (v3 PR 2)",
+      "5と0のつく日 (毎月 5/10/15/20/25/30) のみ、要エントリー。SPU 基本 +2% 込みで実質 +4% 還元。",
   },
 
   // A-3: SMBC ゴールド(NL) × タッチ決済 7% (22 stores)
@@ -70,7 +67,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     validFrom: "2023-04-03",
     description:
       "SMBC ゴールド(NL) Visa/Master タッチ決済 + スマホ利用で 7% Vポイント還元",
-    notes: "旧 rule-smbc-* 22 件から移行 (v3 PR 2)",
   },
 
   // A-4: Olive × タッチ決済 8% (22 stores)
@@ -85,7 +81,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     validFrom: "2023-04-03",
     description:
       "Oliveフレキシブルペイ スマホタッチ決済で 8% Vポイント還元 (smbc-v 7% + Olive 連携 +1%)",
-    notes: "旧 rule-olive-* 22 件から移行 (v3 PR 2)",
   },
 
   // A-5: JALカードSuica × Suicaチャージ 1.5% JRE POINT
@@ -97,7 +92,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "jre",
     bonusType: "primary",
     description: "JALカードSuica (ビューカード機能) × Suicaチャージで 1.5% JRE POINT",
-    notes: "旧 rule-jal-suica-charge から移行 (v3 PR 2)",
   },
 
   // A-6: JALカードSuica × えきねっと新幹線 8%
@@ -109,7 +103,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "jre",
     bonusType: "primary",
     description: "ビューカード会員 新幹線eチケット 8% JRE POINT 還元",
-    notes: "旧 rule-jal-suica-ekinet-shinkansen から移行 (v3 PR 2)",
   },
 
   // A-7: JALカードSuica × えきねっと在来線 5%
@@ -121,7 +114,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "jre",
     bonusType: "primary",
     description: "ビューカード会員 在来線チケットレス特急券 5% JRE POINT 還元",
-    notes: "旧 rule-jal-suica-ekinet-zairaisen から移行 (v3 PR 2)",
   },
 
   // A-8: ビューカード × Suicaチャージ 1.5%
@@ -133,7 +125,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "jre",
     bonusType: "primary",
     description: "ビューカード スタンダード × Suica オートチャージ/モバイルチャージで 1.5% JRE POINT",
-    notes: "旧 rule-viewcard-suica-charge から移行 (v3 PR 2)",
   },
 
   // A-9: メルカード × メルカリ 4% (定常最大)
@@ -145,7 +136,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "mercari-pt",
     bonusType: "primary",
     description: "メルカリ内お買い物で最大 4% メルカリポイント還元 (利用額連動、定常最大)",
-    notes: "旧 rule-mercard-mercari から移行 (v3 PR 2)",
   },
 
   // A-10: メルカード × メルカリ 毎月8日 8%
@@ -158,7 +148,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     bonusType: "primary",
     recurringDays: [8],
     description: "メルカード毎月8日: メルカリ内お買い物で 8% 還元 (常設)",
-    notes: "旧 rule-mercard-mercari-day8 から移行 (v3 PR 2)",
   },
 
   // A-11: dカード × d払い × ビックカメラ 6% 期間限定 (2026/5/16〜5/31)
@@ -176,7 +165,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     officialUrl:
       "https://service.smt.docomo.ne.jp/keitai_payment/campaign/dpay_biccamera_260507_7487/",
     monthlyCapAmountYen: 40000, // 2000pt ÷ 0.05
-    notes: "旧 rule-dcard-bic-camera-d-pay-202605 から移行 (v3 PR 2)",
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -192,7 +180,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "rakuten-pt",
     bonusType: "primary",
     description: "楽天ポイントカード提示で 200円=1pt (0.5%) 還元",
-    notes: "旧 SEED_LOYALTY_RULES + ADDED_LOYALTY_RULES (rakuten-pointcard 0.5%) から移行 (v3 PR 2)",
   },
 
   // B-2: 楽天ポイントカード 1% (複数店舗)
@@ -204,7 +191,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "rakuten-pt",
     bonusType: "primary",
     description: "楽天ポイントカード提示で 100円=1pt (1%) 還元",
-    notes: "旧 SEED_LOYALTY_RULES (rakuten-pointcard 1%) から移行 (v3 PR 2)",
   },
 
   // B-3: dポイントカード 0.5% (複数店舗)
@@ -216,7 +202,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "d-pt",
     bonusType: "primary",
     description: "dポイントカード提示で 200円=1pt (0.5%) 還元",
-    notes: "旧 SEED_LOYALTY_RULES (d-pointcard 0.5%) から移行 (v3 PR 2)",
   },
 
   // B-4: dポイントカード 1% (複数店舗)
@@ -228,7 +213,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "d-pt",
     bonusType: "primary",
     description: "dポイントカード提示で 100円=1pt (1%) 還元",
-    notes: "旧 SEED_LOYALTY_RULES (d-pointcard 1%) から移行 (v3 PR 2)",
   },
 
   // B-5: Pontaカード 0.5% (複数店舗)
@@ -240,7 +224,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "ponta-pt",
     bonusType: "primary",
     description: "Pontaカード提示で 200円=1pt (0.5%) 還元",
-    notes: "旧 SEED_LOYALTY_RULES (ponta-card 0.5%) から移行 (v3 PR 2)",
   },
 
   // B-6: Pontaカード 1% (複数店舗)
@@ -252,7 +235,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "ponta-pt",
     bonusType: "primary",
     description: "Pontaカード提示で 100円=1pt (1%) 還元",
-    notes: "旧 ADDED_LOYALTY_RULES (ponta-card 1%) から移行 (v3 PR 2)",
   },
 
   // B-7: Vポイントカード 0.5% (複数店舗)
@@ -264,7 +246,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "v-pt",
     bonusType: "primary",
     description: "Vポイントカード(旧Tカード)提示で 200円=1pt (0.5%) 還元",
-    notes: "旧 SEED_LOYALTY_RULES (vpoint-card 0.5%) から移行 (v3 PR 2)",
   },
 
   // B-8: nanacoカード 1% (セブン-イレブン)
@@ -276,7 +257,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "nanaco-pt",
     bonusType: "primary",
     description: "nanacoカード提示で 100円=1pt (1%) 還元 (電子マネー支払い時)",
-    notes: "旧 SEED_LOYALTY_RULES (nanaco-card 1%) から移行 (v3 PR 2)",
   },
 
   // B-9: WAONカード 0.5% (複数店舗)
@@ -288,7 +268,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "waon-pt",
     bonusType: "primary",
     description: "WAONカード提示で 200円=1pt (0.5%) 還元",
-    notes: "旧 SEED_LOYALTY_RULES (waon-card 0.5%) から移行 (v3 PR 2)",
   },
 
   // B-10: JRE POINT カード 0.5% (駅ナカ加盟店)
@@ -300,7 +279,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "jre",
     bonusType: "primary",
     description: "JRE POINT カード提示で 200円(税抜)=1pt (0.5%) 還元 (駅ナカ加盟店)",
-    notes: "旧 SEED_LOYALTY_RULES (jre-pointcard 0.5%) 8 件から移行 (v3 PR 2)",
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -316,7 +294,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "rakuten-pt",
     bonusType: "primary",
     description: "楽天Pay 利用で 1% 楽天ポイント還元 (誰でも)",
-    notes: "旧 pa-rakuten-pay.defaultBonusRate=0.01 から移行 (v3 PR 2)",
   },
 
   // C-2: 楽天Pay × 楽天カード 上乗せ 0.5% (addOn)
@@ -329,7 +306,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "rakuten-pt",
     bonusType: "addOn",
     description: "楽天カード経由チャージで +0.5% 上乗せ (楽天Pay 1% と合わせて 1.5%)",
-    notes: "旧 pa-rakuten-pay.cardSpecificBonusRates[rakuten-card] から移行 (v3 PR 2)",
   },
 
   // C-3: d払い ベース還元 0.5% (全 store、primary)
@@ -341,7 +317,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "d-pt",
     bonusType: "primary",
     description: "d払い利用で 0.5% dポイント還元 (誰でも、200円=1pt)",
-    notes: "旧 pa-d-pay.defaultBonusRate=0.005 から移行 (v3 PR 2)",
   },
 
   // C-4: d払い × dカード 上乗せ 0.5% (addOn)
@@ -354,7 +329,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "d-pt",
     bonusType: "addOn",
     description: "dカード設定で +0.5% 上乗せ (d払い 0.5% と合わせて 1.0%)",
-    notes: "旧 pa-d-pay.cardSpecificBonusRates[dcard] から移行 (v3 PR 2)",
   },
 
   // C-5: PayPay ベース還元 0.5% (全 store、primary)
@@ -366,7 +340,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "paypay",
     bonusType: "primary",
     description: "PayPay 残高払いで 0.5% PayPayポイント還元 (誰でも)",
-    notes: "旧 pa-paypay.defaultBonusRate=0.005 から移行 (v3 PR 2)",
   },
 
   // C-6: PayPay × PayPayカード 上乗せ 0.5% (addOn)
@@ -379,7 +352,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "paypay",
     bonusType: "addOn",
     description: "PayPayクレジット連携で +0.5% 上乗せ (PayPay 0.5% と合わせて 1.0%)",
-    notes: "旧 pa-paypay.cardSpecificBonusRates[paypay-card] から移行 (v3 PR 2)",
   },
 
   // C-7: au PAY ベース還元 0.5% (全 store、primary)
@@ -391,7 +363,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "ponta-pt",
     bonusType: "primary",
     description: "au PAY コード支払いで 0.5% Pontaポイント還元 (誰でも)",
-    notes: "旧 pa-au-pay.defaultBonusRate=0.005 から移行 (v3 PR 2)",
   },
 
   // C-8: au PAY × au PAYカード 上乗せ 1% (addOn)
@@ -404,7 +375,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "ponta-pt",
     bonusType: "addOn",
     description: "au PAYカードからチャージで +1% 上乗せ (au PAY 0.5% と合わせて 1.5%)",
-    notes: "旧 pa-au-pay.cardSpecificBonusRates[au-pay-card] から移行 (v3 PR 2)",
   },
 
   // 【削除済 v4.0.1】C-9 prog-famipay-base / C-10 prog-famima-card-addon:
@@ -424,7 +394,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "mercari-pt",
     bonusType: "addOn",
     description: "メルカード連携時 +1% 上乗せ (メルペイ単体は 0%)",
-    notes: "旧 pa-merpay.cardSpecificBonusRates[mercard] から移行 (v3 PR 2)",
   },
 
   // ─── v3.6.0: nanaco / WAON 電子マネー支払い側の base 還元 ───
@@ -456,9 +425,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description:
       "nanaco 電子マネー支払いで 200円1pt (0.5%) 還元。" +
       "セブン-イレブン等 loyalty 加盟店は nanaco-card 経路で計上、ここは非 loyalty 店のみ。",
-    notes:
-      "v3.6.0 で追加。nanaco-pt の edges が限定的なので primary ではなく addOn で" +
-      "カード本来の通貨表示を保つ設計 (二重取りは memberships の排他配置で防止)",
   },
 
   // C-13: WAON 電子マネー ベース還元 0.5% (addOn)
@@ -472,9 +438,6 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description:
       "WAON 電子マネー支払いで 200円1pt (0.5%) 還元。" +
       "イオン系等 loyalty 加盟店は waon-card 経路で計上、ここは非 loyalty 店のみ。",
-    notes:
-      "v3.6.0 で追加。waon-pt の edges が限定的なので primary ではなく addOn で" +
-      "カード本来の通貨表示を保つ設計 (二重取りは memberships の排他配置で防止)",
   },
 ];
 
