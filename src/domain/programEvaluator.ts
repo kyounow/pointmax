@@ -61,6 +61,16 @@ export function evaluatePrograms(args: {
     if (p.cardIds && !p.cardIds.includes(card.id)) continue;
     if (p.paymentAppId && p.paymentAppId !== paymentApp.id) continue;
 
+    // chargeBased paymentApp 経由のときは paymentAppId を持たない program を除外する。
+    // chargeBased = カードは「チャージ元」(0% 還元) で決済主体は paymentApp なので、
+    // カード単体特典 (cardIds-only) や全カード共通の汎用特典は paymentApp 経由では
+    // 発動しないのが論理的整合 (例: Olive 選べる特典 +1% は Olive 直接決済時のみ、
+    // 楽天Pay/d払い 経由では発動しない)。
+    // paymentApp 専用 program (prog-rakuten-pay-base 等) や paymentApp × card 組合せ
+    // program (prog-rakuten-pay-rakuten-card-addon 等) は paymentAppId 指定済なので
+    // この除外の対象外 (上の line 62 で paymentAppId == paymentApp.id を既に検証済)。
+    if (paymentApp.chargeBased && !p.paymentAppId) continue;
+
     const membership = storeMembers.find((m) => m.programId === p.id);
     eligible.push({
       program: p,
