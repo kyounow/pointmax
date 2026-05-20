@@ -101,6 +101,19 @@ export const SEED_CARDS: Card[] = [
     enabled: false,
   },
   {
+    // JCB ゴールド (年会費 11,000円、初年度無料)
+    // 200円=1 J-POINT = 0.5% (基本還元)
+    // 公式: 「優待店利用で最大20倍」「ポイント還元率は最大10%」(= 0.5% × 20倍 = スターバックス)
+    // 「プレミアムでおトク」対象店 (高島屋 4倍 等) は Gold プレミアム条件で発動
+    // V5-2 で J-POINT パートナー Gold 系列 program に対応
+    id: "jcb-gold",
+    name: "JCB ゴールド",
+    grade: "ゴールド",
+    defaultRate: 0.005,
+    defaultCurrencyId: "j-point",
+    enabled: false,
+  },
+  {
     // エポスカード (年会費永年無料)、200円=1エポスポイント = 0.5%
     // 丸井での 10% off 等の優遇は割引なので rate 計算では扱わない
     id: "epos-card",

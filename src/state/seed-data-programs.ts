@@ -442,15 +442,22 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
 
   // ═══════════════════════════════════════════════════════════════
   // V5: JCB J-POINT パートナー (旧 Oki Doki ランド系、2026/1〜J-POINT 名称統一)
-  // 倍率階層別に 4 program。bonusType=primary で JCB W の基本還元を置換。
-  // 全店「ポイントアップ登録 (無料、店ごと)」が必須 → 全 program に entryUrl。
-  // 出典: https://j-pointpartner.jcb.co.jp/search (WebFetch + ユーザー確認 2026-05-20)
-  // 倍率は公式表記をそのまま rate に反映 (W 基本 1% × N 倍 = 1×N%)。
-  // 既存 store id のみ採用 (新規 store 追加は今期スコープ外)。
+  // ───────────────────────────────────────────────────────────────
+  // V5-2 でカードグレード別に W 用 / Gold 用 2 系列に分離。
+  // - 公式の「○倍」は OkiDoki 倍率 (= 200円1pt 基準) なのでカード基本還元率に
+  //   依存する: W 基本 2倍×1% / Gold 基本 1倍×0.5%。
+  // - Gold「最大10%還元」= 0.5% × 20倍 (= スタバ) と整合、Gold プレミアム
+  //   「最大4倍」= 0.5% × 4倍 = 2% (= 高島屋プレミアム) が W の 2倍と同等。
+  // - 「プレミアムでおトク」は Gold が W と同等実効率に追いつく仕組み。
+  // - 全店「ポイントアップ登録 (無料、店ごと)」必須 → 全 program に entryUrl。
+  // 出典: https://j-pointpartner.jcb.co.jp/search +
+  //       https://www.jcb.co.jp/ordercard/kojin_card/gold2.html (V5-2、2026-05-20)
   // ═══════════════════════════════════════════════════════════════
+
+  // ─── W 系列 (cardIds=["jcb-w"]、基本 1% × 倍率) ───
   {
     id: "prog-jcb-jpoint-2x",
-    name: "J-POINT パートナー (2倍)",
+    name: "J-POINT パートナー (2倍) W向け",
     cardIds: ["jcb-w"],
     rate: 0.02,
     currencyId: "j-point",
@@ -462,7 +469,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   },
   {
     id: "prog-jcb-jpoint-3x",
-    name: "J-POINT パートナー (3倍)",
+    name: "J-POINT パートナー (3倍) W向け",
     cardIds: ["jcb-w"],
     rate: 0.03,
     currencyId: "j-point",
@@ -472,28 +479,77 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
-  {
-    id: "prog-jcb-jpoint-4x",
-    name: "J-POINT パートナー (4倍)",
-    cardIds: ["jcb-w"],
-    rate: 0.04,
-    currencyId: "j-point",
-    bonusType: "primary",
-    description: "JCB J-POINT パートナー店で 最大 4倍 (W 基本 1% × 4 = 実効 4%)",
-    conditions:
-      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) + " +
-      "「プレミアムでおトク」条件 (プレミアムカードグレード等) を満たした場合の最大倍率。",
-    entryUrl: "https://j-pointpartner.jcb.co.jp/search",
-  },
+  // V5-2: prog-jcb-jpoint-4x (W 向け 4倍 rate 0.04) を廃止。
+  // 高島屋は W で「2倍 = 2%」が正解 (倍率 4 は Gold プレミアム視点)、
+  // W 用 memberships は prog-jcb-jpoint-2x に移管。Gold プレミアム 4倍は
+  // prog-jcb-jpoint-gold-4x で表現 (実効 2%、W の 2倍と同等)。
   {
     id: "prog-jcb-jpoint-20x",
-    name: "J-POINT パートナー (20倍)",
+    name: "J-POINT パートナー (20倍) W向け",
     cardIds: ["jcb-w"],
     rate: 0.2,
     currencyId: "j-point",
     bonusType: "primary",
     description:
       "JCB J-POINT パートナー店で 20倍 (W 基本 1% × 20 = 実効 20%)。" +
+      "スターバックスのモバイルオーダー / カードチャージ限定。",
+    conditions:
+      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) + " +
+      "Starbucks Rewards のモバイルオーダー or スタバカード入金経由が必須。" +
+      "店頭直接決済は通常倍率扱い。",
+    entryUrl: "https://j-pointpartner.jcb.co.jp/search",
+  },
+
+  // ─── Gold 系列 (cardIds=["jcb-gold"]、基本 0.5% × 倍率) ───
+  {
+    id: "prog-jcb-jpoint-gold-2x",
+    name: "J-POINT パートナー (2倍) Gold向け",
+    cardIds: ["jcb-gold"],
+    rate: 0.01,
+    currencyId: "j-point",
+    bonusType: "primary",
+    description: "JCB J-POINT パートナー店で 2倍 (Gold 基本 0.5% × 2 = 実効 1%)",
+    conditions:
+      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
+    entryUrl: "https://j-pointpartner.jcb.co.jp/search",
+  },
+  {
+    id: "prog-jcb-jpoint-gold-3x",
+    name: "J-POINT パートナー (3倍) Gold向け",
+    cardIds: ["jcb-gold"],
+    rate: 0.015,
+    currencyId: "j-point",
+    bonusType: "primary",
+    description: "JCB J-POINT パートナー店で 3倍 (Gold 基本 0.5% × 3 = 実効 1.5%)",
+    conditions:
+      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
+    entryUrl: "https://j-pointpartner.jcb.co.jp/search",
+  },
+  {
+    id: "prog-jcb-jpoint-gold-4x",
+    name: "J-POINT パートナー (4倍 プレミアム) Gold向け",
+    cardIds: ["jcb-gold"],
+    rate: 0.02,
+    currencyId: "j-point",
+    bonusType: "primary",
+    description:
+      "JCB J-POINT パートナー店「プレミアムでおトク」枠で 4倍 (Gold 基本 0.5% × 4 = 実効 2%)。" +
+      "W 向けの 2倍店舗と同等の実効率に Gold が追いつく仕組み。",
+    conditions:
+      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) + " +
+      "「プレミアムでおトク」対象店 (高島屋等) で Gold グレード保有時の優遇。",
+    entryUrl: "https://j-pointpartner.jcb.co.jp/search",
+  },
+  {
+    id: "prog-jcb-jpoint-gold-20x",
+    name: "J-POINT パートナー (20倍) Gold向け",
+    cardIds: ["jcb-gold"],
+    rate: 0.1,
+    currencyId: "j-point",
+    bonusType: "primary",
+    description:
+      "JCB J-POINT パートナー店で 20倍 (Gold 基本 0.5% × 20 = 実効 10%)。" +
+      "公式の「ポイント還元率は最大10%」と一致。" +
       "スターバックスのモバイルオーダー / カードチャージ限定。",
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) + " +
@@ -805,19 +861,32 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-pa-waon-base", storeId: "mcdonalds" },
   { programId: "prog-pa-waon-base", storeId: "bic-camera" },
 
-  // V5: JCB J-POINT パートナー memberships (9 件 = 既存 store のみ)
+  // V5: JCB J-POINT パートナー memberships
+  // V5-2 で W 系列 / Gold 系列の 2 系列に分離 (10 件 = W6 + Gold9、高島屋は Gold のみプレミアム)
   // 倍率は j-pointpartner.jcb.co.jp/search で WebFetch 検証済 (mos-burger のみ未検証、subagent 一般知識)
-  // 2倍: mercari / welcia / apollo-station / bic-camera / mos-burger
-  // 3倍: amazon / conv-7eleven
-  // 4倍: takashimaya (プレミアム条件付きで最大)
-  // 20倍: starbucks (モバイルオーダー / カードチャージ限定)
+  // W (jcb-w): 2倍 / 3倍 / 20倍 (4倍は廃止、高島屋を 2倍へ移管)
+  // Gold (jcb-gold): 2倍 / 3倍 / 4倍 (高島屋プレミアム) / 20倍
+
+  // ─── W 系列 (jcb-w) ───
   { programId: "prog-jcb-jpoint-2x", storeId: "mercari" },
   { programId: "prog-jcb-jpoint-2x", storeId: "welcia" },
   { programId: "prog-jcb-jpoint-2x", storeId: "apollo-station" },
   { programId: "prog-jcb-jpoint-2x", storeId: "bic-camera" },
   { programId: "prog-jcb-jpoint-2x", storeId: "mos-burger" },
+  // V5-2: 高島屋を W では 2倍 (実効 2%) に移管 (Gold プレミアム 4倍 = 2% と同等)
+  { programId: "prog-jcb-jpoint-2x", storeId: "takashimaya" },
   { programId: "prog-jcb-jpoint-3x", storeId: "amazon" },
   { programId: "prog-jcb-jpoint-3x", storeId: "conv-7eleven" },
-  { programId: "prog-jcb-jpoint-4x", storeId: "takashimaya" },
   { programId: "prog-jcb-jpoint-20x", storeId: "starbucks" },
+
+  // ─── Gold 系列 (jcb-gold) ───
+  { programId: "prog-jcb-jpoint-gold-2x", storeId: "mercari" },
+  { programId: "prog-jcb-jpoint-gold-2x", storeId: "welcia" },
+  { programId: "prog-jcb-jpoint-gold-2x", storeId: "apollo-station" },
+  { programId: "prog-jcb-jpoint-gold-2x", storeId: "bic-camera" },
+  { programId: "prog-jcb-jpoint-gold-2x", storeId: "mos-burger" },
+  { programId: "prog-jcb-jpoint-gold-3x", storeId: "amazon" },
+  { programId: "prog-jcb-jpoint-gold-3x", storeId: "conv-7eleven" },
+  { programId: "prog-jcb-jpoint-gold-4x", storeId: "takashimaya" },
+  { programId: "prog-jcb-jpoint-gold-20x", storeId: "starbucks" },
 ];

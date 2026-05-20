@@ -57,7 +57,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 36;
+export const SEED_VERSION = 37;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -246,6 +246,19 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 37,
+    date: "2026-05-20",
+    summary:
+      "V5-2: JCB ゴールドカード (jcb-gold) を追加 + J-POINT パートナー programs を" +
+      "カードグレード別に 2 系列分離。" +
+      "W 系列 (cardIds=[jcb-w]、基本 1%): 2倍/3倍/20倍 (4倍 廃止、高島屋を 2倍に移管)。" +
+      "Gold 系列 (cardIds=[jcb-gold]、基本 0.5%): 2倍/3倍/4倍 (プレミアムでおトク)/20倍。" +
+      "高島屋は W で 2倍 (実効 2%)、Gold プレミアム 4倍 (実効 2%) で同等。" +
+      "スタバ 20倍 Gold = 実効 10% で公式「最大10%還元」と整合。" +
+      "migration v37 で prog-jcb-jpoint-4x を削除 (Gold プレミアム視点の倍率は" +
+      "prog-jcb-jpoint-gold-4x で代替)。",
   },
   {
     version: 36,
