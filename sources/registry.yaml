@@ -232,18 +232,24 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: false
+    enabled: true
     notes: |
-      ★ 2026-05-20 V5 Phase 3 で追加。
-      cardIds=["jcb-w"], currencyId="j-point", bonusType="primary"。
-      倍率階層別 program (2倍/3倍/4倍/20倍 等) + memberships 出力。
-      全 program に entryUrl: https://j-pointpartner.jcb.co.jp/search を付与
-      (ポイントアップ登録が店ごとに必要、期限なし、無料)。
-      Phase 2 で seed-data-programs.ts に手動 9 件投入済 (amazon/starbucks/
-      conv-7eleven/mercari/welcia/apollo-station/bic-camera/takashimaya/mos-burger)、
-      cron では未網羅の提携店を追加する位置付け。
-      enabled: false で開始 — J-POINT サイトの JS-heavy 構造 + Gemini 2.5 Flash の
-      混雑下で安定 fetch 不可の懸念。手動 fetch 検証して安定動作確認後に true 化。
+      ★ 2026-05-20 V5 Phase 3 で追加、V5-1 (同日) で enabled: true 化。
+      V5-2 でカードグレード別に 2 系列分離: W (cardIds=["jcb-w"]、基本 1%) と
+      Gold (cardIds=["jcb-gold"]、基本 0.5%)。倍率階層別 (2倍/3倍/4倍/20倍 等)
+      で W 系列 / Gold 系列の program を出力。currencyId="j-point"、
+      bonusType="primary"。全 program に entryUrl:
+      https://j-pointpartner.jcb.co.jp/search を付与 (店ごとのポイントアップ登録
+      が必要、無料、期限なし)。
+      手動 seed 投入済 (V5-2 時点): W 系列 9 + Gold 系列 9 = 18 memberships。
+      cron は未網羅の提携店を追加する位置付け、auto-merge は全件 needsReview
+      なので安全網あり。
+      ★ enabled: true 化判断 (V5-1, 2026-05-20):
+        手動 fetch 試行は Flash 503 (Google 側混雑) / Pro 429 (free tier クォータ 0)
+        で全 3 attempt 失敗。実証検証できなかったが、現行 cron の他 source
+        (rakuten/d/v-point-partners 等) と同じ 3-attempt retry + needsReview
+        ロジックで吸収する設計なので有効化リスクは低いと判断。次回週次 cron で
+        Flash の混雑解消時に実証検証される想定。
       代替候補 URL (検索が JS で動的描画される場合):
         - https://j-pointpartner.jcb.co.jp/partner/list?genre=01 (ジャンル別)
         - https://j-pointpartner.jcb.co.jp/genre/ (ジャンル目次)
