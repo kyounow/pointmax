@@ -1,7 +1,7 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-05-17T22:01:49.821Z",
+  "fetchedAt": "2026-05-20T22:29:41.558Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",

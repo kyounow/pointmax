@@ -1,9 +1,9 @@
 {
   "sourceId": "jre-point-campaigns",
   "sourceUrl": "https://www.jrepoint.jp/campaign/list/",
-  "fetchedAt": "2026-05-17T22:01:37.894Z",
+  "fetchedAt": "2026-05-20T22:29:29.456Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided URL lists numerous JRE POINT campaigns, primarily focused on JR East group's own facilities (station buildings, ecute, NewDays, etc.) and regional promotions. The `chains-only` scope requires filtering out single-location stores, local businesses, and very localized promotions. Many lis"
 }

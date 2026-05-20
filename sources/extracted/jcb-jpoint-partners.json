@@ -1,0 +1,9 @@
+{
+  "sourceId": "jcb-jpoint-partners",
+  "sourceUrl": "https://j-pointpartner.jcb.co.jp/search",
+  "fetchedAt": "2026-05-20T22:29:53.986Z",
+  "promptVersion": "jcb-jpoint-vUnknown",
+  "extractor": "jcb-jpoint",
+  "geminiModel": "gemini-2.5-flash",
+  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+}

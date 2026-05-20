@@ -1,9 +1,9 @@
 {
   "sourceId": "smbc-v-gold-7percent",
   "sourceUrl": "https://www.smbc-card.com/mem/cardinfo/cardinfo9001629.jsp",
-  "fetchedAt": "2026-05-17T22:01:02.622Z",
+  "fetchedAt": "2026-05-20T22:28:35.446Z",
   "promptVersion": "card-vUnknown",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars):  The page title is \"対象のコンビニ・飲食店で最大8％還元！\". The page explicitly mentions \"三井住友カード ゴールド VISA/ Mastercard\" which is the card for `smbc-v-gold-7percent` (though the ID naming suggests 7%, the page shows it's part of the 7% group, and Olive has 8%). Let's break down the extraction: **1. `cards` array ("
+  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
 }

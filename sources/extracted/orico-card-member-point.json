@@ -1,9 +1,9 @@
 {
   "sourceId": "orico-card-member-point",
   "sourceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-  "fetchedAt": "2026-05-17T22:01:25.848Z",
+  "fetchedAt": "2026-05-20T22:29:08.678Z",
   "promptVersion": "card-vUnknown",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars):  The content is quite long, I will analyze it step by step to extract the required information. **1. Card Information (`cards[]`)** - `cardId`: `orico-card-member-point` (provided in the prompt) - `defaultRate`: - \"還元率は常に1.0％以上！100円で1オリコポイントがたまる！\" -> 1.0% (0.01) - `defaultCurrencyId`: \"オリコポイント"
 }
