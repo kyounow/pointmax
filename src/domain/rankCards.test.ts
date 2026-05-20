@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { rankCards } from "./rankCards";
-import type { BenefitProgram, Card, ConversionEdge, Store, StoreProgramMembership } from "./types";
+import type { BenefitProgram, Card, ConversionEdge, Currency, PaymentApp, Store, StoreProgramMembership } from "./types";
 
 const rakuten: Card = {
   id: "rakuten",
@@ -567,7 +567,79 @@ describe("rankCards", () => {
     expect(r.appBonusEarnedAmount).toBe(0);
     expect(r.appBonusCurrencyId).toBeNull();
     expect(r.appBonusReachable).toBe(false);
+    expect(r.appBonusBreakdown).toEqual([]);
     expect(r.loyalties).toEqual([]);
     expect(r.totalFinalAmount).toBe(100);
+  });
+
+  // v5.1.3 audit-fix C: 異種通貨 addOn の breakdown 検証
+  it("複数 addOn (異種通貨) は appBonusBreakdown に通貨別 1 件ずつ列挙される", () => {
+    // 仮想 seed: v-pt と rakuten-pt の 2 通貨を持つ
+    const oliveCard: Card = {
+      id: "olive",
+      name: "Olive",
+      defaultRate: 0.005,
+      defaultCurrencyId: "v-pt",
+    };
+    const genStore: Store = { id: "general", name: "一般店舗", category: "汎用" };
+    const noApp: PaymentApp = { id: "pa-no-app", name: "直接決済" };
+    // 異種通貨の 2 addOn (どちらも cardIds=olive、paymentAppId 未指定、非 chargeBased なので適用)
+    const oliveVptAddon: BenefitProgram = {
+      id: "prog-test-olive-vpt-addon",
+      name: "Olive +1% Vポイント",
+      cardIds: ["olive"],
+      rate: 0.01,
+      currencyId: "v-pt",
+      bonusType: "addOn",
+    };
+    const oliveRakutenAddon: BenefitProgram = {
+      id: "prog-test-olive-rakuten-addon",
+      name: "Olive +0.5% 楽天ポイント (仮想)",
+      cardIds: ["olive"],
+      rate: 0.005,
+      currencyId: "rakuten-pt",
+      bonusType: "addOn",
+    };
+    const vCurrency: Currency = { id: "v-pt", name: "Vポイント", kind: "point" };
+    const rakutenCurrency: Currency = {
+      id: "rakuten-pt",
+      name: "楽天ポイント",
+      kind: "point",
+    };
+    const result = rankCards({
+      payment: { storeId: "general", amount: 10000 },
+      targetCurrencyId: "v-pt",
+      cards: [{ ...oliveCard, enabled: true }],
+      currencies: [vCurrency, rakutenCurrency],
+      stores: [genStore],
+      edges: [
+        {
+          id: "rakuten-to-v",
+          fromCurrencyId: "rakuten-pt",
+          toCurrencyId: "v-pt",
+          rate: 1,
+        },
+      ],
+      paymentApps: [noApp],
+      programs: [oliveVptAddon, oliveRakutenAddon],
+      memberships: [],
+    });
+    const r = result[0];
+    expect(r.appBonusBreakdown).toHaveLength(2);
+    const vptEntry = r.appBonusBreakdown.find(
+      (b) => b.earnedCurrencyId === "v-pt",
+    );
+    const rakutenEntry = r.appBonusBreakdown.find(
+      (b) => b.earnedCurrencyId === "rakuten-pt",
+    );
+    expect(vptEntry?.rate).toBe(0.01);
+    expect(vptEntry?.earnedAmount).toBe(100); // 10000 × 0.01
+    expect(vptEntry?.finalAmount).toBe(100); // v-pt → v-pt (same currency)
+    expect(rakutenEntry?.rate).toBe(0.005);
+    expect(rakutenEntry?.earnedAmount).toBe(50); // 10000 × 0.005
+    expect(rakutenEntry?.finalAmount).toBe(50); // rakuten-pt → v-pt rate 1
+    // legacy summary フィールドは「rate 合算 / 1 通貨ぶんの earned のみ」のレガシー仕様 (UI は breakdown を使う)
+    expect(r.appBonusRate).toBe(0.015); // 1% + 0.5%
+    expect(r.appBonusFinalAmount).toBe(150); // 100 + 50
   });
 });
