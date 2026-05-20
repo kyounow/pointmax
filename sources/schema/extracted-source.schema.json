@@ -33,7 +33,7 @@
     },
     "extractor": {
       "type": "string",
-      "enum": ["card", "jal-tokuyaku", "point-partner", "payment-app", "campaign"]
+      "enum": ["card", "jal-tokuyaku", "point-partner", "payment-app", "campaign", "jcb-jpoint"]
     },
     "geminiModel": {
       "type": "string",

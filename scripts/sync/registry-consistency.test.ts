@@ -30,7 +30,14 @@ describe("registry.yaml 整合性契約", () => {
     expect(registry.sources.length).toBeGreaterThan(0);
   });
 
-  it.each(["card", "jal-tokuyaku", "point-partner", "payment-app", "campaign"])(
+  it.each([
+    "card",
+    "jal-tokuyaku",
+    "point-partner",
+    "payment-app",
+    "campaign",
+    "jcb-jpoint",
+  ])(
     "schema の extractor enum に %s が含まれる",
     (kind) => {
       expect(schemaExtractorEnum).toContain(kind);
