@@ -223,6 +223,31 @@ sources:
       実データには別 URL (個別詳細 or 店舗特定の一覧) が必要。現状
       no-op で enabled 温存。
 
+  - id: jcb-jpoint-partners
+    label: JCB J-POINT パートナー (旧 Oki Doki ランド、公式)
+    url: https://j-pointpartner.jcb.co.jp/search
+    extractor: jcb-jpoint
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: false
+    notes: |
+      ★ 2026-05-20 V5 Phase 3 で追加。
+      cardIds=["jcb-w"], currencyId="j-point", bonusType="primary"。
+      倍率階層別 program (2倍/3倍/4倍/20倍 等) + memberships 出力。
+      全 program に entryUrl: https://j-pointpartner.jcb.co.jp/search を付与
+      (ポイントアップ登録が店ごとに必要、期限なし、無料)。
+      Phase 2 で seed-data-programs.ts に手動 9 件投入済 (amazon/starbucks/
+      conv-7eleven/mercari/welcia/apollo-station/bic-camera/takashimaya/mos-burger)、
+      cron では未網羅の提携店を追加する位置付け。
+      enabled: false で開始 — J-POINT サイトの JS-heavy 構造 + Gemini 2.5 Flash の
+      混雑下で安定 fetch 不可の懸念。手動 fetch 検証して安定動作確認後に true 化。
+      代替候補 URL (検索が JS で動的描画される場合):
+        - https://j-pointpartner.jcb.co.jp/partner/list?genre=01 (ジャンル別)
+        - https://j-pointpartner.jcb.co.jp/genre/ (ジャンル目次)
+
   - id: d-pay-campaigns
     label: d払い キャンペーン一覧 (公式)
     url: https://service.smt.docomo.ne.jp/keitai_payment/campaign/

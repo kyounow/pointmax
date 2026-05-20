@@ -40,7 +40,8 @@ export type ExtractorKind =
   | "jal-tokuyaku"  // JAL 特約店リスト系
   | "point-partner" // ポイントカード加盟店系
   | "payment-app"   // 決済アプリ詳細
-  | "campaign";     // 期間限定キャンペーン一覧系 (loyaltyRules + validFrom/validTo)
+  | "campaign"      // 期間限定キャンペーン一覧系 (loyaltyRules + validFrom/validTo)
+  | "jcb-jpoint";   // JCB J-POINT パートナー (旧 Oki Doki ランド系、倍率階層別 programs + memberships)
 
 export type ProducesKind =
   | "cards"
@@ -225,6 +226,7 @@ export type ExtractedProgram = Evidence & {
   recurringDays?: number[]; // 曜日限定 (0=日..6=土)
   description?: string;
   officialUrl?: string;
+  entryUrl?: string;        // エントリー/参加サイト URL (公式情報源 URL とは分離)
   conditions?: string;
   monthlyCapAmountYen?: number;
   notes?: string;

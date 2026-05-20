@@ -13,7 +13,8 @@
 // v3 (PR 4) で 1 → 2 に bump。
 // v3.3 で 2 → 3 に bump (state.rules / addRule 系の物理削除)。
 // v4.0.0 で 3 → 4 に bump (preferredCurrencyIds 新設)。
-export const PERSIST_SCHEMA_VERSION = 4;
+// v5.0.0 で 4 → 5 に bump (V4 未満を一括 reset 化、V5 環境への引き上げ)。
+export const PERSIST_SCHEMA_VERSION = 5;
 
 /**
  * schema migration の戦略型。
@@ -44,12 +45,35 @@ export const SCHEMA_MIGRATIONS: Record<number, SchemaMigrationStrategy> = {
       "既存設定は新しい形式と互換性がないため、公式マスタ + ユーザー選択で再初期化します。" +
       "手書き設定がなければ影響はほぼゼロです。JSON エクスポートで念のためバックアップを推奨します。",
   },
-  // v3.3 で state.rules / addRule 系を物理削除。残存 rules フィールドは
-  // zustand persist が無視するため passthrough で安全。
-  2: { type: "passthrough" },
-  // v4.0.0 で preferredCurrencyIds を新設。旧 localStorage には当該キーが
-  // 無く、store の初期 state (empty.preferredCurrencyIds = []) で埋まるため
-  // passthrough で安全。targetCurrencyId は元々 component local state で
-  // 非永続だったため移行対象なし。
-  3: { type: "passthrough" },
+  // v5.0.0 で v2/v3 も reset 化 (旧 passthrough 維持を廃止)。
+  // 理由: V4 で preferredCurrencyIds が新設され、V5 で BenefitProgram.entryUrl
+  // + JCB J-POINT パートナー programs が追加された。v2 / v3 で長期休眠している
+  // localStorage はその間の SEED_VERSION bump 30+ 回ぶんの追加分を取りこぼした
+  // 「実質ゴーストデータ」になっており、公式マスタ再初期化したほうが安全。
+  // 上書き前に _legacyPersistedState で旧 state を保存し SchemaUpgradeModal が
+  // 同意を求める動作はそのまま (突然消えるわけではない)。
+  2: {
+    type: "reset",
+    reason:
+      "V5 にアップデートします。V4 未満で長期休眠していた localStorage を" +
+      "公式マスタ (最新 SEED_VERSION) で再初期化します。" +
+      "途中の自動同期で追加された各種カード・店舗・キャンペーン情報を" +
+      "まとめて反映するため、整合性確保の観点で reset しています。" +
+      "JSON エクスポートで念のためバックアップを推奨します。" +
+      "(編集していなければユーザーカスタムの上書きは無いため影響は最小)",
+  },
+  3: {
+    type: "reset",
+    reason:
+      "V5 にアップデートします。V4 未満で長期休眠していた localStorage を" +
+      "公式マスタ (最新 SEED_VERSION) で再初期化します。" +
+      "途中の自動同期で追加された各種カード・店舗・キャンペーン情報を" +
+      "まとめて反映するため、整合性確保の観点で reset しています。" +
+      "JSON エクスポートで念のためバックアップを推奨します。" +
+      "(編集していなければユーザーカスタムの上書きは無いため影響は最小)",
+  },
+  // v5.0.0 で BenefitProgram.entryUrl + JCB J-POINT パートナー programs を追加。
+  // entryUrl は任意フィールドの純加算で旧 v4 localStorage は無問題 → passthrough。
+  // 新規 programs/memberships は SyncUpdateModal の差分検知 + UpdateBanner 経由で反映。
+  4: { type: "passthrough" },
 };

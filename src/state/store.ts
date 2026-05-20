@@ -570,7 +570,7 @@ export const useStore = create<State & Actions>()(
       // v0.8 で世代交代。旧キー "pointmax-store" は無視 (孤児は起動時に削除)
       name: "pointmax-v08-store",
       storage: createJSONStorage(() => localStorage),
-      version: PERSIST_SCHEMA_VERSION,  // 3 → 4 (v4.0.0 で preferredCurrencyIds 新設)
+      version: PERSIST_SCHEMA_VERSION,  // 4 → 5 (v5.0.0 で V4 未満を reset 化 + entryUrl 追加)
       migrate: (persistedState: unknown, fromVersion: number) => {
         // 新規 install (version フィールドが無い = fromVersion が undefined 扱い)
         // → そのまま通す (既存の empty+seed 初期化フローへ)
@@ -586,7 +586,7 @@ export const useStore = create<State & Actions>()(
             ...empty,
             _pendingSchemaMigration: {
               type: "reset" as const,
-              reason: `不明な旧 schema (v${fromVersion}) を検出しました。v3 にリセットします。`,
+              reason: `不明な旧 schema (v${fromVersion}) を検出しました。V5 環境にリセットします。`,
             },
           };
         }

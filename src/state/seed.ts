@@ -57,7 +57,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 35;
+export const SEED_VERSION = 36;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -246,6 +246,17 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 36,
+    date: "2026-05-20",
+    summary:
+      "V5 Phase 2: JCB J-POINT パートナー (旧 Oki Doki ランド系) 提携店 10 件を追加。" +
+      "倍率階層別に 4 BenefitProgram (2倍/3倍/4倍/20倍) + memberships 10 件。" +
+      "対象: amazon/starbucks/conv-7eleven/mercari/welcia/apollo-station/" +
+      "mos-burger/bic-camera/takashimaya。" +
+      "全 program に entryUrl (J-POINT パートナー検索ページ) を付与。" +
+      "店ごとのポイントアップ登録 (無料、期限なし) が必要。",
   },
   {
     version: 35,

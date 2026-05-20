@@ -43,7 +43,7 @@ function runMigrate(
       ...emptyBaseState,
       _pendingSchemaMigration: {
         type: "reset" as const,
-        reason: `不明な旧 schema (v${fromVersion}) を検出しました。v3 にリセットします。`,
+        reason: `不明な旧 schema (v${fromVersion}) を検出しました。V5 環境にリセットします。`,
       },
     };
   }
@@ -68,8 +68,8 @@ function runMigrate(
 // -----------------------------------------------------------------------
 
 describe("PERSIST_SCHEMA_VERSION", () => {
-  it("現在のスキーマバージョンは 4 である (v4.0.0 preferredCurrencyIds 新設)", () => {
-    expect(PERSIST_SCHEMA_VERSION).toBe(4);
+  it("現在のスキーマバージョンは 5 である (v5.0.0 V4 未満 reset 化 + entryUrl 追加)", () => {
+    expect(PERSIST_SCHEMA_VERSION).toBe(5);
   });
 });
 
@@ -179,19 +179,31 @@ describe("SCHEMA_MIGRATIONS マップの整合性", () => {
     }
   });
 
-  it("PERSIST_SCHEMA_VERSION (4) のエントリは存在しない (自己移行は不要)", () => {
+  it("PERSIST_SCHEMA_VERSION (5) のエントリは存在しない (自己移行は不要)", () => {
     // 現バージョン自身に対する migration エントリは不要・無意味
     expect(SCHEMA_MIGRATIONS[PERSIST_SCHEMA_VERSION]).toBeUndefined();
   });
 
-  it("SCHEMA_MIGRATIONS[2] は type='passthrough' (v3.3 で state.rules 物理削除)", () => {
+  it("SCHEMA_MIGRATIONS[2] は type='reset' (v5.0.0 で V4 未満を強制アプデ化)", () => {
     const entry = SCHEMA_MIGRATIONS[2];
     expect(entry).toBeDefined();
-    expect(entry.type).toBe("passthrough");
+    expect(entry.type).toBe("reset");
+    if (entry.type === "reset") {
+      expect(entry.reason).toContain("V5");
+    }
   });
 
-  it("SCHEMA_MIGRATIONS[3] は type='passthrough' (v4.0.0 preferredCurrencyIds 新設)", () => {
+  it("SCHEMA_MIGRATIONS[3] は type='reset' (v5.0.0 で V4 未満を強制アプデ化)", () => {
     const entry = SCHEMA_MIGRATIONS[3];
+    expect(entry).toBeDefined();
+    expect(entry.type).toBe("reset");
+    if (entry.type === "reset") {
+      expect(entry.reason).toContain("V5");
+    }
+  });
+
+  it("SCHEMA_MIGRATIONS[4] は type='passthrough' (v5.0.0 entryUrl 追加は schema 互換)", () => {
+    const entry = SCHEMA_MIGRATIONS[4];
     expect(entry).toBeDefined();
     expect(entry.type).toBe("passthrough");
   });

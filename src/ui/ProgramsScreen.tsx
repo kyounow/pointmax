@@ -179,6 +179,25 @@ export function ProgramsScreen() {
                           </div>
                         ) : null;
                       })()}
+                      {(() => {
+                        const url = p.entryUrl ?? p.officialUrl;
+                        if (!url) return null;
+                        const label = p.entryUrl ? "エントリー" : "公式";
+                        return (
+                          <div style={{ marginTop: 2 }}>
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="campaign-link"
+                              title={url}
+                              style={{ fontSize: 11 }}
+                            >
+                              🔗 {label}
+                            </a>
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     {/* 対象カード / ポイントカード / 支払方法 */}

@@ -33,7 +33,7 @@
     },
     "extractor": {
       "type": "string",
-      "enum": ["card", "jal-tokuyaku", "point-partner", "payment-app", "campaign"]
+      "enum": ["card", "jal-tokuyaku", "point-partner", "payment-app", "campaign", "jcb-jpoint"]
     },
     "geminiModel": {
       "type": "string",
@@ -299,6 +299,7 @@
           },
           "description": { "type": "string" },
           "officialUrl": { "type": "string", "format": "uri" },
+          "entryUrl": { "type": "string", "format": "uri", "description": "エントリー / 参加サイト URL。officialUrl が制度解説ページ、entryUrl はユーザーが踏む先 (例: キャンペーン参加ページ、提携店検索トップ)。" },
           "conditions": { "type": "string" },
           "monthlyCapAmountYen": { "type": "integer", "minimum": 0 },
           "notes": { "type": "string" },

@@ -126,7 +126,13 @@ export type BenefitProgram = {
 
   // ─── Meta ───
   description?: string;
-  officialUrl?: string;
+  officialUrl?: string;            // 情報源 URL (詳細・解説ページ)
+  // エントリー / 参加サイトの URL (任意)。officialUrl と分離する理由:
+  //   - officialUrl は「制度を説明する公式ページ」(例: JAL カード特約店一覧)
+  //   - entryUrl は「ユーザーが踏む先」(例: キャンペーンエントリーページ、提携店検索)
+  // entryUrl がセットされている program は UI で「エントリー」リンクを露出。
+  // 「キャンペーンサイトのトップページ」レベルでも構わない (深いリンクで切れる懸念回避)。
+  entryUrl?: string;
   conditions?: string;             // 「ショッピングマイル・プレミアム加入時」等
   monthlyCapAmountYen?: number;
   notes?: string;

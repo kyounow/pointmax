@@ -643,6 +643,32 @@ describe("proposePrograms (PR-D1)", () => {
     expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
   });
 
+  it("entryUrl は addRecord の record に伝播 (V5 新フィールド)", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-with-entry",
+          name: "エントリー要キャンペーン",
+          cardIds: ["sample-card"],
+          rate: 0.02,
+          currencyId: "jre",
+          bonusType: "primary",
+          entryUrl: "https://example.com/entry",
+          officialUrl: "https://example.com/about",
+          evidenceQuote: "明示",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.entryUrl).toBe("https://example.com/entry");
+    expect(record.officialUrl).toBe("https://example.com/about");
+  });
+
   it("既存 program の rate 変動は updateField", () => {
     const seed: SeedShape = {
       ...emptySeed,
