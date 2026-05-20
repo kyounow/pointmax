@@ -546,3 +546,95 @@ describe("PR 2 PaymentApp 系 programs (global programs, addOn)", () => {
     expect(result.addOns).toHaveLength(0);
   });
 });
+
+// v5.1.2: chargeBased paymentApp 経由のときは paymentAppId を持たない program を除外する。
+// カードが「チャージ元」(0% 還元) として扱われるため、カード単体特典 (cardIds-only) や
+// 全カード共通の汎用特典は paymentApp 経由では発動しない論理。
+// 該当 bug: v5.1.1 で追加した prog-olive-vpoint-up-selected-benefit (Olive 選べる特典 +1%
+// Vポイント) が Olive × 楽天Pay (chargeBased) 経由で誤適用されていた。
+describe("chargeBased paymentApp での cardIds-only program 除外 (v5.1.2)", () => {
+  const oliveCard: Card = {
+    id: "olive",
+    name: "Olive",
+    defaultRate: 0.005,
+    defaultCurrencyId: "v-pt",
+  };
+  const generalStore: Store = { id: "general", name: "一般店舗", category: "汎用" };
+  const rakutenPayChargeBased: PaymentApp = {
+    id: "pa-rakuten-pay",
+    name: "楽天Pay",
+    chargeBased: true,
+  };
+  const visaTouchDirect: PaymentApp = {
+    id: "pa-visa-touch",
+    name: "Visaタッチ",
+    chargeBased: false,
+  };
+
+  // Olive 選べる特典 (cardIds=olive、paymentAppId 未指定、addOn) — 本バグの原因 program
+  const oliveSelectableBenefit: BenefitProgram = {
+    id: "prog-olive-vpoint-up-selected-benefit",
+    name: "Olive 選べる特典 +1%",
+    cardIds: ["olive"],
+    rate: 0.01,
+    currencyId: "v-pt",
+    bonusType: "addOn",
+  };
+
+  // 楽天Pay base (paymentAppId 指定、cardIds 未指定、primary) — 除外対象外
+  const rakutenPayBaseProg: BenefitProgram = {
+    id: "prog-rakuten-pay-base",
+    name: "楽天Pay ベース",
+    paymentAppId: "pa-rakuten-pay",
+    rate: 0.01,
+    currencyId: "rakuten-pt",
+    bonusType: "primary",
+  };
+
+  it("Olive × 楽天Pay (chargeBased) → cardIds-only addOn (Olive 選べる特典) は除外、楽天Pay base のみ", () => {
+    const result = evaluatePrograms({
+      card: oliveCard,
+      store: generalStore,
+      paymentApp: rakutenPayChargeBased,
+      programs: [oliveSelectableBenefit, rakutenPayBaseProg],
+      memberships: [],
+    });
+    expect(result.primary?.program.id).toBe("prog-rakuten-pay-base");
+    expect(result.addOns).toHaveLength(0); // Olive 選べる特典 が paymentAppId 未指定で除外
+  });
+
+  it("Olive × Visa タッチ (chargeBased=false) → cardIds-only addOn (Olive 選べる特典) は適用", () => {
+    const result = evaluatePrograms({
+      card: oliveCard,
+      store: generalStore,
+      paymentApp: visaTouchDirect,
+      programs: [oliveSelectableBenefit, rakutenPayBaseProg],
+      memberships: [],
+    });
+    // 楽天Pay base は paymentAppId 不一致で除外、Olive 選べる特典は適用
+    expect(result.primary).toBeNull();
+    expect(result.addOns).toHaveLength(1);
+    expect(result.addOns[0].program.id).toBe(
+      "prog-olive-vpoint-up-selected-benefit",
+    );
+    expect(result.addOns[0].effectiveRate).toBe(0.01);
+  });
+
+  it("paymentAppId 指定 program (rakuten-pay base) は chargeBased でも適用", () => {
+    const otherCard: Card = {
+      id: "other-card",
+      name: "他社カード",
+      defaultRate: 0.005,
+      defaultCurrencyId: "v-pt",
+    };
+    const result = evaluatePrograms({
+      card: otherCard,
+      store: generalStore,
+      paymentApp: rakutenPayChargeBased,
+      programs: [rakutenPayBaseProg],
+      memberships: [],
+    });
+    expect(result.primary?.program.id).toBe("prog-rakuten-pay-base");
+    expect(result.primary?.effectiveRate).toBe(0.01);
+  });
+});
