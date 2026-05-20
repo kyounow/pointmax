@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { classifyResponse, stripHtmlToText, isRetryable } from "./fetch-response";
+import {
+  classifyResponse,
+  stripHtmlToText,
+  isRetryable,
+  detectCharset,
+} from "./fetch-response";
 
 describe("classifyResponse", () => {
   it("空文字列 → empty", () => {
@@ -97,5 +102,54 @@ describe("stripHtmlToText", () => {
     expect(out).not.toContain("var x");
     expect(out).not.toContain(".x{}");
     expect(out).not.toContain("TODO");
+  });
+});
+
+describe("detectCharset", () => {
+  it("Content-Type ヘッダの charset が最優先", () => {
+    expect(
+      detectCharset("text/html; charset=Shift_JIS", '<meta charset="UTF-8">'),
+    ).toBe("shift_jis");
+  });
+
+  it("ヘッダに charset 無 → <meta charset> を採用", () => {
+    expect(detectCharset("text/html", '<meta charset="Shift_JIS">')).toBe(
+      "shift_jis",
+    );
+    expect(detectCharset(null, '<meta charset="UTF-8">')).toBe("utf-8");
+  });
+
+  it("<meta http-equiv> 形式の charset も読める", () => {
+    expect(
+      detectCharset(
+        null,
+        '<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">',
+      ),
+    ).toBe("shift_jis");
+  });
+
+  it("どちらも無ければ utf-8 にフォールバック", () => {
+    expect(detectCharset(null, "<html><body></body></html>")).toBe("utf-8");
+    expect(detectCharset("text/html", "")).toBe("utf-8");
+  });
+
+  it("表記揺れ (Shift-JIS / shift_jis / sjis) を正規化", () => {
+    expect(detectCharset(null, '<meta charset="Shift-JIS">')).toBe("shift_jis");
+    expect(detectCharset(null, '<meta charset="shift_jis">')).toBe("shift_jis");
+    expect(detectCharset(null, '<meta charset="SJIS">')).toBe("shift_jis");
+  });
+
+  it("euc-jp も正規化対象", () => {
+    expect(detectCharset(null, '<meta charset="EUC-JP">')).toBe("euc-jp");
+    expect(detectCharset(null, '<meta charset="x-euc-jp">')).toBe("euc-jp");
+  });
+
+  it("先頭 4KB の中の charset を拾える (実 SMBC ページの形を模倣)", () => {
+    const head =
+      "<!DOCTYPE html>\n" +
+      "<!-- Updated 2026/05/18.T -->\n".repeat(20) +
+      '<meta charset="Shift_JIS">\n' +
+      "<title>Vポイント アップ</title>";
+    expect(detectCharset("text/html", head)).toBe("shift_jis");
   });
 });
