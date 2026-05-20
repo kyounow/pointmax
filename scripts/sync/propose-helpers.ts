@@ -485,6 +485,7 @@ export function proposePrograms(
       if (p.recurringDays !== undefined) rec.recurringDays = p.recurringDays;
       if (p.description !== undefined) rec.description = p.description;
       if (p.officialUrl !== undefined) rec.officialUrl = p.officialUrl;
+      if (p.entryUrl !== undefined) rec.entryUrl = p.entryUrl;
       if (p.conditions !== undefined) rec.conditions = p.conditions;
       if (p.monthlyCapAmountYen !== undefined)
         rec.monthlyCapAmountYen = p.monthlyCapAmountYen;

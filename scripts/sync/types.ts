@@ -225,6 +225,7 @@ export type ExtractedProgram = Evidence & {
   recurringDays?: number[]; // 曜日限定 (0=日..6=土)
   description?: string;
   officialUrl?: string;
+  entryUrl?: string;        // エントリー/参加サイト URL (公式情報源 URL とは分離)
   conditions?: string;
   monthlyCapAmountYen?: number;
   notes?: string;

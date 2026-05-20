@@ -191,6 +191,26 @@ export function CampaignsScreen() {
       },
     },
     {
+      key: "link",
+      label: "リンク",
+      view: (p) => {
+        const url = p.entryUrl ?? p.officialUrl;
+        if (!url) return "-";
+        const label = p.entryUrl ? "エントリー" : "公式";
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="campaign-link"
+            title={url}
+          >
+            🔗 {label}
+          </a>
+        );
+      },
+    },
+    {
       key: "notes",
       label: "メモ",
       view: (p) => sanitizeNoteForDisplay(p.notes) ?? "-",
