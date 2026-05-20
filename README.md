@@ -199,8 +199,8 @@ PointMax は 2 つの version を独立管理:
 
 | 種類 | 用途 | 現在値 |
 |---|---|---|
-| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner)。週次 cron で bump | **35** |
-| `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **4** |
+| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **38** |
+| `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **5** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
 - `passthrough`: 互換あり、何もしない
@@ -212,8 +212,9 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 | from version | 戦略 | 契機 |
 |---|---|---|
 | 1 | `reset` | v3.0.0 BenefitProgram モデル刷新（旧構造と非互換） |
-| 2 | `passthrough` | v3.3.0 `state.rules` / `addRule` 系の物理削除（残存フィールドは無視される） |
-| 3 | `passthrough` | v4.0.0 `preferredCurrencyIds` 新設（初期 state で埋まる） |
+| 2 | `reset` | v5.0.0 で V4 未満を強制アプデ化（旧 passthrough、SEED_VERSION 30+ 回ぶんを取りこぼした「ゴーストデータ」化のため公式マスタ再初期化） |
+| 3 | `reset` | v5.0.0 で V4 未満を強制アプデ化（同上） |
+| 4 | `passthrough` | v5.0.0 `BenefitProgram.entryUrl` 新設（任意フィールドの純加算で旧 v4 localStorage は無問題） |
 
 今後 schema を変更する場合は `PERSIST_SCHEMA_VERSION` を bump し、`SCHEMA_MIGRATIONS` に対応するエントリを追加する。
 
@@ -227,8 +228,15 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **v3.5〜v3.6** — ポイントカード提携の補充、nanaco/WAON を電子マネー PaymentApp 化
 - **v4.0.0** — EdgesScreen ルート検索 / 優先通貨タブ / オリコ・三菱UFJ 通貨・カード追加
 - **v4.0.1** — ファミペイ廃止、migration クラッシュ修正と全 migration 耐性の回帰テスト
+- **v5.0.0** — `BenefitProgram.entryUrl` 追加で「🔗 エントリー」リンク表示、JCB J-POINT パートナー (旧 Oki Doki ランド) 提携店 + 新 extractor `jcb-jpoint` 追加、PERSIST_SCHEMA 4→5 で V4 未満を強制アプデ化
+- **v5.1.0** — JCB ゴールド (jcb-gold) 追加、J-POINT パートナー programs を W 系列 / Gold 系列に分離（公式「最大10%還元」の数値検証で仕様確定）
+- **v5.1.1** — すかいらーく系 13 店 + Olive 選べる特典 program 追加。ライフスタイル系 program (給与振込/住宅ローン/SBI/Vitality 等) は全カード保有者に過大計算されるため恒久除外方針
+- **v5.1.2** — `chargeBased` paymentApp 経由で cardIds-only program (Olive 選べる特典等) が誤適用されるバグ修正
+- **v5.1.3** — legacy `paymentApp.ts` 削除 + 異種通貨 addOn の分離表示 (`CardRanking.appBonusBreakdown` 追加で program 名明示)
+- **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版)。`ExtractorKind` は計 7 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
+sync インフラ修正系の PR (#19-#26、#33-#35、#37、#39 等) は tag なしで運用。
 詳細な開発履歴はリポジトリの git log / リリースノートを参照。
 
 ---
