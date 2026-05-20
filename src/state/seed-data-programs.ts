@@ -83,6 +83,30 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "Oliveフレキシブルペイ スマホタッチ決済で 8% Vポイント還元 (smbc-v 7% + Olive 連携 +1%)",
   },
 
+  // V5-3 follow-up: Olive アカウント 選べる特典「Vポイントアッププログラム+1%」
+  // ※ Olive 保有 + 選べる特典で当該特典を選択した場合のみ適用 (条件付き opt-in)。
+  //   全 Olive ユーザーに自動付与されると過大計算になるが、UI で program enable/disable が
+  //   未実装のため conditions に明示。プラチナプリファードは 2 つ選択で +2% 可能。
+  //   ongoing-program extractor (V5-3) で smbc.co.jp/kojin/vpoint-up/ から抽出した
+  //   15 program のうち、店舗紐付けなしで適用範囲が広い「選べる特典」のみ反映。
+  //   他 12 件の lifestyle 系 (給与振込/円預金/住宅ローン/SBI/Vitality 等) は UX 設計
+  //   (ユーザー条件 opt-in) 未実装のため今期スコープ外。
+  {
+    id: "prog-olive-vpoint-up-selected-benefit",
+    name: "Olive 選べる特典「Vポイントアッププログラム+1%」",
+    cardIds: ["olive"],
+    rate: 0.01,
+    currencyId: "v-pt",
+    bonusType: "addOn",
+    description:
+      "Oliveアカウントの「選べる特典」で「Vポイントアッププログラム+1%」を選択すると +1% Vポイント還元 (全店適用)。" +
+      "プラチナプリファードは 2 つ選択可で最大 +2%。",
+    conditions:
+      "Olive アカウント契約 + 「選べる特典」で当該特典を選択している場合のみ。" +
+      "選択していない場合は 0% (PointMax は条件未追跡なのでユーザー判断で除外を推奨)。",
+    officialUrl: "https://www.smbc.co.jp/kojin/vpoint-up/",
+  },
+
   // A-5: JALカードSuica × Suicaチャージ 1.5% JRE POINT
   {
     id: "prog-jal-suica-charge",
@@ -612,6 +636,20 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-smbc-7p", storeId: "shabuyo" },
   { programId: "prog-smbc-7p", storeId: "seicomart" },
   { programId: "prog-smbc-7p", storeId: "poplar" },
+  // V5-3 follow-up: すかいらーくグループ minor チェーン拡張 (ongoing-program 抽出より)
+  { programId: "prog-smbc-7p", storeId: "aiya" },
+  { programId: "prog-smbc-7p", storeId: "grazie-gardens" },
+  { programId: "prog-smbc-7p", storeId: "steak-gusto" },
+  { programId: "prog-smbc-7p", storeId: "karaage-karayoshi" },
+  { programId: "prog-smbc-7p", storeId: "musashino-mori-coffee" },
+  { programId: "prog-smbc-7p", storeId: "uoya-michi" },
+  { programId: "prog-smbc-7p", storeId: "chawan" },
+  { programId: "prog-smbc-7p", storeId: "la-ohana" },
+  { programId: "prog-smbc-7p", storeId: "tonkara-tei" },
+  { programId: "prog-smbc-7p", storeId: "yumean-shokudo" },
+  { programId: "prog-smbc-7p", storeId: "monana" },
+  { programId: "prog-smbc-7p", storeId: "hachiro-soba" },
+  { programId: "prog-smbc-7p", storeId: "sanmarusan" },
 
   // A-4: Olive 8% スマホタッチ決済 22 stores (SMBC と同じ店舗)
   { programId: "prog-olive-8p", storeId: "conv-7eleven" },
@@ -636,6 +674,20 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-olive-8p", storeId: "shabuyo" },
   { programId: "prog-olive-8p", storeId: "seicomart" },
   { programId: "prog-olive-8p", storeId: "poplar" },
+  // V5-3 follow-up: すかいらーくグループ minor チェーン拡張 (ongoing-program 抽出より)
+  { programId: "prog-olive-8p", storeId: "aiya" },
+  { programId: "prog-olive-8p", storeId: "grazie-gardens" },
+  { programId: "prog-olive-8p", storeId: "steak-gusto" },
+  { programId: "prog-olive-8p", storeId: "karaage-karayoshi" },
+  { programId: "prog-olive-8p", storeId: "musashino-mori-coffee" },
+  { programId: "prog-olive-8p", storeId: "uoya-michi" },
+  { programId: "prog-olive-8p", storeId: "chawan" },
+  { programId: "prog-olive-8p", storeId: "la-ohana" },
+  { programId: "prog-olive-8p", storeId: "tonkara-tei" },
+  { programId: "prog-olive-8p", storeId: "yumean-shokudo" },
+  { programId: "prog-olive-8p", storeId: "monana" },
+  { programId: "prog-olive-8p", storeId: "hachiro-soba" },
+  { programId: "prog-olive-8p", storeId: "sanmarusan" },
 
   // A-5: JALカードSuica × Suicaチャージ
   { programId: "prog-jal-suica-charge", storeId: "suica-charge" },

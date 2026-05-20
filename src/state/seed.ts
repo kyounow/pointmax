@@ -57,7 +57,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 37;
+export const SEED_VERSION = 38;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -246,6 +246,21 @@ export const SEED_CHANGELOG: {
       "stores 81 件は skip (新規店舗マスタ拡大は別議題)。" +
       "loyaltyRules 113 件のうち storeId が既存マスタ (SEED_STORES + ADDED_STORES) にある 59 件を採用。" +
       "kfc/bamiyan/jonathan/gusto/sukiya/yoshinoya/shabuyo/cocos 等 既存店舗 × 楽天ポイントカード loyaltyRule の補完。",
+  },
+  {
+    version: 38,
+    date: "2026-05-20",
+    summary:
+      "V5-3 follow-up: ongoing-program extractor (PR #35) で smbc-vpoint-up から" +
+      "抽出した 13 新規 store (すかいらーくグループ minor チェーン) + 26 memberships" +
+      "(prog-smbc-7p / prog-olive-8p に拡張) + prog-olive-vpoint-up-selected-benefit" +
+      "(+1% addOn) を seed 反映。" +
+      "追加 store: 藍屋 / グラッチェガーデンズ / ステーキガスト / から好し / " +
+      "むさしの森珈琲 / 魚屋路 / chawan / La Ohana / とんから亭 / ゆめあん食堂 / " +
+      "桃菜 / 八郎そば / 三〇三。" +
+      "lifestyle 系 12 program (給与振込 / 円預金残高 / 外貨預金 / 住宅ローン / " +
+      "SBI証券 / Vitality / 日興証券 / Vトリップ / カードローン / Healthcare 等) は " +
+      "全 Olive ユーザーへの自動付与で過大計算になるため、条件 opt-in UX 整備まで保留。",
   },
   {
     version: 37,
