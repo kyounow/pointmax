@@ -439,6 +439,68 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "WAON 電子マネー支払いで 200円1pt (0.5%) 還元。" +
       "イオン系等 loyalty 加盟店は waon-card 経路で計上、ここは非 loyalty 店のみ。",
   },
+
+  // ═══════════════════════════════════════════════════════════════
+  // V5: JCB J-POINT パートナー (旧 Oki Doki ランド系、2026/1〜J-POINT 名称統一)
+  // 倍率階層別に 4 program。bonusType=primary で JCB W の基本還元を置換。
+  // 全店「ポイントアップ登録 (無料、店ごと)」が必須 → 全 program に entryUrl。
+  // 出典: https://j-pointpartner.jcb.co.jp/search (WebFetch + ユーザー確認 2026-05-20)
+  // 倍率は公式表記をそのまま rate に反映 (W 基本 1% × N 倍 = 1×N%)。
+  // 既存 store id のみ採用 (新規 store 追加は今期スコープ外)。
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: "prog-jcb-jpoint-2x",
+    name: "J-POINT パートナー (2倍)",
+    cardIds: ["jcb-w"],
+    rate: 0.02,
+    currencyId: "j-point",
+    bonusType: "primary",
+    description: "JCB J-POINT パートナー店で 2倍 (W 基本 1% × 2 = 実効 2%)",
+    conditions:
+      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
+    entryUrl: "https://j-pointpartner.jcb.co.jp/search",
+  },
+  {
+    id: "prog-jcb-jpoint-3x",
+    name: "J-POINT パートナー (3倍)",
+    cardIds: ["jcb-w"],
+    rate: 0.03,
+    currencyId: "j-point",
+    bonusType: "primary",
+    description: "JCB J-POINT パートナー店で 3倍 (W 基本 1% × 3 = 実効 3%)",
+    conditions:
+      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
+    entryUrl: "https://j-pointpartner.jcb.co.jp/search",
+  },
+  {
+    id: "prog-jcb-jpoint-4x",
+    name: "J-POINT パートナー (4倍)",
+    cardIds: ["jcb-w"],
+    rate: 0.04,
+    currencyId: "j-point",
+    bonusType: "primary",
+    description: "JCB J-POINT パートナー店で 最大 4倍 (W 基本 1% × 4 = 実効 4%)",
+    conditions:
+      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) + " +
+      "「プレミアムでおトク」条件 (プレミアムカードグレード等) を満たした場合の最大倍率。",
+    entryUrl: "https://j-pointpartner.jcb.co.jp/search",
+  },
+  {
+    id: "prog-jcb-jpoint-20x",
+    name: "J-POINT パートナー (20倍)",
+    cardIds: ["jcb-w"],
+    rate: 0.2,
+    currencyId: "j-point",
+    bonusType: "primary",
+    description:
+      "JCB J-POINT パートナー店で 20倍 (W 基本 1% × 20 = 実効 20%)。" +
+      "スターバックスのモバイルオーダー / カードチャージ限定。",
+    conditions:
+      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) + " +
+      "Starbucks Rewards のモバイルオーダー or スタバカード入金経由が必須。" +
+      "店頭直接決済は通常倍率扱い。",
+    entryUrl: "https://j-pointpartner.jcb.co.jp/search",
+  },
 ];
 
 // 店舗 × プログラムの加盟関係 (M2M)
@@ -742,4 +804,20 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-pa-waon-base", storeId: "yoshinoya" },
   { programId: "prog-pa-waon-base", storeId: "mcdonalds" },
   { programId: "prog-pa-waon-base", storeId: "bic-camera" },
+
+  // V5: JCB J-POINT パートナー memberships (9 件 = 既存 store のみ)
+  // 倍率は j-pointpartner.jcb.co.jp/search で WebFetch 検証済 (mos-burger のみ未検証、subagent 一般知識)
+  // 2倍: mercari / welcia / apollo-station / bic-camera / mos-burger
+  // 3倍: amazon / conv-7eleven
+  // 4倍: takashimaya (プレミアム条件付きで最大)
+  // 20倍: starbucks (モバイルオーダー / カードチャージ限定)
+  { programId: "prog-jcb-jpoint-2x", storeId: "mercari" },
+  { programId: "prog-jcb-jpoint-2x", storeId: "welcia" },
+  { programId: "prog-jcb-jpoint-2x", storeId: "apollo-station" },
+  { programId: "prog-jcb-jpoint-2x", storeId: "bic-camera" },
+  { programId: "prog-jcb-jpoint-2x", storeId: "mos-burger" },
+  { programId: "prog-jcb-jpoint-3x", storeId: "amazon" },
+  { programId: "prog-jcb-jpoint-3x", storeId: "conv-7eleven" },
+  { programId: "prog-jcb-jpoint-4x", storeId: "takashimaya" },
+  { programId: "prog-jcb-jpoint-20x", storeId: "starbucks" },
 ];
