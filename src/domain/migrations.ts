@@ -230,4 +230,20 @@ export const MIGRATIONS: VersionMigration[] = [
       },
     ],
   },
+  {
+    toVersion: 37,
+    date: "2026-05-20",
+    changes: [
+      {
+        type: "delete",
+        collection: "programs",
+        id: "prog-jcb-jpoint-4x",
+        notes:
+          "V5-2 で JCB J-POINT パートナーをカードグレード別 (W 用 / Gold 用) に再構成。" +
+          "「4倍」は Gold プレミアム視点の倍率で W 用には不適切だったため廃止。" +
+          "高島屋は W では 2倍 (prog-jcb-jpoint-2x) に移管、" +
+          "Gold プレミアム 4倍は prog-jcb-jpoint-gold-4x で表現 (実効 2%)。",
+      },
+    ],
+  },
 ];
