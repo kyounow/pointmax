@@ -36,12 +36,13 @@ export type RegistryFile = {
 };
 
 export type ExtractorKind =
-  | "card"          // 単一カード詳細
-  | "jal-tokuyaku"  // JAL 特約店リスト系
-  | "point-partner" // ポイントカード加盟店系
-  | "payment-app"   // 決済アプリ詳細
-  | "campaign"      // 期間限定キャンペーン一覧系 (loyaltyRules + validFrom/validTo)
-  | "jcb-jpoint";   // JCB J-POINT パートナー (旧 Oki Doki ランド系、倍率階層別 programs + memberships)
+  | "card"            // 単一カード詳細
+  | "jal-tokuyaku"    // JAL 特約店リスト系
+  | "point-partner"   // ポイントカード加盟店系
+  | "payment-app"     // 決済アプリ詳細
+  | "campaign"        // 期間限定キャンペーン一覧系 (loyaltyRules + validFrom/validTo)
+  | "jcb-jpoint"      // JCB J-POINT パートナー (旧 Oki Doki ランド系、倍率階層別 programs + memberships)
+  | "ongoing-program";// 常設優遇プログラム (validFrom/validTo を付けず、conditions に常時条件記述。jcb-jpoint の汎用版、銀行/カード会社の常設還元アップ等を抽出)
 
 export type ProducesKind =
   | "cards"
