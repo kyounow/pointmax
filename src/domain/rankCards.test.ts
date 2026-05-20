@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { rankCards } from "./rankCards";
-import type { BenefitProgram, Card, ConversionEdge, Currency, PaymentApp, Store, StoreProgramMembership } from "./types";
+import type { BenefitProgram, Card, ConversionEdge, PaymentApp, Store, StoreProgramMembership } from "./types";
 
 const rakuten: Card = {
   id: "rakuten",
@@ -600,17 +600,11 @@ describe("rankCards", () => {
       currencyId: "rakuten-pt",
       bonusType: "addOn",
     };
-    const vCurrency: Currency = { id: "v-pt", name: "Vポイント", kind: "point" };
-    const rakutenCurrency: Currency = {
-      id: "rakuten-pt",
-      name: "楽天ポイント",
-      kind: "point",
-    };
+    // RankInput には currencies フィールドが無いため (rankCards は edge から導出) ローカル定義は不要。
     const result = rankCards({
       payment: { storeId: "general", amount: 10000 },
       targetCurrencyId: "v-pt",
       cards: [{ ...oliveCard, enabled: true }],
-      currencies: [vCurrency, rakutenCurrency],
       stores: [genStore],
       edges: [
         {
