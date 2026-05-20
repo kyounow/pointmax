@@ -709,23 +709,34 @@ export function CalculatorScreen() {
                       )}
                     </div>
 
+                    {/* v5.1.3: 異種通貨 addOn 分離表示。1 つでも appBonus がある場合
+                          breakdown を通貨別に 1 行ずつ表示する。1 件のみのときは従来と
+                          同じ見た目になる。breakdown が空 (旧 fallback) でも legacy summary
+                          フィールドで 1 行表示はカバー。 */}
                     {r.paymentApp &&
-                      r.appBonusEarnedAmount > 0 &&
-                      r.appBonusCurrencyId && (
+                      r.appBonusBreakdown.length > 0 && (
                         <div className="result-meta">
                           {r.paymentApp.chargeBased
                             ? `${r.paymentApp.name} 利用ボーナス`
-                            : "支払アプリ還元"}{" "}
-                          ({(r.appBonusRate * 100).toFixed(2)}%):{" "}
-                          {formatNum(r.appBonusEarnedAmount)}{" "}
-                          {currencyName(r.appBonusCurrencyId)}
-                          {r.appBonusReachable && r.appBonusFinalAmount > 0 && (
-                            <>
-                              {" "}
-                              → +{formatNum(r.appBonusFinalAmount)}{" "}
-                              {currencyName(activeCurrencyId)}
-                            </>
-                          )}
+                            : "支払アプリ還元"}
+                          {r.appBonusBreakdown.map((b) => (
+                            <div
+                              key={b.programId}
+                              style={{ marginLeft: 8, fontSize: 12 }}
+                              title={b.programName}
+                            >
+                              {b.programName} ({(b.rate * 100).toFixed(2)}%):{" "}
+                              {formatNum(b.earnedAmount)}{" "}
+                              {currencyName(b.earnedCurrencyId)}
+                              {b.finalAmount > 0 && (
+                                <>
+                                  {" "}
+                                  → +{formatNum(b.finalAmount)}{" "}
+                                  {currencyName(activeCurrencyId)}
+                                </>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
                   </>

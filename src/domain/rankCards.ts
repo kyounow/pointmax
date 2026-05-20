@@ -36,6 +36,21 @@ export type RankInput = {
   memberships?: StoreProgramMembership[];
 };
 
+// 異種通貨 addOn 分離表示用のエントリ (v5.1.3 audit-fix C)。
+// addOn program ごとに「通貨」「rate」「earn 額 (pre-conversion)」「target 通貨換算 (post-conversion)」
+// と通過 edge を保持して、UI 側で通貨混在時も誤誘導表示にならないようにする。
+// 例: Olive 選べる特典 (v-pt) + 楽天Pay × 楽天カード上乗せ (rakuten-pt) が同時発火しても
+// "1.50% / 150 Vポイント" の合算表示ではなく "1% v-pt + 0.5% rakuten-pt" として表示可能。
+export type AddOnBreakdownEntry = {
+  programId: string;
+  programName: string;
+  rate: number;
+  earnedAmount: number;          // addOn 通貨での earn 量 (pre-conversion)
+  earnedCurrencyId: string;
+  finalAmount: number;           // target 通貨換算後の金額 (post-conversion)
+  pathSteps: ConversionEdge[];
+};
+
 export type CardRanking = {
   card: Card;
   resolved: ResolvedRate;
@@ -47,12 +62,16 @@ export type CardRanking = {
   reachable: boolean;
   // 採用された支払アプリ (paymentApps が渡されない場合は null)
   paymentApp: PaymentApp | null;
-  // 支払アプリのbonus還元結果
-  appBonusRate: number; // 実際に適用された bonus 還元率
-  appBonusFinalAmount: number; // target通貨換算
-  appBonusEarnedAmount: number; // bonus額 (アプリ通貨)
-  appBonusCurrencyId: string | null;
+  // 支払アプリのbonus還元結果 (summary fields; backward compat / tie-break ソート用)
+  // 異種通貨が混在する場合は「first-currency のみの earn」「全 rate 合算」になるため
+  // 表示には appBonusBreakdown を使う方が正確 (UI v5.1.3 で複数行表示に切替)。
+  appBonusRate: number; // 実際に適用された bonus 還元率 (全通貨ぶんの合計)
+  appBonusFinalAmount: number; // target通貨換算合計 (全通貨合算後、最終金額)
+  appBonusEarnedAmount: number; // bonus額 (first-currency のみ合算、レガシー)
+  appBonusCurrencyId: string | null; // first-currency
   appBonusReachable: boolean;
+  // 通貨別の addOn 内訳 (v5.1.3 audit-fix C 追加、UI で混在表示に使用)
+  appBonusBreakdown: AddOnBreakdownEntry[];
   // ポイントカード提示の二重取り
   loyalties: LoyaltyResult[];
   totalFinalAmount: number;
@@ -147,14 +166,24 @@ export function rankCards(
       const baseFinal = path?.finalAmount ?? 0;
 
       // addOn programs の合計 (paymentApp なし時は appBonus として表現)
+      const appBonusBreakdown: AddOnBreakdownEntry[] = [];
       let appBonusTotal = 0; // post-conversion (target 通貨)
-      let appBonusEarned = 0; // pre-conversion (addOn の通貨)
+      let appBonusEarned = 0; // pre-conversion (addOn の first-currency のみ合算、legacy)
       let appBonusRate = 0;
       let appBonusCurrencyId: string | null = null;
       for (const addOn of addOns) {
         const addOnEarned = payment.amount * addOn.effectiveRate;
         const addOnPath = bestPath(edges, addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned, availableCardIds);
         if (addOnPath) {
+          appBonusBreakdown.push({
+            programId: addOn.program.id,
+            programName: addOn.program.name,
+            rate: addOn.effectiveRate,
+            earnedAmount: addOnEarned,
+            earnedCurrencyId: addOn.effectiveCurrencyId,
+            finalAmount: addOnPath.finalAmount,
+            pathSteps: addOnPath.steps,
+          });
           appBonusTotal += addOnPath.finalAmount;
           appBonusRate += addOn.effectiveRate;
           if (appBonusCurrencyId === null) {
@@ -181,6 +210,7 @@ export function rankCards(
         appBonusEarnedAmount: appBonusEarned,
         appBonusCurrencyId,
         appBonusReachable: appBonusTotal > 0,
+        appBonusBreakdown,
         loyalties,
         totalFinalAmount: baseFinal + appBonusTotal + loyaltyTotal,
       };
@@ -224,6 +254,7 @@ export function rankCards(
         appBonusEarnedAmount: 0,
         appBonusCurrencyId: null,
         appBonusReachable: false,
+        appBonusBreakdown: [],
         loyalties,
         totalFinalAmount: baseFinal + loyaltyTotal,
       };
@@ -244,6 +275,7 @@ export function rankCards(
       appBonusEarned: number; // pre-conversion (addOn の通貨)
       appBonusCurrencyId: string | null;
       appBonusReachable: boolean;
+      appBonusBreakdown: AddOnBreakdownEntry[];
       total: number;
     };
 
@@ -287,15 +319,25 @@ export function rankCards(
       const cardPath = bestPath(edges, cardCurrencyId, targetCurrencyId, cardEarned, availableCardIds);
       const cardFinal = cardPath?.finalAmount ?? 0;
 
-      // addOn programs の合計
+      // addOn programs の合計 + 通貨別 breakdown (v5.1.3)
+      const appBonusBreakdown: AddOnBreakdownEntry[] = [];
       let appBonusTotal = 0; // post-conversion (target 通貨)
-      let appBonusEarned = 0; // pre-conversion (addOn の通貨)
+      let appBonusEarned = 0; // pre-conversion (addOn の first-currency のみ合算、legacy)
       let appBonusRateTotal = 0;
       let appBonusCurrencyId: string | null = null;
       for (const addOn of addOns) {
         const addOnEarned = payment.amount * addOn.effectiveRate;
         const addOnPath = bestPath(edges, addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned, availableCardIds);
         if (addOnPath) {
+          appBonusBreakdown.push({
+            programId: addOn.program.id,
+            programName: addOn.program.name,
+            rate: addOn.effectiveRate,
+            earnedAmount: addOnEarned,
+            earnedCurrencyId: addOn.effectiveCurrencyId,
+            finalAmount: addOnPath.finalAmount,
+            pathSteps: addOnPath.steps,
+          });
           appBonusTotal += addOnPath.finalAmount;
           appBonusRateTotal += addOn.effectiveRate;
           if (appBonusCurrencyId === null) {
@@ -321,6 +363,7 @@ export function rankCards(
         appBonusEarned,
         appBonusCurrencyId,
         appBonusReachable: appBonusTotal > 0,
+        appBonusBreakdown,
         total: cardFinal + appBonusTotal,
       };
     });
@@ -362,6 +405,7 @@ export function rankCards(
       appBonusEarnedAmount: best.appBonusEarned,
       appBonusCurrencyId: best.appBonusCurrencyId,
       appBonusReachable: best.appBonusReachable,
+      appBonusBreakdown: best.appBonusBreakdown,
       loyalties,
       totalFinalAmount: best.total + loyaltyTotal,
     };
