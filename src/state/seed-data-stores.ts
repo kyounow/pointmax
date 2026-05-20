@@ -59,6 +59,20 @@ export const SEED_STORES: Store[] = [
   { id: "excelsior-cafe", name: "エクセルシオール カフェ", category: "飲食" },
   { id: "kappa-sushi", name: "かっぱ寿司", category: "飲食" },
   { id: "shabuyo", name: "しゃぶ葉", category: "飲食" },
+  // V5-3 follow-up: すかいらーくグループ minor チェーン (SMBC タッチ決済 7% / Olive 8% の対象)
+  { id: "aiya", name: "藍屋", category: "飲食" },
+  { id: "grazie-gardens", name: "グラッチェガーデンズ", category: "飲食" },
+  { id: "steak-gusto", name: "ステーキガスト", category: "飲食" },
+  { id: "karaage-karayoshi", name: "から好し", category: "飲食" },
+  { id: "musashino-mori-coffee", name: "むさしの森珈琲", category: "飲食" },
+  { id: "uoya-michi", name: "魚屋路", category: "飲食" },
+  { id: "chawan", name: "chawan", category: "飲食" },
+  { id: "la-ohana", name: "La Ohana", category: "飲食" },
+  { id: "tonkara-tei", name: "とんから亭", category: "飲食" },
+  { id: "yumean-shokudo", name: "ゆめあん食堂", category: "飲食" },
+  { id: "monana", name: "桃菜", category: "飲食" },
+  { id: "hachiro-soba", name: "八郎そば", category: "飲食" },
+  { id: "sanmarusan", name: "三〇三", category: "飲食" },
   // 交通 / 電子マネー
   { id: "suica-charge", name: "Suicaチャージ", category: "電子マネー" },
   {
