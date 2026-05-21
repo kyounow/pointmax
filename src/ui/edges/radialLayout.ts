@@ -19,16 +19,39 @@ import type { ConversionEdge } from "../../domain/types";
 
 const CENTER_X = 400;
 const CENTER_Y = 260;
-// ノードの実 max-width (130px) + 最小余白で、円弧上の 1 スロット幅
-const NODE_SLOT_SIZE = 145;
+// ノードの実 max-width (130px) + 最小余白で、隣接ノード間の最低弦長 (chord)
+const NODE_SLOT_SIZE = 160;
 // 関連ノードが 0 個の時の最小 radius (UX 上「近すぎず遠すぎず」のバランス)
 const BASE_RADIUS = 180;
-// 単一リングの上限 (画面 height 580 / center 260 を考慮、視認性も両立)
+// 多重リングで使う radius (外側 → 中間 → 内側)。3 重リングまで対応 (13 個入口でも余裕)。
 const MAX_RADIUS = 380;
-// 2 重リング時の内側リング: 外側との差
-const INNER_RING_DELTA = 130;
+const RING_RADIUSES = [MAX_RADIUS, 270, 160] as const;
 // 双方向ノードを左右に積む時の y 方向間隔
 const STACK_SPACING_Y = 100;
+
+/**
+ * arc 上に N 個のノードを等分配置した時、隣接 2 ノード間の弦長 (chord、直線距離) は
+ *   chord = 2 * radius * sin(arc / (2 * N))
+ * これが NODE_SLOT_SIZE 以上になる最小 radius を返す。
+ *
+ * 旧実装は弧長 (= radius * arc) ベースで計算していたが、実際の重なりは弦長で決まる
+ * (= 半円端 angle ≈ π/0 で 2 つのノードの直線距離は弧長より大幅に短くなる)。
+ */
+function requiredRadiusForChord(N: number, arc: number): number {
+  if (N <= 1) return BASE_RADIUS;
+  return NODE_SLOT_SIZE / (2 * Math.sin(arc / (2 * N)));
+}
+
+/**
+ * 指定 radius / arc 上に NODE_SLOT_SIZE を満たして配置できる最大ノード数。
+ *   chord(N, radius, arc) = 2 * radius * sin(arc / (2N)) ≥ NODE_SLOT_SIZE
+ *   → N ≤ arc / (2 * asin(NODE_SLOT_SIZE / (2 * radius)))
+ */
+function maxCapacityOnArc(radius: number, arc: number): number {
+  const sinArg = NODE_SLOT_SIZE / (2 * radius);
+  if (sinArg >= 1) return 1; // ノードが radius より大きい (= 1 個しか乗らない)
+  return Math.max(1, Math.floor(arc / (2 * Math.asin(sinArg))));
+}
 
 /**
  * 弧上に等分配置する。N 個のノードを startAngle 〜 endAngle に均等に。
@@ -54,11 +77,15 @@ function placeOnArc(
 }
 
 /**
- * 適応 radius で弧上配置。N が多すぎて MAX_RADIUS でも詰まる場合は 2 重リング。
+ * 適応 radius で弧上配置。N が多すぎて MAX_RADIUS でも弦長が足りない場合は多重リングへ。
  *
- * - requiredRadius = N * SLOT_SIZE / arc_angle
- * - requiredRadius ≤ MAX_RADIUS なら単一リング (radius = max(BASE_RADIUS, requiredRadius))
- * - 超える場合は外側 = MAX_RADIUS, 内側 = MAX_RADIUS - INNER_RING_DELTA で 2 重に
+ * 計算は弦長 (chord) ベース:
+ *   chord = 2 * radius * sin(arc / (2N)) ≥ NODE_SLOT_SIZE
+ *
+ * - requiredRadiusForChord(N, arc) ≤ MAX_RADIUS なら単一リング
+ *   (radius = max(BASE_RADIUS, requiredRadius))
+ * - 超える場合は外側 → 中間 → 内側の順に RING_RADIUSES で埋める。各リングは
+ *   chord 制限を満たす capacity 分だけ受け入れる。
  */
 function placeAdaptiveArc(
   ids: string[],
@@ -69,7 +96,7 @@ function placeAdaptiveArc(
   const N = ids.length;
   if (N === 0) return;
   const arc = endAngle - startAngle;
-  const requiredRadius = (N * NODE_SLOT_SIZE) / arc;
+  const requiredRadius = requiredRadiusForChord(N, arc);
 
   if (requiredRadius <= MAX_RADIUS) {
     const radius = Math.max(BASE_RADIUS, requiredRadius);
@@ -77,23 +104,18 @@ function placeAdaptiveArc(
     return;
   }
 
-  // 2 重リング: 外側に capacity 分、残りを内側に
-  const outerCapacity = Math.max(
-    1,
-    Math.floor((MAX_RADIUS * arc) / NODE_SLOT_SIZE),
-  );
-  const outerN = Math.min(N, outerCapacity);
-  const outerIds = ids.slice(0, outerN);
-  const innerIds = ids.slice(outerN);
-  placeOnArc(outerIds, startAngle, endAngle, MAX_RADIUS, layout);
-  if (innerIds.length > 0) {
-    placeOnArc(
-      innerIds,
-      startAngle,
-      endAngle,
-      MAX_RADIUS - INNER_RING_DELTA,
-      layout,
-    );
+  // 多重リング: 外側 → 中間 → 内側 の順に chord 制限を満たす範囲で埋める
+  let remaining = ids;
+  for (const r of RING_RADIUSES) {
+    if (remaining.length === 0) break;
+    const cap = maxCapacityOnArc(r, arc);
+    const take = Math.min(remaining.length, cap);
+    placeOnArc(remaining.slice(0, take), startAngle, endAngle, r, layout);
+    remaining = remaining.slice(take);
+  }
+  // 3 重でも入りきらない極端ケース (>>20 個) は最内リングに詰める (重なり許容)
+  if (remaining.length > 0) {
+    placeOnArc(remaining, startAngle, endAngle, BASE_RADIUS, layout);
   }
 }
 
@@ -132,13 +154,13 @@ export function computeFocusedRadialLayout(
 
   // 双方向は左右 (angle = π / 0) に配置、複数なら y で stack
   // 双方向数は通常少ない (≤ 6 程度) ので単純な stack で十分。
-  // radius は入口/出口の最大 required と同じスケールで揃える。
+  // radius は入口/出口の最大 required と同じスケールで揃える (弦長基準)。
   const sideRadius = (() => {
     const inputRequired = inputOnly.length
-      ? (inputOnly.length * NODE_SLOT_SIZE) / Math.PI
+      ? requiredRadiusForChord(inputOnly.length, Math.PI)
       : 0;
     const outputRequired = outputOnly.length
-      ? (outputOnly.length * NODE_SLOT_SIZE) / Math.PI
+      ? requiredRadiusForChord(outputOnly.length, Math.PI)
       : 0;
     const maxRequired = Math.max(inputRequired, outputRequired);
     if (maxRequired === 0) return BASE_RADIUS;

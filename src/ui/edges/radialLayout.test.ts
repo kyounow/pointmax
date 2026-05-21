@@ -110,10 +110,10 @@ describe("computeFocusedRadialLayout", () => {
     expect(distMedium).toBeGreaterThanOrEqual(distSmall);
   });
 
-  // ─── 密集時の重なり回避 (PR #44 fix) ───
-  it("入口 13 個 (JAL マイル 相当) → 2 重リングに展開され、上限 radius を超えない", () => {
-    // JAL マイル相当の入口 13 個シナリオ。
-    // requiredRadius = 13 * 145 / π ≈ 600 で MAX_RADIUS (380) を超えるため 2 重リング展開。
+  // ─── 密集時の重なり回避 (PR #44 〜 #46 fix) ───
+  it("入口 13 個 (JAL マイル 相当) → 多重リング展開、上限 radius を超えない", () => {
+    // JAL マイル相当の入口 13 個シナリオ。半円 chord 計算で 1 重に入りきらず、
+    // 外側 (380) → 中間 (270) → 内側 (160) の 3 重リングに分散される。
     const edges = Array.from({ length: 13 }, (_, i) =>
       mkEdge(`e${i}`, `n${i}`, "a"),
     );
@@ -125,20 +125,21 @@ describe("computeFocusedRadialLayout", () => {
       const dist = Math.hypot(pos!.x - CENTER_X, pos!.y - CENTER_Y);
       expect(dist).toBeLessThanOrEqual(380 + 0.01);
     }
-    // 外側リング (radius=380) と内側リング (radius=250) の両方が使われていること
+    // 外側 (380) と中間 (270) のリングが使われていること (内側 160 は 0 or 1 個)
     const distances = Array.from({ length: 13 }, (_, i) => {
       const pos = layout.get(`n${i}`)!;
       return Math.hypot(pos.x - CENTER_X, pos.y - CENTER_Y);
     });
     const outerCount = distances.filter((d) => Math.abs(d - 380) < 1).length;
-    const innerCount = distances.filter((d) => Math.abs(d - 250) < 1).length;
+    const middleCount = distances.filter((d) => Math.abs(d - 270) < 1).length;
+    const innerCount = distances.filter((d) => Math.abs(d - 160) < 1).length;
     expect(outerCount).toBeGreaterThan(0);
-    expect(innerCount).toBeGreaterThan(0);
-    expect(outerCount + innerCount).toBe(13);
+    expect(middleCount).toBeGreaterThan(0);
+    expect(outerCount + middleCount + innerCount).toBe(13);
   });
 
-  it("入口 13 個 → 同一リング内で隣接ノード間距離が SLOT_SIZE * 0.9 以上 (重なりなし)", () => {
-    const SLOT_SIZE = 145;
+  it("入口 13 個 → 同一リング内で隣接ノード弦長 ≥ SLOT_SIZE (重なりなし)", () => {
+    const SLOT_SIZE = 160; // radialLayout.ts の定数と一致
     const edges = Array.from({ length: 13 }, (_, i) =>
       mkEdge(`e${i}`, `n${i}`, "a"),
     );
@@ -155,8 +156,8 @@ describe("computeFocusedRadialLayout", () => {
       groupedByRing.get(r)!.push(p);
     }
     for (const ringPositions of groupedByRing.values()) {
-      // 同一リング内で隣接 2 ノードの距離が SLOT_SIZE * 0.9 以上 (= 重なり防止)
-      // angle 順 sort してから隣接距離を確認
+      // 同一リング内で隣接 2 ノードの弦長 (chord) ≥ SLOT_SIZE (= 重なり防止)
+      // 弦長ベース計算のため、margin 0 でも妥当 (1px の浮動小数誤差を許容)
       const sortedByAngle = ringPositions
         .map((p) => ({
           ...p,
@@ -167,7 +168,7 @@ describe("computeFocusedRadialLayout", () => {
         const a = sortedByAngle[i];
         const b = sortedByAngle[i + 1];
         const d = Math.hypot(a.x - b.x, a.y - b.y);
-        expect(d).toBeGreaterThanOrEqual(SLOT_SIZE * 0.9);
+        expect(d).toBeGreaterThanOrEqual(SLOT_SIZE - 1);
       }
     }
   });
