@@ -17,8 +17,15 @@ export type ProgramMatch = {
 };
 
 export type ProgramEvalResult = {
-  // primary: 排他的、最大 rate を選んだ 1 件 (もしくは null = 該当なし)
+  // primary: 排他的、effectiveRate 数値最大を選んだ 1 件 (もしくは null = 該当なし)。
+  // 後方互換のため残す。target 通貨を考慮した選択をしたい caller は primaryCandidates を使う。
   primary: ProgramMatch | null;
+  // primaryCandidates: 全 primary 候補 (effectiveRate 降順)。
+  // target 通貨への path を踏まえて最適 primary を再選択したい caller 向け
+  // (例: rankCards.ts は selectPrimaryForTarget() に渡して path-aware に選び直す)。
+  // primary == primaryCandidates[0] ?? null。
+  // 監査残 B (異種通貨 primary の path 込み比較) のために v5.x で追加。
+  primaryCandidates: ProgramMatch[];
   // addOn: 全部加算する候補
   addOns: ProgramMatch[];
 };
@@ -80,16 +87,17 @@ export function evaluatePrograms(args: {
     });
   }
 
-  // 4. primary と addOn を分離、primary は最大 rate 選択
-  const primaryCandidates = eligible.filter(
-    (m) => (m.program.bonusType ?? "primary") === "primary",
-  );
+  // 4. primary と addOn を分離。
+  //    primary 候補は effectiveRate 降順 sort して全て返す (caller が target 通貨を踏まえて選び直せるように)。
+  //    primary フィールドは旧 caller / back-compat 用に primaryCandidates[0] を入れる
+  //    (= effectiveRate 単純最大、target 不問)。
+  const primaryCandidates = eligible
+    .filter((m) => (m.program.bonusType ?? "primary") === "primary")
+    .slice()
+    .sort((a, b) => b.effectiveRate - a.effectiveRate);
   const addOns = eligible.filter((m) => m.program.bonusType === "addOn");
 
-  let primary: ProgramMatch | null = null;
-  for (const c of primaryCandidates) {
-    if (!primary || c.effectiveRate > primary.effectiveRate) primary = c;
-  }
+  const primary: ProgramMatch | null = primaryCandidates[0] ?? null;
 
-  return { primary, addOns };
+  return { primary, primaryCandidates, addOns };
 }

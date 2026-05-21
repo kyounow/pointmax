@@ -223,6 +223,49 @@ describe("evaluatePrograms", () => {
     });
     expect(result.primary?.effectiveRate).toBe(0.03);
   });
+
+  // ─── primaryCandidates field (監査残 B 対応で v5.x 追加) ───
+  it("primaryCandidates: 候補なしのとき空配列、primary は null", () => {
+    const result = evaluatePrograms({
+      card: jalSuica,
+      store: eneosStore,
+      paymentApp: noApp,
+      programs: [],
+      memberships: [],
+    });
+    expect(result.primaryCandidates).toEqual([]);
+    expect(result.primary).toBeNull();
+  });
+
+  it("primaryCandidates: 異種通貨 primary が並ぶと effectiveRate 降順 sort で全件返す。primary は [0]", () => {
+    // jal-suica × eneos で primary が 2 件発火するシナリオを構築:
+    // - prog-jal-tokuyaku (jal-mile 2%)
+    // - prog-fictional-rakuten (rakuten-pt 1%) ※ jal-suica にも適用される架空 primary
+    const fictionalRakutenPrimary: BenefitProgram = {
+      id: "prog-fictional-rakuten",
+      name: "架空 rakuten primary",
+      cardIds: ["jal-suica"],
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      bonusType: "primary",
+    };
+    const result = evaluatePrograms({
+      card: jalSuica,
+      store: eneosStore,
+      paymentApp: noApp,
+      programs: [jalTokuyakuProgram, fictionalRakutenPrimary],
+      memberships: [
+        jalTokuyakuMembership,
+        { programId: "prog-fictional-rakuten", storeId: "eneos" },
+      ],
+    });
+    expect(result.primaryCandidates).toHaveLength(2);
+    // effectiveRate 降順 sort 済 (0.02 → 0.01)
+    expect(result.primaryCandidates[0]?.program.id).toBe("prog-jal-tokuyaku");
+    expect(result.primaryCandidates[1]?.program.id).toBe("prog-fictional-rakuten");
+    // primary は [0] と同じ (= 旧挙動 back-compat)
+    expect(result.primary?.program.id).toBe("prog-jal-tokuyaku");
+  });
 });
 
 // ─── PR 2 programs の結合テスト ───

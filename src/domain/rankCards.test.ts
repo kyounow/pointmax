@@ -636,4 +636,113 @@ describe("rankCards", () => {
     expect(r.appBonusRate).toBe(0.015); // 1% + 0.5%
     expect(r.appBonusFinalAmount).toBe(150); // 100 + 50
   });
+
+  // ─── 監査残 B: primary 通貨込み比較 (path-aware selection) ───
+  // 異種通貨 primary が並ぶ場合、target 通貨への path を踏まえて最適 primary を選ぶことを E2E で確認。
+  // 旧挙動 (effectiveRate 数値最大) では target 到達不能な primary が選ばれて「対象外」になっていた
+  // ケースを、新挙動では到達可能な primary に切り替えてランキング入りさせる。
+  it("primary 競合: target=v-pt なら rakuten-pt 経路 (1%) を選び、jal-mile primary (2%) は選ばれない", () => {
+    const dualCard: Card = {
+      id: "dual",
+      name: "dual カード",
+      defaultRate: 0.005,
+      defaultCurrencyId: "v-pt",
+    };
+    const eneos: Store = { id: "eneos", name: "ENEOS", category: "ガソリン" };
+    const stores: Store[] = [{ id: "any", name: "any" }, eneos];
+    // 同一 (card, store, paymentApp 直決済) で 2 つの primary が発火
+    const jalPrimary: BenefitProgram = {
+      id: "prog-jal-mile-primary",
+      name: "JAL マイル primary",
+      cardIds: ["dual"],
+      rate: 0.02,
+      currencyId: "jal-mile",
+      bonusType: "primary",
+    };
+    const rakutenPrimary: BenefitProgram = {
+      id: "prog-rakuten-primary",
+      name: "rakuten primary",
+      cardIds: ["dual"],
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      bonusType: "primary",
+    };
+    const memberships: StoreProgramMembership[] = [
+      { programId: "prog-jal-mile-primary", storeId: "eneos" },
+      { programId: "prog-rakuten-primary", storeId: "eneos" },
+    ];
+    // edge: rakuten-pt → v-pt のみ (jal-mile → v-pt は なし = 到達不能)
+    const edges = [edge("rakuten-vpt", "rakuten-pt", "v-pt", 0.5)];
+
+    const result = rankCards({
+      payment: { storeId: "eneos", amount: 10000 },
+      targetCurrencyId: "v-pt",
+      cards: [dualCard],
+      stores,
+      edges,
+      programs: [jalPrimary, rakutenPrimary],
+      memberships,
+    });
+    expect(result).toHaveLength(1);
+    const r = result[0];
+    // path-aware で rakuten primary が選ばれている (旧挙動なら jal-mile が選ばれて到達不能)
+    expect(r.resolved.source).toBe("program");
+    if (r.resolved.source === "program") {
+      expect(r.resolved.programId).toBe("prog-rakuten-primary");
+    }
+    expect(r.earnedCurrencyId).toBe("rakuten-pt");
+    expect(r.earnedAmount).toBe(100); // 10000 × 0.01
+    expect(r.finalAmount).toBe(50); // 100 × 0.5
+    expect(r.reachable).toBe(true); // 旧挙動なら false (= 対象外) だったケース
+  });
+
+  it("primary 競合: target=jal-mile なら jal-mile primary (2%) を選ぶ (path 同一通貨 ratio=1)", () => {
+    // 同じ fixture で target を切り替えるだけで primary 選択も切り替わることを確認
+    const dualCard: Card = {
+      id: "dual",
+      name: "dual カード",
+      defaultRate: 0.005,
+      defaultCurrencyId: "v-pt",
+    };
+    const eneos: Store = { id: "eneos", name: "ENEOS", category: "ガソリン" };
+    const stores: Store[] = [eneos];
+    const jalPrimary: BenefitProgram = {
+      id: "prog-jal-mile-primary",
+      name: "JAL マイル primary",
+      cardIds: ["dual"],
+      rate: 0.02,
+      currencyId: "jal-mile",
+      bonusType: "primary",
+    };
+    const rakutenPrimary: BenefitProgram = {
+      id: "prog-rakuten-primary",
+      name: "rakuten primary",
+      cardIds: ["dual"],
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      bonusType: "primary",
+    };
+    const memberships: StoreProgramMembership[] = [
+      { programId: "prog-jal-mile-primary", storeId: "eneos" },
+      { programId: "prog-rakuten-primary", storeId: "eneos" },
+    ];
+    const edges = [edge("rakuten-vpt", "rakuten-pt", "v-pt", 0.5)]; // jal は target 同一通貨
+
+    const result = rankCards({
+      payment: { storeId: "eneos", amount: 10000 },
+      targetCurrencyId: "jal-mile",
+      cards: [dualCard],
+      stores,
+      edges,
+      programs: [jalPrimary, rakutenPrimary],
+      memberships,
+    });
+    const r = result[0];
+    expect(r.resolved.source).toBe("program");
+    if (r.resolved.source === "program") {
+      expect(r.resolved.programId).toBe("prog-jal-mile-primary");
+    }
+    expect(r.earnedCurrencyId).toBe("jal-mile");
+    expect(r.finalAmount).toBe(200); // 10000 × 0.02 × 1
+  });
 });
