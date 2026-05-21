@@ -22,6 +22,10 @@ const ROUTE_ROLE_COLOR = {
 export function CurrencyNode({ data }: NodeProps<CurrencyNodeType>) {
   const s = styleOf(data.currency.kind);
   const routeColor = data.routeRole ? ROUTE_ROLE_COLOR[data.routeRole] : null;
+  // 背景塗りつぶし: currency 個別の iconColor (例: 楽天=#bf0000) があればそちらで塗る、
+  // なければ kind 別の暗色 (s.bg) で fallback。塗った時の text 色は白で contrast を確保。
+  const fillBg = data.currency.iconColor;
+  const useIconFill = !!fillBg;
   const cls = [
     "currency-node",
     data.selected ? "selected" : "",
@@ -37,8 +41,8 @@ export function CurrencyNode({ data }: NodeProps<CurrencyNodeType>) {
         // routeRole > selected > default の優先度で borderColor を決定
         borderColor: routeColor ?? (data.selected ? "#f59e0b" : s.border),
         borderWidth: data.routeRole ? 3 : undefined,
-        background: s.bg,
-        color: s.text,
+        background: useIconFill ? fillBg : s.bg,
+        color: useIconFill ? "#ffffff" : s.text,
         position: "relative",
       }}
     >

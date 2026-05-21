@@ -17,53 +17,12 @@ import type { ConversionEdge, Currency, CurrencyKind } from "../../domain/types"
 import { nodeTypes, type CurrencyNodeType } from "../CurrencyNode";
 import { edgeTypes } from "../PointMaxEdge";
 import { computeFocusedRadialLayout } from "./radialLayout";
+import { layoutByKindRadial } from "./kindRadialLayout";
 import type { Selection } from "./types";
 
-// kind 別に行を分けて配置 (point上段 / mile中段 / cashlike下段 / 未分類最下段)。
-// 各 kind 内のノードが多い場合は MAX_PER_ROW で折り返して縦に積み、
-// 1 つの kind の subrow 数に応じて次の kind の y 位置を動的に決める。
-// これにより、ノードが多くても横スクロールが大幅に減って fitView の縮尺が改善される。
-function layoutByKind(
-  currencies: Currency[],
-): Map<string, { x: number; y: number }> {
-  const buckets: Record<CurrencyKind | "other", Currency[]> = {
-    point: [],
-    mile: [],
-    cashlike: [],
-    other: [],
-  };
-  for (const c of currencies) {
-    buckets[c.kind ?? "other"].push(c);
-  }
-  const MAX_PER_ROW = 6;
-  const COL_GAP = 140;
-  const SUBROW_GAP = 110;
-  const KIND_GAP = 70;
-  const X_BASE = 30;
-  const orderedKinds: (keyof typeof buckets)[] = [
-    "point",
-    "mile",
-    "cashlike",
-    "other",
-  ];
-  const map = new Map<string, { x: number; y: number }>();
-  let currentY = 30;
-  for (const kind of orderedKinds) {
-    const items = buckets[kind];
-    if (items.length === 0) continue;
-    items.forEach((c, i) => {
-      const row = Math.floor(i / MAX_PER_ROW);
-      const col = i % MAX_PER_ROW;
-      map.set(c.id, {
-        x: X_BASE + col * COL_GAP,
-        y: currentY + row * SUBROW_GAP,
-      });
-    });
-    const subrows = Math.ceil(items.length / MAX_PER_ROW);
-    currentY += subrows * SUBROW_GAP + KIND_GAP;
-  }
-  return map;
-}
+// ノード未選択時のデフォルトレイアウトは kindRadialLayout.ts の layoutByKindRadial に移行。
+// kind 別の同心円配置 (ポイント=外側、マイル=中間、現金相当=内側) で見た目を統一。
+// 旧「kind 別 横一列 + 行折り返し」レイアウトは削除。
 
 // v4.0.0 ③: ルート選択時のレイアウト。
 // 起点 → step1 → step2 → ... → 終点 を一直線に並べる。
@@ -144,7 +103,7 @@ export function EdgesGraph({
     if (focusedNodeId) {
       return computeFocusedRadialLayout(focusedNodeId, edges);
     }
-    return layoutByKind(currencies);
+    return layoutByKindRadial(currencies);
   }, [currencies, edges, focusedNodeId, isRouteMode, routeFromId, routeResultSteps]);
 
   const isEdgeRelated = useCallback(
