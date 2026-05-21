@@ -16,6 +16,7 @@ import { formatRatio, styleOf } from "../../domain/currencyKind";
 import type { ConversionEdge, Currency, CurrencyKind } from "../../domain/types";
 import { nodeTypes, type CurrencyNodeType } from "../CurrencyNode";
 import { edgeTypes } from "../PointMaxEdge";
+import { computeFocusedRadialLayout } from "./radialLayout";
 import type { Selection } from "./types";
 
 // kind 別に行を分けて配置 (point上段 / mile中段 / cashlike下段 / 未分類最下段)。
@@ -82,60 +83,9 @@ function computeRouteLayout(
   return map;
 }
 
-// ノード選択時のフォーカスレイアウト
-// 選択ノードを中心に、入口=上 / 出口=下 / 双方向=左右に配置
-// 戻り値: 表示すべきノードIDのみ含むマップ
-function computeFocusedLayout(
-  selectedId: string,
-  edges: ConversionEdge[],
-): Map<string, { x: number; y: number }> {
-  const incomingSet = new Set<string>();
-  const outgoingSet = new Set<string>();
-  for (const e of edges) {
-    if (e.toCurrencyId === selectedId) incomingSet.add(e.fromCurrencyId);
-    if (e.fromCurrencyId === selectedId) outgoingSet.add(e.toCurrencyId);
-  }
-  const bidirSet = new Set<string>();
-  for (const id of incomingSet) {
-    if (outgoingSet.has(id)) bidirSet.add(id);
-  }
-  const inputOnly = [...incomingSet].filter((id) => !bidirSet.has(id));
-  const outputOnly = [...outgoingSet].filter((id) => !bidirSet.has(id));
-  const bidir = [...bidirSet];
-
-  const layout = new Map<string, { x: number; y: number }>();
-
-  const centerX = 400;
-  const centerY = 260;
-  const spacing = 150;
-  layout.set(selectedId, { x: centerX, y: centerY });
-
-  // 入口 (selected の上、y=40)
-  inputOnly.forEach((id, i) => {
-    const x = centerX + (i - (inputOnly.length - 1) / 2) * spacing;
-    layout.set(id, { x, y: 40 });
-  });
-
-  // 出口 (selected の下、y=480)
-  outputOnly.forEach((id, i) => {
-    const x = centerX + (i - (outputOnly.length - 1) / 2) * spacing;
-    layout.set(id, { x, y: 480 });
-  });
-
-  // 双方向: 左右に振り分け (半分ずつ)
-  const leftCount = Math.ceil(bidir.length / 2);
-  const rightCount = bidir.length - leftCount;
-  bidir.slice(0, leftCount).forEach((id, i) => {
-    const y = centerY + (i - (leftCount - 1) / 2) * 120;
-    layout.set(id, { x: centerX - 280, y });
-  });
-  bidir.slice(leftCount).forEach((id, i) => {
-    const y = centerY + (i - (rightCount - 1) / 2) * 120;
-    layout.set(id, { x: centerX + 280, y });
-  });
-
-  return layout;
-}
+// ノード選択時のレイアウトは radialLayout.ts の computeFocusedRadialLayout に移行。
+// 入口=上半円 / 出口=下半円 / 双方向=左右 の円形配置 + CSS transition でアニメ。
+// 旧「十字」配置 (入口=上行 y=40、出口=下行 y=480、双方向=固定 x=±280) は削除。
 
 type Props = {
   currencies: Currency[];
@@ -192,7 +142,7 @@ export function EdgesGraph({
       return computeRouteLayout(routeFromId, routeResultSteps);
     }
     if (focusedNodeId) {
-      return computeFocusedLayout(focusedNodeId, edges);
+      return computeFocusedRadialLayout(focusedNodeId, edges);
     }
     return layoutByKind(currencies);
   }, [currencies, edges, focusedNodeId, isRouteMode, routeFromId, routeResultSteps]);

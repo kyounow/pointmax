@@ -315,6 +315,15 @@ details summary {
 .graph-wrap .react-flow__minimap {
   border-radius: 6px;
 }
+/* ノード位置切替時のアニメーション (デフォルト⇄focused radial⇄route のレイアウト遷移を smooth に)。
+   ドラッグ中は React Flow が transform を絶えず更新するので transition は切る (カクつき防止)。 */
+.graph-wrap .react-flow__node {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.graph-wrap .react-flow__node.dragging,
+.graph-wrap .react-flow__node.selectable:active {
+  transition: none;
+}
 
 /* グラフツールバー */
 .graph-toolbar {
