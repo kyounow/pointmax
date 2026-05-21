@@ -11,6 +11,7 @@ import type {
 import { bestPath } from "./bestPath";
 import { bestLoyalties, type LoyaltyResult } from "./loyalty";
 import { evaluatePrograms } from "./programEvaluator";
+import { selectPrimaryForTarget } from "./selectPrimary";
 
 // ResolvedRate は programEvaluator ベース。後方互換のため source フィールドを維持。
 export type ResolvedRate =
@@ -150,7 +151,16 @@ export function rankCards(
           })
         : null;
 
-      const primary = programResult?.primary ?? null;
+      // primary は target 通貨への path 込みで再選択 (監査残 B 対応)。
+      // 候補なし or programResult が null の場合は null。
+      const primary = programResult
+        ? selectPrimaryForTarget(
+            programResult.primaryCandidates,
+            edges,
+            targetCurrencyId,
+            availableCardIds,
+          )
+        : null;
       const addOns = programResult?.addOns ?? [];
 
       // カード rate: primary program rate または defaultRate
@@ -230,7 +240,13 @@ export function rankCards(
         programs,
         memberships,
       });
-      const primary = programResult.primary;
+      // primary は target 通貨への path 込みで再選択 (監査残 B 対応)
+      const primary = selectPrimaryForTarget(
+        programResult.primaryCandidates,
+        edges,
+        targetCurrencyId,
+        availableCardIds,
+      );
       const cardRate = primary?.effectiveRate ?? card.defaultRate;
       const cardCurrencyId = primary?.effectiveCurrencyId ?? card.defaultCurrencyId;
       const resolved: ResolvedRate = primary
@@ -288,7 +304,14 @@ export function rankCards(
         memberships,
       });
 
-      const primary = programResult.primary;
+      // primary は target 通貨への path 込みで再選択 (監査残 B 対応)。
+      // chargeBased / 非 chargeBased どちらでも path-aware に最適な primary を採用。
+      const primary = selectPrimaryForTarget(
+        programResult.primaryCandidates,
+        edges,
+        targetCurrencyId,
+        availableCardIds,
+      );
       const addOns = programResult.addOns;
 
       // chargeBased=true: カード自身の還元は 0、bonus のみ (paymentApp program が全部カバー)
