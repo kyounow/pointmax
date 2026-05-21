@@ -287,9 +287,12 @@ details summary {
   color: var(--muted);
 }
 
-/* React Flow container */
+/* React Flow container.
+   height は EdgesGraph.tsx の inline style (780px) で上書きされる。
+   ここの値は EdgesGraph 以外で .graph-wrap が使われた場合の fallback。
+   radial レイアウト (MAX_RADIUS=380) を 1x scale で表示するには 760px+ 必要。 */
 .graph-wrap {
-  height: 420px;
+  height: 780px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -852,9 +855,9 @@ details summary {
   .loyalty-banner-body .final {
     margin-left: 0 !important;
   }
-  /* Graph: shorter on mobile */
+  /* Graph: shorter on mobile (radial radius は変えず fitView の zoom で縮小される) */
   .graph-wrap {
-    height: 380px;
+    height: 560px;
   }
   /* Update banner: actions wrap */
   .update-banner {
