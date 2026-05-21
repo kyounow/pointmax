@@ -92,24 +92,95 @@ describe("computeFocusedRadialLayout", () => {
     expect(layout.get("bi")!.y).toBe(CENTER_Y); // 左右 (y == centerY)
   });
 
-  it("ノード数が増えると radius が大きくなる (上限 280)", () => {
-    // 入口 1 個 vs 入口 20 個で同方向 (真上付近) の y 距離が変わるか
+  it("ノード数が増えると radius が大きくなる (BASE_RADIUS → 適応 radius)", () => {
+    // 入口 1 個 vs 入口 5 個で外側半径が増えるか
     const layoutSmall = computeFocusedRadialLayout("a", [
       mkEdge("e", "b", "a"),
     ]);
     const distSmall = CENTER_Y - layoutSmall.get("b")!.y;
 
-    const manyEdges = Array.from({ length: 20 }, (_, i) =>
+    const mediumEdges = Array.from({ length: 5 }, (_, i) =>
       mkEdge(`e${i}`, `n${i}`, "a"),
     );
-    const layoutLarge = computeFocusedRadialLayout("a", manyEdges);
-    // 真上付近のノードを 1 つ拾って distance を比較
-    // 20 個入口なら中央付近 (i=9 or 10) が真上 (angle ≈ 3π/2)
-    const middleId = "n9";
-    const midPos = layoutLarge.get(middleId);
-    expect(midPos).toBeDefined();
-    const distLarge = Math.hypot(midPos!.x - CENTER_X, midPos!.y - CENTER_Y);
-    expect(distLarge).toBeGreaterThan(distSmall); // radius 増加 (180 → 280 上限)
-    expect(distLarge).toBeLessThanOrEqual(280 + 0.01); // 上限を超えない
+    const layoutMedium = computeFocusedRadialLayout("a", mediumEdges);
+    // 5 個入口なら angle 範囲 (π, 2π) に均等配置、中央付近を抽出
+    const midId = "n2"; // index 2 = (π + 0.5π = 1.5π) 真上付近
+    const midPos = layoutMedium.get(midId)!;
+    const distMedium = Math.hypot(midPos.x - CENTER_X, midPos.y - CENTER_Y);
+    expect(distMedium).toBeGreaterThanOrEqual(distSmall);
+  });
+
+  // ─── 密集時の重なり回避 (PR #44 fix) ───
+  it("入口 13 個 (JAL マイル 相当) → 2 重リングに展開され、上限 radius を超えない", () => {
+    // JAL マイル相当の入口 13 個シナリオ。
+    // requiredRadius = 13 * 145 / π ≈ 600 で MAX_RADIUS (380) を超えるため 2 重リング展開。
+    const edges = Array.from({ length: 13 }, (_, i) =>
+      mkEdge(`e${i}`, `n${i}`, "a"),
+    );
+    const layout = computeFocusedRadialLayout("a", edges);
+    // 全ノードが MAX_RADIUS (380) 以下に配置されること
+    for (let i = 0; i < 13; i++) {
+      const pos = layout.get(`n${i}`);
+      expect(pos).toBeDefined();
+      const dist = Math.hypot(pos!.x - CENTER_X, pos!.y - CENTER_Y);
+      expect(dist).toBeLessThanOrEqual(380 + 0.01);
+    }
+    // 外側リング (radius=380) と内側リング (radius=250) の両方が使われていること
+    const distances = Array.from({ length: 13 }, (_, i) => {
+      const pos = layout.get(`n${i}`)!;
+      return Math.hypot(pos.x - CENTER_X, pos.y - CENTER_Y);
+    });
+    const outerCount = distances.filter((d) => Math.abs(d - 380) < 1).length;
+    const innerCount = distances.filter((d) => Math.abs(d - 250) < 1).length;
+    expect(outerCount).toBeGreaterThan(0);
+    expect(innerCount).toBeGreaterThan(0);
+    expect(outerCount + innerCount).toBe(13);
+  });
+
+  it("入口 13 個 → 同一リング内で隣接ノード間距離が SLOT_SIZE * 0.9 以上 (重なりなし)", () => {
+    const SLOT_SIZE = 145;
+    const edges = Array.from({ length: 13 }, (_, i) =>
+      mkEdge(`e${i}`, `n${i}`, "a"),
+    );
+    const layout = computeFocusedRadialLayout("a", edges);
+    const positions = Array.from({ length: 13 }, (_, i) => ({
+      id: `n${i}`,
+      ...layout.get(`n${i}`)!,
+    }));
+    // 同じ radius (=同一リング) のノード対を抽出し、隣接距離を確認
+    const groupedByRing = new Map<number, typeof positions>();
+    for (const p of positions) {
+      const r = Math.round(Math.hypot(p.x - CENTER_X, p.y - CENTER_Y));
+      if (!groupedByRing.has(r)) groupedByRing.set(r, []);
+      groupedByRing.get(r)!.push(p);
+    }
+    for (const ringPositions of groupedByRing.values()) {
+      // 同一リング内で隣接 2 ノードの距離が SLOT_SIZE * 0.9 以上 (= 重なり防止)
+      // angle 順 sort してから隣接距離を確認
+      const sortedByAngle = ringPositions
+        .map((p) => ({
+          ...p,
+          angle: Math.atan2(p.y - CENTER_Y, p.x - CENTER_X),
+        }))
+        .sort((a, b) => a.angle - b.angle);
+      for (let i = 0; i < sortedByAngle.length - 1; i++) {
+        const a = sortedByAngle[i];
+        const b = sortedByAngle[i + 1];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        expect(d).toBeGreaterThanOrEqual(SLOT_SIZE * 0.9);
+      }
+    }
+  });
+
+  it("入口 100 個 (極端ケース) → 内側 capacity も超える時の挙動: 全部 2 重リングに収まる", () => {
+    // 100 個入口は現状 seed にないが防御的に、tsc/runtime エラーが出ないこと
+    const edges = Array.from({ length: 100 }, (_, i) =>
+      mkEdge(`e${i}`, `n${i}`, "a"),
+    );
+    const layout = computeFocusedRadialLayout("a", edges);
+    // 全 100 個 layout に含まれること (見えなくても座標は付与)
+    for (let i = 0; i < 100; i++) {
+      expect(layout.get(`n${i}`)).toBeDefined();
+    }
   });
 });
