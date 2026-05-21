@@ -216,7 +216,7 @@ export function EdgesGraph({
   ]);
 
   return (
-    <div className="graph-wrap" style={{ height: 580 }}>
+    <div className="graph-wrap" style={{ height: 780 }}>
       {currencies.length === 0 ? (
         <div className="empty">先に通貨を登録してください。</div>
       ) : (
