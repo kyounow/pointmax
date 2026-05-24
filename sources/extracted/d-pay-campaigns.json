@@ -1,7 +1,7 @@
 {
   "sourceId": "d-pay-campaigns",
   "sourceUrl": "https://service.smt.docomo.ne.jp/keitai_payment/campaign/",
-  "fetchedAt": "2026-05-20T22:30:05.472Z",
+  "fetchedAt": "2026-05-24T22:02:35.087Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",

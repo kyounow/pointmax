@@ -1,9 +1,12 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-05-20T22:29:41.558Z",
-  "promptVersion": "campaign-vUnknown",
+  "fetchedAt": "2026-05-24T22:02:11.207Z",
+  "promptVersion": "campaign-v3.0",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "programs": [],
+  "memberships": [],
+  "stores": [],
+  "notes": "掲載されているキャンペーンは、抽選、山分け、特定条件達成ボーナス、または店舗が特定できない全体施策であり、固定還元率と対象店舗が明記された期間限定キャンペーンが抽出できませんでした。"
 }

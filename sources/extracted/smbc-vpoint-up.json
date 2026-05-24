@@ -1,9 +1,292 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-05-20T22:30:17.168Z",
-  "promptVersion": "ongoing-program-vUnknown",
+  "fetchedAt": "2026-05-24T22:03:28.013Z",
+  "promptVersion": "ongoing-program-v1.1",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "合計29件のチェーン店を抽出。Vポイントアッププログラムのライフスタイル条件（給与振込、預金残高、住宅ローン、証券口座、保険、カードローン等）に該当するものは、システム命令により抽出対象外としました。セブン-イレブン専用の高還元は「対象コンビニ・飲食店でスマホタッチ決済最大+7.5%」に統合して表現しています。",
+  "programs": [
+    {
+      "programId": "prog-olive-selectable-bonus",
+      "name": "Olive選べる特典 Vポイントアッププログラム+1%",
+      "cardIds": [
+        "olive"
+      ],
+      "rate": 0.01,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択",
+      "conditions": "Oliveアカウントの選べる特典にて「Vポイントアッププログラム＋1％」を選択した場合",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "Oliveアカウントの選べる特典＋1％",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "name": "SMBC対象コンビニ・飲食店スマホタッチ決済高還元",
+      "cardIds": [
+        "smbc-v",
+        "olive"
+      ],
+      "paymentAppId": "pa-visa-touch",
+      "rate": 0.075,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "Visa/Mastercard®タッチ決済で対象コンビニ・飲食店 最大+7.5%",
+      "conditions": "Visa/Mastercard®のタッチ決済利用時のみ。カード現物のタッチ決済、iD、カードの差し込み、磁気取引は対象外。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "B 対象店舗でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    }
+  ],
+  "memberships": [
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "seicomart",
+      "evidenceQuote": "セイコーマート スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "conv-7eleven",
+      "evidenceQuote": "セブン‐イレブン スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "poplar",
+      "evidenceQuote": "ポプラ スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "conv-ministop",
+      "evidenceQuote": "ミニストップ スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "conv-lawson",
+      "evidenceQuote": "ローソン スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "mcdonalds",
+      "evidenceQuote": "マクドナルド スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "mos-burger",
+      "evidenceQuote": "モスバーガー スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "kfc",
+      "evidenceQuote": "ケンタッキーフライドチキン スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "yoshinoya",
+      "evidenceQuote": "吉野家 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "saizeriya",
+      "evidenceQuote": "サイゼリヤ スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "gusto",
+      "evidenceQuote": "ガスト スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "bamiyan",
+      "evidenceQuote": "バーミヤン スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "shabuyo",
+      "evidenceQuote": "しゃぶ葉 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "jonathan",
+      "evidenceQuote": "ジョナサン スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "yumetoan",
+      "evidenceQuote": "夢庵 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "sukiya",
+      "evidenceQuote": "すき家 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "hamazushi",
+      "evidenceQuote": "はま寿司 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "cocos",
+      "evidenceQuote": "ココス スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "starbucks",
+      "evidenceQuote": "スターバックス (モバイルオーダーのみ) スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "doutor",
+      "evidenceQuote": "ドトールコーヒーショップ スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "excelsior-cafe",
+      "evidenceQuote": "エクセルシオール カフェ スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "kappa-sushi",
+      "evidenceQuote": "かっぱ寿司 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "steak-gusto",
+      "evidenceQuote": "ステーキガスト スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "karaage-karayoshi",
+      "evidenceQuote": "から好し スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "musashino-mori-coffee",
+      "evidenceQuote": "むさしの森珈琲 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "aiya",
+      "evidenceQuote": "藍屋 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "grazie-gardens",
+      "evidenceQuote": "グラッチェガーデンズ スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "uoya-michi",
+      "evidenceQuote": "魚屋路 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "chawan",
+      "evidenceQuote": "chawan スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "la-ohana",
+      "evidenceQuote": "La Ohana スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "tonkara-tei",
+      "evidenceQuote": "とんから亭 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "yumean-shokudo",
+      "evidenceQuote": "ゆめあん食堂 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "monana",
+      "evidenceQuote": "桃菜 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "hachiro-soba",
+      "evidenceQuote": "八郎そば スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "sanmarusan",
+      "evidenceQuote": "三〇三 スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元対象店舗",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    }
+  ]
 }

@@ -1,556 +1,1405 @@
 {
   "sourceId": "v-point-partners",
   "sourceUrl": "https://t-point.tsite.jp/store/list/",
-  "fetchedAt": "2026-05-20T22:26:27.485Z",
+  "fetchedAt": "2026-05-24T21:58:49.125Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
   "stores": [
     {
+      "storeId": "hac-drug",
+      "name": "ハックドラッグ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "お店・サービス一覧 ウエルシア ハックドラッグ 金光薬品",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kinko-yakuhin",
+      "name": "金光薬品",
+      "category": "ドラッグストア",
+      "evidenceQuote": "お店・サービス一覧 ウエルシア ハックドラッグ 金光薬品",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "towoshiya-yakkyoku",
+      "name": "とをしや薬局",
+      "category": "ドラッグストア",
+      "evidenceQuote": "お店・サービス一覧 とをしや薬局 ウエルシア ダックス",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "happy-drug",
+      "name": "ハッピー・ドラッグ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "お店・サービス一覧 ハッピー・ドラッグ マルエドラッグ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "marue-drug",
+      "name": "マルエドラッグ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "お店・サービス一覧 ハッピー・ドラッグ マルエドラッグ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yodoya-drug",
+      "name": "よどやドラッグ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "お店・サービス一覧 よどやドラッグ コクミン ふく薬品",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kokumin-drug",
+      "name": "コクミン",
+      "category": "ドラッグストア",
+      "evidenceQuote": "お店・サービス一覧 よどやドラッグ コクミン ふく薬品",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "fuku-yakuhin",
+      "name": "ふく薬品",
+      "category": "ドラッグストア",
+      "evidenceQuote": "お店・サービス一覧 コクミン ふく薬品 スーパードラッグひまわり",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "super-drug-himawari",
+      "name": "スーパードラッグひまわり",
+      "category": "ドラッグストア",
+      "evidenceQuote": "お店・サービス一覧 ふく薬品 スーパードラッグひまわり B.B.ON",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "b-b-on",
+      "name": "B.B.ON",
+      "category": "美容",
+      "evidenceQuote": "お店・サービス一覧 スーパードラッグひまわり B.B.ON NARCIS",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "narcis",
+      "name": "NARCIS",
+      "category": "美容",
+      "evidenceQuote": "お店・サービス一覧 B.B.ON NARCIS ウエルシアドットコム",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "welcia-dotcom",
+      "name": "ウエルシアドットコム",
+      "category": "ネット通販",
+      "evidenceQuote": "お店・サービス一覧 NARCIS ウエルシアドットコム COLOR STUDIO・MASAYA",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "color-studio-masaya",
+      "name": "COLOR STUDIO・MASAYA",
+      "category": "美容",
+      "evidenceQuote": "お店・サービス一覧 ウエルシアドットコム COLOR STUDIO・MASAYA",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "color-studio-masaya-online",
+      "name": "COLOR STUDIO・MASAYAオンラインショップ",
+      "category": "ネット通販",
+      "evidenceQuote": "お店・サービス一覧 COLOR STUDIO・MASAYA COLOR STUDIO・MASAYAオンラインショップ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "storeId": "zoomore",
       "name": "Zoomore",
       "category": "ペット",
-      "evidenceQuote": "Zoomore：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "お店・サービス一覧 COLOR STUDIO・MASAYAオンラインショップ Zoomore ENEOS",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "eneos-denki",
+      "name": "ＥＮＥＯＳでんき",
+      "category": "電気・ガス",
+      "evidenceQuote": "お店・サービス一覧 ENEOS ＥＮＥＯＳでんき ＥＮＥＯＳ都市ガス",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "eneos-toshigas",
+      "name": "ＥＮＥＯＳ都市ガス",
+      "category": "電気・ガス",
+      "evidenceQuote": "お店・サービス一覧 ＥＮＥＯＳでんき ＥＮＥＯＳ都市ガス ファミリーマート",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "autobacs-dotcom",
+      "name": "オートバックス・ドットコム",
+      "category": "ネット通販",
+      "evidenceQuote": "オートバックス オートバックス・ドットコム ガスト",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "maruetsu",
       "name": "マルエツ",
       "category": "スーパー",
-      "evidenceQuote": "マルエツ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "TSUTAYA マルエツ 吉野家",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "gran-buffet",
-      "name": "グランブッフェ",
+      "storeId": "sukiya",
+      "name": "すき家",
       "category": "飲食",
-      "evidenceQuote": "グランブッフェ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "三井住友銀行 すき家 なか卯 はま寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "festa-garden",
-      "name": "フェスタガーデン",
+      "storeId": "nakau",
+      "name": "なか卯",
       "category": "飲食",
-      "evidenceQuote": "フェスタガーデン：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "三井住友銀行 すき家 なか卯 はま寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "new-market",
-      "name": "ニューマーケット",
+      "storeId": "victorias-station",
+      "name": "ヴィクトリアステーション",
       "category": "飲食",
-      "evidenceQuote": "ニューマーケット：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "hassen",
-      "name": "八献",
-      "category": "飲食",
-      "evidenceQuote": "八献：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "pertica",
-      "name": "ペルティカ",
-      "category": "飲食",
-      "evidenceQuote": "ペルティカ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "tomato-and-onion",
-      "name": "トマト＆オニオン",
-      "category": "飲食",
-      "evidenceQuote": "トマト＆オニオン：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "jujukalbi",
-      "name": "じゅうじゅうカルビ",
-      "category": "飲食",
-      "evidenceQuote": "じゅうじゅうカルビ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ココス ビッグボーイ ヴィクトリアステーション ジョリーパスタ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "jolly-pasta",
       "name": "ジョリーパスタ",
       "category": "飲食",
-      "evidenceQuote": "ジョリーパスタ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ビッグボーイ ヴィクトリアステーション ジョリーパスタ 華屋与兵衛",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "jukusei-yakiniku-ichiban",
       "name": "熟成焼肉いちばん",
       "category": "飲食",
-      "evidenceQuote": "熟成焼肉いちばん：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "華屋与兵衛 熟成焼肉いちばん オリーブの丘 かつ庵",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "olive-no-oka",
       "name": "オリーブの丘",
       "category": "飲食",
-      "evidenceQuote": "オリーブの丘：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "熟成焼肉いちばん オリーブの丘 かつ庵 久兵衛屋",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "katsu-an",
+      "storeId": "katsuan",
       "name": "かつ庵",
       "category": "飲食",
-      "evidenceQuote": "かつ庵：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "オリーブの丘 かつ庵 久兵衛屋 ZETTERIA",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "kyube-ya",
+      "storeId": "kubei-ya",
       "name": "久兵衛屋",
       "category": "飲食",
-      "evidenceQuote": "久兵衛屋：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "かつ庵 久兵衛屋 ZETTERIA 蔦屋書店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "tsutaya-shoten",
-      "name": "蔦屋書店",
-      "category": "書店",
-      "evidenceQuote": "蔦屋書店：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "storeId": "zetteria",
+      "name": "ZETTERIA",
+      "category": "飲食",
+      "evidenceQuote": "久兵衛屋 ZETTERIA 蔦屋書店 ニューバランス",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "medical-system-network",
-      "name": "メディカルシステムネットワーク",
-      "category": "医療",
-      "evidenceQuote": "メディカルシステムネットワーク：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "steak-88",
+      "storeId": "steak88",
       "name": "ステーキ88",
       "category": "飲食",
-      "evidenceQuote": "ステーキ88：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "トライフープ岡山 ステーキ88 好日山荘",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "tokyu-store",
+      "storeId": "tobu-store",
       "name": "東武ストア",
       "category": "スーパー",
-      "evidenceQuote": "東武ストア：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ドラッグユタカ マミーマート 東武ストア 東武ストアネットショップ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "tokyu-store-net-shop",
+      "storeId": "tobu-store-netshop",
       "name": "東武ストアネットショップ",
-      "category": "スーパー",
-      "evidenceQuote": "東武ストアネットショップ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "camera-no-kitamura-net-shop",
-      "name": "カメラのキタムラネットショップ（カメラ用品）",
-      "category": "カメラ・写真",
-      "evidenceQuote": "カメラのキタムラネットショップ（カメラ用品）：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "studio-mario",
-      "name": "スタジオマリオ（写真館）",
-      "category": "カメラ・写真",
-      "evidenceQuote": "スタジオマリオ（写真館）：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "kitamura-shashinki-ten",
-      "name": "北村写真機店",
-      "category": "カメラ・写真",
-      "evidenceQuote": "北村写真機店：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "category": "ネット通販",
+      "evidenceQuote": "マミーマート 東武ストア 東武ストアネットショップ TikTok Lite",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "sojibo",
       "name": "そじ坊",
       "category": "飲食",
-      "evidenceQuote": "そじ坊：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ジュンク堂書店 丸善 そじ坊 杵屋",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "kineya",
       "name": "杵屋",
       "category": "飲食",
-      "evidenceQuote": "杵屋：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "丸善 そじ坊 杵屋 タカハシ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "takahashi",
       "name": "タカハシ",
       "category": "ファッション",
-      "evidenceQuote": "タカハシ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "そじ坊 杵屋 タカハシ ラ チッタデッラ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "la-cittadella",
       "name": "ラ チッタデッラ",
-      "category": "エンタメ・チケット",
-      "evidenceQuote": "ラ チッタデッラ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "category": "ショッピングモール",
+      "evidenceQuote": "杵屋 タカハシ ラ チッタデッラ トーシン補聴器センター",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "toshin-hochokicenter",
+      "storeId": "toshin-hearing-aid",
       "name": "トーシン補聴器センター",
       "category": "医療",
-      "evidenceQuote": "トーシン補聴器センター：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ラ チッタデッラ トーシン補聴器センター 精文館書店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "seibunkan-shoten",
       "name": "精文館書店",
       "category": "書店",
-      "evidenceQuote": "精文館書店：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "トーシン補聴器センター 精文館書店 がんこ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "hiratabokujo",
+      "storeId": "hira-boku",
       "name": "平田牧場",
       "category": "飲食",
-      "evidenceQuote": "平田牧場：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ディープラス 平田牧場 うまい鮨勘 TAYA",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "umai-sushikan",
       "name": "うまい鮨勘",
       "category": "飲食",
-      "evidenceQuote": "うまい鮨勘：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "平田牧場 うまい鮨勘 TAYA セントラルパーク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "taya",
       "name": "TAYA",
       "category": "美容",
-      "evidenceQuote": "TAYA：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "うまい鮨勘 TAYA セントラルパーク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "central-park",
       "name": "セントラルパーク",
       "category": "ショッピングモール",
-      "evidenceQuote": "セントラルパーク：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "TAYA セントラルパーク 藤丸パーク 川徳百貨店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "fujimaru-park",
       "name": "藤丸パーク",
-      "category": "百貨店",
-      "evidenceQuote": "藤丸パーク：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "category": "ショッピングモール",
+      "evidenceQuote": "セントラルパーク 藤丸パーク 川徳百貨店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "rhythm-and-books",
+      "storeId": "camera-no-kitamura-netshop",
+      "name": "カメラのキタムラネットショップ（カメラ用品）",
+      "category": "ネット通販",
+      "evidenceQuote": "富士シティオ カメラのキタムラ カメラのキタムラネットショップ（カメラ用品）",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "studio-mario",
+      "name": "スタジオマリオ（写真館）",
+      "category": "カメラ・写真",
+      "evidenceQuote": "カメラのキタムラネットショップ（カメラ用品） スタジオマリオ（写真館） 北村写真機店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kitamura-shashinki",
+      "name": "北村写真機店",
+      "category": "カメラ・写真",
+      "evidenceQuote": "スタジオマリオ（写真館） 北村写真機店 東京都公式アプリ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "seven-mile",
+      "name": "セブンマイル",
+      "category": "飲食",
+      "evidenceQuote": "ドラッグストアmac セブンマイル 牛角",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "steak-miya",
+      "name": "ステーキ宮",
+      "category": "飲食",
+      "evidenceQuote": "牛角 ステーキ宮 しまうまプリント",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shimauma-print",
+      "name": "しまうまプリント",
+      "category": "カメラ・写真",
+      "evidenceQuote": "ステーキ宮 しまうまプリント JA全農Aコープ(東日本エリア）",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yofuku-no-aoyama",
+      "name": "洋服の青山",
+      "category": "ファッション",
+      "evidenceQuote": "JA全農Aコープ(東日本エリア） 洋服の青山 SUIT SQUARE",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "universal-language",
+      "name": "UNIVERSAL LANGUAGE",
+      "category": "ファッション",
+      "evidenceQuote": "SUIT SQUARE UNIVERSAL LANGUAGE メイクマン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "zihanpi",
+      "name": "ジハンピ",
+      "category": "その他",
+      "evidenceQuote": "メイクマン ジハンピ 新星堂",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ryubo-store",
       "name": "リウボウストア",
       "category": "スーパー",
-      "evidenceQuote": "リウボウストア：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "WonderREX リウボウストア デパートリウボウ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "ryubo-net-super",
       "name": "りうぼうネットスーパー",
-      "category": "スーパー",
-      "evidenceQuote": "りうぼうネットスーパー：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "category": "ネット通販",
+      "evidenceQuote": "デパートリウボウ りうぼうネットスーパー OKINAWA meeti by RYUBOSTORE",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "okinawa-meeti-by-ryubostore",
       "name": "OKINAWA meeti by RYUBOSTORE",
-      "category": "スーパー",
-      "evidenceQuote": "OKINAWA meeti by RYUBOSTORE：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "category": "ネット通販",
+      "evidenceQuote": "りうぼうネットスーパー OKINAWA meeti by RYUBOSTORE JA全農Aコープ(近畿・東海エリア)",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "all-sports-community",
+      "name": "オールスポーツコミュニティ／スナップスナップ",
+      "category": "スポーツ",
+      "evidenceQuote": "Vマネー オールスポーツコミュニティ／スナップスナップ ヤスサキ グルメ館",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "yasusaki-gourmet-kan",
       "name": "ヤスサキ グルメ館",
       "category": "スーパー",
-      "evidenceQuote": "ヤスサキ グルメ館：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "オールスポーツコミュニティ／スナップスナップ ヤスサキ グルメ館",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "yasusaki-wai-home",
+      "storeId": "yasusaki-waihome",
       "name": "ヤスサキ ワイホーム",
       "category": "ホームセンター",
-      "evidenceQuote": "ヤスサキ ワイホーム：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ヤスサキ グルメ館 ヤスサキ ワイホーム ヤスサキ ファッションプラザ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "yasusaki-fashion-plaza",
       "name": "ヤスサキ ファッションプラザ",
       "category": "ファッション",
-      "evidenceQuote": "ヤスサキ ファッションプラザ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ヤスサキ ワイホーム ヤスサキ ファッションプラザ パリオCITY",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "pario-city",
       "name": "パリオCITY",
       "category": "ショッピングモール",
-      "evidenceQuote": "パリオCITY：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ヤスサキ ファッションプラザ パリオCITY SMBCモビット",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "ja-zennoh-a-coop-kinki-tokai",
-      "name": "JA全農Aコープ(近畿・東海エリア)",
-      "category": "スーパー",
-      "evidenceQuote": "JA全農Aコープ(近畿・東海エリア)：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "homecenter-mitsuwa",
+      "storeId": "home-center-mitsuwa",
       "name": "ホームセンターみつわ",
       "category": "ホームセンター",
-      "evidenceQuote": "ホームセンターみつわ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "エヌタス ホームセンターみつわ 薬王堂",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "honyaclub-with-waon-point",
-      "name": "Honya Club With WAON POINT",
+      "storeId": "yakuodo",
+      "name": "薬王堂",
+      "category": "ドラッグストア",
+      "evidenceQuote": "ホームセンターみつわ 薬王堂 レグザクラウドサービス「TimeOn（タイムオン）",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "honya-club-with",
+      "name": "Honya Club With",
       "category": "書店",
-      "evidenceQuote": "Honya Club With WAON POINT：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "レグザクラウドサービス「TimeOn（タイムオン）」 Honya Club With Airbnb",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "shaddy-saladkan",
+      "storeId": "misumi-gas",
+      "name": "ミスミガス・ミスミでんき",
+      "category": "電気・ガス",
+      "evidenceQuote": "BOOKSmisumi ミスミガス・ミスミでんき シャディ・サラダ館",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shaddy-salad-kan",
       "name": "シャディ・サラダ館",
       "category": "雑貨",
-      "evidenceQuote": "シャディ・サラダ館：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ミスミガス・ミスミでんき シャディ・サラダ館 シャディギフトモール",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "shaddy-gift-mall",
       "name": "シャディギフトモール",
-      "category": "雑貨",
-      "evidenceQuote": "シャディギフトモール：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "category": "ネット通販",
+      "evidenceQuote": "シャディ・サラダ館 シャディギフトモール 旭屋書店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "misumi-gas-denki",
-      "name": "ミスミガス・ミスミでんき",
-      "category": "電気・ガス",
-      "evidenceQuote": "ミスミガス・ミスミでんき：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "shueisha",
-      "name": "集英社",
-      "category": "書店",
-      "evidenceQuote": "集英社：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "lect-youme-shokuhinkan",
-      "name": "LECT youme食品館・LECT専門店街",
-      "category": "スーパー",
-      "evidenceQuote": "LECT youme食品館・LECT専門店街：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "takeo-city-library",
-      "name": "武雄市図書館",
-      "category": "生活サービス",
-      "evidenceQuote": "武雄市図書館：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "tokyo-musen",
-      "name": "東京無線",
+      "storeId": "vip-liner",
+      "name": "VIPライナー（高速バス）",
       "category": "交通",
-      "evidenceQuote": "東京無線：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "PeXポイント VIPライナー（高速バス） Powl（ポール）",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "kono-shinyo-kinko",
-      "name": "興能信用金庫",
-      "category": "金融",
-      "evidenceQuote": "興能信用金庫：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "storeId": "charge-spot",
+      "name": "ChargeSPOT",
+      "category": "生活サービス",
+      "evidenceQuote": "モッピー ChargeSPOT ENEOSカード",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "fukkan-dot-com",
-      "name": "復刊ドットコム",
+      "storeId": "tsutaya-conditioning",
+      "name": "TSUTAYA Conditioning",
+      "category": "スポーツ",
+      "evidenceQuote": "myCoin マイナビ TSUTAYA Conditioning",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "epark-kusuri-no-madoguchi",
+      "name": "EPARK くすりの窓口",
+      "category": "医療",
+      "evidenceQuote": "TSUTAYA Conditioning EPARK くすりの窓口",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kyoyo-gas",
+      "name": "京葉ガス",
+      "category": "電気・ガス",
+      "evidenceQuote": "アトカラ 京葉ガス 高梁市図書館",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "takaryo-city-library",
+      "name": "高梁市図書館",
       "category": "書店",
-      "evidenceQuote": "復刊ドットコム：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "京葉ガス 高梁市図書館 ユーカーパック",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ec-current",
+      "name": "ECカレント",
+      "category": "家電量販店",
+      "evidenceQuote": "まいにちポイントくらぶ ECカレント イーベスト",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "e-best",
+      "name": "イーベスト",
+      "category": "家電量販店",
+      "evidenceQuote": "ECカレント イーベスト ERA LIXIL不動産ショップ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "lixil-fudosan-shop",
+      "name": "LIXIL不動産ショップ",
+      "category": "不動産・住宅",
+      "evidenceQuote": "イーベスト ERA LIXIL不動産ショップ MADOショップ（YKK AP）",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "mado-shop",
       "name": "MADOショップ（YKK AP）",
-      "category": "住宅・リフォーム",
-      "evidenceQuote": "MADOショップ（YKK AP）：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "tsutaya-shoten-online-store",
-      "name": "蔦屋書店オンラインストア",
-      "category": "ネット通販",
-      "evidenceQuote": "蔦屋書店オンラインストア：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "era-lixil-fudosan-shop",
-      "name": "ERA LIXIL不動産ショップ",
       "category": "不動産・住宅",
-      "evidenceQuote": "ERA LIXIL不動産ショップ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "LIXIL不動産ショップ MADOショップ（YKK AP） クスリのアオキ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "kusuri-no-madoguchi",
-      "name": "くすりの窓口",
-      "category": "医療",
-      "evidenceQuote": "くすりの窓口：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "yakodo",
-      "name": "薬王堂",
-      "category": "ドラッグストア",
-      "evidenceQuote": "薬王堂：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "storeId": "cd-energy-direct-vstyle-plus",
+      "name": "CDエナジーダイレクト Vスタイルプラス",
+      "category": "電気・ガス",
+      "evidenceQuote": "SBI新生銀行 TRUST CLUB カード CDエナジーダイレクト Vスタイルプラス",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "hyundai-mobility-japan",
       "name": "Hyundai Mobility Japan",
       "category": "車・バイク",
-      "evidenceQuote": "Hyundai Mobility Japan：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ネットマイル Hyundai Mobility Japan TSUTAYAスマホ・タブレット買取",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "taka-ryozen",
-      "name": "宅配弁当 菱膳",
-      "category": "飲食",
-      "evidenceQuote": "宅配弁当 菱膳：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "sushidokoro-ryozen",
-      "name": "寿司処 菱膳",
-      "category": "飲食",
-      "evidenceQuote": "寿司処 菱膳：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "nagano-ken-shinyo-kumiai",
-      "name": "長野県信用組合",
-      "category": "金融",
-      "evidenceQuote": "長野県信用組合：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "evergreen-retailing",
-      "name": "エバーグリーン・リテイリング",
-      "category": "電気・ガス",
-      "evidenceQuote": "エバーグリーン・リテイリング：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "kanamic-cloud-service",
-      "name": "カナミッククラウドサービス",
-      "category": "ネットサービスのみ",
-      "evidenceQuote": "カナミッククラウドサービス：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "mercedes-benz",
-      "name": "メルセデス・ベンツ",
-      "category": "車・バイク",
-      "evidenceQuote": "メルセデス・ベンツ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "tokyo-to-official-app",
-      "name": "東京都公式アプリ",
-      "category": "ネットサービスのみ",
-      "evidenceQuote": "東京都公式アプリ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "qusay",
-      "name": "キューサイ",
-      "category": "ネット通販",
-      "evidenceQuote": "キューサイ：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "storeId": "tsutaya-smartphone-tablet-kaitori",
+      "name": "TSUTAYAスマホ・タブレット買取",
+      "category": "買取",
+      "evidenceQuote": "Hyundai Mobility Japan TSUTAYAスマホ・タブレット買取 SOKUYAKU",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "sokuyaku",
       "name": "SOKUYAKU",
       "category": "医療",
-      "evidenceQuote": "SOKUYAKU：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "TSUTAYAスマホ・タブレット買取 SOKUYAKU 毎日新聞",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mainichi-shimbun",
+      "name": "毎日新聞",
+      "category": "書店",
+      "evidenceQuote": "SOKUYAKU 毎日新聞 ブルーチップ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "blue-chip",
+      "name": "ブルーチップ",
+      "category": "生活サービス",
+      "evidenceQuote": "毎日新聞 ブルーチップ 上毛新聞",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jomo-shimbun",
+      "name": "上毛新聞",
+      "category": "書店",
+      "evidenceQuote": "ブルーチップ 上毛新聞 シーエーセールススタッフ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "oil-by-bijutsu-techo",
+      "name": "OIL by 美術手帖",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "七十七銀行 OIL by 美術手帖 宅配弁当 菱膳",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "takuhai-bento-hishizen",
+      "name": "宅配弁当 菱膳",
+      "category": "飲食",
+      "evidenceQuote": "OIL by 美術手帖 宅配弁当 菱膳 寿司処 菱膳",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sushidokoro-hishizen",
+      "name": "寿司処 菱膳",
+      "category": "飲食",
+      "evidenceQuote": "宅配弁当 菱膳 寿司処 菱膳 CREAL",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "creal",
+      "name": "CREAL",
+      "category": "金融",
+      "evidenceQuote": "寿司処 菱膳 CREAL bitFlyer",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "bitflyer",
+      "name": "bitFlyer",
+      "category": "金融",
+      "evidenceQuote": "CREAL bitFlyer TSUTAYAネット買取",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "miyazaki-taiyo-bank",
+      "name": "宮崎太陽銀行",
+      "category": "金融",
+      "evidenceQuote": "TSUTAYAネット買取 宮崎太陽銀行 エバーグリーン・リテイリング",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "evergreen-retailing",
+      "name": "エバーグリーン・リテイリング",
+      "category": "電気・ガス",
+      "evidenceQuote": "宮崎太陽銀行 エバーグリーン・リテイリング 長野県信用組合",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sbint-market",
+      "name": "SBINFT Market",
+      "category": "ネット通販",
+      "evidenceQuote": "ポケットカード SBINFT Market TSUTAYA DISCAS",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tsutaya-discas",
+      "name": "TSUTAYA DISCAS",
+      "category": "音楽・映像",
+      "evidenceQuote": "SBINFT Market TSUTAYA DISCAS GREEN DOG & CAT",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mercedes-benz",
+      "name": "メルセデス・ベンツ",
+      "category": "車・バイク",
+      "evidenceQuote": "日本メディカルシステム メルセデス・ベンツ オリコ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ana",
+      "name": "ANA",
+      "category": "交通",
+      "evidenceQuote": "オリコ ANA 関西みらい銀行",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "v-fast-channel",
+      "name": "V FASTチャンネル",
+      "category": "その他",
+      "evidenceQuote": "みなと銀行 V FASTチャンネル キューサイ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "q-sai",
+      "name": "キューサイ",
+      "category": "健康",
+      "evidenceQuote": "V FASTチャンネル キューサイ PayPayポイント",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "ajinomoto",
       "name": "味の素",
-      "category": "ネット通販",
-      "evidenceQuote": "味の素：お店・サービス一覧",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "category": "食品",
+      "evidenceQuote": "PayPayポイント 味の素 このアイコンがついている",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     }
   ],
-  "loyaltyRules": [],
-  "notes": "総100件以上の加盟店が掲載されていますが、還元率の明記がないためloyaltyRulesは抽出できませんでした。storesは主要チェーン店のみ60件抽出しています。金融、保険、医療、ギャンブル、葬儀、不動産、ネットサービスのみのカテゴリは除外しています。"
+  "loyaltyRules": [
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "conv-familymart",
+      "rate": 0.005,
+      "evidenceQuote": "ファミリーマート 200円(税込)で1ポイント",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tsutaya",
+      "rate": 0.01,
+      "evidenceQuote": "TSUTAYA 100円(税抜)で1ポイント",
+      "notes": "TSUTAYAレンタル・購入（書籍、CD/DVDなど）が対象。店舗により異なる可能性あり。",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "yoshinoya",
+      "rate": 0.005,
+      "evidenceQuote": "吉野家 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "autobacs",
+      "rate": 0.005,
+      "evidenceQuote": "オートバックス 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "gusto",
+      "rate": 0.005,
+      "evidenceQuote": "ガスト 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "bamiyan",
+      "rate": 0.005,
+      "evidenceQuote": "バーミヤン 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shabuyo",
+      "rate": 0.005,
+      "evidenceQuote": "しゃぶ葉 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "jonathan",
+      "rate": 0.005,
+      "evidenceQuote": "ジョナサン 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "yumetoan",
+      "rate": 0.005,
+      "evidenceQuote": "夢庵 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "steak-gusto",
+      "rate": 0.005,
+      "evidenceQuote": "ステーキガスト 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "karaage-karayoshi",
+      "rate": 0.005,
+      "evidenceQuote": "から好し 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "musashino-mori-coffee",
+      "rate": 0.005,
+      "evidenceQuote": "むさしの森珈琲 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "aiya",
+      "rate": 0.005,
+      "evidenceQuote": "藍屋 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "uoya-michi",
+      "rate": 0.005,
+      "evidenceQuote": "魚屋路 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "grazie-gardens",
+      "rate": 0.005,
+      "evidenceQuote": "グラッチェガーデンズ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "la-ohana",
+      "rate": 0.005,
+      "evidenceQuote": "ラ・オハナ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tonkara-tei",
+      "rate": 0.005,
+      "evidenceQuote": "とんから亭 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "monana",
+      "rate": 0.005,
+      "evidenceQuote": "桃菜 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "yumean-shokudo",
+      "rate": 0.005,
+      "evidenceQuote": "ゆめあん食堂 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hachiro-soba",
+      "rate": 0.005,
+      "evidenceQuote": "八郎そば 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "sukiya",
+      "rate": 0.005,
+      "evidenceQuote": "すき家 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "nakau",
+      "rate": 0.005,
+      "evidenceQuote": "なか卯 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hamazushi",
+      "rate": 0.005,
+      "evidenceQuote": "はま寿司 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "cocos",
+      "rate": 0.005,
+      "evidenceQuote": "ココス 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "big-boy",
+      "rate": 0.005,
+      "evidenceQuote": "ビッグボーイ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "jolly-pasta",
+      "rate": 0.005,
+      "evidenceQuote": "ジョリーパスタ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hanaya-yohei",
+      "rate": 0.005,
+      "evidenceQuote": "華屋与兵衛 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kojitsu-sanso",
+      "rate": 0.01,
+      "evidenceQuote": "好日山荘 100円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "drug-yutaka",
+      "rate": 0.005,
+      "evidenceQuote": "ドラッグユタカ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "mammy-mart",
+      "rate": 0.005,
+      "evidenceQuote": "マミーマート 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "doutor",
+      "rate": 0.005,
+      "evidenceQuote": "ドトールコーヒーショップ 200円(税込)で1ポイント",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "excelsior-cafe",
+      "rate": 0.005,
+      "evidenceQuote": "エクセルシオール カフェ 200円(税込)で1ポイント",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "edion",
+      "rate": 0.005,
+      "evidenceQuote": "エディオン 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "megane-ichiba",
+      "rate": 0.005,
+      "evidenceQuote": "眼鏡市場 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "alook",
+      "rate": 0.005,
+      "evidenceQuote": "ALOOK 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "lens-style",
+      "rate": 0.005,
+      "evidenceQuote": "レンズスタイル 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "junkudo",
+      "rate": 0.005,
+      "evidenceQuote": "ジュンク堂書店 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "maruzen-junkudo-shoten",
+      "rate": 0.005,
+      "evidenceQuote": "丸善 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ganko",
+      "rate": 0.005,
+      "evidenceQuote": "がんこ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kinokuniya",
+      "rate": 0.005,
+      "evidenceQuote": "紀伊國屋書店 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "d-plus",
+      "rate": 0.005,
+      "evidenceQuote": "ディープラス 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "fuji-citio",
+      "rate": 0.005,
+      "evidenceQuote": "富士シティオ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "camera-no-kitamura",
+      "rate": 0.005,
+      "evidenceQuote": "カメラのキタムラ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "drugstore-mac",
+      "rate": 0.005,
+      "evidenceQuote": "ドラッグストアmac 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "gyukaku",
+      "rate": 0.005,
+      "evidenceQuote": "牛角 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ja-zennoh-a-coop",
+      "rate": 0.005,
+      "evidenceQuote": "JA全農Aコープ 200円(税抜)で1ポイント",
+      "notes": "税抜換算。東日本エリア・近畿・東海エリアの記載あり",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "suit-square",
+      "rate": 0.005,
+      "evidenceQuote": "SUIT SQUARE 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "makeman",
+      "rate": 0.005,
+      "evidenceQuote": "メイクマン 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shinseido",
+      "rate": 0.005,
+      "evidenceQuote": "新星堂 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "wondergoo",
+      "rate": 0.005,
+      "evidenceQuote": "WonderGOO 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "wonderrex",
+      "rate": 0.005,
+      "evidenceQuote": "WonderREX 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "dept-ryubo",
+      "rate": 0.005,
+      "evidenceQuote": "デパートリウボウ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "joshin",
+      "rate": 0.005,
+      "evidenceQuote": "Joshin（ジョーシン） 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "iris-plaza",
+      "rate": 0.005,
+      "evidenceQuote": "アイリスプラザ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tokyo-gas",
+      "rate": 0.005,
+      "evidenceQuote": "東京ガス 200円(税込)で1ポイント",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "asahiya-shoten",
+      "rate": 0.005,
+      "evidenceQuote": "旭屋書店 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kansai-electric-power",
+      "rate": 0.005,
+      "evidenceQuote": "関西電力 200円(税込)で1ポイント",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "mitsui-car-shares",
+      "rate": 0.005,
+      "evidenceQuote": "三井のカーシェアーズ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shoplist",
+      "rate": 0.005,
+      "evidenceQuote": "Shoplist 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "net-off",
+      "rate": 0.005,
+      "evidenceQuote": "ネットオフ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "go-today-shaire-salon",
+      "rate": 0.005,
+      "evidenceQuote": "GO TODAY SHAiRE SALON 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kfc",
+      "rate": 0.005,
+      "evidenceQuote": "ケンタッキー・フライド・チキン 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tsutaya",
+      "rate": 0.005,
+      "evidenceQuote": "蔦屋書店 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hitachi-chain-store",
+      "rate": 0.005,
+      "evidenceQuote": "日立チェーンストール 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "toku-taku",
+      "rate": 0.005,
+      "evidenceQuote": "得タク(タクシー) 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "epark-relax-este",
+      "rate": 0.005,
+      "evidenceQuote": "EPARKリラク＆エステ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shikoku-electric-power",
+      "rate": 0.005,
+      "evidenceQuote": "四国電力 200円(税込)で1ポイント",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ucarpack",
+      "rate": 0.005,
+      "evidenceQuote": "ユーカーパック 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kusuri-no-aoki",
+      "rate": 0.005,
+      "evidenceQuote": "クスリのアオキ 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "green-dog-cat",
+      "rate": 0.005,
+      "evidenceQuote": "GREEN DOG & CAT 200円(税抜)で1ポイント",
+      "notes": "税抜換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    }
+  ],
+  "notes": "Tポイント/Vポイント加盟店一覧から、主要なチェーン店と還元率が明記されている店舗を抽出しました。その他、金融・保険・医療・ギャンブル・不動産・葬儀カテゴリは抽出対象外。また、個別の店舗名や詳細な還元率が不明な店舗は除外しています。総数100件以上が掲載されていますが、規程により60件を上限として抽出しています。"
 }

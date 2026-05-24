@@ -1,9 +1,20 @@
 {
   "sourceId": "mufg-card-global-point",
   "sourceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
-  "fetchedAt": "2026-05-20T22:28:47.023Z",
-  "promptVersion": "card-vUnknown",
+  "fetchedAt": "2026-05-24T22:00:27.304Z",
+  "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "グローバルPLUSや海外加盟店利用での優遇がありますが、基本還元率以外の明確なstoreRulesやcategoryRulesは記載されていませんでした。バースデーポイントはスヌーピーカードかつプレミオ会員限定のため、今回は抽出対象外としました。",
+  "cards": [
+    {
+      "cardId": "mufg-card-global-point",
+      "defaultRate": 0.001,
+      "defaultCurrencyId": "mufg-pt",
+      "evidenceQuote": "1千円につき1ポイントを約定支払日に本会員に付与します。",
+      "evidenceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html#globalpoint_04",
+      "explicitness": 0.9,
+      "ambiguity": 0
+    }
+  ]
 }

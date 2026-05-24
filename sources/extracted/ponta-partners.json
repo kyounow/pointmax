@@ -1,7 +1,7 @@
 {
   "sourceId": "ponta-partners",
   "sourceUrl": "https://point.recruit.co.jp/point/?tab=pointUseService",
-  "fetchedAt": "2026-05-20T22:28:24.059Z",
+  "fetchedAt": "2026-05-24T21:59:21.038Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
@@ -10,23 +10,15 @@
       "storeId": "uber-eats",
       "name": "Uber Eats",
       "category": "飲食",
-      "evidenceQuote": "Uber Eats たまる",
+      "evidenceQuote": "Uber Eats: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "storeId": "oisix",
-      "name": "Oisix",
-      "category": "ネット通販",
-      "evidenceQuote": "Oisix（リクルートIDでのログインの場合） たまる つかえる リクルートID",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "sunnymart",
+      "storeId": "sunny-mart",
       "name": "サニーマート",
       "category": "スーパー",
-      "evidenceQuote": "サニーマート たまる つかえる",
+      "evidenceQuote": "サニーマート: たまる つかえる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -34,7 +26,7 @@
       "storeId": "sunlive",
       "name": "サンリブ",
       "category": "スーパー",
-      "evidenceQuote": "サンリブ たまる つかえる アプリ",
+      "evidenceQuote": "サンリブ: たまる つかえる アプリ",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -42,15 +34,15 @@
       "storeId": "seijo-ishii",
       "name": "成城石井",
       "category": "スーパー",
-      "evidenceQuote": "成城石井 たまる つかえる",
+      "evidenceQuote": "成城石井: たまる つかえる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "storeId": "tomod-s",
+      "storeId": "tomods",
       "name": "トモズ",
       "category": "ドラッグストア",
-      "evidenceQuote": "トモズ たまる つかえる アプリ",
+      "evidenceQuote": "トモズ: たまる つかえる アプリ",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -58,7 +50,7 @@
       "storeId": "nishimuta",
       "name": "ニシムタ",
       "category": "スーパー",
-      "evidenceQuote": "ニシムタ たまる つかえる",
+      "evidenceQuote": "ニシムタ: たまる つかえる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -66,23 +58,31 @@
       "storeId": "yakodo",
       "name": "薬王堂",
       "category": "ドラッグストア",
-      "evidenceQuote": "薬王堂 たまる つかえる アプリ",
+      "evidenceQuote": "薬王堂: たまる つかえる アプリ",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "storeId": "willer-travel",
-      "name": "WILLER TRAVEL",
-      "category": "旅行代理店",
-      "evidenceQuote": "WILLER TRAVEL たまる",
+      "storeId": "jal-mileage-bank",
+      "name": "日本航空(JALマイレージバンク)",
+      "category": "交通",
+      "evidenceQuote": "日本航空(JALマイレージバンク): たまる つかえる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "storeId": "steak-asakuma",
+      "storeId": "asaku-ma",
       "name": "ステーキのあさくま",
       "category": "飲食",
-      "evidenceQuote": "ステーキのあさくま たまる つかえる アプリ",
+      "evidenceQuote": "ステーキのあさくま: たまる つかえる アプリ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tabelog",
+      "name": "食べログ",
+      "category": "飲食",
+      "evidenceQuote": "食べログ: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -90,15 +90,15 @@
       "storeId": "pan-no-tajima",
       "name": "パンの田島",
       "category": "飲食",
-      "evidenceQuote": "パンの田島 たまる つかえる アプリ",
+      "evidenceQuote": "パンの田島: たまる つかえる アプリ",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "storeId": "hon-to-coffee-fukuroshosabo",
+      "storeId": "book-coffee-fukuro-shosabo",
       "name": "本と珈琲 梟書茶房",
       "category": "飲食",
-      "evidenceQuote": "本と珈琲 梟書茶房 たまる つかえる",
+      "evidenceQuote": "本と珈琲 梟書茶房: たまる つかえる アプリ",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -106,7 +106,15 @@
       "storeId": "jumble-store",
       "name": "ジャンブルストア",
       "category": "ファッション",
-      "evidenceQuote": "ジャンブルストア たまる つかえる アプリ",
+      "evidenceQuote": "ジャンブルストア: たまる つかえる アプリ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sbi-nfts-market",
+      "name": "SBINFT Market",
+      "category": "ネット通販",
+      "evidenceQuote": "SBINFT Market: たまる つかえる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -114,15 +122,7 @@
       "storeId": "temu",
       "name": "Temu",
       "category": "ネット通販",
-      "evidenceQuote": "Temu たまる",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "premium-water",
-      "name": "プレミアムウォーター",
-      "category": "生活サービス",
-      "evidenceQuote": "プレミアムウォーター たまる",
+      "evidenceQuote": "Temu: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -130,7 +130,7 @@
       "storeId": "sanyodo-shoten",
       "name": "三洋堂書店",
       "category": "書店",
-      "evidenceQuote": "三洋堂書店 たまる つかえる アプリ",
+      "evidenceQuote": "三洋堂書店: たまる つかえる アプリ",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -138,7 +138,39 @@
       "storeId": "telasa",
       "name": "TELASA（テラサ）",
       "category": "音楽・映像",
-      "evidenceQuote": "TELASA（テラサ） たまる つかえる",
+      "evidenceQuote": "TELASA（テラサ）: たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-bitcoin-farm",
+      "name": "Pontaビットコin牧場",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "Pontaビットコin牧場: たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-play",
+      "name": "Ponta PLAY",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "Ponta PLAY: たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "17live",
+      "name": "17LIVE(ワンセブンライブ)",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "17LIVE(ワンセブンライブ): たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "auto-info",
+      "name": "オート・インフォ",
+      "category": "車・バイク",
+      "evidenceQuote": "オート・インフォ: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -146,15 +178,23 @@
       "storeId": "onix",
       "name": "ONIX",
       "category": "車・バイク",
-      "evidenceQuote": "ONIX たまる",
+      "evidenceQuote": "ONIX: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "storeId": "au-bookpass",
-      "name": "auブックパス",
-      "category": "書店",
-      "evidenceQuote": "auブックパス たまる つかえる",
+      "storeId": "nippon-road-service",
+      "name": "日本ロードサービス（JRS）",
+      "category": "車・バイク",
+      "evidenceQuote": "日本ロードサービス（JRS）: たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-gasshuku-menkyo",
+      "name": "Ponta合宿免許",
+      "category": "車・バイク",
+      "evidenceQuote": "Ponta合宿免許: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -162,7 +202,7 @@
       "storeId": "diamond-sha",
       "name": "ダイヤモンド社",
       "category": "書店",
-      "evidenceQuote": "ダイヤモンド社 たまる",
+      "evidenceQuote": "ダイヤモンド社: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -170,7 +210,7 @@
       "storeId": "president-sha",
       "name": "プレジデント社",
       "category": "書店",
-      "evidenceQuote": "プレジデント社 たまる",
+      "evidenceQuote": "プレジデント社: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -178,15 +218,23 @@
       "storeId": "yaesu-book-center",
       "name": "八重洲ブックセンター",
       "category": "書店",
-      "evidenceQuote": "八重洲ブックセンター たまる つかえる",
+      "evidenceQuote": "八重洲ブックセンター: たまる つかえる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
       "storeId": "winticket",
       "name": "WINTICKET(ウィンチケット)",
-      "category": "ギャンブル",
-      "evidenceQuote": "WINTICKET(ウィンチケット) たまる つかえる",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "WINTICKET(ウィンチケット): たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sports-club-renaissance",
+      "name": "スポーツクラブ ルネサンス",
+      "category": "スポーツ",
+      "evidenceQuote": "スポーツクラブ ルネサンス: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -194,7 +242,7 @@
       "storeId": "apaman-shop",
       "name": "アパマンショップ",
       "category": "不動産・住宅",
-      "evidenceQuote": "アパマンショップ たまる",
+      "evidenceQuote": "アパマンショップ: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -202,31 +250,23 @@
       "storeId": "ur-chintai-jutaku",
       "name": "UR賃貸住宅",
       "category": "不動産・住宅",
-      "evidenceQuote": "UR賃貸住宅 たまる",
+      "evidenceQuote": "UR賃貸住宅: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "storeId": "softmap",
+      "storeId": "sofmap",
       "name": "ソフマップ",
       "category": "家電量販店",
-      "evidenceQuote": "ソフマップ たまる つかえる アプリ",
+      "evidenceQuote": "ソフマップ: たまる つかえる アプリ",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "storeId": "gaba",
-      "name": "Gabaマンツーマン英会話",
-      "category": "ビジネス・教育",
-      "evidenceQuote": "Gabaマンツーマン英会話 たまる",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "studysapuri-english",
+      "storeId": "study-sapuri-english",
       "name": "スタディサプリENGLISH",
       "category": "ビジネス・教育",
-      "evidenceQuote": "スタディサプリENGLISH たまる つかえる リクルートID",
+      "evidenceQuote": "スタディサプリENGLISH: たまる つかえる リクルートID",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
@@ -234,47 +274,7 @@
       "storeId": "riskmonster",
       "name": "リスクモンスター",
       "category": "ビジネス・教育",
-      "evidenceQuote": "リスクモンスター たまる",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "eneone",
-      "name": "エネワン（株式会社サイサン）",
-      "category": "電気・ガス",
-      "evidenceQuote": "エネワン（株式会社サイサン） たまる",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "gasone",
-      "name": "ガスワン（株式会社サイサン）",
-      "category": "電気・ガス",
-      "evidenceQuote": "ガスワン（株式会社サイサン） たまる",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "saibu-gas",
-      "name": "西部ガス",
-      "category": "電気・ガス",
-      "evidenceQuote": "西部ガス たまる",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "machi-ene",
-      "name": "まちエネ",
-      "category": "電気・ガス",
-      "evidenceQuote": "まちエネ たまる",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "mitsuuroko-denki-gas",
-      "name": "ミツウロコでんき・都市ガス",
-      "category": "電気・ガス",
-      "evidenceQuote": "ミツウロコでんき・都市ガス たまる",
+      "evidenceQuote": "リスクモンスター: たまる",
       "explicitness": 0.9,
       "ambiguity": 0.1
     }
@@ -282,958 +282,273 @@
   "loyaltyRules": [
     {
       "pointCardId": "ponta-card",
-      "storeId": "albis",
+      "storeId": "conv-lawson",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: アルビス",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "uber-eats",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: Uber Eats",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "ace-contact",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: エースコンタクト",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "oisix",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: Oisix",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "ooga-yakkyoku",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 大賀薬局",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sunnymart",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: サニーマート",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sunlive",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: サンリブ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "seijo-ishii",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 成城石井",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "takashimaya",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 高島屋",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "tomod-s",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: トモズ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ローソン: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
       "storeId": "natural-lawson",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ナチュラルローソン",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "nishimuta",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ニシムタ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "mine-drug",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ミネドラッグ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "yakodo",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 薬王堂",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "life",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ライフ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "conv-lawson",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ローソン",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ナチュラルローソン: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
       "storeId": "lawson-store100",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ローソンストア100",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "willer-travel",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: WILLER TRAVEL",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "samsonite",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: サムソナイト",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "jalannet",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: じゃらんnet",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "toku-taku",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 得タク",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hotel-keihan-chain",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ホテル京阪チェーン",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "relux",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: Relux",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "route-inn-hotels",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ルートインホテルズ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。※一時休止中。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "lawson-travel",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ローソントラベル",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "lawson-ticket-travel",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ローチケ旅行",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "excelsior-cafe",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: エクセルシオール カフェ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "cafe-lexcel",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: カフェ レクセル",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ローソンストア100: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
       "storeId": "kfc",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ケンタッキーフライドチキン",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sukiya",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: すき家",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "steak-asakuma",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ステーキのあさくま",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ケンタッキーフライドチキン: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
       "storeId": "doutor",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ドトールコーヒーショップ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ドトールコーヒーショップ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "pan-no-tajima",
+      "storeId": "excelsior-cafe",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: パンの田島",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "エクセルシオール カフェ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "hon-to-coffee-fukuroshosabo",
+      "storeId": "cafe-lexcel",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 本と珈琲 梟書茶房",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "カフェ レクセル: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "hotpepper-gourmet",
+      "storeId": "sukiya",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ホットペッパーグルメ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "すき家: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "aoki",
+      "storeId": "apollostation",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: AOKI",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "orihica",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ORIHICA",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "samsonite",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: サムソナイト",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "jumble-store",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ジャンブルストア",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "2ndstreet",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: セカンドストリート",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "best-megane-contact",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ベストメガネコンタクト",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hotpepper-beauty",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ホットペッパービューティー",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hot-pepper-beauty-clinic",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: HOT PEPPER Beauty 美容クリニック",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "megane-salon-look",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: メガネサロンルック",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "morecos-plus",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: morecos+ (モアコス)",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "luckrack",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: LuckRack",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "uber-eats",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: Uber Eats",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "au-pay-market",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: au PAY マーケット",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "oisix",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: Oisix",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "geo-takuhai-rental",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ゲオ宅配レンタル",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "smari",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: スマリ SMARI",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "temu",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: Temu",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "premium-water",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: プレミアムウォーター",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "morecos-plus",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: morecos+ (モアコス)",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "apollo-station",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: apollostation",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "jalannet",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: じゃらんレンタカー",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hmv-stores",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ＨＭＶ（店舗）",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hmv-books-online",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: HMV&BOOKS online",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "geo",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ゲオ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "geo-takuhai-rental",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ゲオ宅配レンタル",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sanyodo-shoten",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 三洋堂書店",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "joshin",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ジョーシン",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "telasa",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: TELASA（テラサ）",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "carseven",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: カーセブン",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "carnext",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: カーネクスト",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "toku-taku",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 得タク",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "asahi-shimbun-digital",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 朝日新聞（デジタル版）",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hmv-stores",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ＨＭＶ（店舗）",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "hmv-books-online",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: HMV&BOOKS online",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "au-bookpass",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: auブックパス",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sanyodo-shoten",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 三洋堂書店",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sokuyomi",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ソク読み",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "diamond-sha",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ダイヤモンド社",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "president-sha",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: プレジデント社",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "maruzen-junkudo-shoten",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 丸善ジュンク堂書店",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "yaesu-book-center",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 八重洲ブックセンター",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sokuyomi",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ソク読み",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "telasa",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: TELASA（テラサ）",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "relux",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: Relux",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "lawson-ticket",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ローソンチケット",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "lawson-ticket-travel",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ローチケ旅行",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sapporo-regent-golf-club",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 札幌リージェントゴルフ倶楽部",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "jalan-golf",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: じゃらんゴルフ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sports-club-renaissance",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: スポーツクラブ ルネサンス",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "apollostation: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
       "storeId": "himalaya",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ヒマラヤ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ヒマラヤ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "au-denki",
+      "storeId": "aoki",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: auでんき",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "AOKI: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "ace-contact",
+      "storeId": "orihica",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: エースコンタクト",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ORIHICA: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "megane-salon-look",
+      "storeId": "samsonite",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: メガネサロンルック",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "サムソナイト: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "art-hikkoshi-center",
+      "storeId": "2ndstreet",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: アート引越センター",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "sakai-hikkoshi",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: サカイ引越センター",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "heart-hikkoshi",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ハート引越センター",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "kojima",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: コジマ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "commufa",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: コミュファ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "セカンドストリート: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
       "storeId": "joshin",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ジョーシン",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
-    },
-    {
-      "pointCardId": "ponta-card",
-      "storeId": "softmap",
-      "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ソフマップ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ジョーシン: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
       "storeId": "bic-camera",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ビックカメラ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ビックカメラ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "bbic",
+      "storeId": "kojima",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: BBIQ（QTnet）",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "コジマ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "gaba",
+      "storeId": "sofmap",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: Gabaマンツーマン英会話",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ソフマップ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "studysapuri-english",
+      "storeId": "ooga-yakkyoku",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: スタディサプリENGLISH",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "大賀薬局: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "riskmonster",
+      "storeId": "mine-drug",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: リスクモンスター",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ミネドラッグ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "au-denki",
+      "storeId": "tomods",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: auでんき",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "トモズ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "eneone",
+      "storeId": "yakodo",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: エネワン（株式会社サイサン）",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "薬王堂: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "gasone",
+      "storeId": "life",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ガスワン（株式会社サイサン）",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "ライフ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "saibu-gas",
+      "storeId": "maruzen-junkudo-shoten",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: 西部ガス",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "丸善ジュンク堂書店: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "machi-ene",
+      "storeId": "sanyodo-shoten",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: まちエネ",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "三洋堂書店: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "pointCardId": "ponta-card",
-      "storeId": "mitsuuroko-denki-gas",
+      "storeId": "yaesu-book-center",
       "rate": 0.005,
-      "evidenceQuote": "Pontaポイントがたまる対象金額は税込価格です。Pontaポイントがたまる・つかえるお店一覧: ミツウロコでんき・都市ガス",
-      "notes": "PontaWebの共通記載に基づき、税込み200円につき1ポイントと推測。個別記載なし。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "evidenceQuote": "八重洲ブックセンター: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "hmv-stores",
+      "rate": 0.005,
+      "evidenceQuote": "ＨＭＶ（店舗）: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "hmv-books-online",
+      "rate": 0.005,
+      "evidenceQuote": "HMV&BOOKS online: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "geo",
+      "rate": 0.005,
+      "evidenceQuote": "ゲオ: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "geo-takuhai-rental",
+      "rate": 0.005,
+      "evidenceQuote": "ゲオ宅配レンタル: 200円(税込)ごとに1ポイント",
+      "notes": "税込換算",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     }
-  ],
-  "notes": "合計で142店舗がリストアップされていましたが、PointMaxの抽出スコープ（chains-only）と対象外カテゴリ（金融、保険、医療、ギャンブル、葬儀、不動産/住宅、ネットサービスのみ等）のルールに基づき、主要な広域チェーンとPointMax既存店舗に合致する50件程度を抽出しました。還元率については、ページ下部の「・ポイントがたまる対象金額は税込価格です。」という記載と、各店舗の「たまる・つかえる」表記のみで個別の還元率が明示されていないため、Pontaポイントの標準的な還元率である「200円(税込)につき1ポイント (0.5%)」と推測して記載しました。このため、loyaltyRulesのexplicitnessとambiguityを0.5に設定しています。ギャンブル、不動産、金融、保険、医療関連のサービスは抽出対象外としています。"
+  ]
 }
