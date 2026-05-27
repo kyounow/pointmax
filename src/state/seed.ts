@@ -57,7 +57,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 38;
+export const SEED_VERSION = 39;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -382,6 +382,18 @@ export const SEED_CHANGELOG: {
       "Loyalty 系 10 件 (pointCard × rate group)、PaymentApp 系 11 件 (base + addOn))。" +
       "Memberships 約 200+ 件。Calculator は programEvaluator が主な評価源、旧 rule 配列は空。" +
       "PR 3 で旧型 (StoreRule / LoyaltyRule / cardSpecificBonusRates 等) と旧 evaluator を削除予定。",
+  },
+  {
+    version: 39,
+    date: "2026-05-27",
+    summary:
+      "孤児 membership backfill: 過去 cron の applyCategoryCap で store 本体が deferred されたまま " +
+      "membership だけ auto-merge されていた 45 件の整理。40 件の store 本体 (幸楽苑/ジョリーパスタ/" +
+      "なか卯/くら寿司/ミスタードーナツ等の飲食系 33 件 + ponta 由来のトモズ/ステーキのあさくま/" +
+      "ジャンブルストア/三洋堂書店/八重洲ブックセンター/ソフマップ等 7 件) を seed-data-stores.ts に " +
+      "補完追加。apollostation を apollo-station に alias 統一 (aliases.json + ADDED_MEMBERSHIPS)。" +
+      "BLOCKED 経由の孤児 (kamei/princess-cruises) と unknown (geo/yakudo) の 4 membership を削除。" +
+      "結果、seed の孤児 membership 数は 45 → 0。再発防止は PR #52 の downgradeOrphanMemberships で実施済。",
   },
   {
     version: 28,
