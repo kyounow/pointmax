@@ -1,9 +1,365 @@
 {
   "sourceId": "d-pay-campaigns",
   "sourceUrl": "https://service.smt.docomo.ne.jp/keitai_payment/campaign/",
-  "fetchedAt": "2026-05-20T22:30:05.472Z",
-  "promptVersion": "campaign-vUnknown",
+  "fetchedAt": "2026-05-27T22:34:24.242Z",
+  "promptVersion": "campaign-v3.0",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "programs": [
+    {
+      "programId": "prog-dpointcard-matsukiyo-cocokara-kao-2026-05",
+      "name": "マツキヨ・ココカラで花王商品購入がおトク",
+      "pointCardId": "d-pointcard",
+      "rate": 0.01,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-05-01",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "マツキヨ・ココカラで花王商品購入がおトク 2026/05/01～2026/05/31",
+      "explicitness": 0.6,
+      "ambiguity": 0.4
+    },
+    {
+      "programId": "prog-dpointcard-lawson-products-2026-03",
+      "name": "【ローソン】対象商品購入でdポイント進呈！",
+      "pointCardId": "d-pointcard",
+      "rate": 0.01,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-03-01",
+      "validTo": "2026-08-31",
+      "evidenceQuote": "【ローソン】対象商品購入でdポイント進呈！ 2026/03/01～2026/08/31",
+      "explicitness": 0.6,
+      "ambiguity": 0.4
+    },
+    {
+      "programId": "prog-dpointcard-doutor-100k-share-2026-05",
+      "name": "【ドトール】毎月10万ポイント山分け！",
+      "pointCardId": "d-pointcard",
+      "rate": 0.01,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-05-01",
+      "validTo": "2026-07-31",
+      "evidenceQuote": "【ドトール】毎月10万ポイント山分け！ 2026/05/01～2026/07/31",
+      "explicitness": 0.6,
+      "ambiguity": 0.4
+    },
+    {
+      "programId": "prog-dpay-hotto-motto-10k-daily-2026-04",
+      "name": "ほっともっとd払いで毎日1名に1万ポイント",
+      "paymentAppId": "pa-d-pay",
+      "rate": 0.01,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-04-01",
+      "validTo": "2026-09-30",
+      "evidenceQuote": "ほっともっとd払いで毎日1名に1万ポイント 2026/04/01～2026/09/30",
+      "explicitness": 0.7,
+      "ambiguity": 0.3
+    },
+    {
+      "programId": "prog-dpointcard-edion-max30k-2026-05",
+      "name": "エディオンで最大3万ポイント当たる！",
+      "pointCardId": "d-pointcard",
+      "rate": 0.01,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-05-15",
+      "validTo": "2026-06-14",
+      "evidenceQuote": "エディオンで最大3万ポイント当たる！ 2026/05/15～2026/06/14",
+      "explicitness": 0.6,
+      "ambiguity": 0.4
+    },
+    {
+      "programId": "prog-dpay-yayoi-ken-10k-daily-2026-04",
+      "name": "やよい軒d払いで毎日1名に1万ポイント",
+      "paymentAppId": "pa-d-pay",
+      "rate": 0.01,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-04-01",
+      "validTo": "2026-09-30",
+      "evidenceQuote": "やよい軒d払いで毎日1名に1万ポイント 2026/04/01～2026/09/30",
+      "explicitness": 0.7,
+      "ambiguity": 0.3
+    },
+    {
+      "programId": "prog-dpay-biccamera-plus5pct-2026-05",
+      "name": "【ビックカメラ】もれなく＋5％還元！",
+      "paymentAppId": "pa-d-pay",
+      "rate": 0.05,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-05-07",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "【ビックカメラ】もれなく＋5％還元！ 2026/05/07～2026/05/31",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpay-joyfulhonda-5x-2026-05",
+      "name": "ジョイフル本田ｄ払い５倍キャンペーン",
+      "paymentAppId": "pa-d-pay",
+      "rate": 0.05,
+      "currencyId": "d-pt",
+      "bonusType": "primary",
+      "validFrom": "2026-05-01",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "ジョイフル本田ｄ払い５倍キャンペーン 2026/05/01～2026/05/31",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-wellpark-thu-sat-sun-2026-05",
+      "name": "毎週木・土・日はウェルパークがおトク！",
+      "pointCardId": "d-pointcard",
+      "rate": 0.01,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-05-01",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "毎週木・土・日はウェルパークがおトク！ 2026/05/01～2026/05/31",
+      "explicitness": 0.6,
+      "ambiguity": 0.4
+    },
+    {
+      "programId": "prog-dpointcard-forl-500k-share-2026-05",
+      "name": "フォーエル｜50万ポイント山分け！",
+      "pointCardId": "d-pointcard",
+      "rate": 0.01,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-05-01",
+      "validTo": "2026-07-31",
+      "evidenceQuote": "フォーエル｜50万ポイント山分け！ 2026/05/01～2026/07/31",
+      "explicitness": 0.6,
+      "ambiguity": 0.4
+    },
+    {
+      "programId": "prog-dpointcard-jalannet-10pct-2025-05",
+      "name": "【じゃらんnet】もれなく10％還元！",
+      "pointCardId": "d-pointcard",
+      "rate": 0.1,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2025-05-01",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "【じゃらんnet】もれなく10％還元！ 2025/05/01～2026/05/31",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-jalannet-5x-2025-05",
+      "name": "【じゃらんnet】もれなく5倍還元！",
+      "pointCardId": "d-pointcard",
+      "rate": 0.05,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2025-05-01",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "【じゃらんnet】もれなく5倍還元！ 2025/05/01～2026/05/31",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-jalanrentacar-10pct-2025-05",
+      "name": "【じゃらんレンタカー】もれなく10％還元！",
+      "pointCardId": "d-pointcard",
+      "rate": 0.1,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2025-05-01",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "【じゃらんレンタカー】もれなく10％還元！ 2025/05/01～2026/05/31",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpay-samplehyakkaten-plus30pct-2026-05",
+      "name": "ｄ払い│サンプル百貨店＋30%還元",
+      "paymentAppId": "pa-d-pay",
+      "rate": 0.3,
+      "currencyId": "d-pt",
+      "bonusType": "addOn",
+      "validFrom": "2026-05-27",
+      "validTo": "2026-06-10",
+      "evidenceQuote": "ｄ払い│サンプル百貨店＋30%還元 2026/05/27～2026/06/10",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "memberships": [
+    {
+      "programId": "prog-dpointcard-lawson-max777x-2026-05",
+      "storeId": "conv-lawson",
+      "evidenceQuote": "ローソン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-matsukiyo-cocokara-kao-2026-05",
+      "storeId": "matsukiyo",
+      "evidenceQuote": "マツキヨ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-matsukiyo-cocokara-kao-2026-05",
+      "storeId": "cocokara",
+      "evidenceQuote": "ココカラ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-lawson-products-2026-03",
+      "storeId": "conv-lawson",
+      "evidenceQuote": "ローソン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-doutor-100k-share-2026-05",
+      "storeId": "doutor",
+      "evidenceQuote": "ドトール",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpay-hotto-motto-10k-daily-2026-04",
+      "storeId": "hotto-motto",
+      "evidenceQuote": "ほっともっと",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-edion-max30k-2026-05",
+      "storeId": "edion",
+      "evidenceQuote": "エディオン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpay-yayoi-ken-10k-daily-2026-04",
+      "storeId": "yayoi-ken",
+      "evidenceQuote": "やよい軒",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpay-biccamera-plus5pct-2026-05",
+      "storeId": "bic-camera",
+      "evidenceQuote": "ビックカメラ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpay-joyfulhonda-5x-2026-05",
+      "storeId": "joyful-honda",
+      "evidenceQuote": "ジョイフル本田",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-wellpark-thu-sat-sun-2026-05",
+      "storeId": "wellpark",
+      "evidenceQuote": "ウェルパーク",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-forl-500k-share-2026-05",
+      "storeId": "forl",
+      "evidenceQuote": "フォーエル",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-jalannet-10pct-2025-05",
+      "storeId": "jalannet",
+      "evidenceQuote": "じゃらんnet",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-jalannet-5x-2025-05",
+      "storeId": "jalannet",
+      "evidenceQuote": "じゃらんnet",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpointcard-jalanrentacar-10pct-2025-05",
+      "storeId": "jalan-rentacar",
+      "evidenceQuote": "じゃらんレンタカー",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-dpay-samplehyakkaten-plus30pct-2026-05",
+      "storeId": "sample-hyakkaten",
+      "evidenceQuote": "サンプル百貨店",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "stores": [
+    {
+      "storeId": "hotto-motto",
+      "name": "ほっともっと",
+      "category": "飲食",
+      "evidenceQuote": "ほっともっとd払いで毎日1名に1万ポイント",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "yayoi-ken",
+      "name": "やよい軒",
+      "category": "飲食",
+      "evidenceQuote": "やよい軒d払いで毎日1名に1万ポイント",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "joyful-honda",
+      "name": "ジョイフル本田",
+      "category": "ホームセンター",
+      "evidenceQuote": "ジョイフル本田ｄ払い５倍キャンペーン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "wellpark",
+      "name": "ウェルパーク",
+      "category": "ドラッグストア",
+      "evidenceQuote": "毎週木・土・日はウェルパークがおトク！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "forl",
+      "name": "フォーエル",
+      "category": "ファッション",
+      "evidenceQuote": "フォーエル｜50万ポイント山分け！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "jalan-rentacar",
+      "name": "じゃらんレンタカー",
+      "category": "レンタカー",
+      "evidenceQuote": "【じゃらんレンタカー】もれなく10％還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sample-hyakkaten",
+      "name": "サンプル百貨店",
+      "category": "ネット通販",
+      "evidenceQuote": "ｄ払い│サンプル百貨店＋30%還元",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "notes": "[sync] schema 違反で除去したアイテム: programs:1。"
 }

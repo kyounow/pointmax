@@ -1,9 +1,394 @@
 {
   "sourceId": "jre-point-campaigns",
   "sourceUrl": "https://www.jrepoint.jp/campaign/list/",
-  "fetchedAt": "2026-05-20T22:29:29.456Z",
-  "promptVersion": "campaign-vUnknown",
+  "fetchedAt": "2026-05-27T22:32:54.636Z",
+  "promptVersion": "campaign-v3.0",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided URL lists numerous JRE POINT campaigns, primarily focused on JR East group's own facilities (station buildings, ecute, NewDays, etc.) and regional promotions. The `chains-only` scope requires filtering out single-location stores, local businesses, and very localized promotions. Many lis"
+  "programs": [
+    {
+      "programId": "prog-jre-campaign-fukushima-suica-2026-04",
+      "name": "ふくしまSuicaで福を呼ぼう！ JRE POINTプレゼントキャンペーン",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.01,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-04-01",
+      "validTo": "2026-06-30",
+      "evidenceQuote": "04月01日～06月30日 ふくしまSuicaで福を呼ぼう！ JRE POINTプレゼントキャンペーン エントリー形式",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-jre-campaign-suica-wednesday-2026-04",
+      "name": "JRE POINT WEBサイトに登録したSuicaを使って、毎週水曜日はJRE POINTをおトクに貯めよう！",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.01,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-04-01",
+      "validTo": "2026-09-30",
+      "evidenceQuote": "04月01日～09月30日 JRE POINT WEBサイトに登録したSuicaを使って、毎週水曜日はJRE POINTをおトクに貯めよう！",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-jre-campaign-entry-ticket-pointback-2026-04",
+      "name": "タッチでエキナカ 入場券ポイントバック！",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.01,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-04-24",
+      "validTo": "2027-03-31",
+      "evidenceQuote": "04月24日～03月31日 タッチでエキナカ 入場券ポイントバック！",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-jre-campaign-monthend-2026-05",
+      "name": "2026年5月月末ごほうびキャンペーン",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.01,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 2026年5月月末ごほうびキャンペーン エントリー形式",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-jre-campaign-ars-topico-2x-2026-05",
+      "name": "【アルス・トピコ】ポイント２倍キャンペーン！",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 【アルス・トピコ】ポイント２倍キャンペーン！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-chapeau-funabashi-fashion-2x-2026-05",
+      "name": "シャポー船橋 ファッション・グッズ・サービス限定2倍デー",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-29",
+      "evidenceQuote": "05月29日～05月29日 シャポー船橋 ファッション・グッズ・サービス限定2倍デー",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-cereo-kofu-2x-2026-05",
+      "name": "【セレオ甲府】2026年5月｜JRE POINT２倍",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-30",
+      "evidenceQuote": "05月29日～05月30日 【セレオ甲府】2026年5月｜JRE POINT２倍",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-cereo-kokubunji-2x-2026-05",
+      "name": "【セレオ国分寺】５月２９日（金）・３０日（土）・３１日（日）は２倍ポイント！",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 【セレオ国分寺】５月２９日（金）・３０日（土）・３１日（日）は２倍ポイント！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-excel-mito-wpoint-2026-05",
+      "name": "【水戸】5月の全館Wポイント",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 【水戸】5月の全館Wポイント",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-cial-yokohama-wpoint-2026-05",
+      "name": "【シァル横浜】Wポイントのお知らせ",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 【シァル横浜】Wポイントのお知らせ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-granduo-kamata-wpoint-2026-05",
+      "name": "全館Ｗポイントアップ",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 全館Ｗポイントアップ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-granduo-tachikawa-wpoint-2026-05",
+      "name": "Ｗポイントアップ",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 Ｗポイントアップ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-termina-3x-2026-05",
+      "name": "テルミナ 全館3倍",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.03,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 テルミナ 全館3倍",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-paseo-utsunomiya-2x-2026-05",
+      "name": "［パセオ］２６０５２９―２６０５３１ ２倍",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 ［パセオ］２６０５２９―２６０５３１ ２倍",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-cocolo-niigata-2x-2026-05",
+      "name": "CoCoLo新潟 JRE POINT2倍DAY",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.02,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-31",
+      "evidenceQuote": "05月29日～05月31日 CoCoLo新潟 JRE POINT2倍DAY",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-granduo-tachikawa-1f-3pt-2026-05",
+      "name": "グランデュオ立川 1階食料品売場限定3ﾎﾟｲﾝﾄ",
+      "pointCardId": "jre-pointcard",
+      "rate": 0.03,
+      "currencyId": "jre",
+      "bonusType": "primary",
+      "validFrom": "2026-05-29",
+      "validTo": "2026-05-29",
+      "evidenceQuote": "05月29日～05月29日 1階食料品売場限定3ﾎﾟｲﾝﾄ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "memberships": [
+    {
+      "programId": "prog-jre-campaign-ars-topico-2x-2026-05",
+      "storeId": "ars-topico",
+      "evidenceQuote": "【アルス・トピコ】ポイント２倍キャンペーン！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-chapeau-funabashi-fashion-2x-2026-05",
+      "storeId": "chapeau-funabashi",
+      "evidenceQuote": "シャポー船橋 ファッション・グッズ・サービス限定2倍デー",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-cereo-kofu-2x-2026-05",
+      "storeId": "cereo-kofu",
+      "evidenceQuote": "【セレオ甲府】2026年5月｜JRE POINT２倍",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-cereo-kokubunji-2x-2026-05",
+      "storeId": "cereo-kokubunji",
+      "evidenceQuote": "【セレオ国分寺】５月２９日（金）・３０日（土）・３１日（日）は２倍ポイント！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-excel-mito-wpoint-2026-05",
+      "storeId": "excel-mito",
+      "evidenceQuote": "【水戸】5月の全館Wポイント",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-cial-yokohama-wpoint-2026-05",
+      "storeId": "cial-yokohama",
+      "evidenceQuote": "【シァル横浜】Wポイントのお知らせ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-granduo-kamata-wpoint-2026-05",
+      "storeId": "granduo-kamata",
+      "evidenceQuote": "全館Ｗポイントアップ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-granduo-tachikawa-wpoint-2026-05",
+      "storeId": "granduo-tachikawa",
+      "evidenceQuote": "Ｗポイントアップ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-termina-3x-2026-05",
+      "storeId": "termina-kinshicho",
+      "evidenceQuote": "テルミナ 全館3倍",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-paseo-utsunomiya-2x-2026-05",
+      "storeId": "paseo-utsunomiya",
+      "evidenceQuote": "［パセオ］２６０５２９―２６０５３１ ２倍",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-cocolo-niigata-2x-2026-05",
+      "storeId": "cocolo-niigata",
+      "evidenceQuote": "CoCoLo新潟 JRE POINT2倍DAY",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-jre-campaign-granduo-tachikawa-1f-3pt-2026-05",
+      "storeId": "granduo-tachikawa",
+      "evidenceQuote": "1階食料品売場限定3ﾎﾟｲﾝﾄ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "stores": [
+    {
+      "storeId": "ars-topico",
+      "name": "アルス&トピコ",
+      "category": "駅ビル",
+      "evidenceQuote": "アルス&トピコ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "chapeau-funabashi",
+      "name": "シャポー船橋",
+      "category": "駅ビル",
+      "evidenceQuote": "シャポー船橋",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "cereo-kofu",
+      "name": "セレオ甲府",
+      "category": "駅ビル",
+      "evidenceQuote": "セレオ甲府",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "cereo-kokubunji",
+      "name": "セレオ国分寺",
+      "category": "駅ビル",
+      "evidenceQuote": "セレオ国分寺",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "excel-mito",
+      "name": "エクセル水戸",
+      "category": "駅ビル",
+      "evidenceQuote": "エクセル水戸",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "cial-yokohama",
+      "name": "シァル横浜",
+      "category": "駅ビル",
+      "evidenceQuote": "シァル横浜",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "granduo-kamata",
+      "name": "グランデュオ蒲田",
+      "category": "駅ビル",
+      "evidenceQuote": "グランデュオ蒲田",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "granduo-tachikawa",
+      "name": "グランデュオ立川",
+      "category": "駅ビル",
+      "evidenceQuote": "グランデュオ立川",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "termina-kinshicho",
+      "name": "錦糸町テルミナ",
+      "category": "駅ビル",
+      "evidenceQuote": "錦糸町テルミナ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "paseo-utsunomiya",
+      "name": "パセオ宇都宮",
+      "category": "駅ビル",
+      "evidenceQuote": "パセオ宇都宮",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "cocolo-niigata",
+      "name": "CoCoLo新潟",
+      "category": "駅ビル",
+      "evidenceQuote": "CoCoLo新潟",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ]
 }

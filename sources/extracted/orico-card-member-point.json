@@ -1,9 +1,33 @@
 {
   "sourceId": "orico-card-member-point",
   "sourceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-  "fetchedAt": "2026-05-20T22:29:08.678Z",
-  "promptVersion": "card-vUnknown",
+  "fetchedAt": "2026-05-27T22:32:31.380Z",
+  "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars):  The content is quite long, I will analyze it step by step to extract the required information. **1. Card Information (`cards[]`)** - `cardId`: `orico-card-member-point` (provided in the prompt) - `defaultRate`: - \"還元率は常に1.0％以上！100円で1オリコポイントがたまる！\" -> 1.0% (0.01) - `defaultCurrencyId`: \"オリコポイント"
+  "notes": "「ETCのご利用分も入会後6ヵ月は2倍ポイントがたまります。」のルールは、期間指定がないため抽出対象外としました。",
+  "cards": [
+    {
+      "cardId": "orico-the-point",
+      "defaultRate": 0.01,
+      "defaultCurrencyId": "orico-pt",
+      "evidenceQuote": "還元率は常に1.0％以上！100円で1オリコポイントがたまる！",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
+      "explicitness": 1,
+      "ambiguity": 0
+    }
+  ],
+  "categoryRules": [
+    {
+      "cardId": "orico-the-point",
+      "category": "ネット通販",
+      "rate": 0.02,
+      "currencyId": "orico-pt",
+      "evidenceQuote": "オリコモールを経由しネットショッピングした場合、カードご利用分（1.0％）+オリコモールご利用分（+0.5%以上）+特別加算（0.5％）で2%以上のオリコポイントがたまります。",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    }
+  ],
+  "storeRules": []
 }

@@ -1,1013 +1,679 @@
 {
   "sourceId": "rakuten-point-partners",
   "sourceUrl": "https://pointcard.rakuten.co.jp/partner/",
-  "fetchedAt": "2026-05-20T22:24:33.863Z",
+  "fetchedAt": "2026-05-27T22:29:27.769Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
   "stores": [
     {
-      "storeId": "kfc",
-      "name": "ケンタッキーフライドチキン",
+      "storeId": "fujiya",
+      "name": "不二家",
       "category": "飲食",
-      "evidenceQuote": "ケンタッキーフライドチキン：創業以来手づくり調理にこだわり できたてのおいしさと最高のホスピタリティを提供",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "korakuen",
-      "name": "幸楽苑",
-      "category": "飲食",
-      "evidenceQuote": "幸楽苑：昭和29年創業のらーめんチェーン。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "gusto",
-      "name": "ガスト",
-      "category": "飲食",
-      "evidenceQuote": "ガスト：Caféレストラン",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "bamiyan",
-      "name": "バーミヤン",
-      "category": "飲食",
-      "evidenceQuote": "バーミヤン：中華レストラン",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "shabuyo",
-      "name": "しゃぶ葉",
-      "category": "飲食",
-      "evidenceQuote": "しゃぶ葉：しゃぶしゃぶブッフェ",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "jonathan",
-      "name": "ジョナサン",
-      "category": "飲食",
-      "evidenceQuote": "ジョナサン：ファミリーレストラン",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "yumetoan",
-      "name": "夢庵",
-      "category": "飲食",
-      "evidenceQuote": "夢庵：和食レストラン",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "steak-gusto",
-      "name": "ステーキガスト",
-      "category": "飲食",
-      "evidenceQuote": "ステーキガスト：ステーキ＆サラダバー",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "karaage-karayoshi",
-      "name": "から好し",
-      "category": "飲食",
-      "evidenceQuote": "から好し：から揚げ専門店",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "musashino-mori-coffee",
-      "name": "むさしの森珈琲",
-      "category": "飲食",
-      "evidenceQuote": "むさしの森珈琲：カフェ＆ダイニング",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "aiya",
-      "name": "藍屋",
-      "category": "飲食",
-      "evidenceQuote": "藍屋：和食レストラン",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "grazie-gardens",
-      "name": "グラッチェガーデンズ",
-      "category": "飲食",
-      "evidenceQuote": "グラッチェガーデンズ：イタリアンレストラン",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "uoya-michi",
-      "name": "魚屋路",
-      "category": "飲食",
-      "evidenceQuote": "魚屋路：回転寿司",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "la-ohana",
-      "name": "La Ohana",
-      "category": "飲食",
-      "evidenceQuote": "La Ohana：ハワイアンダイニング＆カフェ",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "tonkara-tei",
-      "name": "とんから亭",
-      "category": "飲食",
-      "evidenceQuote": "とんから亭：とんかつ・からあげ",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "yumean-shokudo",
-      "name": "ゆめあん食堂",
-      "category": "飲食",
-      "evidenceQuote": "ゆめあん食堂：うどん・天ぷら・定食",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "hachiro-soba",
-      "name": "八郎そば",
-      "category": "飲食",
-      "evidenceQuote": "八郎そば：そば・丼・定食",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "monana",
-      "name": "桃菜(トウサイ)",
-      "category": "飲食",
-      "evidenceQuote": "桃菜(トウサイ)：點心の食べ放題とアラカルト",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "不二家：創業明治43年。おいしいを通じてしあわせをお手伝い。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "sukiya",
       "name": "すき家",
       "category": "飲食",
       "evidenceQuote": "すき家：「すき家」は店舗数日本一、日本を代表する牛丼チェーンです。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "hamazushi",
       "name": "はま寿司",
       "category": "飲食",
       "evidenceQuote": "はま寿司：全国の漁港から届いたネタを一皿110円(税込)～ご提供♪",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "cocos",
       "name": "ココス",
       "category": "飲食",
       "evidenceQuote": "ココス：ハンバーグやパスタ・おこさまメニューなど豊富メニューで、ご家族みんなが楽しめるファミリーレストランです。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "big-boy",
-      "name": "ビッグボーイ",
-      "category": "飲食",
-      "evidenceQuote": "ビッグボーイ：アツアツの大俵ハンバーグやジューシーなステーキをどうぞ。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "jolly-pasta",
       "name": "ジョリーパスタ",
       "category": "飲食",
       "evidenceQuote": "ジョリーパスタ：パスタ専門店 パスタならジョリーパスタ♪",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "nakau",
       "name": "なか卯",
       "category": "飲食",
       "evidenceQuote": "なか卯：「親子丼」「京風うどん」など、和風ファストフードチェーン。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "zetteria",
       "name": "ゼッテリア",
       "category": "飲食",
       "evidenceQuote": "ゼッテリア：「絶品バーガー」と「フェアトレードコーヒー」",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "big-boy",
+      "name": "ビッグボーイ",
+      "category": "飲食",
+      "evidenceQuote": "ビッグボーイ：アツアツの大俵ハンバーグやジューシーなステーキをどうぞ。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "jukusei-yakiniku-ichiban",
       "name": "熟成焼肉いちばん",
       "category": "飲食",
-      "evidenceQuote": "熟成焼肉いちばん：熟成肉と土鍋ご飯が特徴。品質の高い牛肉をリーズナブルな価格で楽しめる焼肉レストラン。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "熟成焼肉いちばん：熟成肉と土鍋ご飯が特徴。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "olive-no-oka",
       "name": "オリーブの丘",
       "category": "飲食",
       "evidenceQuote": "オリーブの丘：本場イタリア食材のパスタ・ピッツァがリーズナブルに楽しめる",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "hanaya-yohei",
       "name": "華屋与兵衛",
       "category": "飲食",
       "evidenceQuote": "華屋与兵衛：和食ファミリーレストランで美味しく楽しく貯めよう！",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "katsuan",
+      "name": "かつ庵",
+      "category": "飲食",
+      "evidenceQuote": "かつ庵：サクッと揚がったこだわりのカツを気軽に！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "kyubeya",
       "name": "久兵衛屋",
       "category": "飲食",
       "evidenceQuote": "久兵衛屋：小麦の香り高いうどんを具だくさんの汁につけて食べる武蔵野うどんのお店。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "katsuan",
-      "name": "かつ庵",
+      "storeId": "gusto",
+      "name": "ガスト",
       "category": "飲食",
-      "evidenceQuote": "かつ庵：サクッと揚がったこだわりのカツを気軽に！お持ち帰りのご予約も承っております！",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ガスト：Caféレストラン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "mister-donut",
-      "name": "ミスタードーナツ",
+      "storeId": "bamiyan",
+      "name": "バーミヤン",
       "category": "飲食",
-      "evidenceQuote": "ミスタードーナツ：手作りドーナツと美味しさ広がる多彩なメニュー",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "バーミヤン：中華レストラン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "mosdo",
-      "name": "MOSDO",
+      "storeId": "jonathan",
+      "name": "ジョナサン",
       "category": "飲食",
-      "evidenceQuote": "MOSDO：モスバーガーとミスタードーナツがタッグを組んだプレミアムブランド",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ジョナサン：ファミリーレストラン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shabuyo",
+      "name": "しゃぶ葉",
+      "category": "飲食",
+      "evidenceQuote": "しゃぶ葉：しゃぶしゃぶブッフェ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yumetoan",
+      "name": "夢庵",
+      "category": "飲食",
+      "evidenceQuote": "夢庵：和食レストラン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "aiya",
+      "name": "藍屋",
+      "category": "飲食",
+      "evidenceQuote": "藍屋：和食レストラン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "musashino-mori-coffee",
+      "name": "むさしの森珈琲",
+      "category": "飲食",
+      "evidenceQuote": "むさしの森珈琲：カフェ＆ダイニング",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "steak-gusto",
+      "name": "ステーキガスト",
+      "category": "飲食",
+      "evidenceQuote": "ステーキガスト：ステーキ＆サラダバー",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "grazie-gardens",
+      "name": "グラッチェガーデンズ",
+      "category": "飲食",
+      "evidenceQuote": "グラッチェガーデンズ：イタリアンレストラン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "uoya-michi",
+      "name": "魚屋路",
+      "category": "飲食",
+      "evidenceQuote": "魚屋路：回転寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "karaage-karayoshi",
+      "name": "から好し",
+      "category": "飲食",
+      "evidenceQuote": "から好し：から揚げ専門店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tonkara-tei",
+      "name": "とんから亭",
+      "category": "飲食",
+      "evidenceQuote": "とんから亭：とんかつ・からあげ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yumean-shokudo",
+      "name": "ゆめあん食堂",
+      "category": "飲食",
+      "evidenceQuote": "ゆめあん食堂：うどん・天ぷら・定食",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "monana",
+      "name": "桃菜(トウサイ)",
+      "category": "飲食",
+      "evidenceQuote": "桃菜(トウサイ)：點心の食べ放題とアラカルト",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "la-ohana",
+      "name": "La Ohana",
+      "category": "飲食",
+      "evidenceQuote": "La Ohana：ハワイアンダイニング＆カフェ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hachiro-soba",
+      "name": "八郎そば",
+      "category": "飲食",
+      "evidenceQuote": "八郎そば：そば・丼・定食",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "kura-sushi",
       "name": "くら寿司",
       "category": "飲食",
       "evidenceQuote": "くら寿司：安心・おいしい・安価そして楽しいをコンセプトにもつ、回転寿司チェーンです。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "storeId": "royal-host",
-      "name": "ロイヤルホスト",
+      "storeId": "mister-donut",
+      "name": "ミスタードーナツ",
       "category": "飲食",
-      "evidenceQuote": "ロイヤルホスト：心からのおもてなしでくつろいでいただけるレストランでありたい。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ミスタードーナツ：手作りドーナツと美味しさ広がる多彩なメニュー",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mosdo",
+      "name": "MOSDO",
+      "category": "飲食",
+      "evidenceQuote": "MOSDO：モスバーガーとミスタードーナツがタッグを組んだプレミアムブランド",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kfc",
+      "name": "ケンタッキーフライドチキン",
+      "category": "飲食",
+      "evidenceQuote": "ケンタッキーフライドチキン：創業以来手づくり調理にこだわり できたてのおいしさと最高のホスピタリティを提供",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "yoshinoya",
       "name": "吉野家",
       "category": "飲食",
       "evidenceQuote": "吉野家：日本国内で展開する牛丼の「吉野家」は、1899年創業の和のファストフードを代表する飲食店チェーンです。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "god-katsu",
       "name": "ゴッドカツ",
       "category": "飲食",
-      "evidenceQuote": "ゴッドカツはサクサクの衣と旨味あふれる肉にこだわった、特別なかつをお届けします。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "coco-ichibanya",
-      "name": "カレーハウスCoCo壱番屋",
-      "category": "飲食",
-      "evidenceQuote": "カレーハウスCoCo壱番屋：世界最大の店舗数を誇るカレー専門店。量・辛さやトッピングもお好み次第です。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "pasta-de-coco",
-      "name": "パスタ・デ・ココ",
-      "category": "飲食",
-      "evidenceQuote": "パスタ・デ・ココ：”名古屋生まれ”のあんかけスパゲッティ専門店。あんかけソースと極太麺が特徴です。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "hidakaya",
-      "name": "日高屋",
-      "category": "飲食",
-      "evidenceQuote": "日高屋：中華料理",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "rairaken",
-      "name": "来来軒",
-      "category": "飲食",
-      "evidenceQuote": "来来軒：中華料理",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "yakitori-hidaka",
-      "name": "焼鳥日高",
-      "category": "飲食",
-      "evidenceQuote": "焼鳥日高：焼鳥",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "chukafast-ichiban",
-      "name": "中華一番",
-      "category": "飲食",
-      "evidenceQuote": "中華一番：中華料理",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "tainan",
-      "name": "台南",
-      "category": "飲食",
-      "evidenceQuote": "台南：台湾料理",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "ramen-hidaka",
-      "name": "らーめん日高",
-      "category": "飲食",
-      "evidenceQuote": "らーめん日高：鶏白湯",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "taishu-sakaba-hidaka",
-      "name": "大衆酒場日高",
-      "category": "飲食",
-      "evidenceQuote": "大衆酒場日高：焼鳥",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "taishu-shokudo-hidaka",
-      "name": "大衆食堂日高",
-      "category": "飲食",
-      "evidenceQuote": "大衆食堂日高：焼鳥",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ゴッドカツ：ゴッドカツはサクサクの衣と旨味あふれる肉にこだわった、特別なかつをお届けします。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "hanamaru-udon",
-      "name": "はなまる",
+      "name": "はなまるうどん",
       "category": "飲食",
       "evidenceQuote": "はなまる：お好みのトッピングを選び自分流のうどんを楽しめる本場讃岐で主流のセルフ方式のお店",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "umagena",
       "name": "うまげな",
       "category": "飲食",
       "evidenceQuote": "うまげな：お好みのトッピングを選び自分流のうどんを楽しめる本場讃岐で主流のセルフ方式のお店",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "tsurusaku",
       "name": "つるさく",
       "category": "飲食",
       "evidenceQuote": "つるさく：お好みのトッピングを選び自分流のうどんを楽しめる本場讃岐で主流のセルフ方式のお店",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "sanuki-menya",
       "name": "さぬき麺屋",
       "category": "飲食",
       "evidenceQuote": "さぬき麺屋：お好みのトッピングを選び自分流のうどんを楽しめる本場讃岐で主流のセルフ方式のお店",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "takamatsu-teshi",
       "name": "高松勅使",
       "category": "飲食",
       "evidenceQuote": "高松勅使：お好みのトッピングを選び自分流のうどんを楽しめる本場讃岐で主流のセルフ方式のお店",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "mango-tree-cafe",
-      "name": "マンゴツリーカフェ",
-      "category": "飲食",
-      "evidenceQuote": "バンコクに本店を持つmango treeの姉妹店。タイ伝統の味をカジュアルに。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "mango-tree-kitchen",
-      "name": "マンゴツリーキッチン",
-      "category": "飲食",
-      "evidenceQuote": "タイ屋台のようにクイックでカジュアルな、本格タイ料理のファストフード。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "storeId": "dancing-crab",
-      "name": "ダンシングクラブ",
-      "category": "飲食",
-      "evidenceQuote": "豪快に手づかみでシーフードを食べるエンタテインメントレストラン。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "saint-marc-cafe",
       "name": "サンマルクカフェ",
       "category": "飲食",
       "evidenceQuote": "サンマルクカフェ：大人気のチョコクロや注文を受けてから1杯ずつ淹れるコーヒーをお楽しみください。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "kamakura-pasta",
       "name": "鎌倉パスタ",
       "category": "飲食",
       "evidenceQuote": "鎌倉パスタ：生パスタ専門店。茹でたて熱々もっちもちの生パスタを是非ご賞味あれ。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "gion-tsubaki-an",
       "name": "ぎをん椿庵",
       "category": "飲食",
       "evidenceQuote": "ぎをん椿庵：和空間で味わう、ソースと相性抜群の生麺＆焼き立て和パンの食べ放題！",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "baguette",
       "name": "バケット",
       "category": "飲食",
       "evidenceQuote": "バケット：自慢の料理と13種類の焼き立てパンで皆様をお迎えします。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "bistro309",
       "name": "BISTRO309",
       "category": "飲食",
       "evidenceQuote": "BISTRO309：自慢の料理と13種類の焼き立てパンで皆様をお迎えします。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kobe-motomachi-doria",
+      "name": "神戸元町ドリア",
+      "category": "飲食",
+      "evidenceQuote": "神戸元町ドリア：トロ～リ絡まるチーズと素材の旨味が見事に調和した窯焼きドリア専門店。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yokohama-motomachi-doria",
+      "name": "横濱元町ドリア",
+      "category": "飲食",
+      "evidenceQuote": "横濱元町ドリア：トロ～リ絡まるチーズと素材の旨味が見事に調和した窯焼きドリア専門店。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "cheese-doria-sweets",
+      "name": "チーズ＆ドリア.スイーツ",
+      "category": "飲食",
+      "evidenceQuote": "チーズ＆ドリア.スイーツ：計50種類以上の料理でチーズを五感でお楽しみいただけます！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "grill-kura-shiki",
+      "name": "グリル蔵敷",
+      "category": "飲食",
+      "evidenceQuote": "グリル蔵敷：100%牛肉使用ハンバーグをはじめとするこだわりの洋食レストランです。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shanghai-xiaolongbao",
+      "name": "九份小籠包",
+      "category": "飲食",
+      "evidenceQuote": "九份小籠包：吟味した新鮮な食材の力を活かした料理を熱々の石焼鍋でご提供します。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "taiwan-xiaolongbao",
+      "name": "台湾小籠包",
+      "category": "飲食",
+      "evidenceQuote": "台湾小籠包：蒸し立て熱々の小籠包と、食材の力を活かしたお料理をご提供します。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ishiyaki-chanhan-ten",
+      "name": "石焼炒飯店",
+      "category": "飲食",
+      "evidenceQuote": "石焼炒飯店：吟味した新鮮な食材の力を活かした料理を熱々の石焼鍋でご提供します。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kurashiki-coffee-ten",
+      "name": "倉式珈琲店",
+      "category": "飲食",
+      "evidenceQuote": "倉式珈琲店：寛いだ空間の中でサイフォン抽出のコーヒーをお楽しみいただけます。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tully-s-coffee",
+      "name": "タリーズコーヒー",
+      "category": "飲食",
+      "evidenceQuote": "タリーズコーヒー：一杯一杯手作りの本格的なスペシャルティコーヒーと寛ぎの空間を提供しています。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hidakaya",
+      "name": "日高屋",
+      "category": "飲食",
+      "evidenceQuote": "日高屋：中華料理",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "rairaken",
+      "name": "来来軒",
+      "category": "飲食",
+      "evidenceQuote": "来来軒：中華料理",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yakitori-hidaka",
+      "name": "焼鳥日高",
+      "category": "飲食",
+      "evidenceQuote": "焼鳥日高：焼鳥",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "chukafast-ichiban",
+      "name": "中華一番",
+      "category": "飲食",
+      "evidenceQuote": "中華一番：中華料理",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tainan",
+      "name": "台南",
+      "category": "飲食",
+      "evidenceQuote": "台南：台湾料理",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ramen-hidaka",
+      "name": "らーめん日高",
+      "category": "飲食",
+      "evidenceQuote": "らーめん日高：鶏白湯",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     }
   ],
   "loyaltyRules": [
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "kfc",
-      "rate": 0.005,
-      "evidenceQuote": "ケンタッキーフライドチキン 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "apollostation",
+      "rate": 0.00294,
+      "evidenceQuote": "給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "pointCardId": "rakuten-pointcard",
+      "storeId": "solato-taiho-sekiyu",
+      "rate": 0.00294,
+      "evidenceQuote": "給油で！カーケアで！ポイントが貯まる！",
+      "notes": "2Lあたり1ポイント換算（推測）。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "rakuten-pointcard",
+      "storeId": "eneos",
+      "rate": 0.00294,
+      "evidenceQuote": "ENEOSブランドで、生活に身近なガソリンなどの燃料油を販売しています。",
+      "notes": "2Lあたり1ポイント換算（推測）。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "rakuten-pointcard",
+      "storeId": "enejet",
+      "rate": 0.00294,
+      "evidenceQuote": "Enejet：ENEOSブランドで、生活に身近なガソリンなどの燃料油を販売しています。",
+      "notes": "2Lあたり1ポイント換算（推測）。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "rakuten-pointcard",
+      "storeId": "enex-fleet",
+      "rate": 0.00294,
+      "evidenceQuote": "エネクスフリート：全国のエネクスフリートで使える！貯まる！(提携店を除く)",
+      "notes": "2Lあたり1ポイント換算（推測）。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "rakuten-pointcard",
+      "storeId": "cosmo-oil",
+      "rate": 0.00294,
+      "evidenceQuote": "コスモ石油：「ココロも満タンに♪」でおなじみのコスモ石油のガソリンスタンドです。",
+      "notes": "2Lあたり1ポイント換算（推測）。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "rakuten-pointcard",
+      "storeId": "marubeni-energy",
+      "rate": 0.00294,
+      "evidenceQuote": "丸紅エネルギー：給油でもカーケアでも楽天ポイントが使える！貯まる！（一部店舗を除く）",
+      "notes": "2Lあたり1ポイント換算（推測）。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "rakuten-pointcard",
+      "storeId": "itochu-enex",
+      "rate": 0.00294,
+      "evidenceQuote": "伊藤忠エネクス：全国の伊藤忠エネクス系列CS(カーライフステーション)で使える！貯まる！",
+      "notes": "2Lあたり1ポイント換算（推測）。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "rakuten-pointcard",
+      "storeId": "cygnus-oil",
+      "rate": 0.00294,
+      "evidenceQuote": "キグナス石油：キグナス石油では、給油で貯まる！カーケアで貯まる！",
+      "notes": "2Lあたり1ポイント換算（推測）。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "rakuten-pointcard",
+      "storeId": "sannext-tsutsuji-no-sato-ss",
+      "rate": 0.00294,
+      "evidenceQuote": "株式会社サンネクスト セルフつつじの里SS：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "korakuen",
-      "rate": 0.005,
-      "evidenceQuote": "幸楽苑 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "mandaiya-mukouhigashi-kyuyujo",
+      "rate": 0.00294,
+      "evidenceQuote": "株式会社万代屋 向東給油所：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "gusto",
-      "rate": 0.005,
-      "evidenceQuote": "ガスト 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "kanaseki-watada-ss",
+      "rate": 0.00294,
+      "evidenceQuote": "株式会社かなせき 渡田SS：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "bamiyan",
-      "rate": 0.005,
-      "evidenceQuote": "バーミヤン 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "kanaseki-katakura-ss",
+      "rate": 0.00294,
+      "evidenceQuote": "株式会社かなせき 片倉SS：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "shabuyo",
-      "rate": 0.005,
-      "evidenceQuote": "しゃぶ葉 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "kanaseki-minamikase-ss",
+      "rate": 0.00294,
+      "evidenceQuote": "株式会社かなせき 南加瀬SS：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "jonathan",
-      "rate": 0.005,
-      "evidenceQuote": "ジョナサン 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "tamaya-sekiyu-mikuni-ekimae",
+      "rate": 0.00294,
+      "evidenceQuote": "株式会社玉谷石油店 三国駅前給油所：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "yumetoan",
-      "rate": 0.005,
-      "evidenceQuote": "夢庵 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "tomobe-shoten-ogawacho-kyuyujo",
+      "rate": 0.00294,
+      "evidenceQuote": "友部商店 小川町給油所：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "steak-gusto",
-      "rate": 0.005,
-      "evidenceQuote": "ステーキガスト 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "ueno-yugyo-self-yakage-kyuyujo",
+      "rate": 0.00294,
+      "evidenceQuote": "上野油業株式会社 セルフ矢掛給油所：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "karaage-karayoshi",
-      "rate": 0.005,
-      "evidenceQuote": "から好し 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "ueno-yugyo-self-mabi-kyuyujo",
+      "rate": 0.00294,
+      "evidenceQuote": "上野油業株式会社 セルフ真備給油所：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "musashino-mori-coffee",
-      "rate": 0.005,
-      "evidenceQuote": "むさしの森珈琲 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "heiwa-auto-living-lapitpro-kasugai",
+      "rate": 0.00294,
+      "evidenceQuote": "平和オートリビング株式会社 LaPitPro春日井SS：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "aiya",
-      "rate": 0.005,
-      "evidenceQuote": "藍屋 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "ito-chukan-sakai-ichijo-kyuyujo",
+      "rate": 0.00294,
+      "evidenceQuote": "株式会社イトー 中環堺一条給油所：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "pointCardId": "rakuten-pointcard",
-      "storeId": "grazie-gardens",
-      "rate": 0.005,
-      "evidenceQuote": "グラッチェガーデンズ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "uoya-michi",
-      "rate": 0.005,
-      "evidenceQuote": "魚屋路 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "la-ohana",
-      "rate": 0.005,
-      "evidenceQuote": "La Ohana 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "tonkara-tei",
-      "rate": 0.005,
-      "evidenceQuote": "とんから亭 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "yumean-shokudo",
-      "rate": 0.005,
-      "evidenceQuote": "ゆめあん食堂 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "hachiro-soba",
-      "rate": 0.005,
-      "evidenceQuote": "八郎そば 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "monana",
-      "rate": 0.005,
-      "evidenceQuote": "桃菜(トウサイ) 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "sukiya",
-      "rate": 0.005,
-      "evidenceQuote": "すき家 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "hamazushi",
-      "rate": 0.005,
-      "evidenceQuote": "はま寿司 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "cocos",
-      "rate": 0.005,
-      "evidenceQuote": "ココス 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "big-boy",
-      "rate": 0.005,
-      "evidenceQuote": "ビッグボーイ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "jolly-pasta",
-      "rate": 0.005,
-      "evidenceQuote": "ジョリーパスタ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "nakau",
-      "rate": 0.005,
-      "evidenceQuote": "なか卯 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "zetteria",
-      "rate": 0.005,
-      "evidenceQuote": "ゼッテリア 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "jukusei-yakiniku-ichiban",
-      "rate": 0.005,
-      "evidenceQuote": "熟成焼肉いちばん 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "olive-no-oka",
-      "rate": 0.005,
-      "evidenceQuote": "オリーブの丘 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "hanaya-yohei",
-      "rate": 0.005,
-      "evidenceQuote": "華屋与兵衛 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "kyubeya",
-      "rate": 0.005,
-      "evidenceQuote": "久兵衛屋 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "katsuan",
-      "rate": 0.005,
-      "evidenceQuote": "かつ庵 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "mister-donut",
-      "rate": 0.005,
-      "evidenceQuote": "ミスタードーナツ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "mosdo",
-      "rate": 0.005,
-      "evidenceQuote": "MOSDO 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "kura-sushi",
-      "rate": 0.005,
-      "evidenceQuote": "くら寿司 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "royal-host",
-      "rate": 0.005,
-      "evidenceQuote": "ロイヤルホスト 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "yoshinoya",
-      "rate": 0.005,
-      "evidenceQuote": "吉野家 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "god-katsu",
-      "rate": 0.005,
-      "evidenceQuote": "ゴッドカツ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "coco-ichibanya",
-      "rate": 0.005,
-      "evidenceQuote": "カレーハウスCoCo壱番屋 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "pasta-de-coco",
-      "rate": 0.005,
-      "evidenceQuote": "パスタ・デ・ココ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "hidakaya",
-      "rate": 0.005,
-      "evidenceQuote": "日高屋 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "rairaken",
-      "rate": 0.005,
-      "evidenceQuote": "来来軒 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "yakitori-hidaka",
-      "rate": 0.005,
-      "evidenceQuote": "焼鳥日高 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "chukafast-ichiban",
-      "rate": 0.005,
-      "evidenceQuote": "中華一番 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "tainan",
-      "rate": 0.005,
-      "evidenceQuote": "台南 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "ramen-hidaka",
-      "rate": 0.005,
-      "evidenceQuote": "らーめん日高 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "taishu-sakaba-hidaka",
-      "rate": 0.005,
-      "evidenceQuote": "大衆酒場日高 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "taishu-shokudo-hidaka",
-      "rate": 0.005,
-      "evidenceQuote": "大衆食堂日高 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "hanamaru-udon",
-      "rate": 0.005,
-      "evidenceQuote": "はなまる 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "umagena",
-      "rate": 0.005,
-      "evidenceQuote": "うまげな 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "tsurusaku",
-      "rate": 0.005,
-      "evidenceQuote": "つるさく 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "sanuki-menya",
-      "rate": 0.005,
-      "evidenceQuote": "さぬき麺屋 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "takamatsu-teshi",
-      "rate": 0.005,
-      "evidenceQuote": "高松勅使 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "mango-tree-cafe",
-      "rate": 0.005,
-      "evidenceQuote": "マンゴツリーカフェ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "mango-tree-kitchen",
-      "rate": 0.005,
-      "evidenceQuote": "マンゴツリーキッチン 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "dancing-crab",
-      "rate": 0.005,
-      "evidenceQuote": "ダンシングクラブ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "saint-marc-cafe",
-      "rate": 0.005,
-      "evidenceQuote": "サンマルクカフェ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "kamakura-pasta",
-      "rate": 0.005,
-      "evidenceQuote": "鎌倉パスタ 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "gion-tsubaki-an",
-      "rate": 0.005,
-      "evidenceQuote": "ぎをん椿庵 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "baguette",
-      "rate": 0.005,
-      "evidenceQuote": "バケット 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "pointCardId": "rakuten-pointcard",
-      "storeId": "bistro309",
-      "rate": 0.005,
-      "evidenceQuote": "BISTRO309 200円(税抜)につき1ポイント",
-      "notes": "税抜換算",
+      "storeId": "toyokosan-carland-self-takao",
+      "rate": 0.00294,
+      "evidenceQuote": "東洋興産株式会社 カーランドセルフ鷹尾店：給油２L＝１ポイント貯まる！",
+      "notes": "2Lあたり1ポイント。1Lあたり170円換算の場合の還元率（変動する可能性あり）",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }
