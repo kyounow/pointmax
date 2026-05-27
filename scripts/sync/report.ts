@@ -7,7 +7,7 @@
 // Usage:
 //   npm run sync:report
 
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { writeFile, mkdir } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,8 +16,13 @@ import type {
   Proposal,
   ProposalReport,
   ReviewReason,
+  SyncHistoryEntry,
+  SyncHistoryFile,
+  SyncHistoryItem,
+  SyncHistorySourceCount,
   UpdateFieldProposal,
 } from "./types";
+import { SYNC_HISTORY_MAX_ENTRIES } from "./types";
 
 // ───────────────────────────────────────────────────────────────
 // Paths
@@ -28,6 +33,8 @@ const REPO_ROOT = resolve(__dirname, "../..");
 const PROPOSAL_PATH = resolve(REPO_ROOT, "sources/proposed-migrations.json");
 const AUTO_SUMMARY_PATH = resolve(REPO_ROOT, "sources/AUTO_SUMMARY.md");
 const REVIEW_QUEUE_PATH = resolve(REPO_ROOT, "sources/REVIEW_QUEUE.md");
+const SYNC_HISTORY_JSON_PATH = resolve(REPO_ROOT, "sources/SYNC_HISTORY.json");
+const SYNC_HISTORY_MD_PATH = resolve(REPO_ROOT, "sources/SYNC_HISTORY.md");
 const SOURCES_DIR = resolve(REPO_ROOT, "sources");
 
 // ───────────────────────────────────────────────────────────────
@@ -408,6 +415,173 @@ export function buildReviewQueue(report: ProposalReport): string {
 }
 
 // ───────────────────────────────────────────────────────────────
+// SYNC_HISTORY (machine-readable JSON + human-readable Markdown)
+// ───────────────────────────────────────────────────────────────
+//
+// 自動マージされた変更を時系列に蓄積する監査ログ。
+// scripts/sync/report.ts が cron 実行ごとに先頭追記する。
+// アプリ側「更新履歴」タブと GitHub 上の閲覧の両方で参照される。
+//
+// 設計判断:
+// - autoApplicable が 0 件の run は entry を追加しない (空エントリーで履歴を埋めない)
+// - 同じ generatedAt が既存 entries に居れば追加しない (workflow 再実行による重複防止)
+// - 最大 SYNC_HISTORY_MAX_ENTRIES 件で truncate (古いものから削除)
+// - commitSha は backfill 用のみ。新規 cron からは付与しない (squash merge SHA は事後判明のため)
+
+/** ProposalReport → SyncHistoryEntry を構築。0 件なら null。 */
+export function buildSyncHistoryEntry(
+  report: ProposalReport,
+): SyncHistoryEntry | null {
+  const n = report.autoApplicable.length;
+  if (n === 0) return null;
+
+  // bySource: source × collection の件数集計
+  const counts = new Map<string, SyncHistorySourceCount>();
+  for (const p of report.autoApplicable) {
+    const collection = p.collection ?? "unknown";
+    const key = `${p.sourceId}::${collection}`;
+    const existing = counts.get(key);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      counts.set(key, { sourceId: p.sourceId, collection, count: 1 });
+    }
+  }
+  const bySource = [...counts.values()].sort(
+    (a, b) =>
+      a.sourceId.localeCompare(b.sourceId) ||
+      a.collection.localeCompare(b.collection),
+  );
+
+  // items: AUTO_SUMMARY と同じ formatAutoItem 出力を 1 行ずつ保存
+  const items: SyncHistoryItem[] = report.autoApplicable.map((p) => ({
+    sourceId: p.sourceId,
+    collection: p.collection ?? "unknown",
+    summary: formatAutoItem(p),
+  }));
+
+  const avgConfidence =
+    report.autoApplicable.reduce((s, p) => s + p.confidence, 0) / n;
+
+  return {
+    date: jstDate(report.generatedAt),
+    generatedAt: report.generatedAt,
+    totalCount: n,
+    avgConfidence: Number(avgConfidence.toFixed(3)),
+    sourcesProcessed: report.summary.sourcesProcessed,
+    bySource,
+    items,
+  };
+}
+
+/**
+ * 既存の SYNC_HISTORY.json を読み込み、新規エントリーを先頭に追加した結果を返す。
+ * pure function (file I/O なし)。0 件 entry / 同一 generatedAt は no-op。
+ */
+export function appendSyncHistory(
+  existing: SyncHistoryFile | null,
+  newEntry: SyncHistoryEntry | null,
+): SyncHistoryFile {
+  const base: SyncHistoryFile = existing ?? { version: 1, entries: [] };
+  if (!newEntry) return base;
+  // 同じ generatedAt が既に居れば再実行とみなしスキップ
+  if (base.entries.some((e) => e.generatedAt === newEntry.generatedAt)) {
+    return base;
+  }
+  const entries = [newEntry, ...base.entries].slice(0, SYNC_HISTORY_MAX_ENTRIES);
+  return { version: 1, entries };
+}
+
+/** SYNC_HISTORY.md (人間向け) を生成。最新が上。 */
+export function buildSyncHistoryMarkdown(history: SyncHistoryFile): string {
+  const lines: string[] = [
+    "# 週次マスタ同期 履歴",
+    "",
+    "> 自動生成。最新が上、最大 " + SYNC_HISTORY_MAX_ENTRIES +
+      " 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。",
+    "> アプリ内「更新履歴」タブから同じデータを参照可能。",
+    "",
+  ];
+
+  if (history.entries.length === 0) {
+    lines.push("履歴はまだありません。");
+    return lines.join("\n");
+  }
+
+  for (const e of history.entries) {
+    lines.push(`## ${e.date} (${e.totalCount} 件)`);
+    lines.push("");
+    const meta: string[] = [];
+    if (e.commitSha) {
+      meta.push(
+        `commit: [\`${e.commitSha}\`](https://github.com/kyounow/pointmax/commit/${e.commitSha})`,
+      );
+    }
+    if (e.prNumber) {
+      meta.push(
+        `PR: [#${e.prNumber}](https://github.com/kyounow/pointmax/pull/${e.prNumber})`,
+      );
+    }
+    meta.push(`平均 confidence: ${e.avgConfidence?.toFixed(2) ?? "-"}`);
+    meta.push(`source 数: ${e.sourcesProcessed}`);
+    lines.push("- " + meta.join(" / "));
+    lines.push("");
+
+    // 内訳テーブル
+    lines.push("| Source | Collection | 件数 |");
+    lines.push("|---|---|---:|");
+    for (const c of e.bySource) {
+      lines.push(`| ${c.sourceId} | ${c.collection} | ${c.count} |`);
+    }
+    lines.push("");
+
+    // 追加項目 (折りたたみ)
+    lines.push(`<details><summary>追加項目 ${e.items.length} 件</summary>`);
+    lines.push("");
+    // source × collection でグルーピング (AUTO_SUMMARY と同じ表記)
+    const grouped = new Map<string, SyncHistoryItem[]>();
+    for (const it of e.items) {
+      const k = `${it.sourceId} / ${it.collection}`;
+      if (!grouped.has(k)) grouped.set(k, []);
+      grouped.get(k)!.push(it);
+    }
+    for (const [k, items] of grouped.entries()) {
+      lines.push(`### ${k} (${items.length})`);
+      for (const it of items) lines.push(`- ${it.summary}`);
+      lines.push("");
+    }
+    lines.push("</details>");
+    lines.push("");
+    lines.push("---");
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+/** 既存の SYNC_HISTORY.json を読み込む。無ければ null。 */
+function loadSyncHistory(): SyncHistoryFile | null {
+  if (!existsSync(SYNC_HISTORY_JSON_PATH)) return null;
+  try {
+    const text = readFileSync(SYNC_HISTORY_JSON_PATH, "utf-8");
+    const parsed = JSON.parse(text) as SyncHistoryFile;
+    if (parsed.version !== 1 || !Array.isArray(parsed.entries)) {
+      console.warn(
+        "⚠️ SYNC_HISTORY.json の形式が想定外、新規ファイルとして再生成します",
+      );
+      return null;
+    }
+    return parsed;
+  } catch (err) {
+    console.warn(
+      "⚠️ SYNC_HISTORY.json 読み込み失敗、新規ファイルとして再生成します:",
+      err instanceof Error ? err.message : String(err),
+    );
+    return null;
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
 // Main (CLI entry)
 // ───────────────────────────────────────────────────────────────
 
@@ -427,6 +601,28 @@ async function main(): Promise<void> {
   const reviewMd = buildReviewQueue(report);
   await writeFile(REVIEW_QUEUE_PATH, reviewMd, "utf-8");
   console.log(`✓ wrote ${REVIEW_QUEUE_PATH} (${reviewMd.length} chars)`);
+
+  // SYNC_HISTORY.json / .md は autoApplicable が 1 件以上の run のみ追記。
+  // 0 件 run でも MD は最新の history を再生成 (タイトル等の整合用) し、
+  // JSON は既存ファイルがあれば touch (なければ作らない) で保つ。
+  const newEntry = buildSyncHistoryEntry(report);
+  const existingHistory = loadSyncHistory();
+  if (newEntry !== null) {
+    const updated = appendSyncHistory(existingHistory, newEntry);
+    await writeFile(
+      SYNC_HISTORY_JSON_PATH,
+      JSON.stringify(updated, null, 2) + "\n",
+      "utf-8",
+    );
+    const historyMd = buildSyncHistoryMarkdown(updated);
+    await writeFile(SYNC_HISTORY_MD_PATH, historyMd, "utf-8");
+    console.log(
+      `✓ wrote ${SYNC_HISTORY_JSON_PATH} (${updated.entries.length} entries)`,
+    );
+    console.log(`✓ wrote ${SYNC_HISTORY_MD_PATH} (${historyMd.length} chars)`);
+  } else {
+    console.log("ℹ️ autoApplicable=0 のため SYNC_HISTORY は更新スキップ");
+  }
 }
 
 // CLI として実行された場合のみ main を呼ぶ

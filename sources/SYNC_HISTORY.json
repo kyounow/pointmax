@@ -1,0 +1,434 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "date": "2026-05-21",
+      "generatedAt": "2026-05-20T22:30:17.684Z",
+      "totalCount": 43,
+      "avgConfidence": 0.9,
+      "sourcesProcessed": 13,
+      "commitSha": "dda20d6",
+      "bySource": [
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "count": 43
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → korakuen"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → steak-gusto"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → karaage-karayoshi"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → musashino-mori-coffee"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → uoya-michi"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → la-ohana"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → tonkara-tei"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → yumean-shokudo"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → hachiro-soba"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → monana"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → jolly-pasta"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → nakau"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → zetteria"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → jukusei-yakiniku-ichiban"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → olive-no-oka"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → kyubeya"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → katsuan"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → mister-donut"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → mosdo"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → kura-sushi"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → god-katsu"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → pasta-de-coco"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → hidakaya"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → rairaken"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → yakitori-hidaka"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → chukafast-ichiban"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → tainan"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → ramen-hidaka"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → taishu-sakaba-hidaka"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → taishu-shokudo-hidaka"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → hanamaru-udon"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → umagena"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → tsurusaku"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → sanuki-menya"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → takamatsu-teshi"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → mango-tree-cafe"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → mango-tree-kitchen"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → dancing-crab"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → saint-marc-cafe"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → kamakura-pasta"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → gion-tsubaki-an"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → baguette"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "prog-rakuten-pointcard-0.5pc → bistro309"
+        }
+      ]
+    },
+    {
+      "date": "2026-05-18",
+      "generatedAt": "2026-05-17T22:02:12.000Z",
+      "totalCount": 36,
+      "avgConfidence": 0.9,
+      "sourcesProcessed": 11,
+      "commitSha": "8fad1eb",
+      "bySource": [
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "count": 36
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → albis"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → ace-contact"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → ooga-yakkyoku"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → takashimaya"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → tomod-s"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → natural-lawson"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → mine-drug"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → yakudo"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → life"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → lawson-store100"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → hotel-keihan-chain"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → route-inn-hotels"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → excelsior-cafe"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → cafe-lexcel"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → steak-asakuma"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → aoki"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → orihica"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → jumble-store"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → 2ndstreet"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → best-megane-contact"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → megane-salon-look"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → luckrack"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → apollostation"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → hmv-stores"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → geo"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → sanyodo-shoten"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → sokuyomi"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → maruzen-junkudo-shoten"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → yaesu-book-center"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → lawson-ticket"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → himalaya"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → kojima"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → commufa"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → softmap"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → bic-camera"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "prog-ponta-card-0.5pc → bbic"
+        }
+      ]
+    }
+  ]
+}

@@ -340,6 +340,52 @@ export type ReferenceChangeProposal = ProposalBase & {
 };
 
 // ===========================================================
+// Layer 3: Sync history (cron 自動マージの監査ログ)
+// ===========================================================
+// 自動マージされた変更を JSON + Markdown で時系列に蓄積し、
+// アプリ内「更新履歴」タブと GitHub 上の閲覧の両方で参照する。
+// scripts/sync/report.ts が cron 実行ごとに先頭追記する。
+// 最新エントリーが先頭 (entries[0])、最大 SYNC_HISTORY_MAX_ENTRIES 件で truncate。
+
+export type SyncHistorySourceCount = {
+  sourceId: string;
+  collection: string;
+  count: number;
+};
+
+export type SyncHistoryItem = {
+  sourceId: string;
+  collection: string;
+  /** AUTO_SUMMARY の「追加項目」と同じ 1 行要約 */
+  summary: string;
+};
+
+export type SyncHistoryEntry = {
+  /** JST 暦日 YYYY-MM-DD (cron 21:00 UTC = 翌 06:00 JST のずれ補正済み) */
+  date: string;
+  /** ProposalReport.generatedAt をそのまま継承 (ISO8601) */
+  generatedAt: string;
+  totalCount: number;
+  /** 自動マージ全件の平均 confidence。0 件のときは null */
+  avgConfidence: number | null;
+  sourcesProcessed: number;
+  bySource: SyncHistorySourceCount[];
+  items: SyncHistoryItem[];
+  /** Backfill 時のみ設定 (PR 経由化後の新規エントリーには付かない) */
+  commitSha?: string;
+  /** PR 経由のエントリーには PR 番号を付与 (将来 workflow 側で書き込み) */
+  prNumber?: number;
+};
+
+export type SyncHistoryFile = {
+  version: 1;
+  entries: SyncHistoryEntry[]; // newest first
+};
+
+/** 保持する履歴件数 (週 2 回 × 52 週 = 104。実質 1 年分) */
+export const SYNC_HISTORY_MAX_ENTRIES = 104;
+
+// ===========================================================
 // Helpers / thresholds
 // ===========================================================
 

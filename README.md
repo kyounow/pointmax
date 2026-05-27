@@ -183,10 +183,13 @@ npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE 生成
 ## 自動アップデート (cron)
 
 - 週2回（毎週月曜・木曜 06:00 JST）GitHub Actions が同期パイプラインを実行 (`workflow_dispatch` で手動実行可)
-- 高信頼項目 (autoApplicable) は main に自動 push → GitHub Pages が再デプロイ。要レビュー項目は
-  `chore/sync-review-queue` ブランチの長寿命 PR に集約
-- `sync.config.json` の `autoMergeEnabled` で自動 push の ON/OFF、`maxAutoChangesPerRun` が安全弁
+- 高信頼項目 (autoApplicable) は `auto-sync/YYYY-MM-DD-HHMM` ブランチ + `auto-sync` ラベル付き PR を作成し、
+  safety check (件数上限/test/build) 通過後に **squash auto-merge** → main → GitHub Pages 再デプロイ
+- 要レビュー項目は `chore/sync-review-queue` ブランチの長寿命 PR (`needs-review` ラベル) に集約
+- `sync.config.json` の `autoMergeEnabled` で auto-merge の ON/OFF、`maxAutoChangesPerRun` が安全弁
   （超過時は全件 review 降格）
+- 自動マージ履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (最大 104 件、newest first)。
+  GitHub の PR タブ (`auto-sync` ラベル絞り込み) + 履歴ファイルの両方で同じ情報を参照可
 - inject-prompt は実行時に `seed()` をライブ参照するため、seed に追加した新カード/通貨は
   自動でプロンプトへ反映される（回帰契約テストで保証）
 - ローカル PC は完全に無関係 — GitHub のサーバー上で実行される

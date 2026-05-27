@@ -71,7 +71,10 @@ jobs:
       - name: Generate reports
         run: npm run sync:report
 
-      # ===== Tier 1: Auto-merge to main =====
+      # ===== Tier 1: Auto-merge via PR (auto-merge enabled) =====
+      # 旧仕様 (~2026-05-27 PR #48 前) では直接 main に push していたが、
+      # GitHub の PR タブで履歴を一望できる + アプリ内「更新履歴」タブと
+      # 連動できるようにするため PR 経由に切替。
       - name: Apply auto changes
         if: steps.counts.outputs.auto > 0
         run: npm run sync:apply
@@ -88,22 +91,59 @@ jobs:
           npm test
           npm run build
 
-      - name: Commit auto changes to main
+      - name: Create auto-sync PR + enable auto-merge
         if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # 日付 + 時刻でユニーク化 (同日 2 回走っても衝突しない)
+          BRANCH="auto-sync/$(date -u +%Y-%m-%d-%H%M)"
+          git checkout -b "$BRANCH"
           # src/state/seed.ts は意図的に対象外: SEED_VERSION はリリース粒度で
           # cron は bump しない (apply-proposals は seed.ts を書き換えない)。
           # 既存ユーザーへの追加分通知は SyncUpdateModal が差分検知で担う。
-          git add src/state/seed-additions.ts sources/extracted/ sources/proposed-migrations.json
+          # SYNC_HISTORY は監査ログ + アプリ内「更新履歴」タブのデータソース。
+          git add src/state/seed-additions.ts \
+                  sources/extracted/ \
+                  sources/proposed-migrations.json \
+                  sources/SYNC_HISTORY.json \
+                  sources/SYNC_HISTORY.md
           if git diff --cached --quiet; then
             echo "ℹ️ no changes to commit"
-          else
-            git commit -F sources/AUTO_SUMMARY.md
-            git push origin main
-            echo "✓ auto-merged ${{ steps.counts.outputs.auto }} changes to main"
+            exit 0
           fi
+          git commit -F sources/AUTO_SUMMARY.md
+          git push origin "$BRANCH"
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "🤖 auto-sync: ${{ steps.counts.outputs.auto }} 件 ($(TZ=Asia/Tokyo date +%Y-%m-%d))" \
+            --body-file sources/AUTO_SUMMARY.md \
+            --label auto-sync)
+          echo "📋 PR created: $PR_URL"
+          # safety check 済みなので auto-merge を有効化。
+          # branch protection が無い repo では即時マージされる。
+          gh pr merge --squash --auto --delete-branch "$PR_URL"
+          echo "✓ auto-merge enabled (squash + delete-branch)"
+
+      # auto-sync PR を作った後は working tree を main に戻す。
+      # 後段の review-PR (peter-evans) が auto 変更を二重に含まないようにするため。
+      # REVIEW_QUEUE.md は次のステップで使うため一時退避する。
+      - name: Return to main after auto-sync PR
+        if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome == 'success'
+        run: |
+          if [ -f sources/REVIEW_QUEUE.md ]; then
+            cp sources/REVIEW_QUEUE.md /tmp/REVIEW_QUEUE.md
+          fi
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+          if [ -f /tmp/REVIEW_QUEUE.md ]; then
+            cp /tmp/REVIEW_QUEUE.md sources/REVIEW_QUEUE.md
+          fi
+          echo "✓ working tree を main に reset (review-PR 用)"
 
       # ===== Safety fallback: autoApplicable を needsReview に降格 =====
       # safety check が失敗した時 (件数超過 / test/build 失敗)、
@@ -180,7 +220,6 @@ jobs:
 
             See sources/REVIEW_QUEUE.md for details.
           labels: |
-            auto-sync
             needs-review
           add-paths: |
             sources/REVIEW_QUEUE.md
