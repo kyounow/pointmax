@@ -27,6 +27,7 @@ import type {
 } from "./types";
 import {
   proposeCards,
+  proposeExpiredCampaignDeletions,
   proposeJalTokuyakuMemberships,
   proposeLoyaltyRules,
   proposeMemberships,
@@ -39,6 +40,7 @@ import { resolveCardId, resolveStoreId } from "./aliases";
 // 再エクスポート (テスト互換性のため diff-and-propose 経由で参照される旧APIを温存)
 export {
   proposeCards,
+  proposeExpiredCampaignDeletions,
   proposeJalTokuyakuMemberships,
   proposeLoyaltyRules,
   proposeMemberships,
@@ -298,6 +300,15 @@ function main(): void {
     allProposals.push(...proposeMemberships(data, current));
     allProposals.push(...proposeJalTokuyakuMemberships(data, current));
   }
+
+  // 期限切れキャンペーンの削除提案 (seed 全体 1 回だけ評価、ソース非依存)
+  const expiredProposals = proposeExpiredCampaignDeletions(current);
+  if (expiredProposals.length > 0) {
+    console.log(
+      `🧹 expired-cleanup: ${expiredProposals.length} 件の campaign を削除候補に追加`,
+    );
+  }
+  allProposals.push(...expiredProposals);
 
   // within-run dedup: 異なるソースから同 name/id の store が提案された場合、
   // 2 件目以降は idCollision で要レビューに格下げする

@@ -357,6 +357,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   unsupportedDateClaim: "🔴 unsupportedDateClaim",
   zeroOrInvalidRate: "🔴 zeroOrInvalidRate",
   missingStoreBody: "🟠 missingStoreBody (store 本体なし membership)",
+  expiredCampaign: "🟠 expiredCampaign (validTo+30日経過、削除候補)",
 };
 
 const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
@@ -391,6 +392,10 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "membership 提案だが、参照先 store 本体が seed 未存在 + 同 run の auto 候補にも無い (例: category cap で deferred された場合)。" +
     "そのまま auto-merge すると孤児 membership (店名解決できない、UI で店舗未表示) が seed に残るため降格。store 本体を手動キュレートで追加するか、" +
     "次回 cron で store 側が auto 化されるのを待つ。",
+  expiredCampaign:
+    "validTo が 30 日以上前に終了した campaign。Calculator では isRuleActiveAt() で自動 skip されているため機能的影響なし、" +
+    "seed のサイズ/可読性のために削除を提案。承認する場合は seed-data-programs.ts (or seed-additions.ts) から該当 program と関連 memberships を手動削除して PR。" +
+    "翌年同条件で再開する季節 campaign の場合は削除せず validTo を更新で対応。",
 };
 
 function formatProposalDetail(p: Proposal): string {
@@ -495,6 +500,7 @@ export function buildReviewQueue(report: ProposalReport): string {
       "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
       "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
       "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
+      "expiredCampaign",      // 🟠 validTo+30日経過。クリーンアップ候補
       "rateDeltaTooLarge",
       "rateRatioOutOfRange",
       "multiSourceConflict",

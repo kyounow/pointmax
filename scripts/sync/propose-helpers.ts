@@ -680,3 +680,69 @@ export function buildRateUpdate(
     reviewReason,
   };
 }
+
+// ───────────────────────────────────────────────────────────────
+// 期限切れキャンペーン削除提案
+// validTo + grace 日数を経過した program に対する DeleteProposal を生成。
+// Calculator は isRuleActiveAt() で自動 skip 済みのため機能影響なしだが、
+// seed の可読性/サイズ維持のため定期的にクリーンアップ。
+// 誤削除防止のため必ず needsReview (=expiredCampaign 理由付き) で投入し、
+// 人手承認 → seed-data-programs.ts (or seed-additions.ts) から手動削除する運用。
+// ───────────────────────────────────────────────────────────────
+
+export const EXPIRED_CAMPAIGN_GRACE_DAYS = 30;
+
+function parseDateEndLocal(s: string): number | null {
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return new Date(
+    Number(m[1]),
+    Number(m[2]) - 1,
+    Number(m[3]),
+    23, 59, 59, 999,
+  ).getTime();
+}
+
+export function proposeExpiredCampaignDeletions(
+  current: SeedShape,
+  now: Date = new Date(),
+  graceDays: number = EXPIRED_CAMPAIGN_GRACE_DAYS,
+): Proposal[] {
+  const cutoffMs = now.getTime() - graceDays * 24 * 60 * 60 * 1000;
+  const memberships = current.memberships ?? [];
+  const proposals: Proposal[] = [];
+
+  for (const p of current.programs ?? []) {
+    if (!p.validTo) continue;
+    const validToMs = parseDateEndLocal(p.validTo);
+    if (validToMs === null) continue;
+    if (validToMs > cutoffMs) continue; // grace 内なのでスキップ
+
+    const cascade = memberships.filter((m) => m.programId === p.id);
+    const daysExpired = Math.floor(
+      (now.getTime() - validToMs) / (1000 * 60 * 60 * 24),
+    );
+    // cascade は先頭 5 件まで列挙、残りは件数表記 (REVIEW_QUEUE.md の冗長化を防ぐ)
+    const cascadeStoreIds = cascade.map((m) => m.storeId);
+    const cascadeSummary =
+      cascade.length > 0
+        ? ` 関連 memberships ${cascade.length} 件も同時削除推奨 (${cascadeStoreIds.slice(0, 5).join(", ")}${cascade.length > 5 ? ` 他 ${cascade.length - 5} 件` : ""})`
+        : "";
+
+    proposals.push({
+      type: "delete",
+      collection: "programs",
+      id: p.id,
+      sourceId: "expired-cleanup",
+      confidence: 1.0,
+      evidence: {
+        evidenceQuote:
+          `validTo=${p.validTo} (${daysExpired}日前に終了)。${cascadeSummary}`.trim(),
+        explicitness: 1.0,
+        ambiguity: 0,
+      },
+      reviewReason: "expiredCampaign",
+    });
+  }
+  return proposals;
+}
