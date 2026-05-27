@@ -5,233 +5,321 @@
       "date": "2026-05-21",
       "generatedAt": "2026-05-20T22:30:17.684Z",
       "totalCount": 43,
-      "avgConfidence": 0.9,
+      "avgConfidence": 0.903,
       "sourcesProcessed": 13,
-      "commitSha": "dda20d6",
       "bySource": [
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "count": 43
+          "count": 43,
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         }
       ],
       "items": [
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → korakuen"
+          "summary": "楽天ポイントカード提示 0.5% → korakuen",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → steak-gusto"
+          "summary": "楽天ポイントカード提示 0.5% → ステーキガスト",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → karaage-karayoshi"
+          "summary": "楽天ポイントカード提示 0.5% → から好し",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → musashino-mori-coffee"
+          "summary": "楽天ポイントカード提示 0.5% → むさしの森珈琲",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → uoya-michi"
+          "summary": "楽天ポイントカード提示 0.5% → 魚屋路",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → la-ohana"
+          "summary": "楽天ポイントカード提示 0.5% → La Ohana",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → tonkara-tei"
+          "summary": "楽天ポイントカード提示 0.5% → とんから亭",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → yumean-shokudo"
+          "summary": "楽天ポイントカード提示 0.5% → ゆめあん食堂",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → hachiro-soba"
+          "summary": "楽天ポイントカード提示 0.5% → 八郎そば",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → monana"
+          "summary": "楽天ポイントカード提示 0.5% → 桃菜",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → jolly-pasta"
+          "summary": "楽天ポイントカード提示 0.5% → jolly-pasta",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → nakau"
+          "summary": "楽天ポイントカード提示 0.5% → nakau",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → zetteria"
+          "summary": "楽天ポイントカード提示 0.5% → zetteria",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → jukusei-yakiniku-ichiban"
+          "summary": "楽天ポイントカード提示 0.5% → jukusei-yakiniku-ichiban",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → olive-no-oka"
+          "summary": "楽天ポイントカード提示 0.5% → olive-no-oka",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → kyubeya"
+          "summary": "楽天ポイントカード提示 0.5% → kyubeya",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → katsuan"
+          "summary": "楽天ポイントカード提示 0.5% → katsuan",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → mister-donut"
+          "summary": "楽天ポイントカード提示 0.5% → mister-donut",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → mosdo"
+          "summary": "楽天ポイントカード提示 0.5% → mosdo",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → kura-sushi"
+          "summary": "楽天ポイントカード提示 0.5% → kura-sushi",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → god-katsu"
+          "summary": "楽天ポイントカード提示 0.5% → god-katsu",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → pasta-de-coco"
+          "summary": "楽天ポイントカード提示 0.5% → pasta-de-coco",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → hidakaya"
+          "summary": "楽天ポイントカード提示 0.5% → hidakaya",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → rairaken"
+          "summary": "楽天ポイントカード提示 0.5% → rairaken",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → yakitori-hidaka"
+          "summary": "楽天ポイントカード提示 0.5% → yakitori-hidaka",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → chukafast-ichiban"
+          "summary": "楽天ポイントカード提示 0.5% → chukafast-ichiban",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → tainan"
+          "summary": "楽天ポイントカード提示 0.5% → tainan",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → ramen-hidaka"
+          "summary": "楽天ポイントカード提示 0.5% → ramen-hidaka",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → taishu-sakaba-hidaka"
+          "summary": "楽天ポイントカード提示 0.5% → taishu-sakaba-hidaka",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → taishu-shokudo-hidaka"
+          "summary": "楽天ポイントカード提示 0.5% → taishu-shokudo-hidaka",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → hanamaru-udon"
+          "summary": "楽天ポイントカード提示 0.5% → hanamaru-udon",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → umagena"
+          "summary": "楽天ポイントカード提示 0.5% → umagena",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → tsurusaku"
+          "summary": "楽天ポイントカード提示 0.5% → tsurusaku",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → sanuki-menya"
+          "summary": "楽天ポイントカード提示 0.5% → sanuki-menya",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → takamatsu-teshi"
+          "summary": "楽天ポイントカード提示 0.5% → takamatsu-teshi",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → mango-tree-cafe"
+          "summary": "楽天ポイントカード提示 0.5% → mango-tree-cafe",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → mango-tree-kitchen"
+          "summary": "楽天ポイントカード提示 0.5% → mango-tree-kitchen",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → dancing-crab"
+          "summary": "楽天ポイントカード提示 0.5% → dancing-crab",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → saint-marc-cafe"
+          "summary": "楽天ポイントカード提示 0.5% → saint-marc-cafe",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → kamakura-pasta"
+          "summary": "楽天ポイントカード提示 0.5% → kamakura-pasta",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → gion-tsubaki-an"
+          "summary": "楽天ポイントカード提示 0.5% → gion-tsubaki-an",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → baguette"
+          "summary": "楽天ポイントカード提示 0.5% → baguette",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "rakuten-point-partners",
           "collection": "memberships",
-          "summary": "prog-rakuten-pointcard-0.5pc → bistro309"
+          "summary": "楽天ポイントカード提示 0.5% → bistro309",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
         }
-      ]
+      ],
+      "commitSha": "dda20d6"
     },
     {
       "date": "2026-05-18",
@@ -244,189 +332,263 @@
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "count": 36
+          "count": 36,
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         }
       ],
       "items": [
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → albis"
+          "summary": "Pontaカード提示 0.5% → アルビス",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → ace-contact"
+          "summary": "Pontaカード提示 0.5% → エースコンタクト",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → ooga-yakkyoku"
+          "summary": "Pontaカード提示 0.5% → 大賀薬局",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → takashimaya"
+          "summary": "Pontaカード提示 0.5% → 高島屋",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → tomod-s"
+          "summary": "Pontaカード提示 0.5% → tomod-s",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → natural-lawson"
+          "summary": "Pontaカード提示 0.5% → ナチュラルローソン",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → mine-drug"
+          "summary": "Pontaカード提示 0.5% → ミネドラッグ",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → yakudo"
+          "summary": "Pontaカード提示 0.5% → yakudo",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → life"
+          "summary": "Pontaカード提示 0.5% → ライフ",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → lawson-store100"
+          "summary": "Pontaカード提示 0.5% → ローソンストア100",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → hotel-keihan-chain"
+          "summary": "Pontaカード提示 0.5% → ホテル京阪チェーン",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → route-inn-hotels"
+          "summary": "Pontaカード提示 0.5% → ルートインホテルズ",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → excelsior-cafe"
+          "summary": "Pontaカード提示 0.5% → エクセルシオール カフェ",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → cafe-lexcel"
+          "summary": "Pontaカード提示 0.5% → カフェ レクセル",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → steak-asakuma"
+          "summary": "Pontaカード提示 0.5% → steak-asakuma",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → aoki"
+          "summary": "Pontaカード提示 0.5% → AOKI",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → orihica"
+          "summary": "Pontaカード提示 0.5% → ORIHICA",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → jumble-store"
+          "summary": "Pontaカード提示 0.5% → jumble-store",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → 2ndstreet"
+          "summary": "Pontaカード提示 0.5% → セカンドストリート",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → best-megane-contact"
+          "summary": "Pontaカード提示 0.5% → ベストメガネコンタクト",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → megane-salon-look"
+          "summary": "Pontaカード提示 0.5% → メガネサロンルック",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → luckrack"
+          "summary": "Pontaカード提示 0.5% → LuckRack",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → apollostation"
+          "summary": "Pontaカード提示 0.5% → apollostation",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → hmv-stores"
+          "summary": "Pontaカード提示 0.5% → ＨＭＶ（店舗）",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → geo"
+          "summary": "Pontaカード提示 0.5% → geo",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → sanyodo-shoten"
+          "summary": "Pontaカード提示 0.5% → sanyodo-shoten",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → sokuyomi"
+          "summary": "Pontaカード提示 0.5% → ソク読み",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → maruzen-junkudo-shoten"
+          "summary": "Pontaカード提示 0.5% → 丸善ジュンク堂書店",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → yaesu-book-center"
+          "summary": "Pontaカード提示 0.5% → yaesu-book-center",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → lawson-ticket"
+          "summary": "Pontaカード提示 0.5% → ローソンチケット",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → himalaya"
+          "summary": "Pontaカード提示 0.5% → ヒマラヤ",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → kojima"
+          "summary": "Pontaカード提示 0.5% → コジマ",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → commufa"
+          "summary": "Pontaカード提示 0.5% → コミュファ",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → softmap"
+          "summary": "Pontaカード提示 0.5% → softmap",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → bic-camera"
+          "summary": "Pontaカード提示 0.5% → ビックカメラ",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         },
         {
           "sourceId": "ponta-partners",
           "collection": "memberships",
-          "summary": "prog-ponta-card-0.5pc → bbic"
+          "summary": "Pontaカード提示 0.5% → BBIQ（QTnet）",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
         }
       ]
     }

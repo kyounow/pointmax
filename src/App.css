@@ -2113,3 +2113,154 @@ details summary {
     width: 100%;
   }
 }
+
+/* ── 更新履歴タブ (SyncHistoryScreen) ── */
+.sync-history-pr-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 13px;
+}
+.sync-history-pr-link:hover {
+  text-decoration: underline;
+}
+.sync-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sync-history-entry {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.sync-history-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.sync-history-date {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.sync-history-count {
+  color: var(--muted);
+  font-size: 13px;
+  background: var(--panel-2);
+  border-radius: 10px;
+  padding: 2px 10px;
+}
+.sync-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.sync-history-meta-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.sync-history-meta-link:hover {
+  text-decoration: underline;
+}
+.sync-history-meta-item {
+  color: var(--muted);
+}
+.sync-history-breakdown {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.sync-history-breakdown th,
+.sync-history-breakdown td {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.sync-history-breakdown th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sync-history-breakdown .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.sync-history-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.sync-history-toggle:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.sync-history-items {
+  list-style: none;
+  padding: 8px 0 0 0;
+  margin: 8px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+.sync-history-items li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 2px 0;
+}
+.sync-history-item-tag {
+  color: var(--muted);
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  min-width: 200px;
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .sync-history-item-tag {
+    min-width: unset;
+    display: block;
+    flex-basis: 100%;
+  }
+  .sync-history-items li {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+/* ── SyncUpdateModal の「過去の更新を見る」リンク ── */
+.sync-update-history-link-row {
+  margin: 4px 0 8px 0;
+  text-align: right;
+}
+.sync-update-history-link {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  padding: 4px 0;
+  font-size: 12px;
+  cursor: pointer;
+}
+.sync-update-history-link:hover {
+  text-decoration: underline;
+}

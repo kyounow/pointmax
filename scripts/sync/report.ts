@@ -11,10 +11,12 @@ import { readFileSync, existsSync } from "node:fs";
 import { writeFile, mkdir } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { load as parseYaml } from "js-yaml";
 import type {
   AddRecordProposal,
   Proposal,
   ProposalReport,
+  RegistryFile,
   ReviewReason,
   SyncHistoryEntry,
   SyncHistoryFile,
@@ -23,6 +25,7 @@ import type {
   UpdateFieldProposal,
 } from "./types";
 import { SYNC_HISTORY_MAX_ENTRIES } from "./types";
+import { seed } from "../../src/state/seed";
 
 // ───────────────────────────────────────────────────────────────
 // Paths
@@ -35,7 +38,135 @@ const AUTO_SUMMARY_PATH = resolve(REPO_ROOT, "sources/AUTO_SUMMARY.md");
 const REVIEW_QUEUE_PATH = resolve(REPO_ROOT, "sources/REVIEW_QUEUE.md");
 const SYNC_HISTORY_JSON_PATH = resolve(REPO_ROOT, "sources/SYNC_HISTORY.json");
 const SYNC_HISTORY_MD_PATH = resolve(REPO_ROOT, "sources/SYNC_HISTORY.md");
+const REGISTRY_PATH = resolve(REPO_ROOT, "sources/registry.yaml");
 const SOURCES_DIR = resolve(REPO_ROOT, "sources");
+
+// ───────────────────────────────────────────────────────────────
+// Japanese label resolver (SYNC_HISTORY 用)
+// ───────────────────────────────────────────────────────────────
+// 自動マージ履歴を「prog-x → store-y」ではなく「楽天ポイントカード提示 → 幸楽苑」
+// と日本語名で表示するため、seed と registry.yaml から ID→名前を解決する。
+// AUTO_SUMMARY.md (commit message) は影響を抑えるため従来 slug ベースを温存。
+
+type LabelResolver = {
+  store: (id: string) => string;
+  program: (id: string) => string;
+  currency: (id: string) => string;
+  card: (id: string) => string;
+  paymentApp: (id: string) => string;
+  pointCard: (id: string) => string;
+  source: (id: string) => string;
+};
+
+const COLLECTION_LABELS: Record<string, string> = {
+  stores: "店舗",
+  memberships: "提携店舗",
+  programs: "プログラム",
+  campaigns: "キャンペーン",
+  loyaltyRules: "ポイントカード提示",
+  cards: "カード",
+  paymentApps: "決済アプリ",
+  pointCards: "ポイントカード",
+  currencies: "通貨",
+  edges: "交換ルート",
+};
+
+function collectionLabel(collection: string): string {
+  return COLLECTION_LABELS[collection] ?? collection;
+}
+
+function loadRegistry(): RegistryFile | null {
+  if (!existsSync(REGISTRY_PATH)) return null;
+  try {
+    const text = readFileSync(REGISTRY_PATH, "utf-8");
+    const data = parseYaml(text) as RegistryFile;
+    if (!data || !Array.isArray(data.sources)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+/** seed + registry.yaml から ID→Japanese 名解決の lookup を構築する。 */
+export function buildLabelResolver(): LabelResolver {
+  const s = seed();
+  const sources = loadRegistry()?.sources ?? [];
+  const storeMap = new Map(s.stores.map((x) => [x.id, x.name]));
+  const programMap = new Map(s.programs.map((x) => [x.id, x.name]));
+  const currencyMap = new Map(s.currencies.map((x) => [x.id, x.name]));
+  const cardMap = new Map(s.cards.map((x) => [x.id, x.name]));
+  const paymentAppMap = new Map(s.paymentApps.map((x) => [x.id, x.name]));
+  const pointCardMap = new Map(s.pointCards.map((x) => [x.id, x.name]));
+  const sourceMap = new Map(sources.map((x) => [x.id, x.label]));
+  // 未解決時は slug を返す (fallback でも debug 可能に)
+  return {
+    store: (id) => storeMap.get(id) ?? id,
+    program: (id) => programMap.get(id) ?? id,
+    currency: (id) => currencyMap.get(id) ?? id,
+    card: (id) => cardMap.get(id) ?? id,
+    paymentApp: (id) => paymentAppMap.get(id) ?? id,
+    pointCard: (id) => pointCardMap.get(id) ?? id,
+    source: (id) => sourceMap.get(id) ?? id,
+  };
+}
+
+/** ProposalReport の各 item を日本語化された 1 行要約に変換 (SYNC_HISTORY 専用)。 */
+export function formatAutoItemLocalized(
+  p: Proposal,
+  resolver: LabelResolver,
+): string {
+  const pct = (v: unknown) =>
+    typeof v === "number" ? `${(v * 100).toFixed(2)}%` : String(v);
+
+  if (p.type === "updateField") {
+    const u = p as UpdateFieldProposal;
+    return `${collectionLabel(u.collection)} ${u.id}.${u.field}: ${pct(u.from)} → ${pct(u.to)}`;
+  }
+  if (p.type === "delete") {
+    const d = p as { collection: string; id: string };
+    return `${collectionLabel(d.collection)} 削除 ${d.id}`;
+  }
+  if (p.type === "referenceChange") {
+    const r = p as { collection: string; id: string; field: string; from: unknown; to: unknown };
+    return `${collectionLabel(r.collection)} ${r.id}.${r.field}: ${JSON.stringify(r.from)} → ${JSON.stringify(r.to)}`;
+  }
+
+  const rec = (p as AddRecordProposal).record;
+  const period =
+    rec.validFrom || rec.validTo
+      ? ` [${rec.validFrom ?? "?"}〜${rec.validTo ?? "?"}]`
+      : "";
+
+  switch (p.collection) {
+    case "stores":
+      return `${rec.name}${rec.category ? ` (${rec.category})` : ""}`;
+    case "memberships": {
+      const programName = resolver.program(String(rec.programId));
+      const storeName = resolver.store(String(rec.storeId));
+      const override =
+        rec.overrideRate != null ? ` (率上書き ${pct(rec.overrideRate)})` : "";
+      return `${programName} → ${storeName}${override}`;
+    }
+    case "programs":
+    case "campaigns": {
+      const currencyName = rec.currencyId
+        ? resolver.currency(String(rec.currencyId))
+        : "";
+      return `${rec.name} ${pct(rec.rate)}${currencyName ? ` ${currencyName}` : ""}${period}`.trim();
+    }
+    case "loyaltyRules": {
+      const storeName = resolver.store(String(rec.storeId));
+      const pointCardName = resolver.pointCard(String(rec.pointCardId));
+      return `${pointCardName} 提示 ${pct(rec.rate)} → ${storeName}`;
+    }
+    case "cards":
+      return `${rec.name}${rec.grade ? ` (${rec.grade})` : ""}`;
+    case "paymentApps":
+      return `${rec.name}`;
+    default:
+      return `${rec.id ?? JSON.stringify(rec)}`;
+  }
+}
 
 // ───────────────────────────────────────────────────────────────
 // Loader
@@ -428,9 +559,14 @@ export function buildReviewQueue(report: ProposalReport): string {
 // - 最大 SYNC_HISTORY_MAX_ENTRIES 件で truncate (古いものから削除)
 // - commitSha は backfill 用のみ。新規 cron からは付与しない (squash merge SHA は事後判明のため)
 
-/** ProposalReport → SyncHistoryEntry を構築。0 件なら null。 */
+/**
+ * ProposalReport → SyncHistoryEntry を構築。0 件なら null。
+ * SYNC_HISTORY は日本語化された summary + label を保存 (cron 時点の seed
+ * snapshot で resolve、後で seed の名前が変わっても履歴は当時の名前のまま)。
+ */
 export function buildSyncHistoryEntry(
   report: ProposalReport,
+  resolver: LabelResolver = buildLabelResolver(),
 ): SyncHistoryEntry | null {
   const n = report.autoApplicable.length;
   if (n === 0) return null;
@@ -444,7 +580,13 @@ export function buildSyncHistoryEntry(
     if (existing) {
       existing.count += 1;
     } else {
-      counts.set(key, { sourceId: p.sourceId, collection, count: 1 });
+      counts.set(key, {
+        sourceId: p.sourceId,
+        collection,
+        count: 1,
+        sourceLabel: resolver.source(p.sourceId),
+        collectionLabel: collectionLabel(collection),
+      });
     }
   }
   const bySource = [...counts.values()].sort(
@@ -453,11 +595,13 @@ export function buildSyncHistoryEntry(
       a.collection.localeCompare(b.collection),
   );
 
-  // items: AUTO_SUMMARY と同じ formatAutoItem 出力を 1 行ずつ保存
+  // items: 日本語化された summary を 1 行ずつ保存
   const items: SyncHistoryItem[] = report.autoApplicable.map((p) => ({
     sourceId: p.sourceId,
     collection: p.collection ?? "unknown",
-    summary: formatAutoItem(p),
+    summary: formatAutoItemLocalized(p, resolver),
+    sourceLabel: resolver.source(p.sourceId),
+    collectionLabel: collectionLabel(p.collection ?? "unknown"),
   }));
 
   const avgConfidence =
@@ -527,21 +671,24 @@ export function buildSyncHistoryMarkdown(history: SyncHistoryFile): string {
     lines.push("- " + meta.join(" / "));
     lines.push("");
 
-    // 内訳テーブル
-    lines.push("| Source | Collection | 件数 |");
+    // 内訳テーブル (label があれば優先)
+    lines.push("| 取得元 | 種別 | 件数 |");
     lines.push("|---|---|---:|");
     for (const c of e.bySource) {
-      lines.push(`| ${c.sourceId} | ${c.collection} | ${c.count} |`);
+      const src = c.sourceLabel ?? c.sourceId;
+      const col = c.collectionLabel ?? c.collection;
+      lines.push(`| ${src} | ${col} | ${c.count} |`);
     }
     lines.push("");
 
-    // 追加項目 (折りたたみ)
+    // 追加項目 (折りたたみ)。グルーピング表記も label 優先
     lines.push(`<details><summary>追加項目 ${e.items.length} 件</summary>`);
     lines.push("");
-    // source × collection でグルーピング (AUTO_SUMMARY と同じ表記)
     const grouped = new Map<string, SyncHistoryItem[]>();
     for (const it of e.items) {
-      const k = `${it.sourceId} / ${it.collection}`;
+      const src = it.sourceLabel ?? it.sourceId;
+      const col = it.collectionLabel ?? it.collection;
+      const k = `${src} / ${col}`;
       if (!grouped.has(k)) grouped.set(k, []);
       grouped.get(k)!.push(it);
     }

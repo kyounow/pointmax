@@ -320,11 +320,27 @@ describe("buildReviewQueue", () => {
 // ───────────────────────────────────────────────────────────────
 
 describe("buildSyncHistoryEntry", () => {
+  // テスト用の決定的 resolver (production seed/registry 非依存)
+  const stubResolver = {
+    store: (id: string) => (id === "store-a" ? "ストアA" : id === "store-b" ? "ストアB" : id),
+    program: (id: string) => (id === "prog-x" ? "プログラムX" : id),
+    currency: (id: string) => id,
+    card: (id: string) => id,
+    paymentApp: (id: string) => id,
+    pointCard: (id: string) => id,
+    source: (id: string) =>
+      id === "ponta-partners"
+        ? "Pontaポイント 提携店"
+        : id === "rakuten-point-partners"
+          ? "楽天ポイントカード 加盟店"
+          : id,
+  };
+
   it("autoApplicable=0 のとき null", () => {
-    expect(buildSyncHistoryEntry(baseReport({}))).toBeNull();
+    expect(buildSyncHistoryEntry(baseReport({}), stubResolver)).toBeNull();
   });
 
-  it("autoApplicable から date / totalCount / bySource / items を構築する", () => {
+  it("autoApplicable から日本語化された summary + label を構築する", () => {
     const report = baseReport({
       generatedAt: "2026-05-17T22:02:12.000Z", // JST 翌日 2026-05-18
       autoApplicable: [
@@ -347,7 +363,7 @@ describe("buildSyncHistoryEntry", () => {
         {
           type: "addRecord",
           collection: "stores",
-          record: { id: "store-c", name: "C", category: "コンビニ" },
+          record: { id: "store-c", name: "Cマート", category: "コンビニ" },
           sourceId: "rakuten-point-partners",
           confidence: 0.95,
           evidence: { evidenceQuote: "c", explicitness: 1, ambiguity: 0.05 },
@@ -360,29 +376,75 @@ describe("buildSyncHistoryEntry", () => {
         sourcesFailed: 0,
       },
     });
-    const entry = buildSyncHistoryEntry(report)!;
-    expect(entry.date).toBe("2026-05-18"); // JST 暦日
+    const entry = buildSyncHistoryEntry(report, stubResolver)!;
+    expect(entry.date).toBe("2026-05-18");
     expect(entry.totalCount).toBe(3);
     expect(entry.sourcesProcessed).toBe(7);
     expect(entry.avgConfidence).toBeCloseTo((0.92 + 0.88 + 0.95) / 3, 2);
+
+    // bySource: label が解決されている (memberships → 提携店舗, stores → 店舗)
     expect(entry.bySource).toHaveLength(2);
     expect(entry.bySource).toContainEqual({
       sourceId: "ponta-partners",
       collection: "memberships",
       count: 2,
+      sourceLabel: "Pontaポイント 提携店",
+      collectionLabel: "提携店舗",
     });
     expect(entry.bySource).toContainEqual({
       sourceId: "rakuten-point-partners",
       collection: "stores",
       count: 1,
+      sourceLabel: "楽天ポイントカード 加盟店",
+      collectionLabel: "店舗",
     });
+
+    // items: summary が日本語化されている (prog-x → プログラムX, store-a → ストアA)
     expect(entry.items).toHaveLength(3);
-    // formatAutoItem の出力が summary に入る
-    expect(entry.items[0].summary).toContain("prog-x → store-a");
-    expect(entry.items[2].summary).toContain("store-c — C");
-    // commitSha / prNumber は新規 entry には付かない
+    expect(entry.items[0].summary).toBe("プログラムX → ストアA");
+    expect(entry.items[1].summary).toBe("プログラムX → ストアB");
+    expect(entry.items[2].summary).toBe("Cマート (コンビニ)"); // stores 形式
+    expect(entry.items[0].sourceLabel).toBe("Pontaポイント 提携店");
+    expect(entry.items[0].collectionLabel).toBe("提携店舗");
+
     expect(entry.commitSha).toBeUndefined();
     expect(entry.prNumber).toBeUndefined();
+  });
+
+  it("resolver が解決できない ID は slug にフォールバック", () => {
+    const passthroughResolver = {
+      store: (id: string) => id,
+      program: (id: string) => id,
+      currency: (id: string) => id,
+      card: (id: string) => id,
+      paymentApp: (id: string) => id,
+      pointCard: (id: string) => id,
+      source: (id: string) => id,
+    };
+    const report = baseReport({
+      autoApplicable: [
+        {
+          type: "addRecord",
+          collection: "memberships",
+          record: { programId: "prog-unknown", storeId: "store-unknown" },
+          sourceId: "src-unknown",
+          confidence: 0.91,
+          evidence: { evidenceQuote: "x", explicitness: 0.95, ambiguity: 0.05 },
+        },
+      ],
+      summary: {
+        autoApplicableCount: 1,
+        needsReviewCount: 0,
+        sourcesProcessed: 1,
+        sourcesFailed: 0,
+      },
+    });
+    const entry = buildSyncHistoryEntry(report, passthroughResolver)!;
+    expect(entry.items[0].summary).toBe("prog-unknown → store-unknown");
+    // collection は label がある (hard-coded map なので)
+    expect(entry.bySource[0].collectionLabel).toBe("提携店舗");
+    // source は label が無い (resolver が slug 返却なので slug がそのまま label に入る)
+    expect(entry.bySource[0].sourceLabel).toBe("src-unknown");
   });
 });
 
@@ -492,10 +554,48 @@ describe("buildSyncHistoryMarkdown", () => {
     expect(md).toContain("## 2026-05-21 (2 件)");
     expect(md).toContain("commit: [`abc1234`]");
     expect(md).toContain("平均 confidence: 0.90");
-    expect(md).toContain("| src-a | memberships | 2 |");
+    // ヘッダは日本語、 label があれば優先表示
+    expect(md).toContain("| 取得元 | 種別 | 件数 |");
+    expect(md).toContain("| src-a | memberships | 2 |"); // label 無し → slug fallback
     expect(md).toContain("追加項目 2 件");
     expect(md).toContain("prog-x → store-1");
     expect(md).toContain("prog-x → store-2");
+  });
+
+  it("sourceLabel / collectionLabel があれば label 優先で表示", () => {
+    const md = buildSyncHistoryMarkdown({
+      version: 1,
+      entries: [
+        {
+          date: "2026-05-21",
+          generatedAt: "2026-05-20T22:30:17Z",
+          totalCount: 1,
+          avgConfidence: 0.9,
+          sourcesProcessed: 5,
+          bySource: [
+            {
+              sourceId: "ponta-partners",
+              collection: "memberships",
+              count: 1,
+              sourceLabel: "Pontaポイント 提携店",
+              collectionLabel: "提携店舗",
+            },
+          ],
+          items: [
+            {
+              sourceId: "ponta-partners",
+              collection: "memberships",
+              summary: "Pontaカード提示 0.5% → アルビス",
+              sourceLabel: "Pontaポイント 提携店",
+              collectionLabel: "提携店舗",
+            },
+          ],
+        },
+      ],
+    });
+    expect(md).toContain("| Pontaポイント 提携店 | 提携店舗 | 1 |");
+    expect(md).toContain("### Pontaポイント 提携店 / 提携店舗 (1)");
+    expect(md).toContain("Pontaカード提示 0.5% → アルビス");
   });
 });
 
