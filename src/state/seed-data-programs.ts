@@ -775,10 +775,8 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "sky-rent-a-car" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "nippon-rent-a-car" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "cd-energy-direct-point-denki" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "kamei" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "tokyu-hotel" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "excel-hotel-tokyu" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "princess-cruises" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "hotel-keihan-chain" },
   // v3.5.0: Phase A 楽天 追加
   // welcia: ウエルシアは楽天ポイントカード加盟 (Sonnet 検証)

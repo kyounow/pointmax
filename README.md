@@ -132,12 +132,12 @@ src/state/
 | エンティティ | 件数 |
 |---|---|
 | 通貨 (currencies) | 22 |
-| カード (cards) | 18 |
+| カード (cards) | 19 |
 | ポイントカード (pointCards) | 7 |
 | 決済アプリ (paymentApps) | 11 |
-| 店舗 (stores) | 214（手キュレート 61 + 自動同期分） |
-| BenefitProgram (programs) | 33 |
-| StoreProgramMembership (memberships) | 199 |
+| 店舗 (stores) | 265（手キュレート + 自動同期分） |
+| BenefitProgram (programs) | 41 |
+| StoreProgramMembership (memberships) | 317 |
 | 交換エッジ (edges) | 54 |
 
 ### 自動同期パイプライン
@@ -204,7 +204,7 @@ PointMax は 2 つの version を独立管理:
 
 | 種類 | 用途 | 現在値 |
 |---|---|---|
-| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **38** |
+| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **39** |
 | `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **5** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:

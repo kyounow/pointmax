@@ -123,6 +123,52 @@ export const SEED_STORES: Store[] = [
   // 既存 ADDED_STORES の apollo-station (name="apollostation") を日本語に上書き
   { id: "apollo-station", name: "apollostation (アポロステーション)", category: "ガソリンスタンド" },
 
+  // 孤児 membership backfill (cron pipeline の category cap で store 本体だけ deferred
+  // されて membership が孤児化した分の補完、PR #53)。
+  // 元データ: sources/extracted/{rakuten-point-partners,ponta-partners,v-point-partners}.json
+  // 飲食系 (rakuten-point-partners 由来、prog-rakuten-pointcard-0.5pc)
+  { id: "korakuen", name: "幸楽苑", category: "飲食" },
+  { id: "jolly-pasta", name: "ジョリーパスタ", category: "飲食" },
+  { id: "nakau", name: "なか卯", category: "飲食" },
+  { id: "zetteria", name: "ゼッテリア", category: "飲食" },
+  { id: "jukusei-yakiniku-ichiban", name: "熟成焼肉いちばん", category: "飲食" },
+  { id: "olive-no-oka", name: "オリーブの丘", category: "飲食" },
+  { id: "kyubeya", name: "久兵衛屋", category: "飲食" },
+  { id: "katsuan", name: "かつ庵", category: "飲食" },
+  { id: "mister-donut", name: "ミスタードーナツ", category: "飲食" },
+  { id: "mosdo", name: "MOSDO", category: "飲食" },
+  { id: "kura-sushi", name: "くら寿司", category: "飲食" },
+  { id: "god-katsu", name: "ゴッドカツ", category: "飲食" },
+  { id: "pasta-de-coco", name: "パスタ・デ・ココ", category: "飲食" },
+  { id: "hidakaya", name: "日高屋", category: "飲食" },
+  { id: "rairaken", name: "来来軒", category: "飲食" },
+  { id: "yakitori-hidaka", name: "焼鳥日高", category: "飲食" },
+  { id: "chukafast-ichiban", name: "中華一番", category: "飲食" },
+  { id: "tainan", name: "台南", category: "飲食" },
+  { id: "ramen-hidaka", name: "らーめん日高", category: "飲食" },
+  { id: "taishu-sakaba-hidaka", name: "大衆酒場日高", category: "飲食" },
+  { id: "taishu-shokudo-hidaka", name: "大衆食堂日高", category: "飲食" },
+  { id: "hanamaru-udon", name: "はなまるうどん", category: "飲食" },
+  { id: "umagena", name: "うまげな", category: "飲食" },
+  { id: "tsurusaku", name: "つるさく", category: "飲食" },
+  { id: "sanuki-menya", name: "さぬき麺屋", category: "飲食" },
+  { id: "takamatsu-teshi", name: "高松勅使", category: "飲食" },
+  { id: "mango-tree-cafe", name: "マンゴツリーカフェ", category: "飲食" },
+  { id: "mango-tree-kitchen", name: "マンゴツリーキッチン", category: "飲食" },
+  { id: "dancing-crab", name: "ダンシングクラブ", category: "飲食" },
+  { id: "saint-marc-cafe", name: "サンマルクカフェ", category: "飲食" },
+  { id: "kamakura-pasta", name: "鎌倉パスタ", category: "飲食" },
+  { id: "gion-tsubaki-an", name: "ぎをん椿庵", category: "飲食" },
+  { id: "baguette", name: "バケット", category: "飲食" },
+  { id: "bistro309", name: "BISTRO309", category: "飲食" },
+  // ponta-partners 由来 (prog-ponta-card-0.5pc)
+  { id: "tomod-s", name: "トモズ", category: "ドラッグストア" },
+  { id: "steak-asakuma", name: "ステーキのあさくま", category: "飲食" },
+  { id: "jumble-store", name: "ジャンブルストア", category: "ファッション" },
+  { id: "sanyodo-shoten", name: "三洋堂書店", category: "書店" },
+  { id: "yaesu-book-center", name: "八重洲ブックセンター", category: "書店" },
+  { id: "softmap", name: "ソフマップ", category: "家電量販店" },
+
   // 汎用 (デフォルト選択用。基本還元率を確認したい時に使う)
   { id: "general", name: "一般店舗 (規定還元)", category: "汎用" },
 ];
