@@ -351,13 +351,21 @@ export type SyncHistorySourceCount = {
   sourceId: string;
   collection: string;
   count: number;
+  /** registry.yaml の label (例: 「楽天ポイントカード 加盟店 (公式)」)。無ければ sourceId を fallback。 */
+  sourceLabel?: string;
+  /** collection の日本語表示 (例: 「提携店舗」)。無ければ collection slug を fallback。 */
+  collectionLabel?: string;
 };
 
 export type SyncHistoryItem = {
   sourceId: string;
   collection: string;
-  /** AUTO_SUMMARY の「追加項目」と同じ 1 行要約 */
+  /** 日本語化された 1 行要約 (例: 「楽天ポイントカード提示 0.5% → 幸楽苑」)。ID が seed に無ければ slug fallback。 */
   summary: string;
+  /** registry.yaml の label。app 表示用、fallback あり。 */
+  sourceLabel?: string;
+  /** collection の日本語表示。app 表示用、fallback あり。 */
+  collectionLabel?: string;
 };
 
 export type SyncHistoryEntry = {

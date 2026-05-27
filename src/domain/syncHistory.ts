@@ -13,13 +13,21 @@ export type SyncHistorySourceCount = {
   sourceId: string;
   collection: string;
   count: number;
+  /** registry.yaml の label (例: 「楽天ポイントカード 加盟店 (公式)」)。cron 生成時に解決、無ければ sourceId にフォールバック。 */
+  sourceLabel?: string;
+  /** collection の日本語表示 (例: 「提携店舗」)。無ければ collection slug にフォールバック。 */
+  collectionLabel?: string;
 };
 
 export type SyncHistoryItem = {
   sourceId: string;
   collection: string;
-  /** 1 行要約 (例: `prog-rakuten-pointcard-0.5pc → korakuen`) */
+  /** 日本語化された 1 行要約 (例: 「楽天ポイントカード提示 0.5% → 幸楽苑」)。 */
   summary: string;
+  /** registry.yaml の label (app 表示用)。 */
+  sourceLabel?: string;
+  /** collection の日本語表示 (app 表示用)。 */
+  collectionLabel?: string;
 };
 
 export type SyncHistoryEntry = {
@@ -76,3 +84,15 @@ export function prUrl(entry: SyncHistoryEntry): string | null {
 
 /** auto-sync ラベルで絞った PR タブの URL (履歴全体への動線用) */
 export const AUTO_SYNC_PR_LIST_URL = `https://github.com/${SYNC_HISTORY_REPO}/pulls?q=is%3Apr+label%3Aauto-sync`;
+
+/** sourceLabel / collectionLabel が無い古い entry のフォールバック表示。 */
+export function displaySource(
+  e: { sourceId: string; sourceLabel?: string },
+): string {
+  return e.sourceLabel ?? e.sourceId;
+}
+export function displayCollection(
+  e: { collection: string; collectionLabel?: string },
+): string {
+  return e.collectionLabel ?? e.collection;
+}

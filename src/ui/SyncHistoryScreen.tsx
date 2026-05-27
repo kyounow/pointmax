@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import {
   AUTO_SYNC_PR_LIST_URL,
   commitUrl,
+  displayCollection,
+  displaySource,
   loadSyncHistory,
   prUrl,
   type SyncHistoryEntry,
@@ -93,16 +95,16 @@ function SyncHistoryEntryCard({ entry }: { entry: SyncHistoryEntry }) {
       <table className="sync-history-breakdown">
         <thead>
           <tr>
-            <th>Source</th>
-            <th>Collection</th>
+            <th>取得元</th>
+            <th>種別</th>
             <th className="num">件数</th>
           </tr>
         </thead>
         <tbody>
           {entry.bySource.map((b, i) => (
             <tr key={i}>
-              <td>{b.sourceId}</td>
-              <td>{b.collection}</td>
+              <td>{displaySource(b)}</td>
+              <td>{displayCollection(b)}</td>
               <td className="num">{b.count}</td>
             </tr>
           ))}
@@ -123,7 +125,7 @@ function SyncHistoryEntryCard({ entry }: { entry: SyncHistoryEntry }) {
           {entry.items.map((item, i) => (
             <li key={i}>
               <span className="sync-history-item-tag">
-                {item.sourceId} / {item.collection}
+                {displaySource(item)} / {displayCollection(item)}
               </span>
               <span>{item.summary}</span>
             </li>

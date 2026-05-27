@@ -7,56 +7,56 @@
 
 - commit: [`dda20d6`](https://github.com/kyounow/pointmax/commit/dda20d6) / 平均 confidence: 0.90 / source 数: 13
 
-| Source | Collection | 件数 |
+| 取得元 | 種別 | 件数 |
 |---|---|---:|
-| rakuten-point-partners | memberships | 43 |
+| 楽天ポイントカード 加盟店 (公式) | 提携店舗 | 43 |
 
 <details><summary>追加項目 43 件</summary>
 
-### rakuten-point-partners / memberships (43)
-- prog-rakuten-pointcard-0.5pc → korakuen
-- prog-rakuten-pointcard-0.5pc → steak-gusto
-- prog-rakuten-pointcard-0.5pc → karaage-karayoshi
-- prog-rakuten-pointcard-0.5pc → musashino-mori-coffee
-- prog-rakuten-pointcard-0.5pc → uoya-michi
-- prog-rakuten-pointcard-0.5pc → la-ohana
-- prog-rakuten-pointcard-0.5pc → tonkara-tei
-- prog-rakuten-pointcard-0.5pc → yumean-shokudo
-- prog-rakuten-pointcard-0.5pc → hachiro-soba
-- prog-rakuten-pointcard-0.5pc → monana
-- prog-rakuten-pointcard-0.5pc → jolly-pasta
-- prog-rakuten-pointcard-0.5pc → nakau
-- prog-rakuten-pointcard-0.5pc → zetteria
-- prog-rakuten-pointcard-0.5pc → jukusei-yakiniku-ichiban
-- prog-rakuten-pointcard-0.5pc → olive-no-oka
-- prog-rakuten-pointcard-0.5pc → kyubeya
-- prog-rakuten-pointcard-0.5pc → katsuan
-- prog-rakuten-pointcard-0.5pc → mister-donut
-- prog-rakuten-pointcard-0.5pc → mosdo
-- prog-rakuten-pointcard-0.5pc → kura-sushi
-- prog-rakuten-pointcard-0.5pc → god-katsu
-- prog-rakuten-pointcard-0.5pc → pasta-de-coco
-- prog-rakuten-pointcard-0.5pc → hidakaya
-- prog-rakuten-pointcard-0.5pc → rairaken
-- prog-rakuten-pointcard-0.5pc → yakitori-hidaka
-- prog-rakuten-pointcard-0.5pc → chukafast-ichiban
-- prog-rakuten-pointcard-0.5pc → tainan
-- prog-rakuten-pointcard-0.5pc → ramen-hidaka
-- prog-rakuten-pointcard-0.5pc → taishu-sakaba-hidaka
-- prog-rakuten-pointcard-0.5pc → taishu-shokudo-hidaka
-- prog-rakuten-pointcard-0.5pc → hanamaru-udon
-- prog-rakuten-pointcard-0.5pc → umagena
-- prog-rakuten-pointcard-0.5pc → tsurusaku
-- prog-rakuten-pointcard-0.5pc → sanuki-menya
-- prog-rakuten-pointcard-0.5pc → takamatsu-teshi
-- prog-rakuten-pointcard-0.5pc → mango-tree-cafe
-- prog-rakuten-pointcard-0.5pc → mango-tree-kitchen
-- prog-rakuten-pointcard-0.5pc → dancing-crab
-- prog-rakuten-pointcard-0.5pc → saint-marc-cafe
-- prog-rakuten-pointcard-0.5pc → kamakura-pasta
-- prog-rakuten-pointcard-0.5pc → gion-tsubaki-an
-- prog-rakuten-pointcard-0.5pc → baguette
-- prog-rakuten-pointcard-0.5pc → bistro309
+### 楽天ポイントカード 加盟店 (公式) / 提携店舗 (43)
+- 楽天ポイントカード提示 0.5% → korakuen
+- 楽天ポイントカード提示 0.5% → ステーキガスト
+- 楽天ポイントカード提示 0.5% → から好し
+- 楽天ポイントカード提示 0.5% → むさしの森珈琲
+- 楽天ポイントカード提示 0.5% → 魚屋路
+- 楽天ポイントカード提示 0.5% → La Ohana
+- 楽天ポイントカード提示 0.5% → とんから亭
+- 楽天ポイントカード提示 0.5% → ゆめあん食堂
+- 楽天ポイントカード提示 0.5% → 八郎そば
+- 楽天ポイントカード提示 0.5% → 桃菜
+- 楽天ポイントカード提示 0.5% → jolly-pasta
+- 楽天ポイントカード提示 0.5% → nakau
+- 楽天ポイントカード提示 0.5% → zetteria
+- 楽天ポイントカード提示 0.5% → jukusei-yakiniku-ichiban
+- 楽天ポイントカード提示 0.5% → olive-no-oka
+- 楽天ポイントカード提示 0.5% → kyubeya
+- 楽天ポイントカード提示 0.5% → katsuan
+- 楽天ポイントカード提示 0.5% → mister-donut
+- 楽天ポイントカード提示 0.5% → mosdo
+- 楽天ポイントカード提示 0.5% → kura-sushi
+- 楽天ポイントカード提示 0.5% → god-katsu
+- 楽天ポイントカード提示 0.5% → pasta-de-coco
+- 楽天ポイントカード提示 0.5% → hidakaya
+- 楽天ポイントカード提示 0.5% → rairaken
+- 楽天ポイントカード提示 0.5% → yakitori-hidaka
+- 楽天ポイントカード提示 0.5% → chukafast-ichiban
+- 楽天ポイントカード提示 0.5% → tainan
+- 楽天ポイントカード提示 0.5% → ramen-hidaka
+- 楽天ポイントカード提示 0.5% → taishu-sakaba-hidaka
+- 楽天ポイントカード提示 0.5% → taishu-shokudo-hidaka
+- 楽天ポイントカード提示 0.5% → hanamaru-udon
+- 楽天ポイントカード提示 0.5% → umagena
+- 楽天ポイントカード提示 0.5% → tsurusaku
+- 楽天ポイントカード提示 0.5% → sanuki-menya
+- 楽天ポイントカード提示 0.5% → takamatsu-teshi
+- 楽天ポイントカード提示 0.5% → mango-tree-cafe
+- 楽天ポイントカード提示 0.5% → mango-tree-kitchen
+- 楽天ポイントカード提示 0.5% → dancing-crab
+- 楽天ポイントカード提示 0.5% → saint-marc-cafe
+- 楽天ポイントカード提示 0.5% → kamakura-pasta
+- 楽天ポイントカード提示 0.5% → gion-tsubaki-an
+- 楽天ポイントカード提示 0.5% → baguette
+- 楽天ポイントカード提示 0.5% → bistro309
 
 </details>
 
@@ -66,49 +66,49 @@
 
 - commit: [`8fad1eb`](https://github.com/kyounow/pointmax/commit/8fad1eb) / 平均 confidence: 0.90 / source 数: 11
 
-| Source | Collection | 件数 |
+| 取得元 | 種別 | 件数 |
 |---|---|---:|
-| ponta-partners | memberships | 36 |
+| Pontaポイント 提携店・サービス (公式) | 提携店舗 | 36 |
 
 <details><summary>追加項目 36 件</summary>
 
-### ponta-partners / memberships (36)
-- prog-ponta-card-0.5pc → albis
-- prog-ponta-card-0.5pc → ace-contact
-- prog-ponta-card-0.5pc → ooga-yakkyoku
-- prog-ponta-card-0.5pc → takashimaya
-- prog-ponta-card-0.5pc → tomod-s
-- prog-ponta-card-0.5pc → natural-lawson
-- prog-ponta-card-0.5pc → mine-drug
-- prog-ponta-card-0.5pc → yakudo
-- prog-ponta-card-0.5pc → life
-- prog-ponta-card-0.5pc → lawson-store100
-- prog-ponta-card-0.5pc → hotel-keihan-chain
-- prog-ponta-card-0.5pc → route-inn-hotels
-- prog-ponta-card-0.5pc → excelsior-cafe
-- prog-ponta-card-0.5pc → cafe-lexcel
-- prog-ponta-card-0.5pc → steak-asakuma
-- prog-ponta-card-0.5pc → aoki
-- prog-ponta-card-0.5pc → orihica
-- prog-ponta-card-0.5pc → jumble-store
-- prog-ponta-card-0.5pc → 2ndstreet
-- prog-ponta-card-0.5pc → best-megane-contact
-- prog-ponta-card-0.5pc → megane-salon-look
-- prog-ponta-card-0.5pc → luckrack
-- prog-ponta-card-0.5pc → apollostation
-- prog-ponta-card-0.5pc → hmv-stores
-- prog-ponta-card-0.5pc → geo
-- prog-ponta-card-0.5pc → sanyodo-shoten
-- prog-ponta-card-0.5pc → sokuyomi
-- prog-ponta-card-0.5pc → maruzen-junkudo-shoten
-- prog-ponta-card-0.5pc → yaesu-book-center
-- prog-ponta-card-0.5pc → lawson-ticket
-- prog-ponta-card-0.5pc → himalaya
-- prog-ponta-card-0.5pc → kojima
-- prog-ponta-card-0.5pc → commufa
-- prog-ponta-card-0.5pc → softmap
-- prog-ponta-card-0.5pc → bic-camera
-- prog-ponta-card-0.5pc → bbic
+### Pontaポイント 提携店・サービス (公式) / 提携店舗 (36)
+- Pontaカード提示 0.5% → アルビス
+- Pontaカード提示 0.5% → エースコンタクト
+- Pontaカード提示 0.5% → 大賀薬局
+- Pontaカード提示 0.5% → 高島屋
+- Pontaカード提示 0.5% → tomod-s
+- Pontaカード提示 0.5% → ナチュラルローソン
+- Pontaカード提示 0.5% → ミネドラッグ
+- Pontaカード提示 0.5% → yakudo
+- Pontaカード提示 0.5% → ライフ
+- Pontaカード提示 0.5% → ローソンストア100
+- Pontaカード提示 0.5% → ホテル京阪チェーン
+- Pontaカード提示 0.5% → ルートインホテルズ
+- Pontaカード提示 0.5% → エクセルシオール カフェ
+- Pontaカード提示 0.5% → カフェ レクセル
+- Pontaカード提示 0.5% → steak-asakuma
+- Pontaカード提示 0.5% → AOKI
+- Pontaカード提示 0.5% → ORIHICA
+- Pontaカード提示 0.5% → jumble-store
+- Pontaカード提示 0.5% → セカンドストリート
+- Pontaカード提示 0.5% → ベストメガネコンタクト
+- Pontaカード提示 0.5% → メガネサロンルック
+- Pontaカード提示 0.5% → LuckRack
+- Pontaカード提示 0.5% → apollostation
+- Pontaカード提示 0.5% → ＨＭＶ（店舗）
+- Pontaカード提示 0.5% → geo
+- Pontaカード提示 0.5% → sanyodo-shoten
+- Pontaカード提示 0.5% → ソク読み
+- Pontaカード提示 0.5% → 丸善ジュンク堂書店
+- Pontaカード提示 0.5% → yaesu-book-center
+- Pontaカード提示 0.5% → ローソンチケット
+- Pontaカード提示 0.5% → ヒマラヤ
+- Pontaカード提示 0.5% → コジマ
+- Pontaカード提示 0.5% → コミュファ
+- Pontaカード提示 0.5% → softmap
+- Pontaカード提示 0.5% → ビックカメラ
+- Pontaカード提示 0.5% → BBIQ（QTnet）
 
 </details>
 

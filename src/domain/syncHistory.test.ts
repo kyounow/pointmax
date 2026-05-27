@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   AUTO_SYNC_PR_LIST_URL,
   commitUrl,
+  displayCollection,
+  displaySource,
   loadSyncHistory,
   prUrl,
   SYNC_HISTORY_REPO,
@@ -78,5 +80,53 @@ describe("AUTO_SYNC_PR_LIST_URL", () => {
     expect(AUTO_SYNC_PR_LIST_URL).toBe(
       `https://github.com/${SYNC_HISTORY_REPO}/pulls?q=is%3Apr+label%3Aauto-sync`,
     );
+  });
+});
+
+describe("displaySource / displayCollection (label fallback)", () => {
+  it("sourceLabel があれば label を返す", () => {
+    expect(
+      displaySource({ sourceId: "ponta-partners", sourceLabel: "Pontaポイント" }),
+    ).toBe("Pontaポイント");
+  });
+
+  it("sourceLabel が無ければ sourceId を返す", () => {
+    expect(displaySource({ sourceId: "ponta-partners" })).toBe("ponta-partners");
+  });
+
+  it("collectionLabel があれば label を返す", () => {
+    expect(
+      displayCollection({ collection: "memberships", collectionLabel: "提携店舗" }),
+    ).toBe("提携店舗");
+  });
+
+  it("collectionLabel が無ければ collection を返す", () => {
+    expect(displayCollection({ collection: "memberships" })).toBe("memberships");
+  });
+});
+
+describe("backfill 済み履歴の日本語化検証", () => {
+  it("既存 entries は sourceLabel + collectionLabel が付与されている", () => {
+    const h = loadSyncHistory();
+    for (const e of h.entries) {
+      for (const b of e.bySource) {
+        expect(b.sourceLabel).toBeDefined();
+        expect(b.collectionLabel).toBeDefined();
+      }
+      for (const item of e.items) {
+        expect(item.sourceLabel).toBeDefined();
+        expect(item.collectionLabel).toBeDefined();
+      }
+    }
+  });
+
+  it("summary に slug プレフィックスが含まれない (memberships は日本語化されている)", () => {
+    const h = loadSyncHistory();
+    const allSummaries = h.entries.flatMap((e) => e.items.map((i) => i.summary));
+    // korakuen 等 seed 未登録の store は slug fallback で残る可能性があるので
+    // 「prog-X →」(programId 部分) が日本語化されていることだけチェック
+    for (const s of allSummaries) {
+      expect(s).not.toMatch(/^prog-[a-z0-9-]+ →/);
+    }
   });
 });
