@@ -3,6 +3,7 @@ import type { SeedShape } from "../../src/domain/mergeSeed";
 import {
   applyCategoryCap,
   dedupeAcrossProposals,
+  downgradeOrphanMemberships,
   isFailedExtraction,
   proposeCards,
   proposeJalTokuyakuMemberships,
@@ -907,5 +908,95 @@ describe("proposeJalTokuyakuMemberships (PR-D2b)", () => {
       stores: [jalStore("royal-host")],
     });
     expect(proposeJalTokuyakuMemberships(data, seed)).toEqual([]);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// downgradeOrphanMemberships
+// ───────────────────────────────────────────────────────────────
+
+describe("downgradeOrphanMemberships", () => {
+  const ev = { evidenceQuote: "x", explicitness: 1, ambiguity: 0 };
+  const baseMembership = (storeId: string, programId = "prog-x"): Proposal => ({
+    type: "addRecord",
+    collection: "memberships",
+    record: { programId, storeId },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: ev,
+  });
+  const baseStore = (id: string): Proposal => ({
+    type: "addRecord",
+    collection: "stores",
+    record: { id, name: id, category: "コンビニ" },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: ev,
+  });
+
+  it("既存 store を参照する membership は通過", () => {
+    const existing = new Set(["store-existing"]);
+    const { proposals, downgraded } = downgradeOrphanMemberships(
+      [baseMembership("store-existing")],
+      existing,
+    );
+    expect(downgraded).toBe(0);
+    expect(proposals[0].reviewReason).toBeUndefined();
+  });
+
+  it("同 run の auto store を参照する membership は通過", () => {
+    const { proposals, downgraded } = downgradeOrphanMemberships(
+      [baseStore("store-new"), baseMembership("store-new")],
+      new Set(),
+    );
+    expect(downgraded).toBe(0);
+    expect(proposals[1].reviewReason).toBeUndefined();
+  });
+
+  it("seed にも auto にも無い store を参照する membership は missingStoreBody で降格", () => {
+    const { proposals, downgraded } = downgradeOrphanMemberships(
+      [baseMembership("store-orphan")],
+      new Set(),
+    );
+    expect(downgraded).toBe(1);
+    expect(proposals[0].reviewReason).toBe("missingStoreBody");
+  });
+
+  it("deferred (reviewReason 付き) の store は同 run auto に含めない", () => {
+    // category cap で reviewReason が後から付くわけではないが、
+    // 既に excludedCategory 等で降格済 store を「auto 通過」とみなさないことを確認
+    const deferredStore: Proposal = {
+      ...baseStore("store-deferred"),
+      reviewReason: "excludedCategory",
+    };
+    const { proposals, downgraded } = downgradeOrphanMemberships(
+      [deferredStore, baseMembership("store-deferred")],
+      new Set(),
+    );
+    expect(downgraded).toBe(1);
+    expect(proposals[1].reviewReason).toBe("missingStoreBody");
+  });
+
+  it("既に他理由で降格済 membership は触らない (idCollision 等が優先される)", () => {
+    const existing: Proposal = {
+      ...baseMembership("store-orphan"),
+      reviewReason: "idCollision",
+    };
+    const { proposals, downgraded } = downgradeOrphanMemberships(
+      [existing],
+      new Set(),
+    );
+    expect(downgraded).toBe(0);
+    expect(proposals[0].reviewReason).toBe("idCollision");
+  });
+
+  it("memberships 以外の proposal はそのまま通す", () => {
+    const storeProp = baseStore("store-x");
+    const { proposals, downgraded } = downgradeOrphanMemberships(
+      [storeProp],
+      new Set(),
+    );
+    expect(downgraded).toBe(0);
+    expect(proposals[0]).toBe(storeProp);
   });
 });

@@ -356,6 +356,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   selfReportedExclusion: "🟠 selfReportedExclusion",
   unsupportedDateClaim: "🔴 unsupportedDateClaim",
   zeroOrInvalidRate: "🔴 zeroOrInvalidRate",
+  missingStoreBody: "🟠 missingStoreBody (store 本体なし membership)",
 };
 
 const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
@@ -386,6 +387,10 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "validFrom/validTo が抽出されたが evidenceQuote に日付の根拠 (期間 / YYYY年 / まで 等) が見当たらない。日付の hallucination 疑い。元 URL を直接確認の上採否を判断。",
   zeroOrInvalidRate:
     "rate=0 抽出。Gemini が還元率を読み取れなかった疑い。実際の値を URL で確認の上、手動キュレートで取り込むか、prompt 改善後に再 fetch すること。",
+  missingStoreBody:
+    "membership 提案だが、参照先 store 本体が seed 未存在 + 同 run の auto 候補にも無い (例: category cap で deferred された場合)。" +
+    "そのまま auto-merge すると孤児 membership (店名解決できない、UI で店舗未表示) が seed に残るため降格。store 本体を手動キュレートで追加するか、" +
+    "次回 cron で store 側が auto 化されるのを待つ。",
 };
 
 function formatProposalDetail(p: Proposal): string {
@@ -489,6 +494,7 @@ export function buildReviewQueue(report: ProposalReport): string {
       "safetyFailed",         // 🛡 件数超過で降格された健全な auto 候補。内容確認の上 bump 判断
       "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
       "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
+      "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
       "rateDeltaTooLarge",
       "rateRatioOutOfRange",
       "multiSourceConflict",
