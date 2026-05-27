@@ -1000,3 +1000,81 @@ describe("downgradeOrphanMemberships", () => {
     expect(proposals[0]).toBe(storeProp);
   });
 });
+
+// ───────────────────────────────────────────────────────────────
+// proposeExpiredCampaignDeletions
+// ───────────────────────────────────────────────────────────────
+
+import { proposeExpiredCampaignDeletions } from "./propose-helpers";
+
+describe("proposeExpiredCampaignDeletions", () => {
+  const now = new Date("2026-05-27T00:00:00Z");
+
+  const makeSeed = (programs: SeedShape["programs"], memberships: SeedShape["memberships"] = []): SeedShape => ({
+    ...emptySeed,
+    programs,
+    memberships,
+  });
+
+  const baseProgram = {
+    id: "prog-test",
+    name: "テスト",
+    rate: 0.05,
+    currencyId: "v-pt",
+  };
+
+  it("validTo なしの program は対象外 (常時 campaign)", () => {
+    const s = makeSeed([{ ...baseProgram, validFrom: "2024-01-01" }]);
+    expect(proposeExpiredCampaignDeletions(s, now)).toEqual([]);
+  });
+
+  it("validTo が grace 内 (30日未満) は対象外", () => {
+    const s = makeSeed([{ ...baseProgram, validTo: "2026-05-01" }]); // 26日前
+    expect(proposeExpiredCampaignDeletions(s, now)).toEqual([]);
+  });
+
+  it("validTo が grace 超過 (30日以上前) は DeleteProposal を返す", () => {
+    const s = makeSeed([{ ...baseProgram, validTo: "2026-04-01" }]); // 56日前
+    const ps = proposeExpiredCampaignDeletions(s, now);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].type).toBe("delete");
+    expect(ps[0].collection).toBe("programs");
+    expect((ps[0] as { id: string }).id).toBe("prog-test");
+    expect(ps[0].reviewReason).toBe("expiredCampaign");
+    expect(ps[0].evidence.evidenceQuote).toContain("validTo=2026-04-01");
+    expect(ps[0].evidence.evidenceQuote).toMatch(/5[0-9]日前/); // TZ 差で 55-56 のレンジ
+  });
+
+  it("関連 memberships が evidence に列挙される (5 件まで)", () => {
+    const s = makeSeed(
+      [{ ...baseProgram, validTo: "2026-04-01" }],
+      [
+        { programId: "prog-test", storeId: "store-1" },
+        { programId: "prog-test", storeId: "store-2" },
+        { programId: "prog-test", storeId: "store-3" },
+        { programId: "prog-test", storeId: "store-4" },
+        { programId: "prog-test", storeId: "store-5" },
+        { programId: "prog-test", storeId: "store-6" },
+        { programId: "prog-test", storeId: "store-7" },
+      ],
+    );
+    const ps = proposeExpiredCampaignDeletions(s, now);
+    const quote = ps[0].evidence.evidenceQuote;
+    expect(quote).toContain("関連 memberships 7 件");
+    expect(quote).toContain("store-1, store-2, store-3, store-4, store-5");
+    expect(quote).toContain("他 2 件");
+  });
+
+  it("graceDays をカスタムで指定できる (テスト容易性)", () => {
+    const s = makeSeed([{ ...baseProgram, validTo: "2026-05-20" }]); // 7日前
+    // grace=30: 対象外
+    expect(proposeExpiredCampaignDeletions(s, now, 30)).toHaveLength(0);
+    // grace=3: 対象 (7日 > 3日)
+    expect(proposeExpiredCampaignDeletions(s, now, 3)).toHaveLength(1);
+  });
+
+  it("不正な validTo フォーマットは無視 (削除しない、安全側)", () => {
+    const s = makeSeed([{ ...baseProgram, validTo: "invalid-date" }]);
+    expect(proposeExpiredCampaignDeletions(s, now)).toEqual([]);
+  });
+});
