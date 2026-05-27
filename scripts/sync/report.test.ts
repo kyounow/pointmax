@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { buildAutoSummary, buildReviewQueue } from "./report";
-import type { ProposalReport } from "./types";
+import {
+  appendSyncHistory,
+  buildAutoSummary,
+  buildReviewQueue,
+  buildSyncHistoryEntry,
+  buildSyncHistoryMarkdown,
+} from "./report";
+import type { ProposalReport, SyncHistoryFile } from "./types";
+import { SYNC_HISTORY_MAX_ENTRIES } from "./types";
 
 // ───────────────────────────────────────────────────────────────
 // Helpers
@@ -307,3 +314,188 @@ describe("buildReviewQueue", () => {
     expect(md).toContain("他 5 件は省略");
   });
 });
+
+// ───────────────────────────────────────────────────────────────
+// SYNC_HISTORY
+// ───────────────────────────────────────────────────────────────
+
+describe("buildSyncHistoryEntry", () => {
+  it("autoApplicable=0 のとき null", () => {
+    expect(buildSyncHistoryEntry(baseReport({}))).toBeNull();
+  });
+
+  it("autoApplicable から date / totalCount / bySource / items を構築する", () => {
+    const report = baseReport({
+      generatedAt: "2026-05-17T22:02:12.000Z", // JST 翌日 2026-05-18
+      autoApplicable: [
+        {
+          type: "addRecord",
+          collection: "memberships",
+          record: { programId: "prog-x", storeId: "store-a" },
+          sourceId: "ponta-partners",
+          confidence: 0.92,
+          evidence: { evidenceQuote: "a", explicitness: 0.95, ambiguity: 0.05 },
+        },
+        {
+          type: "addRecord",
+          collection: "memberships",
+          record: { programId: "prog-x", storeId: "store-b" },
+          sourceId: "ponta-partners",
+          confidence: 0.88,
+          evidence: { evidenceQuote: "b", explicitness: 0.92, ambiguity: 0.08 },
+        },
+        {
+          type: "addRecord",
+          collection: "stores",
+          record: { id: "store-c", name: "C", category: "コンビニ" },
+          sourceId: "rakuten-point-partners",
+          confidence: 0.95,
+          evidence: { evidenceQuote: "c", explicitness: 1, ambiguity: 0.05 },
+        },
+      ],
+      summary: {
+        autoApplicableCount: 3,
+        needsReviewCount: 0,
+        sourcesProcessed: 7,
+        sourcesFailed: 0,
+      },
+    });
+    const entry = buildSyncHistoryEntry(report)!;
+    expect(entry.date).toBe("2026-05-18"); // JST 暦日
+    expect(entry.totalCount).toBe(3);
+    expect(entry.sourcesProcessed).toBe(7);
+    expect(entry.avgConfidence).toBeCloseTo((0.92 + 0.88 + 0.95) / 3, 2);
+    expect(entry.bySource).toHaveLength(2);
+    expect(entry.bySource).toContainEqual({
+      sourceId: "ponta-partners",
+      collection: "memberships",
+      count: 2,
+    });
+    expect(entry.bySource).toContainEqual({
+      sourceId: "rakuten-point-partners",
+      collection: "stores",
+      count: 1,
+    });
+    expect(entry.items).toHaveLength(3);
+    // formatAutoItem の出力が summary に入る
+    expect(entry.items[0].summary).toContain("prog-x → store-a");
+    expect(entry.items[2].summary).toContain("store-c — C");
+    // commitSha / prNumber は新規 entry には付かない
+    expect(entry.commitSha).toBeUndefined();
+    expect(entry.prNumber).toBeUndefined();
+  });
+});
+
+describe("appendSyncHistory", () => {
+  const baseEntry = {
+    date: "2026-05-21",
+    generatedAt: "2026-05-20T22:30:17.684Z",
+    totalCount: 43,
+    avgConfidence: 0.9,
+    sourcesProcessed: 13,
+    bySource: [],
+    items: [],
+  };
+
+  it("既存ファイル無し + 新規 entry → entries=[entry]", () => {
+    const out = appendSyncHistory(null, baseEntry);
+    expect(out.version).toBe(1);
+    expect(out.entries).toHaveLength(1);
+    expect(out.entries[0]).toBe(baseEntry);
+  });
+
+  it("新規 entry が null なら既存ファイルをそのまま返す", () => {
+    const existing: SyncHistoryFile = {
+      version: 1,
+      entries: [{ ...baseEntry, generatedAt: "2026-05-14T22:00:00Z" }],
+    };
+    const out = appendSyncHistory(existing, null);
+    expect(out).toBe(existing);
+  });
+
+  it("同じ generatedAt が既に居れば追加しない (workflow 再実行による重複防止)", () => {
+    const existing: SyncHistoryFile = {
+      version: 1,
+      entries: [baseEntry],
+    };
+    const dup = { ...baseEntry, totalCount: 999 }; // 同じ generatedAt
+    const out = appendSyncHistory(existing, dup);
+    expect(out.entries).toHaveLength(1);
+    expect(out.entries[0].totalCount).toBe(43); // 既存が残る
+  });
+
+  it("新規 entry が先頭に prepend される (newest first)", () => {
+    const older = { ...baseEntry, generatedAt: "2026-05-14T22:00:00Z", date: "2026-05-15" };
+    const existing: SyncHistoryFile = {
+      version: 1,
+      entries: [older],
+    };
+    const out = appendSyncHistory(existing, baseEntry);
+    expect(out.entries).toHaveLength(2);
+    expect(out.entries[0].date).toBe("2026-05-21"); // 新規が先頭
+    expect(out.entries[1].date).toBe("2026-05-15");
+  });
+
+  it(`entries が ${SYNC_HISTORY_MAX_ENTRIES} 件で truncate される`, () => {
+    const existing: SyncHistoryFile = {
+      version: 1,
+      entries: Array.from({ length: SYNC_HISTORY_MAX_ENTRIES }, (_, i) => ({
+        ...baseEntry,
+        generatedAt: `2024-01-${String(i + 1).padStart(2, "0")}T00:00:00Z`,
+        date: `2024-01-${String(i + 1).padStart(2, "0")}`,
+      })),
+    };
+    const out = appendSyncHistory(existing, baseEntry);
+    expect(out.entries).toHaveLength(SYNC_HISTORY_MAX_ENTRIES);
+    expect(out.entries[0].date).toBe("2026-05-21"); // 新規が先頭
+    // newest first なので末尾 (loop で最後に push された 1 件) が truncate で落ちる
+    const droppedDate = `2024-01-${String(SYNC_HISTORY_MAX_ENTRIES).padStart(2, "0")}`;
+    expect(
+      out.entries.find((e) => e.date === droppedDate),
+    ).toBeUndefined();
+    // 直前の entry はまだ残っている
+    const survivorDate = `2024-01-${String(SYNC_HISTORY_MAX_ENTRIES - 1).padStart(2, "0")}`;
+    expect(
+      out.entries.find((e) => e.date === survivorDate),
+    ).toBeDefined();
+  });
+});
+
+describe("buildSyncHistoryMarkdown", () => {
+  it("空の history でも生成できる", () => {
+    const md = buildSyncHistoryMarkdown({ version: 1, entries: [] });
+    expect(md).toContain("週次マスタ同期 履歴");
+    expect(md).toContain("履歴はまだありません");
+  });
+
+  it("entry の date / 件数 / bySource / items が出力される", () => {
+    const md = buildSyncHistoryMarkdown({
+      version: 1,
+      entries: [
+        {
+          date: "2026-05-21",
+          generatedAt: "2026-05-20T22:30:17Z",
+          totalCount: 2,
+          avgConfidence: 0.9,
+          sourcesProcessed: 7,
+          commitSha: "abc1234",
+          bySource: [
+            { sourceId: "src-a", collection: "memberships", count: 2 },
+          ],
+          items: [
+            { sourceId: "src-a", collection: "memberships", summary: "prog-x → store-1" },
+            { sourceId: "src-a", collection: "memberships", summary: "prog-x → store-2" },
+          ],
+        },
+      ],
+    });
+    expect(md).toContain("## 2026-05-21 (2 件)");
+    expect(md).toContain("commit: [`abc1234`]");
+    expect(md).toContain("平均 confidence: 0.90");
+    expect(md).toContain("| src-a | memberships | 2 |");
+    expect(md).toContain("追加項目 2 件");
+    expect(md).toContain("prog-x → store-1");
+    expect(md).toContain("prog-x → store-2");
+  });
+});
+
