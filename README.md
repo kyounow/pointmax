@@ -50,6 +50,8 @@
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
 - 「サンプル投入」「ローカルデータ初期化」「JSONエクスポート/インポート」は設定画面から。
+- **更新履歴タブ**: 週次 cron で自動マージされた変更を時系列で閲覧
+  (`sources/SYNC_HISTORY.json` を bundle 同梱、最新 104 件、GitHub commit/PR への動線あり)。
 
 ### マスタ自動アップデート
 - `sources/registry.yaml` に各カード・ポイント・決済アプリの公式 URL を登録。

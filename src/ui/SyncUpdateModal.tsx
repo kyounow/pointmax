@@ -26,7 +26,12 @@ function writeSeen(digest: string): void {
   }
 }
 
-export function SyncUpdateModal() {
+type SyncUpdateModalProps = {
+  /** 「過去の更新を見る」リンク押下時のハンドラ。タブ遷移などを呼び出す。 */
+  onViewHistory?: () => void;
+};
+
+export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
   const cards = useStore((s) => s.cards);
   const currencies = useStore((s) => s.currencies);
   const stores = useStore((s) => s.stores);
@@ -133,6 +138,21 @@ export function SyncUpdateModal() {
             </div>
           ))}
         </div>
+
+        {onViewHistory && (
+          <div className="sync-update-history-link-row">
+            <button
+              type="button"
+              className="sync-update-history-link"
+              onClick={() => {
+                onViewHistory();
+                close();
+              }}
+            >
+              過去の更新を見る ↗
+            </button>
+          </div>
+        )}
 
         <div className="sync-update-actions">
           <button onClick={close}>閉じる</button>

@@ -10,6 +10,7 @@ import { CalculatorScreen } from "./ui/CalculatorScreen";
 import { PointCardsScreen } from "./ui/PointCardsScreen";
 import { PaymentAppsScreen } from "./ui/PaymentAppsScreen";
 import { SettingsScreen } from "./ui/SettingsScreen";
+import { SyncHistoryScreen } from "./ui/SyncHistoryScreen";
 import { UpdateBanner } from "./ui/UpdateBanner";
 import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
 import { SyncUpdateModal } from "./ui/SyncUpdateModal";
@@ -26,6 +27,7 @@ type Tab =
   | "programs"
   | "campaigns"
   | "edges"
+  | "sync-history"
   | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
@@ -38,6 +40,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "programs", label: "プログラム" },
   { id: "campaigns", label: "キャンペーン" },
   { id: "edges", label: "交換ルート" },
+  { id: "sync-history", label: "更新履歴" },
   { id: "settings", label: "設定" },
 ];
 
@@ -144,7 +147,9 @@ function App() {
   return (
     <div className="app">
       {pendingMigration && <SchemaUpgradeModal strategy={pendingMigration} />}
-      {!pendingMigration && <SyncUpdateModal />}
+      {!pendingMigration && (
+        <SyncUpdateModal onViewHistory={() => setTab("sync-history")} />
+      )}
       <header className="appbar">
         <button
           className="hamburger"
@@ -272,6 +277,7 @@ function App() {
         {tab === "programs" && <ProgramsScreen />}
         {tab === "campaigns" && <CampaignsScreen />}
         {tab === "edges" && <EdgesScreen />}
+        {tab === "sync-history" && <SyncHistoryScreen />}
         {tab === "settings" && <SettingsScreen />}
       </main>
     </div>
