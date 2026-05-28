@@ -346,4 +346,103 @@ describe("bestLoyalties (Top-N stack)", () => {
     // d=100, r=50, p=200 → 上位2件は p, d
     expect(top.map((r) => r.pointCard.id)).toEqual(["p-card", "d-card"]);
   });
+
+  // ─── D-2 audit-fix: edge case 強化 ───
+
+  it("max=2 で 3 カードが finalAmount tie の時、preferredPointCardIds の順序で dedup される", () => {
+    // 全部 d-pt 還元、同 rate で tie。preferred=["r-card","p-card","d-card"]
+    const rules: LoyaltyRule[] = [
+      { id: "r-d", storeId: "shop", pointCardId: "d-card", rate: 0.01 },
+      { id: "r-r", storeId: "shop", pointCardId: "r-card", rate: 0.01 },
+      { id: "r-p", storeId: "shop", pointCardId: "p-card", rate: 0.01 },
+    ];
+    const edges = [
+      edge("r-to-d", "rakuten-pt", "d-pt", 1),
+      edge("p-to-d", "ponta-pt", "d-pt", 1),
+    ];
+    const top = bestLoyalties(
+      "shop",
+      10000,
+      "d-pt",
+      [dCard, rakutenCard, pontaCard],
+      rules,
+      edges,
+      2,
+      ["r-card", "p-card", "d-card"],
+    );
+    expect(top.map((r) => r.pointCard.id)).toEqual(["r-card", "p-card"]);
+  });
+
+  it("ownedPointCards 未保有のルールは全部除外され、空配列を返す", () => {
+    const rules: LoyaltyRule[] = [
+      { id: "r1", storeId: "shop", pointCardId: "v-card", rate: 0.01 },
+      { id: "r2", storeId: "shop", pointCardId: "ponta-card", rate: 0.01 },
+    ];
+    const result = bestLoyalties(
+      "shop",
+      10000,
+      "d-pt",
+      [dCard], // v-card / ponta-card 未保有
+      rules,
+      [],
+      2,
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("到達不能ルールしかない場合、reachable=false のエントリで dedup される (空ではない)", () => {
+    // d-pt から ana-mile への edge なし → 到達不能
+    const rules: LoyaltyRule[] = [
+      { id: "r1", storeId: "shop", pointCardId: "d-card", rate: 0.01 },
+    ];
+    const top = bestLoyalties(
+      "shop",
+      10000,
+      "ana-mile",
+      [dCard],
+      rules,
+      [], // edge なし
+      2,
+    );
+    expect(top).toHaveLength(1);
+    expect(top[0].reachable).toBe(false);
+    expect(top[0].finalAmount).toBe(0);
+  });
+
+  it("preferred と owned の両方に無い pointCardId のルールは無視される", () => {
+    const rules: LoyaltyRule[] = [
+      { id: "r-x", storeId: "shop", pointCardId: "x-card", rate: 0.05 },
+      { id: "r-d", storeId: "shop", pointCardId: "d-card", rate: 0.01 },
+    ];
+    const top = bestLoyalties(
+      "shop",
+      10000,
+      "d-pt",
+      [dCard],
+      rules,
+      [],
+      2,
+      ["x-card", "d-card"],
+    );
+    expect(top).toHaveLength(1);
+    expect(top[0].pointCard.id).toBe("d-card");
+  });
+
+  it("maxStacks=10 でも実際の重複排除後の枚数で打ち切られる", () => {
+    const rules: LoyaltyRule[] = [
+      { id: "r1", storeId: "shop", pointCardId: "d-card", rate: 0.01 },
+      { id: "r2", storeId: "shop", pointCardId: "r-card", rate: 0.01 },
+    ];
+    const edges = [edge("r-to-d", "rakuten-pt", "d-pt", 1)];
+    const top = bestLoyalties(
+      "shop",
+      10000,
+      "d-pt",
+      [dCard, rakutenCard],
+      rules,
+      edges,
+      10,
+    );
+    expect(top).toHaveLength(2);
+  });
 });
