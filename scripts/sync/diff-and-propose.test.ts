@@ -701,6 +701,257 @@ describe("proposePrograms (PR-D1)", () => {
     expect(ps[0].type).toBe("updateField");
     expect(ps[0].reviewReason).toBeUndefined();
   });
+
+  // ─── PR #60 (B): campaign 高品質 auto-merge ───
+  describe("campaign auto-merge (PR #60)", () => {
+    // 全条件を満たした seed (pointCard + paymentApp + currency が揃ったテスト用)
+    const richSeed: SeedShape = {
+      ...emptySeed,
+      pointCards: [
+        { id: "jre-pointcard", name: "JRE POINTカード", currencyId: "jre" },
+      ],
+      paymentApps: [{ id: "pa-d-pay", name: "d払い" }],
+      cards: [
+        { id: "smbc-v", name: "三井住友カード", defaultRate: 0.005, defaultCurrencyId: "v-pt" },
+      ],
+      currencies: [
+        { id: "jre", name: "JRE POINT", kind: "point" },
+        { id: "d-pt", name: "dポイント", kind: "point" },
+        { id: "v-pt", name: "Vポイント", kind: "point" },
+      ],
+    };
+
+    const futureValidTo = "2099-12-31"; // 期限切れ防止用 (固定値)
+
+    it("全条件パス: campaign extractor + 未来 validTo + 既存参照 + 高 confidence + lifestyle 無し → auto", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-jre-camp-newdays-future",
+            name: "JRE POINT NewDays 3%還元キャンペーン",
+            pointCardId: "jre-pointcard",
+            rate: 0.03,
+            currencyId: "jre",
+            bonusType: "addOn",
+            validFrom: "2026-06-01",
+            validTo: futureValidTo,
+            evidenceQuote: "キャンペーン期間：2026年6月1日〜2099年12月31日、NewDaysでJRE POINT提示で3%",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps).toHaveLength(1);
+      expect(ps[0].reviewReason).toBeUndefined(); // ← auto-merge OK
+    });
+
+    it("ongoing-program extractor は除外 (lifestyle 系の入口を遮断)", () => {
+      const data = baseSource({
+        extractor: "ongoing-program", // ← campaign 以外
+        programs: [
+          {
+            programId: "prog-ongoing-x",
+            name: "常設プログラム",
+            pointCardId: "jre-pointcard",
+            rate: 0.03,
+            currencyId: "jre",
+            bonusType: "addOn",
+            validTo: futureValidTo,
+            evidenceQuote: "常設 3%、期間 2099年12月31日まで",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBe("idCollision");
+    });
+
+    it("validTo 無しは auto 不可", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-no-validto",
+            pointCardId: "jre-pointcard",
+            rate: 0.03,
+            currencyId: "jre",
+            evidenceQuote: "3%、期間 2099年12月31日まで",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBe("idCollision");
+    });
+
+    it("validTo が過去なら auto 不可 (既に終了)", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-expired",
+            pointCardId: "jre-pointcard",
+            rate: 0.03,
+            currencyId: "jre",
+            validTo: "2020-01-01",
+            evidenceQuote: "期間 2020年1月1日まで",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBe("idCollision");
+    });
+
+    it("rate > CAMPAIGN_AUTO_RATE_MAX (30%) なら auto 不可", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-toohigh",
+            pointCardId: "jre-pointcard",
+            rate: 0.5, // 50% は誤抽出疑い
+            currencyId: "jre",
+            validTo: futureValidTo,
+            evidenceQuote: "50%還元、期間 2099年12月31日まで",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBe("idCollision");
+    });
+
+    it("confidence < 0.95 なら auto 不可 (campaign 用厳格化)", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-lowconf",
+            pointCardId: "jre-pointcard",
+            rate: 0.03,
+            currencyId: "jre",
+            validTo: futureValidTo,
+            evidenceQuote: "3%、期間 2099年12月31日まで",
+            explicitness: 0.95, // 0.95 * (1 - 0.05) = 0.9025 < 0.95
+            ambiguity: 0.05,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBe("idCollision");
+    });
+
+    it("pointCardId が seed に存在しない → auto 不可", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-unknown-ref",
+            pointCardId: "unknown-pointcard", // ← richSeed に居ない
+            rate: 0.03,
+            currencyId: "jre",
+            validTo: futureValidTo,
+            evidenceQuote: "3%、期間 2099年12月31日まで",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBe("idCollision");
+    });
+
+    it("lifestyle 系キーワードを含む program は auto 不可 (defense-in-depth)", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-lifestyle",
+            name: "給与振込で +3%",
+            pointCardId: "jre-pointcard",
+            rate: 0.03,
+            currencyId: "jre",
+            validTo: futureValidTo,
+            conditions: "給与振込口座を当行に指定すること",
+            evidenceQuote: "給与振込で3%、期間 2099年12月31日まで",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBe("idCollision");
+    });
+
+    it("integrity issue (selfReportedExclusion) は auto より優先", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-self-excluded",
+            pointCardId: "jre-pointcard",
+            rate: 0.03,
+            currencyId: "jre",
+            validTo: futureValidTo,
+            evidenceQuote: "対象外: このキャンペーンは記載なし", // ← selfReported pattern
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      // selfReportedExclusion / idCollision 等が優先される
+      expect(ps[0].reviewReason).not.toBeUndefined();
+    });
+
+    it("cardIds 配列の 1 つでも未登録なら auto 不可", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-multi-card",
+            cardIds: ["smbc-v", "unknown-card"], // ← 後者が未登録
+            rate: 0.03,
+            currencyId: "v-pt",
+            validTo: futureValidTo,
+            evidenceQuote: "3%、期間 2099年12月31日まで",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBe("idCollision");
+    });
+
+    it("paymentAppId 経由でも全条件 OK なら auto", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-d-pay-camp",
+            name: "d払い 5% 還元",
+            paymentAppId: "pa-d-pay",
+            rate: 0.05,
+            currencyId: "d-pt",
+            validTo: futureValidTo,
+            evidenceQuote: "d払いで5%、期間 2099/12/31 まで",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBeUndefined();
+    });
+  });
 });
 
 describe("proposeMemberships (PR-D1)", () => {
