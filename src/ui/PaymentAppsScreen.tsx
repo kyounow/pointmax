@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { isMasterPaymentApp } from "../state/seed";
 import { isSubstantivePaymentAppPatch } from "../state/userModified";
@@ -9,12 +10,24 @@ import { sanitizeNoteForDisplay } from "../domain/noteParser";
 import { useDialog } from "./dialog/DialogProvider";
 
 export function PaymentAppsScreen() {
-  const cards = useStore((s) => s.cards);
-  const paymentApps = useStore((s) => s.paymentApps);
-  const addPaymentApp = useStore((s) => s.addPaymentApp);
-  const updatePaymentApp = useStore((s) => s.updatePaymentApp);
-  const removePaymentApp = useStore((s) => s.removePaymentApp);
-  const resetPaymentAppToSeed = useStore((s) => s.resetPaymentAppToSeed);
+  // Wave 5 B-1: 6 個別 subscribe → 単一 useShallow に集約
+  const {
+    cards,
+    paymentApps,
+    addPaymentApp,
+    updatePaymentApp,
+    removePaymentApp,
+    resetPaymentAppToSeed,
+  } = useStore(
+    useShallow((s) => ({
+      cards: s.cards,
+      paymentApps: s.paymentApps,
+      addPaymentApp: s.addPaymentApp,
+      updatePaymentApp: s.updatePaymentApp,
+      removePaymentApp: s.removePaymentApp,
+      resetPaymentAppToSeed: s.resetPaymentAppToSeed,
+    })),
+  );
   const { confirm } = useDialog();
 
   const [name, setName] = useState("");

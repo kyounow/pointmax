@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { isMasterCard } from "../state/seed";
 import { isSubstantiveCardPatch } from "../state/userModified";
@@ -8,12 +9,18 @@ import { useNameResolvers } from "./hooks/useNameResolvers";
 import { useDialog } from "./dialog/DialogProvider";
 
 export function CardsScreen() {
-  const cards = useStore((s) => s.cards);
-  const currencies = useStore((s) => s.currencies);
-  const addCard = useStore((s) => s.addCard);
-  const updateCard = useStore((s) => s.updateCard);
-  const removeCard = useStore((s) => s.removeCard);
-  const resetCardToSeed = useStore((s) => s.resetCardToSeed);
+  // Wave 5 B-1: 6 個別 subscribe → 単一 useShallow に集約
+  const { cards, currencies, addCard, updateCard, removeCard, resetCardToSeed } =
+    useStore(
+      useShallow((s) => ({
+        cards: s.cards,
+        currencies: s.currencies,
+        addCard: s.addCard,
+        updateCard: s.updateCard,
+        removeCard: s.removeCard,
+        resetCardToSeed: s.resetCardToSeed,
+      })),
+    );
   const { confirm } = useDialog();
 
   const [name, setName] = useState("");

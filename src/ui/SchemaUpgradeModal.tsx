@@ -1,3 +1,4 @@
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import type { SchemaMigrationStrategy } from "../state/persist-versions";
 
@@ -6,8 +7,13 @@ type Props = {
 };
 
 export function SchemaUpgradeModal({ strategy }: Props) {
-  const applySchemaMigration = useStore((s) => s.applySchemaMigration);
-  const exportLegacyState = useStore((s) => s.exportLegacyState);
+  // Wave 5 B-1: 2 個別 subscribe → 単一 useShallow
+  const { applySchemaMigration, exportLegacyState } = useStore(
+    useShallow((s) => ({
+      applySchemaMigration: s.applySchemaMigration,
+      exportLegacyState: s.exportLegacyState,
+    })),
+  );
 
   const handleExport = () => {
     const json = exportLegacyState();

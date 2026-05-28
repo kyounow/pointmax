@@ -1,14 +1,20 @@
 import { useMemo, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { Store } from "../domain/types";
 
 export function StoresScreen() {
-  const stores = useStore((s) => s.stores);
-  const pointCards = useStore((s) => s.pointCards);
-  const addStore = useStore((s) => s.addStore);
-  const updateStore = useStore((s) => s.updateStore);
-  const removeStore = useStore((s) => s.removeStore);
+  // Wave 5 B-1: 5 個別 subscribe → 単一 useShallow
+  const { stores, pointCards, addStore, updateStore, removeStore } = useStore(
+    useShallow((s) => ({
+      stores: s.stores,
+      pointCards: s.pointCards,
+      addStore: s.addStore,
+      updateStore: s.updateStore,
+      removeStore: s.removeStore,
+    })),
+  );
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { rankCards } from "../domain/rankCards";
 import { cardLabel } from "../domain/cardLabel";
@@ -14,17 +15,33 @@ import { isMasterCard } from "../state/seed";
 import { CardComparisonSection } from "./CardComparisonSection";
 
 export function CalculatorScreen() {
-  const cards = useStore((s) => s.cards);
-  const stores = useStore((s) => s.stores);
-  const currencies = useStore((s) => s.currencies);
-  const edges = useStore((s) => s.edges);
-  const pointCards = useStore((s) => s.pointCards);
-  const loyaltyRules = useStore((s) => s.loyaltyRules);
-  const paymentApps = useStore((s) => s.paymentApps);
-  const programs = useStore((s) => s.programs);
-  const memberships = useStore((s) => s.memberships);
-  // v4.0.0 ②: 優先通貨 (CurrenciesScreen で設定、順序あり)。
-  const preferredCurrencyIds = useStore((s) => s.preferredCurrencyIds);
+  // Wave 5 B-1: 10 個別 subscribe → 単一 useShallow に集約。
+  // calculator はカード変更や通貨変更で再 render する設計なので、関連 collection 一括購読でよい。
+  const {
+    cards,
+    stores,
+    currencies,
+    edges,
+    pointCards,
+    loyaltyRules,
+    paymentApps,
+    programs,
+    memberships,
+    preferredCurrencyIds,
+  } = useStore(
+    useShallow((s) => ({
+      cards: s.cards,
+      stores: s.stores,
+      currencies: s.currencies,
+      edges: s.edges,
+      pointCards: s.pointCards,
+      loyaltyRules: s.loyaltyRules,
+      paymentApps: s.paymentApps,
+      programs: s.programs,
+      memberships: s.memberships,
+      preferredCurrencyIds: s.preferredCurrencyIds,
+    })),
+  );
 
   // デフォルトは「一般店舗 (規定還元)」。基本還元率の確認用。
   // store-id "general" が存在しない場合 (極端なリセット直後) は空文字フォールバック

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import "./App.css";
 import { CardsScreen } from "./ui/CardsScreen";
 import { CurrenciesScreen } from "./ui/CurrenciesScreen";
@@ -48,9 +49,14 @@ const TABS: { id: Tab; label: string }[] = [
 function App() {
   const [tab, setTab] = useState<Tab>("calculator");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const exportJson = useStore((s) => s.exportJson);
-  const importJson = useStore((s) => s.importJson);
-  const pendingMigration = useStore((s) => s._pendingSchemaMigration);
+  // Wave 5 B-1: useShallow に集約 (関数 + pendingMigration はまとめて取れる)
+  const { exportJson, importJson, pendingMigration } = useStore(
+    useShallow((s) => ({
+      exportJson: s.exportJson,
+      importJson: s.importJson,
+      pendingMigration: s._pendingSchemaMigration,
+    })),
+  );
   const hasData = useStore(
     (s) =>
       s.cards.length +

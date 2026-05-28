@@ -4,6 +4,7 @@
 // 公式マスター由来の Program には「公式」バッジを表示。
 // 現バージョンは読み取り専用 (ユーザー追加は将来対応)。
 import { Fragment, useMemo, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { isMasterProgram } from "../state/seed";
 import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
@@ -33,12 +34,18 @@ function bonusTypeBadge(bt: BonusTypeKey | undefined) {
 type FilterKey = "all" | "active" | "inactive" | "campaign" | "loyalty" | "paymentapp";
 
 export function ProgramsScreen() {
-  const programs = useStore((s) => s.programs);
-  const memberships = useStore((s) => s.memberships);
-  const cards = useStore((s) => s.cards);
-  const stores = useStore((s) => s.stores);
-  const pointCards = useStore((s) => s.pointCards);
-  const paymentApps = useStore((s) => s.paymentApps);
+  // Wave 5 B-1: 6 個別 subscribe → 単一 useShallow に集約
+  const { programs, memberships, cards, stores, pointCards, paymentApps } =
+    useStore(
+      useShallow((s) => ({
+        programs: s.programs,
+        memberships: s.memberships,
+        cards: s.cards,
+        stores: s.stores,
+        pointCards: s.pointCards,
+        paymentApps: s.paymentApps,
+      })),
+    );
 
   const [filter, setFilter] = useState<FilterKey>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);

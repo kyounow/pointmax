@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import type { Connection, Edge as RFEdge, Node as RFNode } from "@xyflow/react";
 
 import { useStore } from "../state/store";
@@ -14,12 +15,17 @@ import { formatRatio } from "../domain/currencyKind";
 import { formatNum } from "../domain/formatNum";
 
 export function EdgesScreen() {
-  const currencies = useStore((s) => s.currencies);
-  const edges = useStore((s) => s.edges);
-  const cards = useStore((s) => s.cards);
-  const addEdge = useStore((s) => s.addEdge);
-  const updateEdge = useStore((s) => s.updateEdge);
-  const removeEdge = useStore((s) => s.removeEdge);
+  // Wave 5 B-1: 6 個別 subscribe → 単一 useShallow に集約
+  const { currencies, edges, cards, addEdge, updateEdge, removeEdge } = useStore(
+    useShallow((s) => ({
+      currencies: s.currencies,
+      edges: s.edges,
+      cards: s.cards,
+      addEdge: s.addEdge,
+      updateEdge: s.updateEdge,
+      removeEdge: s.removeEdge,
+    })),
+  );
 
   const [sel, setSel] = useState<Selection>(null);
   const [showLabels, setShowLabels] = useState(false);
