@@ -139,6 +139,11 @@ export function proposeStores(
       baseReason = "idCollision";
     } else if (confidence < CONFIDENCE_AUTO_THRESHOLD) {
       baseReason = "lowConfidence";
+    } else {
+      // 上記理由に該当しない健全な新規 store も、ポリシー上 cron では
+      // 自動追加せず手動キュレ運用 (PR #56)。「キャンペーン情報の獲得に注力」
+      // のため、store 増加で seed が肥大化するのを避ける。
+      baseReason = "storeAdditionsDisabled";
     }
     // evidence integrity: Gemini 自身が除外と報告している場合は強制 needsReview
     const reviewReason = resolveReviewReason(baseReason, [

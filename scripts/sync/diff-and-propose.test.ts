@@ -66,7 +66,7 @@ describe("isFailedExtraction", () => {
 });
 
 describe("proposeStores", () => {
-  it("新規 store は addRecord として提案される", () => {
+  it("新規 store は addRecord として提案される、ただし PR #56 ポリシーで storeAdditionsDisabled needsReview に降格", () => {
     const data = baseSource({
       stores: [
         {
@@ -82,7 +82,7 @@ describe("proposeStores", () => {
     const ps = proposeStores(data, emptySeed);
     expect(ps).toHaveLength(1);
     expect(ps[0].type).toBe("addRecord");
-    expect(ps[0].reviewReason).toBeUndefined();
+    expect(ps[0].reviewReason).toBe("storeAdditionsDisabled");
   });
 
   it("既存 ID と衝突したら idCollision", () => {
@@ -154,7 +154,7 @@ describe("proposeStores", () => {
     }
   });
 
-  it("Policy B: 通常カテゴリは auto (excludedCategory 不発火)", () => {
+  it("Policy B: 通常カテゴリは excludedCategory 不発火、PR #56 で storeAdditionsDisabled に降格", () => {
     const data = baseSource({
       stores: [
         {
@@ -168,7 +168,7 @@ describe("proposeStores", () => {
       ],
     });
     const ps = proposeStores(data, emptySeed);
-    expect(ps[0].reviewReason).toBeUndefined();
+    expect(ps[0].reviewReason).toBe("storeAdditionsDisabled");
   });
 
   it("userBlocked: seed-blocklist にある storeId は強制 review", () => {
