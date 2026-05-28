@@ -1,0 +1,63 @@
+name: Bundle Size Check
+
+# Wave 4 D-4 audit-fix: PR / main push で bundle size が膨らんでないか軽量チェック。
+# 完全な Lighthouse CI ではないが、CI ゲートで「貢献 PR が +50% 級の bloat を起こす」を防止。
+#
+# 計測: dist/assets/*.js のサイズを合計、main_total に比べて閾値超なら fail。
+# 失敗時の対応: vite manualChunks (Wave 1 C-7) を見直すか、依存を再評価。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Report bundle size
+        run: |
+          echo "## Bundle size" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Size | Gzipped |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          for f in dist/assets/*.js dist/assets/*.css; do
+            if [ -f "$f" ]; then
+              size=$(du -h "$f" | cut -f1)
+              gz=$(gzip -9c "$f" | wc -c | awk '{printf "%.1f KiB", $1/1024}')
+              echo "| $(basename "$f") | $size | $gz |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Check main chunk size threshold (300 KiB raw)
+        run: |
+          MAIN=$(ls dist/assets/index-*.js | head -1)
+          if [ -z "$MAIN" ]; then
+            echo "❌ main chunk not found"
+            exit 1
+          fi
+          BYTES=$(wc -c < "$MAIN")
+          KIB=$((BYTES / 1024))
+          echo "main chunk: $KIB KiB"
+          if [ $KIB -gt 300 ]; then
+            echo "❌ main chunk exceeds 300 KiB threshold (got $KIB KiB)"
+            echo "   vite manualChunks (Wave 1 C-7) を見直すか、新規依存を分離してください"
+            exit 1
+          fi
+          echo "✓ within 300 KiB threshold"

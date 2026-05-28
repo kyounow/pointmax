@@ -1,8 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../state/store";
-import { seed } from "../state/seed";
-import { mergeSeed, diffCount } from "../domain/mergeSeed";
 import { syncDigest, buildSyncGroups } from "../domain/syncDigest";
+import { useSeedMerge } from "./hooks/useSeedMerge";
 
 // 週次 cron が bundled seed に追加したデータをユーザーに知らせるモーダル。
 // SEED_VERSION とは独立した差分検知 (cron は版数を bump しない)。
@@ -32,56 +31,13 @@ type SyncUpdateModalProps = {
 };
 
 export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
-  const cards = useStore((s) => s.cards);
-  const currencies = useStore((s) => s.currencies);
-  const stores = useStore((s) => s.stores);
-  const edges = useStore((s) => s.edges);
-  const pointCards = useStore((s) => s.pointCards);
-  const loyaltyRules = useStore((s) => s.loyaltyRules);
-  const paymentApps = useStore((s) => s.paymentApps);
-  const programs = useStore((s) => s.programs);
-  const memberships = useStore((s) => s.memberships);
   const applySeedUpdate = useStore((s) => s.applySeedUpdate);
 
   const [dismissed, setDismissed] = useState(false);
   const [seen] = useState(readSeen);
 
-  const merged = useMemo(() => {
-    const currentShape = {
-      cards,
-      currencies,
-      stores,
-      edges,
-      pointCards,
-      loyaltyRules,
-      paymentApps,
-      programs,
-      memberships,
-    };
-    const hasData =
-      cards.length +
-        currencies.length +
-        stores.length +
-        edges.length +
-        pointCards.length +
-        loyaltyRules.length +
-        paymentApps.length >
-      0;
-    if (!hasData) return null;
-    return mergeSeed(currentShape, seed());
-  }, [
-    cards,
-    currencies,
-    stores,
-    edges,
-    pointCards,
-    loyaltyRules,
-    paymentApps,
-    programs,
-    memberships,
-  ]);
-
-  const count = merged ? diffCount(merged.diff) : 0;
+  // Wave 4 B-7: 共有 hook 経由で mergeSeed (UpdateBanner と同じ計算ロジック)
+  const { merged, additionCount: count } = useSeedMerge();
   const digest = merged ? syncDigest(merged.diff) : "";
 
   const groups = useMemo(() => {
@@ -111,10 +67,34 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
     close();
   };
 
+  // Wave 4 B-5 a11y: modal の focus 管理 + ESC で閉じる + 初期 focus を primary に。
+  // 完全な focus trap は外部ライブラリ (focus-trap-react) が必要だが、ここでは最低限の
+  // フォーカス制御と ESC ハンドリングだけ提供 (実用上の改善が大きい)。
+  const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (!visible) return;
+    primaryButtonRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        close();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // close 参照は state 変更で再生成されるが、effect 内で最新を見るので OK
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
   return (
-    <div className="sync-update-modal-overlay">
+    <div
+      className="sync-update-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sync-update-title"
+    >
       <div className="sync-update-modal">
-        <h2 className="sync-update-title">最新データが届いています</h2>
+        <h2 id="sync-update-title" className="sync-update-title">最新データが届いています</h2>
         <p className="sync-update-lead">
           公式マスタの自動同期で <strong>{count} 件</strong>{" "}
           の項目が追加されました。「アプリに反映」で取り込めます。
@@ -157,6 +137,7 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
         <div className="sync-update-actions">
           <button onClick={close}>閉じる</button>
           <button
+            ref={primaryButtonRef}
             className="primary sync-update-primary"
             onClick={handleApply}
           >

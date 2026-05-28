@@ -10,6 +10,8 @@ import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { cardLabel } from "../domain/cardLabel";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
+import { byId } from "../domain/entityIndex";
+import type { StoreProgramMembership } from "../domain/types";
 
 type BonusTypeKey = "primary" | "addOn";
 
@@ -43,19 +45,32 @@ export function ProgramsScreen() {
 
   const { currencyName } = useNameResolvers();
 
+  // Wave 4 B-3 audit-fix: 配列 find を Map に置換 (O(N) → O(1) lookup)。
+  // programs × cards/pointCards/paymentApps の積で N*M 回 find していたのを抑制。
+  const cardById = useMemo(() => byId(cards), [cards]);
+  const pointCardById = useMemo(() => byId(pointCards), [pointCards]);
+  const paymentAppById = useMemo(() => byId(paymentApps), [paymentApps]);
+  const storeById = useMemo(() => byId(stores), [stores]);
+
+  // membership を programId でグルーピング (programs × memberships の N×M ループを避ける)。
+  const membershipsByProgram = useMemo(() => {
+    const map = new Map<string, StoreProgramMembership[]>();
+    for (const m of memberships) {
+      const arr = map.get(m.programId);
+      if (arr) arr.push(m);
+      else map.set(m.programId, [m]);
+    }
+    return map;
+  }, [memberships]);
+
   const cardLabelById = (id: string) => {
-    const c = cards.find((c) => c.id === id);
+    const c = cardById.get(id);
     return c ? cardLabel(c) : id;
   };
   const pointCardNameById = (id: string) =>
-    pointCards.find((p) => p.id === id)?.name ?? id;
+    pointCardById.get(id)?.name ?? id;
   const paymentAppNameById = (id: string) =>
-    paymentApps.find((p) => p.id === id)?.name ?? id;
-
-  const storeById = useMemo(
-    () => new Map(stores.map((s) => [s.id, s])),
-    [stores],
-  );
+    paymentAppById.get(id)?.name ?? id;
 
   const now = new Date();
 
@@ -93,7 +108,7 @@ export function ProgramsScreen() {
   }, [programs, now]);
 
   const getMembershipsForProgram = (programId: string) =>
-    memberships.filter((m) => m.programId === programId);
+    membershipsByProgram.get(programId) ?? [];
 
   return (
     <section>

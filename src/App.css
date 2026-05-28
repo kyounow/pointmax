@@ -12,6 +12,26 @@
   --badge: #3a86ff;
 }
 
+/* Wave 4 B-8 audit-fix: light mode の基本サポート。
+   OS / ブラウザの prefers-color-scheme: light で発火し、主要 token を反転。
+   汎用クラスの明示色 (.badge / .result-card 等の direct hex) は引き続き dark 寄りなので、
+   light mode 下では一部のコントラストが弱くなる可能性あり (将来 fine-tune 余地)。 */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --panel-2: #f0f2f5;
+    --border: #d6d9de;
+    --text: #1a1f29;
+    --muted: #5b6066;
+    --accent: #2b7ad6;
+    --accent-2: #1b56a0;
+    --good: #1f8b53;
+    --bad: #cf3a3a;
+    --badge: #2b7ad6;
+  }
+}
+
 * {
   box-sizing: border-box;
 }

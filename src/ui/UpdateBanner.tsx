@@ -1,64 +1,23 @@
 import { useMemo, useState } from "react";
 import { useStore } from "../state/store";
-import { SEED_CHANGELOG, SEED_VERSION, seed } from "../state/seed";
-import { mergeSeed, diffCount } from "../domain/mergeSeed";
+import { SEED_CHANGELOG, SEED_VERSION } from "../state/seed";
 import {
   MIGRATIONS,
   planMigrations,
   conflictItems,
   type PlanItem,
 } from "../domain/migrations";
+import { useSeedMerge } from "./hooks/useSeedMerge";
 
 export function UpdateBanner() {
   const lastSeedVersion = useStore((s) => s.lastSeedVersion);
-  const cards = useStore((s) => s.cards);
-  const currencies = useStore((s) => s.currencies);
-  const stores = useStore((s) => s.stores);
-  const edges = useStore((s) => s.edges);
-  const pointCards = useStore((s) => s.pointCards);
-  const loyaltyRules = useStore((s) => s.loyaltyRules);
-  const paymentApps = useStore((s) => s.paymentApps);
   const applySeedUpdate = useStore((s) => s.applySeedUpdate);
   const dismissSeedUpdate = useStore((s) => s.dismissSeedUpdate);
   const [showDetail, setShowDetail] = useState(false);
   const [overrideKeys, setOverrideKeys] = useState<Set<string>>(new Set());
 
-  const currentShape = useMemo(
-    () => ({
-      cards,
-      currencies,
-      stores,
-      edges,
-      pointCards,
-      loyaltyRules,
-      paymentApps,
-    }),
-    [
-      cards,
-      currencies,
-      stores,
-      edges,
-      pointCards,
-      loyaltyRules,
-      paymentApps,
-    ],
-  );
-
-  const hasData =
-    cards.length +
-      currencies.length +
-      stores.length +
-      edges.length +
-      pointCards.length +
-      loyaltyRules.length +
-      paymentApps.length >
-    0;
-
-  const merged = useMemo(() => {
-    if (!hasData) return null;
-    return mergeSeed(currentShape, seed());
-  }, [hasData, currentShape]);
-  const additionCount = merged ? diffCount(merged.diff) : 0;
+  // Wave 4 B-7: 共有 hook 経由で mergeSeed (SyncUpdateModal と同じ計算ロジック)
+  const { merged, additionCount, hasData } = useSeedMerge();
 
   const plan: PlanItem[] = useMemo(() => {
     if (!hasData) return [];
