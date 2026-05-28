@@ -3,7 +3,7 @@
 // 「加盟店」セルをクリックすると StoreProgramMembership の store 一覧が展開される。
 // 公式マスター由来の Program には「公式」バッジを表示。
 // 現バージョンは読み取り専用 (ユーザー追加は将来対応)。
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useStore } from "../state/store";
 import { isMasterProgram } from "../state/seed";
 import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
@@ -170,9 +170,8 @@ export function ProgramsScreen() {
               const isExpanded = expandedId === p.id;
 
               return (
-                <>
+                <Fragment key={p.id}>
                   <tr
-                    key={p.id}
                     style={{ opacity: active ? 1 : 0.55 }}
                   >
                     {/* プログラム名 */}
@@ -315,7 +314,7 @@ export function ProgramsScreen() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </tbody>
