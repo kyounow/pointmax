@@ -288,23 +288,21 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: false
+    enabled: true
     notes: |
-      ★ 2026-05-28 追加 (#C キャンペーン獲得拡充 PR #57、初期 enabled:false で dry-run)。
+      ★ 2026-05-28 追加 (#C キャンペーン獲得拡充 PR #57)。
       paymentAppId=pa-paypay、還元通貨=paypay。campaign-v3.0 extractor が
       「対象店舗 × PayPay 期間限定上振れ」を 1 キャンペーン=1 program
       (paymentAppId+validFrom/validTo) + 対象店舗 membership として抽出。
       新規 program は base "idCollision" で必ず needsReview (ライブ還元計算に
       効くため auto-merge されない)。
-      ★ 事前 WebFetch (2026-05-28): https://paypay.ne.jp/event/ は索引ハブだが
-      ページ自体に「セブン-イレブン おにぎり 最大20%還元 (2026-06-01〜06-30)」
-      「コカ・コーラ製品 最大10%還元 (2026-06-01〜06-30)」など具体例が
-      3 件以上記載されており、Gemini で抽出可能性あり。実 cron で結果を見て
-      enabled:true への切替判断。
-      初回 enable は手動 fetch (workflow_dispatch + force_review_only) で
-      動作確認推奨。失敗時は別 URL 候補:
-        - https://paypay.ne.jp/event/list/ (一覧サブパス)
-        - https://paypay.ne.jp/promotion/
+      ★ 2026-05-28 手動 fetch 検証 (2 attempts、success): 1 program + 1 membership
+      抽出。例: prog-paypay-7eleven-onigiri-sushi-2026-06 (セブンイレブン
+      対象おにぎり・寿司 最大20%、validFrom 2026-06-01 / validTo 2026-06-30、
+      bonusType=addOn)。同 program に conv-7eleven membership。
+      → 有効な campaign source として enabled:true で運用開始。次回 cron で
+      自動抽出 (proposePrograms の idCollision で needsReview 経由)。
+      失敗時は別 URL 候補: https://paypay.ne.jp/event/list/, https://paypay.ne.jp/promotion/
 
   - id: smbc-vpoint-up
     label: SMBC Vポイント アップ施策一覧 (公式)
