@@ -42,6 +42,52 @@ sources:
       全国チェーンだけ新規取り込み、既存登録の特約店についてはキャンペーン/還元率変動を検知。
       cardId は jal-suica を主に対象、他の JALカード保有時は別ソース追加で対応。
 
+  - id: jal-shop-campaigns
+    label: JALカード ショッピングキャンペーン一覧 (公式)
+    url: https://partner.jal.co.jp/campaign/?ctn=1&cid=jal_shop_campaign
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: false
+    notes: |
+      ★ 2026-05-28 追加 (#C-2 キャンペーン獲得拡充、ユーザー提供 URL、初期 enabled:false)。
+      JAL カードの店舗別マイル上振れキャンペーン一覧。
+      cardIds 候補: ["jal-suica"] (将来 jal-card 一般 / jal-ana 系も対応)。
+      還元通貨: jal-mile。期間限定 + 店舗特定の上振れマイル付与施策を campaign-v3.0
+      extractor で 1 キャンペーン=1 program (validFrom/validTo + cardIds) + 対象
+      店舗 membership として抽出。
+      ★ 事前 WebFetch (2026-05-28): 索引ハブだがページ自体に店舗名 (アクアクララ /
+      ウエルシアグループ / マツキヨココカラ 等) が見えており、Gemini で抽出可能性あり。
+      ただし倍率/期間が「子ページ参照」となっていて 0 件の可能性も高い。実 cron で
+      確認後 enabled:true 化。失敗時は別 URL 候補:
+        - https://partner.jal.co.jp/campaign/list (一覧サブパス)
+        - 個別キャンペーン詳細 URL (子ページ、ユーザー提供待ち)
+
+  - id: jal-card-information
+    label: JALカード インフォメーション (公式)
+    url: https://www.jal.co.jp/jp/ja/jalcard/information/
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: false
+    notes: |
+      ★ 2026-05-28 追加 (#C-2 キャンペーン獲得拡充、ユーザー提供 URL、初期 enabled:false)。
+      JAL カードのお知らせ/キャンペーン情報集約ページ。
+      cardIds 候補: ["jal-suica"]、還元通貨: jal-mile。
+      ★ 事前検証 (2026-05-28): curl/WebFetch 両方で接続失敗 (HTTP 000、Anthropic 側
+      IP block の可能性)。ただし GitHub Actions の Gemini cron は別 IP から動くため、
+      実 cron では取得できる可能性あり。次回 manual workflow_dispatch で動作確認 →
+      enabled:true 化 or URL 差し替え判断。
+      取得成功時に期待する形: 入会キャンペーン (新規発行 + N マイル) は新規 program、
+      店舗別マイル上振れ施策は program+membership として抽出。日付明記が無いものは
+      campaign extractor が 0 件で返す保守動作 (既存 jre-point-campaigns 等と同じ)。
+
   - id: rakuten-point-partners
     label: 楽天ポイントカード 加盟店 (公式)
     url: https://pointcard.rakuten.co.jp/partner/
