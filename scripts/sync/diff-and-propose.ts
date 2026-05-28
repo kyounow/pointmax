@@ -221,52 +221,74 @@ export function applyCategoryCap(
 // ───────────────────────────────────────────────────────────────
 // Orphan membership guard
 // ───────────────────────────────────────────────────────────────
-// category cap や idCollision 等で store 本体が auto 通過しなかった場合、
-// 同 run の membership 提案が「店舗本体なし」のまま auto-merge されると
-// seed に孤児 membership が残る (UI で店名解決できない・履歴で slug fallback)。
-// 防止策: membership の storeId が「既存 seed」or「同 run の auto 候補 store」
-// どちらにも含まれなければ reviewReason="missingStoreBody" で降格させる。
+// category cap や idCollision 等で store / program 本体が auto 通過しなかった
+// 場合、同 run の membership 提案が「本体なし」のまま auto-merge されると
+// seed に孤児 membership が残る (UI で名前解決できない・履歴で slug fallback)。
+// 特に proposePrograms は新規 program に必ず idCollision を付けるため、
+// その program を参照する membership は本ガードが無いと自動で seed に流れてしまう。
 //
-// 注意: programId 側にも同様のロジックを掛けるべきだが、program 提案は
-// category cap 対象外で deferred されにくいため、ひとまず store だけ守る
-// (実害が観測された範囲に対応)。
+// 防止策: membership の storeId / programId が「既存 seed」or「同 run の auto
+// 候補 store/program」どちらにも含まれなければ降格させる:
+//   - storeId 不在 → reviewReason="missingStoreBody"
+//   - programId 不在 → reviewReason="missingProgramBody"
+//   - 両方不在の場合は store 側を優先 (storeId 不明の方が UX 影響大)
 
 export function downgradeOrphanMemberships(
   proposals: Proposal[],
   existingStoreIds: ReadonlySet<string>,
-): { proposals: Proposal[]; downgraded: number } {
-  // 「同 run で auto 通過する予定の store id 集合」を構築
-  // = reviewReason 未設定の addRecord/stores
+  existingProgramIds: ReadonlySet<string>,
+): {
+  proposals: Proposal[];
+  downgradedStore: number;
+  downgradedProgram: number;
+} {
+  // 同 run で auto 通過予定の store / program id 集合
   const sameRunAutoStoreIds = new Set<string>();
+  const sameRunAutoProgramIds = new Set<string>();
   for (const p of proposals) {
-    if (
-      p.type === "addRecord" &&
-      p.collection === "stores" &&
-      !p.reviewReason
-    ) {
-      const id = (p as AddRecordProposal).record.id;
-      if (typeof id === "string") sameRunAutoStoreIds.add(id);
-    }
+    if (p.type !== "addRecord" || p.reviewReason) continue;
+    const id = (p as AddRecordProposal).record.id;
+    if (typeof id !== "string") continue;
+    if (p.collection === "stores") sameRunAutoStoreIds.add(id);
+    else if (p.collection === "programs") sameRunAutoProgramIds.add(id);
   }
 
-  let downgraded = 0;
+  let downgradedStore = 0;
+  let downgradedProgram = 0;
   const out: Proposal[] = proposals.map((p) => {
     if (
       p.type !== "addRecord" ||
       p.collection !== "memberships" ||
-      p.reviewReason // 既に他理由で降格済なら触らない
+      p.reviewReason
     ) {
       return p;
     }
-    const storeId = (p as AddRecordProposal).record.storeId;
-    if (typeof storeId !== "string") return p;
-    if (existingStoreIds.has(storeId)) return p; // 既存 seed → OK
-    if (sameRunAutoStoreIds.has(storeId)) return p; // 同 run auto → OK
-    // 孤児: store 本体が seed にも auto 候補にも無い
-    downgraded += 1;
-    return { ...p, reviewReason: "missingStoreBody" } as Proposal;
+    const rec = (p as AddRecordProposal).record;
+    const storeId = typeof rec.storeId === "string" ? rec.storeId : null;
+    const programId = typeof rec.programId === "string" ? rec.programId : null;
+
+    // store 側の整合性チェック (UX 影響大なので優先)
+    if (
+      storeId !== null &&
+      !existingStoreIds.has(storeId) &&
+      !sameRunAutoStoreIds.has(storeId)
+    ) {
+      downgradedStore += 1;
+      return { ...p, reviewReason: "missingStoreBody" } as Proposal;
+    }
+    // program 側の整合性チェック (新規 program は proposePrograms で
+    // 必ず idCollision されるため、ここで membership 側も同時降格する)
+    if (
+      programId !== null &&
+      !existingProgramIds.has(programId) &&
+      !sameRunAutoProgramIds.has(programId)
+    ) {
+      downgradedProgram += 1;
+      return { ...p, reviewReason: "missingProgramBody" } as Proposal;
+    }
+    return p;
   });
-  return { proposals: out, downgraded };
+  return { proposals: out, downgradedStore, downgradedProgram };
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -344,15 +366,24 @@ function main(): void {
     }
   }
 
-  // Orphan membership guard: store 本体が auto に居ない場合は降格
-  // category cap で deferred されたり既存と衝突した場合の整合性を保つ
+  // Orphan membership guard: store / program 本体が auto に居ない場合は降格
+  // category cap で deferred されたり (store)、proposePrograms が必ず
+  // idCollision を付けたり (program) した場合の整合性を保つ
   const existingStoreIds = new Set(current.stores.map((s) => s.id));
-  const orphan = downgradeOrphanMemberships(finalProposals, existingStoreIds);
+  const existingProgramIds = new Set(current.programs.map((p) => p.id));
+  const orphan = downgradeOrphanMemberships(
+    finalProposals,
+    existingStoreIds,
+    existingProgramIds,
+  );
   finalProposals = orphan.proposals;
-  if (orphan.downgraded > 0) {
-    console.log(
-      `🧯 orphan guard: ${orphan.downgraded} 件の membership を missingStoreBody で降格`,
-    );
+  if (orphan.downgradedStore > 0 || orphan.downgradedProgram > 0) {
+    const parts: string[] = [];
+    if (orphan.downgradedStore > 0)
+      parts.push(`${orphan.downgradedStore} 件を missingStoreBody`);
+    if (orphan.downgradedProgram > 0)
+      parts.push(`${orphan.downgradedProgram} 件を missingProgramBody`);
+    console.log(`🧯 orphan guard: ${parts.join(" / ")} で降格`);
   }
 
   const autoApplicable: Proposal[] = [];
