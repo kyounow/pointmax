@@ -3,7 +3,27 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
-## 2026-05-21 (43 件)
+## 2026-05-28 (auto 0 件 / review 262 件)
+
+- source 数: 13
+
+### Review queue 内訳 (262 件)
+| 理由 | 件数 |
+|---|---:|
+| lowConfidence | 121 |
+| idCollision | 62 |
+| safetyFailed | 48 |
+| missingStoreBody | 19 |
+| excludedCategory | 6 |
+| userBlocked | 6 |
+
+<details><summary>追加項目 0 件</summary>
+
+</details>
+
+---
+
+## 2026-05-21 (auto 43 件)
 
 - commit: [`dda20d6`](https://github.com/kyounow/pointmax/commit/dda20d6) / 平均 confidence: 0.90 / source 数: 13
 
@@ -62,7 +82,7 @@
 
 ---
 
-## 2026-05-18 (36 件)
+## 2026-05-18 (auto 36 件)
 
 - commit: [`8fad1eb`](https://github.com/kyounow/pointmax/commit/8fad1eb) / 平均 confidence: 0.90 / source 数: 11
 
