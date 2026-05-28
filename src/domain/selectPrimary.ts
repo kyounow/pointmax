@@ -22,6 +22,7 @@
 
 import { bestPath } from "./bestPath";
 import type { ProgramMatch } from "./programEvaluator";
+import type { PathCache } from "./pathCache";
 import type { ConversionEdge } from "./types";
 
 /**
@@ -31,6 +32,7 @@ import type { ConversionEdge } from "./types";
  * @param edges 全 ConversionEdge (bestPath に渡される)
  * @param targetCurrencyId 目標通貨 ID
  * @param availableCardIds requiredCardIds ゲート用 (bestPath に渡される)
+ * @param pathCache optional: 事前構築済 path cache (rankCards から再利用、bestPath 重複呼出削減)
  * @returns 最適な ProgramMatch、または null (候補なし時)
  */
 export function selectPrimaryForTarget(
@@ -38,19 +40,22 @@ export function selectPrimaryForTarget(
   edges: ConversionEdge[],
   targetCurrencyId: string,
   availableCardIds?: ReadonlySet<string>,
+  pathCache?: PathCache,
 ): ProgramMatch | null {
   if (candidates.length === 0) return null;
   if (candidates.length === 1) return candidates[0] ?? null;
 
-  // currency → target への path ratio キャッシュ (関数呼び出し内で完結)
-  const ratioCache = new Map<string, number>();
+  // currency → target への path ratio キャッシュ。pathCache が渡されていれば
+  // 共有 cache を経由 (rankCards 内の他の bestPath 呼び出しと重複排除)。
+  const localCache = new Map<string, number>();
   const getRatio = (currencyId: string): number => {
     if (currencyId === targetCurrencyId) return 1;
-    const cached = ratioCache.get(currencyId);
+    if (pathCache) return pathCache.getProduct(currencyId, targetCurrencyId);
+    const cached = localCache.get(currencyId);
     if (cached !== undefined) return cached;
     const path = bestPath(edges, currencyId, targetCurrencyId, 1, availableCardIds);
     const ratio = path?.product ?? 0; // 到達不能なら 0
-    ratioCache.set(currencyId, ratio);
+    localCache.set(currencyId, ratio);
     return ratio;
   };
 

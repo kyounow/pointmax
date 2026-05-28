@@ -7,6 +7,8 @@ import type {
 } from "./types";
 import { bestPath } from "./bestPath";
 import { isRuleActiveAt } from "./ruleActiveAt";
+import { membersFor, type MembershipIndex } from "./membershipIndex";
+import type { PathCache } from "./pathCache";
 
 export type LoyaltyResult = {
   pointCard: PointCard;
@@ -65,6 +67,10 @@ export function bestLoyalties(
   availableCardIds?: ReadonlySet<string>,
   programs?: BenefitProgram[],
   memberships?: StoreProgramMembership[],
+  /** optional: 事前構築済 membership index (rankCards から再利用) */
+  membershipIndex?: MembershipIndex,
+  /** optional: 事前構築済 path cache (rankCards から再利用、bestPath 重複呼出削減) */
+  pathCache?: PathCache,
 ): LoyaltyResult[] {
   if (maxStacks <= 0) return [];
 
@@ -82,9 +88,13 @@ export function bestLoyalties(
   const programApplicable: LoyaltyRule[] = [];
   if (programs && memberships) {
     // この store の membership を持つ programs + 全 store 適用 programs
-    const storeMembers = memberships.filter((m) => m.storeId === storeId);
+    const storeMembers = membershipIndex
+      ? membersFor(membershipIndex, storeId)
+      : memberships.filter((m) => m.storeId === storeId);
     const memberProgramIds = new Set(storeMembers.map((m) => m.programId));
-    const allMemberProgramIds = new Set(memberships.map((m) => m.programId));
+    const allMemberProgramIds = membershipIndex
+      ? membershipIndex.programsWithMembership
+      : new Set(memberships.map((m) => m.programId));
 
     for (const p of programs) {
       if (!p.pointCardId) continue;
@@ -124,13 +134,15 @@ export function bestLoyalties(
     const pc = ownedById.get(rule.pointCardId)!;
     const earnedAmount = amount * rule.rate;
     const earnedCurrencyId = rule.currencyId ?? pc.currencyId;
-    const path = bestPath(
-      edges,
-      earnedCurrencyId,
-      targetCurrencyId,
-      earnedAmount,
-      availableCardIds,
-    );
+    const path = pathCache
+      ? pathCache.resolve(earnedCurrencyId, targetCurrencyId, earnedAmount)
+      : bestPath(
+          edges,
+          earnedCurrencyId,
+          targetCurrencyId,
+          earnedAmount,
+          availableCardIds,
+        );
     if (path === null) {
       return {
         pointCard: pc,

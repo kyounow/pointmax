@@ -133,4 +133,67 @@ describe("bestPath", () => {
     const result = bestPath(edges, "A", "B", 100, new Set(["card2"]));
     expect(result).not.toBeNull();
   });
+
+  // ─── D-3 audit-fix: 収束性 / 循環 / 自己ループ / V-1 反復境界 ───
+
+  it("自己ループ edge は無害 (rate=1 でも有限回反復で収束)", () => {
+    // A→A の自己ループ (rate=2 で gain あり) と A→B 直接 (rate=0.5)
+    // 旧 Bellman-Ford は negative cycle 検出が要件だが、本実装は **積最大** で
+    // 全 rate>0 のため不正循環は無く、V-1 反復で確実に停止する。
+    const edges = [
+      edge("self", "A", "A", 2),
+      edge("ab", "A", "B", 0.5),
+    ];
+    const result = bestPath(edges, "A", "B", 100);
+    expect(result).not.toBeNull();
+    // 自己ループ rate=2 を通っても A の bestProduct は単調増加だが、A→B は同じ B を再計算するだけ
+    // (= ループで A の値が上書きされても、B も同期更新されるので最終 product は変わらない)。
+    // 重要なのは「無限ループ / crash しない」こと。
+    expect(result!.finalAmount).toBeGreaterThan(0);
+  });
+
+  it("2 ノード相互変換 (A↔B) は更新収束 (V=2 → 1 反復で停止)", () => {
+    // A→B 0.5 / B→A 1.5 → A→B→A は product 0.75 (損)、よって to=B の最善は直接 A→B
+    const edges = [
+      edge("ab", "A", "B", 0.5),
+      edge("ba", "B", "A", 1.5),
+    ];
+    const result = bestPath(edges, "A", "B", 100);
+    expect(result!.product).toBeCloseTo(0.5, 10);
+    expect(result!.steps.map((e) => e.id)).toEqual(["ab"]);
+  });
+
+  it("4 ホップ chain (V=5、V-1=4 反復必要) で正しく収束", () => {
+    // A→B→C→D→E。V=5 で V-1=4 反復が必要な境界ケース。
+    const edges = [
+      edge("ab", "A", "B", 0.5),
+      edge("bc", "B", "C", 2),
+      edge("cd", "C", "D", 0.5),
+      edge("de", "D", "E", 2),
+    ];
+    const result = bestPath(edges, "A", "E", 100);
+    expect(result).not.toBeNull();
+    expect(result!.product).toBeCloseTo(1, 10);
+    expect(result!.steps.map((e) => e.id)).toEqual(["ab", "bc", "cd", "de"]);
+  });
+
+  it("tie path (積が完全一致): 先に bestProduct を更新した経路が steps に残る", () => {
+    // A→B 0.6 (直接) と A→C→B (0.6 = 1.2 × 0.5) の tie
+    // 候補 ordering は edges 配列順、最初に達成した path が prevEdge に残る (= direct 採用)
+    const edges = [
+      edge("direct", "A", "B", 0.6),
+      edge("ac", "A", "C", 1.2),
+      edge("cb", "C", "B", 0.5),
+    ];
+    const result = bestPath(edges, "A", "B", 100);
+    expect(result!.product).toBeCloseTo(0.6, 10);
+    expect(result!.steps.map((e) => e.id)).toEqual(["direct"]);
+  });
+
+  it("到達不能 toId (= edges から到達不能) → null、crash しない", () => {
+    // A→B のみ、to=Z (孤立)。bestProduct[Z] = -Infinity で null 返却される
+    const edges = [edge("ab", "A", "B", 0.5)];
+    const result = bestPath(edges, "A", "Z", 100);
+    expect(result).toBeNull();
+  });
 });

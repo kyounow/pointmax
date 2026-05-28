@@ -202,7 +202,7 @@ npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE 生成
 |---|---|---|
 | 既存 store/program 参照の **memberships** | ✅ する | rakuten/Ponta/JAL 等の提携店追加 |
 | 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview |
-| 新規 **stores** | ❌ しない (PR #56) | キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制。`storeAdditionsDisabled` 理由で needsReview に集約、必要なら手動で `seed-data-stores.ts` に追加 |
+| 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge |
 | 新規 **programs / cards / paymentApps** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
 | **削除提案** (validTo+30 日経過 campaign など) | ❌ しない | 誤削除防止のため必ず人手レビュー |
 

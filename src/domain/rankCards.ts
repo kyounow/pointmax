@@ -8,8 +8,9 @@ import type {
   Store,
   StoreProgramMembership,
 } from "./types";
-import { bestPath } from "./bestPath";
 import { bestLoyalties, type LoyaltyResult } from "./loyalty";
+import { buildMembershipIndex } from "./membershipIndex";
+import { makePathCache } from "./pathCache";
 import { evaluatePrograms } from "./programEvaluator";
 import { selectPrimaryForTarget } from "./selectPrimary";
 
@@ -114,6 +115,12 @@ export function rankCards(
   const store = stores.find((s) => s.id === payment.storeId);
   const maxStacks = Math.max(0, store?.maxLoyaltyStacks ?? 1);
 
+  // ─── 重複計算削減用の共通 cache / index (Wave 2 audit-fix A-1 / A-2 / A-5) ───
+  // pathCache: bestPath (Bellman-Ford O(V·E)) の (from,to) 重複呼び出しを memoize
+  // membershipIndex: storeId → memberships の lookup を全 evaluatePrograms / loyalty で共有
+  const pathCache = makePathCache(edges, availableCardIds);
+  const membershipIndex = buildMembershipIndex(memberships);
+
   // ─── Loyalty (ポイントカード提示) 評価 ───
   // programEvaluator ベースの loyalty: pointCardId を持つ programs を評価
   const loyalties = bestLoyalties(
@@ -129,6 +136,8 @@ export function rankCards(
     availableCardIds,
     programs,
     memberships,
+    membershipIndex,
+    pathCache,
   );
   const loyaltyTotal = loyalties.reduce(
     (sum, r) => sum + (r.reachable ? r.finalAmount : 0),
@@ -148,6 +157,7 @@ export function rankCards(
             paymentApp: DIRECT_PAYMENT_APP,
             programs,
             memberships,
+            membershipIndex,
           })
         : null;
 
@@ -159,6 +169,7 @@ export function rankCards(
             edges,
             targetCurrencyId,
             availableCardIds,
+            pathCache,
           )
         : null;
       const addOns = programResult?.addOns ?? [];
@@ -172,7 +183,7 @@ export function rankCards(
         : { rate: card.defaultRate, currencyId: card.defaultCurrencyId, source: "default" };
 
       const earnedAmount = payment.amount * cardRate;
-      const path = bestPath(edges, cardCurrencyId, targetCurrencyId, earnedAmount, availableCardIds);
+      const path = pathCache.resolve(cardCurrencyId, targetCurrencyId, earnedAmount);
       const baseFinal = path?.finalAmount ?? 0;
 
       // addOn programs の合計 (paymentApp なし時は appBonus として表現)
@@ -183,7 +194,7 @@ export function rankCards(
       let appBonusCurrencyId: string | null = null;
       for (const addOn of addOns) {
         const addOnEarned = payment.amount * addOn.effectiveRate;
-        const addOnPath = bestPath(edges, addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned, availableCardIds);
+        const addOnPath = pathCache.resolve(addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned);
         if (addOnPath) {
           appBonusBreakdown.push({
             programId: addOn.program.id,
@@ -239,6 +250,7 @@ export function rankCards(
         paymentApp: DIRECT_PAYMENT_APP,
         programs,
         memberships,
+        membershipIndex,
       });
       // primary は target 通貨への path 込みで再選択 (監査残 B 対応)
       const primary = selectPrimaryForTarget(
@@ -246,6 +258,7 @@ export function rankCards(
         edges,
         targetCurrencyId,
         availableCardIds,
+        pathCache,
       );
       const cardRate = primary?.effectiveRate ?? card.defaultRate;
       const cardCurrencyId = primary?.effectiveCurrencyId ?? card.defaultCurrencyId;
@@ -253,7 +266,7 @@ export function rankCards(
         ? { rate: cardRate, currencyId: cardCurrencyId, source: "program", programId: primary.program.id }
         : { rate: card.defaultRate, currencyId: card.defaultCurrencyId, source: "default" };
       const earnedAmount = payment.amount * cardRate;
-      const path = bestPath(edges, cardCurrencyId, targetCurrencyId, earnedAmount, availableCardIds);
+      const path = pathCache.resolve(cardCurrencyId, targetCurrencyId, earnedAmount);
       const baseFinal = path?.finalAmount ?? 0;
       return {
         card,
@@ -302,6 +315,7 @@ export function rankCards(
         paymentApp: pa,
         programs,
         memberships,
+        membershipIndex,
       });
 
       // primary は target 通貨への path 込みで再選択 (監査残 B 対応)。
@@ -311,6 +325,7 @@ export function rankCards(
         edges,
         targetCurrencyId,
         availableCardIds,
+        pathCache,
       );
       const addOns = programResult.addOns;
 
@@ -339,7 +354,7 @@ export function rankCards(
       }
 
       const cardEarned = payment.amount * cardRate;
-      const cardPath = bestPath(edges, cardCurrencyId, targetCurrencyId, cardEarned, availableCardIds);
+      const cardPath = pathCache.resolve(cardCurrencyId, targetCurrencyId, cardEarned);
       const cardFinal = cardPath?.finalAmount ?? 0;
 
       // addOn programs の合計 + 通貨別 breakdown (v5.1.3)
@@ -350,7 +365,7 @@ export function rankCards(
       let appBonusCurrencyId: string | null = null;
       for (const addOn of addOns) {
         const addOnEarned = payment.amount * addOn.effectiveRate;
-        const addOnPath = bestPath(edges, addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned, availableCardIds);
+        const addOnPath = pathCache.resolve(addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned);
         if (addOnPath) {
           appBonusBreakdown.push({
             programId: addOn.program.id,

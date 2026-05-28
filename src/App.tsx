@@ -16,6 +16,7 @@ import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
 import { SyncUpdateModal } from "./ui/SyncUpdateModal";
 import { useStore } from "./state/store";
 import { useDialog } from "./ui/dialog/DialogProvider";
+import { ErrorBoundary } from "./ui/ErrorBoundary";
 
 type Tab =
   | "calculator"
@@ -268,17 +269,22 @@ function App() {
 
       <main className="content">
         <UpdateBanner />
-        {tab === "calculator" && <CalculatorScreen />}
-        {tab === "cards" && <CardsScreen />}
-        {tab === "pointcards" && <PointCardsScreen />}
-        {tab === "paymentapps" && <PaymentAppsScreen />}
-        {tab === "currencies" && <CurrenciesScreen />}
-        {tab === "stores" && <StoresScreen />}
-        {tab === "programs" && <ProgramsScreen />}
-        {tab === "campaigns" && <CampaignsScreen />}
-        {tab === "edges" && <EdgesScreen />}
-        {tab === "sync-history" && <SyncHistoryScreen />}
-        {tab === "settings" && <SettingsScreen />}
+        {/* Wave 4 B-6 audit-fix: 各 Screen を ErrorBoundary で wrap。
+            画面単位で隔離して、1 画面のエラーがアプリ全体を停止させないようにする。
+            scopeName で console.error に画面名が残るので運用調査の起点になる。 */}
+        <ErrorBoundary scopeName={activeTabLabel}>
+          {tab === "calculator" && <CalculatorScreen />}
+          {tab === "cards" && <CardsScreen />}
+          {tab === "pointcards" && <PointCardsScreen />}
+          {tab === "paymentapps" && <PaymentAppsScreen />}
+          {tab === "currencies" && <CurrenciesScreen />}
+          {tab === "stores" && <StoresScreen />}
+          {tab === "programs" && <ProgramsScreen />}
+          {tab === "campaigns" && <CampaignsScreen />}
+          {tab === "edges" && <EdgesScreen />}
+          {tab === "sync-history" && <SyncHistoryScreen />}
+          {tab === "settings" && <SettingsScreen />}
+        </ErrorBoundary>
       </main>
     </div>
   );

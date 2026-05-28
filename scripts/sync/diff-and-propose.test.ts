@@ -5,6 +5,7 @@ import {
   dedupeAcrossProposals,
   downgradeOrphanMemberships,
   isFailedExtraction,
+  promoteChainStoreAutoMerge,
   proposeCards,
   proposeJalTokuyakuMemberships,
   proposeLoyaltyRules,
@@ -1317,6 +1318,135 @@ describe("downgradeOrphanMemberships", () => {
     expect(downgradedStore).toBe(0);
     expect(downgradedProgram).toBe(0);
     expect(proposals[0]).toBe(storeProp);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// promoteChainStoreAutoMerge (C-9、PR #56 部分解除)
+// ───────────────────────────────────────────────────────────────
+
+describe("promoteChainStoreAutoMerge", () => {
+  const ev = { evidenceQuote: "x", explicitness: 1, ambiguity: 0 };
+  const disabledStore = (id: string, name: string, category = "飲食"): Proposal => ({
+    type: "addRecord",
+    collection: "stores",
+    record: { id, name, category },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: ev,
+    reviewReason: "storeAdditionsDisabled",
+  });
+  const campaignProgram = (id: string, validTo = "2030-12-31"): Proposal => ({
+    type: "addRecord",
+    collection: "programs",
+    record: { id, name: id, rate: 0.05, currencyId: "paypay", validTo },
+    sourceId: "src",
+    confidence: 0.97,
+    evidence: ev,
+  });
+  const membership = (storeId: string, programId: string): Proposal => ({
+    type: "addRecord",
+    collection: "memberships",
+    record: { programId, storeId },
+    sourceId: "src",
+    confidence: 0.97,
+    evidence: ev,
+  });
+
+  it("チェーン名 + 同 run campaign 参照 → auto に復帰", () => {
+    const props = [
+      disabledStore("store-mcd-shibuya", "マクドナルド 渋谷店"),
+      campaignProgram("prog-paypay-mcd-2026"),
+      membership("store-mcd-shibuya", "prog-paypay-mcd-2026"),
+    ];
+    const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
+      stores: [],
+      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+    });
+    expect(promoted).toBe(1);
+    expect(proposals[0].reviewReason).toBeUndefined();
+  });
+
+  it("チェーン名でも campaign 参照なしなら 据え置き (storeAdditionsDisabled)", () => {
+    const props = [disabledStore("store-mcd", "マクドナルド")];
+    const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
+      stores: [],
+      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+    });
+    expect(promoted).toBe(0);
+    expect(proposals[0].reviewReason).toBe("storeAdditionsDisabled");
+  });
+
+  it("campaign 参照あっても非チェーン (個人店) なら 据え置き", () => {
+    const props = [
+      disabledStore("store-localcafe", "近所のカフェ"),
+      campaignProgram("prog-x"),
+      membership("store-localcafe", "prog-x"),
+    ];
+    const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
+      stores: [],
+      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+    });
+    expect(promoted).toBe(0);
+    expect(proposals[0].reviewReason).toBe("storeAdditionsDisabled");
+  });
+
+  it("validTo なしの program (常設) を参照しても campaign 扱いされず据え置き", () => {
+    const ongoingProg: Proposal = {
+      type: "addRecord",
+      collection: "programs",
+      record: { id: "prog-ongoing", name: "常設", rate: 0.02, currencyId: "v-pt" },
+      sourceId: "src",
+      confidence: 0.97,
+      evidence: ev,
+    };
+    const props = [
+      disabledStore("store-mcd", "マクドナルド"),
+      ongoingProg,
+      membership("store-mcd", "prog-ongoing"),
+    ];
+    const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
+      stores: [],
+      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+    });
+    expect(promoted).toBe(0);
+    expect(proposals[0].reviewReason).toBe("storeAdditionsDisabled");
+  });
+
+  it("chain-heavy category (飲食に既存 3 店あり) + campaign 参照 → promote", () => {
+    const props = [
+      disabledStore("store-newrestaurant", "ニュー業態食堂", "飲食"),
+      campaignProgram("prog-paypay-c"),
+      membership("store-newrestaurant", "prog-paypay-c"),
+    ];
+    const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
+      stores: [
+        { id: "s1", name: "既存1", category: "飲食" },
+        { id: "s2", name: "既存2", category: "飲食" },
+        { id: "s3", name: "既存3", category: "飲食" },
+      ] as never,
+      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+    });
+    expect(promoted).toBe(1);
+    expect(proposals[0].reviewReason).toBeUndefined();
+  });
+
+  it("storeAdditionsDisabled 以外の理由は触らない", () => {
+    const idCollisionStore: Proposal = {
+      ...disabledStore("store-x", "マクドナルド"),
+      reviewReason: "idCollision",
+    };
+    const props = [
+      idCollisionStore,
+      campaignProgram("prog-x"),
+      membership("store-x", "prog-x"),
+    ];
+    const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
+      stores: [],
+      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+    });
+    expect(promoted).toBe(0);
+    expect(proposals[0].reviewReason).toBe("idCollision");
   });
 });
 
