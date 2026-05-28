@@ -33,6 +33,12 @@ export type RegistrySource = {
 export type RegistryFile = {
   version: number; // 現在は 1
   sources: RegistrySource[];
+  // extractor prompt の version 集約 (e.g., { campaign: "v3.1", "ongoing-program": "v1.0" })。
+  // 各 prompt の JSON 例フィールド (promptVersion: "campaign-v3.1") の prefix を除いた版数。
+  // optional: 未指定でも fetch / propose は動く (ドキュメント用途)。
+  // SYNC_HISTORY に「どの extractor が何 version で出力したか」を残すため
+  // sync:report が任意で参照する。
+  extractorVersions?: Partial<Record<ExtractorKind, string>>;
 };
 
 export type ExtractorKind =

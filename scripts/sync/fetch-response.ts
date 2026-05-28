@@ -26,6 +26,15 @@ const REFUSAL_PATTERNS = [
   /I do not have/i,
 ];
 
+// classifyResponse の判定順 (early-return で短絡、上にあるほど優先):
+//   1. empty            : text 完全に空 → リトライ価値あり
+//   2. allUrlsFailed    : URL Context が全 URL 取得失敗 (URL/IP 側問題、attempt 3 で pre-fetch fallback に進む)
+//   3. refusal          : 散文に「申し訳ありません」「対象外」等あり、かつ JSON 構造を持たない
+//                          (= LLM が抽出を拒否。リトライしても同じ可能性が高い)
+//   4. truncatedJson    : { で始まるが } で閉じてない (= context window 超過、maxOutputTokens 不足)
+//   5. success          : コードフェンス除去後 JSON.parse 成功し object になる (= ハッピーパス)
+//   6. nonJson          : それ以外の散文 / JSON 以外 / parse 失敗
+// fetch-source.ts は success 以外を全てリトライ価値ありと扱う (isRetryable 参照)。
 export function classifyResponse(r: GeminiResponse): ResponseStatus {
   const trimmed = r.text.trim();
   if (trimmed.length === 0) return "empty";

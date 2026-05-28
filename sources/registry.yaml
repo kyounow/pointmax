@@ -13,6 +13,18 @@
 
 version: 1
 
+# extractor prompt の現行 version を集約 (各 *.prompt.md の JSON 例 promptVersion と同期)。
+# 新規 extractor 追加 / version bump 時はここを更新。sync:report が SYNC_HISTORY に
+# version matrix を記録するために参照 (省略しても動作影響なし)。
+extractorVersions:
+  campaign: v3.1
+  card: v1.1
+  jal-tokuyaku: v1.0
+  jcb-jpoint: v1.0
+  ongoing-program: v1.0
+  payment-app: v1.1
+  point-partner: v1.2
+
 sources:
   - id: jal-card-tokuyaku-list
     label: JALカード特約店 検索結果 (公式)

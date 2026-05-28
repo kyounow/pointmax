@@ -48,7 +48,9 @@ export function bestPath(
       const u = bestProduct.get(e.fromCurrencyId);
       if (u === undefined || u === -Infinity) continue;
       const candidate = u * e.rate;
-      const v = bestProduct.get(e.toCurrencyId)!;
+      // e.toCurrencyId は line 32-35 で nodes に追加されているので
+      // bestProduct.get() は必ず値を返すが、防御的に -Infinity fallback。
+      const v = bestProduct.get(e.toCurrencyId) ?? -Infinity;
       if (candidate > v) {
         bestProduct.set(e.toCurrencyId, candidate);
         prevEdge.set(e.toCurrencyId, e);
@@ -58,7 +60,9 @@ export function bestPath(
     if (!updated) break;
   }
 
-  const finalProduct = bestProduct.get(toId)!;
+  // toId は line 31 で nodes に追加されているので必ず値が入るが、
+  // 防御的に -Infinity fallback (= 後段で null 返却)。
+  const finalProduct = bestProduct.get(toId) ?? -Infinity;
   if (finalProduct === -Infinity) return null;
 
   const steps: ConversionEdge[] = [];

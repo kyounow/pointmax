@@ -32,8 +32,11 @@ function mergeArray<T extends Identifiable>(
   current: T[],
   next: T[],
 ): { merged: T[]; added: T[] } {
+  if (next.length === 0) return { merged: current, added: [] };
   const existingIds = new Set(current.map((x) => x.id));
   const added = next.filter((x) => !existingIds.has(x.id));
+  // 追加 0 件なら current の参照をそのまま返して下流の memo / 参照等価判定を維持
+  if (added.length === 0) return { merged: current, added };
   return { merged: [...current, ...added], added };
 }
 
@@ -42,12 +45,14 @@ function mergeMemberships(
   current: StoreProgramMembership[],
   next: StoreProgramMembership[],
 ): { merged: StoreProgramMembership[]; added: StoreProgramMembership[] } {
+  if (next.length === 0) return { merged: current, added: [] };
   const existingKeys = new Set(
     current.map((m) => `${m.programId}:${m.storeId}`),
   );
   const added = next.filter(
     (m) => !existingKeys.has(`${m.programId}:${m.storeId}`),
   );
+  if (added.length === 0) return { merged: current, added };
   return { merged: [...current, ...added], added };
 }
 

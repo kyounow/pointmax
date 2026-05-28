@@ -65,6 +65,14 @@ function evidenceAndConfidence(x: Evidence): {
 //   - overrides は呼出側が**現行と同じ順序**で渡す。各 check が値を返せば上書き、
 //     undefined なら据え置き。最後に返した非 undefined が勝つ (= 逐次 if と同一)
 // 順序の責任は呼出側に残るため、抽出による挙動変化は構造的に起こらない。
+//
+// ─── Integrity check 優先順位 (low→high、後ろほど強い、配列順がそのまま反映) ───
+// 1. base                    : caller の分類 (idCollision / lowConfidence / excludedCategory 等)
+// 2. selfReportedExclusion   : Gemini 自身が evidence で「対象外/記載なし」と報告
+// 3. unsupportedDateClaim    : validFrom/validTo を主張しているのに evidence に日付なし
+//                              (= Gemini が日付を hallucinate)
+// この順番で配列に積めば、より強い integrity check が後勝ちで base を上書きする。
+// 個別 propose* で順番が違う場合は意図的 (e.g. memberships は日付主張なしで dateClaim 省略可)。
 type IntegrityCheck = () => ReviewReason | undefined;
 
 function resolveReviewReason(
@@ -77,6 +85,24 @@ function resolveReviewReason(
     if (r) rr = r;
   }
   return rr;
+}
+
+// 共通の integrity check ファクトリ。callsite で同じ inline arrow を繰り返さないため。
+// 呼出側は順序を気にせず `[selfReportedExclusionFromQuote(quote), unsupportedDateClaimFromRule(rule, quote)]`
+// のように積める (配列順 = 優先順位、上の docstring 参照)。
+function selfReportedExclusionFromQuote(
+  quote: string | undefined,
+): IntegrityCheck {
+  return () =>
+    detectSelfReportedExclusion(quote) ? "selfReportedExclusion" : undefined;
+}
+
+function unsupportedDateClaimFromRule(
+  rule: { validFrom?: string; validTo?: string },
+  quote: string | undefined,
+): IntegrityCheck {
+  return () =>
+    detectUnsupportedDateClaim(rule, quote) ? "unsupportedDateClaim" : undefined;
 }
 
 // ───────────────────────────────────────────────────────────────

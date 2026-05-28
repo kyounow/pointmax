@@ -42,4 +42,24 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // 大型依存を別 chunk に切り出して初期 bundle を軽量化。
+        // - xyflow: グラフ画面 (EdgesScreen) でのみ使う、Calculator/Cards/Stores では不要
+        // - react-vendor: React core (react / react-dom) を分離してブラウザキャッシュ効果を最大化
+        manualChunks(id: string) {
+          if (id.includes("@xyflow/react")) return "xyflow";
+          if (
+            id.includes("/node_modules/react-dom/") ||
+            id.includes("/node_modules/react/") ||
+            id.includes("/node_modules/scheduler/")
+          ) {
+            return "react-vendor";
+          }
+          return undefined;
+        },
+      },
+    },
+  },
 });
