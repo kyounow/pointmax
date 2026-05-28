@@ -459,10 +459,11 @@ export function proposePrograms(
     const { evidence, confidence } = evidenceAndConfidence(p);
     const found = existing.find((x) => x.id === p.programId);
     if (!found) {
-      // 新規 program はライブ還元計算に直接効くため、proposeCards /
-      // proposePaymentApps と同じく base "idCollision" で必ず人手レビュー。
-      // 順序は loyaltyRules と同一: selfReported → unsupportedDate → zeroRate。
-      const reviewReason = resolveReviewReason("idCollision", [
+      // 新規 program は原則 idCollision で要レビュー (ライブ還元計算に直結)。
+      // PR #60 (B 段階): campaign 専用 source の高品質 program は auto-merge
+      // を許可。integrity チェック (selfReported/unsupportedDate/zeroRate) が
+      // 引っかかれば優先降格、その他は isCampaignAutoMergeable で判定。
+      const integrityIssue = resolveReviewReason(undefined, [
         () =>
           detectSelfReportedExclusion(evidence.evidenceQuote)
             ? "selfReportedExclusion"
@@ -473,6 +474,11 @@ export function proposePrograms(
             : undefined,
         () => (!p.rate || p.rate === 0 ? "zeroOrInvalidRate" : undefined),
       ]);
+      const reviewReason: ReviewReason | undefined = integrityIssue
+        ? integrityIssue
+        : isCampaignAutoMergeable(p, data, current, confidence)
+          ? undefined // 高品質 campaign → autoApplicable
+          : "idCollision"; // 既存挙動: 安全条件未達は要レビュー
       // 定義済みフィールドのみ詰める (apply の emitObjectLiteral が
       // undefined/null を除外するのと整合、loyaltyRecord と同方式)
       const rec: Record<string, unknown> = {
@@ -750,4 +756,105 @@ export function proposeExpiredCampaignDeletions(
     });
   }
   return proposals;
+}
+
+// ───────────────────────────────────────────────────────────────
+// Campaign auto-merge eligibility (B 段階、PR #60)
+// ───────────────────────────────────────────────────────────────
+// 新規 program は本来 idCollision で全件 needsReview (ライブ還元計算に
+// 直接効くため誤適用が厳禁) だが、campaign 専用 source から抽出された
+// 「期限明示 + 既存参照 + 妥当 rate + 高 confidence + lifestyle 系
+// キーワード無し」の高品質な campaign は auto-merge を許可する。
+//
+// 安全ガード:
+// 1. extractor === "campaign" (ongoing-program は除外、smbc-vpoint-up
+//    系の lifestyle 条件付き program の混入を防ぐ)
+// 2. validTo 必須 + 未来日 (既に終了した campaign は提案不要)
+// 3. rate ∈ (0, CAMPAIGN_AUTO_RATE_MAX] (30% を超える率は誤抽出疑い)
+// 4. confidence ≥ CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD (通常 0.9 → 0.95)
+// 5. cardIds / pointCardId / paymentAppId / currencyId が全て seed に
+//    存在 (未定義の参照を防ぐ)
+// 6. lifestyle 系キーワード除外 (memory feedback_pointmax_lifestyle_programs
+//    と整合、defense-in-depth として keyword filter で更に阻む)
+// 7. proposePrograms の他の reviewReason (selfReportedExclusion /
+//    unsupportedDateClaim / zeroOrInvalidRate) に該当しない (=
+//    その他のチェックは従来どおり通った後の最終ゲートとして本関数)
+
+export const CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD = 0.95;
+export const CAMPAIGN_AUTO_RATE_MAX = 0.3;
+
+// memory: feedback_pointmax_lifestyle_programs.md の禁止カテゴリ。
+// 本来 ongoing-program prompt で除外済だが、campaign extractor 経由で
+// 混入する万が一に備える defense-in-depth。
+const LIFESTYLE_KEYWORDS: ReadonlyArray<string> = [
+  "給与", "ボーナス振込",
+  "住宅ローン",
+  "外貨預金", "円預金", "預金残高",
+  "投資", "証券", "NISA", "iDeCo", "SBI",
+  "保険", "Vitality", "ヘルスケア",
+  "カードローン", "リボ払い",
+  "外貨積立",
+];
+
+function parseDateEndMs(s: string | undefined): number | null {
+  if (!s) return null;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return new Date(
+    Number(m[1]), Number(m[2]) - 1, Number(m[3]),
+    23, 59, 59, 999,
+  ).getTime();
+}
+
+/**
+ * 新規 program が campaign auto-merge の安全条件を全て満たすか判定する。
+ * 安全条件は 7 つの AND チェック、1 つでも外れたら false (idCollision に降格)。
+ */
+export function isCampaignAutoMergeable(
+  p: { rate: number; validTo?: string; cardIds?: string[]; pointCardId?: string; paymentAppId?: string; currencyId: string; name?: string; description?: string; conditions?: string },
+  data: ExtractedSource,
+  current: SeedShape,
+  confidence: number,
+  now: Date = new Date(),
+): boolean {
+  // 1. campaign extractor source 限定
+  if (data.extractor !== "campaign") return false;
+
+  // 2. validTo 必須 + 未来日
+  const validToMs = parseDateEndMs(p.validTo);
+  if (validToMs === null) return false;
+  if (validToMs <= now.getTime()) return false;
+
+  // 3. rate ∈ (0, CAMPAIGN_AUTO_RATE_MAX]
+  if (!Number.isFinite(p.rate)) return false;
+  if (p.rate <= 0 || p.rate > CAMPAIGN_AUTO_RATE_MAX) return false;
+
+  // 4. confidence 厳格化
+  if (confidence < CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD) return false;
+
+  // 5. seed 参照整合性
+  if (p.cardIds && p.cardIds.length > 0) {
+    const known = new Set((current.cards ?? []).map((c) => c.id));
+    for (const cid of p.cardIds) {
+      if (!known.has(cid)) return false;
+    }
+  }
+  if (p.pointCardId) {
+    const known = new Set((current.pointCards ?? []).map((c) => c.id));
+    if (!known.has(p.pointCardId)) return false;
+  }
+  if (p.paymentAppId) {
+    const known = new Set((current.paymentApps ?? []).map((a) => a.id));
+    if (!known.has(p.paymentAppId)) return false;
+  }
+  const knownCurrencies = new Set((current.currencies ?? []).map((c) => c.id));
+  if (!knownCurrencies.has(p.currencyId)) return false;
+
+  // 6. lifestyle 系キーワード除外 (defense-in-depth)
+  const text = [p.name ?? "", p.description ?? "", p.conditions ?? ""].join(" ");
+  for (const kw of LIFESTYLE_KEYWORDS) {
+    if (text.includes(kw)) return false;
+  }
+
+  return true;
 }
