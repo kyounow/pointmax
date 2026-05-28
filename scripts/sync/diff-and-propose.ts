@@ -36,6 +36,8 @@ import {
   proposeStores,
 } from "./propose-helpers";
 import { resolveCardId, resolveStoreId } from "./aliases";
+import { isChainLikeStore } from "./chain-store-detection";
+import type { SeedShape } from "../../src/domain/mergeSeed";
 
 // 再エクスポート (テスト互換性のため diff-and-propose 経由で参照される旧APIを温存)
 export {
@@ -233,6 +235,96 @@ export function applyCategoryCap(
 //   - programId 不在 → reviewReason="missingProgramBody"
 //   - 両方不在の場合は store 側を優先 (storeId 不明の方が UX 影響大)
 
+// ───────────────────────────────────────────────────────────────
+// Chain-store auto-merge promote (C-9、PR #56 部分解除)
+// ───────────────────────────────────────────────────────────────
+// PR #56 で「新規 store の auto-merge 全停止 (storeAdditionsDisabled)」を確定したが、
+// ユーザー指示 (2026-05-28) で「キャンペーンが実施されるような層 (チェーン店等) は
+// auto-merge OK」に方針を緩める。
+//
+// 復帰条件 (AND):
+//   (a) 同 run の auto 候補 program (campaign 系 = validTo を持つ) に membership 参照
+//   (b) チェーン名パターン or chain-heavy category (isChainLikeStore で判定)
+//
+// (a) は store 単独抽出を排除 (= 注目度の高い store だけ通す)、(b) は明確な
+// チェーン業態のみ通す。両方満たすときのみ storeAdditionsDisabled を解除。
+
+export function promoteChainStoreAutoMerge(
+  proposals: Proposal[],
+  current: SeedShape,
+): { proposals: Proposal[]; promoted: number } {
+  // 同 run の campaign 系 (validTo 持ち) program の id を集計。
+  // 注意: proposePrograms は新規 program に必ず idCollision を付けるため、
+  // ここで reviewReason フィルタはしない (= reviewReason の有無に関わらず campaign
+  // 候補として扱う)。「campaign program が同 run に含まれる」だけが条件。
+  const sameRunCampaignProgramIds = new Set<string>();
+  // storeId → 同 run の membership が参照する programId 集合 (同 run 限定の正反映確認)
+  const membershipsByStore = new Map<string, Set<string>>();
+
+  for (const p of proposals) {
+    if (p.type !== "addRecord") continue;
+    const rec = (p as AddRecordProposal).record;
+
+    if (p.collection === "programs") {
+      const id = typeof rec.id === "string" ? rec.id : null;
+      const validTo = typeof rec.validTo === "string" ? rec.validTo : null;
+      // campaign 系 program = 終了日を持つ
+      if (id && validTo) sameRunCampaignProgramIds.add(id);
+    } else if (p.collection === "memberships") {
+      // membership 側も reviewReason 不問 (auto/review に関わらず参照関係を見る)
+      const storeId = typeof rec.storeId === "string" ? rec.storeId : null;
+      const programId = typeof rec.programId === "string" ? rec.programId : null;
+      if (storeId && programId) {
+        let set = membershipsByStore.get(storeId);
+        if (!set) {
+          set = new Set();
+          membershipsByStore.set(storeId, set);
+        }
+        set.add(programId);
+      }
+    }
+  }
+
+  let promoted = 0;
+  const out: Proposal[] = proposals.map((p) => {
+    if (p.type !== "addRecord") return p;
+    if (p.collection !== "stores") return p;
+    if (p.reviewReason !== "storeAdditionsDisabled") return p;
+
+    const rec = (p as AddRecordProposal).record;
+    const storeId = typeof rec.id === "string" ? rec.id : null;
+    const name = typeof rec.name === "string" ? rec.name : "";
+    const category = typeof rec.category === "string" ? rec.category : undefined;
+    if (!storeId) return p;
+
+    // 条件 (a): 同 run の campaign program に membership 参照されている
+    const referencingPrograms = membershipsByStore.get(storeId);
+    if (!referencingPrograms) return p;
+    let hasCampaignReference = false;
+    for (const pid of referencingPrograms) {
+      if (sameRunCampaignProgramIds.has(pid)) {
+        hasCampaignReference = true;
+        break;
+      }
+    }
+    if (!hasCampaignReference) return p;
+
+    // 条件 (b OR c): チェーン名パターン or chain-heavy category
+    // (notes は store の evidence 由来だがここでは取り出さない簡素化、name + category のみで判定)
+    if (
+      !isChainLikeStore({ name, category, existingStores: current.stores })
+    ) {
+      return p;
+    }
+
+    // 全条件 OK → storeAdditionsDisabled 解除して auto に復帰
+    promoted += 1;
+    return { ...p, reviewReason: undefined } as Proposal;
+  });
+
+  return { proposals: out, promoted };
+}
+
 export function downgradeOrphanMemberships(
   proposals: Proposal[],
   existingStoreIds: ReadonlySet<string>,
@@ -295,6 +387,19 @@ export function downgradeOrphanMemberships(
 // Main
 // ───────────────────────────────────────────────────────────────
 
+// ─── Sync pipeline phase 一覧 (実行順、Wave 3 C-3 audit-fix で可視化) ───
+//   Phase 0  : extracted/*.json 読み込み + alias 正規化
+//   Phase 1  : 各エンティティの propose* (stores / cards / programs / memberships 等)
+//   Phase 2  : 期限切れ campaign の自動削除提案 (proposeExpiredCampaignDeletions)
+//   Phase A  : 同 run 重複の dedup (dedupeAcrossProposals) ─ 2 件目以降 idCollision
+//   Phase B  : Category cap (applyCategoryCap) ─ 飲食 5/cat 等で deferred
+//   Phase B' : Chain-store auto-merge promote (promoteChainStoreAutoMerge)
+//              ─ storeAdditionsDisabled を campaign 参照 + チェーン判定で部分解除 (C-9)
+//   Phase C  : Orphan membership guard (downgradeOrphanMemberships)
+//              ─ store / program 本体が auto に無い membership を降格
+//   Phase D  : auto / needsReview 振り分け + report 書き出し
+// Phase ラベルは log メッセージにも反映済 (🧯 = guard, 📐 = cap, 🔁 = dedup, 🧹 = expired, 🔓 = chain-promote)。
+
 function main(): void {
   console.log("📥 reading extracted/*.json ...");
   const extracted = readExtractedSources();
@@ -305,6 +410,7 @@ function main(): void {
   let processed = 0;
   let failed = 0;
 
+  // Phase 1: 各エンティティの propose
   for (const raw of extracted) {
     if (isFailedExtraction(raw)) {
       console.log(`   ⚠️  ${raw.sourceId}: 取得失敗 (notes) - スキップ`);
@@ -323,7 +429,7 @@ function main(): void {
     allProposals.push(...proposeJalTokuyakuMemberships(data, current));
   }
 
-  // 期限切れキャンペーンの削除提案 (seed 全体 1 回だけ評価、ソース非依存)
+  // Phase 2: 期限切れキャンペーンの削除提案 (seed 全体 1 回だけ評価、ソース非依存)
   const expiredProposals = proposeExpiredCampaignDeletions(current);
   if (expiredProposals.length > 0) {
     console.log(
@@ -332,8 +438,8 @@ function main(): void {
   }
   allProposals.push(...expiredProposals);
 
-  // within-run dedup: 異なるソースから同 name/id の store が提案された場合、
-  // 2 件目以降は idCollision で要レビューに格下げする
+  // Phase A: within-run dedup (異なるソースから同 name/id の store が提案された場合、
+  //          2 件目以降は idCollision で要レビューに格下げ)
   const dedup = dedupeAcrossProposals(allProposals);
   if (dedup.collisions > 0) {
     console.log(
@@ -341,7 +447,7 @@ function main(): void {
     );
   }
 
-  // Category cap (stores の新規追加のみ対象)
+  // Phase B: Category cap (stores の新規追加のみ対象)
   const cap = readCapPerCategory();
   let finalProposals = dedup.proposals;
   let deferredCount = 0;
@@ -366,9 +472,21 @@ function main(): void {
     }
   }
 
-  // Orphan membership guard: store / program 本体が auto に居ない場合は降格
-  // category cap で deferred されたり (store)、proposePrograms が必ず
-  // idCollision を付けたり (program) した場合の整合性を保つ
+  // Phase B': Chain-store auto-merge promote (C-9 audit-fix、PR #56 部分解除)
+  //   storeAdditionsDisabled の店舗のうち、同 run の campaign program に
+  //   membership 参照されていて、かつチェーン名/業態を満たすものを auto に復帰。
+  const chainPromote = promoteChainStoreAutoMerge(finalProposals, current);
+  finalProposals = chainPromote.proposals;
+  if (chainPromote.promoted > 0) {
+    console.log(
+      `🔓 chain-promote: ${chainPromote.promoted} 件の新規 chain store を auto-merge に復帰`,
+    );
+  }
+
+  // Phase C: Orphan membership guard
+  //   store / program 本体が auto に居ない場合は降格。category cap で deferred
+  //   されたり (store)、proposePrograms が必ず idCollision を付けたり (program)
+  //   した場合の整合性を保つ。同 run の auto 候補 store/program は内部で derive される。
   const existingStoreIds = new Set(current.stores.map((s) => s.id));
   const existingProgramIds = new Set(current.programs.map((p) => p.id));
   const orphan = downgradeOrphanMemberships(
