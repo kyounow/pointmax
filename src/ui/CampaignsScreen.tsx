@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { cardLabel } from "../domain/cardLabel";
 import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
@@ -80,10 +81,15 @@ function statusBadge(s: CampaignStatus) {
 type TabKey = "all" | "active" | "ongoing" | "expired" | "future";
 
 export function CampaignsScreen() {
-  const cards = useStore((s) => s.cards);
-  const pointCards = useStore((s) => s.pointCards);
-  const programs = useStore((s) => s.programs);
-  const paymentApps = useStore((s) => s.paymentApps);
+  // Wave 5 B-1: 4 個別 subscribe → 単一 useShallow
+  const { cards, pointCards, programs, paymentApps } = useStore(
+    useShallow((s) => ({
+      cards: s.cards,
+      pointCards: s.pointCards,
+      programs: s.programs,
+      paymentApps: s.paymentApps,
+    })),
+  );
 
   const [activeTab, setActiveTab] = useState<TabKey>("all");
 

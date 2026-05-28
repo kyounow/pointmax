@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { CurrencyIcon } from "./CurrencyIcon";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
@@ -8,19 +9,38 @@ import { PointCardStoresPreview } from "./PointCardStoresPreview";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
 
 export function PointCardsScreen() {
-  const pointCards = useStore((s) => s.pointCards);
-  const currencies = useStore((s) => s.currencies);
-  const stores = useStore((s) => s.stores);
-  const loyaltyRules = useStore((s) => s.loyaltyRules);
-  const programs = useStore((s) => s.programs);
-  const memberships = useStore((s) => s.memberships);
-  const addPointCard = useStore((s) => s.addPointCard);
-  const updatePointCard = useStore((s) => s.updatePointCard);
-  const removePointCard = useStore((s) => s.removePointCard);
-  const movePointCard = useStore((s) => s.movePointCard);
-  const addLoyaltyRule = useStore((s) => s.addLoyaltyRule);
-  const updateLoyaltyRule = useStore((s) => s.updateLoyaltyRule);
-  const removeLoyaltyRule = useStore((s) => s.removeLoyaltyRule);
+  // Wave 5 B-1: 13 個別 subscribe → 単一 useShallow に集約
+  const {
+    pointCards,
+    currencies,
+    stores,
+    loyaltyRules,
+    programs,
+    memberships,
+    addPointCard,
+    updatePointCard,
+    removePointCard,
+    movePointCard,
+    addLoyaltyRule,
+    updateLoyaltyRule,
+    removeLoyaltyRule,
+  } = useStore(
+    useShallow((s) => ({
+      pointCards: s.pointCards,
+      currencies: s.currencies,
+      stores: s.stores,
+      loyaltyRules: s.loyaltyRules,
+      programs: s.programs,
+      memberships: s.memberships,
+      addPointCard: s.addPointCard,
+      updatePointCard: s.updatePointCard,
+      removePointCard: s.removePointCard,
+      movePointCard: s.movePointCard,
+      addLoyaltyRule: s.addLoyaltyRule,
+      updateLoyaltyRule: s.updateLoyaltyRule,
+      removeLoyaltyRule: s.removeLoyaltyRule,
+    })),
+  );
 
   const [pcName, setPcName] = useState("");
   const [pcCurrency, setPcCurrency] = useState("");

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { SEED_CHANGELOG, SEED_VERSION } from "../state/seed";
 import {
@@ -10,9 +11,14 @@ import {
 import { useSeedMerge } from "./hooks/useSeedMerge";
 
 export function UpdateBanner() {
-  const lastSeedVersion = useStore((s) => s.lastSeedVersion);
-  const applySeedUpdate = useStore((s) => s.applySeedUpdate);
-  const dismissSeedUpdate = useStore((s) => s.dismissSeedUpdate);
+  // Wave 5 B-1: 3 個別 subscribe → 単一 useShallow
+  const { lastSeedVersion, applySeedUpdate, dismissSeedUpdate } = useStore(
+    useShallow((s) => ({
+      lastSeedVersion: s.lastSeedVersion,
+      applySeedUpdate: s.applySeedUpdate,
+      dismissSeedUpdate: s.dismissSeedUpdate,
+    })),
+  );
   const [showDetail, setShowDetail] = useState(false);
   const [overrideKeys, setOverrideKeys] = useState<Set<string>>(new Set());
 

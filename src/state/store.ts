@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
 import type {
   BenefitProgram,
   Card,
@@ -168,221 +169,252 @@ const empty: State = {
   // _pendingSchemaMigration / _legacyPersistedState は undefined で初期化
 };
 
+// Wave 5 A-4 audit-fix: zustand/immer middleware で構造共有を有効化。
+// 1 件更新時に他要素の object reference を保持 → useShallow(B-1) と組み合わせ
+// 再 render 範囲を局所化。set 関数の callback は draft をミューテートする (return しない)。
 export const useStore = create<State & Actions>()(
   persist(
-    (set, get) => ({
+    immer((set, get) => ({
       ...empty,
 
       addCard: (c) =>
-        set((s) => ({ cards: [...s.cards, { ...c, id: newId() }] })),
+        set((state) => {
+          state.cards.push({ ...c, id: newId() });
+        }),
       updateCard: (id, patch) =>
-        set((s) => ({
-          cards: s.cards.map((c) =>
-            c.id === id ? applyCardPatch(c, patch, new Date()) : c,
-          ),
-        })),
+        set((state) => {
+          const idx = state.cards.findIndex((c) => c.id === id);
+          if (idx >= 0) {
+            state.cards[idx] = applyCardPatch(
+              state.cards[idx],
+              patch,
+              new Date(),
+            );
+          }
+        }),
       removeCard: (id) => {
         // マスター由来カードは削除不可 (mergeFromSeed で復活するため意味がない)。
         // UI 側で削除ボタンも隠すが、ここでも防御する。
         if (isMasterCard(id)) return;
-        set((s) => ({
-          cards: s.cards.filter((c) => c.id !== id),
-        }));
+        set((state) => {
+          const idx = state.cards.findIndex((c) => c.id === id);
+          if (idx >= 0) state.cards.splice(idx, 1);
+        });
       },
       resetCardToSeed: (id) => {
         // non-master (UUID 由来) は seed lookup できないので no-op
         const original = getSeedCard(id);
         if (!original) return;
-        set((s) => ({
-          cards: s.cards.map((c) =>
-            c.id === id ? resetCardToSeedValues(c, original) : c,
-          ),
-        }));
+        set((state) => {
+          const idx = state.cards.findIndex((c) => c.id === id);
+          if (idx >= 0) {
+            state.cards[idx] = resetCardToSeedValues(state.cards[idx], original);
+          }
+        });
       },
 
       addCurrency: (c) =>
-        set((s) => ({ currencies: [...s.currencies, { ...c, id: newId() }] })),
+        set((state) => {
+          state.currencies.push({ ...c, id: newId() });
+        }),
       updateCurrency: (id, patch) =>
-        set((s) => ({
-          currencies: s.currencies.map((c) =>
-            c.id === id ? { ...c, ...patch } : c,
-          ),
-        })),
+        set((state) => {
+          const idx = state.currencies.findIndex((c) => c.id === id);
+          if (idx >= 0) Object.assign(state.currencies[idx], patch);
+        }),
       removeCurrency: (id) =>
-        set((s) => ({
-          currencies: s.currencies.filter((c) => c.id !== id),
-          edges: s.edges.filter(
+        set((state) => {
+          state.currencies = state.currencies.filter((c) => c.id !== id);
+          state.edges = state.edges.filter(
             (e) => e.fromCurrencyId !== id && e.toCurrencyId !== id,
-          ),
+          );
           // v4.0.0 ②: 削除された通貨が優先リストに残ると dangling になるので除外
-          preferredCurrencyIds: s.preferredCurrencyIds.filter(
+          state.preferredCurrencyIds = state.preferredCurrencyIds.filter(
             (cid) => cid !== id,
-          ),
-        })),
+          );
+        }),
 
       addStore: (st) =>
-        set((s) => ({ stores: [...s.stores, { ...st, id: newId() }] })),
+        set((state) => {
+          state.stores.push({ ...st, id: newId() });
+        }),
       updateStore: (id, patch) =>
-        set((s) => ({
-          stores: s.stores.map((st) =>
-            st.id === id ? { ...st, ...patch } : st,
-          ),
-        })),
+        set((state) => {
+          const idx = state.stores.findIndex((s) => s.id === id);
+          if (idx >= 0) Object.assign(state.stores[idx], patch);
+        }),
       removeStore: (id) =>
-        set((s) => ({
-          stores: s.stores.filter((st) => st.id !== id),
-          loyaltyRules: s.loyaltyRules.filter((r) => r.storeId !== id),
-        })),
+        set((state) => {
+          state.stores = state.stores.filter((st) => st.id !== id);
+          state.loyaltyRules = state.loyaltyRules.filter(
+            (r) => r.storeId !== id,
+          );
+        }),
 
       addEdge: (e) =>
-        set((s) => ({ edges: [...s.edges, { ...e, id: newId() }] })),
+        set((state) => {
+          state.edges.push({ ...e, id: newId() });
+        }),
       updateEdge: (id, patch) =>
-        set((s) => ({
-          edges: s.edges.map((e) => (e.id === id ? { ...e, ...patch } : e)),
-        })),
+        set((state) => {
+          const idx = state.edges.findIndex((e) => e.id === id);
+          if (idx >= 0) Object.assign(state.edges[idx], patch);
+        }),
       removeEdge: (id) =>
-        set((s) => ({ edges: s.edges.filter((e) => e.id !== id) })),
+        set((state) => {
+          state.edges = state.edges.filter((e) => e.id !== id);
+        }),
 
       addPointCard: (p) =>
-        set((s) => ({
-          pointCards: [...s.pointCards, { ...p, id: newId() }],
-        })),
+        set((state) => {
+          state.pointCards.push({ ...p, id: newId() });
+        }),
       updatePointCard: (id, patch) =>
-        set((s) => ({
-          pointCards: s.pointCards.map((p) =>
-            p.id === id ? { ...p, ...patch } : p,
-          ),
-        })),
+        set((state) => {
+          const idx = state.pointCards.findIndex((p) => p.id === id);
+          if (idx >= 0) Object.assign(state.pointCards[idx], patch);
+        }),
       removePointCard: (id) =>
-        set((s) => ({
-          pointCards: s.pointCards.filter((p) => p.id !== id),
-          loyaltyRules: s.loyaltyRules.filter((r) => r.pointCardId !== id),
-        })),
+        set((state) => {
+          state.pointCards = state.pointCards.filter((p) => p.id !== id);
+          state.loyaltyRules = state.loyaltyRules.filter(
+            (r) => r.pointCardId !== id,
+          );
+        }),
       movePointCard: (id, direction) =>
-        set((s) => {
-          const idx = s.pointCards.findIndex((p) => p.id === id);
-          if (idx < 0) return s;
+        set((state) => {
+          const idx = state.pointCards.findIndex((p) => p.id === id);
+          if (idx < 0) return;
           const next = direction === "up" ? idx - 1 : idx + 1;
-          if (next < 0 || next >= s.pointCards.length) return s;
-          const arr = [...s.pointCards];
-          [arr[idx], arr[next]] = [arr[next], arr[idx]];
-          return { pointCards: arr };
+          if (next < 0 || next >= state.pointCards.length) return;
+          [state.pointCards[idx], state.pointCards[next]] = [
+            state.pointCards[next],
+            state.pointCards[idx],
+          ];
         }),
 
       // v4.0.0 ②: 優先通貨リスト操作 (movePointCard と同じ並べ替えパターン)
       addPreferredCurrency: (currencyId) =>
-        set((s) =>
-          s.preferredCurrencyIds.includes(currencyId)
-            ? s // 重複は無視
-            : {
-                preferredCurrencyIds: [
-                  ...s.preferredCurrencyIds,
-                  currencyId,
-                ],
-              },
-        ),
+        set((state) => {
+          if (!state.preferredCurrencyIds.includes(currencyId)) {
+            state.preferredCurrencyIds.push(currencyId);
+          }
+        }),
       removePreferredCurrency: (currencyId) =>
-        set((s) => ({
-          preferredCurrencyIds: s.preferredCurrencyIds.filter(
+        set((state) => {
+          state.preferredCurrencyIds = state.preferredCurrencyIds.filter(
             (id) => id !== currencyId,
-          ),
-        })),
+          );
+        }),
       movePreferredCurrency: (currencyId, direction) =>
-        set((s) => {
-          const idx = s.preferredCurrencyIds.indexOf(currencyId);
-          if (idx < 0) return s;
+        set((state) => {
+          const idx = state.preferredCurrencyIds.indexOf(currencyId);
+          if (idx < 0) return;
           const next = direction === "up" ? idx - 1 : idx + 1;
-          if (next < 0 || next >= s.preferredCurrencyIds.length) return s;
-          const arr = [...s.preferredCurrencyIds];
-          [arr[idx], arr[next]] = [arr[next], arr[idx]];
-          return { preferredCurrencyIds: arr };
+          if (next < 0 || next >= state.preferredCurrencyIds.length) return;
+          [
+            state.preferredCurrencyIds[idx],
+            state.preferredCurrencyIds[next],
+          ] = [
+            state.preferredCurrencyIds[next],
+            state.preferredCurrencyIds[idx],
+          ];
         }),
 
       addLoyaltyRule: (r) =>
-        set((s) => ({
-          loyaltyRules: [...s.loyaltyRules, { ...r, id: newId() }],
-        })),
+        set((state) => {
+          state.loyaltyRules.push({ ...r, id: newId() });
+        }),
       updateLoyaltyRule: (id, patch) =>
-        set((s) => ({
-          loyaltyRules: s.loyaltyRules.map((r) =>
-            r.id === id ? { ...r, ...patch } : r,
-          ),
-        })),
+        set((state) => {
+          const idx = state.loyaltyRules.findIndex((r) => r.id === id);
+          if (idx >= 0) Object.assign(state.loyaltyRules[idx], patch);
+        }),
       removeLoyaltyRule: (id) =>
-        set((s) => ({
-          loyaltyRules: s.loyaltyRules.filter((r) => r.id !== id),
-        })),
+        set((state) => {
+          state.loyaltyRules = state.loyaltyRules.filter((r) => r.id !== id);
+        }),
 
       addPaymentApp: (p) =>
-        set((s) => ({
-          paymentApps: [...s.paymentApps, { ...p, id: newId() }],
-        })),
+        set((state) => {
+          state.paymentApps.push({ ...p, id: newId() });
+        }),
       updatePaymentApp: (id, patch) =>
-        set((s) => ({
-          paymentApps: s.paymentApps.map((p) =>
-            p.id === id ? applyPaymentAppPatch(p, patch, new Date()) : p,
-          ),
-        })),
+        set((state) => {
+          const idx = state.paymentApps.findIndex((p) => p.id === id);
+          if (idx >= 0) {
+            state.paymentApps[idx] = applyPaymentAppPatch(
+              state.paymentApps[idx],
+              patch,
+              new Date(),
+            );
+          }
+        }),
       removePaymentApp: (id) => {
         // マスター由来 PaymentApp は削除不可 (mergeFromSeed で復活するため意味がない)。
         // UI 側で削除ボタンも隠すが、ここでも防御する。
         if (isMasterPaymentApp(id)) return;
-        set((s) => ({
-          paymentApps: s.paymentApps.filter((p) => p.id !== id),
-        }));
+        set((state) => {
+          state.paymentApps = state.paymentApps.filter((p) => p.id !== id);
+        });
       },
       resetPaymentAppToSeed: (id) => {
         const original = getSeedPaymentApp(id);
         if (!original) return;
-        set((s) => ({
-          paymentApps: s.paymentApps.map((p) =>
-            p.id === id ? resetPaymentAppToSeedValues(p, original) : p,
-          ),
-        }));
+        set((state) => {
+          const idx = state.paymentApps.findIndex((p) => p.id === id);
+          if (idx >= 0) {
+            state.paymentApps[idx] = resetPaymentAppToSeedValues(
+              state.paymentApps[idx],
+              original,
+            );
+          }
+        });
       },
 
-      clearAll: () => set(() => empty),
+      clearAll: () =>
+        set((state) => {
+          Object.assign(state, empty);
+        }),
       mergeFromSeed: () =>
-        set((s) => {
+        set((state) => {
           const result = mergeSeedFn(
             {
-              cards: s.cards,
-              currencies: s.currencies,
-              stores: s.stores,
-              edges: s.edges,
-              pointCards: s.pointCards,
-              loyaltyRules: s.loyaltyRules,
-              paymentApps: s.paymentApps,
-              programs: s.programs,
-              memberships: s.memberships,
+              cards: state.cards,
+              currencies: state.currencies,
+              stores: state.stores,
+              edges: state.edges,
+              pointCards: state.pointCards,
+              loyaltyRules: state.loyaltyRules,
+              paymentApps: state.paymentApps,
+              programs: state.programs,
+              memberships: state.memberships,
             },
             seed(),
           );
-          return {
-            cards: result.cards,
-            currencies: result.currencies,
-            stores: result.stores,
-            edges: result.edges,
-            pointCards: result.pointCards,
-            loyaltyRules: result.loyaltyRules,
-            paymentApps: result.paymentApps,
-            programs: result.programs ?? [],
-            memberships: result.memberships ?? [],
-            lastSeedVersion: SEED_VERSION,
-          };
+          state.cards = result.cards;
+          state.currencies = result.currencies;
+          state.stores = result.stores;
+          state.edges = result.edges;
+          state.pointCards = result.pointCards;
+          state.loyaltyRules = result.loyaltyRules;
+          state.paymentApps = result.paymentApps;
+          state.programs = result.programs ?? [];
+          state.memberships = result.memberships ?? [];
+          state.lastSeedVersion = SEED_VERSION;
         }),
       applySeedUpdate: (overrideKeys) =>
-        set((s) => {
+        set((state) => {
           const currentShape = {
-            cards: s.cards,
-            currencies: s.currencies,
-            stores: s.stores,
-            edges: s.edges,
-            pointCards: s.pointCards,
-            loyaltyRules: s.loyaltyRules,
-            paymentApps: s.paymentApps,
-            programs: s.programs,
-            memberships: s.memberships,
+            cards: state.cards,
+            currencies: state.currencies,
+            stores: state.stores,
+            edges: state.edges,
+            pointCards: state.pointCards,
+            loyaltyRules: state.loyaltyRules,
+            paymentApps: state.paymentApps,
+            programs: state.programs,
+            memberships: state.memberships,
           };
           // 1. 追加分マージ (mergeSeed; add-only)
           const merged = mergeSeedFn(currentShape, seed());
@@ -390,7 +422,7 @@ export const useStore = create<State & Actions>()(
           // 2. マイグレーション計画 (現在の state + 追加後で再計算)
           const plan = planMigrations(
             merged,
-            s.lastSeedVersion,
+            state.lastSeedVersion,
             SEED_VERSION,
             MIGRATIONS,
           );
@@ -414,30 +446,29 @@ export const useStore = create<State & Actions>()(
             keysToApply,
           );
 
-          return {
-            cards: finalState.cards,
-            currencies: finalState.currencies,
-            stores: finalState.stores,
-            edges: finalState.edges,
-            pointCards: finalState.pointCards,
-            loyaltyRules: finalState.loyaltyRules,
-            paymentApps: finalState.paymentApps,
-            programs: merged.programs ?? [],
-            memberships: merged.memberships ?? [],
-            lastSeedVersion: SEED_VERSION,
-          };
+          state.cards = finalState.cards;
+          state.currencies = finalState.currencies;
+          state.stores = finalState.stores;
+          state.edges = finalState.edges;
+          state.pointCards = finalState.pointCards;
+          state.loyaltyRules = finalState.loyaltyRules;
+          state.paymentApps = finalState.paymentApps;
+          state.programs = merged.programs ?? [];
+          state.memberships = merged.memberships ?? [];
+          state.lastSeedVersion = SEED_VERSION;
         }),
       dismissSeedUpdate: () =>
-        set(() => ({ lastSeedVersion: SEED_VERSION })),
+        set((state) => {
+          state.lastSeedVersion = SEED_VERSION;
+        }),
 
       applySchemaMigration: () =>
-        set(() => ({
-          ...empty,
-          ...seed(),
-          lastSeedVersion: SEED_VERSION,
-          _pendingSchemaMigration: undefined,
-          _legacyPersistedState: undefined,
-        })),
+        set((state) => {
+          Object.assign(state, empty, seed());
+          state.lastSeedVersion = SEED_VERSION;
+          state._pendingSchemaMigration = undefined;
+          state._legacyPersistedState = undefined;
+        }),
 
       exportLegacyState: () => {
         const s = get();
@@ -453,7 +484,10 @@ export const useStore = create<State & Actions>()(
         );
       },
 
-      setSyncUrl: (url) => set(() => ({ syncUrl: url.trim() })),
+      setSyncUrl: (url) =>
+        set((state) => {
+          state.syncUrl = url.trim();
+        }),
 
       syncFromUrl: async () => {
         const url = get().syncUrl;
@@ -487,25 +521,26 @@ export const useStore = create<State & Actions>()(
               };
             }
           }
-          const remote = {
-            cards: data.cards,
-            currencies: data.currencies,
-            stores: data.stores,
-            edges: data.edges,
-            pointCards: Array.isArray(data.pointCards) ? data.pointCards : [],
-            loyaltyRules: Array.isArray(data.loyaltyRules)
+          set((state) => {
+            state.cards = data.cards;
+            state.currencies = data.currencies;
+            state.stores = data.stores;
+            state.edges = data.edges;
+            state.pointCards = Array.isArray(data.pointCards)
+              ? data.pointCards
+              : [];
+            state.loyaltyRules = Array.isArray(data.loyaltyRules)
               ? data.loyaltyRules
-              : [],
-            paymentApps: Array.isArray(data.paymentApps)
+              : [];
+            state.paymentApps = Array.isArray(data.paymentApps)
               ? data.paymentApps
-              : [],
-            programs: Array.isArray(data.programs) ? data.programs : [],
-            memberships: Array.isArray(data.memberships) ? data.memberships : [],
-          };
-          set(() => ({
-            ...remote,
-            lastSyncAt: new Date().toISOString(),
-          }));
+              : [];
+            state.programs = Array.isArray(data.programs) ? data.programs : [];
+            state.memberships = Array.isArray(data.memberships)
+              ? data.memberships
+              : [];
+            state.lastSyncAt = new Date().toISOString();
+          });
           return { ok: true };
         } catch (e) {
           return {
@@ -544,19 +579,21 @@ export const useStore = create<State & Actions>()(
               return { ok: false, error: `"${key}" が配列ではありません` };
           }
           // 手書き JSON で省略されているケースのため、欠けてれば空配列で防御
-          set(() => ({
-            cards: data.cards,
-            currencies: data.currencies,
-            stores: data.stores,
-            edges: data.edges,
-            pointCards: Array.isArray(data.pointCards) ? data.pointCards : [],
-            loyaltyRules: Array.isArray(data.loyaltyRules)
+          set((state) => {
+            state.cards = data.cards;
+            state.currencies = data.currencies;
+            state.stores = data.stores;
+            state.edges = data.edges;
+            state.pointCards = Array.isArray(data.pointCards)
+              ? data.pointCards
+              : [];
+            state.loyaltyRules = Array.isArray(data.loyaltyRules)
               ? data.loyaltyRules
-              : [],
-            paymentApps: Array.isArray(data.paymentApps)
+              : [];
+            state.paymentApps = Array.isArray(data.paymentApps)
               ? data.paymentApps
-              : [],
-          }));
+              : [];
+          });
           return { ok: true };
         } catch (e) {
           return {
@@ -565,7 +602,7 @@ export const useStore = create<State & Actions>()(
           };
         }
       },
-    }),
+    })),
     {
       // v0.8 で世代交代。旧キー "pointmax-store" は無視 (孤児は起動時に削除)
       name: "pointmax-v08-store",

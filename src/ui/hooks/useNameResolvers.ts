@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../../state/store";
 
 /**
@@ -14,9 +15,14 @@ import { useStore } from "../../state/store";
  *   <span>{cardName(rule.cardId)}</span>
  */
 export function useNameResolvers() {
-  const cards = useStore((s) => s.cards);
-  const currencies = useStore((s) => s.currencies);
-  const stores = useStore((s) => s.stores);
+  // Wave 5 B-1: 3 個別 subscribe → 単一 useShallow
+  const { cards, currencies, stores } = useStore(
+    useShallow((s) => ({
+      cards: s.cards,
+      currencies: s.currencies,
+      stores: s.stores,
+    })),
+  );
 
   const cardName = useCallback(
     (id: string) => cards.find((c) => c.id === id)?.name ?? id,

@@ -16,6 +16,7 @@
 // 必要だが、現状規模ならこれで十分。
 
 import { useMemo } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../../state/store";
 import { seed } from "../../state/seed";
 import { mergeSeed, diffCount, type MergeResult } from "../../domain/mergeSeed";
@@ -29,15 +30,30 @@ export type SeedMergeResult = {
 };
 
 export function useSeedMerge(): SeedMergeResult {
-  const cards = useStore((s) => s.cards);
-  const currencies = useStore((s) => s.currencies);
-  const stores = useStore((s) => s.stores);
-  const edges = useStore((s) => s.edges);
-  const pointCards = useStore((s) => s.pointCards);
-  const loyaltyRules = useStore((s) => s.loyaltyRules);
-  const paymentApps = useStore((s) => s.paymentApps);
-  const programs = useStore((s) => s.programs);
-  const memberships = useStore((s) => s.memberships);
+  // Wave 5 B-1 audit-fix: 9 個別 subscribe → 単一 useShallow に集約
+  const {
+    cards,
+    currencies,
+    stores,
+    edges,
+    pointCards,
+    loyaltyRules,
+    paymentApps,
+    programs,
+    memberships,
+  } = useStore(
+    useShallow((s) => ({
+      cards: s.cards,
+      currencies: s.currencies,
+      stores: s.stores,
+      edges: s.edges,
+      pointCards: s.pointCards,
+      loyaltyRules: s.loyaltyRules,
+      paymentApps: s.paymentApps,
+      programs: s.programs,
+      memberships: s.memberships,
+    })),
+  );
 
   const hasData =
     cards.length +

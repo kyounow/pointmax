@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { KIND_OPTIONS, styleOf } from "../domain/currencyKind";
 import type { Currency, CurrencyKind } from "../domain/types";
@@ -6,15 +7,28 @@ import { CurrencyIcon } from "./CurrencyIcon";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 
 export function CurrenciesScreen() {
-  const currencies = useStore((s) => s.currencies);
-  const addCurrency = useStore((s) => s.addCurrency);
-  const updateCurrency = useStore((s) => s.updateCurrency);
-  const removeCurrency = useStore((s) => s.removeCurrency);
-  // v4.0.0 ②: 優先通貨リスト管理
-  const preferredCurrencyIds = useStore((s) => s.preferredCurrencyIds);
-  const addPreferredCurrency = useStore((s) => s.addPreferredCurrency);
-  const removePreferredCurrency = useStore((s) => s.removePreferredCurrency);
-  const movePreferredCurrency = useStore((s) => s.movePreferredCurrency);
+  // Wave 5 B-1: 8 個別 subscribe → 単一 useShallow に集約
+  const {
+    currencies,
+    addCurrency,
+    updateCurrency,
+    removeCurrency,
+    preferredCurrencyIds,
+    addPreferredCurrency,
+    removePreferredCurrency,
+    movePreferredCurrency,
+  } = useStore(
+    useShallow((s) => ({
+      currencies: s.currencies,
+      addCurrency: s.addCurrency,
+      updateCurrency: s.updateCurrency,
+      removeCurrency: s.removeCurrency,
+      preferredCurrencyIds: s.preferredCurrencyIds,
+      addPreferredCurrency: s.addPreferredCurrency,
+      removePreferredCurrency: s.removePreferredCurrency,
+      movePreferredCurrency: s.movePreferredCurrency,
+    })),
+  );
   const [name, setName] = useState("");
   const [kind, setKind] = useState<CurrencyKind | "">("point");
   const [iconChar, setIconChar] = useState("");

@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { useDialog } from "./dialog/DialogProvider";
 import { DEFAULT_SYNC_URL } from "../state/seed";
 
 export function SettingsScreen() {
-  const syncUrl = useStore((s) => s.syncUrl);
-  const lastSyncAt = useStore((s) => s.lastSyncAt);
-  const setSyncUrl = useStore((s) => s.setSyncUrl);
-  const syncFromUrl = useStore((s) => s.syncFromUrl);
-  const clearAll = useStore((s) => s.clearAll);
+  // Wave 5 B-1: 5 個別 subscribe → 単一 useShallow に集約。
+  // hasData は数値派生なので別 subscribe で OK (primitive 比較で十分)。
+  const { syncUrl, lastSyncAt, setSyncUrl, syncFromUrl, clearAll } = useStore(
+    useShallow((s) => ({
+      syncUrl: s.syncUrl,
+      lastSyncAt: s.lastSyncAt,
+      setSyncUrl: s.setSyncUrl,
+      syncFromUrl: s.syncFromUrl,
+      clearAll: s.clearAll,
+    })),
+  );
   const hasData = useStore(
     (s) =>
       s.cards.length +
