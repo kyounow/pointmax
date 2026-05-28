@@ -383,6 +383,18 @@ export type SyncHistoryEntry = {
   sourcesProcessed: number;
   bySource: SyncHistorySourceCount[];
   items: SyncHistoryItem[];
+  /**
+   * 当該 run の needsReview 集計 (PR #61 で追加)。
+   * - total: needsReview の総件数
+   * - byReason: reviewReason ごとの件数マップ (idCollision / lowConfidence /
+   *   missingStoreBody / missingProgramBody / storeAdditionsDisabled 等)
+   * - 履歴上の trend 可視化用 (例: 「先週 idCollision=14、今週 8」)
+   * - 旧 entry には未設定 (optional、UI 側で fallback 表示)
+   */
+  reviewStats?: {
+    total: number;
+    byReason: Record<string, number>;
+  };
   /** Backfill 時のみ設定 (PR 経由化後の新規エントリーには付かない) */
   commitSha?: string;
   /** PR 経由のエントリーには PR 番号を付与 (将来 workflow 側で書き込み) */

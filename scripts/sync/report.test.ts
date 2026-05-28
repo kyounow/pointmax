@@ -337,8 +337,108 @@ describe("buildSyncHistoryEntry", () => {
           : id,
   };
 
-  it("autoApplicable=0 のとき null", () => {
+  it("autoApplicable=0 + needsReview=0 のとき null (本当に変化なしの週)", () => {
     expect(buildSyncHistoryEntry(baseReport({}), stubResolver)).toBeNull();
+  });
+
+  it("autoApplicable=0 + needsReview>0 のとき review-only entry を返す (PR #61)", () => {
+    const ev = { evidenceQuote: "x", explicitness: 0.95, ambiguity: 0.05 };
+    const report = baseReport({
+      autoApplicable: [],
+      needsReview: [
+        {
+          type: "addRecord",
+          collection: "stores",
+          record: { id: "store-a", name: "A", category: "コンビニ" },
+          sourceId: "src",
+          confidence: 0.9,
+          evidence: ev,
+          reviewReason: "storeAdditionsDisabled",
+        },
+        {
+          type: "addRecord",
+          collection: "memberships",
+          record: { programId: "prog-x", storeId: "store-orphan" },
+          sourceId: "src",
+          confidence: 0.9,
+          evidence: ev,
+          reviewReason: "missingStoreBody",
+        },
+        {
+          type: "addRecord",
+          collection: "memberships",
+          record: { programId: "prog-x", storeId: "store-b" },
+          sourceId: "src",
+          confidence: 0.5,
+          evidence: ev,
+          reviewReason: "lowConfidence",
+        },
+      ],
+      summary: {
+        autoApplicableCount: 0,
+        needsReviewCount: 3,
+        sourcesProcessed: 1,
+        sourcesFailed: 0,
+      },
+    });
+    const entry = buildSyncHistoryEntry(report, stubResolver)!;
+    expect(entry).not.toBeNull();
+    expect(entry.totalCount).toBe(0);
+    expect(entry.avgConfidence).toBeNull();
+    expect(entry.bySource).toEqual([]);
+    expect(entry.items).toEqual([]);
+    expect(entry.reviewStats?.total).toBe(3);
+    expect(entry.reviewStats?.byReason).toEqual({
+      storeAdditionsDisabled: 1,
+      missingStoreBody: 1,
+      lowConfidence: 1,
+    });
+  });
+
+  it("autoApplicable + needsReview の両方ある entry は reviewStats も付与される", () => {
+    const ev = { evidenceQuote: "x", explicitness: 0.95, ambiguity: 0.05 };
+    const report = baseReport({
+      autoApplicable: [
+        {
+          type: "addRecord",
+          collection: "memberships",
+          record: { programId: "prog-x", storeId: "store-a" },
+          sourceId: "ponta-partners",
+          confidence: 0.95,
+          evidence: ev,
+        },
+      ],
+      needsReview: [
+        {
+          type: "addRecord",
+          collection: "stores",
+          record: { id: "store-y", name: "Y", category: "コンビニ" },
+          sourceId: "ponta-partners",
+          confidence: 0.95,
+          evidence: ev,
+          reviewReason: "idCollision",
+        },
+        {
+          type: "addRecord",
+          collection: "stores",
+          record: { id: "store-z", name: "Z", category: "コンビニ" },
+          sourceId: "ponta-partners",
+          confidence: 0.95,
+          evidence: ev,
+          reviewReason: "idCollision",
+        },
+      ],
+      summary: {
+        autoApplicableCount: 1,
+        needsReviewCount: 2,
+        sourcesProcessed: 1,
+        sourcesFailed: 0,
+      },
+    });
+    const entry = buildSyncHistoryEntry(report, stubResolver)!;
+    expect(entry.totalCount).toBe(1);
+    expect(entry.reviewStats?.total).toBe(2);
+    expect(entry.reviewStats?.byReason).toEqual({ idCollision: 2 });
   });
 
   it("autoApplicable から日本語化された summary + label を構築する", () => {
@@ -552,7 +652,7 @@ describe("buildSyncHistoryMarkdown", () => {
         },
       ],
     });
-    expect(md).toContain("## 2026-05-21 (2 件)");
+    expect(md).toContain("## 2026-05-21 (auto 2 件)"); // PR #61: ヘッダ形式変更
     expect(md).toContain("commit: [`abc1234`]");
     expect(md).toContain("平均 confidence: 0.90");
     // ヘッダは日本語、 label があれば優先表示

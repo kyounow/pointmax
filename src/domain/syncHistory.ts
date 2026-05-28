@@ -30,6 +30,15 @@ export type SyncHistoryItem = {
   collectionLabel?: string;
 };
 
+/**
+ * 当該 run の needsReview 集計 (PR #61 で追加)。trend 可視化用。
+ * 旧 entry には未設定 (UI 側で fallback)。
+ */
+export type SyncHistoryReviewStats = {
+  total: number;
+  byReason: Record<string, number>;
+};
+
 export type SyncHistoryEntry = {
   /** JST 暦日 YYYY-MM-DD */
   date: string;
@@ -40,6 +49,8 @@ export type SyncHistoryEntry = {
   sourcesProcessed: number;
   bySource: SyncHistorySourceCount[];
   items: SyncHistoryItem[];
+  /** review queue 集計 (PR #61 で追加、旧 entry には未設定) */
+  reviewStats?: SyncHistoryReviewStats;
   /** backfill 済みエントリーのみ (cron からは付かない、PR 経由で squash merge SHA が事後判明のため) */
   commitSha?: string;
   /** PR 経由化後の将来エントリーに付与予定 */

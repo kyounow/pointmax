@@ -623,7 +623,10 @@ export function buildReviewQueue(report: ProposalReport): string {
 // - commitSha は backfill 用のみ。新規 cron からは付与しない (squash merge SHA は事後判明のため)
 
 /**
- * ProposalReport → SyncHistoryEntry を構築。0 件なら null。
+ * ProposalReport → SyncHistoryEntry を構築。
+ * - auto > 0 OR review > 0 のとき entry を返す (PR #61 で「review のみの週」も
+ *   trend として残すよう拡張)
+ * - 両方 0 なら null (本当に変化なしの週は履歴に残さない)
  * SYNC_HISTORY は日本語化された summary + label を保存 (cron 時点の seed
  * snapshot で resolve、後で seed の名前が変わっても履歴は当時の名前のまま)。
  */
@@ -631,10 +634,11 @@ export function buildSyncHistoryEntry(
   report: ProposalReport,
   resolver: LabelResolver = buildLabelResolver(report.autoApplicable),
 ): SyncHistoryEntry | null {
-  const n = report.autoApplicable.length;
-  if (n === 0) return null;
+  const autoCount = report.autoApplicable.length;
+  const reviewCount = report.needsReview.length;
+  if (autoCount === 0 && reviewCount === 0) return null;
 
-  // bySource: source × collection の件数集計
+  // bySource: source × collection の件数集計 (autoApplicable のみ)
   const counts = new Map<string, SyncHistorySourceCount>();
   for (const p of report.autoApplicable) {
     const collection = p.collection ?? "unknown";
@@ -658,7 +662,7 @@ export function buildSyncHistoryEntry(
       a.collection.localeCompare(b.collection),
   );
 
-  // items: 日本語化された summary を 1 行ずつ保存
+  // items: 日本語化された summary を 1 行ずつ保存 (autoApplicable のみ)
   const items: SyncHistoryItem[] = report.autoApplicable.map((p) => ({
     sourceId: p.sourceId,
     collection: p.collection ?? "unknown",
@@ -668,16 +672,40 @@ export function buildSyncHistoryEntry(
   }));
 
   const avgConfidence =
-    report.autoApplicable.reduce((s, p) => s + p.confidence, 0) / n;
+    autoCount > 0
+      ? Number(
+          (
+            report.autoApplicable.reduce((s, p) => s + p.confidence, 0) /
+            autoCount
+          ).toFixed(3),
+        )
+      : null;
+
+  // reviewStats: needsReview の reviewReason 別件数 (trend 可視化用)
+  const reviewStats =
+    reviewCount > 0
+      ? {
+          total: reviewCount,
+          byReason: report.needsReview.reduce<Record<string, number>>(
+            (acc, p) => {
+              const reason = p.reviewReason ?? "unknown";
+              acc[reason] = (acc[reason] ?? 0) + 1;
+              return acc;
+            },
+            {},
+          ),
+        }
+      : undefined;
 
   return {
     date: jstDate(report.generatedAt),
     generatedAt: report.generatedAt,
-    totalCount: n,
-    avgConfidence: Number(avgConfidence.toFixed(3)),
+    totalCount: autoCount,
+    avgConfidence,
     sourcesProcessed: report.summary.sourcesProcessed,
     bySource,
     items,
+    ...(reviewStats ? { reviewStats } : {}),
   };
 }
 
@@ -716,7 +744,13 @@ export function buildSyncHistoryMarkdown(history: SyncHistoryFile): string {
   }
 
   for (const e of history.entries) {
-    lines.push(`## ${e.date} (${e.totalCount} 件)`);
+    // タイトルに auto 件数 (review-only run は totalCount=0 でも entry を作る)
+    const headerCounts: string[] = [];
+    headerCounts.push(`auto ${e.totalCount} 件`);
+    if (e.reviewStats && e.reviewStats.total > 0) {
+      headerCounts.push(`review ${e.reviewStats.total} 件`);
+    }
+    lines.push(`## ${e.date} (${headerCounts.join(" / ")})`);
     lines.push("");
     const meta: string[] = [];
     if (e.commitSha) {
@@ -729,20 +763,40 @@ export function buildSyncHistoryMarkdown(history: SyncHistoryFile): string {
         `PR: [#${e.prNumber}](https://github.com/kyounow/pointmax/pull/${e.prNumber})`,
       );
     }
-    meta.push(`平均 confidence: ${e.avgConfidence?.toFixed(2) ?? "-"}`);
-    meta.push(`source 数: ${e.sourcesProcessed}`);
-    lines.push("- " + meta.join(" / "));
-    lines.push("");
-
-    // 内訳テーブル (label があれば優先)
-    lines.push("| 取得元 | 種別 | 件数 |");
-    lines.push("|---|---|---:|");
-    for (const c of e.bySource) {
-      const src = c.sourceLabel ?? c.sourceId;
-      const col = c.collectionLabel ?? c.collection;
-      lines.push(`| ${src} | ${col} | ${c.count} |`);
+    if (e.avgConfidence != null) {
+      meta.push(`平均 confidence: ${e.avgConfidence.toFixed(2)}`);
     }
-    lines.push("");
+    meta.push(`source 数: ${e.sourcesProcessed}`);
+    if (meta.length > 0) {
+      lines.push("- " + meta.join(" / "));
+      lines.push("");
+    }
+
+    // 内訳テーブル (auto applicable のみ、label があれば優先)
+    if (e.bySource.length > 0) {
+      lines.push("| 取得元 | 種別 | 件数 |");
+      lines.push("|---|---|---:|");
+      for (const c of e.bySource) {
+        const src = c.sourceLabel ?? c.sourceId;
+        const col = c.collectionLabel ?? c.collection;
+        lines.push(`| ${src} | ${col} | ${c.count} |`);
+      }
+      lines.push("");
+    }
+
+    // review queue 集計 (PR #61 追加)
+    if (e.reviewStats && e.reviewStats.total > 0) {
+      lines.push(`### Review queue 内訳 (${e.reviewStats.total} 件)`);
+      const sortedReasons = Object.entries(e.reviewStats.byReason).sort(
+        (a, b) => b[1] - a[1],
+      );
+      lines.push("| 理由 | 件数 |");
+      lines.push("|---|---:|");
+      for (const [reason, count] of sortedReasons) {
+        lines.push(`| ${reason} | ${count} |`);
+      }
+      lines.push("");
+    }
 
     // 追加項目 (折りたたみ)。グルーピング表記も label 優先
     lines.push(`<details><summary>追加項目 ${e.items.length} 件</summary>`);
