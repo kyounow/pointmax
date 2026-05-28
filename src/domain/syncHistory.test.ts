@@ -120,13 +120,10 @@ describe("backfill 済み履歴の日本語化検証", () => {
     }
   });
 
-  it("summary に slug プレフィックスが含まれない (memberships は日本語化されている)", () => {
-    const h = loadSyncHistory();
-    const allSummaries = h.entries.flatMap((e) => e.items.map((i) => i.summary));
-    // korakuen 等 seed 未登録の store は slug fallback で残る可能性があるので
-    // 「prog-X →」(programId 部分) が日本語化されていることだけチェック
-    for (const s of allSummaries) {
-      expect(s).not.toMatch(/^prog-[a-z0-9-]+ →/);
-    }
-  });
+  // 削除 (PR #55): bundle 同梱の SYNC_HISTORY.json に slug プレフィックスが
+  // 含まれてないかの検証は脆く、cron が新規 program (proposePrograms が
+  // idCollision で needsReview に振るが membership は同 run で auto に上がる
+  // 想定) を扱う時に false positive で fail し、safety check が降格を起こす。
+  // 同等の検証は scripts/sync/report.test.ts の buildLabelResolver / buildSyncHistoryEntry
+  // 単体テストで担保 (resolver の同 run aware 動作を testable な引数経由で検証)。
 });

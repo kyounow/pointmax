@@ -917,7 +917,9 @@ describe("proposeJalTokuyakuMemberships (PR-D2b)", () => {
 
 describe("downgradeOrphanMemberships", () => {
   const ev = { evidenceQuote: "x", explicitness: 1, ambiguity: 0 };
-  const baseMembership = (storeId: string, programId = "prog-x"): Proposal => ({
+  // テストの簡潔さのため、デフォルトで「programId は existingPrograms に居る」前提。
+  // program 側のテスト時には programId を明示する。
+  const baseMembership = (storeId: string, programId = "prog-existing"): Proposal => ({
     type: "addRecord",
     collection: "memberships",
     record: { programId, storeId },
@@ -933,70 +935,136 @@ describe("downgradeOrphanMemberships", () => {
     confidence: 0.95,
     evidence: ev,
   });
+  const baseProgram = (id: string): Proposal => ({
+    type: "addRecord",
+    collection: "programs",
+    record: { id, name: id, rate: 0.01, currencyId: "v-pt" },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: ev,
+  });
+  const existingProgs = new Set(["prog-existing"]);
 
-  it("既存 store を参照する membership は通過", () => {
-    const existing = new Set(["store-existing"]);
-    const { proposals, downgraded } = downgradeOrphanMemberships(
+  // ─── store 側の整合性 ───
+  it("既存 store + 既存 program を参照する membership は通過", () => {
+    const { proposals, downgradedStore, downgradedProgram } = downgradeOrphanMemberships(
       [baseMembership("store-existing")],
-      existing,
+      new Set(["store-existing"]),
+      existingProgs,
     );
-    expect(downgraded).toBe(0);
+    expect(downgradedStore).toBe(0);
+    expect(downgradedProgram).toBe(0);
     expect(proposals[0].reviewReason).toBeUndefined();
   });
 
   it("同 run の auto store を参照する membership は通過", () => {
-    const { proposals, downgraded } = downgradeOrphanMemberships(
+    const { proposals, downgradedStore } = downgradeOrphanMemberships(
       [baseStore("store-new"), baseMembership("store-new")],
       new Set(),
+      existingProgs,
     );
-    expect(downgraded).toBe(0);
+    expect(downgradedStore).toBe(0);
     expect(proposals[1].reviewReason).toBeUndefined();
   });
 
   it("seed にも auto にも無い store を参照する membership は missingStoreBody で降格", () => {
-    const { proposals, downgraded } = downgradeOrphanMemberships(
+    const { proposals, downgradedStore } = downgradeOrphanMemberships(
       [baseMembership("store-orphan")],
       new Set(),
+      existingProgs,
     );
-    expect(downgraded).toBe(1);
+    expect(downgradedStore).toBe(1);
     expect(proposals[0].reviewReason).toBe("missingStoreBody");
   });
 
   it("deferred (reviewReason 付き) の store は同 run auto に含めない", () => {
-    // category cap で reviewReason が後から付くわけではないが、
-    // 既に excludedCategory 等で降格済 store を「auto 通過」とみなさないことを確認
     const deferredStore: Proposal = {
       ...baseStore("store-deferred"),
       reviewReason: "excludedCategory",
     };
-    const { proposals, downgraded } = downgradeOrphanMemberships(
+    const { proposals, downgradedStore } = downgradeOrphanMemberships(
       [deferredStore, baseMembership("store-deferred")],
       new Set(),
+      existingProgs,
     );
-    expect(downgraded).toBe(1);
+    expect(downgradedStore).toBe(1);
     expect(proposals[1].reviewReason).toBe("missingStoreBody");
   });
 
-  it("既に他理由で降格済 membership は触らない (idCollision 等が優先される)", () => {
-    const existing: Proposal = {
-      ...baseMembership("store-orphan"),
+  // ─── program 側の整合性 (PR #55 で追加) ───
+  it("seed にも auto にも無い program を参照する membership は missingProgramBody で降格", () => {
+    const { proposals, downgradedProgram } = downgradeOrphanMemberships(
+      [baseMembership("store-existing", "prog-orphan")],
+      new Set(["store-existing"]),
+      new Set(), // 既存 program に prog-orphan は無い
+    );
+    expect(downgradedProgram).toBe(1);
+    expect(proposals[0].reviewReason).toBe("missingProgramBody");
+  });
+
+  it("同 run の auto program を参照する membership は通過", () => {
+    const { proposals, downgradedProgram } = downgradeOrphanMemberships(
+      [
+        baseProgram("prog-new"),
+        baseMembership("store-existing", "prog-new"),
+      ],
+      new Set(["store-existing"]),
+      new Set(), // 既存 program 0、ただし同 run auto に prog-new
+    );
+    expect(downgradedProgram).toBe(0);
+    expect(proposals[1].reviewReason).toBeUndefined();
+  });
+
+  it("proposePrograms が idCollision を付けた program は同 run auto に含めない (membership は missingProgramBody)", () => {
+    const reviewedProgram: Proposal = {
+      ...baseProgram("prog-reviewed"),
       reviewReason: "idCollision",
     };
-    const { proposals, downgraded } = downgradeOrphanMemberships(
-      [existing],
+    const { proposals, downgradedProgram } = downgradeOrphanMemberships(
+      [reviewedProgram, baseMembership("store-existing", "prog-reviewed")],
+      new Set(["store-existing"]),
       new Set(),
     );
-    expect(downgraded).toBe(0);
+    expect(downgradedProgram).toBe(1);
+    expect(proposals[1].reviewReason).toBe("missingProgramBody");
+  });
+
+  it("store と program 両方 orphan の場合は store 側を優先 (UX 影響大)", () => {
+    const { proposals, downgradedStore, downgradedProgram } = downgradeOrphanMemberships(
+      [baseMembership("store-orphan", "prog-orphan")],
+      new Set(),
+      new Set(),
+    );
+    expect(downgradedStore).toBe(1);
+    expect(downgradedProgram).toBe(0);
+    expect(proposals[0].reviewReason).toBe("missingStoreBody");
+  });
+
+  // ─── 共通: 他理由優先 + 非 membership ───
+  it("既に他理由で降格済 membership は触らない (idCollision 等が優先される)", () => {
+    const existing: Proposal = {
+      ...baseMembership("store-orphan", "prog-orphan"),
+      reviewReason: "idCollision",
+    };
+    const { proposals, downgradedStore, downgradedProgram } = downgradeOrphanMemberships(
+      [existing],
+      new Set(),
+      new Set(),
+    );
+    expect(downgradedStore).toBe(0);
+    expect(downgradedProgram).toBe(0);
     expect(proposals[0].reviewReason).toBe("idCollision");
   });
 
   it("memberships 以外の proposal はそのまま通す", () => {
     const storeProp = baseStore("store-x");
-    const { proposals, downgraded } = downgradeOrphanMemberships(
+    const { proposals, downgradedStore, downgradedProgram } = downgradeOrphanMemberships(
       [storeProp],
       new Set(),
+      new Set(),
     );
-    expect(downgraded).toBe(0);
+    expect(downgradedStore).toBe(0);
+    expect(downgradedProgram).toBe(0);
     expect(proposals[0]).toBe(storeProp);
   });
 });

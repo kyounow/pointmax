@@ -2,11 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   appendSyncHistory,
   buildAutoSummary,
+  buildLabelResolver,
   buildReviewQueue,
   buildSyncHistoryEntry,
   buildSyncHistoryMarkdown,
 } from "./report";
-import type { ProposalReport, SyncHistoryFile } from "./types";
+import type { Proposal, ProposalReport, SyncHistoryFile } from "./types";
 import { SYNC_HISTORY_MAX_ENTRIES } from "./types";
 
 // ───────────────────────────────────────────────────────────────
@@ -599,3 +600,145 @@ describe("buildSyncHistoryMarkdown", () => {
   });
 });
 
+
+// ───────────────────────────────────────────────────────────────
+// buildLabelResolver: 同 run aware (PR #55 で追加)
+// ───────────────────────────────────────────────────────────────
+
+describe("buildLabelResolver: 同 run aware", () => {
+  const ev = { evidenceQuote: "x", explicitness: 1, ambiguity: 0 };
+
+  it("引数無しでも seed の lookup は機能する", () => {
+    const r = buildLabelResolver();
+    // 未存在 ID は slug を返す
+    expect(r.program("prog-totally-new")).toBe("prog-totally-new");
+    // seed に居る既知 program は名前を返す (実 seed 依存だが prog-rakuten-pointcard-0.5pc は存在)
+    expect(r.program("prog-rakuten-pointcard-0.5pc")).not.toBe("prog-rakuten-pointcard-0.5pc");
+  });
+
+  it("同 run の auto programs を name lookup に注入できる", () => {
+    const sameRunAuto: Proposal[] = [
+      {
+        type: "addRecord",
+        collection: "programs",
+        record: {
+          id: "prog-new-touch-conveni",
+          name: "対象コンビニ・飲食店でタッチ決済 +7%",
+          rate: 0.07,
+          currencyId: "v-pt",
+        },
+        sourceId: "smbc-vpoint-up",
+        confidence: 0.95,
+        evidence: ev,
+      },
+    ];
+    const r = buildLabelResolver(sameRunAuto);
+    expect(r.program("prog-new-touch-conveni")).toBe(
+      "対象コンビニ・飲食店でタッチ決済 +7%",
+    );
+  });
+
+  it("同 run の auto stores も name lookup に注入できる", () => {
+    const sameRunAuto: Proposal[] = [
+      {
+        type: "addRecord",
+        collection: "stores",
+        record: { id: "store-new-cafe", name: "新カフェ", category: "飲食" },
+        sourceId: "rakuten-point-partners",
+        confidence: 0.95,
+        evidence: ev,
+      },
+    ];
+    const r = buildLabelResolver(sameRunAuto);
+    expect(r.store("store-new-cafe")).toBe("新カフェ");
+  });
+
+  it("needsReview (reviewReason 付き) は注入されない", () => {
+    // proposePrograms で idCollision された program は needsReview 側にあるが、
+    // buildLabelResolver は引数で渡したものを全部注入する設計。
+    // 注: 実用上は autoApplicable だけを渡すので reviewReason 付きは来ないが、
+    // 万一渡しても rec に id/name があれば取り込む (defensive、ただし
+    // membership 側は missingProgramBody で降格してるので summary に出ない)
+    const sameRunAuto: Proposal[] = [
+      {
+        type: "addRecord",
+        collection: "programs",
+        record: { id: "prog-with-review", name: "レビュー必須 prog", rate: 0.05, currencyId: "v-pt" },
+        sourceId: "src",
+        confidence: 0.95,
+        evidence: ev,
+        reviewReason: "idCollision",
+      },
+    ];
+    const r = buildLabelResolver(sameRunAuto);
+    // 引数経由で渡されたものは取り込む (caller 側で autoApplicable のみ
+    // 渡す前提)。これは仕様として明示しておく。
+    expect(r.program("prog-with-review")).toBe("レビュー必須 prog");
+  });
+
+  it("seed の name が既存なら同 run の同 id では上書きされない (既存優先)", () => {
+    // 通常運用では起きないが防御的に。
+    const sameRunAuto: Proposal[] = [
+      {
+        type: "addRecord",
+        collection: "programs",
+        record: { id: "prog-rakuten-pointcard-0.5pc", name: "上書きされてはいけない", rate: 0.005, currencyId: "rakuten-point" },
+        sourceId: "src",
+        confidence: 0.95,
+        evidence: ev,
+      },
+    ];
+    const r = buildLabelResolver(sameRunAuto);
+    expect(r.program("prog-rakuten-pointcard-0.5pc")).not.toBe("上書きされてはいけない");
+  });
+});
+
+describe("buildSyncHistoryEntry: 同 run aware で新規 program/store summary が日本語化", () => {
+  const base: ProposalReport = {
+    generatedAt: "2026-05-28T00:00:00Z",
+    fromSeedVersion: 39,
+    toSeedVersion: 39,
+    autoApplicable: [],
+    needsReview: [],
+    summary: { autoApplicableCount: 0, needsReviewCount: 0, sourcesProcessed: 1, sourcesFailed: 0 },
+  };
+
+  it("同 run で program 本体 + membership が両方 auto なら summary も日本語化", () => {
+    const ev = { evidenceQuote: "x", explicitness: 1, ambiguity: 0 };
+    const report: ProposalReport = {
+      ...base,
+      autoApplicable: [
+        // 注: 実運用では proposePrograms が idCollision を付けるので
+        // 同 run で program が auto になることはあまり無いが、API としては
+        // 「同時 auto」のケースを保証する
+        {
+          type: "addRecord",
+          collection: "programs",
+          record: {
+            id: "prog-new-touch",
+            name: "新タッチ決済 +7%",
+            rate: 0.07,
+            currencyId: "v-pt",
+          },
+          sourceId: "smbc-vpoint-up",
+          confidence: 0.95,
+          evidence: ev,
+        },
+        {
+          type: "addRecord",
+          collection: "memberships",
+          record: { programId: "prog-new-touch", storeId: "store-x" },
+          sourceId: "smbc-vpoint-up",
+          confidence: 0.95,
+          evidence: ev,
+        },
+      ],
+      summary: { autoApplicableCount: 2, needsReviewCount: 0, sourcesProcessed: 1, sourcesFailed: 0 },
+    };
+    const entry = buildSyncHistoryEntry(report)!;
+    // membership の summary が「prog-new-touch → ...」ではなく日本語名で resolve
+    const membershipItem = entry.items.find((i) => i.collection === "memberships");
+    expect(membershipItem?.summary).toContain("新タッチ決済 +7%");
+    expect(membershipItem?.summary).not.toMatch(/^prog-new-touch →/);
+  });
+});

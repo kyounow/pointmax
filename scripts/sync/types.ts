@@ -308,6 +308,7 @@ export type ReviewReason =
   | "unsupportedDateClaim"    // validFrom/validTo があるのに evidenceQuote に日付根拠がない
   | "zeroOrInvalidRate"       // rate=0 または未定義。Gemini が還元率を抽出できなかった疑い
   | "missingStoreBody"        // membership 提案だが、参照先 store 本体が seed 未存在 + 同 run autoApplicable にも無い (category cap 等で deferred 済の orphan を防止)
+  | "missingProgramBody"      // membership 提案だが、参照先 program 本体が seed 未存在 + 同 run autoApplicable にも無い (proposePrograms の idCollision 強制 → membership だけ通過するケースを防止)
   | "expiredCampaign"         // validTo + grace (30日) 経過済の campaign 削除提案。誤削除防止のため必ず人手レビュー
   | "safetyFailed";           // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
 

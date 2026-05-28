@@ -87,8 +87,16 @@ function loadRegistry(): RegistryFile | null {
   }
 }
 
-/** seed + registry.yaml から ID→Japanese 名解決の lookup を構築する。 */
-export function buildLabelResolver(): LabelResolver {
+/**
+ * seed + registry.yaml から ID→Japanese 名解決の lookup を構築する。
+ * 第 2 引数 `sameRunAutoProposals` を渡すと、同 run で auto-merge 予定の
+ * 新規 programs/stores/cards 等の name も lookup map に注入される。
+ * これにより cron が新規 program を auto-merge する run の SYNC_HISTORY
+ * summary が「prog-X → 店名」ではなく「program 名 → 店名」で日本語化される。
+ */
+export function buildLabelResolver(
+  sameRunAutoProposals: Proposal[] = [],
+): LabelResolver {
   const s = seed();
   const sources = loadRegistry()?.sources ?? [];
   const storeMap = new Map(s.stores.map((x) => [x.id, x.name]));
@@ -98,6 +106,37 @@ export function buildLabelResolver(): LabelResolver {
   const paymentAppMap = new Map(s.paymentApps.map((x) => [x.id, x.name]));
   const pointCardMap = new Map(s.pointCards.map((x) => [x.id, x.name]));
   const sourceMap = new Map(sources.map((x) => [x.id, x.label]));
+
+  // 同 run の auto 候補も lookup に注入 (新規 program/store が同時に追加される
+  // 場合に summary を日本語化するため)。既存 seed の値が優先 (上書きしない)。
+  for (const p of sameRunAutoProposals) {
+    if (p.type !== "addRecord") continue;
+    const rec = (p as { record: Record<string, unknown> }).record;
+    const id = typeof rec.id === "string" ? rec.id : null;
+    const name = typeof rec.name === "string" ? rec.name : null;
+    if (!id || !name) continue;
+    switch (p.collection) {
+      case "programs":
+        if (!programMap.has(id)) programMap.set(id, name);
+        break;
+      case "stores":
+        if (!storeMap.has(id)) storeMap.set(id, name);
+        break;
+      case "cards":
+        if (!cardMap.has(id)) cardMap.set(id, name);
+        break;
+      case "paymentApps":
+        if (!paymentAppMap.has(id)) paymentAppMap.set(id, name);
+        break;
+      case "pointCards":
+        if (!pointCardMap.has(id)) pointCardMap.set(id, name);
+        break;
+      case "currencies":
+        if (!currencyMap.has(id)) currencyMap.set(id, name);
+        break;
+    }
+  }
+
   // 未解決時は slug を返す (fallback でも debug 可能に)
   return {
     store: (id) => storeMap.get(id) ?? id,
@@ -357,6 +396,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   unsupportedDateClaim: "🔴 unsupportedDateClaim",
   zeroOrInvalidRate: "🔴 zeroOrInvalidRate",
   missingStoreBody: "🟠 missingStoreBody (store 本体なし membership)",
+  missingProgramBody: "🟠 missingProgramBody (program 本体なし membership)",
   expiredCampaign: "🟠 expiredCampaign (validTo+30日経過、削除候補)",
 };
 
@@ -392,6 +432,10 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "membership 提案だが、参照先 store 本体が seed 未存在 + 同 run の auto 候補にも無い (例: category cap で deferred された場合)。" +
     "そのまま auto-merge すると孤児 membership (店名解決できない、UI で店舗未表示) が seed に残るため降格。store 本体を手動キュレートで追加するか、" +
     "次回 cron で store 側が auto 化されるのを待つ。",
+  missingProgramBody:
+    "membership 提案だが、参照先 program 本体が seed 未存在 + 同 run の auto 候補にも無い (proposePrograms は新規 program に必ず idCollision を付けるため、" +
+    "program 本体は同 run では auto に上がらず needsReview に行く)。そのまま membership だけ auto-merge すると BenefitProgram が無く還元計算できない孤児が seed に残るため降格。" +
+    "program 本体側の needsReview を先に承認 → 手動で seed に program 追加 → 次回 cron で membership 側も自動的に通る運用。",
   expiredCampaign:
     "validTo が 30 日以上前に終了した campaign。Calculator では isRuleActiveAt() で自動 skip されているため機能的影響なし、" +
     "seed のサイズ/可読性のために削除を提案。承認する場合は seed-data-programs.ts (or seed-additions.ts) から該当 program と関連 memberships を手動削除して PR。" +
@@ -500,6 +544,7 @@ export function buildReviewQueue(report: ProposalReport): string {
       "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
       "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
       "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
+      "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
       "expiredCampaign",      // 🟠 validTo+30日経過。クリーンアップ候補
       "rateDeltaTooLarge",
       "rateRatioOutOfRange",
@@ -578,7 +623,7 @@ export function buildReviewQueue(report: ProposalReport): string {
  */
 export function buildSyncHistoryEntry(
   report: ProposalReport,
-  resolver: LabelResolver = buildLabelResolver(),
+  resolver: LabelResolver = buildLabelResolver(report.autoApplicable),
 ): SyncHistoryEntry | null {
   const n = report.autoApplicable.length;
   if (n === 0) return null;
