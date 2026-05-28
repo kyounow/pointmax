@@ -397,6 +397,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   zeroOrInvalidRate: "🔴 zeroOrInvalidRate",
   missingStoreBody: "🟠 missingStoreBody (store 本体なし membership)",
   missingProgramBody: "🟠 missingProgramBody (program 本体なし membership)",
+  storeAdditionsDisabled: "⏸ storeAdditionsDisabled (store 追加は手動キュレ運用)",
   expiredCampaign: "🟠 expiredCampaign (validTo+30日経過、削除候補)",
 };
 
@@ -436,6 +437,10 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "membership 提案だが、参照先 program 本体が seed 未存在 + 同 run の auto 候補にも無い (proposePrograms は新規 program に必ず idCollision を付けるため、" +
     "program 本体は同 run では auto に上がらず needsReview に行く)。そのまま membership だけ auto-merge すると BenefitProgram が無く還元計算できない孤児が seed に残るため降格。" +
     "program 本体側の needsReview を先に承認 → 手動で seed に program 追加 → 次回 cron で membership 側も自動的に通る運用。",
+  storeAdditionsDisabled:
+    "新規 store の追加は cron では行わない方針 (キャンペーン情報の獲得に注力するため)。" +
+    "ここに列挙された店舗は cron が検知した「seed に未追加の店舗候補」で、必要な場合は手動で seed-data-stores.ts に追加 → 次回 cron で関連 membership が自動取り込まれる。" +
+    "全件無視も OK (リストとしての参照のみ)。",
   expiredCampaign:
     "validTo が 30 日以上前に終了した campaign。Calculator では isRuleActiveAt() で自動 skip されているため機能的影響なし、" +
     "seed のサイズ/可読性のために削除を提案。承認する場合は seed-data-programs.ts (or seed-additions.ts) から該当 program と関連 memberships を手動削除して PR。" +
@@ -546,6 +551,7 @@ export function buildReviewQueue(report: ProposalReport): string {
       "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
       "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
       "expiredCampaign",      // 🟠 validTo+30日経過。クリーンアップ候補
+      "storeAdditionsDisabled", // ⏸ store 追加は手動キュレ運用、参照リストとして末尾配置
       "rateDeltaTooLarge",
       "rateRatioOutOfRange",
       "multiSourceConflict",
