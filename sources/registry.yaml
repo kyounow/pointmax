@@ -53,17 +53,19 @@ sources:
     extractionScope: chains-only
     enabled: false
     notes: |
-      ★ 2026-05-28 追加 (#C-2 キャンペーン獲得拡充、ユーザー提供 URL、初期 enabled:false)。
+      ★ 2026-05-28 追加 (#C-2 キャンペーン獲得拡充、ユーザー提供 URL)。
       JAL カードの店舗別マイル上振れキャンペーン一覧。
       cardIds 候補: ["jal-suica"] (将来 jal-card 一般 / jal-ana 系も対応)。
       還元通貨: jal-mile。期間限定 + 店舗特定の上振れマイル付与施策を campaign-v3.0
       extractor で 1 キャンペーン=1 program (validFrom/validTo + cardIds) + 対象
       店舗 membership として抽出。
-      ★ 事前 WebFetch (2026-05-28): 索引ハブだがページ自体に店舗名 (アクアクララ /
-      ウエルシアグループ / マツキヨココカラ 等) が見えており、Gemini で抽出可能性あり。
-      ただし倍率/期間が「子ページ参照」となっていて 0 件の可能性も高い。実 cron で
-      確認後 enabled:true 化。失敗時は別 URL 候補:
-        - https://partner.jal.co.jp/campaign/list (一覧サブパス)
+      ★ 2026-05-28 手動 fetch 検証 (3 attempts: URL Context 2回 nonJson →
+      pre-fetch fallback → 取得成功): 抽出 0 件。
+      notes="ページ本文にはキャンペーン情報（店舗名、還元率、期間）の具体的な記載が
+      ありませんでした。" Gemini が保守的に判定。索引ハブで子ページに具体情報がある状態
+      (アクアクララ / ウエルシアグループ / マツキヨココカラ 等のリンクは見える)。
+      現状 enabled:false 維持、別 URL 候補:
+        - https://partner.jal.co.jp/campaign/list (一覧サブパス、未検証)
         - 個別キャンペーン詳細 URL (子ページ、ユーザー提供待ち)
 
   - id: jal-card-information
@@ -77,16 +79,18 @@ sources:
     extractionScope: chains-only
     enabled: false
     notes: |
-      ★ 2026-05-28 追加 (#C-2 キャンペーン獲得拡充、ユーザー提供 URL、初期 enabled:false)。
+      ★ 2026-05-28 追加 (#C-2 キャンペーン獲得拡充、ユーザー提供 URL)。
       JAL カードのお知らせ/キャンペーン情報集約ページ。
       cardIds 候補: ["jal-suica"]、還元通貨: jal-mile。
-      ★ 事前検証 (2026-05-28): curl/WebFetch 両方で接続失敗 (HTTP 000、Anthropic 側
-      IP block の可能性)。ただし GitHub Actions の Gemini cron は別 IP から動くため、
-      実 cron では取得できる可能性あり。次回 manual workflow_dispatch で動作確認 →
-      enabled:true 化 or URL 差し替え判断。
-      取得成功時に期待する形: 入会キャンペーン (新規発行 + N マイル) は新規 program、
-      店舗別マイル上振れ施策は program+membership として抽出。日付明記が無いものは
-      campaign extractor が 0 件で返す保守動作 (既存 jre-point-campaigns 等と同じ)。
+      ★ 2026-05-28 手動 fetch 検証 (3 attempts、URL_RETRIEVAL_STATUS_SUCCESS):
+      取得は成功したが Gemini が JSON ではなく散文で返答し nonJson エラー。
+      Gemini raw: "I have reviewed the content of the JALカードキャンペーン page.
+      The page primarily lists campaigns related to: JALCARD new applications,
+      JALCARD usage (lottery), Events and other..."
+      → ページ本体は入会/抽選キャンペーンが中心で、「店舗×期間×還元率」3点セットを
+      持つ campaign extractor の対象外。Gemini が JSON 0件で返さず散文で説明
+      したため nonJson エラーで extracted JSON は空。現状 enabled:false 維持、
+      別 URL 候補 (店舗別マイル上振れページ) のユーザー提供待ち。
 
   - id: rakuten-point-partners
     label: 楽天ポイントカード 加盟店 (公式)
