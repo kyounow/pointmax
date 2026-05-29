@@ -57,7 +57,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 39;
+export const SEED_VERSION = 40;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -73,6 +73,16 @@ export const SEED_CHANGELOG: {
   date: string;
   summary: string;
 }[] = [
+  {
+    version: 40,
+    date: "2026-05-29",
+    summary:
+      "v6.0.0 メジャー: ポイントカードに「使う/使わない」チェックボックスを追加。" +
+      "使わないポイントは二重取り計算から外れ、交換ルートの起点・経由からも除外される " +
+      "(使うポイント間の交換に限定)。Calculator は「未使用ポイントカードを有効化すると +X」を、" +
+      "交換ルート検索は「保有優先のメインルート + 使い始めればより良いサブルート」を提示。" +
+      "データ追加は無し (PointCard.enabled は任意フィールド、既存は全て ON 扱いで後方互換)。",
+  },
   {
     version: 1,
     date: "2026-05-11",

@@ -214,7 +214,7 @@ PointMax は 2 つの version を独立管理:
 
 | 種類 | 用途 | 現在値 |
 |---|---|---|
-| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **39** |
+| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **40** |
 | `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **5** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
@@ -248,6 +248,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **v5.1.1** — すかいらーく系 13 店 + Olive 選べる特典 program 追加。ライフスタイル系 program (給与振込/住宅ローン/SBI/Vitality 等) は全カード保有者に過大計算されるため恒久除外方針
 - **v5.1.2** — `chargeBased` paymentApp 経由で cardIds-only program (Olive 選べる特典等) が誤適用されるバグ修正
 - **v5.1.3** — legacy `paymentApp.ts` 削除 + 異種通貨 addOn の分離表示 (`CardRanking.appBonusBreakdown` 追加で program 名明示)
+- **v6.0.0** — ポイントカードに「使う/使わない」チェックボックスを追加 (クレカ・支払方法と同 UI)。使わないポイントは二重取りから外れ、交換ルートの起点・経由からも除外 (`bestPath` に `blockedCurrencyIds` ゲート新設、deny-list 方式)。Calculator は「未使用ポイントカードを有効化すると +X」(`rankCards` 戻り値を `RankResult { rankings, upgrade }` 化)、EdgesScreen ルート検索は「保有優先メイン + 使い始めればより良いサブルート」を提示。PERSIST_SCHEMA は 5 据え置き (PointCard.enabled は任意フィールド、後方互換)
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版)。`ExtractorKind` は計 7 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
