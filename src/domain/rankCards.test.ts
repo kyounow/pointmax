@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { rankCards } from "./rankCards";
+import { rankCards, nearlyEqual, RANK_EPS } from "./rankCards";
 import type { BenefitProgram, Card, ConversionEdge, PaymentApp, PointCard, Store, StoreProgramMembership } from "./types";
 
 // v6.0.0: rankCards は RankResult ({ rankings, upgrade }) を返すようになった。
@@ -11,6 +11,19 @@ function rankCardsRankings(
 ) {
   return rankCards(input, options).rankings;
 }
+
+// A3: ランキングの「実質同値」判定が浮動小数点 dust を許容することの回帰テスト。
+// 計算モデルは丸めず精度を保ち (表示は formatNum)、順位比較のみ ε 許容にする方針。
+describe("nearlyEqual (RANK_EPS 許容比較)", () => {
+  it("浮動小数点 dust (0.1 + 0.2 = 0.30000000000000004) を同値とみなす", () => {
+    expect(0.1 + 0.2).not.toBe(0.3); // dust が実在することを文書化
+    expect(nearlyEqual(0.1 + 0.2, 0.3)).toBe(true);
+  });
+  it("RANK_EPS を超える差は別値とみなす", () => {
+    expect(nearlyEqual(70, 70 + RANK_EPS * 10)).toBe(false);
+    expect(nearlyEqual(100, 101)).toBe(false);
+  });
+});
 
 const rakuten: Card = {
   id: "rakuten",

@@ -3,7 +3,12 @@
 // ここでは store action 固有の「ガード条件」「ストア state への反映」のみ検査。
 import { describe, it, expect, beforeEach } from "vitest";
 import { useStore } from "./store";
-import type { Card, PaymentApp } from "../domain/types";
+import type {
+  BenefitProgram,
+  Card,
+  PaymentApp,
+  StoreProgramMembership,
+} from "../domain/types";
 
 const MASTER_CARD_ID = "rakuten-card";
 const MASTER_PAYMENT_APP_ID = "pa-rakuten-pay";
@@ -208,5 +213,51 @@ describe("store: preferredCurrencyIds (v4.0.0 ②)", () => {
     });
     useStore.getState().removeCurrency("cur-x");
     expect(useStore.getState().preferredCurrencyIds).toEqual(["cur-y"]);
+  });
+});
+
+describe("store: exportJson / importJson は programs / memberships を保持する (A4)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  const program: BenefitProgram = {
+    id: "prog-a4-test",
+    name: "A4 テストプログラム",
+    rate: 0.05,
+    currencyId: "rakuten-pt",
+  };
+  const membership: StoreProgramMembership = {
+    programId: "prog-a4-test",
+    storeId: "store-a4",
+  };
+
+  it("export → import ラウンドトリップで programs / memberships が失われない", () => {
+    useStore.setState({ programs: [program], memberships: [membership] });
+    const json = useStore.getState().exportJson();
+    // 別端末を模して programs / memberships を消してから復元
+    useStore.setState({ programs: [], memberships: [] });
+
+    const res = useStore.getState().importJson(json);
+    expect(res.ok).toBe(true);
+    expect(useStore.getState().programs).toEqual([program]);
+    expect(useStore.getState().memberships).toEqual([membership]);
+  });
+
+  it("programs / memberships 欄が無い旧フォーマットの import は既存値を保持する", () => {
+    useStore.setState({ programs: [program], memberships: [membership] });
+    const legacyJson = JSON.stringify({
+      version: 1,
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [],
+    });
+
+    const res = useStore.getState().importJson(legacyJson);
+    expect(res.ok).toBe(true);
+    // preserve-on-missing: 旧フォーマットでも同期済みデータを消さない
+    expect(useStore.getState().programs).toEqual([program]);
+    expect(useStore.getState().memberships).toEqual([membership]);
   });
 });
