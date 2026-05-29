@@ -49,6 +49,7 @@ type CachedEntry = { product: number; steps: ConversionEdge[] } | null;
 export function makePathCache(
   edges: ConversionEdge[],
   availableCardIds?: ReadonlySet<string>,
+  blockedCurrencyIds?: ReadonlySet<string>,
 ): PathCache {
   const cache = new Map<string, CachedEntry>();
 
@@ -57,7 +58,7 @@ export function makePathCache(
     const key = `${from}|${to}`;
     const hit = cache.get(key);
     if (hit !== undefined) return hit;
-    const result = bestPath(edges, from, to, 1, availableCardIds);
+    const result = bestPath(edges, from, to, 1, availableCardIds, blockedCurrencyIds);
     const stored: CachedEntry = result
       ? { product: result.product, steps: result.steps }
       : null;

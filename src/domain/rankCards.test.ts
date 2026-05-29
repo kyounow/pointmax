@@ -1,6 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { rankCards } from "./rankCards";
-import type { BenefitProgram, Card, ConversionEdge, PaymentApp, Store, StoreProgramMembership } from "./types";
+import type { BenefitProgram, Card, ConversionEdge, PaymentApp, PointCard, Store, StoreProgramMembership } from "./types";
+
+// v6.0.0: rankCards は RankResult ({ rankings, upgrade }) を返すようになった。
+// 既存テストは rankings 配列を期待するので、薄いラッパで .rankings を取り出す。
+// upgrade を検証する新規テストは rankCards(...) を直接呼ぶ。
+function rankCardsRankings(
+  input: Parameters<typeof rankCards>[0],
+  options?: Parameters<typeof rankCards>[1],
+) {
+  return rankCards(input, options).rankings;
+}
 
 const rakuten: Card = {
   id: "rakuten",
@@ -30,7 +40,7 @@ const baseStores: Store[] = [
 
 describe("rankCards", () => {
   it("貯まる通貨が目標と一致するなら、変換ゼロホップでそのまま返す", () => {
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "rakuten-pt",
       cards: [rakuten],
@@ -48,7 +58,7 @@ describe("rankCards", () => {
 
   it("変換が必要なときは bestPath を経由して最終量を計算する", () => {
     const edges = [edge("rakuten-to-ana", "rakuten-pt", "ana-mile", 0.5)];
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "ana-mile",
       cards: [rakuten],
@@ -66,7 +76,7 @@ describe("rankCards", () => {
       edge("rakuten-to-ana", "rakuten-pt", "ana-mile", 0.5),
       edge("oki-to-ana", "okidoki", "ana-mile", 3),
     ];
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "ana-mile",
       cards: [rakuten, jcb],
@@ -93,7 +103,7 @@ describe("rankCards", () => {
     const memberships: StoreProgramMembership[] = [
       { programId: "prog-amzn-rule", storeId: "amazon" },
     ];
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "amazon", amount: 10000 },
       targetCurrencyId: "amazon-pt",
       cards: [rakuten],
@@ -110,7 +120,7 @@ describe("rankCards", () => {
 
   it("目標通貨に到達できないカードは reachable=false で末尾に入る", () => {
     const edges = [edge("rakuten-to-ana", "rakuten-pt", "ana-mile", 0.5)];
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "ana-mile",
       cards: [rakuten, jcb],
@@ -130,7 +140,7 @@ describe("rankCards", () => {
       edge("via-x-1", "rakuten-pt", "x-pt", 1),
       edge("via-x-2", "x-pt", "ana-mile", 0.7),
     ];
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "ana-mile",
       cards: [rakuten],
@@ -150,7 +160,7 @@ describe("rankCards", () => {
       name: "dポイントカード",
       currencyId: "d-pt",
     };
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "d-pt",
       cards: [rakuten],
@@ -188,7 +198,7 @@ describe("rankCards", () => {
       name: "重ね取り店",
       maxLoyaltyStacks: 2,
     };
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "stack-shop", amount: 10000 },
       targetCurrencyId: "d-pt",
       cards: [rakuten],
@@ -218,7 +228,7 @@ describe("rankCards", () => {
       defaultCurrencyId: "rakuten-pt",
       enabled: false,
     };
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "rakuten-pt",
       cards: [rakuten, disabledCard],
@@ -244,7 +254,7 @@ describe("rankCards", () => {
     const memberships: StoreProgramMembership[] = [
       { programId: "prog-cat-net", storeId: "amazon" },
     ];
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "amazon", amount: 10000 },
       targetCurrencyId: "rakuten-pt",
       cards: [rakuten],
@@ -274,7 +284,7 @@ describe("rankCards", () => {
       defaultCurrencyId: "target-pt",
     };
 
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "target-pt",
       cards: [cardB, cardA], // 意図的に B を先に渡す
@@ -305,7 +315,7 @@ describe("rankCards", () => {
       defaultCurrencyId: "target-pt",
     };
 
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "target-pt",
       cards: [cardB, cardA],
@@ -337,7 +347,7 @@ describe("rankCards", () => {
     const loyPtCard = { id: "loy-pt", name: "ポイントカード", currencyId: "target-pt" };
     const partsStore: Store = { id: "parts-shop", name: "構成要素店", maxLoyaltyStacks: 1 };
 
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "parts-shop", amount: 10000 },
       targetCurrencyId: "target-pt",
       cards: [cardB, cardA],
@@ -362,7 +372,7 @@ describe("rankCards", () => {
       { id: "active", name: "A", defaultRate: 0.01, defaultCurrencyId: "c1" },
       { id: "disabled", name: "B", defaultRate: 0.05, defaultCurrencyId: "c1", enabled: false },
     ];
-    const result = rankCards(
+    const result = rankCardsRankings(
       {
         payment: { storeId: "any", amount: 10000 },
         targetCurrencyId: "c1",
@@ -381,7 +391,7 @@ describe("rankCards", () => {
       { id: "active", name: "A", defaultRate: 0.01, defaultCurrencyId: "c1" },
       { id: "disabled", name: "B", defaultRate: 0.05, defaultCurrencyId: "c1", enabled: false },
     ];
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "c1",
       cards,
@@ -418,7 +428,7 @@ describe("rankCards", () => {
     const memberships: StoreProgramMembership[] = [
       { programId: "prog-rakuten-jre", storeId: "any" },
     ];
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "jal-mile",
       cards,
@@ -459,7 +469,7 @@ describe("rankCards", () => {
       { programId: "prog-test-waon-base", storeId: "any" },
     ];
 
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 1000 },
       targetCurrencyId: "waon-pt",
       cards: [rakuten], // defaultCurrencyId="rakuten-pt"
@@ -476,7 +486,7 @@ describe("rankCards", () => {
   });
 
   it("primary も addOn も loyalty も発火しなければ reachable=false", () => {
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 1000 },
       targetCurrencyId: "waon-pt",
       cards: [rakuten],
@@ -514,7 +524,7 @@ describe("rankCards", () => {
     ];
     const edges = [edge("rakuten-to-ana", "rakuten-pt", "ana-mile", 0.5)];
 
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "ana-mile",
       cards: [rakuten],
@@ -537,7 +547,7 @@ describe("rankCards", () => {
   // V4 で multi-currency 対応のため return shape が変わる可能性があるが、
   // 単一 target で呼び出した場合の挙動を pin して回帰を検出する。
   it("contract: 単一 target 呼び出しの CardRanking 完全 shape", () => {
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "rakuten-pt",
       cards: [rakuten],
@@ -601,7 +611,7 @@ describe("rankCards", () => {
       bonusType: "addOn",
     };
     // RankInput には currencies フィールドが無いため (rankCards は edge から導出) ローカル定義は不要。
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "general", amount: 10000 },
       targetCurrencyId: "v-pt",
       cards: [{ ...oliveCard, enabled: true }],
@@ -674,7 +684,7 @@ describe("rankCards", () => {
     // edge: rakuten-pt → v-pt のみ (jal-mile → v-pt は なし = 到達不能)
     const edges = [edge("rakuten-vpt", "rakuten-pt", "v-pt", 0.5)];
 
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "eneos", amount: 10000 },
       targetCurrencyId: "v-pt",
       cards: [dualCard],
@@ -728,7 +738,7 @@ describe("rankCards", () => {
     ];
     const edges = [edge("rakuten-vpt", "rakuten-pt", "v-pt", 0.5)]; // jal は target 同一通貨
 
-    const result = rankCards({
+    const result = rankCardsRankings({
       payment: { storeId: "eneos", amount: 10000 },
       targetCurrencyId: "jal-mile",
       cards: [dualCard],
@@ -744,5 +754,107 @@ describe("rankCards", () => {
     }
     expect(r.earnedCurrencyId).toBe("jal-mile");
     expect(r.finalAmount).toBe(200); // 10000 × 0.02 × 1
+  });
+});
+
+// ─── v6.0.0: PointCard.enabled + usedCurrency ゲート + ScopeUpgrade ───
+describe("rankCards v6.0.0: ポイントカード利用選択 + upgrade", () => {
+  const dCard: PointCard = { id: "d-card", name: "dポイントカード", currencyId: "d-pt" };
+  const rCard: PointCard = { id: "r-card", name: "楽天ポイントカード", currencyId: "rakuten-pt" };
+
+  it("全ポイントカード ON (disabled 無し) なら upgrade は null", () => {
+    const res = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "d-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
+      pointCards: [dCard],
+      loyaltyRules: [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+    });
+    expect(res.upgrade).toBeNull();
+  });
+
+  it("disabled なポイントカードの二重取りは MAIN に出ず、upgrade.addedLoyalties に出る", () => {
+    const res = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "d-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
+      pointCards: [{ ...dCard, enabled: false }],
+      loyaltyRules: [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+    });
+    // MAIN: dカード無効 → loyalty 二重取りなし
+    expect(res.rankings[0].loyalties).toHaveLength(0);
+    // upgrade: dカードを有効化すれば +100 (10000×0.01)
+    expect(res.upgrade).not.toBeNull();
+    expect(res.upgrade!.loyaltyDelta).toBe(100);
+    expect(res.upgrade!.deltaFinalAmount).toBe(100);
+    expect(res.upgrade!.addedLoyalties.map((l) => l.pointCard.id)).toEqual(["d-card"]);
+  });
+
+  it("disabled ポイントカードの通貨を経由するルートは MAIN で使えず、有効化で開く (unlockCurrencyIds)", () => {
+    // 楽天カードが稼ぐ rakuten-pt → (d-pt 経由) → ana-mile。
+    // d-pt は d-card (disabled) でしか「使う通貨」にならない。
+    // MAIN: rakuten-pt → ana-mile 直行 (低レート) のみ。d-pt 経由は d-card OFF で不可。
+    const edges = [
+      edge("rakuten-to-ana", "rakuten-pt", "ana-mile", 0.3), // 直行 低レート
+      edge("rakuten-to-d", "rakuten-pt", "d-pt", 1),
+      edge("d-to-ana", "d-pt", "ana-mile", 0.9), // d-pt 経由 高レート
+    ];
+    const res = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "ana-mile",
+      cards: [rakuten],
+      stores: baseStores,
+      edges,
+      pointCards: [{ ...dCard, enabled: false }],
+    });
+    // MAIN: rakuten-pt は使う通貨 (楽天カード)。d-pt は使わない → d-to-ana edge 不可。
+    //   直行 rakuten→ana (0.3) のみ。100 楽天pt × 0.3 = 30
+    expect(res.rankings[0].finalAmount).toBeCloseTo(30, 10);
+    expect(res.rankings[0].pathSteps.map((e) => e.id)).toEqual(["rakuten-to-ana"]);
+    // upgrade: d-card 有効化で d-pt 経由 (100×1×0.9=90) が開く → +60、unlock に d-pt
+    expect(res.upgrade).not.toBeNull();
+    expect(res.upgrade!.deltaFinalAmount).toBeCloseTo(60, 10);
+    expect(res.upgrade!.unlockCurrencyIds).toContain("d-pt");
+  });
+
+  it("enabled 未設定 (undefined) のポイントカードは使う扱い (後方互換)", () => {
+    const res = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "d-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
+      pointCards: [dCard], // enabled 未設定
+      loyaltyRules: [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+    });
+    expect(res.rankings[0].loyalties).toHaveLength(1);
+    expect(res.upgrade).toBeNull();
+  });
+
+  it("maxStacks=1 で高レート disabled が enabled を押し出す (入れ替え upgrade)", () => {
+    const stackStore: Store = { id: "s1", name: "s1", maxLoyaltyStacks: 1 };
+    const res = rankCards({
+      payment: { storeId: "s1", amount: 10000 },
+      targetCurrencyId: "d-pt",
+      cards: [rakuten],
+      stores: [...baseStores, stackStore],
+      edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
+      pointCards: [rCard, { ...dCard, enabled: false }],
+      loyaltyRules: [
+        { id: "lr", storeId: "s1", pointCardId: "r-card", rate: 0.005 }, // enabled、低レート
+        { id: "ld", storeId: "s1", pointCardId: "d-card", rate: 0.02 }, // disabled、高レート
+      ],
+    });
+    // MAIN: maxStacks=1、r-card のみ → 10000×0.005=50
+    expect(res.rankings[0].loyalties).toHaveLength(1);
+    expect(res.rankings[0].loyalties[0].pointCard.id).toBe("r-card");
+    // FULL: d-card (0.02→200) が r-card を押し出して採用 → loyaltyDelta = 200-50 = 150
+    expect(res.upgrade).not.toBeNull();
+    expect(res.upgrade!.loyaltyDelta).toBe(150);
+    expect(res.upgrade!.addedLoyalties.map((l) => l.pointCard.id)).toEqual(["d-card"]);
   });
 });

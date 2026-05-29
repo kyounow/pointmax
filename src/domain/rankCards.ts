@@ -13,6 +13,7 @@ import { buildMembershipIndex } from "./membershipIndex";
 import { makePathCache } from "./pathCache";
 import { evaluatePrograms } from "./programEvaluator";
 import { selectPrimaryForTarget } from "./selectPrimary";
+import { computeBlockedCurrencyIds } from "./currencyGating";
 
 // ResolvedRate は programEvaluator ベース。後方互換のため source フィールドを維持。
 export type ResolvedRate =
@@ -79,6 +80,23 @@ export type CardRanking = {
   totalFinalAmount: number;
 };
 
+// v6.0.0: 「未使用のポイントカードを有効化すればこれだけお得になる」提案。
+// MAIN (使う資産) と FULL (全ポイントカード ON) の差分から算出。
+// disabled なポイントカードが 1 枚も無ければ null。
+export type ScopeUpgrade = {
+  deltaFinalAmount: number; // best achievable total の増分 (> 0)
+  loyaltyDelta: number; // うち loyalty 二重取りの増分
+  routeDelta: number; // うち交換ルート改善の増分 (= delta - loyaltyDelta、>= 0 にクランプ)
+  addedLoyalties: LoyaltyResult[]; // 新たに二重取りに加わる pointCard 群 (FULL にあって MAIN に無い)
+  unlockCurrencyIds: string[]; // ルート改善のため使い始めるべき通貨 (UI で pointCard 名に逆引き)
+};
+
+// v6.0.0: rankCards の戻り値。rankings = 現在の最適 (MAIN)、upgrade = 未使用資産有効化提案。
+export type RankResult = {
+  rankings: CardRanking[];
+  upgrade: ScopeUpgrade | null;
+};
+
 // このカード × この支払アプリが使えるか判定
 function isPaymentAppCompatible(card: Card, paymentApp: PaymentApp): boolean {
   if (!paymentApp.compatibleCardIds || paymentApp.compatibleCardIds.length === 0) {
@@ -90,7 +108,7 @@ function isPaymentAppCompatible(card: Card, paymentApp: PaymentApp): boolean {
 export function rankCards(
   input: RankInput,
   options: { includeDisabled?: boolean } = {},
-): CardRanking[] {
+): RankResult {
   const { includeDisabled = false } = options;
   const {
     payment,
@@ -105,48 +123,54 @@ export function rankCards(
     memberships = [],
   } = input;
 
-  const targetCards = includeDisabled
-    ? cards
-    : cards.filter((c) => c.enabled !== false);
-
-  const enabledCards = cards.filter((c) => c.enabled !== false);
-  const availableCardIds = new Set(enabledCards.map((c) => c.id));
-
   const store = stores.find((s) => s.id === payment.storeId);
   const maxStacks = Math.max(0, store?.maxLoyaltyStacks ?? 1);
 
-  // ─── 重複計算削減用の共通 cache / index (Wave 2 audit-fix A-1 / A-2 / A-5) ───
-  // pathCache: bestPath (Bellman-Ford O(V·E)) の (from,to) 重複呼び出しを memoize
   // membershipIndex: storeId → memberships の lookup を全 evaluatePrograms / loyalty で共有
-  const pathCache = makePathCache(edges, availableCardIds);
+  // (Wave 2 audit-fix A-2)。スコープ非依存なので 1 度だけ構築。
   const membershipIndex = buildMembershipIndex(memberships);
-
-  // ─── Loyalty (ポイントカード提示) 評価 ───
-  // programEvaluator ベースの loyalty: pointCardId を持つ programs を評価
-  const loyalties = bestLoyalties(
-    payment.storeId,
-    payment.amount,
-    targetCurrencyId,
-    pointCards,
-    loyaltyRules,
-    edges,
-    maxStacks,
-    store?.preferredPointCardIds,
-    new Date(),
-    availableCardIds,
-    programs,
-    memberships,
-    membershipIndex,
-    pathCache,
-  );
-  const loyaltyTotal = loyalties.reduce(
-    (sum, r) => sum + (r.reachable ? r.finalAmount : 0),
-    0,
-  );
 
   const DIRECT_PAYMENT_APP: PaymentApp = { id: "__direct__", name: "直接決済" };
 
-  const ranked: CardRanking[] = targetCards.map((card) => {
+  // 1 スコープ (= 利用可能カード集合 + 使う通貨集合 + loyalty 対象ポイントカード) の
+  // ランキングを計算する内部関数。MAIN (使う資産) と FULL (全ポイントカード ON) を
+  // 同一ロジックで回し、差分から ScopeUpgrade を作る (v6.0.0)。
+  //   - pathCache は usedCurrencyIds 込みで構築 → 全 path 解決が「使う通貨」でゲートされる
+  //   - usedCurrencyIds=undefined なら全通貨解放 (FULL ルート計算用)
+  function runScope(
+    targetCards: Card[],
+    availableCardIds: ReadonlySet<string>,
+    blockedCurrencyIds: ReadonlySet<string> | undefined,
+    scopePointCards: PointCard[],
+  ): { rankings: CardRanking[]; loyalties: LoyaltyResult[]; loyaltyTotal: number } {
+    // pathCache: bestPath (Bellman-Ford O(V·E)) の (from,to) 重複呼び出しを memoize
+    // (Wave 2 audit-fix A-1)。blockedCurrencyIds ゲート込み。
+    const pathCache = makePathCache(edges, availableCardIds, blockedCurrencyIds);
+
+    // ─── Loyalty (ポイントカード提示) 評価 ───
+    // programEvaluator ベースの loyalty: pointCardId を持つ programs を評価
+    const loyalties = bestLoyalties(
+      payment.storeId,
+      payment.amount,
+      targetCurrencyId,
+      scopePointCards,
+      loyaltyRules,
+      edges,
+      maxStacks,
+      store?.preferredPointCardIds,
+      new Date(),
+      availableCardIds,
+      programs,
+      memberships,
+      membershipIndex,
+      pathCache,
+    );
+    const loyaltyTotal = loyalties.reduce(
+      (sum, r) => sum + (r.reachable ? r.finalAmount : 0),
+      0,
+    );
+
+    const ranked: CardRanking[] = targetCards.map((card) => {
     // PaymentApp なし: programEvaluator のみ
     if (paymentApps.length === 0 || !store) {
       const storeObj = store ?? null;
@@ -469,7 +493,88 @@ export function rankCards(
       (r.appBonusFinalAmount > 0 ? 1 : 0) +
       r.loyalties.filter((l) => l.reachable).length;
     return partCount(a) - partCount(b);
-  });
+    });
 
-  return ranked;
+    return { rankings: ranked, loyalties, loyaltyTotal };
+  }
+
+  // ─── MAIN: 現在「使う」資産でのランキング ───
+  const enabledCards = cards.filter((c) => c.enabled !== false);
+  const mainAvailableCardIds = new Set(enabledCards.map((c) => c.id));
+  const enabledPointCards = pointCards.filter((p) => p.enabled !== false);
+  // 「使わない」選択をしたポイント通貨 (deny-list)。交換ルートの起点・経由から除外される。
+  const blockedCurrencyIds = computeBlockedCurrencyIds(cards, pointCards, programs);
+  const mainTargetCards = includeDisabled ? cards : enabledCards;
+  const main = runScope(
+    mainTargetCards,
+    mainAvailableCardIds,
+    blockedCurrencyIds,
+    enabledPointCards,
+  );
+
+  // ─── FULL: 全ポイントカードを ON にしたらどうなるか (upgrade 算出用) ───
+  // クレカ軸 (disabled クレカの有効化) は既存 comparisonItems が担うので、ここでは
+  // ポイントカード軸のみ動かす: availableCardIds は enabled のまま、blockedCurrencyIds を
+  // 空 (= 何もブロックしない) にし、loyalty も全ポイントカードで評価する。
+  const hasDisabledPointCard = pointCards.some((p) => p.enabled === false);
+  let upgrade: ScopeUpgrade | null = null;
+  if (hasDisabledPointCard) {
+    const full = runScope(
+      mainTargetCards,
+      mainAvailableCardIds,
+      undefined, // 全ポイントカード ON 相当 = ブロックなし
+      pointCards, // 全ポイントカードで loyalty 評価
+    );
+    upgrade = buildScopeUpgrade(main, full, blockedCurrencyIds);
+  }
+
+  return { rankings: main.rankings, upgrade };
+}
+
+// MAIN と FULL の差分から ScopeUpgrade を構築する。改善が無ければ null。
+function buildScopeUpgrade(
+  main: { rankings: CardRanking[]; loyalties: LoyaltyResult[]; loyaltyTotal: number },
+  full: { rankings: CardRanking[]; loyalties: LoyaltyResult[]; loyaltyTotal: number },
+  blockedCurrencyIds: ReadonlySet<string>,
+): ScopeUpgrade | null {
+  const EPS = 1e-9;
+  const mainTop = main.rankings.find((r) => r.reachable)?.totalFinalAmount ?? 0;
+  const fullTop = full.rankings.find((r) => r.reachable)?.totalFinalAmount ?? 0;
+  const deltaFinalAmount = fullTop - mainTop;
+  if (deltaFinalAmount <= EPS) return null;
+
+  const loyaltyDelta = Math.max(0, full.loyaltyTotal - main.loyaltyTotal);
+  const routeDelta = Math.max(0, deltaFinalAmount - loyaltyDelta);
+
+  // 新たに loyalty stack に加わる pointCard (FULL にあって MAIN に無い)
+  const mainLoyaltyCardIds = new Set(
+    main.loyalties.map((l) => l.pointCard.id),
+  );
+  const addedLoyalties = full.loyalties.filter(
+    (l) => l.reachable && !mainLoyaltyCardIds.has(l.pointCard.id),
+  );
+
+  // ルート改善のため使い始めるべき通貨: FULL top カードの path が使う edge の
+  // fromCurrency のうち、MAIN でブロックされていた (使わない選択をした) 通貨。
+  const fullTopCard = full.rankings.find((r) => r.reachable);
+  const unlockCurrencySet = new Set<string>();
+  if (fullTopCard) {
+    const collect = (steps: { fromCurrencyId: string }[]) => {
+      for (const s of steps) {
+        if (blockedCurrencyIds.has(s.fromCurrencyId)) {
+          unlockCurrencySet.add(s.fromCurrencyId);
+        }
+      }
+    };
+    collect(fullTopCard.pathSteps);
+    for (const b of fullTopCard.appBonusBreakdown) collect(b.pathSteps);
+  }
+
+  return {
+    deltaFinalAmount,
+    loyaltyDelta,
+    routeDelta,
+    addedLoyalties,
+    unlockCurrencyIds: [...unlockCurrencySet],
+  };
 }

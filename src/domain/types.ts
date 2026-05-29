@@ -62,10 +62,18 @@ export type ConversionEdge = {
 
 // ポイントカード（クレカ決済とは別軸の、店頭提示で貯まるカード）
 // 例: dポイントカード, 楽天ポイントカード, Pontaカード
+// enabled: undefined または true = 使う（デフォルト。既存 localStorage データとの後方互換）
+//          false = 使わない。v6.0.0 で追加。Card.enabled と同セマンティクス。
+//   効果は 2 つ:
+//   (1) loyalty (店頭提示の二重取り) 候補から除外される
+//   (2) このポイントカードの通貨が「使う通貨 (usedCurrencyIds)」から外れ、
+//       交換ルート (bestPath) の起点・経由として使えなくなる
+//       (computeUsedCurrencyIds / bestPath の usedCurrencyIds ゲート参照)
 export type PointCard = {
   id: string;
   name: string;
   currencyId: string;
+  enabled?: boolean;
   notes?: string;
 };
 

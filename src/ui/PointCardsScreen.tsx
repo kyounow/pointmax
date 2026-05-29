@@ -113,6 +113,49 @@ export function PointCardsScreen() {
       },
     },
     {
+      // v6.0.0: クレカ/支払方法と同じ「使う」トグル。OFF にすると二重取り loyalty 候補から
+      // 外れ、かつこのポイント通貨が交換ルートの起点・経由から除外される (CalcUpgradeBanner で
+      // 「有効化すれば +X」を提示)。CardsScreen の enabled 列パターンを横展開。
+      key: "enabled",
+      label: "使う",
+      width: 90,
+      view: (p) => {
+        const on = p.enabled !== false;
+        return (
+          <label
+            className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={on}
+              onChange={(e) =>
+                updatePointCard(p.id, {
+                  enabled: e.target.checked ? undefined : false,
+                })
+              }
+            />
+            <span>{on ? "使う" : "OFF"}</span>
+          </label>
+        );
+      },
+      edit: (p, set) => {
+        const on = p.enabled !== false;
+        return (
+          <label className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}>
+            <input
+              type="checkbox"
+              checked={on}
+              onChange={(e) =>
+                set({ enabled: e.target.checked ? undefined : false })
+              }
+            />
+            <span>{on ? "使う" : "OFF"}</span>
+          </label>
+        );
+      },
+    },
+    {
       key: "name",
       label: "名前",
       view: (p) => p.name,
