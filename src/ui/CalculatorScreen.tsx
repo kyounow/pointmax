@@ -80,8 +80,9 @@ export function CalculatorScreen() {
   );
   const { cardName } = useNameResolvers();
 
-  // includeDisabled: true で全カード試算、後で 2 つに分割
-  const allRanked = useMemo(() => {
+  // includeDisabled: true で全カード試算、後で 2 つに分割。
+  // v6.0.0: rankCards は RankResult ({ rankings, upgrade }) を返す。
+  const rankResult = useMemo(() => {
     if (!storeId || !activeCurrencyId || !amount) return null;
     const amt = Number(amount);
     if (!Number.isFinite(amt) || amt <= 0) return null;
@@ -113,6 +114,8 @@ export function CalculatorScreen() {
     programs,
     memberships,
   ]);
+
+  const allRanked = rankResult?.rankings ?? null;
 
   // 主結果: enabled なカード (既存 result と同等)
   const result = useMemo(

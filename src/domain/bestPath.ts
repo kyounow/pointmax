@@ -12,20 +12,34 @@ export function bestPath(
   toId: string,
   startAmount: number = 1,
   availableCardIds?: ReadonlySet<string>,
+  blockedCurrencyIds?: ReadonlySet<string>,
 ): BestPathResult | null {
   if (fromId === toId) {
     return { finalAmount: startAmount, product: 1, steps: [] };
   }
 
-  // availableCardIds が渡されたら、requiredCardIds が制約を満たさないエッジを除外。
-  // undefined 時は従来通り全エッジを使う (テスト等の後方互換)。
-  const gated = availableCardIds
-    ? edges.filter(
-        (e) =>
-          !e.requiredCardIds?.length ||
-          e.requiredCardIds.some((id) => availableCardIds.has(id)),
-      )
-    : edges;
+  // ゲーティング (v6.0.0 で blockedCurrencyIds を追加):
+  //  (1) availableCardIds: requiredCardIds が制約を満たさないエッジを除外 (クレカ保有)。
+  //      undefined 時は従来通り全エッジ (テスト等の後方互換)。
+  //  (2) blockedCurrencyIds: ユーザーが「使わない」選択をしたポイント通貨 (= 該当
+  //      pointCard を OFF にし、他の有効資産でも貯まらない通貨) を起点・経由に持つ
+  //      エッジを除外する。edge は fromCurrencyId が blocked のとき通行不可。
+  //      目標通貨 (最終 toCurrency) はゲートしない (goal はユーザーが明示選択)。
+  //      純粋な経由通貨 (どの pointCard にも紐づかない) はブロックされない。
+  //      undefined / 空集合なら制約なし (全解放 = FULL ルート / 後方互換)。
+  const gated = edges.filter((e) => {
+    if (
+      availableCardIds &&
+      e.requiredCardIds?.length &&
+      !e.requiredCardIds.some((id) => availableCardIds.has(id))
+    ) {
+      return false;
+    }
+    if (blockedCurrencyIds && blockedCurrencyIds.has(e.fromCurrencyId)) {
+      return false;
+    }
+    return true;
+  });
   const valid = gated.filter((e) => e.rate > 0);
 
   const nodes = new Set<string>([fromId, toId]);

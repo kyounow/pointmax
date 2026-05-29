@@ -196,4 +196,54 @@ describe("bestPath", () => {
     const result = bestPath(edges, "A", "Z", 100);
     expect(result).toBeNull();
   });
+
+  // ─── v6.0.0: blockedCurrencyIds ゲート (使わないポイントを起点・経由から除外) ───
+  describe("blockedCurrencyIds ゲート", () => {
+    const edges = [
+      edge("ab", "A", "B", 1),
+      edge("bc", "B", "C", 1),
+    ];
+
+    it("undefined / 空集合なら全通行 (後方互換)", () => {
+      const r1 = bestPath(edges, "A", "C", 100, undefined, undefined);
+      expect(r1!.steps.map((e) => e.id)).toEqual(["ab", "bc"]);
+      const r2 = bestPath(edges, "A", "C", 100, undefined, new Set());
+      expect(r2!.steps.map((e) => e.id)).toEqual(["ab", "bc"]);
+    });
+
+    it("経由通貨 B が blocked だと B→C edge を通れず到達不能", () => {
+      const r = bestPath(edges, "A", "C", 100, undefined, new Set(["B"]));
+      expect(r).toBeNull();
+    });
+
+    it("起点 A が blocked だと最初の edge も通れない", () => {
+      const r = bestPath(edges, "A", "C", 100, undefined, new Set(["A"]));
+      expect(r).toBeNull();
+    });
+
+    it("目標通貨 C が blocked でも到達できる (起点・経由のみゲート)", () => {
+      // C は goal (どの edge の fromCurrency でもない) → blocked でも影響なし
+      const r = bestPath(edges, "A", "C", 100, undefined, new Set(["C"]));
+      expect(r).not.toBeNull();
+      expect(r!.finalAmount).toBe(100);
+    });
+
+    it("blocked に無関係な通貨が入っていても正常ルート", () => {
+      const r = bestPath(edges, "A", "C", 100, undefined, new Set(["Z"]));
+      expect(r!.steps.map((e) => e.id)).toEqual(["ab", "bc"]);
+    });
+
+    it("requiredCardIds と blockedCurrencyIds は AND (どちらかで弾かれる)", () => {
+      const e2: ConversionEdge[] = [
+        { id: "ab", fromCurrencyId: "A", toCurrencyId: "B", rate: 1, requiredCardIds: ["card1"] },
+      ];
+      // カード不足 → 不可
+      expect(bestPath(e2, "A", "B", 100, new Set(["other"]), undefined)).toBeNull();
+      // カード OK だが A が blocked → 不可
+      expect(bestPath(e2, "A", "B", 100, new Set(["card1"]), new Set(["A"]))).toBeNull();
+      // 両方クリア → 可
+      const r = bestPath(e2, "A", "B", 100, new Set(["card1"]), new Set(["Z"]));
+      expect(r).not.toBeNull();
+    });
+  });
 });
