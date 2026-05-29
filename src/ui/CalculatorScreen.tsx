@@ -1,18 +1,24 @@
+// CalculatorScreen — 試算画面のオーケストレーター (Wave 6 B-2 で子コンポーネントに分割)。
+// 入力 state / rankCards 試算 / 展開状態を保持し、表示は calculator/ 配下の子に委譲する:
+//   - CalcTodayBanner   : 今日のアクティブ割増サマリ
+//   - CalcStoreForm     : 店舗ピッカー + 金額 + 目標通貨フォールバック
+//   - CalcCurrencyTabs  : 優先通貨タブ
+//   - CalcLoyaltyBanner : ポイントカード併用バナー
+//   - CalcResultCard    : 1 カードぶんの結果カード
+//   - CardComparisonSection : 非保有カード比較 (既存)
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { rankCards } from "../domain/rankCards";
-import { cardLabel } from "../domain/cardLabel";
-import { formatRatio } from "../domain/currencyKind";
-import { formatNum } from "../domain/formatNum";
-import { groupBy } from "../domain/groupBy";
-import { NodePill } from "./NodePill";
-import { RuleStatusBadge } from "./RuleStatusBadge";
-import { NoteChips } from "./NoteChips";
+import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
-import { isRuleActiveAt } from "../domain/ruleActiveAt";
 import { isMasterCard } from "../state/seed";
 import { CardComparisonSection } from "./CardComparisonSection";
+import { CalcTodayBanner } from "./calculator/CalcTodayBanner";
+import { CalcStoreForm } from "./calculator/CalcStoreForm";
+import { CalcCurrencyTabs } from "./calculator/CalcCurrencyTabs";
+import { CalcLoyaltyBanner } from "./calculator/CalcLoyaltyBanner";
+import { CalcResultCard } from "./calculator/CalcResultCard";
 
 export function CalculatorScreen() {
   // Wave 5 B-1: 10 個別 subscribe → 単一 useShallow に集約。
@@ -53,6 +59,8 @@ export function CalculatorScreen() {
   // preferred があれば既定で先頭、無ければ fallback select で都度選択。
   const [activeCurrencyId, setActiveCurrencyId] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  // today-banner: 内訳の展開状態 (初期は折り畳み)
+  const [todayBreakdownOpen, setTodayBreakdownOpen] = useState(false);
 
   // preferred が変わったら activeCurrencyId を整合させる:
   // - preferred 非空 かつ activeCurrencyId が preferred に無い → 先頭にリセット
@@ -64,65 +72,8 @@ export function CalculatorScreen() {
     }
   }, [preferredCurrencyIds, activeCurrencyId]);
 
-  // today-banner: 内訳の展開状態 (初期は折り畳み)
-  const [todayBreakdownOpen, setTodayBreakdownOpen] = useState(false);
-
-  // 利用可能なカテゴリ一覧 (件数付き)
-  const categoryOptions = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const s of stores) {
-      const c = s.category ?? "(未分類)";
-      counts.set(c, (counts.get(c) ?? 0) + 1);
-    }
-    return Array.from(counts.entries())
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => a.name.localeCompare(b.name, "ja"));
-  }, [stores]);
-
-  // カテゴリ絞り込み + 文字検索 (AND)
-  // どちらも空ならデフォルトで全件表示
-  const filteredStores = useMemo(() => {
-    const q = storeSearch.trim().toLowerCase();
-    return stores.filter((s) => {
-      if (storeCategory) {
-        const cat = s.category ?? "(未分類)";
-        if (cat !== storeCategory) return false;
-      }
-      if (q) {
-        const inName = s.name.toLowerCase().includes(q);
-        const inCat = (s.category ?? "").toLowerCase().includes(q);
-        if (!inName && !inCat) return false;
-      }
-      return true;
-    });
-  }, [stores, storeSearch, storeCategory]);
-
-  // 店舗をカテゴリ別にグループ化 (検索フィルタ後)
-  const storesByCategory = useMemo(
-    () => groupBy(filteredStores, (s) => s.category ?? "その他"),
-    [filteredStores],
-  );
-  // 通貨を kind 別にグループ化（マイル/ポイント/現金相当/未分類）
-  const currenciesByKind = useMemo(() => {
-    const kindLabel = (k?: string) => {
-      switch (k) {
-        case "mile":
-          return "マイル";
-        case "point":
-          return "ポイント";
-        case "cashlike":
-          return "現金相当";
-        default:
-          return "その他";
-      }
-    };
-    return groupBy(currencies, (c) => kindLabel(c.kind));
-  }, [currencies]);
-
-  const currencyById = useMemo(
-    () => new Map(currencies.map((c) => [c.id, c])),
-    [currencies],
-  );
+  const currencyById = useMemo(() => byId(currencies), [currencies]);
+  const programById = useMemo(() => byId(programs), [programs]);
   const currencyName = useCallback(
     (id: string) => currencyById.get(id)?.name ?? id,
     [currencyById],
@@ -237,153 +188,29 @@ export function CalculatorScreen() {
       <p className="hint">
         支払い情報と「最終的に貯めたい通貨」を選ぶと、保有カード別に最適な交換ルートと最終取得量を表示します。ポイントカード併用ボーナスがある店舗ではクレカ還元と合算されます。
       </p>
-      {(() => {
-        const now = new Date();
-        const dateStr = now.toLocaleDateString("ja-JP", {
-          month: "long",
-          day: "numeric",
-          weekday: "short",
-        });
 
-        // アクティブ期間ルールの集計 (programs + loyaltyRules)
-        const allRules = [...loyaltyRules];
-        const allProgramsWithDates = programs.filter((p) => p.validFrom || p.validTo);
+      <CalcTodayBanner
+        loyaltyRules={loyaltyRules}
+        programs={programs}
+        open={todayBreakdownOpen}
+        onToggle={() => setTodayBreakdownOpen((v) => !v)}
+      />
 
-        const timeBoundActive = [...allRules, ...allProgramsWithDates].filter(
-          (r) => r.validTo && isRuleActiveAt(r, now)
-        ).length;
-        const ongoingActive = [...allRules, ...allProgramsWithDates].filter(
-          (r) => !r.validTo && r.validFrom && isRuleActiveAt(r, now)
-        ).length;
-        const recurringActive = [...allRules, ...programs].filter(
-          (r) => "recurringDays" in r && r.recurringDays?.length && isRuleActiveAt(r, now)
-        ).length;
-        const totalActive = timeBoundActive + ongoingActive + recurringActive;
-
-        return (
-          <div
-            className={`today-banner${todayBreakdownOpen ? " is-open" : ""}`}
-          >
-            <button
-              type="button"
-              className="today-banner-head"
-              onClick={() => setTodayBreakdownOpen((v) => !v)}
-              aria-expanded={todayBreakdownOpen}
-              aria-controls="today-banner-breakdown"
-              title={todayBreakdownOpen ? "内訳を閉じる" : "内訳を表示"}
-            >
-              <span className="today-banner-date">📅 今日 {dateStr}</span>
-              <span className="today-banner-summary">
-                ✨ 今アクティブな割増 <strong>{totalActive}</strong> 件
-              </span>
-              <span
-                className="today-banner-caret"
-                aria-hidden="true"
-              >
-                {todayBreakdownOpen ? "▴" : "▾"}
-              </span>
-            </button>
-            {todayBreakdownOpen && (
-              <div
-                id="today-banner-breakdown"
-                className="today-banner-counts"
-              >
-                <span>
-                  🎯 期間限定 <strong>{timeBoundActive}</strong> 件
-                </span>
-                <span>
-                  📌 公式プログラム <strong>{ongoingActive}</strong> 件
-                </span>
-                <span>
-                  🗓 毎月特定日 <strong>{recurringActive}</strong> 件
-                </span>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      <form className="row" onSubmit={(e) => e.preventDefault()}>
-        <label>
-          店舗:
-          <span className="store-picker">
-            <select
-              className="store-category-filter"
-              value={storeCategory}
-              onChange={(e) => setStoreCategory(e.target.value)}
-              aria-label="カテゴリで絞り込み"
-              title="カテゴリで絞り込み"
-            >
-              <option value="">全カテゴリ ({stores.length})</option>
-              {categoryOptions.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name} ({c.count})
-                </option>
-              ))}
-            </select>
-            <input
-              type="search"
-              className="store-search"
-              placeholder="検索..."
-              value={storeSearch}
-              onChange={(e) => setStoreSearch(e.target.value)}
-              aria-label="店舗を絞り込み検索"
-            />
-            <select
-              value={storeId}
-              onChange={(e) => setStoreId(e.target.value)}
-            >
-              <option value="">選択</option>
-              {storesByCategory.map((g) => (
-                <optgroup key={g.key} label={g.key}>
-                  {g.items.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            {(storeSearch || storeCategory) && (
-              <small className="store-search-hint">
-                {filteredStores.length} 件
-              </small>
-            )}
-          </span>
-        </label>
-        <label>
-          金額:
-          <input
-            type="number"
-            min="0"
-            step="100"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-          円
-        </label>
-        {preferredCurrencyIds.length === 0 && (
-          // 優先通貨 未設定時の fallback: 従来どおり都度選択
-          <label>
-            目標通貨:
-            <select
-              value={activeCurrencyId}
-              onChange={(e) => setActiveCurrencyId(e.target.value)}
-            >
-              <option value="">選択</option>
-              {currenciesByKind.map((g) => (
-                <optgroup key={g.key} label={g.key}>
-                  {g.items.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
-        )}
-      </form>
+      <CalcStoreForm
+        stores={stores}
+        currencies={currencies}
+        storeId={storeId}
+        setStoreId={setStoreId}
+        storeSearch={storeSearch}
+        setStoreSearch={setStoreSearch}
+        storeCategory={storeCategory}
+        setStoreCategory={setStoreCategory}
+        amount={amount}
+        setAmount={setAmount}
+        activeCurrencyId={activeCurrencyId}
+        setActiveCurrencyId={setActiveCurrencyId}
+        showCurrencyFallback={preferredCurrencyIds.length === 0}
+      />
 
       {preferredCurrencyIds.length === 0 ? (
         <p className="hint" style={{ fontSize: 13 }}>
@@ -392,30 +219,12 @@ export function CalculatorScreen() {
         </p>
       ) : (
         // v4.0.0 ② 案C: 優先通貨をタブで切替 (選択タブの通貨で結果表示)
-        <div
-          className="campaign-tabs currency-tabs"
-          style={{ marginBottom: 12 }}
-          role="tablist"
-          aria-label="目標通貨"
-        >
-          {preferredCurrencyIds.map((cid) => {
-            const c = currencyById.get(cid);
-            if (!c) return null;
-            const active = cid === activeCurrencyId;
-            return (
-              <button
-                key={cid}
-                role="tab"
-                aria-selected={active}
-                className={active ? "active" : ""}
-                onClick={() => setActiveCurrencyId(cid)}
-                title={`${c.name} で表示`}
-              >
-                {c.name}
-              </button>
-            );
-          })}
-        </div>
+        <CalcCurrencyTabs
+          preferredCurrencyIds={preferredCurrencyIds}
+          activeCurrencyId={activeCurrencyId}
+          onSelect={setActiveCurrencyId}
+          currencyById={currencyById}
+        />
       )}
 
       {!result && (
@@ -426,68 +235,14 @@ export function CalculatorScreen() {
         </p>
       )}
 
-      {result && loyalties.length > 0 && (
-        <div className="loyalty-banner">
-          <div className="loyalty-banner-title">
-            ポイントカード併用
-            {loyalties.length > 1
-              ? `（${loyalties.length}枚を同時提示・三重取り）`
-              : `（${loyalties[0].pointCard.name}）`}
-          </div>
-          {loyalties.map((loyalty, idx) => (
-            <div className="loyalty-banner-body" key={loyalty.rule.id}>
-              {loyalties.length > 1 && (
-                <span className="loyalty-stack-tag">{idx + 1}枚目</span>
-              )}
-              <span className="loyalty-rate">
-                {loyalties.length > 1 && (
-                  <>
-                    <strong>{loyalty.pointCard.name}</strong>{" "}
-                  </>
-                )}
-                還元率 {(loyalty.rule.rate * 100).toFixed(2)}% →{" "}
-                {formatNum(loyalty.earnedAmount)}{" "}
-                {currencyName(loyalty.earnedCurrencyId)}
-                <RuleStatusBadge
-                  validFrom={loyalty.rule.validFrom}
-                  validTo={loyalty.rule.validTo}
-                  style={{ marginLeft: 6 }}
-                />
-                <NoteChips notes={loyalty.rule.notes} />
-              </span>
-              <span className="path-line">
-                <NodePill
-                  currency={currencyById.get(loyalty.earnedCurrencyId)}
-                />
-                {loyalty.pathSteps.map((step) => (
-                  <span key={step.id} className="path-segment">
-                    <span className="arrow">
-                      →<small>{formatRatio(step.rate)}</small>
-                    </span>
-                    {step.requiredCardIds?.length ? (
-                      <small className="step-required-card" title="この交換ステップにこのカード保有が必要です">
-                        (要 {step.requiredCardIds.map(cardName).join(" / ")})
-                      </small>
-                    ) : null}
-                    <NodePill currency={currencyById.get(step.toCurrencyId)} />
-                  </span>
-                ))}
-              </span>
-              {loyalty.reachable ? (
-                <strong className="final" style={{ marginLeft: "auto" }}>
-                  +{formatNum(loyalty.finalAmount)}{" "}
-                  {currencyName(activeCurrencyId)}
-                </strong>
-              ) : (
-                <small className="hint">
-                  {currencyName(loyalty.earnedCurrencyId)} から{" "}
-                  {currencyName(activeCurrencyId)}{" "}
-                  へのルート未登録（合算は0扱い）
-                </small>
-              )}
-            </div>
-          ))}
-        </div>
+      {result && (
+        <CalcLoyaltyBanner
+          loyalties={loyalties}
+          activeCurrencyId={activeCurrencyId}
+          currencyById={currencyById}
+          currencyName={currencyName}
+          cardName={cardName}
+        />
       )}
 
       {result && result.length > 0 && (
@@ -506,275 +261,29 @@ export function CalculatorScreen() {
           {result.length === 0 && (
             <p className="empty">保有カードが登録されていません。</p>
           )}
-          {result.map((r, i) => {
-            const reachableLoyalties = r.loyalties.filter((l) => l.reachable);
-            const loyaltyTotal = reachableLoyalties.reduce(
-              (s, l) => s + l.finalAmount,
-              0,
-            );
-            const hasLoyalty = reachableLoyalties.length > 0;
-            const expanded = expandedIds.has(r.card.id);
-            return (
-              <article
-                key={r.card.id}
-                className={`result-card ${r.reachable ? "" : "unreachable"} ${displayRankMap.get(r.card.id) === 1 && r.reachable ? "best" : ""} ${expanded ? "expanded" : "collapsed"}`}
-              >
-                <header
-                  className="result-head clickable"
-                  onClick={() => toggleExpand(r.card.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      toggleExpand(r.card.id);
-                    }
-                  }}
-                >
-                  <span className="caret" aria-hidden="true">
-                    {expanded ? "▾" : "▸"}
-                  </span>
-                  <span className="rank">
-                    {r.reachable ? `#${displayRankMap.get(r.card.id) ?? i + 1}` : "対象外"}
-                  </span>
-                  {(() => {
-                    // paymentMode を優先、なければ chargeBased fallback
-                    const mode =
-                      r.paymentApp?.paymentMode ??
-                      (r.paymentApp?.chargeBased ? "charge" : undefined);
-                    return mode === "charge" || mode === "direct";
-                  })() ? (
-                    <>
-                      <span
-                        className="payment-app-badge"
-                        title="支払いに使うアプリ"
-                      >
-                        {r.paymentApp!.iconChar && (
-                          <span
-                            className="payment-app-icon"
-                            style={{
-                              background: r.paymentApp!.iconColor ?? "#6b7280",
-                            }}
-                          >
-                            {r.paymentApp!.iconChar}
-                          </span>
-                        )}
-                        {r.paymentApp!.name}
-                      </span>
-                      <span className="charge-flow-hint">
-                        {(r.paymentApp!.paymentMode ?? "charge") === "direct"
-                          ? " に紐付けて決済、"
-                          : " の残高にカードからチャージ、"}
-                      </span>
-                      <strong>{cardLabel(r.card)}</strong>
-                    </>
-                  ) : (
-                    <>
-                      <strong>{cardLabel(r.card)}</strong>
-                      {r.paymentApp && (
-                        <span
-                          className="payment-app-badge"
-                          title="自動選択された支払方法"
-                        >
-                          {r.paymentApp.iconChar && (
-                            <span
-                              className="payment-app-icon"
-                              style={{
-                                background:
-                                  r.paymentApp.iconColor ?? "#6b7280",
-                              }}
-                            >
-                              {r.paymentApp.iconChar}
-                            </span>
-                          )}
-                          {r.paymentApp.name}
-                        </span>
-                      )}
-                    </>
-                  )}
-                  {r.reachable && (
-                    <span className="final">
-                      {(() => {
-                        const appBonus = r.appBonusReachable
-                          ? r.appBonusFinalAmount
-                          : 0;
-                        const hasExtras = hasLoyalty || appBonus > 0;
-                        if (!hasExtras) {
-                          return (
-                            <>
-                              最終: {formatNum(r.finalAmount)}{" "}
-                              {currencyName(activeCurrencyId)}
-                            </>
-                          );
-                        }
-                        const parts: string[] = [
-                          `クレカ ${formatNum(r.finalAmount)}`,
-                        ];
-                        if (appBonus > 0) {
-                          parts.push(`アプリ +${formatNum(appBonus)}`);
-                        }
-                        if (hasLoyalty) {
-                          parts.push(
-                            `併用 +${formatNum(loyaltyTotal)}${reachableLoyalties.length > 1 ? `×${reachableLoyalties.length}枚` : ""}`,
-                          );
-                        }
-                        return (
-                          <>
-                            合計 {formatNum(r.totalFinalAmount)}{" "}
-                            {currencyName(activeCurrencyId)}
-                            <small className="loyalty-breakdown">
-                              （{parts.join(" + ")}）
-                            </small>
-                          </>
-                        );
-                      })()}
-                    </span>
-                  )}
-                </header>
-
-                {expanded && (
-                  <>
-                    <div className="result-meta">
-                      {r.resolved.source === "charge" && r.paymentApp ? (
-                        <>
-                          {r.paymentApp.name} ベース還元{" "}
-                          {(r.resolved.rate * 100).toFixed(2)}% で{" "}
-                          {formatNum(r.earnedAmount)}{" "}
-                          {currencyName(r.earnedCurrencyId)}
-                        </>
-                      ) : (
-                        <>
-                          クレカ還元率 {(r.resolved.rate * 100).toFixed(2)}% で{" "}
-                          {formatNum(r.earnedAmount)}{" "}
-                          {currencyName(r.earnedCurrencyId)}
-                        </>
-                      )}
-                      {r.resolved.source === "program" && (
-                        <span className="badge">プログラム適用</span>
-                      )}
-                      {r.resolved.source === "program" && (() => {
-                        const resolved = r.resolved;
-                        const prog = resolved.source === "program" ? programs.find((p) => p.id === resolved.programId) : null;
-                        if (!prog) return null;
-                        return (
-                          <>
-                            <RuleStatusBadge
-                              validFrom={prog.validFrom}
-                              validTo={prog.validTo}
-                              style={{ marginLeft: 4 }}
-                            />
-                            <NoteChips notes={prog.notes} />
-                            {prog.monthlyCapAmountYen && (
-                              <span
-                                className="cap-warn"
-                                title="この還元率には月間/年間の上限があります"
-                              >
-                                ⚠ 上限{" "}
-                                {prog.monthlyCapAmountYen.toLocaleString()}
-                                円/月
-                              </span>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-
-                    {r.resolved.source === "charge" && r.paymentApp && (
-                      <div
-                        className="hint"
-                        style={{
-                          marginTop: 2,
-                          fontSize: 11,
-                          paddingLeft: 0,
-                        }}
-                        title="チャージ式の支払アプリは、カード単体での還元は 0% (チャージ時には還元されない)。表示は支払アプリのベース還元率。"
-                      >
-                        ※ クレカ単体 0%、{r.paymentApp.name} 側で還元
-                      </div>
-                    )}
-
-                    <div className="path">
-                      <div className="path-line">
-                        <NodePill
-                          currency={currencyById.get(r.earnedCurrencyId)}
-                        />
-                        {r.pathSteps.map((step) => (
-                          <span key={step.id} className="path-segment">
-                            <span className="arrow">
-                              →<small>{formatRatio(step.rate)}</small>
-                            </span>
-                            {step.requiredCardIds?.length ? (
-                              <small className="step-required-card" title="この交換ステップにこのカード保有が必要です">
-                                (要 {step.requiredCardIds.map(cardName).join(" / ")})
-                              </small>
-                            ) : null}
-                            <NodePill
-                              currency={currencyById.get(step.toCurrencyId)}
-                            />
-                          </span>
-                        ))}
-                      </div>
-                      {r.reachable && r.pathSteps.length === 0 && (
-                        <small className="hint">変換不要（同一通貨）</small>
-                      )}
-                      {!r.reachable && (
-                        <small className="hint">
-                          {currencyName(r.earnedCurrencyId)} から{" "}
-                          {currencyName(activeCurrencyId)}{" "}
-                          への交換ルートが未登録です
-                        </small>
-                      )}
-                    </div>
-
-                    {/* v5.1.3: 異種通貨 addOn 分離表示。1 つでも appBonus がある場合
-                          breakdown を通貨別に 1 行ずつ表示する。1 件のみのときは従来と
-                          同じ見た目になる。breakdown が空 (旧 fallback) でも legacy summary
-                          フィールドで 1 行表示はカバー。 */}
-                    {r.paymentApp &&
-                      r.appBonusBreakdown.length > 0 && (
-                        <div className="result-meta">
-                          {r.paymentApp.chargeBased
-                            ? `${r.paymentApp.name} 利用ボーナス`
-                            : "支払アプリ還元"}
-                          {r.appBonusBreakdown.map((b) => (
-                            <div
-                              key={b.programId}
-                              style={{ marginLeft: 8, fontSize: 12 }}
-                              title={b.programName}
-                            >
-                              {b.programName} ({(b.rate * 100).toFixed(2)}%):{" "}
-                              {formatNum(b.earnedAmount)}{" "}
-                              {currencyName(b.earnedCurrencyId)}
-                              {b.finalAmount > 0 && (
-                                <>
-                                  {" "}
-                                  → +{formatNum(b.finalAmount)}{" "}
-                                  {currencyName(activeCurrencyId)}
-                                </>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                  </>
-                )}
-              </article>
-            );
-          })}
-          {comparisonItems.length > 0 && (() => {
-            const topReachable = result.find((r) => r.reachable);
-            const topTotal = topReachable?.totalFinalAmount ?? 0;
-            return (
-              <CardComparisonSection
-                comparisonItems={comparisonItems}
-                topReachableTotal={topTotal}
-                targetCurrencyName={currencyName(activeCurrencyId)}
-              />
-            );
-          })()}
+          {result.map((r) => (
+            <CalcResultCard
+              key={r.card.id}
+              ranking={r}
+              displayRank={displayRankMap.get(r.card.id) ?? -1}
+              expanded={expandedIds.has(r.card.id)}
+              onToggle={() => toggleExpand(r.card.id)}
+              activeCurrencyId={activeCurrencyId}
+              currencyById={currencyById}
+              currencyName={currencyName}
+              cardName={cardName}
+              programById={programById}
+            />
+          ))}
+          {comparisonItems.length > 0 && (
+            <CardComparisonSection
+              comparisonItems={comparisonItems}
+              topReachableTotal={result.find((r) => r.reachable)?.totalFinalAmount ?? 0}
+              targetCurrencyName={currencyName(activeCurrencyId)}
+            />
+          )}
         </div>
       )}
     </section>
   );
 }
-
