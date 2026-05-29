@@ -11,18 +11,17 @@ import { NodeDetailPanel } from "./edges/NodeDetailPanel";
 import { NodePill } from "./NodePill";
 import type { Selection } from "./edges/types";
 import { bestPath } from "../domain/bestPath";
-import { computeBlockedCurrencyIds } from "../domain/currencyGating";
+import { computeStrictBlockedCurrencyIds } from "../domain/currencyGating";
 import { formatRatio } from "../domain/currencyKind";
 import { formatNum } from "../domain/formatNum";
 
 export function EdgesScreen() {
-  // Wave 5 B-1 / v6.0.0: useShallow に集約 (pointCards/programs は blockedCurrencyIds 用)
+  // Wave 5 B-1 / v6.0.0: useShallow に集約 (pointCards は strict blockedCurrencyIds 用)
   const {
     currencies,
     edges,
     cards,
     pointCards,
-    programs,
     addEdge,
     updateEdge,
     removeEdge,
@@ -32,7 +31,6 @@ export function EdgesScreen() {
       edges: s.edges,
       cards: s.cards,
       pointCards: s.pointCards,
-      programs: s.programs,
       addEdge: s.addEdge,
       updateEdge: s.updateEdge,
       removeEdge: s.removeEdge,
@@ -70,10 +68,12 @@ export function EdgesScreen() {
   // v6.0.0: 全カード集合 (SUB ルート = 全資産解放での最良ルート計算用)
   const allCardIds = useMemo(() => new Set(cards.map((c) => c.id)), [cards]);
 
-  // v6.0.0: ユーザーが「使わない」選択をしたポイント通貨 (MAIN ルートの起点・経由から除外)
+  // v6.0.0 / 強い除外: ユーザーが「使わない」にしたポイント通貨 (MAIN ルートの起点・経由から除外)。
+  // EdgesScreen は探索ツールなので strict 版 = 有効クレカが同通貨を貯めても除外する
+  // (有効な別 pointCard が同通貨を持つ場合のみ救済)。Calculator は通常版を使い続ける。
   const blockedCurrencyIds = useMemo(
-    () => computeBlockedCurrencyIds(cards, pointCards, programs),
-    [cards, pointCards, programs],
+    () => computeStrictBlockedCurrencyIds(pointCards),
+    [pointCards],
   );
 
   // edge が現状ユーザーで実際に利用可能か。requiredCardIds が無ければ常に true。
@@ -348,7 +348,17 @@ export function EdgesScreen() {
               <p className="hint">
                 {currencyName(routeFromId)} から {currencyName(routeToId)}{" "}
                 への交換ルートが見つかりません。
-                保有カードが必須の edge をブロックしている場合があります — カード設定を確認してください。
+                {blockedCurrencyIds.has(routeFromId) ? (
+                  <>
+                    {" "}起点「{currencyName(routeFromId)}」は「使わない」設定です。
+                    「ポイントカード」画面で「使う」に戻すと交換ルートが表示されます。
+                  </>
+                ) : (
+                  <>
+                    {" "}保有カードが必須の edge
+                    をブロックしている場合があります — カード設定を確認してください。
+                  </>
+                )}
               </p>
             )}
 
@@ -475,6 +485,7 @@ export function EdgesScreen() {
         sel={sel}
         showLabels={showLabels}
         accessibleCardIds={accessibleCardIds}
+        blockedCurrencyIds={blockedCurrencyIds}
         onConnect={onConnect}
         onEdgeClick={onEdgeClick}
         onNodeClick={onNodeClick}

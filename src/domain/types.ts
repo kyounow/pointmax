@@ -66,9 +66,11 @@ export type ConversionEdge = {
 //          false = 使わない。v6.0.0 で追加。Card.enabled と同セマンティクス。
 //   効果は 2 つ:
 //   (1) loyalty (店頭提示の二重取り) 候補から除外される
-//   (2) このポイントカードの通貨が「使う通貨 (usedCurrencyIds)」から外れ、
-//       交換ルート (bestPath) の起点・経由として使えなくなる
-//       (computeUsedCurrencyIds / bestPath の usedCurrencyIds ゲート参照)
+//   (2) このポイントカードの通貨が交換ルート (bestPath) の起点・経由から除外される。
+//       除外の強さは画面で異なる (src/domain/currencyGating.ts):
+//         - Calculator: computeBlockedCurrencyIds (通常)。有効クレカ等が同通貨を貯めるなら維持。
+//         - EdgesScreen: computeStrictBlockedCurrencyIds (強い)。有効な別 pointCard が同通貨を
+//           持つ場合のみ維持し、有効クレカが貯めても除外する (探索ツールとして OFF 意図を尊重)。
 export type PointCard = {
   id: string;
   name: string;

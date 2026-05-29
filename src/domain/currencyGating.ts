@@ -15,6 +15,14 @@
 //     かつ (C を貯められる有効資産が他に無い:
 //           enabled pointCard / enabled card default / enabled card の program 通貨)
 //   = ユーザーが明示的に「使わない」とし、かつ他経路でも貯まらない通貨だけを塞ぐ。
+//
+// deny-list は 2 種類ある:
+//   - computeBlockedCurrencyIds (通常): Calculator (rankCards) 用。有効クレカの
+//     defaultCurrency / 有効カードの program 通貨でも救済する (= 保有資産で取得できる
+//     通貨はルートに使う、という最適化前提)。
+//   - computeStrictBlockedCurrencyIds (強い): EdgesScreen (交換ルート探索) 用。OFF にした
+//     pointCard の通貨は「有効な別 pointCard が同通貨を持つ」場合のみ救済し、有効クレカが
+//     貯めても block する。「このポイントは交換に使いたくない」というユーザー明示の除外を尊重。
 
 import type { BenefitProgram, Card, PointCard } from "./types";
 
@@ -59,6 +67,28 @@ export function computeBlockedCurrencyIds(
   const blocked = new Set<string>();
   for (const p of pointCards) {
     if (p.enabled === false && !enabled.has(p.currencyId)) {
+      blocked.add(p.currencyId);
+    }
+  }
+  return blocked;
+}
+
+/**
+ * EdgesScreen (交換ルート探索) 用の「強い」 deny-list。
+ * OFF にした pointCard の通貨は、有効な別 pointCard が同通貨を持つ場合のみ救済し、
+ * それ以外は有効クレカが貯めても block する (= 「このポイントは交換に使わない」を強く尊重)。
+ * Calculator は computeBlockedCurrencyIds を使い続けること (有効クレカ通貨を消すと
+ * そのカードが他 target に到達不能化しランキングが崩れるため)。
+ */
+export function computeStrictBlockedCurrencyIds(
+  pointCards: PointCard[],
+): Set<string> {
+  const enabledPointCurrencies = new Set(
+    pointCards.filter((p) => p.enabled !== false).map((p) => p.currencyId),
+  );
+  const blocked = new Set<string>();
+  for (const p of pointCards) {
+    if (p.enabled === false && !enabledPointCurrencies.has(p.currencyId)) {
       blocked.add(p.currencyId);
     }
   }
