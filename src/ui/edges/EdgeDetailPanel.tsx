@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { formatRatio } from "../../domain/currencyKind";
 import type { Card, ConversionEdge, Currency } from "../../domain/types";
 import { CurrencyIcon } from "../CurrencyIcon";
@@ -26,10 +26,14 @@ export function EdgeDetailPanel({
 }: Props) {
   // 閲覧モード ↔ 編集モードの 2 段階。デフォルトは閲覧モード。
   // 別の edge に切り替わったら閲覧モードに戻す (誤編集を防ぐため)。
+  // render 中に直前の edge.id と比較してリセットする (effect 内 setState を避ける
+  // React 公認の「prop 変化時に state を調整」パターン)。
   const [isEditing, setIsEditing] = useState(false);
-  useEffect(() => {
+  const [prevEdgeId, setPrevEdgeId] = useState(edge.id);
+  if (prevEdgeId !== edge.id) {
+    setPrevEdgeId(edge.id);
     setIsEditing(false);
-  }, [edge.id]);
+  }
 
   const requiredCardNames = edge.requiredCardIds
     ?.map((id) => cards.find((c) => c.id === id)?.name ?? id)

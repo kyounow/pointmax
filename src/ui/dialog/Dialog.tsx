@@ -14,11 +14,30 @@ export function Dialog({ state, onConfirm, onPrompt, onAlert }: Props) {
   );
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // ダイアログが切り替わった時に input 内容を初期化
+  // ok/cancel は Escape effect より前で宣言する (effect クロージャが cancel を
+  // 参照するため。後方宣言だと react-hooks/immutability = 宣言前アクセスになる)。
+  const ok = () => {
+    if (state.type === "confirm") onConfirm(true);
+    else if (state.type === "prompt") onPrompt(value);
+    else onAlert();
+  };
+  const cancel = () => {
+    if (state.type === "confirm") onConfirm(false);
+    else if (state.type === "prompt") onPrompt(null);
+    else onAlert();
+  };
+
+  // ダイアログが切り替わった時に input 内容を初期化する (render 中 guard。
+  // effect 内 setState を避ける React 公認の「prop 変化時に state 調整」パターン)。
+  const [prevState, setPrevState] = useState(state);
+  if (prevState !== state) {
+    setPrevState(state);
+    setValue(state.type === "prompt" ? (state.opts.defaultValue ?? "") : "");
+  }
+
+  // prompt 表示時のフォーカス & 全選択 (副作用のみ。setState は含めない)
   useEffect(() => {
     if (state.type === "prompt") {
-      setValue(state.opts.defaultValue ?? "");
-      // フォーカス & 全選択
       requestAnimationFrame(() => {
         inputRef.current?.focus();
         inputRef.current?.select();
@@ -38,17 +57,6 @@ export function Dialog({ state, onConfirm, onPrompt, onAlert }: Props) {
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
-
-  const ok = () => {
-    if (state.type === "confirm") onConfirm(true);
-    else if (state.type === "prompt") onPrompt(value);
-    else onAlert();
-  };
-  const cancel = () => {
-    if (state.type === "confirm") onConfirm(false);
-    else if (state.type === "prompt") onPrompt(null);
-    else onAlert();
-  };
 
   const okText = state.opts.okText ?? "OK";
   const cancelText =

@@ -1,15 +1,13 @@
-name: Lint (React Hooks)
+name: Lint
 
-# v6.1.1 / PR #68 の再発防止: React の Rules of Hooks 違反を PR / main push で gating する。
+# v6.1.1 / PR #68 (白画面クラッシュ = react-hooks/rules-of-hooks 違反) の再発防止として
+# 当初は rules-of-hooks だけを見る `lint:hooks` ゲートを暫定導入した (PR #69)。
+# v6.2.0 で既存 lint エラーを全解消したため、本ゲートを full `npm run lint`
+# (eslint.config.js = react-hooks 全ルール + typescript-eslint + react-refresh) に昇格。
+# 暫定の eslint.hooks.config.js / lint:hooks script は撤去済 (full lint が rules-of-hooks を包含)。
 #
-# 背景: SyncUpdateModal で useRef/useEffect が早期 return より後ろにあり、再レンダーで
-# hook 数が減って "Rendered fewer hooks than expected" でアプリ全体が白画面クラッシュした。
-# これは react-hooks/rules-of-hooks で静的検出できるが、当時の CI は test + build のみで
-# lint を走らせておらず、かつ `npm run lint` 全体は既存の多数の lint エラーで常時 fail する
-# ため gating に使えなかった。そこで rules-of-hooks 1 ルールだけに絞った
-# `npm run lint:hooks` (eslint.hooks.config.js) を CI ゲートとして追加する。
-#
-# 既存 lint エラー全体の解消 → `npm run lint` 全体の gating 化は別 follow-up。
+# これで set-state-in-effect / 未使用変数 / export 分割漏れ等も含め、PR / main push で
+# lint 違反が全てマージ前にブロックされる。
 
 on:
   push:
@@ -18,7 +16,7 @@ on:
     branches: [main]
 
 jobs:
-  hooks-lint:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,5 +31,5 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Lint React Hooks rules
-        run: npm run lint:hooks
+      - name: Lint
+        run: npm run lint

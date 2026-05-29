@@ -6,7 +6,7 @@
 //   - CalcLoyaltyBanner : ポイントカード併用バナー
 //   - CalcResultCard    : 1 カードぶんの結果カード
 //   - CardComparisonSection : 非保有カード比較 (既存)
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { rankCards } from "../domain/rankCards";
@@ -63,15 +63,22 @@ export function CalculatorScreen() {
   // today-banner: 内訳の展開状態 (初期は折り畳み)
   const [todayBreakdownOpen, setTodayBreakdownOpen] = useState(false);
 
-  // preferred が変わったら activeCurrencyId を整合させる:
+  // preferred が変わったら activeCurrencyId を整合させる (render 中 guard。
+  // effect 内 setState を避ける React 公認の「prop 変化時に state 調整」パターン):
   // - preferred 非空 かつ activeCurrencyId が preferred に無い → 先頭にリセット
   // - preferred から現在のタブ通貨が消えた場合も先頭に戻る
-  useEffect(() => {
-    if (preferredCurrencyIds.length === 0) return;
-    if (!preferredCurrencyIds.includes(activeCurrencyId)) {
+  // (preferred 非空時、activeCurrencyId は preferred タブ経由でのみ変わるため
+  //  preferred の変化だけを起点にすれば従来 effect と等価)
+  const [prevPreferred, setPrevPreferred] = useState(preferredCurrencyIds);
+  if (prevPreferred !== preferredCurrencyIds) {
+    setPrevPreferred(preferredCurrencyIds);
+    if (
+      preferredCurrencyIds.length > 0 &&
+      !preferredCurrencyIds.includes(activeCurrencyId)
+    ) {
       setActiveCurrencyId(preferredCurrencyIds[0]);
     }
-  }, [preferredCurrencyIds, activeCurrencyId]);
+  }
 
   const currencyById = useMemo(() => byId(currencies), [currencies]);
   const programById = useMemo(() => byId(programs), [programs]);
@@ -156,22 +163,29 @@ export function CalculatorScreen() {
   }, [result]);
 
   // 入力が変わるたびに、同率 1 位の reachable カード全部を展開状態にリセット
-  // (totalFinalAmount が最上位値と等しい全カード = displayRank 1 の集合)
-  useEffect(() => {
+  // (totalFinalAmount が最上位値と等しい全カード = displayRank 1 の集合)。
+  // render 中 guard で実装 (effect 内 setState を避ける React 公認パターン)。
+  // result は useMemo 済で入力 (storeId/activeCurrencyId/amount/データ) が変わった時のみ
+  // 参照が変わるため、result 参照の変化を起点にすれば従来 effect と等価。
+  // 手動 toggle (toggleExpand/expandAll/collapseAll) は次の入力変化まで保持される。
+  const [prevResult, setPrevResult] = useState(result);
+  if (prevResult !== result) {
+    setPrevResult(result);
     if (!result) {
       setExpandedIds(new Set());
-      return;
+    } else {
+      const topTotal = result.find((r) => r.reachable)?.totalFinalAmount;
+      setExpandedIds(
+        topTotal === undefined
+          ? new Set()
+          : new Set(
+              result
+                .filter((r) => r.reachable && r.totalFinalAmount === topTotal)
+                .map((r) => r.card.id),
+            ),
+      );
     }
-    const topTotal = result.find((r) => r.reachable)?.totalFinalAmount;
-    if (topTotal === undefined) {
-      setExpandedIds(new Set());
-      return;
-    }
-    const tiedTop = result.filter(
-      (r) => r.reachable && r.totalFinalAmount === topTotal,
-    );
-    setExpandedIds(new Set(tiedTop.map((r) => r.card.id)));
-  }, [storeId, activeCurrencyId, amount, result]);
+  }
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {

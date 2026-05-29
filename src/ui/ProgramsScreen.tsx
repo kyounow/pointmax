@@ -79,7 +79,10 @@ export function ProgramsScreen() {
   const paymentAppNameById = (id: string) =>
     paymentAppById.get(id)?.name ?? id;
 
-  const now = new Date();
+  // mount 時に 1 回だけ生成する。毎 render で new Date() を作ると参照が変わり、
+  // 下の useMemo (filtered / filterCounts) の依存が毎回変化して再計算されてしまう
+  // (react-hooks/exhaustive-deps)。同一セッション内の「現在時刻」は固定で問題ない。
+  const now = useMemo(() => new Date(), []);
 
   const filtered = useMemo(() => {
     return programs.filter((p) => {

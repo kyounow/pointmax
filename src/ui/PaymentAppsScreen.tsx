@@ -7,7 +7,7 @@ import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import type { PaymentApp } from "../domain/types";
 import { cardLabel } from "../domain/cardLabel";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
-import { useDialog } from "./dialog/DialogProvider";
+import { useDialog } from "./dialog/useDialog";
 
 export function PaymentAppsScreen() {
   // Wave 5 B-1: 6 個別 subscribe → 単一 useShallow に集約

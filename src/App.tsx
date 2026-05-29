@@ -22,7 +22,7 @@ import { UpdateBanner } from "./ui/UpdateBanner";
 import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
 import { SyncUpdateModal } from "./ui/SyncUpdateModal";
 import { useStore } from "./state/store";
-import { useDialog } from "./ui/dialog/DialogProvider";
+import { useDialog } from "./ui/dialog/useDialog";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 
 type Tab =

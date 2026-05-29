@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
-import { useDialog } from "./dialog/DialogProvider";
+import { useDialog } from "./dialog/useDialog";
 import { DEFAULT_SYNC_URL } from "../state/seed";
 
 export function SettingsScreen() {

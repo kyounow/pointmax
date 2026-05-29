@@ -35,7 +35,7 @@ export function sanitizeNoteForDisplay(notes: string | undefined): string | unde
     .replace(/\s*[（(]\s*v\d+\s+PR\s+\d+\s*[）)]/g, "")
     // "旧 rule-foo から移行" / "旧 SEED_LOYALTY_RULES (xxx) から移行"
     .replace(
-      /旧\s+[A-Za-z0-9_*\-]+(?:\s*\([^)]+\))?\s*\d*\s*件?\s*から移行/g,
+      /旧\s+[A-Za-z0-9_*-]+(?:\s*\([^)]+\))?\s*\d*\s*件?\s*から移行/g,
       "",
     )
     // "v3 で ... 化 (旧 rule-xxx)"

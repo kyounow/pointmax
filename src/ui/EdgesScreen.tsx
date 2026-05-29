@@ -3,7 +3,7 @@ import { useShallow } from "zustand/shallow";
 import type { Connection, Edge as RFEdge, Node as RFNode } from "@xyflow/react";
 
 import { useStore } from "../state/store";
-import { useDialog } from "./dialog/DialogProvider";
+import { useDialog } from "./dialog/useDialog";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { EdgesGraph } from "./edges/EdgesGraph";
 import { EdgeDetailPanel } from "./edges/EdgeDetailPanel";

@@ -52,7 +52,6 @@ const DEFAULT_COLUMNS: Record<InjectableEntity, string[]> = {
  */
 export function injectExistingEntities(prompt: string): string {
   const data = seed();
-  let resolved = 0;
 
   const result = prompt.replace(
     /<!--\s*INJECT:(\w+)([^>]*?)-->([\s\S]*?)<!--\s*\/INJECT\s*-->/g,
@@ -64,7 +63,6 @@ export function injectExistingEntities(prompt: string): string {
       const params = parseParams(paramStr, DEFAULT_COLUMNS[kind]);
       const records = collectRecords(data, kind, params.filter);
       const table = renderMarkdownTable(records, params.columns);
-      resolved += 1;
       // マーカー自体は保存して冪等性を保つ
       return `<!-- INJECT:${kind}${paramStr.replace(/\s+$/, "")} -->\n${table}\n<!-- /INJECT -->`;
     },

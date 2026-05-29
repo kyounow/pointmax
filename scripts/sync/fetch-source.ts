@@ -525,7 +525,7 @@ async function main(): Promise<void> {
   let parsed: ExtractedSource;
   try {
     // Gemini が ```json コードフェンスでラップしてくることがあるので除去 (保険)
-    let cleaned = rawJson
+    const cleaned = rawJson
       .replace(/^\s*```(?:json)?\s*/i, "")
       .replace(/```\s*$/i, "")
       .trim();
@@ -540,7 +540,7 @@ async function main(): Promise<void> {
     } else {
       parsed = JSON.parse(cleaned) as ExtractedSource;
     }
-  } catch (e) {
+  } catch {
     // Gemini が JSON でなく散文で「ページから抽出できなかった」と返した場合。
     // crash せず空の ExtractedSource を書き出し、proposed-migrations 側で skip 判定。
     console.log("⚠️ Gemini レスポンスが JSON でない (取得には成功したが抽出失敗)");

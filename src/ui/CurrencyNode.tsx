@@ -81,4 +81,4 @@ export function CurrencyNode({ data }: NodeProps<CurrencyNodeType>) {
   );
 }
 
-export const nodeTypes = { currency: CurrencyNode };
+// nodeTypes は currencyNodeConfig.ts へ分離 (react-refresh/only-export-components)。

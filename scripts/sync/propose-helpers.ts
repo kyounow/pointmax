@@ -87,24 +87,6 @@ function resolveReviewReason(
   return rr;
 }
 
-// 共通の integrity check ファクトリ。callsite で同じ inline arrow を繰り返さないため。
-// 呼出側は順序を気にせず `[selfReportedExclusionFromQuote(quote), unsupportedDateClaimFromRule(rule, quote)]`
-// のように積める (配列順 = 優先順位、上の docstring 参照)。
-function selfReportedExclusionFromQuote(
-  quote: string | undefined,
-): IntegrityCheck {
-  return () =>
-    detectSelfReportedExclusion(quote) ? "selfReportedExclusion" : undefined;
-}
-
-function unsupportedDateClaimFromRule(
-  rule: { validFrom?: string; validTo?: string },
-  quote: string | undefined,
-): IntegrityCheck {
-  return () =>
-    detectUnsupportedDateClaim(rule, quote) ? "unsupportedDateClaim" : undefined;
-}
-
 // ───────────────────────────────────────────────────────────────
 // pointCard ロイヤリティ → 正準モデル (BenefitProgram) への決定論変換
 //
