@@ -18,6 +18,7 @@ import { CalcTodayBanner } from "./calculator/CalcTodayBanner";
 import { CalcStoreForm } from "./calculator/CalcStoreForm";
 import { CalcCurrencyTabs } from "./calculator/CalcCurrencyTabs";
 import { CalcLoyaltyBanner } from "./calculator/CalcLoyaltyBanner";
+import { CalcUpgradeBanner } from "./calculator/CalcUpgradeBanner";
 import { CalcResultCard } from "./calculator/CalcResultCard";
 
 export function CalculatorScreen() {
@@ -116,6 +117,8 @@ export function CalculatorScreen() {
   ]);
 
   const allRanked = rankResult?.rankings ?? null;
+  // v6.0.0: 未使用ポイントカード有効化提案 (CalcUpgradeBanner へ)
+  const upgrade = rankResult?.upgrade ?? null;
 
   // 主結果: enabled なカード (既存 result と同等)
   const result = useMemo(
@@ -245,6 +248,15 @@ export function CalculatorScreen() {
           currencyById={currencyById}
           currencyName={currencyName}
           cardName={cardName}
+        />
+      )}
+
+      {result && upgrade && (
+        <CalcUpgradeBanner
+          upgrade={upgrade}
+          activeCurrencyId={activeCurrencyId}
+          currencyById={currencyById}
+          currencyName={currencyName}
         />
       )}
 
