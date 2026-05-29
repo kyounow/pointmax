@@ -55,21 +55,20 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
   const visible =
     !dismissed && count > 0 && digest !== "" && digest !== seen;
 
-  if (!visible) return null;
-
   const close = () => {
     writeSeen(digest);
     setDismissed(true);
   };
 
-  const handleApply = () => {
-    applySeedUpdate([]);
-    close();
-  };
-
   // Wave 4 B-5 a11y: modal の focus 管理 + ESC で閉じる + 初期 focus を primary に。
   // 完全な focus trap は外部ライブラリ (focus-trap-react) が必要だが、ここでは最低限の
   // フォーカス制御と ESC ハンドリングだけ提供 (実用上の改善が大きい)。
+  //
+  // ⚠️ hooks (useRef/useEffect) は早期 return より「前」で必ず呼ぶこと。
+  // visible が true→false に変わった再レンダー (「アプリに反映」/「閉じる」押下) で
+  // `if (!visible) return null` が hook より先に発火すると hook 数が減り、
+  // React が "Rendered fewer hooks than expected" で全画面クラッシュする
+  // (Rules of Hooks 違反)。effect 本体は visible で guard 済みなので順序入れ替えで安全。
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     if (!visible) return;
@@ -85,6 +84,13 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
     // close 参照は state 変更で再生成されるが、effect 内で最新を見るので OK
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  if (!visible) return null;
+
+  const handleApply = () => {
+    applySeedUpdate([]);
+    close();
+  };
 
   return (
     <div
