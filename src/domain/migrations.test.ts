@@ -359,6 +359,50 @@ describe("MIGRATIONS v13", () => {
   });
 });
 
+describe("MIGRATIONS v41 (WAON→JAL を aeon-card ゲート化)", () => {
+  const mkState = (requiredCardIds?: string[]): SeedShape => ({
+    cards: [],
+    currencies: [],
+    stores: [],
+    edges: [
+      {
+        id: "waon-to-jal",
+        fromCurrencyId: "waon-pt",
+        toCurrencyId: "jal-mile",
+        rate: 0.5,
+        ...(requiredCardIds ? { requiredCardIds } : {}),
+      },
+    ],
+    pointCards: [],
+    loyaltyRules: [],
+    paymentApps: [],
+  });
+
+  it("v41: 既存ユーザ (requiredCardIds 無し) の waon-to-jal に ['aeon-card'] を付与", () => {
+    const state = mkState();
+    const plan = planMigrations(state, 40, 41, MIGRATIONS);
+    expect(plan).toHaveLength(1);
+    expect(plan[0].status).toBe("applicable");
+    const applied = applyMigrationsByKey(state, plan, autoApplicableKeys(plan));
+    const edge = applied.edges.find((e) => e.id === "waon-to-jal");
+    expect(edge?.requiredCardIds).toEqual(["aeon-card"]);
+  });
+
+  it("v41: 既に requiredCardIds 設定済は conflict (配列 identity 比較、v13 と同制限)", () => {
+    const state = mkState(["aeon-card"]);
+    const plan = planMigrations(state, 40, 41, MIGRATIONS);
+    expect(plan).toHaveLength(1);
+    expect(plan[0].status).toBe("conflict");
+  });
+
+  it("v41: SEED_VERSION 41 まで上げると v13 と v41 の両方は範囲に応じて選ばれる", () => {
+    // fromVersion 40 → 41 では v41 のみ (v13 は範囲外)
+    const state = mkState();
+    const plan = planMigrations(state, 40, 41, MIGRATIONS);
+    expect(plan.every((p) => p.migration.id === "waon-to-jal")).toBe(true);
+  });
+});
+
 describe("MIGRATIONS v34 (ponta⇄d 相互交換廃止)", () => {
   it("v34: ponta-to-d / d-to-ponta が既存ユーザの edges から削除される", () => {
     const state: SeedShape = {

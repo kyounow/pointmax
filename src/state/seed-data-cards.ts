@@ -90,6 +90,28 @@ export const SEED_CARDS: Card[] = [
     enabled: false,
   },
   {
+    // JMB JQ SUGOCA (JR九州 × JAL)。JQ CARD 系で JRキューポを貯める (基本 0.5%)。
+    // 主な役割は「JALマイル ⇔ JRキューポ」相互交換の解放 (seed-data-edges の
+    // jrkyupo-to-jal / jal-to-jrkyupo の requiredCardIds)。enabled:false で
+    // デフォルト非表示、保有ユーザーが「使う」を ON にして利用する。
+    id: "jmb-jq-sugoca",
+    name: "JMB JQ SUGOCA",
+    grade: "通常",
+    defaultRate: 0.005,
+    defaultCurrencyId: "jrkyupo",
+    enabled: false,
+  },
+  {
+    // JQ SUGOCA ANA (JR九州 × ANA)。JMB JQ SUGOCA の ANA 版。
+    // 「ANAマイル ⇔ JRキューポ」相互交換を解放 (jrkyupo-to-ana / ana-to-jrkyupo)。
+    id: "jq-sugoca-ana",
+    name: "JQ SUGOCA ANA",
+    grade: "通常",
+    defaultRate: 0.005,
+    defaultCurrencyId: "jrkyupo",
+    enabled: false,
+  },
+  {
     // JCB CARD W (39 歳以下限定、Web 申込限定、2倍ポイント特典)
     // 200円=2 J-POINT = 1.0% (基本還元、J-POINT 1pt=1円相当)
     // 2026年1月の Oki Doki ポイント → J-POINT リニューアル後の還元体系
