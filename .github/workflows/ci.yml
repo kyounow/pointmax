@@ -1,0 +1,55 @@
+name: CI
+
+# PR / main push で test と typecheck を gate する。
+#
+# 背景: bundle-size.yml が PR で `npm run build` (= tsc -b --force && vite build) を実行するため
+# 型エラー自体は既にブロックされるが、(1) vitest テストは deploy.yml (= main push 後) でしか走らず
+# PR では未 gate、(2) 型チェックが bundle-size ジョブの build 副作用に依存していて脆い。
+# 本 workflow で vitest を PR で必須化し、typecheck を build から切り離した明示ジョブにする。
+# (lint は lint.yml、bundle サイズは bundle-size.yml が引き続き担当)
+#
+# 注: typecheck (tsc -b) は public/master.json を必要としない (同ファイルはランタイム fetch される
+# gitignore 済みアセットで、src からの型 import ではないため prebuild 不要)。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm run test
