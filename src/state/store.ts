@@ -12,6 +12,7 @@ import type {
   Store,
   StoreProgramMembership,
 } from "../domain/types";
+import { validateImportData } from "./validators";
 import {
   seed,
   SEED_VERSION,
@@ -504,24 +505,10 @@ export const useStore = create<State & Actions>()(
             };
           }
           const text = await res.text();
-          const data = JSON.parse(text);
-          if (typeof data !== "object" || data == null) {
-            return { ok: false, error: "JSONが不正です" };
-          }
-          const required = [
-            "cards",
-            "currencies",
-            "stores",
-            "edges",
-          ];
-          for (const key of required) {
-            if (!Array.isArray(data[key])) {
-              return {
-                ok: false,
-                error: `"${key}" が配列ではありません`,
-              };
-            }
-          }
+          const parsed = JSON.parse(text);
+          const result = validateImportData(parsed);
+          if (!result.ok) return { ok: false, error: result.error };
+          const data = result.value;
           set((state) => {
             // v6.0.1: 全置換だが「使う/使わない」(enabled) と userModifiedAt は id マッチで
             // ローカル保持 (取込側がキーを持たない＝公式 master のときのみ)。
@@ -533,22 +520,19 @@ export const useStore = create<State & Actions>()(
             state.stores = data.stores;
             state.edges = data.edges;
             state.pointCards = preservePreferences(
-              Array.isArray(data.pointCards) ? data.pointCards : [],
+              data.pointCards ?? [],
               state.pointCards,
               ["enabled"],
             );
-            state.loyaltyRules = Array.isArray(data.loyaltyRules)
-              ? data.loyaltyRules
-              : [];
+            state.loyaltyRules = data.loyaltyRules ?? [];
             state.paymentApps = preservePreferences(
-              Array.isArray(data.paymentApps) ? data.paymentApps : [],
+              data.paymentApps ?? [],
               state.paymentApps,
               ["enabled", "userModifiedAt"],
             );
-            state.programs = Array.isArray(data.programs) ? data.programs : [];
-            state.memberships = Array.isArray(data.memberships)
-              ? data.memberships
-              : [];
+            // 公式 master は全置換 (欠落欄は空配列)。
+            state.programs = data.programs ?? [];
+            state.memberships = data.memberships ?? [];
             state.lastSyncAt = new Date().toISOString();
           });
           return { ok: true };
@@ -584,15 +568,10 @@ export const useStore = create<State & Actions>()(
       },
       importJson: (json) => {
         try {
-          const data = JSON.parse(json);
-          if (typeof data !== "object" || data == null)
-            return { ok: false, error: "JSONが不正です" };
-          const required = ["cards", "currencies", "stores", "edges"];
-          for (const key of required) {
-            if (!Array.isArray(data[key]))
-              return { ok: false, error: `"${key}" が配列ではありません` };
-          }
-          // 手書き JSON で省略されているケースのため、欠けてれば空配列で防御
+          const parsed = JSON.parse(json);
+          const result = validateImportData(parsed);
+          if (!result.ok) return { ok: false, error: result.error };
+          const data = result.value;
           set((state) => {
             // v6.0.1: syncFromUrl と同じく enabled / userModifiedAt を id マッチで保持
             state.cards = preservePreferences(data.cards, state.cards, [
@@ -603,24 +582,20 @@ export const useStore = create<State & Actions>()(
             state.stores = data.stores;
             state.edges = data.edges;
             state.pointCards = preservePreferences(
-              Array.isArray(data.pointCards) ? data.pointCards : [],
+              data.pointCards ?? [],
               state.pointCards,
               ["enabled"],
             );
-            state.loyaltyRules = Array.isArray(data.loyaltyRules)
-              ? data.loyaltyRules
-              : [];
+            state.loyaltyRules = data.loyaltyRules ?? [];
             state.paymentApps = preservePreferences(
-              Array.isArray(data.paymentApps) ? data.paymentApps : [],
+              data.paymentApps ?? [],
               state.paymentApps,
               ["enabled", "userModifiedAt"],
             );
-            // programs / memberships を含めて全復元。ただし旧フォーマット (両欄なし) の
-            // import で同期済みデータを消さないよう、欠落時は既存値を保持する
-            // (syncFromUrl は公式 master 全置換なので [] 既定だが、import はバックアップ復元)。
-            if (Array.isArray(data.programs)) state.programs = data.programs;
-            if (Array.isArray(data.memberships))
-              state.memberships = data.memberships;
+            // programs / memberships は preserve-on-missing (旧フォーマット import で
+            // 同期済みデータを消さない。syncFromUrl は公式 master 全置換なので [] 既定)。
+            if (data.programs) state.programs = data.programs;
+            if (data.memberships) state.memberships = data.memberships;
           });
           return { ok: true };
         } catch (e) {

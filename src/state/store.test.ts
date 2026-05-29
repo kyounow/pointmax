@@ -261,3 +261,33 @@ describe("store: exportJson / importJson は programs / memberships を保持す
     expect(useStore.getState().memberships).toEqual([membership]);
   });
 });
+
+describe("store: importJson 入力バリデーション (A6/D2)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("妥当な JSON は受理される", () => {
+    const good = JSON.stringify({
+      cards: [{ id: "c1", name: "C", defaultRate: 0.01, defaultCurrencyId: "cur1" }],
+      currencies: [{ id: "cur1", name: "C1" }],
+      stores: [],
+      edges: [],
+    });
+    const res = useStore.getState().importJson(good);
+    expect(res.ok).toBe(true);
+    expect(useStore.getState().cards).toHaveLength(1);
+  });
+
+  it("card.defaultRate が文字列の不正 JSON を拒否し State を汚染しない", () => {
+    const bad = JSON.stringify({
+      cards: [{ id: "c1", name: "C", defaultRate: "x", defaultCurrencyId: "cur1" }],
+      currencies: [{ id: "cur1", name: "C1" }],
+      stores: [],
+      edges: [],
+    });
+    const res = useStore.getState().importJson(bad);
+    expect(res.ok).toBe(false);
+    expect(useStore.getState().cards).toHaveLength(0); // set() に到達しない
+  });
+});
