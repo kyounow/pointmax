@@ -54,6 +54,9 @@ type Props = {
   sel: Selection;
   showLabels: boolean;
   accessibleCardIds: ReadonlySet<string>;
+  // 「使わない」設定のポイント通貨 (EdgesScreen の strict blocked)。
+  // この通貨ノードを dim、そこから出るエッジを灰・点線で「除外」表示する。
+  blockedCurrencyIds?: ReadonlySet<string>;
   onConnect: (conn: Connection) => void;
   onEdgeClick: (evt: React.MouseEvent, e: RFEdge) => void;
   onNodeClick: (evt: React.MouseEvent, n: RFNode) => void;
@@ -78,6 +81,7 @@ export function EdgesGraph({
   sel,
   showLabels,
   accessibleCardIds,
+  blockedCurrencyIds,
   onConnect,
   onEdgeClick,
   onNodeClick,
@@ -138,10 +142,23 @@ export function EdgesGraph({
         id: c.id,
         type: "currency",
         position: pos,
-        data: { currency: c, selected: isSelected, dimmed: false, routeRole },
+        data: {
+          currency: c,
+          selected: isSelected,
+          dimmed: blockedCurrencyIds?.has(c.id) ?? false,
+          routeRole,
+        },
       };
     });
-  }, [currencies, positions, focusedNodeId, routeFromId, routeToId, isRouteMode]);
+  }, [
+    currencies,
+    positions,
+    focusedNodeId,
+    routeFromId,
+    routeToId,
+    isRouteMode,
+    blockedCurrencyIds,
+  ]);
 
   const rfEdges: RFEdge[] = useMemo(() => {
     // ルート表示モード: path に含まれる edge のみ表示
@@ -159,13 +176,16 @@ export function EdgesGraph({
       const locked =
         !!e.requiredCardIds?.length &&
         !e.requiredCardIds.some((id) => accessibleCardIds.has(id));
-      // 優先度: routePath (紫、最強調) > selected/related (橙) > locked (灰) > default (青)
+      // 「使わない」ポイント通貨発のエッジ (strict blocked) も locked と同様に除外表示。
+      const blocked = blockedCurrencyIds?.has(e.fromCurrencyId) ?? false;
+      const dimEdge = locked || blocked;
+      // 優先度: routePath (紫) > locked/blocked (灰・点線) > selected/related (橙) > default (青)
       let stroke: string;
       let strokeWidth: number;
       if (inRoutePath) {
         stroke = ROUTE_PATH_STROKE;
         strokeWidth = 3.5;
-      } else if (locked) {
+      } else if (dimEdge) {
         stroke = "#6b7280";
         strokeWidth = isSelectedEdge || related ? 2.5 : 1.5;
       } else if (isSelectedEdge || related) {
@@ -185,8 +205,8 @@ export function EdgesGraph({
         style: {
           stroke,
           strokeWidth,
-          strokeDasharray: locked && !inRoutePath ? "6 4" : undefined,
-          opacity: locked && !inRoutePath ? 0.55 : 1,
+          strokeDasharray: dimEdge && !inRoutePath ? "6 4" : undefined,
+          opacity: dimEdge && !inRoutePath ? 0.55 : 1,
         },
         labelStyle: {
           fill: "#e6e6e6",
@@ -212,6 +232,7 @@ export function EdgesGraph({
     focusedNodeId,
     showLabels,
     accessibleCardIds,
+    blockedCurrencyIds,
     routePathEdgeIds,
     isRouteMode,
   ]);

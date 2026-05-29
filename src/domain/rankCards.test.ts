@@ -916,3 +916,29 @@ describe("A1: monthlyCapAmountYen の per-tx クランプ", () => {
     expect(res[0].earnedAmount).toBeCloseTo(1500, 6); // 上限未満なので全額対象
   });
 });
+
+describe("pointCard OFF と Calculator (strict 除外は EdgesScreen 限定の確認)", () => {
+  it("有効クレカが貯める通貨は、その pointCard を OFF にしても Calculator で reachable", () => {
+    // 楽天カード (enabled, rakuten-pt) + 楽天ポイントカード OFF + rakuten-pt→ana-mile。
+    // rankCards は通常 computeBlockedCurrencyIds を使うため、rakuten-pt は楽天カードが
+    // 貯める = blocked にならず、交換ルートは維持される (EdgesScreen の strict 除外と対照)。
+    const res = rankCardsRankings({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "ana-mile",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [edge("rakuten-to-ana", "rakuten-pt", "ana-mile", 0.5)],
+      pointCards: [
+        {
+          id: "rakuten-pc",
+          name: "楽天ポイントカード",
+          currencyId: "rakuten-pt",
+          enabled: false,
+        },
+      ],
+    });
+    expect(res[0].card.id).toBe("rakuten");
+    expect(res[0].reachable).toBe(true);
+    expect(res[0].finalAmount).toBeCloseTo(50, 10); // 100 rakuten-pt × 0.5
+  });
+});
