@@ -47,9 +47,9 @@ function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
   };
 }
 
+// expanded は各テストで明示する (aria-expanded / 上限バッジ表示の検証で値が重要)。
 const baseProps = {
   displayRank: 1,
-  expanded: true,
   onToggle: () => {},
   activeCurrencyId: "rakuten-pt",
   currencyById: new Map<string, Currency>([["rakuten-pt", rakutenPt]]),
@@ -70,6 +70,7 @@ describe("CalcResultCard", () => {
       <CalcResultCard
         ranking={makeRanking()}
         programById={new Map([["prog-cap", capProgram]])}
+        expanded
         {...baseProps}
       />,
     );
@@ -88,6 +89,7 @@ describe("CalcResultCard", () => {
       <CalcResultCard
         ranking={makeRanking()}
         programById={new Map([["prog-cap", program]])}
+        expanded
         {...baseProps}
       />,
     );
@@ -99,6 +101,7 @@ describe("CalcResultCard", () => {
       <CalcResultCard
         ranking={makeRanking()}
         programById={new Map()}
+        expanded
         {...baseProps}
       />,
     );
@@ -111,9 +114,36 @@ describe("CalcResultCard", () => {
       <CalcResultCard
         ranking={makeRanking({ reachable: false })}
         programById={new Map()}
+        expanded={false}
         {...baseProps}
       />,
     );
     expect(screen.getByText("対象外")).toBeInTheDocument();
+  });
+
+  it("展開状態を header の aria-expanded に反映する (A11y)", () => {
+    const { rerender } = render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /楽天カード/ }),
+    ).toHaveAttribute("aria-expanded", "true");
+
+    rerender(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /楽天カード/ }),
+    ).toHaveAttribute("aria-expanded", "false");
   });
 });
