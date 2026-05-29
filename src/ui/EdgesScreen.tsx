@@ -11,16 +11,28 @@ import { NodeDetailPanel } from "./edges/NodeDetailPanel";
 import { NodePill } from "./NodePill";
 import type { Selection } from "./edges/types";
 import { bestPath } from "../domain/bestPath";
+import { computeBlockedCurrencyIds } from "../domain/currencyGating";
 import { formatRatio } from "../domain/currencyKind";
 import { formatNum } from "../domain/formatNum";
 
 export function EdgesScreen() {
-  // Wave 5 B-1: 6 個別 subscribe → 単一 useShallow に集約
-  const { currencies, edges, cards, addEdge, updateEdge, removeEdge } = useStore(
+  // Wave 5 B-1 / v6.0.0: useShallow に集約 (pointCards/programs は blockedCurrencyIds 用)
+  const {
+    currencies,
+    edges,
+    cards,
+    pointCards,
+    programs,
+    addEdge,
+    updateEdge,
+    removeEdge,
+  } = useStore(
     useShallow((s) => ({
       currencies: s.currencies,
       edges: s.edges,
       cards: s.cards,
+      pointCards: s.pointCards,
+      programs: s.programs,
       addEdge: s.addEdge,
       updateEdge: s.updateEdge,
       removeEdge: s.removeEdge,
@@ -55,6 +67,15 @@ export function EdgesScreen() {
     [cards],
   );
 
+  // v6.0.0: 全カード集合 (SUB ルート = 全資産解放での最良ルート計算用)
+  const allCardIds = useMemo(() => new Set(cards.map((c) => c.id)), [cards]);
+
+  // v6.0.0: ユーザーが「使わない」選択をしたポイント通貨 (MAIN ルートの起点・経由から除外)
+  const blockedCurrencyIds = useMemo(
+    () => computeBlockedCurrencyIds(cards, pointCards, programs),
+    [cards, pointCards, programs],
+  );
+
   // edge が現状ユーザーで実際に利用可能か。requiredCardIds が無ければ常に true。
   const isEdgeAccessible = useCallback(
     (e: { requiredCardIds?: string[] }) => {
@@ -71,6 +92,7 @@ export function EdgesScreen() {
     return Number.isFinite(n) && n > 0 ? n : 0;
   }, [routeAmountStr]);
 
+  // MAIN ルート: 使うカード + 使うポイント (blockedCurrencyIds で起点・経由を制限)。
   const routeResult = useMemo(() => {
     if (!routeFromId || !routeToId || routeAmount <= 0) return null;
     return bestPath(
@@ -79,8 +101,51 @@ export function EdgesScreen() {
       routeToId,
       routeAmount,
       accessibleCardIds,
+      blockedCurrencyIds,
     );
-  }, [edges, routeFromId, routeToId, routeAmount, accessibleCardIds]);
+  }, [edges, routeFromId, routeToId, routeAmount, accessibleCardIds, blockedCurrencyIds]);
+
+  // SUB ルート (v6.0.0): 全カード + 全ポイント解放での最良ルート。
+  // MAIN より高レートのとき「使い始めればより良いルートが開く」提案を出す。
+  const betterRoute = useMemo(() => {
+    if (!routeFromId || !routeToId || routeAmount <= 0) return null;
+    const full = bestPath(edges, routeFromId, routeToId, routeAmount, allCardIds, undefined);
+    if (!full) return null;
+    const mainProduct = routeResult?.product ?? 0;
+    if (full.product <= mainProduct + 1e-9) return null; // MAIN と同等以下なら提案しない
+
+    // 不足資産を抽出: SUB path の step から
+    //  - blocked な fromCurrency (= 使い始めるべきポイント通貨)
+    //  - requiredCardIds が accessible に無い (= 有効化すべきクレカ)
+    const unlockCurrencyIds = new Set<string>();
+    const unlockCardIds = new Set<string>();
+    for (const s of full.steps) {
+      if (blockedCurrencyIds.has(s.fromCurrencyId)) {
+        unlockCurrencyIds.add(s.fromCurrencyId);
+      }
+      if (
+        s.requiredCardIds?.length &&
+        !s.requiredCardIds.some((id) => accessibleCardIds.has(id))
+      ) {
+        for (const id of s.requiredCardIds) unlockCardIds.add(id);
+      }
+    }
+    return {
+      result: full,
+      deltaFinal: full.finalAmount - (routeResult?.finalAmount ?? 0),
+      unlockCurrencyIds: [...unlockCurrencyIds],
+      unlockCardIds: [...unlockCardIds],
+    };
+  }, [
+    edges,
+    routeFromId,
+    routeToId,
+    routeAmount,
+    allCardIds,
+    accessibleCardIds,
+    blockedCurrencyIds,
+    routeResult,
+  ]);
 
   // ルート path に含まれる edge id 集合 (グラフでハイライト用)
   const routePathEdgeIds = useMemo(
@@ -285,6 +350,53 @@ export function EdgesScreen() {
                 への交換ルートが見つかりません。
                 保有カードが必須の edge をブロックしている場合があります — カード設定を確認してください。
               </p>
+            )}
+
+            {/* v6.0.0: 使っていない資産を有効化すれば開くより良いルート (SUB) */}
+            {betterRoute && (
+              <div className="route-finder-better">
+                <div className="route-finder-better-title">
+                  ✨ 使っていない資産を有効化すると、より良いルートが開きます (+
+                  {formatNum(betterRoute.deltaFinal)} {currencyName(routeToId)})
+                </div>
+                <div className="path">
+                  <div className="path-line">
+                    <NodePill currency={currencyById.get(routeFromId)} />
+                    {betterRoute.result.steps.map((step) => (
+                      <span key={step.id} className="path-segment">
+                        <span className="arrow">
+                          →<small>{formatRatio(step.rate)}</small>
+                        </span>
+                        <NodePill currency={currencyById.get(step.toCurrencyId)} />
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="hint" style={{ marginTop: 6, fontSize: 13 }}>
+                  {formatNum(routeAmount)} {currencyName(routeFromId)} →{" "}
+                  <strong>
+                    {formatNum(betterRoute.result.finalAmount)}{" "}
+                    {currencyName(routeToId)}
+                  </strong>{" "}
+                  (合計 ×{formatRatio(betterRoute.result.product)})
+                </div>
+                {betterRoute.unlockCurrencyIds.length > 0 && (
+                  <div className="route-finder-better-unlock">
+                    使い始めるポイント:{" "}
+                    {betterRoute.unlockCurrencyIds
+                      .map((id) => currencyName(id))
+                      .join(" / ")}
+                    {" "}(「ポイントカード」画面で「使う」を ON に)
+                  </div>
+                )}
+                {betterRoute.unlockCardIds.length > 0 && (
+                  <div className="route-finder-better-unlock">
+                    有効化するカード:{" "}
+                    {betterRoute.unlockCardIds.map(cardName).join(" / ")}
+                    {" "}(「カード」画面で「使う」を ON に)
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
