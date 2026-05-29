@@ -166,6 +166,24 @@ export function conflictItems(
 // v0.8 リリースで履歴をリセット。v1.0 以降の差分を積み上げる予定
 export const MIGRATIONS: VersionMigration[] = [
   {
+    toVersion: 41,
+    date: "2026-05-29",
+    changes: [
+      {
+        type: "updateField",
+        collection: "edges",
+        id: "waon-to-jal",
+        field: "requiredCardIds",
+        from: undefined,
+        to: ["aeon-card"],
+        notes:
+          "WAON→JAL マイル はイオンカード会員 + JMB 会員の特典 (公式)。" +
+          "v41 以前は制約なしで全ユーザーに表示していたが、実体に合わせて" +
+          "aeon-card 保有 (使う) 時のみ表示する。jre-to-jal の v13 と同方式。",
+      },
+    ],
+  },
+  {
     toVersion: 13,
     date: "2026-05-12",
     changes: [

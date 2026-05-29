@@ -154,7 +154,50 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "waon-pt",
     toCurrencyId: "jal-mile",
     rate: 0.5,
-    notes: "2WAON = 1マイル (50%還元)",
+    requiredCardIds: ["aeon-card"],
+    notes:
+      "2WAON = 1マイル (50%還元)。イオンカード会員 + JMB 会員の特典 (公式 FAQ)。" +
+      "本人名義と JMB お得意様番号の名義が一致している必要あり。",
+  },
+
+  // ============ JRキューポ ⇔ JAL/ANA マイル (JQ SUGOCA カード保有特典) ============
+  // JRキューポ (JR九州、旧 JQ POINT)。JMB JQ SUGOCA / JQ SUGOCA ANA カード保有で
+  // マイルと相互交換できる。マイル→ポイントは等価、ポイント→マイルは 2:1 (50%)。
+  {
+    id: "jrkyupo-to-jal",
+    fromCurrencyId: "jrkyupo",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    requiredCardIds: ["jmb-jq-sugoca"],
+    notes:
+      "1000JRキューポ → 500マイル。JMB JQ SUGOCA 会員特典 " +
+      "(JMB×おまとめ登録SUGOCA 紐付け、1日1回)。",
+  },
+  {
+    id: "jal-to-jrkyupo",
+    fromCurrencyId: "jal-mile",
+    toCurrencyId: "jrkyupo",
+    rate: 1,
+    requiredCardIds: ["jmb-jq-sugoca"],
+    notes:
+      "10000マイル → 10000JRキューポ (等価交換)。JMB JQ SUGOCA 会員特典 " +
+      "(年度内2回・20000マイルまで)。",
+  },
+  {
+    id: "jrkyupo-to-ana",
+    fromCurrencyId: "jrkyupo",
+    toCurrencyId: "ana-mile",
+    rate: 0.5,
+    requiredCardIds: ["jq-sugoca-ana"],
+    notes: "1000JRキューポ → 500マイル。JQ SUGOCA ANA 会員特典。",
+  },
+  {
+    id: "ana-to-jrkyupo",
+    fromCurrencyId: "ana-mile",
+    toCurrencyId: "jrkyupo",
+    rate: 1,
+    requiredCardIds: ["jq-sugoca-ana"],
+    notes: "10000マイル → 10000JRキューポ (等価交換)。JQ SUGOCA ANA 会員特典。",
   },
 
   // ============ クレカ・ホテル系プログラム ============

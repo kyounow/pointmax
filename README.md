@@ -214,7 +214,7 @@ PointMax は 2 つの version を独立管理:
 
 | 種類 | 用途 | 現在値 |
 |---|---|---|
-| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **40** |
+| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **41** |
 | `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **5** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
@@ -249,6 +249,8 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **v5.1.2** — `chargeBased` paymentApp 経由で cardIds-only program (Olive 選べる特典等) が誤適用されるバグ修正
 - **v5.1.3** — legacy `paymentApp.ts` 削除 + 異種通貨 addOn の分離表示 (`CardRanking.appBonusBreakdown` 追加で program 名明示)
 - **v6.0.0** — ポイントカードに「使う/使わない」チェックボックスを追加 (クレカ・支払方法と同 UI)。使わないポイントは二重取りから外れ、交換ルートの起点・経由からも除外 (`bestPath` に `blockedCurrencyIds` ゲート新設、deny-list 方式)。Calculator は「未使用ポイントカードを有効化すると +X」(`rankCards` 戻り値を `RankResult { rankings, upgrade }` 化)、EdgesScreen ルート検索は「保有優先メイン + 使い始めればより良いサブルート」を提示。PERSIST_SCHEMA は 5 据え置き (PointCard.enabled は任意フィールド、後方互換)
+- **v6.0.1** — 全上書き同期 (設定の「URLから取得して全上書き」/ インポート) で「使う/使わない」設定 (`enabled` / `userModifiedAt`) を id マッチで保護 (`preferenceMerge.ts`)。ポイントカードの「使う」列をクレカ・支払方法と同じ末尾位置に統一
+- **v6.1.0** — カード保有で開く交換ルートを追加。WAON→JALマイルをイオンカード保有特典としてゲート化、JRキューポ⇔JALマイル (JMB JQ SUGOCA) / JRキューポ⇔ANAマイル (JQ SUGOCA ANA) を新設。新カード `jmb-jq-sugoca` / `jq-sugoca-ana` (enabled:false)。既存ユーザーには migration v41 で WAON→JAL ゲートを反映
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版)。`ExtractorKind` は計 7 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。

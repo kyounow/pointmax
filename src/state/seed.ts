@@ -57,7 +57,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 40;
+export const SEED_VERSION = 41;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -73,6 +73,17 @@ export const SEED_CHANGELOG: {
   date: string;
   summary: string;
 }[] = [
+  {
+    version: 41,
+    date: "2026-05-29",
+    summary:
+      "v6.1.0: カード保有で開く交換ルートを追加。" +
+      "WAON→JALマイル (2WAON→1マイル) をイオンカード保有特典としてゲート化。" +
+      "JRキューポ⇔JALマイル (JMB JQ SUGOCA) / JRキューポ⇔ANAマイル (JQ SUGOCA ANA) を新設 " +
+      "(ポイント→マイル 2:1、マイル→ポイント 等価)。新カード jmb-jq-sugoca / jq-sugoca-ana " +
+      "を追加 (enabled:false、保有時に「使う」ON で各ルート解放)。" +
+      "既存ユーザーには migration v41 で WAON→JAL のゲートを反映。",
+  },
   {
     version: 40,
     date: "2026-05-29",

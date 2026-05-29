@@ -193,4 +193,47 @@ describe("SEED_EDGES の通貨参照整合性", () => {
       expect(ids.has(id), `edge ${id} が未登録`).toBe(true);
     }
   });
+
+  // v6.1.0: requiredCardIds は実在する Card.id を参照しなければならない
+  // (gate カードを seed-data-cards.ts に追加し忘れると edge が永久に通行不可になる)。
+  it("全 edge の requiredCardIds が SEED_CARDS の id を参照する", () => {
+    const { edges } = seed();
+    const cardIds = new Set(SEED_CARDS.map((c) => c.id));
+    const dangling: string[] = [];
+    for (const e of edges) {
+      for (const id of e.requiredCardIds ?? []) {
+        if (!cardIds.has(id)) {
+          dangling.push(`${e.id}: requiredCardIds '${id}' が未定義`);
+        }
+      }
+    }
+    expect(dangling, dangling.join("\n")).toEqual([]);
+  });
+
+  // v6.1.0: カード保有で開く JAL/ANA ルートが登録されている
+  it("v6.1.0 のカード保有ルートが存在し、正しい requiredCardIds を持つ", () => {
+    const { edges } = seed();
+    const byId = new Map(edges.map((e) => [e.id, e]));
+    const expected: Record<string, string[]> = {
+      "waon-to-jal": ["aeon-card"],
+      "jrkyupo-to-jal": ["jmb-jq-sugoca"],
+      "jal-to-jrkyupo": ["jmb-jq-sugoca"],
+      "jrkyupo-to-ana": ["jq-sugoca-ana"],
+      "ana-to-jrkyupo": ["jq-sugoca-ana"],
+    };
+    for (const [id, req] of Object.entries(expected)) {
+      const e = byId.get(id);
+      expect(e, `edge ${id} が未登録`).toBeDefined();
+      expect(e?.requiredCardIds, `edge ${id} の requiredCardIds`).toEqual(req);
+    }
+  });
+
+  it("v6.1.0 の gate カード (jmb-jq-sugoca / jq-sugoca-ana) が enabled:false で存在", () => {
+    const byId = new Map(SEED_CARDS.map((c) => [c.id, c]));
+    for (const id of ["jmb-jq-sugoca", "jq-sugoca-ana"]) {
+      const c = byId.get(id);
+      expect(c, `card ${id} が未登録`).toBeDefined();
+      expect(c?.enabled, `card ${id} は enabled:false 想定`).toBe(false);
+    }
+  });
 });
