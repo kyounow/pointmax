@@ -180,10 +180,17 @@ function App() {
         >
           PointMax
         </button>
-        <nav className="tabs desktop-only">
+        <nav
+          className="tabs desktop-only"
+          role="tablist"
+          aria-label="メインナビゲーション"
+        >
           {TABS.map((t) => (
             <button
               key={t.id}
+              role="tab"
+              aria-selected={tab === t.id}
+              aria-controls="main-tabpanel"
               className={tab === t.id ? "active" : ""}
               onClick={() => setTab(t.id)}
             >
@@ -238,10 +245,17 @@ function App() {
                 ×
               </button>
             </div>
-            <nav className="drawer-tabs">
+            <nav
+              className="drawer-tabs"
+              role="tablist"
+              aria-label="メインナビゲーション"
+            >
               {TABS.map((t) => (
                 <button
                   key={t.id}
+                  role="tab"
+                  aria-selected={tab === t.id}
+                  aria-controls="main-tabpanel"
                   className={`drawer-tab ${tab === t.id ? "active" : ""}`}
                   onClick={() => selectTab(t.id)}
                 >
@@ -279,7 +293,12 @@ function App() {
         </div>
       )}
 
-      <main className="content">
+      <main
+        className="content"
+        id="main-tabpanel"
+        role="tabpanel"
+        aria-label={activeTabLabel}
+      >
         <UpdateBanner />
         {/* Wave 4 B-6 audit-fix: 各 Screen を ErrorBoundary で wrap。
             画面単位で隔離して、1 画面のエラーがアプリ全体を停止させないようにする。
