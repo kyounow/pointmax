@@ -132,6 +132,9 @@ export function bestLoyalties(
 
   const evaluated: LoyaltyResult[] = applicable.map((rule) => {
     const pc = ownedById.get(rule.pointCardId)!;
+    // 注: program の monthlyCapAmountYen は現状この loyalty 経路へ伝播していない
+    // (cap 付き program は paymentApp 系のみで rankCards 側でクランプ済み。将来 pointCard 系の
+    // cap 付き program が登場したら、ここにも per-tx クランプを追加すること)。
     const earnedAmount = amount * rule.rate;
     const earnedCurrencyId = rule.currencyId ?? pc.currencyId;
     const path = pathCache
