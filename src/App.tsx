@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import "./App.css";
 import { CardsScreen } from "./ui/CardsScreen";
@@ -6,7 +6,13 @@ import { CurrenciesScreen } from "./ui/CurrenciesScreen";
 import { StoresScreen } from "./ui/StoresScreen";
 import { ProgramsScreen } from "./ui/ProgramsScreen";
 import { CampaignsScreen } from "./ui/CampaignsScreen";
-import { EdgesScreen } from "./ui/EdgesScreen";
+// Wave 6 B-4: EdgesScreen は @xyflow/react (174 KB JS + 15 KB CSS) を引き込む最重量画面。
+// 静的 import だと index.html の modulepreload に乗り、デフォルトの計算タブを開くだけで
+// 全ユーザーが React Flow を初期ロードする。lazy 化して「交換ルート」タブを開いた時だけ
+// xyflow chunk を fetch するよう遅延 (初期ロードから ~190 KB を除外)。
+const EdgesScreen = lazy(() =>
+  import("./ui/EdgesScreen").then((m) => ({ default: m.EdgesScreen })),
+);
 import { CalculatorScreen } from "./ui/CalculatorScreen";
 import { PointCardsScreen } from "./ui/PointCardsScreen";
 import { PaymentAppsScreen } from "./ui/PaymentAppsScreen";
@@ -279,17 +285,21 @@ function App() {
             画面単位で隔離して、1 画面のエラーがアプリ全体を停止させないようにする。
             scopeName で console.error に画面名が残るので運用調査の起点になる。 */}
         <ErrorBoundary scopeName={activeTabLabel}>
-          {tab === "calculator" && <CalculatorScreen />}
-          {tab === "cards" && <CardsScreen />}
-          {tab === "pointcards" && <PointCardsScreen />}
-          {tab === "paymentapps" && <PaymentAppsScreen />}
-          {tab === "currencies" && <CurrenciesScreen />}
-          {tab === "stores" && <StoresScreen />}
-          {tab === "programs" && <ProgramsScreen />}
-          {tab === "campaigns" && <CampaignsScreen />}
-          {tab === "edges" && <EdgesScreen />}
-          {tab === "sync-history" && <SyncHistoryScreen />}
-          {tab === "settings" && <SettingsScreen />}
+          {/* Wave 6 B-4: EdgesScreen は lazy なので Suspense で囲む。
+              他画面は静的 import なので fallback は交換ルート読込時のみ出る。 */}
+          <Suspense fallback={<p className="empty">読み込み中…</p>}>
+            {tab === "calculator" && <CalculatorScreen />}
+            {tab === "cards" && <CardsScreen />}
+            {tab === "pointcards" && <PointCardsScreen />}
+            {tab === "paymentapps" && <PaymentAppsScreen />}
+            {tab === "currencies" && <CurrenciesScreen />}
+            {tab === "stores" && <StoresScreen />}
+            {tab === "programs" && <ProgramsScreen />}
+            {tab === "campaigns" && <CampaignsScreen />}
+            {tab === "edges" && <EdgesScreen />}
+            {tab === "sync-history" && <SyncHistoryScreen />}
+            {tab === "settings" && <SettingsScreen />}
+          </Suspense>
         </ErrorBoundary>
       </main>
     </div>
