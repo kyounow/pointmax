@@ -1,0 +1,37 @@
+name: Lint (React Hooks)
+
+# v6.1.1 / PR #68 の再発防止: React の Rules of Hooks 違反を PR / main push で gating する。
+#
+# 背景: SyncUpdateModal で useRef/useEffect が早期 return より後ろにあり、再レンダーで
+# hook 数が減って "Rendered fewer hooks than expected" でアプリ全体が白画面クラッシュした。
+# これは react-hooks/rules-of-hooks で静的検出できるが、当時の CI は test + build のみで
+# lint を走らせておらず、かつ `npm run lint` 全体は既存の多数の lint エラーで常時 fail する
+# ため gating に使えなかった。そこで rules-of-hooks 1 ルールだけに絞った
+# `npm run lint:hooks` (eslint.hooks.config.js) を CI ゲートとして追加する。
+#
+# 既存 lint エラー全体の解消 → `npm run lint` 全体の gating 化は別 follow-up。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  hooks-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint React Hooks rules
+        run: npm run lint:hooks

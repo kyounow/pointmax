@@ -164,6 +164,7 @@ npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
 npm run test         # Vitest (344 ケース)
 npm run build        # 本番ビルド
+npm run lint:hooks   # React Rules of Hooks 違反のみ検出 (CI ゲート / 早期 return 後の hook 等)
 npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出
 npm run sync:propose               # 全 extracted vs seed の差分提案
 npm run sync:apply                 # autoApplicable を seed-additions.ts へ
