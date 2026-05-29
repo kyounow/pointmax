@@ -28,6 +28,7 @@ import {
   resetPaymentAppToSeedValues,
 } from "./userModified";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
+import { preservePreferences } from "./preferenceMerge";
 import {
   MIGRATIONS,
   applyMigrationsByKey,
@@ -522,19 +523,28 @@ export const useStore = create<State & Actions>()(
             }
           }
           set((state) => {
-            state.cards = data.cards;
+            // v6.0.1: 全置換だが「使う/使わない」(enabled) と userModifiedAt は id マッチで
+            // ローカル保持 (取込側がキーを持たない＝公式 master のときのみ)。
+            state.cards = preservePreferences(data.cards, state.cards, [
+              "enabled",
+              "userModifiedAt",
+            ]);
             state.currencies = data.currencies;
             state.stores = data.stores;
             state.edges = data.edges;
-            state.pointCards = Array.isArray(data.pointCards)
-              ? data.pointCards
-              : [];
+            state.pointCards = preservePreferences(
+              Array.isArray(data.pointCards) ? data.pointCards : [],
+              state.pointCards,
+              ["enabled"],
+            );
             state.loyaltyRules = Array.isArray(data.loyaltyRules)
               ? data.loyaltyRules
               : [];
-            state.paymentApps = Array.isArray(data.paymentApps)
-              ? data.paymentApps
-              : [];
+            state.paymentApps = preservePreferences(
+              Array.isArray(data.paymentApps) ? data.paymentApps : [],
+              state.paymentApps,
+              ["enabled", "userModifiedAt"],
+            );
             state.programs = Array.isArray(data.programs) ? data.programs : [];
             state.memberships = Array.isArray(data.memberships)
               ? data.memberships
@@ -580,19 +590,27 @@ export const useStore = create<State & Actions>()(
           }
           // 手書き JSON で省略されているケースのため、欠けてれば空配列で防御
           set((state) => {
-            state.cards = data.cards;
+            // v6.0.1: syncFromUrl と同じく enabled / userModifiedAt を id マッチで保持
+            state.cards = preservePreferences(data.cards, state.cards, [
+              "enabled",
+              "userModifiedAt",
+            ]);
             state.currencies = data.currencies;
             state.stores = data.stores;
             state.edges = data.edges;
-            state.pointCards = Array.isArray(data.pointCards)
-              ? data.pointCards
-              : [];
+            state.pointCards = preservePreferences(
+              Array.isArray(data.pointCards) ? data.pointCards : [],
+              state.pointCards,
+              ["enabled"],
+            );
             state.loyaltyRules = Array.isArray(data.loyaltyRules)
               ? data.loyaltyRules
               : [];
-            state.paymentApps = Array.isArray(data.paymentApps)
-              ? data.paymentApps
-              : [];
+            state.paymentApps = preservePreferences(
+              Array.isArray(data.paymentApps) ? data.paymentApps : [],
+              state.paymentApps,
+              ["enabled", "userModifiedAt"],
+            );
           });
           return { ok: true };
         } catch (e) {
