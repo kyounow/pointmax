@@ -15,6 +15,16 @@ import { evaluatePrograms } from "./programEvaluator";
 import { selectPrimaryForTarget } from "./selectPrimary";
 import { computeBlockedCurrencyIds } from "./currencyGating";
 
+// 浮動小数点の積み上げ誤差 (例: 0.1 + 0.2 = 0.30000000000000004) が、ランキングの
+// 厳密等価比較を貫通して決定的 tiebreaker (支払単独額 → 構成要素数) を飛ばさないための
+// 許容誤差。ポイント/マイルで 1e-9 未満の差に意味は無い。buildScopeUpgrade の改善判定にも共用。
+export const RANK_EPS = 1e-9;
+
+// a ≈ b (RANK_EPS 以内) を判定。ソート・upgrade 判定の「実質同値」に使う。
+export function nearlyEqual(a: number, b: number): boolean {
+  return Math.abs(a - b) <= RANK_EPS;
+}
+
 // ResolvedRate は programEvaluator ベース。後方互換のため source フィールドを維持。
 export type ResolvedRate =
   | { rate: number; currencyId: string; source: "default" }
@@ -477,15 +487,15 @@ export function rankCards(
     // 0次: reachable を優先
     if (a.reachable !== b.reachable) return a.reachable ? -1 : 1;
 
-    // 1次: totalFinalAmount 降順
-    if (a.totalFinalAmount !== b.totalFinalAmount) {
+    // 1次: totalFinalAmount 降順 (浮動小数点 dust が決定的 tiebreaker を飛ばさないよう ε 比較)
+    if (!nearlyEqual(a.totalFinalAmount, b.totalFinalAmount)) {
       return b.totalFinalAmount - a.totalFinalAmount;
     }
 
     // 2次: 支払単独 (card + appBonus、loyalty 除く) 多い順
     const aPay = a.finalAmount + a.appBonusFinalAmount;
     const bPay = b.finalAmount + b.appBonusFinalAmount;
-    if (aPay !== bPay) return bPay - aPay;
+    if (!nearlyEqual(aPay, bPay)) return bPay - aPay;
 
     // 3次: 構成要素少ない順
     const partCount = (r: CardRanking) =>
@@ -537,11 +547,10 @@ function buildScopeUpgrade(
   full: { rankings: CardRanking[]; loyalties: LoyaltyResult[]; loyaltyTotal: number },
   blockedCurrencyIds: ReadonlySet<string>,
 ): ScopeUpgrade | null {
-  const EPS = 1e-9;
   const mainTop = main.rankings.find((r) => r.reachable)?.totalFinalAmount ?? 0;
   const fullTop = full.rankings.find((r) => r.reachable)?.totalFinalAmount ?? 0;
   const deltaFinalAmount = fullTop - mainTop;
-  if (deltaFinalAmount <= EPS) return null;
+  if (deltaFinalAmount <= RANK_EPS) return null;
 
   const loyaltyDelta = Math.max(0, full.loyaltyTotal - main.loyaltyTotal);
   const routeDelta = Math.max(0, deltaFinalAmount - loyaltyDelta);

@@ -573,6 +573,10 @@ export const useStore = create<State & Actions>()(
             pointCards: s.pointCards,
             loyaltyRules: s.loyaltyRules,
             paymentApps: s.paymentApps,
+            // v6.x: 以前は programs / memberships を含めず、export→import で
+            // カスタム / 同期済みプログラムが復元されなかった。全データのスナップショットにする。
+            programs: s.programs,
+            memberships: s.memberships,
           },
           null,
           2,
@@ -611,6 +615,12 @@ export const useStore = create<State & Actions>()(
               state.paymentApps,
               ["enabled", "userModifiedAt"],
             );
+            // programs / memberships を含めて全復元。ただし旧フォーマット (両欄なし) の
+            // import で同期済みデータを消さないよう、欠落時は既存値を保持する
+            // (syncFromUrl は公式 master 全置換なので [] 既定だが、import はバックアップ復元)。
+            if (Array.isArray(data.programs)) state.programs = data.programs;
+            if (Array.isArray(data.memberships))
+              state.memberships = data.memberships;
           });
           return { ok: true };
         } catch (e) {
