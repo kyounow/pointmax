@@ -9,7 +9,6 @@
     "build": "tsc -b --force && vite build",
     "predev": "tsx scripts/generate-master.ts",
     "lint": "eslint .",
-    "lint:hooks": "eslint --config eslint.hooks.config.js \"src/**/*.{ts,tsx}\"",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

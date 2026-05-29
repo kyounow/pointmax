@@ -164,7 +164,7 @@ npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
 npm run test         # Vitest (344 ケース)
 npm run build        # 本番ビルド
-npm run lint:hooks   # React Rules of Hooks 違反のみ検出 (CI ゲート / 早期 return 後の hook 等)
+npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
 npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出
 npm run sync:propose               # 全 extracted vs seed の差分提案
 npm run sync:apply                 # autoApplicable を seed-additions.ts へ
@@ -253,6 +253,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **v6.0.1** — 全上書き同期 (設定の「URLから取得して全上書き」/ インポート) で「使う/使わない」設定 (`enabled` / `userModifiedAt`) を id マッチで保護 (`preferenceMerge.ts`)。ポイントカードの「使う」列をクレカ・支払方法と同じ末尾位置に統一
 - **v6.1.0** — カード保有で開く交換ルートを追加。WAON→JALマイルをイオンカード保有特典としてゲート化、JRキューポ⇔JALマイル (JMB JQ SUGOCA) / JRキューポ⇔ANAマイル (JQ SUGOCA ANA) を新設。新カード `jmb-jq-sugoca` / `jq-sugoca-ana` (enabled:false)。既存ユーザーには migration v41 で WAON→JAL ゲートを反映
 - **v6.1.1** — `SyncUpdateModal` のクラッシュ修正。「アプリに反映」/「閉じる」押下で `visible` が false に変わる再レンダー時、早期 return より後ろに置かれた `useRef`/`useEffect` が Rules of Hooks 違反 ("Rendered fewer hooks than expected") を起こし全画面が白くなっていた。hooks を早期 return より前へ移動。SEED_VERSION 41 / PERSIST_SCHEMA 5 据え置き
+- **v6.2.0** — lint エラーを全解消し、CI ゲートを `lint:hooks` (rules-of-hooks のみ) から full `npm run lint` に昇格。`set-state-in-effect`/`immutability` は React 公認の「prop 変化時に state 調整」(render-guard) パターンで解消 (Calculator 同率展開・Dialog・EdgeDetailPanel)、`only-export-components` は React Flow の `nodeTypes`/`edgeTypes` と `useDialog`/`DialogContext` を別ファイルへ分離。暫定 `eslint.hooks.config.js` は撤去。挙動・SEED_VERSION 41・PERSIST_SCHEMA 5 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版)。`ExtractorKind` は計 7 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。

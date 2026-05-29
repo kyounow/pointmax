@@ -1,12 +1,6 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Dialog } from "./Dialog";
+import { DialogContext } from "./useDialog";
 import type {
   AlertOpts,
   ConfirmOpts,
@@ -14,8 +8,6 @@ import type {
   DialogState,
   PromptOpts,
 } from "./types";
-
-const DialogContext = createContext<DialogApi | null>(null);
 
 export function DialogProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DialogState | null>(null);
@@ -75,10 +67,4 @@ export function DialogProvider({ children }: { children: ReactNode }) {
       )}
     </DialogContext.Provider>
   );
-}
-
-export function useDialog(): DialogApi {
-  const ctx = useContext(DialogContext);
-  if (!ctx) throw new Error("useDialog must be inside DialogProvider");
-  return ctx;
 }

@@ -86,4 +86,4 @@ export function PointMaxEdge(props: EdgeProps) {
   );
 }
 
-export const edgeTypes = { pointmax: PointMaxEdge };
+// edgeTypes は pointMaxEdgeConfig.ts へ分離 (react-refresh/only-export-components)。

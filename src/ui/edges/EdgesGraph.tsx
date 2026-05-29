@@ -14,8 +14,9 @@ import "@xyflow/react/dist/style.css";
 
 import { formatRatio, styleOf } from "../../domain/currencyKind";
 import type { ConversionEdge, Currency, CurrencyKind } from "../../domain/types";
-import { nodeTypes, type CurrencyNodeType } from "../CurrencyNode";
-import { edgeTypes } from "../PointMaxEdge";
+import type { CurrencyNodeType } from "../CurrencyNode";
+import { nodeTypes } from "../currencyNodeConfig";
+import { edgeTypes } from "../pointMaxEdgeConfig";
 import { computeFocusedRadialLayout } from "./radialLayout";
 import { layoutByKindRadial } from "./kindRadialLayout";
 import type { Selection } from "./types";

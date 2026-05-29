@@ -64,7 +64,7 @@ for (const src of extracted) {
 console.log("// extracted から補完候補:");
 const sortedOrphans = [...orphanIds].sort();
 let resolved = 0;
-let unresolved: string[] = [];
+const unresolved: string[] = [];
 for (const id of sortedOrphans) {
   const cands = candidateMap.get(id);
   if (!cands || cands.length === 0) {
