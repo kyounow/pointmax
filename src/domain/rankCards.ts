@@ -25,6 +25,20 @@ export function nearlyEqual(a: number, b: number): boolean {
   return Math.abs(a - b) <= RANK_EPS;
 }
 
+// A1: program の月次利用上限 (monthlyCapAmountYen, 円) を考慮した earn 額。
+// 単発計算機は月次累積を持たないため「この取引が今月の対象支出の全て」と仮定し、付与対象
+// 支出を上限でクランプする (per-tx 近似)。これにより上限付き高還元プログラムがランキングで
+// 過大評価されるのを防ぐ。月内累積の注意は UI 警告バッジ (CalcResultCard) が担う。
+// cap 未設定 (undefined) は従来通り全額対象。丸めはしない (連続通貨モデル維持、表示は formatNum)。
+function earnWithMonthlyCap(
+  amount: number,
+  rate: number,
+  capYen: number | undefined,
+): number {
+  const eligibleSpend = capYen != null ? Math.min(amount, capYen) : amount;
+  return eligibleSpend * rate;
+}
+
 // ResolvedRate は programEvaluator ベース。後方互換のため source フィールドを維持。
 export type ResolvedRate =
   | { rate: number; currencyId: string; source: "default" }
@@ -216,7 +230,11 @@ export function rankCards(
         ? { rate: cardRate, currencyId: cardCurrencyId, source: "program", programId: primary.program.id }
         : { rate: card.defaultRate, currencyId: card.defaultCurrencyId, source: "default" };
 
-      const earnedAmount = payment.amount * cardRate;
+      const earnedAmount = earnWithMonthlyCap(
+        payment.amount,
+        cardRate,
+        primary?.program.monthlyCapAmountYen,
+      );
       const path = pathCache.resolve(cardCurrencyId, targetCurrencyId, earnedAmount);
       const baseFinal = path?.finalAmount ?? 0;
 
@@ -227,7 +245,11 @@ export function rankCards(
       let appBonusRate = 0;
       let appBonusCurrencyId: string | null = null;
       for (const addOn of addOns) {
-        const addOnEarned = payment.amount * addOn.effectiveRate;
+        const addOnEarned = earnWithMonthlyCap(
+          payment.amount,
+          addOn.effectiveRate,
+          addOn.program.monthlyCapAmountYen,
+        );
         const addOnPath = pathCache.resolve(addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned);
         if (addOnPath) {
           appBonusBreakdown.push({
@@ -299,7 +321,11 @@ export function rankCards(
       const resolved: ResolvedRate = primary
         ? { rate: cardRate, currencyId: cardCurrencyId, source: "program", programId: primary.program.id }
         : { rate: card.defaultRate, currencyId: card.defaultCurrencyId, source: "default" };
-      const earnedAmount = payment.amount * cardRate;
+      const earnedAmount = earnWithMonthlyCap(
+        payment.amount,
+        cardRate,
+        primary?.program.monthlyCapAmountYen,
+      );
       const path = pathCache.resolve(cardCurrencyId, targetCurrencyId, earnedAmount);
       const baseFinal = path?.finalAmount ?? 0;
       return {
@@ -327,6 +353,7 @@ export function rankCards(
     type AppEval = {
       pa: PaymentApp;
       cardRate: number;
+      cardEarned: number;
       cardCurrencyId: string;
       resolved: ResolvedRate;
       cardFinal: number;
@@ -387,7 +414,11 @@ export function rankCards(
           : { rate: card.defaultRate, currencyId: card.defaultCurrencyId, source: "default" };
       }
 
-      const cardEarned = payment.amount * cardRate;
+      const cardEarned = earnWithMonthlyCap(
+        payment.amount,
+        cardRate,
+        primary?.program.monthlyCapAmountYen,
+      );
       const cardPath = pathCache.resolve(cardCurrencyId, targetCurrencyId, cardEarned);
       const cardFinal = cardPath?.finalAmount ?? 0;
 
@@ -398,7 +429,11 @@ export function rankCards(
       let appBonusRateTotal = 0;
       let appBonusCurrencyId: string | null = null;
       for (const addOn of addOns) {
-        const addOnEarned = payment.amount * addOn.effectiveRate;
+        const addOnEarned = earnWithMonthlyCap(
+          payment.amount,
+          addOn.effectiveRate,
+          addOn.program.monthlyCapAmountYen,
+        );
         const addOnPath = pathCache.resolve(addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned);
         if (addOnPath) {
           appBonusBreakdown.push({
@@ -424,6 +459,7 @@ export function rankCards(
       return {
         pa,
         cardRate,
+        cardEarned,
         cardCurrencyId,
         resolved,
         cardFinal,
@@ -453,7 +489,7 @@ export function rankCards(
     return {
       card,
       resolved: best.resolved,
-      earnedAmount: payment.amount * best.cardRate,
+      earnedAmount: best.cardEarned,
       earnedCurrencyId: best.cardCurrencyId,
       // 以前ハードコードで [] / 0 だったため、chargeBased paymentApp 利用時 (楽天Pay等)
       // でも UI に「変換不要 (同一通貨)」と誤表示されていた。実際の cardPath からコピー。

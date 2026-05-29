@@ -871,3 +871,48 @@ describe("rankCards v6.0.0: ポイントカード利用選択 + upgrade", () => 
     expect(res.upgrade!.addedLoyalties.map((l) => l.pointCard.id)).toEqual(["d-card"]);
   });
 });
+
+describe("A1: monthlyCapAmountYen の per-tx クランプ", () => {
+  const capStore: Store = { id: "cap-store", name: "上限店" };
+  const capProgram: BenefitProgram = {
+    id: "prog-cap",
+    name: "上限付き高還元",
+    cardIds: ["rakuten"],
+    rate: 0.05,
+    currencyId: "rakuten-pt",
+    monthlyCapAmountYen: 40000,
+  };
+  const capMembership: StoreProgramMembership = {
+    programId: "prog-cap",
+    storeId: "cap-store",
+  };
+
+  it("上限超の支払いは付与対象支出が cap でクランプされる (80000円×5%/上限40000円 → 2000)", () => {
+    const res = rankCardsRankings({
+      payment: { storeId: "cap-store", amount: 80000 },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakuten],
+      stores: [capStore],
+      edges: [],
+      programs: [capProgram],
+      memberships: [capMembership],
+    });
+    expect(res[0].resolved.source).toBe("program");
+    // min(80000, 40000) * 0.05 = 2000 (クランプ前の 80000 * 0.05 = 4000 ではない)
+    expect(res[0].earnedAmount).toBeCloseTo(2000, 6);
+    expect(res[0].finalAmount).toBeCloseTo(2000, 6); // 同一通貨 (product 1)
+  });
+
+  it("上限以下の支払いはクランプされない (30000円×5% → 1500)", () => {
+    const res = rankCardsRankings({
+      payment: { storeId: "cap-store", amount: 30000 },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakuten],
+      stores: [capStore],
+      edges: [],
+      programs: [capProgram],
+      memberships: [capMembership],
+    });
+    expect(res[0].earnedAmount).toBeCloseTo(1500, 6); // 上限未満なので全額対象
+  });
+});
