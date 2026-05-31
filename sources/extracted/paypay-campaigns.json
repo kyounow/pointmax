@@ -1,0 +1,9 @@
+{
+  "sourceId": "paypay-campaigns",
+  "sourceUrl": "https://paypay.ne.jp/event/",
+  "fetchedAt": "2026-05-31T22:07:08.414Z",
+  "promptVersion": "campaign-vUnknown",
+  "extractor": "campaign",
+  "geminiModel": "gemini-2.5-flash",
+  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+}

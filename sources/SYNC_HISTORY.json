@@ -2,6 +2,77 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-06-01",
+      "generatedAt": "2026-05-31T22:07:20.551Z",
+      "totalCount": 6,
+      "avgConfidence": 0.902,
+      "sourcesProcessed": 14,
+      "bySource": [
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "count": 6,
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "楽天ポイントカード提示 0.5% → ダイコクドラッグ",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "楽天ポイントカード提示 0.5% → B&Dドラッグストア",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "楽天ポイントカード提示 0.5% → ドラッグイレブン",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "楽天ポイントカード提示 0.5% → ドラッグユタカ",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "楽天ポイントカード提示 0.5% → アメリカンドラッグ",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "rakuten-point-partners",
+          "collection": "memberships",
+          "summary": "楽天ポイントカード提示 0.5% → アカカベグループ",
+          "sourceLabel": "楽天ポイントカード 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 139,
+        "byReason": {
+          "missingStoreBody": 26,
+          "idCollision": 68,
+          "lowConfidence": 27,
+          "excludedCategory": 5,
+          "userBlocked": 3,
+          "storeAdditionsDisabled": 10
+        }
+      }
+    },
+    {
       "date": "2026-05-28",
       "generatedAt": "2026-05-27T22:35:21.927Z",
       "totalCount": 0,
