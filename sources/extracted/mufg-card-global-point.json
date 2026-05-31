@@ -1,9 +1,22 @@
 {
   "sourceId": "mufg-card-global-point",
   "sourceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
-  "fetchedAt": "2026-05-20T22:28:47.023Z",
-  "promptVersion": "card-vUnknown",
+  "fetchedAt": "2026-05-31T22:03:33.521Z",
+  "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "基本還元率は1,000円につき1ポイントと定義されています。別途、月間利用額に応じたグローバルPLUS（会員区分により異なる倍率）やプラチナAMEX会員の海外利用優遇がありますが、これらは特定の店舗・カテゴリへの直接的な還元率明記ではないため、storeRules/categoryRulesには含めず、defaultRateの抽出のみとしました。",
+  "cards": [
+    {
+      "cardId": "mufg-card",
+      "defaultRate": 0.001,
+      "defaultCurrencyId": "mufg-pt",
+      "evidenceQuote": "1千円につき1ポイントを約定支払日に本会員に付与します。",
+      "evidenceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html#anchor04",
+      "explicitness": 1,
+      "ambiguity": 0
+    }
+  ],
+  "storeRules": [],
+  "categoryRules": []
 }

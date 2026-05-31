@@ -1,9 +1,340 @@
 {
   "sourceId": "smbc-v-gold-7percent",
   "sourceUrl": "https://www.smbc-card.com/mem/cardinfo/cardinfo9001629.jsp",
-  "fetchedAt": "2026-05-20T22:28:35.446Z",
-  "promptVersion": "card-vUnknown",
+  "fetchedAt": "2026-05-31T22:02:58.672Z",
+  "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "Oliveフレキシブルペイ クレジットモードの場合、対象コンビニ・飲食店で8%還元。記載されている『三井住友カード ゴールド VISA/ Mastercard』は7%還元の対象。",
+  "cards": [
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "defaultRate": 0.005,
+      "defaultCurrencyId": "v-pt",
+      "evidenceQuote": "通常のポイント分 合計200円（税込）につき、0.5％～1％ポイント還元",
+      "explicitness": 0.8,
+      "ambiguity": 0.3
+    }
+  ],
+  "storeRules": [
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "seven-eleven",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "三井住友カード ゴールド VISA/ Mastercardで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、対象のコンビニ・飲食店で7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "familymart",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "三井住友カード ゴールド VISA/ Mastercardで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、対象のコンビニ・飲食店で7％ポイント還元！",
+      "explicitness": 0.5,
+      "ambiguity": 0.3
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "lawson",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "三井住友カード ゴールド VISA/ Mastercardで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、対象のコンビニ・飲食店で7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "ministop",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "三井住友カード ゴールド VISA/ Mastercardで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、対象のコンビニ・飲食店で7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "daily-yamazaki",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "三井住友カード ゴールド VISA/ Mastercardで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、対象のコンビニ・飲食店で7％ポイント還元！",
+      "explicitness": 0.5,
+      "ambiguity": 0.3
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "seicomart",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●セイコーマート（※2）",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "poplar",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●ポプラ（※3）",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "mcdonalds",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●マクドナルド",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "mos-burger",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●モスバーガー（※5）",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "kfc",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●ケンタッキーフライドチキン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "yoshinoya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●吉野家",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "saizeriya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●サイゼリヤ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "gast",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●ガスト",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "bamiyan",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●バーミヤン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "syabu-yo",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●しゃぶ葉",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "jonathan",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●ジョナサン",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "yumean",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●夢庵",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "sukiya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●すき家",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "hamazushi",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●はま寿司",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "cocos",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●ココス",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "doutor",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●ドトールコーヒーショップ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "excelsior-cafe",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●エクセルシオール カフェ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "kappa-sushi",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "【対象店舗】 ●かっぱ寿司",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "mcdonalds",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "validFrom": "2025-09-16",
+      "evidenceQuote": "（1）2025年9月16日（火）より、一部店舗（※）にてモバイルオーダーがポイント加算の対象取引に追加されました。対象店舗：マクドナルド",
+      "explicitness": 0.8,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "mos-burger",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "validFrom": "2025-09-16",
+      "evidenceQuote": "（1）2025年9月16日（火）より、一部店舗（※）にてモバイルオーダーがポイント加算の対象取引に追加されました。対象店舗：モスバーガー",
+      "explicitness": 0.8,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "kfc",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "validFrom": "2025-09-16",
+      "evidenceQuote": "（1）2025年9月16日（火）より、一部店舗（※）にてモバイルオーダーがポイント加算の対象取引に追加されました。対象店舗：ケンタッキーフライドチキン",
+      "explicitness": 0.8,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "yoshinoya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "validFrom": "2025-09-16",
+      "evidenceQuote": "（1）2025年9月16日（火）より、一部店舗（※）にてモバイルオーダーがポイント加算の対象取引に追加されました。対象店舗：吉野家",
+      "explicitness": 0.8,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "sukiya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "validFrom": "2025-09-16",
+      "evidenceQuote": "（1）2025年9月16日（火）より、一部店舗（※）にてモバイルオーダーがポイント加算の対象取引に追加されました。対象店舗：すき家",
+      "explicitness": 0.8,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "starbucks",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "validFrom": "2025-09-16",
+      "evidenceQuote": "（1）2025年9月16日（火）より、一部店舗（※）にてモバイルオーダーがポイント加算の対象取引に追加されました。対象店舗：スターバックス",
+      "explicitness": 0.8,
+      "ambiguity": 0.1
+    }
+  ]
 }

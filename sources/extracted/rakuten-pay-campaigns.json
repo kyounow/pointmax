@@ -1,9 +1,9 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-05-20T22:29:41.558Z",
+  "fetchedAt": "2026-05-31T22:05:07.144Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): 汎thought I have browsed the URL. Now I need to go through the content and apply the extraction rules. **Observations from the browsed content:** * Many campaigns involve \"抽選で\" (by lottery), \"全額還元\" (full cashback - often by lottery), \"最大○○ポイント\" (maximum points - rate unclear), \"山分け\" (share points)"
 }
