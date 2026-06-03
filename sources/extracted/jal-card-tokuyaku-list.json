@@ -1,11 +1,11 @@
 {
   "sourceId": "jal-card-tokuyaku-list",
   "sourceUrl": "https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201",
-  "fetchedAt": "2026-05-31T21:58:30.704Z",
+  "fetchedAt": "2026-06-03T23:04:58.505Z",
   "promptVersion": "jal-tokuyaku-v1.1",
   "extractor": "jal-tokuyaku",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "ページは検索結果の一部を表示しており、抽出スコープ(chains-only)に合致する広域チェーンは「ロイヤルホスト」のみでした。他の掲載店舗は地域限定店と判断し対象外としました。",
+  "notes": "検索結果一覧に多くの個店/地域限定店舗が含まれるため、抽出スコープに従い全国チェーンのロイヤルホストのみを追加しました。掲載合計20件中1件を抽出。",
   "categoryRules": [
     {
       "cardId": "jal-suica",

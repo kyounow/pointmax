@@ -1,9 +1,9 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-05-31T22:07:20.090Z",
+  "fetchedAt": "2026-06-03T23:13:38.255Z",
   "promptVersion": "ongoing-program-vUnknown",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The page outlines the \"Vポイントアッププログラム\" which offers increased V Point還元 based on various SMBC Group service usages. I need to filter out temporary campaigns and lifestyle-dependent programs. Here's a breakdown of the programs to be extracted and excluded: **Programs to Extract (Targeted for PointMa"
 }

@@ -1,19 +1,18 @@
 {
   "sourceId": "mufg-card-global-point",
   "sourceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
-  "fetchedAt": "2026-05-31T22:03:33.521Z",
+  "fetchedAt": "2026-06-03T23:10:57.676Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "基本還元率は1,000円につき1ポイントと定義されています。別途、月間利用額に応じたグローバルPLUS（会員区分により異なる倍率）やプラチナAMEX会員の海外利用優遇がありますが、これらは特定の店舗・カテゴリへの直接的な還元率明記ではないため、storeRules/categoryRulesには含めず、defaultRateの抽出のみとしました。",
+  "notes": "基本ポイント還元率は0.1%（1,000円につき1ポイント）。グローバルPLUSによる月間利用額に応じた優遇（最大1.5倍）や、プラチナ会員向けアメックス海外利用での2倍ポイント優遇がありますが、これらはPointMaxのstoreRules/categoryRulesのスキーマでは表現しきれないため、カードの基本還元率のみを抽出しました。",
   "cards": [
     {
-      "cardId": "mufg-card",
+      "cardId": "mufg-card-global-point",
       "defaultRate": 0.001,
       "defaultCurrencyId": "mufg-pt",
-      "evidenceQuote": "1千円につき1ポイントを約定支払日に本会員に付与します。",
-      "evidenceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html#anchor04",
-      "explicitness": 1,
+      "evidenceQuote": "ショッピング利用代金...1千円につき1ポイントを約定支払日に本会員に付与します。",
+      "explicitness": 0.95,
       "ambiguity": 0
     }
   ],

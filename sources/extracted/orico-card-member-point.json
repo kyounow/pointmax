@@ -1,11 +1,11 @@
 {
   "sourceId": "orico-card-member-point",
   "sourceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-  "fetchedAt": "2026-05-31T22:04:15.193Z",
+  "fetchedAt": "2026-06-03T23:11:23.167Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Orico Card THE POINTの基本還元率とオリコモール利用時の還元率を抽出しました。入会後6ヵ月間は還元率2.0%にアップするキャンペーンがありますが、開始・終了日が相対的なため、defaultRateには含めていません。ウェルカムキャンペーンの具体的なポイント進呈期間はありますが、特定店舗・カテゴリの還元率ではないため抽出していません。 [sync] schema 違反で除去したアイテム: storeRules:1。",
+  "notes": "「入会後6ヵ月間は還元率2.0%」は利用開始日からの相対期間のため、validFrom/validToは設定せずnotesに記載。 [sync] schema 違反で除去したアイテム: categoryRules:1。",
   "cards": [
     {
       "cardId": "orico-card-member-point",
@@ -16,5 +16,16 @@
       "ambiguity": 0
     }
   ],
-  "categoryRules": []
+  "categoryRules": [
+    {
+      "cardId": "orico-card-member-point",
+      "category": "ネット通販",
+      "rate": 0.02,
+      "currencyId": "orico-pt",
+      "notes": "オリコモール経由のネットショッピング。カードご利用分(1.0%) + オリコモールご利用分(+0.5%以上) + 特別加算(0.5%)で合計2%以上。",
+      "evidenceQuote": "オリコモールを経由しネットショッピングした場合、カードご利用分（1.0％）+オリコモールご利用分（+0.5%以上）+特別加算（0.5％）で2%以上のオリコポイントがたまります。",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ]
 }

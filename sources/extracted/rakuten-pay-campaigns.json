@@ -1,9 +1,9 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-05-31T22:05:07.144Z",
+  "fetchedAt": "2026-06-03T23:12:31.845Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): 汎thought I have browsed the URL. Now I need to go through the content and apply the extraction rules. **Observations from the browsed content:** * Many campaigns involve \"抽選で\" (by lottery), \"全額還元\" (full cashback - often by lottery), \"最大○○ポイント\" (maximum points - rate unclear), \"山分け\" (share points)"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The browsed page contains a list of campaigns, but after reviewing them, none of them meet the extraction criteria for \"店舗での支払いでポイント還元\" (point reduction for in-store payments) with a clear, always-on rate for specific chains. Most of the campaigns are: * **抽選系** (\"全額還元のチャンス\", \"抽選で\", \"くじ\") - Exclu"
 }
