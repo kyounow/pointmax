@@ -52,6 +52,7 @@
 - 「サンプル投入」「ローカルデータ初期化」「JSONエクスポート/インポート」は設定画面から。
 - **更新履歴タブ**: 週次 cron で自動マージされた変更を時系列で閲覧
   (`sources/SYNC_HISTORY.json` を bundle 同梱、最新 104 件、GitHub commit/PR への動線あり)。
+  自動マージが 0 件で要レビューのみの週も、件数と理由内訳 (`reviewStats`) を記録する。
 
 ### マスタ自動アップデート
 - `sources/registry.yaml` に各カード・ポイント・決済アプリの公式 URL を登録。
@@ -180,6 +181,9 @@ npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE 生成
 ## デプロイ
 
 `main` ブランチに push すると GitHub Actions が自動でビルド & GitHub Pages にデプロイされます。
+週次 cron (Weekly Master Sync) が `GITHUB_TOKEN` で main を更新するケース (auto-merge / 履歴 push) は
+push トリガーが起動しない (GitHub の再帰防止仕様) ため、`deploy.yml` の `workflow_run`
+(sync 完了で発火) が再デプロイを担います。
 
 ---
 
@@ -187,11 +191,15 @@ npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE 生成
 
 - 週2回（毎週月曜・木曜 06:00 JST）GitHub Actions が同期パイプラインを実行 (`workflow_dispatch` で手動実行可)
 - 高信頼項目 (autoApplicable) は `auto-sync/YYYY-MM-DD-HHMM` ブランチ + `auto-sync` ラベル付き PR を作成し、
-  safety check (件数上限/test/build) 通過後に **squash auto-merge** → main → GitHub Pages 再デプロイ
+  safety check (件数上限/test/build) 通過後に **squash auto-merge** → main。
+  bot のマージ (`GITHUB_TOKEN`) は push トリガーを起動しないため、GitHub Pages 再デプロイは
+  `deploy.yml` の **`workflow_run`** (Weekly Master Sync 完了で発火) が担う
 - 要レビュー項目は `chore/sync-review-queue` ブランチの長寿命 PR (`needs-review` ラベル) に集約
 - `sync.config.json` の `autoMergeEnabled` で auto-merge の ON/OFF、`maxAutoChangesPerRun` が安全弁
   （超過時は全件 review 降格）
-- 自動マージ履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (最大 104 件、newest first)。
+- 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (最大 104 件、newest first)。
+  auto-merge 週は auto-sync PR が、要レビューのみの週は weekly-sync の「Publish SYNC_HISTORY to main」step が
+  履歴を main へ直 push し、いずれも `workflow_run` deploy でアプリ「更新履歴」タブに反映される。
   GitHub の PR タブ (`auto-sync` ラベル絞り込み) + 履歴ファイルの両方で同じ情報を参照可
 - inject-prompt は実行時に `seed()` をライブ参照するため、seed に追加した新カード/通貨は
   自動でプロンプトへ反映される（回帰契約テストで保証）
