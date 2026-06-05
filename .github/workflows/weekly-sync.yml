@@ -157,32 +157,37 @@ jobs:
           fi
           echo "✓ working tree を main に reset (review-PR 用)"
 
-      # ===== Safety fallback: autoApplicable を needsReview に降格 =====
-      # safety check が失敗した時 (件数超過 / test/build 失敗)、
-      # autoApplicable アイテムがそのまま proposed-migrations.json に留まり
-      # REVIEW_QUEUE.md に出てこない問題を解消する。
-      # → 全 autoApplicable に reviewReason="safetyFailed" を付けて needsReview に移動し
-      #   sync:report を再実行することで REVIEW_QUEUE.md に可視化される。
-      - name: Downgrade auto to review on safety failure
-        if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome != 'success'
+      # ===== auto を review に降格 (auto-sync PR を作らなかった run) =====
+      # auto-sync PR が作られないのは次の 2 ケース:
+      #   (1) safety check 失敗 (件数超過 / test / build 失敗) … enabled=true
+      #   (2) auto-merge 無効 (autoMergeEnabled=false / force_review_only=true)
+      # どちらも autoApplicable が proposed-migrations.json に残ると REVIEW_QUEUE.md
+      # にも SYNC_HISTORY (auto 件数) にも不整合が出る。全 autoApplicable を needsReview
+      # に移して sync:report を再実行し、auto=0 / review=全件 に正規化する。
+      # 理由は (1)=safetyFailed / (2)=autoMergeDisabled で区別。
+      - name: Downgrade auto to review (no auto-merge this run)
+        if: ${{ steps.counts.outputs.auto > 0 && !(steps.config.outputs.enabled == 'true' && steps.safety.outcome == 'success') }}
+        env:
+          DOWNGRADE_REASON: ${{ (steps.config.outputs.enabled == 'true' && steps.safety.outcome != 'success') && 'safetyFailed' || 'autoMergeDisabled' }}
         run: |
           node -e "
             const fs = require('fs');
+            const reason = process.env.DOWNGRADE_REASON;
             const m = JSON.parse(fs.readFileSync('sources/proposed-migrations.json', 'utf-8'));
             const downgraded = m.autoApplicable.map(p => ({
               ...p,
-              reviewReason: 'safetyFailed',
+              reviewReason: reason,
             }));
             m.needsReview = [...m.needsReview, ...downgraded];
             m.autoApplicable = [];
             m.summary.needsReviewCount = m.needsReview.length;
             m.summary.autoApplicableCount = 0;
             fs.writeFileSync('sources/proposed-migrations.json', JSON.stringify(m, null, 2));
-            console.log('Downgraded', downgraded.length, 'auto items to review (safetyFailed)');
+            console.log('Downgraded', downgraded.length, 'auto items to review (' + reason + ')');
           "
 
-      - name: Regenerate reports (after safety-failed downgrade)
-        if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome != 'success'
+      - name: Regenerate reports (after downgrade)
+        if: ${{ steps.counts.outputs.auto > 0 && !(steps.config.outputs.enabled == 'true' && steps.safety.outcome == 'success') }}
         run: npm run sync:report
 
       # ===== review-only / no-auto-merge 週の履歴を main に公開 =====

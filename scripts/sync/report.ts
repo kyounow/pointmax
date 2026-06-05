@@ -383,6 +383,7 @@ export function buildAutoSummary(report: ProposalReport): string {
 
 const REASON_LABELS: Record<ReviewReason, string> = {
   safetyFailed: "🛡 safetyFailed (auto-merge 件数オーバー降格)",
+  autoMergeDisabled: "🛡 autoMergeDisabled (auto-merge 無効化で降格)",
   lowConfidence: "🟡 lowConfidence",
   rateDeltaTooLarge: "🟠 rateDeltaTooLarge",
   rateRatioOutOfRange: "🟠 rateRatioOutOfRange",
@@ -405,6 +406,9 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
   safetyFailed:
     "auto-merge 候補だが、件数が maxAutoChangesPerRun を超えたため安全弁で review に降格。" +
     "内容は健全な auto 候補なので、個別精査の上 maxAutoChangesPerRun を一時 bump して再実行 or 手動で取り込み判断。",
+  autoMergeDisabled:
+    "auto-merge 候補だが、autoMergeEnabled=false または force_review_only=true のため review に降格。" +
+    "内容は健全な auto 候補。auto-merge を有効化した次回 cron で自動反映される (主に手動テスト時の挙動)。",
   lowConfidence:
     "Gemini の評価で confidence < 0.9。エビデンス不明瞭・推測混入の疑い。",
   rateDeltaTooLarge:
@@ -546,6 +550,7 @@ export function buildReviewQueue(report: ProposalReport): string {
     // then data-quality issues, then others, then userBlocked last
     const reasonOrder: ReviewReason[] = [
       "safetyFailed",         // 🛡 件数超過で降格された健全な auto 候補。内容確認の上 bump 判断
+      "autoMergeDisabled",    // 🛡 auto-merge 無効化で降格された健全な auto 候補 (手動テスト等)
       "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
       "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
       "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
