@@ -127,6 +127,18 @@ jobs:
           # branch protection が無い repo では即時マージされる。
           gh pr merge --squash --auto --delete-branch "$PR_URL"
           echo "✓ auto-merge enabled (squash + delete-branch)"
+          # deploy.yml の workflow_run が「マージ後の main」を確実にビルドできるよう、
+          # PR が MERGED になるまで待つ (branch protection 無しなら即時マージされる)。
+          STATE=""
+          for i in $(seq 1 30); do
+            STATE=$(gh pr view "$PR_URL" --json state -q .state)
+            echo "  PR state: $STATE (try $i)"
+            [ "$STATE" = "MERGED" ] && break
+            sleep 2
+          done
+          if [ "$STATE" != "MERGED" ]; then
+            echo "⚠️ PR が時間内にマージされず。workflow_run deploy がマージ前 main を拾う可能性あり (次回 sync / 手動 deploy で回復)"
+          fi
 
       # auto-sync PR を作った後は working tree を main に戻す。
       # 後段の review-PR (peter-evans) が auto 変更を二重に含まないようにするため。
@@ -172,6 +184,34 @@ jobs:
       - name: Regenerate reports (after safety-failed downgrade)
         if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome != 'success'
         run: npm run sync:report
+
+      # ===== review-only / no-auto-merge 週の履歴を main に公開 =====
+      # auto-sync PR を作らない run (auto=0 / autoMergeEnabled=false / safety 失敗) でも、
+      # sync:report は SYNC_HISTORY に entry を生成済み (auto>0 OR review>0 で非 null。
+      # review-only 週も記録するのは PR #61 の設計)。ところが従来そのファイルは
+      # どこにもコミットされず破棄されていた (auto-sync PR パスでしか add しておらず、
+      # review-PR の add-paths にも無く、そのブランチも main 未マージ)。
+      # → アプリ内「更新履歴」タブに review-only 週が出ないバグの修正。
+      # SYNC_HISTORY は監査ログ (seed/コード非変更) なので main へ直 push し、
+      # deploy.yml の workflow_run トリガーが再デプロイ=公開を担う。
+      - name: Publish SYNC_HISTORY to main (review-only / no auto-merge runs)
+        if: ${{ !(steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome == 'success') }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sources/SYNC_HISTORY.json sources/SYNC_HISTORY.md
+          if git diff --cached --quiet; then
+            echo "ℹ️ SYNC_HISTORY に変更なし (本当に変化なしの週)。skip"
+            exit 0
+          fi
+          git commit -m "chore(sync): update SYNC_HISTORY (review-only run)"
+          # review-PR 用に残る作業ツリー変更 (REVIEW_QUEUE/extracted/proposed 等) を
+          # 一時退避してから rebase + push し、後段ステップ用に復元する。
+          git stash push -u || true
+          git pull --rebase origin main
+          git push origin HEAD:main
+          git stash pop || true
+          echo "✓ SYNC_HISTORY を main に公開 (workflow_run deploy が再デプロイ)"
 
       # ===== Tier 2: Review PR =====
       # 条件:

@@ -866,9 +866,11 @@ async function main(): Promise<void> {
   await writeFile(REVIEW_QUEUE_PATH, reviewMd, "utf-8");
   console.log(`✓ wrote ${REVIEW_QUEUE_PATH} (${reviewMd.length} chars)`);
 
-  // SYNC_HISTORY.json / .md は autoApplicable が 1 件以上の run のみ追記。
-  // 0 件 run でも MD は最新の history を再生成 (タイトル等の整合用) し、
-  // JSON は既存ファイルがあれば touch (なければ作らない) で保つ。
+  // SYNC_HISTORY.json / .md は buildSyncHistoryEntry が非 null を返す run で追記する
+  // = auto>0 OR review>0 の週 (review-only 週も trend として記録する PR #61 の設計)。
+  // auto も review も 0 の「本当に変化なしの週」のみ skip。
+  // ※ cron では auto-sync PR (auto-merge 時) か、weekly-sync.yml の
+  //   「Publish SYNC_HISTORY to main」ステップ (review-only 時) が main へ反映する。
   const newEntry = buildSyncHistoryEntry(report);
   const existingHistory = loadSyncHistory();
   if (newEntry !== null) {
@@ -885,7 +887,7 @@ async function main(): Promise<void> {
     );
     console.log(`✓ wrote ${SYNC_HISTORY_MD_PATH} (${historyMd.length} chars)`);
   } else {
-    console.log("ℹ️ autoApplicable=0 のため SYNC_HISTORY は更新スキップ");
+    console.log("ℹ️ auto=0 かつ review=0 のため SYNC_HISTORY は更新スキップ");
   }
 }
 

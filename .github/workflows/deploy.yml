@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # 週次 cron (Weekly Master Sync) は auto-merge / review-only 履歴 push を
+  # GITHUB_TOKEN で main に反映するが、GITHUB_TOKEN 由来の push は push トリガーを
+  # 起動しない (GitHub の再帰防止仕様)。そのため sync 完了を workflow_run で受けて
+  # 確実に再デプロイする。
+  workflow_run:
+    workflows: ["Weekly Master Sync"]
+    types: [completed]
 
 permissions:
   contents: read
@@ -17,9 +24,16 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # workflow_run 経由のときは sync 成功時のみデプロイ (失敗 run では公開しない)。
+    # push / workflow_dispatch では常に実行。
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # workflow_run の既定チェックアウトは upstream 開始時 (= マージ前) の SHA を
+          # 指すため、最新 main を明示してマージ後の内容をビルドする。
+          ref: main
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
