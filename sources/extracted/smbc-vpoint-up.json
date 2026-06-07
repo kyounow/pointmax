@@ -1,9 +1,323 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-05-31T22:07:20.090Z",
-  "promptVersion": "ongoing-program-vUnknown",
+  "fetchedAt": "2026-06-07T22:15:00.651Z",
+  "promptVersion": "ongoing-program-v1.1",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "ライフスタイル条件のため出力対象外: 円預金残高、外貨預金、住宅ローン、SBI証券、Vitality（住友生命）、カードローン（三井住友カード/モビット）、SMBC日興証券、Vトリップ、Oliveヘルスケア。キャンペーンは出力対象外。スターバックスはモバイルオーダーのみ対象。",
+  "programs": [
+    {
+      "programId": "prog-smbc-olive-select-benefit-plus1",
+      "name": "Olive選べる特典 (+1%)",
+      "cardIds": [
+        "olive"
+      ],
+      "rate": 0.01,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "Olive選べる特典で「Vポイントアッププログラム＋1％」を選択で還元率アップ",
+      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。プラチナプリファードは2つ選択で+2%。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典※で「Vポイントアッププログラム＋1％」をご選択",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "name": "対象コンビニ・飲食店でのスマホタッチ決済・モバイルオーダー利用 (+7.5%)",
+      "cardIds": [
+        "smbc-v",
+        "olive"
+      ],
+      "paymentAppId": "pa-visa-touch",
+      "rate": 0.075,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "対象のコンビニ・飲食店でスマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用で+7.5%還元",
+      "conditions": "スマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用時のみ。iDも対象。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "B 対象店舗でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-family-point-plus-5",
+      "name": "家族ポイント (+5%)",
+      "cardIds": [
+        "smbc-v",
+        "olive"
+      ],
+      "rate": 0.05,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "家族ポイントに登録した人数に応じて最大+5%還元",
+      "conditions": "家族ポイントに6人以上登録（主会員1人＋従会員5人以上）で+5%。家族ポイントに登録されるご家族は、対象の三井住友カードに入会した本会員さまであり、当サービスに登録することが条件。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "C 家族ポイントに6人以上登録（主会員1人＋従会員5人以上）＝＋5％還元",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    }
+  ],
+  "memberships": [
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "seicomart",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 セイコーマート",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "conv-7eleven",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 セブン‐イレブン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "poplar",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 ポプラ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "conv-ministop",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 ミニストップ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "conv-lawson",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 ローソン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "mcdonalds",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 マクドナルド",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "mos-burger",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 モスバーガー",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "kfc",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 ケンタッキーフライドチキン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "yoshinoya",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 吉野家",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "saizeriya",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 サイゼリヤ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "gusto",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 ガスト",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "bamiyan",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 バーミヤン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "shabuyo",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 しゃぶ葉",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "jonathan",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 ジョナサン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "yumetoan",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 夢庵",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "sukiya",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 すき家",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "hamazushi",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 はま寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "cocos",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 ココス",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "starbucks",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 スターバックス",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "doutor",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 ドトールコーヒーショップ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "excelsior-cafe",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 エクセルシオール カフェ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "kappa-sushi",
+      "evidenceQuote": "Vポイント加算対象店舗 全国での以下の店舗での、店頭でのご利用が対象となります。 かっぱ寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "steak-gusto",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "karaage-karayoshi",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "musashino-mori-coffee",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "aiya",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "grazie-gardens",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "uoya-michi",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "chawan",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "la-ohana",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "tonkara-tei",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "yumean-shokudo",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "monana",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "hachiro-soba",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "sanmarusan",
+      "evidenceQuote": "その他すかいらーくグループ飲食店※6 ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "natural-lawson",
+      "evidenceQuote": "※4ナチュラルローソン、ローソンストア100、ローソンスリーエフも対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant-addon-7.5",
+      "storeId": "lawson-store100",
+      "evidenceQuote": "※4ナチュラルローソン、ローソンストア100、ローソンスリーエフも対象です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    }
+  ]
 }

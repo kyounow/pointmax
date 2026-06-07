@@ -1,16 +1,24 @@
 {
   "sourceId": "ponta-partners",
   "sourceUrl": "https://point.recruit.co.jp/point/?tab=pointUseService",
-  "fetchedAt": "2026-05-31T22:02:36.043Z",
+  "fetchedAt": "2026-06-07T22:09:06.975Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
   "stores": [
     {
+      "storeId": "geo",
+      "name": "ゲオ",
+      "category": "音楽・映像",
+      "evidenceQuote": "ゲオ: Pontaポイントがたまる・つかえるお店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "storeId": "uber-eats",
       "name": "Uber Eats",
-      "category": "ネット通販",
-      "evidenceQuote": "Uber Eats たまる",
+      "category": "飲食",
+      "evidenceQuote": "Uber Eats: Pontaポイントがたまる・つかえるサービス",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -18,7 +26,23 @@
       "storeId": "oisix",
       "name": "Oisix",
       "category": "ネット通販",
-      "evidenceQuote": "Oisix（リクルートIDでのログインの場合） たまる つかえる",
+      "evidenceQuote": "Oisix: Pontaポイントがたまる・つかえる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sunny-mart",
+      "name": "サニーマート",
+      "category": "スーパー",
+      "evidenceQuote": "サニーマート: Pontaポイントがたまる・つかえる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sunlive",
+      "name": "サンリブ",
+      "category": "スーパー",
+      "evidenceQuote": "サンリブ: Pontaポイントがたまる・つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -26,23 +50,31 @@
       "storeId": "seijo-ishii",
       "name": "成城石井",
       "category": "スーパー",
-      "evidenceQuote": "成城石井 たまる つかえる",
+      "evidenceQuote": "成城石井: Pontaポイントがたまる・つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "yakuodo",
+      "storeId": "nisihmuta",
+      "name": "ニシムタ",
+      "category": "スーパー",
+      "evidenceQuote": "ニシムタ: Pontaポイントがたまる・つかえる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yakoudo",
       "name": "薬王堂",
       "category": "ドラッグストア",
-      "evidenceQuote": "薬王堂 たまる つかえる",
+      "evidenceQuote": "薬王堂: Pontaポイントがたまる・つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "jal-mileage-bank",
+      "storeId": "japan-airlines",
       "name": "日本航空(JALマイレージバンク)",
-      "category": "航空・旅行",
-      "evidenceQuote": "日本航空(JALマイレージバンク) たまる つかえる",
+      "category": "交通",
+      "evidenceQuote": "日本航空(JALマイレージバンク): Pontaポイントがたまる・つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -50,23 +82,63 @@
       "storeId": "pan-no-tajima",
       "name": "パンの田島",
       "category": "飲食",
-      "evidenceQuote": "パンの田島 たまる つかえる",
+      "evidenceQuote": "パンの田島: Pontaポイントがたまる・つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "honto-coffee-fukurou-shosabo",
+      "storeId": "hon-to-coffee-fukuro-shosabo",
       "name": "本と珈琲 梟書茶房",
       "category": "飲食",
-      "evidenceQuote": "本と珈琲 梟書茶房 たまる つかえる",
+      "evidenceQuote": "本と珈琲 梟書茶房: Pontaポイントがたまる・つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "orix-auto-info",
+      "storeId": "au-pay-market",
+      "name": "au PAY マーケット",
+      "category": "ネット通販",
+      "evidenceQuote": "au PAY マーケット: Pontaポイントがたまる・つかえる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "smari",
+      "name": "スマリ SMARI",
+      "category": "生活サービス",
+      "evidenceQuote": "スマリ SMARI: Pontaポイントがたまる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "temu",
+      "name": "Temu",
+      "category": "ネット通販",
+      "evidenceQuote": "Temu: Pontaポイントがたまる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "premium-water",
+      "name": "プレミアムウォーター",
+      "category": "生活サービス",
+      "evidenceQuote": "プレミアムウォーター: Pontaポイントがたまる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "telasa",
+      "name": "TELASA（テラサ）",
+      "category": "音楽・映像",
+      "evidenceQuote": "TELASA（テラサ）: Pontaポイントがたまる・つかえる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "autoinfo",
       "name": "オート・インフォ",
       "category": "車・バイク",
-      "evidenceQuote": "オート・インフォ たまる",
+      "evidenceQuote": "オート・インフォ: Pontaポイントがたまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -74,31 +146,47 @@
       "storeId": "onix",
       "name": "ONIX",
       "category": "車・バイク",
-      "evidenceQuote": "ONIX たまる",
+      "evidenceQuote": "ONIX: Pontaポイントがたまる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "nihon-road-service",
+      "name": "日本ロードサービス（JRS）",
+      "category": "車・バイク",
+      "evidenceQuote": "日本ロードサービス（JRS）: Pontaポイントがたまる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ponta-gasshuku-menkyo",
+      "name": "Ponta合宿免許",
+      "category": "ビジネス・教育",
+      "evidenceQuote": "Ponta合宿免許: Pontaポイントがたまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "storeId": "au-bookpass",
       "name": "auブックパス",
-      "category": "電子書籍",
-      "evidenceQuote": "auブックパス たまる つかえる",
+      "category": "本・電子書籍・新聞",
+      "evidenceQuote": "auブックパス: Pontaポイントがたまる・つかえる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "storeId": "diamond-sha",
       "name": "ダイヤモンド社",
-      "category": "書店",
-      "evidenceQuote": "ダイヤモンド社 たまる",
+      "category": "本・電子書籍・新聞",
+      "evidenceQuote": "ダイヤモンド社: Pontaポイントがたまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "storeId": "president-sha",
       "name": "プレジデント社",
-      "category": "書店",
-      "evidenceQuote": "プレジデント社 たまる",
+      "category": "本・電子書籍・新聞",
+      "evidenceQuote": "プレジデント社: Pontaポイントがたまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -106,7 +194,15 @@
       "storeId": "winticket",
       "name": "WINTICKET(ウィンチケット)",
       "category": "ギャンブル",
-      "evidenceQuote": "WINTICKET(ウィンチケット) たまる つかえる",
+      "evidenceQuote": "WINTICKET(ウィンチケット): Pontaポイントがたまる・つかえる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sports-club-renaissance",
+      "name": "スポーツクラブ ルネサンス",
+      "category": "スポーツ",
+      "evidenceQuote": "スポーツクラブ ルネサンス: Pontaポイントがたまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -114,71 +210,15 @@
       "storeId": "au-denki",
       "name": "auでんき",
       "category": "電気・ガス",
-      "evidenceQuote": "auでんき たまる",
+      "evidenceQuote": "auでんき: Pontaポイントがたまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "apamanshop",
-      "name": "アパマンショップ",
-      "category": "不動産",
-      "evidenceQuote": "アパマンショップ たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "ur-chintai-jutaku",
-      "name": "UR賃貸住宅",
-      "category": "不動産",
-      "evidenceQuote": "UR賃貸住宅 たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "au-mobile",
-      "name": "au",
-      "category": "通信",
-      "evidenceQuote": "au たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "sokuyaku",
-      "name": "SOKUYAKU",
-      "category": "医療",
-      "evidenceQuote": "SOKUYAKU たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "saican-enewan",
-      "name": "エネワン（株式会社サイサン）",
+      "storeId": "ponta-denki",
+      "name": "Pontaでんき",
       "category": "電気・ガス",
-      "evidenceQuote": "エネワン（株式会社サイサン） たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "saican-gasone",
-      "name": "ガスワン（株式会社サイサン）",
-      "category": "電気・ガス",
-      "evidenceQuote": "ガスワン（株式会社サイサン） たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "saibu-gas",
-      "name": "西部ガス",
-      "category": "電気・ガス",
-      "evidenceQuote": "西部ガス たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "machi-ene",
-      "name": "まちエネ",
-      "category": "電気・ガス",
-      "evidenceQuote": "まちエネ たまる",
+      "evidenceQuote": "Pontaでんき: Pontaポイントがたまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -186,11 +226,254 @@
       "storeId": "mitsuuroko-denki-toshigas",
       "name": "ミツウロコでんき・都市ガス",
       "category": "電気・ガス",
-      "evidenceQuote": "ミツウロコでんき・都市ガス たまる",
+      "evidenceQuote": "ミツウロコでんき・都市ガス: Pontaポイントがたまる",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }
   ],
-  "loyaltyRules": [],
-  "notes": "ページに「○円ごとに○ポイント」といった具体的な還元率の記載がないため、loyaltyRulesは抽出できませんでした。抽出スコープに合致しない（金融、保険、医療、ギャンブル、葬儀、不動産、ネットサービスのみ、漠然カテゴリ）店舗および地域限定店舗は抽出対象外としました。"
+  "loyaltyRules": [
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "conv-lawson",
+      "rate": 0.005,
+      "evidenceQuote": "ローソン: 200円＝1P",
+      "notes": "ローソンは200円(税抜)につき1ポイントが通常。ウェブページに直接記載がないが、他の個別店情報と一致し、Pontaの一般的な還元率であるため、通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "conv-natural-lawson",
+      "rate": 0.005,
+      "evidenceQuote": "ナチュラルローソン: 200円＝1P",
+      "notes": "ローソンは200円(税抜)につき1ポイントが通常。ウェブページに直接記載がないが、他の個別店情報と一致し、Pontaの一般的な還元率であるため、通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "conv-lawson-store100",
+      "rate": 0.005,
+      "evidenceQuote": "ローソンストア100: 200円＝1P",
+      "notes": "ローソンは200円(税抜)につき1ポイントが通常。ウェブページに直接記載がないが、他の個別店情報と一致し、Pontaの一般的な還元率であるため、通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "ace-contact",
+      "rate": 0.005,
+      "evidenceQuote": "エースコンタクト: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "ooga-yakkyoku",
+      "rate": 0.005,
+      "evidenceQuote": "大賀薬局: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "tomod-s",
+      "rate": 0.005,
+      "evidenceQuote": "トモズ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "mine-drug",
+      "rate": 0.005,
+      "evidenceQuote": "ミネドラッグ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "life",
+      "rate": 0.005,
+      "evidenceQuote": "ライフ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "kfc",
+      "rate": 0.005,
+      "evidenceQuote": "ケンタッキーフライドチキン: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "sukiya",
+      "rate": 0.005,
+      "evidenceQuote": "すき家: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "doutor",
+      "rate": 0.005,
+      "evidenceQuote": "ドトールコーヒーショップ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "excelsior-cafe",
+      "rate": 0.005,
+      "evidenceQuote": "エクセルシオール カフェ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "cafe-lexcel",
+      "rate": 0.005,
+      "evidenceQuote": "カフェ レクセル: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "jumble-store",
+      "rate": 0.005,
+      "evidenceQuote": "ジャンブルストア: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "2ndstreet",
+      "rate": 0.005,
+      "evidenceQuote": "セカンドストリート: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "megane-salon-look",
+      "rate": 0.005,
+      "evidenceQuote": "メガネサロンルック: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "best-megane-contact",
+      "rate": 0.005,
+      "evidenceQuote": "ベストメガネコンタクト: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "hmv-stores",
+      "rate": 0.005,
+      "evidenceQuote": "ＨＭＶ（店舗）: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "geo",
+      "rate": 0.005,
+      "evidenceQuote": "ゲオ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "sanyodo-shoten",
+      "rate": 0.005,
+      "evidenceQuote": "三洋堂書店: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "joshin",
+      "rate": 0.005,
+      "evidenceQuote": "ジョーシン: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "softmap",
+      "rate": 0.005,
+      "evidenceQuote": "ソフマップ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "bic-camera",
+      "rate": 0.005,
+      "evidenceQuote": "ビックカメラ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "maruzen-junkudo-shoten",
+      "rate": 0.005,
+      "evidenceQuote": "丸善ジュンク堂書店: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "yaesu-book-center",
+      "rate": 0.005,
+      "evidenceQuote": "八重洲ブックセンター: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "himalaya",
+      "rate": 0.005,
+      "evidenceQuote": "ヒマラヤ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "pointCardId": "ponta-card",
+      "storeId": "kojima",
+      "rate": 0.005,
+      "evidenceQuote": "コジマ: 200円＝1P",
+      "notes": "個別店舗の記述より推測。通常ルールとして採用。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    }
+  ]
 }

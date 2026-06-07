@@ -1,9 +1,9 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-05-31T22:07:08.414Z",
+  "fetchedAt": "2026-06-07T22:14:29.724Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided webpage lists several campaigns. I need to go through each one and check if it meets the extraction criteria, especially the `chains-only` scope, explicit rate, and valid dates. Here's an analysis of the campaigns from the browsed content: 1. **ペイトク2**: \"2026/6/2 〜\". No explicit rate"
 }

@@ -1,30 +1,9 @@
 {
   "sourceId": "jal-card-tokuyaku-list",
   "sourceUrl": "https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201",
-  "fetchedAt": "2026-05-31T21:58:30.704Z",
-  "promptVersion": "jal-tokuyaku-v1.1",
+  "fetchedAt": "2026-06-07T22:01:54.928Z",
+  "promptVersion": "jal-tokuyaku-vUnknown",
   "extractor": "jal-tokuyaku",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "ページは検索結果の一部を表示しており、抽出スコープ(chains-only)に合致する広域チェーンは「ロイヤルホスト」のみでした。他の掲載店舗は地域限定店と判断し対象外としました。",
-  "categoryRules": [
-    {
-      "cardId": "jal-suica",
-      "category": "JAL特約店",
-      "rate": 0.02,
-      "currencyId": "jal-mile",
-      "evidenceQuote": "JALカードでの決済でショッピングマイルが2倍たまる（JALカード特約店）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    }
-  ],
-  "stores": [
-    {
-      "storeId": "royal-host",
-      "name": "ロイヤルホスト",
-      "category": "JAL特約店",
-      "evidenceQuote": "ロイヤルホスト 決済でマイルが 2 倍",
-      "explicitness": 0.9,
-      "ambiguity": 0.05
-    }
-  ]
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The browse result shows a list of \"JALカード特約店\" where \"JALカードでの決済でショッピングマイルが2倍たまる\" (JAL Card payment earns double shopping miles). This confirms the 2% rate for JAL 특약점. However, the current URL `https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201` is filtered by `ptn=1&ct=2&scat=1201`, whi"
 }
