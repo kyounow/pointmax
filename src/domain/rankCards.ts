@@ -61,6 +61,13 @@ export type RankInput = {
   paymentApps?: PaymentApp[];
   programs?: BenefitProgram[];
   memberships?: StoreProgramMembership[];
+  /**
+   * 評価時刻 (キャンペーン期間 / recurringDays 判定の基準)。省略時は現在時刻。
+   * 従来は loyalty / 各 evaluatePrograms が個別に new Date() していたため
+   * 単一の評価タイムスタンプが無かった (改善計画 C-2)。UI は useToday() の
+   * 値を渡すことで日付跨ぎの再計算も担保する。
+   */
+  now?: Date;
 };
 
 // 異種通貨 addOn 分離表示用のエントリ (v5.1.3 audit-fix C)。
@@ -145,7 +152,10 @@ export function rankCards(
     paymentApps = [],
     programs = [],
     memberships = [],
+    now,
   } = input;
+  // 単一の評価時刻。MAIN / FULL 両スコープ + loyalty + 全 evaluatePrograms で共有
+  const evalNow = now ?? new Date();
 
   const store = stores.find((s) => s.id === payment.storeId);
   const maxStacks = Math.max(0, store?.maxLoyaltyStacks ?? 1);
@@ -182,7 +192,7 @@ export function rankCards(
       edges,
       maxStacks,
       store?.preferredPointCardIds,
-      new Date(),
+      evalNow,
       availableCardIds,
       programs,
       memberships,
@@ -206,6 +216,7 @@ export function rankCards(
             programs,
             memberships,
             membershipIndex,
+            now: evalNow,
           })
         : null;
 
@@ -307,6 +318,7 @@ export function rankCards(
         programs,
         memberships,
         membershipIndex,
+        now: evalNow,
       });
       // primary は target 通貨への path 込みで再選択 (監査残 B 対応)
       const primary = selectPrimaryForTarget(
@@ -377,6 +389,7 @@ export function rankCards(
         programs,
         memberships,
         membershipIndex,
+        now: evalNow,
       });
 
       // primary は target 通貨への path 込みで再選択 (監査残 B 対応)。

@@ -131,6 +131,45 @@ describe("rankCards", () => {
     expect(result[0].resolved.source).toBe("program");
   });
 
+  it("now 引数がキャンペーン期間判定の基準時刻になる (C-2 単一評価時刻)", () => {
+    const programs: BenefitProgram[] = [
+      {
+        id: "prog-june-camp",
+        name: "6月限定 5%",
+        cardIds: ["rakuten"],
+        rate: 0.05,
+        currencyId: "rakuten-pt",
+        bonusType: "primary",
+        validFrom: "2026-06-01",
+        validTo: "2026-06-30",
+      },
+    ];
+    const memberships: StoreProgramMembership[] = [
+      { programId: "prog-june-camp", storeId: "amazon" },
+    ];
+    const base = {
+      payment: { storeId: "amazon", amount: 10000 },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [],
+      programs,
+      memberships,
+    };
+    // 期間内: キャンペーン 5% が適用される
+    const during = rankCardsRankings({
+      ...base,
+      now: new Date("2026-06-15T12:00:00"),
+    });
+    expect(during[0].earnedAmount).toBe(500);
+    // 期間終了後: 通常還元 (1%) に戻る
+    const after = rankCardsRankings({
+      ...base,
+      now: new Date("2026-07-01T12:00:00"),
+    });
+    expect(after[0].earnedAmount).toBe(100);
+  });
+
   it("目標通貨に到達できないカードは reachable=false で末尾に入る", () => {
     const edges = [edge("rakuten-to-ana", "rakuten-pt", "ana-mile", 0.5)];
     const result = rankCardsRankings({

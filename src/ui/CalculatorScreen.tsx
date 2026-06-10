@@ -14,6 +14,7 @@ import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { isMasterCard } from "../state/seed";
 import { CardComparisonSection } from "./CardComparisonSection";
+import { useToday } from "./hooks/useToday";
 import { CalcTodayBanner } from "./calculator/CalcTodayBanner";
 import { CalcStoreForm } from "./calculator/CalcStoreForm";
 import { CalcCurrencyTabs } from "./calculator/CalcCurrencyTabs";
@@ -88,6 +89,10 @@ export function CalculatorScreen() {
   );
   const { cardName } = useNameResolvers();
 
+  // 評価時刻。同じ暦日の間は参照固定、日付が変わると自動更新され rankCards が
+  // 再計算される (C-2: 日付跨ぎでキャンペーン/「5のつく日」が stale になる問題の解消)
+  const today = useToday();
+
   // includeDisabled: true で全カード試算、後で 2 つに分割。
   // v6.0.0: rankCards は RankResult ({ rankings, upgrade }) を返す。
   const rankResult = useMemo(() => {
@@ -106,10 +111,12 @@ export function CalculatorScreen() {
         paymentApps,
         programs,
         memberships,
+        now: today,
       },
       { includeDisabled: true },
     );
   }, [
+    today,
     storeId,
     amount,
     activeCurrencyId,
@@ -212,6 +219,7 @@ export function CalculatorScreen() {
       <CalcTodayBanner
         loyaltyRules={loyaltyRules}
         programs={programs}
+        now={today}
         open={todayBreakdownOpen}
         onToggle={() => setTodayBreakdownOpen((v) => !v)}
       />

@@ -9,6 +9,7 @@ import { useStore } from "../state/store";
 import { isMasterProgram } from "../state/seed";
 import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
 import { useNameResolvers } from "./hooks/useNameResolvers";
+import { useToday } from "./hooks/useToday";
 import { cardLabel } from "../domain/cardLabel";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
 import { byId } from "../domain/entityIndex";
@@ -79,10 +80,10 @@ export function ProgramsScreen() {
   const paymentAppNameById = (id: string) =>
     paymentAppById.get(id)?.name ?? id;
 
-  // mount 時に 1 回だけ生成する。毎 render で new Date() を作ると参照が変わり、
-  // 下の useMemo (filtered / filterCounts) の依存が毎回変化して再計算されてしまう
-  // (react-hooks/exhaustive-deps)。同一セッション内の「現在時刻」は固定で問題ない。
-  const now = useMemo(() => new Date(), []);
+  // useToday: 同じ暦日の間は参照固定 (useMemo 依存を荒らさない)、日付が変わると
+  // 自動更新される。旧実装は mount 時 1 回固定で、日付を跨いで開きっぱなしの
+  // PWA で「有効中/非アクティブ」のフィルタ件数・行の dim 表示が古いままだった (C-2)。
+  const now = useToday();
 
   const filtered = useMemo(() => {
     return programs.filter((p) => {
@@ -195,6 +196,16 @@ export function ProgramsScreen() {
                           <span className="badge" style={{ background: "#9ca3af", fontSize: 11 }}>非アクティブ</span>
                         )}
                       </span>
+                      {/* C-7: conditions (適用条件) はこれまでどの画面にも未表示だった。
+                          opt-in 特典等の前提条件をユーザーが確認できるよう表示する */}
+                      {p.conditions && (
+                        <div
+                          style={{ fontSize: 11, color: "#b45309", marginTop: 2 }}
+                          title="このプログラムの適用条件"
+                        >
+                          ⚠ 条件: {p.conditions}
+                        </div>
+                      )}
                       {(() => {
                         const cleaned = sanitizeNoteForDisplay(p.notes);
                         return cleaned ? (
