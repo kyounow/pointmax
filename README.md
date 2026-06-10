@@ -124,6 +124,7 @@ src/state/
   seed-data-programs.ts         # BenefitProgram / StoreProgramMembership
   seed-data-edges.ts            # 通貨間交換レート
   seed-additions.ts             # 自動同期で追加されたデータ (auto-generated)
+  seed-overrides.ts             # 既存 program への部分上書き (PROGRAM_OVERRIDES) の型 + 適用関数
   seed-blocklist.ts             # 自動同期で除外したい storeId
   seed-category-aliases.ts      # カテゴリ統合マップ (旧名 → 新名)
 ```
@@ -201,7 +202,8 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   各項目には安定 ID が振られ、取り込みたいものはレビュー PR ブランチ上で
   `npm run sync:approve -- <ID> [<ID> ...]` を実行すると seed-additions.ts への反映・
   queue からの除去・REVIEW_QUEUE.md 再生成まで半自動で完了する
-  (`--list` で一覧、`--dry-run` で確認のみ。addRecord のみ対応、updateField/delete は順次対応予定)
+  (`--list` で一覧、`--dry-run` で確認のみ。対応: addRecord 全般 +
+  updateField/programs の rate/validFrom/validTo。delete は順次対応予定)
 - `sync.config.json` の `autoMergeEnabled` で auto-merge の ON/OFF、`maxAutoChangesPerRun` が安全弁
   （超過時は全件 review 降格）
 - 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (最大 104 件、newest first)。
@@ -217,7 +219,8 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | 対象 | auto-merge | 備考 |
 |---|---|---|
 | 既存 store/program 参照の **memberships** | ✅ する | rakuten/Ponta/JAL 等の提携店追加 |
-| 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview |
+| 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview。反映は `seed-additions.ts` の `PROGRAM_OVERRIDES` (部分上書き) 経由で、手書き seed ファイルは書き換えない |
+| 既存 program の **期間変更** (validFrom/validTo) | ❌ しない (`periodChange` で needsReview) | キャンペーン延長/期間訂正の検知。承認は `npm run sync:approve -- <ID>` → `PROGRAM_OVERRIDES` 経由で反映 |
 | 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge |
 | 新規 **programs / cards / paymentApps** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
 | **削除提案** (validTo+30 日経過 campaign など) | ❌ しない | 誤削除防止のため必ず人手レビュー |

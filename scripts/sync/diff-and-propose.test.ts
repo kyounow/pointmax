@@ -703,6 +703,137 @@ describe("proposePrograms (PR-D1)", () => {
     expect(ps[0].reviewReason).toBeUndefined();
   });
 
+  // ─── Phase 4 (B-2): 既存 program の期間変更検知 ───
+  describe("期間変更 (periodChange)", () => {
+    const seedWithCampaign: SeedShape = {
+      ...emptySeed,
+      programs: [
+        {
+          id: "prog-camp",
+          name: "既存キャンペーン",
+          pointCardId: "jre-pointcard",
+          rate: 0.03,
+          currencyId: "jre",
+          validFrom: "2026-06-01",
+          validTo: "2026-06-30",
+        },
+      ],
+    };
+
+    it("validTo の延長は updateField + periodChange (必ず要レビュー)", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-camp",
+            rate: 0.03,
+            currencyId: "jre",
+            validFrom: "2026-06-01",
+            validTo: "2026-07-31", // 1 ヶ月延長
+            evidenceQuote: "期間延長: 2026年7月31日まで",
+            explicitness: 0.95,
+            ambiguity: 0.05,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, seedWithCampaign);
+      expect(ps).toHaveLength(1);
+      const up = ps[0] as {
+        type: string;
+        field: string;
+        from: unknown;
+        to: unknown;
+        reviewReason?: string;
+      };
+      expect(up.type).toBe("updateField");
+      expect(up.field).toBe("validTo");
+      expect(up.from).toBe("2026-06-30");
+      expect(up.to).toBe("2026-07-31");
+      expect(up.reviewReason).toBe("periodChange");
+    });
+
+    it("validFrom / validTo 両方変更は 2 件の updateField", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-camp",
+            rate: 0.03,
+            currencyId: "jre",
+            validFrom: "2026-07-01",
+            validTo: "2026-07-31",
+            evidenceQuote: "期間: 2026年7月1日〜7月31日",
+            explicitness: 0.95,
+            ambiguity: 0.05,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, seedWithCampaign);
+      expect(ps.map((p) => (p as { field?: string }).field).sort()).toEqual([
+        "validFrom",
+        "validTo",
+      ]);
+      expect(ps.every((p) => p.reviewReason === "periodChange")).toBe(true);
+    });
+
+    it("evidence に日付根拠が無い期間変更は unsupportedDateClaim を優先", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-camp",
+            rate: 0.03,
+            currencyId: "jre",
+            validFrom: "2026-06-01",
+            validTo: "2026-07-31",
+            evidenceQuote: "対象店で3%還元", // 日付の逐語根拠なし
+            explicitness: 0.95,
+            ambiguity: 0.05,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, seedWithCampaign);
+      expect(ps).toHaveLength(1);
+      expect(ps[0].reviewReason).toBe("unsupportedDateClaim");
+    });
+
+    it("抽出側に期間が無い (省略) 場合は変更提案しない (省略 = 言及なし)", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-camp",
+            rate: 0.03,
+            currencyId: "jre",
+            evidenceQuote: "対象店で3%",
+            explicitness: 0.95,
+            ambiguity: 0.05,
+          },
+        ],
+      });
+      expect(proposePrograms(data, seedWithCampaign)).toHaveLength(0);
+    });
+
+    it("期間が同値なら提案なし", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-camp",
+            rate: 0.03,
+            currencyId: "jre",
+            validFrom: "2026-06-01",
+            validTo: "2026-06-30",
+            evidenceQuote: "期間 2026年6月1日〜6月30日 3%",
+            explicitness: 0.95,
+            ambiguity: 0.05,
+          },
+        ],
+      });
+      expect(proposePrograms(data, seedWithCampaign)).toHaveLength(0);
+    });
+  });
+
   // ─── PR #60 (B): campaign 高品質 auto-merge ───
   describe("campaign auto-merge (PR #60)", () => {
     // 全条件を満たした seed (pointCard + paymentApp + currency が揃ったテスト用)
@@ -780,6 +911,27 @@ describe("proposePrograms (PR-D1)", () => {
             rate: 0.03,
             currencyId: "jre",
             evidenceQuote: "3%、期間 2099年12月31日まで",
+            explicitness: 1.0,
+            ambiguity: 0.0,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBe("idCollision");
+    });
+
+    it("malformed 期間 (validFrom > validTo) は auto 不可 (B-5: 死にデータの混入防止)", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-malformed-period",
+            pointCardId: "jre-pointcard",
+            rate: 0.03,
+            currencyId: "jre",
+            validFrom: "2099-12-31", // validTo より後
+            validTo: "2099-01-01",
+            evidenceQuote: "期間 2099年1月1日〜2099年12月31日、3%",
             explicitness: 1.0,
             ambiguity: 0.0,
           },

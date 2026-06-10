@@ -11,6 +11,7 @@ import type {
   Store,
   StoreProgramMembership,
 } from "../domain/types";
+import type { ProgramOverride } from "./seed-overrides";
 
 export const ADDED_STORES: Store[] = [
   { id: "17live", name: "17LIVE(ワンセブンライブ)", category: "エンタメ・チケット" },
@@ -290,3 +291,5 @@ export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "american-drug", notes: "税抜換算" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "akakabe-group", notes: "税抜換算" },
 ];
+
+export const PROGRAM_OVERRIDES: ProgramOverride[] = [];

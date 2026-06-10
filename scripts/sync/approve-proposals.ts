@@ -14,18 +14,22 @@
 //   3. REVIEW_QUEUE.md を残件で再生成
 // 適用後は `npm test && npm run build` を確認して commit すること。
 //
-// 対応 type は addRecord のみ。updateField / delete の承認適用は
-// override layer (Phase 4) / removals (Phase 5) で対応予定。
+// 対応 type:
+//   - addRecord 全般 (ADDED_* へ)
+//   - updateField/programs の rate / validFrom / validTo (PROGRAM_OVERRIDES へ。
+//     キャンペーンの率改定・期間延長の承認経路、Phase 4 override layer)
+// delete の承認適用は removals (Phase 5) で対応予定。
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Proposal, ProposalReport } from "./types";
-import { computeProposalId } from "./types";
+import { computeProposalId, isApplicableProposal } from "./types";
 import {
   bucketProposals,
   buildSeedAdditionsContent,
   mergeMemberships,
+  mergeOverrides,
   mergeWithExisting,
   type Buckets,
 } from "./apply-proposals";
@@ -37,6 +41,7 @@ import {
   ADDED_PAYMENT_APPS,
   ADDED_PROGRAMS,
   ADDED_STORES,
+  PROGRAM_OVERRIDES,
 } from "../../src/state/seed-additions";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -85,7 +90,8 @@ function printUsage(): void {
       "  npm run sync:approve -- <ID> --dry-run         書き込まずに内容確認",
       "",
       "ID は REVIEW_QUEUE.md の各項目見出し先頭 (例: pro-1a2b3c4d5e) か --list で確認。",
-      "対応 type は addRecord のみ (updateField/delete は Phase 4/5 で対応予定)。",
+      "対応 type: addRecord 全般 + updateField/programs の rate/validFrom/validTo。",
+      "delete の承認適用は Phase 5 (removals) で対応予定。",
     ].join("\n"),
   );
 }
@@ -95,11 +101,11 @@ function printUsage(): void {
 // ───────────────────────────────────────────────────────────────
 
 export type ApproveSelection = {
-  /** 適用対象 (addRecord かつ needsReview に存在) */
+  /** 適用対象 (isApplicableProposal を満たし needsReview に存在) */
   found: Proposal[];
   /** needsReview に見つからなかった指定 ID */
   missing: string[];
-  /** 見つかったが addRecord 以外で未対応 */
+  /** 見つかったが実書き込み経路の無い type/field で未対応 */
   unsupported: Proposal[];
 };
 
@@ -127,7 +133,7 @@ export function selectProposalsByIds(
       missing.push(id);
       continue;
     }
-    if (p.type !== "addRecord") {
+    if (!isApplicableProposal(p)) {
       unsupported.push(p);
       continue;
     }
@@ -176,7 +182,7 @@ export function formatListLine(p: Proposal): string {
     desc = (p as { id: string }).id;
   }
   const reason = p.reviewReason ?? "-";
-  const approvable = p.type === "addRecord" ? "  " : "✋"; // ✋ = sync:approve 未対応 type
+  const approvable = isApplicableProposal(p) ? "  " : "✋"; // ✋ = sync:approve 未対応 type/field
   return `${pid}  ${approvable}${p.type}/${p.collection}  [${reason}]  ${desc}  <${p.sourceId}>`;
 }
 
@@ -234,12 +240,15 @@ function main(): void {
     process.exit(1);
   }
   if (sel.unsupported.length > 0) {
-    console.error("💥 以下は sync:approve 未対応 type です (addRecord のみ対応):");
+    console.error(
+      "💥 以下は sync:approve 未対応の type/field です " +
+        "(対応: addRecord 全般 + updateField/programs の rate/validFrom/validTo):",
+    );
     for (const p of sel.unsupported) {
       console.error(`   ${proposalIdOf(p)}  ${p.type}/${p.collection}`);
     }
     console.error(
-      "   updateField (rate/期間変更) は Phase 4、delete (期限切れ削除) は Phase 5 で対応予定。" +
+      "   delete (期限切れ削除) は Phase 5 で対応予定。" +
         "それまでは手動で seed ファイルを編集してください。",
     );
     process.exit(1);
@@ -270,14 +279,19 @@ function main(): void {
     programs: mergeWithExisting(ADDED_PROGRAMS, buckets.programs),
     memberships: mergeMemberships(ADDED_MEMBERSHIPS, buckets.memberships),
   };
+  const overrideMerge = mergeOverrides(PROGRAM_OVERRIDES, buckets.programOverrides);
   const added = Object.entries(merge)
     .map(([k, v]) => [k, v.added] as const)
     .filter(([, n]) => n > 0)
     .map(([k, n]) => `${k} +${n}`)
     .join(", ");
+  const overrideStr =
+    overrideMerge.added + overrideMerge.updated > 0
+      ? `, overrides +${overrideMerge.added}/upd ${overrideMerge.updated}`
+      : "";
   const skipped = Object.values(merge).reduce((s, v) => s + v.skipped, 0);
   console.log(
-    `📋 seed-additions 反映: ${added || "なし"}${skipped > 0 ? ` (既存重複 skip ${skipped})` : ""}`,
+    `📋 seed-additions 反映: ${added || "なし"}${overrideStr}${skipped > 0 ? ` (既存重複 skip ${skipped})` : ""}`,
   );
 
   if (args.dryRun) {
@@ -292,6 +306,7 @@ function main(): void {
     paymentApps: merge.paymentApps.merged as Record<string, unknown>[],
     programs: merge.programs.merged as Record<string, unknown>[],
     memberships: merge.memberships.merged as Record<string, unknown>[],
+    programOverrides: overrideMerge.merged,
   };
   writeFileSync(SEED_ADDITIONS_PATH, buildSeedAdditionsContent(mergedBuckets));
   console.log(`✓ wrote ${SEED_ADDITIONS_PATH}`);

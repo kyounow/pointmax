@@ -24,7 +24,11 @@ import type {
   SyncHistorySourceCount,
   UpdateFieldProposal,
 } from "./types";
-import { SYNC_HISTORY_MAX_ENTRIES, computeProposalId } from "./types";
+import {
+  SYNC_HISTORY_MAX_ENTRIES,
+  computeProposalId,
+  isApplicableProposal,
+} from "./types";
 import { seed } from "../../src/state/seed";
 
 // ───────────────────────────────────────────────────────────────
@@ -400,6 +404,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   missingProgramBody: "🟠 missingProgramBody (program 本体なし membership)",
   storeAdditionsDisabled: "⏸ storeAdditionsDisabled (store 追加は手動キュレ運用)",
   expiredCampaign: "🟠 expiredCampaign (validTo+30日経過、削除候補)",
+  periodChange: "🟣 periodChange (キャンペーン期間の変更/延長)",
 };
 
 const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
@@ -449,6 +454,10 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "validTo が 30 日以上前に終了した campaign。Calculator では isRuleActiveAt() で自動 skip されているため機能的影響なし、" +
     "seed のサイズ/可読性のために削除を提案。承認する場合は seed-data-programs.ts (or seed-additions.ts) から該当 program と関連 memberships を手動削除して PR。" +
     "翌年同条件で再開する季節 campaign の場合は削除せず validTo を更新で対応。",
+  periodChange:
+    "既存 program の validFrom/validTo が公式ページの記載と異なる (キャンペーン延長 / 期間訂正)。" +
+    "evidenceQuote の期間根拠を確認し、正しければ sync:approve で承認 → PROGRAM_OVERRIDES 経由で seed に反映される。" +
+    "誤抽出 (別キャンペーンの期間を拾った等) の場合は無視。",
 };
 
 function formatProposalDetail(p: Proposal): string {
@@ -493,13 +502,13 @@ function formatProposalDetail(p: Proposal): string {
   if (p.evidence?.evidenceQuote) {
     lines.push(`- 評価: \`evidenceQuote="${p.evidence.evidenceQuote.slice(0, 120)}"\``);
   }
-  if (p.type === "addRecord") {
+  if (isApplicableProposal(p)) {
     lines.push(
       `- 対応案: 取り込むなら \`npm run sync:approve -- ${pid}\`、不要なら無視`,
     );
   } else {
     lines.push(
-      `- 対応案: 手動で seed ファイルに反映するか、不要なら無視 (sync:approve は addRecord のみ対応)`,
+      `- 対応案: 手動で seed ファイルに反映するか、不要なら無視 (この type/field は sync:approve 未対応)`,
     );
   }
 
@@ -565,6 +574,7 @@ export function buildReviewQueue(report: ProposalReport): string {
       "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
       "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
       "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
+      "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目
       "expiredCampaign",      // 🟠 validTo+30日経過。クリーンアップ候補
       "storeAdditionsDisabled", // ⏸ store 追加は手動キュレ運用、参照リストとして末尾配置
       "rateDeltaTooLarge",

@@ -326,6 +326,7 @@ export type ReviewReason =
   | "missingProgramBody"      // membership 提案だが、参照先 program 本体が seed 未存在 + 同 run autoApplicable にも無い (proposePrograms の idCollision 強制 → membership だけ通過するケースを防止)
   | "storeAdditionsDisabled"  // 新規 store 追加を cron では行わない方針 (キャンペーン情報の獲得に注力)。proposeStores の出力は他の理由が無い場合この理由で needsReview に
   | "expiredCampaign"         // validTo + grace (30日) 経過済の campaign 削除提案。誤削除防止のため必ず人手レビュー
+  | "periodChange"            // 既存 program の validFrom/validTo 変更 (キャンペーン延長/期間訂正)。誤期間適用防止のため必ず人手レビュー (sync:approve で承認可)
   | "safetyFailed"            // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
   | "autoMergeDisabled";      // auto-merge 候補だが autoMergeEnabled=false / force_review_only=true のため review に降格 (手動テスト等)
 
@@ -489,6 +490,28 @@ export function computeProposalId(p: Proposal): string {
     .digest("hex")
     .slice(0, 10);
   return `${p.collection.slice(0, 3)}-${hash}`;
+}
+
+// === sync:apply / sync:approve の適用可否 ===
+// 実書き込み経路を持つ proposal か。
+//  - addRecord 全般: seed-additions.ts の ADDED_* へ (Phase 2)
+//  - updateField/programs の rate / validFrom / validTo: PROGRAM_OVERRIDES へ
+//    (Phase 4 override layer。手書き seed-data-programs.ts を書き換えずに
+//    既存 program のフィールド更新を反映)
+// それ以外 (delete / referenceChange / 他 collection の updateField) は
+// 経路が無いため apply は skip、approve は中止する。
+export const OVERRIDABLE_PROGRAM_FIELDS = new Set<string>([
+  "rate",
+  "validFrom",
+  "validTo",
+]);
+
+export function isApplicableProposal(p: Proposal): boolean {
+  if (p.type === "addRecord") return true;
+  if (p.type === "updateField" && p.collection === "programs") {
+    return OVERRIDABLE_PROGRAM_FIELDS.has((p as UpdateFieldProposal).field);
+  }
+  return false;
 }
 
 // === 自動マージ閾値 ===

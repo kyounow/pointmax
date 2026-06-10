@@ -31,7 +31,9 @@ import {
   ADDED_PAYMENT_APPS,
   ADDED_PROGRAMS,
   ADDED_STORES,
+  PROGRAM_OVERRIDES,
 } from "./seed-additions";
+import { applyProgramOverrides } from "./seed-overrides";
 import { BLOCKED_STORE_IDS } from "./seed-blocklist";
 import { resolveCategory } from "./seed-category-aliases";
 import { SEED_CURRENCIES } from "./seed-data-currencies";
@@ -559,12 +561,19 @@ export const seed = (): SeedReturn => {
       ...paymentApps,
       ...ADDED_PAYMENT_APPS.filter((p) => !handwrittenPaymentAppIds.has(p.id)),
     ],
-    programs: [
-      ...SEED_BENEFIT_PROGRAMS,
-      ...ADDED_PROGRAMS.filter(
-        (p) => !SEED_BENEFIT_PROGRAMS.some((sp) => sp.id === p.id),
-      ),
-    ],
+    // PROGRAM_OVERRIDES (cron の rate 変動 / 期間延長の updateField を
+    // apply/approve が蓄積する部分上書き) を合成の最後に適用。
+    // 手書き seed-data-programs.ts を codegen で書き換えずに既存 program の
+    // フィールド更新を反映するための override layer (改善計画 B-1/B-2)。
+    programs: applyProgramOverrides(
+      [
+        ...SEED_BENEFIT_PROGRAMS,
+        ...ADDED_PROGRAMS.filter(
+          (p) => !SEED_BENEFIT_PROGRAMS.some((sp) => sp.id === p.id),
+        ),
+      ],
+      PROGRAM_OVERRIDES,
+    ),
     memberships: [
       ...SEED_STORE_PROGRAM_MEMBERSHIPS,
       ...ADDED_MEMBERSHIPS.filter(
