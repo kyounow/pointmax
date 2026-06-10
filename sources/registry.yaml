@@ -18,10 +18,11 @@ version: 1
 # version matrix を記録するために参照 (省略しても動作影響なし)。
 extractorVersions:
   campaign: v3.1
+  campaign-index: v1.0  # crawl: index の 1 段目 (子 URL 列挙専用、ExtractedSource は出力しない)
   card: v1.1
   jal-tokuyaku: v1.0
   jcb-jpoint: v1.0
-  ongoing-program: v1.0
+  ongoing-program: v1.1  # 2026-06-10 修正: prompt 本文は PR #37 以降 v1.1 (旧記載 v1.0 は不整合)
   payment-app: v1.1
   point-partner: v1.2
 
@@ -64,7 +65,14 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: false
+    crawl:
+      mode: index
+      maxChildren: 5
     notes: |
+      ★ 2026-06-10 (A-1 索引ハブ対策): crawl: index を設定。enabled:true 化した際は
+      1 段目 (campaign-index) で個別キャンペーン詳細 URL を列挙 → 2 段目で各詳細
+      ページを campaign extractor で抽出する 2 段階クロールになる。
+      ---
       ★ 2026-05-28 追加 (#C-2 キャンペーン獲得拡充、ユーザー提供 URL、初期 enabled:false)。
       JAL カードの店舗別マイル上振れキャンペーン一覧。
       cardIds 候補: ["jal-suica"] (将来 jal-card 一般 / jal-ana 系も対応)。
@@ -235,7 +243,15 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: true
+    crawl:
+      mode: index
+      maxChildren: 5
     notes: |
+      ★ 2026-06-10 (A-1 索引ハブ対策): crawl: index を設定。1 段目 (campaign-index)
+      で当一覧ページから個別キャンペーン詳細 URL を列挙 → 2 段目で各詳細ページを
+      campaign extractor で抽出 → 1 つの extracted JSON に統合。これまで恒常 0 件
+      だった索引ハブ問題への対策。次回 cron で子ページからの抽出件数を確認。
+      ---
       ★ 2026-05-17 追加 (#B キャンペーン取り込み 第1弾、JRE のみ)。
       ★ PR-D1: 出力を loyaltyRules → programs+memberships (v3+ 正準
       BenefitProgram モデル) に再ポイント。pointCardId は jre-pointcard
@@ -252,8 +268,7 @@ sources:
       (Gemini 0 件、URL Context 2回 nonJson → pre-fetch fallback でも空)。
       JAL特約店の "navigation hub" 問題と同型。extractor/パイプラインは
       正常 (厳格方針どおり具体データ無し→0件)。実データを取るには個別
-      キャンペーン詳細ページの URL が必要 (ユーザ提供待ち)。それまで本
-      ソースは no-op (0 提案・crash なし) なので enabled のまま温存。
+      キャンペーン詳細ページの URL が必要 → 2026-06-10 の crawl: index 化で解消。
 
   - id: rakuten-pay-campaigns
     label: 楽天Pay キャンペーン一覧 (公式)
@@ -265,7 +280,16 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: true
+    crawl:
+      mode: index
+      maxChildren: 5
     notes: |
+      ★ 2026-06-10 (A-1 索引ハブ対策): crawl: index を設定。1 段目 (campaign-index)
+      で当一覧ページから個別キャンペーン詳細 URL を列挙 → 2 段目で各詳細ページを
+      campaign extractor で抽出 → 1 つの extracted JSON に統合。一覧自体は抽選・
+      全体施策中心だが、個別詳細ページに「店舗×率×期間」があるケースを拾えるように
+      なる。次回 cron で子ページからの抽出件数を確認。
+      ---
       ★ 2026-05-17 追加 (#B 決済系キャンペーン、PR-D1 で proposePrograms
       が通ったので解禁)。paymentAppId=pa-rakuten-pay、還元通貨 rakuten-pt。
       campaign-v3.0 extractor が「対象店舗 × 楽天Pay 期間限定上振れ」を
@@ -278,8 +302,8 @@ sources:
       中心で「固定還元率+対象店舗+期間」が揃うキャンペーンを含まない
       (d払いと違い構造的に抽出対象なし)。thinking-leak ではなく Gemini
       が 2 回とも正しく「対象外」判定=extractor の保守動作が正常。
-      実データには別 URL (個別詳細 or 店舗特定の一覧) が必要。現状
-      no-op で enabled 温存。
+      実データには別 URL (個別詳細 or 店舗特定の一覧) が必要
+      → 2026-06-10 の crawl: index 化で解消。
 
   - id: jcb-jpoint-partners
     label: JCB J-POINT パートナー (旧 Oki Doki ランド、公式)

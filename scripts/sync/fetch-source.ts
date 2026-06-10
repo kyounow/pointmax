@@ -40,8 +40,21 @@ import type {
 import {
   classifyResponse,
   prefetchAsPlainText,
+  prefetchRawHtml,
+  probeUrl,
   type ResponseStatus,
 } from "./fetch-response";
+import {
+  CHILD_FETCH_SLEEP_MS,
+  extractAnchors,
+  mergeChildExtractions,
+  normalizeChildUrls,
+  parseIndexResponse,
+  resolveMaxChildren,
+  type ChildExtraction,
+  type IndexUrlEntry,
+  type ParsedIndexResponse,
+} from "./crawl-index";
 
 const RETRY_DELAYS_MS = [5000, 15000];  // attempt 2: +5s, attempt 3: +15s (合計 max 20s wait)
 
@@ -183,6 +196,16 @@ function loadResolvedPrompt(source: RegistrySource): string {
   const scopeDirective = SCOPE_DIRECTIVES[source.extractionScope];
   const injected = injectExistingEntities(template);
   return `${scopeDirective}\n${injected}`;
+}
+
+// crawl: index の 1 段目 (子 URL 列挙) 専用プロンプト。INJECT もスコープ指示も
+// 不要 (URL を列挙するだけで seed 文脈に依存しない)。
+function loadIndexPrompt(): string {
+  const path = resolve(EXTRACTORS_DIR, "campaign-index.prompt.md");
+  if (!existsSync(path)) {
+    throw new Error(`index クロール用プロンプトが見つからない: ${path}`);
+  }
+  return readFileSync(path, "utf-8");
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -431,6 +454,46 @@ export function salvageBySchema(
 }
 
 // ───────────────────────────────────────────────────────────────
+// Gemini レスポンスの JSON parse (単発 fetch / index crawl の子ページで共用)
+// ───────────────────────────────────────────────────────────────
+
+// Gemini レスポンス文字列を ExtractedSource として parse する。
+// コードフェンス (```json) 除去と、誤って [...] 配列でラップしてくる事例への
+// 保険 (先頭要素を採用) 込み。失敗時は throw し、呼び出し側が fallback を書く。
+export function parseExtractedJson(rawJson: string): ExtractedSource {
+  const cleaned = rawJson
+    .replace(/^\s*```(?:json)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+  if (cleaned.startsWith("[")) {
+    const arr = JSON.parse(cleaned);
+    if (!Array.isArray(arr) || arr.length === 0) {
+      throw new Error("配列が空 or 不正");
+    }
+    console.log("   注意: Gemini が配列でラップしてきたので 1 要素目を採用");
+    return arr[0] as ExtractedSource;
+  }
+  return JSON.parse(cleaned) as ExtractedSource;
+}
+
+// 必須メタ情報を「スクリプトが知ってる事実」で上書きする。
+// (Gemini はプロンプト例の値をコピーしてくることがあるため信用しない)
+// sourceUrl は単発 fetch では source.url、index crawl の子ページでは子 URL。
+function stampMeta(
+  parsed: ExtractedSource,
+  source: RegistrySource,
+  sourceUrl: string,
+): void {
+  parsed.sourceId = source.id;
+  parsed.sourceUrl = sourceUrl;
+  parsed.fetchedAt = new Date().toISOString();
+  parsed.extractor = source.extractor;
+  parsed.geminiModel = GEMINI_MODEL;
+  // promptVersion だけは Gemini が読み取る値を尊重 (extractor のバージョン管理)
+  parsed.promptVersion = parsed.promptVersion || `${source.extractor}-vUnknown`;
+}
+
+// ───────────────────────────────────────────────────────────────
 // Fallback writer (空応答 / 非JSON / schema救済不能 で共通)
 // ───────────────────────────────────────────────────────────────
 // 旧: 3 箇所で同形の ExtractedSource リテラル + mkdir + write + log を
@@ -458,6 +521,240 @@ function writeFallback(args: {
 }
 
 // ───────────────────────────────────────────────────────────────
+// Index crawl (crawl: { mode: index } のソース用 2 段階クロール)
+// ───────────────────────────────────────────────────────────────
+// 1 段目: campaign-index prompt で索引ページから子 URL を列挙
+// 2 段目: 各子 URL を source 本来の extractor prompt で抽出 (子ごとに salvage)
+// 3: mergeChildExtractions で 1 つの ExtractedSource に統合して書き出し。
+// 1 子ページの失敗は notes に記録して他の子を続行 (1 ソース失敗で cron を
+// 止めない既存方針と同じ)。
+
+// 1 段目 (ground truth 選択モード): 索引 HTML から抽出した実在アンカー一覧を
+// Gemini に渡し、「この中から個別キャンペーン詳細を選ぶ」選択タスクとして実行。
+// ページ本文は渡さない (アンカーテキストで判断可能 + プロンプトサイズ節約)。
+// URL Context 不使用なので responseMimeType を JSON に固定できる。
+// 2026-06-10 の実 fetch で URL Context 直読みの Gemini が URL を捏造する事象を
+// 確認したための設計 (crawl-index.ts の extractAnchors docblock 参照)。
+async function callGeminiIndexSelection(args: {
+  apiKey: string;
+  indexPrompt: string;
+  sourceId: string;
+  indexUrl: string;
+  candidates: IndexUrlEntry[];
+}): Promise<ParsedIndexResponse> {
+  const ai = new GoogleGenAI({ apiKey: args.apiKey });
+  const list = args.candidates
+    .map((c) => `- ${c.url}${c.title ? ` | ${c.title}` : ""}`)
+    .join("\n");
+  const userPrompt =
+    `以下は ${args.indexUrl} (キャンペーン索引ページ) に実在するリンク一覧です。\n` +
+    `systemInstruction の規則に従い、個別キャンペーン詳細ページに該当するものを選んで JSON で返してください。\n\n` +
+    `**重要**: \`urls[].url\` は下の一覧から**逐語コピー**すること。一覧に無い URL の出力は禁止 (後段で機械的に破棄されます)。\n` +
+    `\`urls[].title\` は一覧の "|" 以降のテキストを逐語コピー。\n\n` +
+    `sourceId: ${args.sourceId}\n\n` +
+    `=== リンク一覧 (${args.candidates.length} 件) ===\n${list}`;
+
+  let lastError = "no attempt";
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    if (attempt > 1) {
+      console.log(`   ⏳ index 選択 attempt ${attempt}/2 (待機 5s)`);
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+    try {
+      const response = await ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: userPrompt,
+        config: {
+          systemInstruction: args.indexPrompt,
+          responseMimeType: "application/json",
+          thinkingConfig: { thinkingBudget: 1024 },
+        },
+      });
+      const parsed = parseIndexResponse(response.text ?? "");
+      if (parsed.ok) return parsed;
+      lastError = parsed.error;
+      console.log(`   ⚠️ index 選択 attempt ${attempt}/2 parse 失敗: ${parsed.error}`);
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+      console.log(`   ⚠️ index 選択 attempt ${attempt}/2 error: ${lastError}`);
+    }
+  }
+  return { ok: false, error: lastError };
+}
+
+async function runIndexCrawl(args: {
+  apiKey: string;
+  source: RegistrySource;
+  childPrompt: string; // source.extractor の解決済み prompt (scope directive 込み)
+  indexPrompt: string; // campaign-index prompt
+}): Promise<void> {
+  const { apiKey, source, childPrompt, indexPrompt } = args;
+  const maxChildren = resolveMaxChildren(source.crawl?.maxChildren);
+
+  // ── 1 段目: 索引ページから子 URL を列挙 ──
+  // 優先: 索引 HTML を自前 prefetch → 実在アンカー抽出 → Gemini は選択のみ
+  //       (出力 URL は実在集合との照合で強制検証 = 捏造 URL を遮断)
+  // fallback: prefetch 不可 (JS レンダリング / IP block) なら従来の
+  //       URL Context 直読み列挙 + 子ページ probe で防御
+  console.log(`🕸️ [1/2] 索引ページから子 URL を列挙中 (maxChildren=${maxChildren})...`);
+  let candidates: IndexUrlEntry[] | undefined;
+  try {
+    const html = await prefetchRawHtml(source.url);
+    const anchors = extractAnchors(html, source.url);
+    if (anchors.length > 0) {
+      candidates = anchors;
+      console.log(`   ✓ 索引 HTML prefetch 成功: 実在アンカー ${anchors.length} 件を抽出`);
+    } else {
+      console.log("   ⚠️ 索引 HTML にアンカーが見つからない (JS レンダリングの疑い)。URL Context 直読みに fallback");
+    }
+  } catch (e) {
+    console.log(
+      `   ⚠️ 索引 prefetch 失敗 (${e instanceof Error ? e.message : String(e)})。URL Context 直読みに fallback`,
+    );
+  }
+
+  let parsedIndex: ParsedIndexResponse;
+  if (candidates !== undefined) {
+    parsedIndex = await callGeminiIndexSelection({
+      apiKey,
+      indexPrompt,
+      sourceId: source.id,
+      indexUrl: source.url,
+      candidates,
+    });
+  } else {
+    const idx = await callGeminiWithRetry({
+      apiKey,
+      systemInstruction: indexPrompt,
+      url: source.url,
+      sourceId: source.id,
+    });
+    console.log(
+      `   ${idx.finalStatus === "success" ? "✓" : "⚠️"} attempts=${idx.attempts}, status=${idx.finalStatus}`,
+    );
+    parsedIndex =
+      idx.finalStatus === "success"
+        ? parseIndexResponse(idx.text)
+        : { ok: false, error: `fetch status=${idx.finalStatus}` };
+  }
+
+  if (!parsedIndex.ok) {
+    writeFallback({
+      source,
+      notes: `[crawl:index] 索引ページの子 URL 列挙に失敗: ${parsedIndex.error}。子ページ抽出は未実施。`,
+      promptVersion: `${source.extractor}-vUnknown`,
+      logSuffix: "(index 失敗)",
+    });
+    return;
+  }
+  const { accepted, rejected } = normalizeChildUrls(
+    source.url,
+    parsedIndex.urls,
+    maxChildren,
+    { candidates },
+  );
+  console.log(
+    `   index 列挙: ${parsedIndex.urls.length} 件 → 採用 ${accepted.length} / 除外 ${rejected.length}` +
+      (parsedIndex.droppedEntries > 0 ? ` (型不正 drop ${parsedIndex.droppedEntries})` : ""),
+  );
+  for (const r of rejected) console.log(`     - 除外 [${r.reason}] ${r.url}`);
+
+  // ── 2 段目: 各子ページを本来の extractor で抽出 ──
+  const schema = loadSchema();
+  const children: ChildExtraction[] = [];
+  for (let i = 0; i < accepted.length; i++) {
+    const child = accepted[i];
+    if (i > 0) {
+      // Gemini free tier 10 RPM 対策 (fetch-all のソース間 5s sleep と同思想)
+      await new Promise((r) => setTimeout(r, CHILD_FETCH_SLEEP_MS));
+    }
+    console.log(
+      `🕸️ [2/2] 子ページ ${i + 1}/${accepted.length}: ${child.url}${child.title ? ` (${child.title})` : ""}`,
+    );
+    // Gemini を呼ぶ前に生存確認 (404/410 は捏造 or 終了済みページ → attempts を burn しない)
+    const probe = await probeUrl(child.url);
+    if (probe.verdict === "dead") {
+      console.log(`   ⚠️ probe HTTP ${probe.status} (この子ページはスキップ)`);
+      children.push({
+        ...child,
+        status: "failed",
+        failReason: `notFound(${probe.status})`,
+      });
+      continue;
+    }
+    const res = await callGeminiWithRetry({
+      apiKey,
+      systemInstruction: childPrompt,
+      url: child.url,
+      sourceId: source.id,
+    });
+    if (res.finalStatus !== "success") {
+      console.log(`   ⚠️ status=${res.finalStatus} (この子ページはスキップ)`);
+      children.push({ ...child, status: "failed", failReason: res.finalStatus });
+      continue;
+    }
+    let parsed: ExtractedSource;
+    try {
+      parsed = parseExtractedJson(res.text);
+    } catch {
+      console.log("   ⚠️ JSON parse 失敗 (この子ページはスキップ)");
+      children.push({ ...child, status: "failed", failReason: "nonJson" });
+      continue;
+    }
+    stampMeta(parsed, source, child.url);
+    const salvage = salvageBySchema(parsed, schema);
+    if (!salvage.ok) {
+      console.log(`   ⚠️ schema 違反 (この子ページはスキップ): ${salvage.errors[0] ?? ""}`);
+      children.push({ ...child, status: "failed", failReason: "schemaViolation" });
+      continue;
+    }
+    const droppedEntries = Object.entries(salvage.droppedByKey);
+    if (droppedEntries.length > 0) {
+      console.log(
+        `   ⚠️ schema 違反アイテムを除去: ${droppedEntries.map(([k, n]) => `${k}:${n}`).join(", ")}`,
+      );
+    }
+    children.push({ ...child, status: "success", data: salvage.data });
+  }
+
+  // ── 統合して書き出し ──
+  const merged = mergeChildExtractions({
+    source: { id: source.id, url: source.url, extractor: source.extractor },
+    geminiModel: GEMINI_MODEL,
+    fetchedAt: new Date().toISOString(),
+    children,
+    indexNotes: parsedIndex.notes,
+  });
+  // 子単位では salvage 済だが、merge ロジック退行の検知として統合結果も検証する
+  const finalSalvage = salvageBySchema(merged, schema);
+  if (!finalSalvage.ok) {
+    writeFallback({
+      source,
+      notes:
+        `[crawl:index] merge 結果が schema 違反 (merge ロジック退行の疑い): ` +
+        finalSalvage.errors.join("; ").slice(0, 300),
+      promptVersion: merged.promptVersion,
+      logSuffix: "(merge schema fallback)",
+    });
+    return;
+  }
+
+  mkdirSync(OUTPUT_DIR, { recursive: true });
+  const outPath = resolve(OUTPUT_DIR, `${source.id}.json`);
+  writeFileSync(outPath, JSON.stringify(finalSalvage.data, null, 2));
+  console.log(`✓ wrote ${outPath}`);
+
+  const summary = {
+    programs: finalSalvage.data.programs?.length ?? 0,
+    memberships: finalSalvage.data.memberships?.length ?? 0,
+    stores: finalSalvage.data.stores?.length ?? 0,
+    childrenOk: children.filter((c) => c.status === "success").length,
+    childrenFailed: children.filter((c) => c.status === "failed").length,
+  };
+  console.log("📊 crawl summary:", JSON.stringify(summary));
+}
+
+// ───────────────────────────────────────────────────────────────
 // Main
 // ───────────────────────────────────────────────────────────────
 
@@ -479,6 +776,16 @@ async function main(): Promise<void> {
     `🧩 prompt: 解決済み ${systemInstruction.length.toLocaleString()} chars (scope directive 込み)`,
   );
 
+  // 索引ハブ型ソース (crawl: { mode: index }) は 2 段階クロールに分岐
+  const isIndexCrawl = source.crawl?.mode === "index";
+  let indexPrompt: string | undefined;
+  if (isIndexCrawl) {
+    indexPrompt = loadIndexPrompt();
+    console.log(
+      `🕸️ crawl: index モード (maxChildren=${resolveMaxChildren(source.crawl?.maxChildren)}, index prompt ${indexPrompt.length.toLocaleString()} chars)`,
+    );
+  }
+
   if (args.dryRun) {
     console.log("✋ --dry-run なのでここで停止 (Gemini 呼び出し無し)");
     return;
@@ -486,6 +793,17 @@ async function main(): Promise<void> {
 
   // --dry-run でなければ API キーが必要
   const apiKey = getApiKey();
+
+  if (isIndexCrawl && indexPrompt !== undefined) {
+    console.log(`🤖 Gemini ${GEMINI_MODEL} 呼び出し中 (index crawl、各段 3 attempts)...`);
+    await runIndexCrawl({
+      apiKey,
+      source,
+      childPrompt: systemInstruction,
+      indexPrompt,
+    });
+    return;
+  }
 
   console.log(`🤖 Gemini ${GEMINI_MODEL} 呼び出し中 (最大 3 attempts, retry/pre-fetch 込み)...`);
   const { text: rawJson, retrievedUrls, attempts, finalStatus } = await callGeminiWithRetry({
@@ -524,22 +842,7 @@ async function main(): Promise<void> {
   console.log("📋 JSON 解析中...");
   let parsed: ExtractedSource;
   try {
-    // Gemini が ```json コードフェンスでラップしてくることがあるので除去 (保険)
-    const cleaned = rawJson
-      .replace(/^\s*```(?:json)?\s*/i, "")
-      .replace(/```\s*$/i, "")
-      .trim();
-    // Gemini が誤って [...] 配列でラップしてくる事例あり。先頭が [ なら要素 0 を取る
-    if (cleaned.startsWith("[")) {
-      const arr = JSON.parse(cleaned);
-      if (!Array.isArray(arr) || arr.length === 0) {
-        throw new Error("配列が空 or 不正");
-      }
-      parsed = arr[0] as ExtractedSource;
-      console.log("   注意: Gemini が配列でラップしてきたので 1 要素目を採用");
-    } else {
-      parsed = JSON.parse(cleaned) as ExtractedSource;
-    }
+    parsed = parseExtractedJson(rawJson);
   } catch {
     // Gemini が JSON でなく散文で「ページから抽出できなかった」と返した場合。
     // crash せず空の ExtractedSource を書き出し、proposed-migrations 側で skip 判定。
@@ -557,15 +860,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  // 必須メタ情報を「スクリプトが知ってる事実」で上書き。
-  // (Gemini はプロンプト例の値をコピーしてくることがあるため信用しない)
-  parsed.sourceId = source.id;
-  parsed.sourceUrl = source.url;
-  parsed.fetchedAt = new Date().toISOString();
-  parsed.extractor = source.extractor;
-  parsed.geminiModel = GEMINI_MODEL;
-  // promptVersion だけは Gemini が読み取る値を尊重 (extractor のバージョン管理)
-  parsed.promptVersion = parsed.promptVersion || `${source.extractor}-vUnknown`;
+  stampMeta(parsed, source, source.url);
 
   console.log("✅ schema 検証中...");
   const schema = loadSchema();

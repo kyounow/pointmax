@@ -96,21 +96,18 @@ export function detectCharset(
   return raw;
 }
 
-// Pre-fetch helper: URL から HTML を取り、charset (Shift_JIS 等) を検出して
-// 正しく decode し、script/style/comment を削って plain text 化。
-// 50KB で truncate (Gemini context window 配慮)。
-export async function prefetchAsPlainText(
-  url: string,
-  maxBytes: number = 50_000,
-): Promise<string> {
-  const res = await fetch(url, {
-    headers: {
-      // 普通のブラウザを装ってブロック回避
-      "User-Agent":
-        "Mozilla/5.0 (compatible; PointMax-Sync/1.0; +https://github.com/kyounow/pointmax)",
-      "Accept-Language": "ja,en;q=0.8",
-    },
-  });
+const PREFETCH_HEADERS = {
+  // 普通のブラウザを装ってブロック回避
+  "User-Agent":
+    "Mozilla/5.0 (compatible; PointMax-Sync/1.0; +https://github.com/kyounow/pointmax)",
+  "Accept-Language": "ja,en;q=0.8",
+} as const;
+
+// Pre-fetch helper (生 HTML): URL から HTML を取り、charset (Shift_JIS 等) を
+// 検出して正しく decode した文字列を返す。タグはそのまま (index crawl の
+// アンカー抽出が href を必要とするため)。
+export async function prefetchRawHtml(url: string): Promise<string> {
+  const res = await fetch(url, { headers: PREFETCH_HEADERS });
   if (!res.ok) {
     throw new Error(`prefetch HTTP ${res.status}: ${res.statusText}`);
   }
@@ -126,16 +123,67 @@ export async function prefetchAsPlainText(
   );
   const charset = detectCharset(res.headers.get("content-type"), head);
 
-  let html: string;
   try {
-    html = new TextDecoder(charset).decode(buf);
+    return new TextDecoder(charset).decode(buf);
   } catch {
     // 未知の charset は utf-8 fallback (Node の TextDecoder は不明 encoding で throw)
-    html = new TextDecoder("utf-8", { fatal: false }).decode(buf);
+    return new TextDecoder("utf-8", { fatal: false }).decode(buf);
   }
+}
 
+// Pre-fetch helper (plain text): 生 HTML から script/style/comment を削って
+// plain text 化。50KB で truncate (Gemini context window 配慮)。
+export async function prefetchAsPlainText(
+  url: string,
+  maxBytes: number = 50_000,
+): Promise<string> {
+  const html = await prefetchRawHtml(url);
   const stripped = stripHtmlToText(html);
   return stripped.slice(0, maxBytes);
+}
+
+// 子 URL の生存確認。index crawl で Gemini が URL を捏造した場合 (2026-06-10 の
+// rakuten-pay 実 fetch で 4/4 件の捏造 URL を確認)、Gemini 呼び出し (最大 3
+// attempts) を burn する前に安価な GET で弾く。
+//   - dead    : HTTP 404/410。確実に存在しない → 子ページ抽出をスキップ
+//   - alive   : 2xx
+//   - unknown : 403 / ネットワークエラー / timeout 等。当方 IP がブロックされていても
+//               Gemini URL Context (Google egress) からは読める可能性があるので続行
+export type ProbeVerdict = {
+  verdict: "alive" | "dead" | "unknown";
+  status: number | null;
+};
+
+export async function probeUrl(
+  url: string,
+  timeoutMs = 15_000,
+): Promise<ProbeVerdict> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        redirect: "follow",
+        signal: controller.signal,
+        headers: PREFETCH_HEADERS,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    try {
+      await res.body?.cancel();
+    } catch {
+      // body 破棄失敗は無視 (生存判定には不要)
+    }
+    if (res.ok) return { verdict: "alive", status: res.status };
+    if (res.status === 404 || res.status === 410) {
+      return { verdict: "dead", status: res.status };
+    }
+    return { verdict: "unknown", status: res.status };
+  } catch {
+    return { verdict: "unknown", status: null };
+  }
 }
 
 export function stripHtmlToText(html: string): string {
@@ -150,11 +198,24 @@ export function stripHtmlToText(html: string): string {
       .replace(/<[^>]+>/g, " ")
       // HTML entity 一部復号
       .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
       .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
+      // 数値文字参照 (例: &#65374; = 〜)。リンクテキストの期間表記等に頻出
+      .replace(/&#x([0-9a-f]+);/gi, (m, hex: string) => {
+        const cp = Number.parseInt(hex, 16);
+        return Number.isFinite(cp) && cp > 0 && cp < 0x110000
+          ? String.fromCodePoint(cp)
+          : m;
+      })
+      .replace(/&#(\d+);/g, (m, dec: string) => {
+        const cp = Number(dec);
+        return Number.isFinite(cp) && cp > 0 && cp < 0x110000
+          ? String.fromCodePoint(cp)
+          : m;
+      })
+      // &amp; は最後 (二重エスケープ &amp;#39; 等を誤復号しないため)
+      .replace(/&amp;/g, "&")
       // 連続空白圧縮
       .replace(/\s+/g, " ")
       .trim()
