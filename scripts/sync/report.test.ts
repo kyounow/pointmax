@@ -234,6 +234,58 @@ describe("buildReviewQueue", () => {
     expect(md).toContain("</details>");
   });
 
+  it("各項目に proposalId と sync:approve コマンドが表示される (B-4)", () => {
+    const stamped: Proposal = {
+      type: "addRecord",
+      collection: "programs",
+      record: { id: "prog-x", name: "X キャンペーン", rate: 0.05, currencyId: "d-pt" },
+      sourceId: "d-pay-campaigns",
+      confidence: 0.93,
+      evidence: { evidenceQuote: "引用", explicitness: 0.95, ambiguity: 0.02 },
+      proposalId: "pro-abc1234567",
+      reviewReason: "idCollision",
+    };
+    const md = buildReviewQueue(
+      baseReport({
+        needsReview: [stamped],
+        summary: {
+          autoApplicableCount: 0,
+          needsReviewCount: 1,
+          sourcesProcessed: 1,
+          sourcesFailed: 0,
+        },
+      }),
+    );
+    // 見出しに ID、対応案に approve コマンド、操作セクションに半自動手順
+    expect(md).toContain("#### `pro-abc1234567`");
+    expect(md).toContain("npm run sync:approve -- pro-abc1234567");
+    expect(md).toContain("npm run sync:approve -- --list");
+  });
+
+  it("proposalId 未付与 (旧 run) でも computeProposalId fallback で ID が表示される", () => {
+    const legacy: Proposal = {
+      type: "addRecord",
+      collection: "stores",
+      record: { id: "legacy-store", name: "レガシー店" },
+      sourceId: "ponta-partners",
+      confidence: 0.5,
+      evidence: { evidenceQuote: "引用", explicitness: 0.6, ambiguity: 0.2 },
+      reviewReason: "lowConfidence",
+    };
+    const md = buildReviewQueue(
+      baseReport({
+        needsReview: [legacy],
+        summary: {
+          autoApplicableCount: 0,
+          needsReviewCount: 1,
+          sourcesProcessed: 1,
+          sourcesFailed: 0,
+        },
+      }),
+    );
+    expect(md).toMatch(/#### `sto-[0-9a-f]{10}`/);
+  });
+
   it("混在ケース: autoApplicable + needsReview の両方があっても両ファイル生成が落ちない", () => {
     const report = baseReport({
       autoApplicable: [

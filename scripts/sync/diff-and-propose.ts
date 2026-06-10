@@ -25,6 +25,7 @@ import type {
   Proposal,
   ProposalReport,
 } from "./types";
+import { computeProposalId } from "./types";
 import {
   proposeCards,
   proposeExpiredCampaignDeletions,
@@ -507,6 +508,8 @@ function main(): void {
   const autoApplicable: Proposal[] = [];
   const needsReview: Proposal[] = [];
   for (const p of finalProposals) {
+    // 安定 ID を付与 (REVIEW_QUEUE.md の項目表示 / sync:approve の項目指定用)
+    p.proposalId = computeProposalId(p);
     if (p.reviewReason) needsReview.push(p);
     else autoApplicable.push(p);
   }

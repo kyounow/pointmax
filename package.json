@@ -17,6 +17,7 @@
     "sync:fetch-all": "tsx scripts/sync/fetch-all.ts",
     "sync:propose": "tsx scripts/sync/diff-and-propose.ts",
     "sync:apply": "tsx scripts/sync/apply-proposals.ts",
+    "sync:approve": "tsx scripts/sync/approve-proposals.ts",
     "sync:report": "tsx scripts/sync/report.ts"
   },
   "dependencies": {

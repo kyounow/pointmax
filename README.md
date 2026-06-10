@@ -151,6 +151,7 @@ scripts/sync/
   diff-and-propose.ts  # seed vs extracted の差分 → ProposalReport
   propose-helpers.ts   # propose<Entity> 個別関数群
   apply-proposals.ts   # autoApplicable を seed-additions.ts に書き出し
+  approve-proposals.ts # needsReview を ID 指定で seed-additions.ts に承認適用 (半自動レビュー)
   inject-prompt.ts     # extractor プロンプトに seed 内容を動的注入
   aliases.ts           # cardId / storeId の表記揺れ正規化
   evidence-check.ts    # hallucination guard (日付主張の根拠検証 等)
@@ -169,6 +170,8 @@ npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブ
 npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出
 npm run sync:propose               # 全 extracted vs seed の差分提案
 npm run sync:apply                 # autoApplicable を seed-additions.ts へ
+npm run sync:approve -- --list     # needsReview 一覧 (ID 付き) を表示
+npm run sync:approve -- <ID> ...   # 指定 needsReview 項目を seed-additions.ts へ承認適用
 npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE 生成
 ```
 
@@ -194,7 +197,11 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   safety check (件数上限/test/build) 通過後に **squash auto-merge** → main。
   bot のマージ (`GITHUB_TOKEN`) は push トリガーを起動しないため、GitHub Pages 再デプロイは
   `deploy.yml` の **`workflow_run`** (Weekly Master Sync 完了で発火) が担う
-- 要レビュー項目は `chore/sync-review-queue` ブランチの長寿命 PR (`needs-review` ラベル) に集約
+- 要レビュー項目は `chore/sync-review-queue` ブランチの長寿命 PR (`needs-review` ラベル) に集約。
+  各項目には安定 ID が振られ、取り込みたいものはレビュー PR ブランチ上で
+  `npm run sync:approve -- <ID> [<ID> ...]` を実行すると seed-additions.ts への反映・
+  queue からの除去・REVIEW_QUEUE.md 再生成まで半自動で完了する
+  (`--list` で一覧、`--dry-run` で確認のみ。addRecord のみ対応、updateField/delete は順次対応予定)
 - `sync.config.json` の `autoMergeEnabled` で auto-merge の ON/OFF、`maxAutoChangesPerRun` が安全弁
   （超過時は全件 review 降格）
 - 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (最大 104 件、newest first)。
