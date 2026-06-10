@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
+import { isMasterProgram } from "../state/seed";
 import { cardLabel } from "../domain/cardLabel";
 import {
   isRuleActiveAt,
@@ -13,7 +14,9 @@ import type { BenefitProgram } from "../domain/types";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { useToday } from "./hooks/useToday";
+import { useDialog } from "./dialog/useDialog";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
+import { CampaignForm } from "./CampaignForm";
 
 // 終了日セル: 日付 + 終了間近カウントダウン (C-5)。
 // あと 7 日以内は warning、3 日以内は urgent (RuleStatusBadge と同じ閾値)。
@@ -74,14 +77,17 @@ type TabKey = "all" | "active" | "ongoing" | "expired" | "future";
 
 export function CampaignsScreen() {
   // Wave 5 B-1: 4 個別 subscribe → 単一 useShallow
-  const { cards, pointCards, programs, paymentApps } = useStore(
-    useShallow((s) => ({
-      cards: s.cards,
-      pointCards: s.pointCards,
-      programs: s.programs,
-      paymentApps: s.paymentApps,
-    })),
-  );
+  const { cards, pointCards, programs, paymentApps, removeUserProgram } =
+    useStore(
+      useShallow((s) => ({
+        cards: s.cards,
+        pointCards: s.pointCards,
+        programs: s.programs,
+        paymentApps: s.paymentApps,
+        removeUserProgram: s.removeUserProgram,
+      })),
+    );
+  const dialog = useDialog();
 
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   // 同じ暦日の間は参照固定、日付が変わると自動更新 (C-2)。
@@ -101,8 +107,8 @@ export function CampaignsScreen() {
   );
 
   // ─── BenefitProgram キャンペーン (validFrom or validTo を持つ programs) ───
-  // v3 で 旧 StoreRule / LoyaltyRule のキャンペーン編集 UI は廃止。
-  // ユーザー追加のキャンペーンが必要な場合は将来 Program 直接編集を提供予定。
+  // 公式 (seed + 週次自動同期) に加え、CampaignForm (A-4) によるユーザー手動
+  // 登録分も含む。ユーザー作成分 (非 master) は本画面から削除できる。
   const campaignPrograms = useMemo(
     () => programs.filter((p) => !!(p.validFrom || p.validTo)),
     [programs],
@@ -249,6 +255,33 @@ export function CampaignsScreen() {
         );
       },
     },
+    {
+      key: "actions",
+      label: "操作",
+      // A-4: ユーザー作成キャンペーン (非 master) のみ削除可。
+      // 公式分は表示のみ (削除は seed 側 tombstone の仕事)
+      view: (p) =>
+        isMasterProgram(p.id) ? (
+          <span className="card-master-badge" title="公式マスター由来">
+            公式
+          </span>
+        ) : (
+          <button
+            className="danger"
+            onClick={async () => {
+              const ok = await dialog.confirm({
+                title: "キャンペーンを削除",
+                message: `「${p.name}」と対象店舗との紐付けを削除します。よろしいですか?`,
+                okText: "削除する",
+                danger: true,
+              });
+              if (ok) removeUserProgram(p.id);
+            }}
+          >
+            削除
+          </button>
+        ),
+    },
   ];
 
   return (
@@ -260,10 +293,13 @@ export function CampaignsScreen() {
         期間外は通常還元 / カードのデフォルトに戻ります。
         <br />
         <small>
-          終了日 = その日の 23:59:59 まで有効。プログラム本体の追加・編集は
-          現在マスターデータ (seed) でのみ管理しています。
+          終了日 = その日の 23:59:59 まで有効。公式分は週次自動同期で更新され、
+          見つけたキャンペーンは下の「手動追加」で自分のデータとして登録できます
+          (自作分のみ削除可)。
         </small>
       </p>
+
+      <CampaignForm />
 
       {/* ─── フィルタータブ ─── */}
       <div className="campaign-tabs">

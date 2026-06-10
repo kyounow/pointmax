@@ -19,6 +19,7 @@ import {
   DEFAULT_SYNC_URL,
   isMasterCard,
   isMasterPaymentApp,
+  isMasterProgram,
   getSeedCard,
   getSeedPaymentApp,
 } from "./seed";
@@ -127,6 +128,17 @@ type Actions = {
     patch: Partial<Omit<LoyaltyRule, "id">>,
   ) => void;
   removeLoyaltyRule: (id: string) => void;
+
+  // ユーザー作成キャンペーン (BenefitProgram + 対象店舗 memberships) の一括追加 / 削除。
+  // 改善計画 A-4: v3 で廃止した手動キャンペーン登録の復活 (CampaignsScreen のフォームから利用)。
+  // 戻り値は生成された program id (UUID)。
+  // removeUserProgram は master 由来 program には no-op (mergeFromSeed で復活するだけのため。
+  // 公式キャンペーンの非表示は seed 側の tombstone = REMOVED_PROGRAM_IDS が担う)。
+  addCampaignProgram: (
+    p: Omit<BenefitProgram, "id">,
+    storeIds: string[],
+  ) => string;
+  removeUserProgram: (id: string) => void;
 
   addPaymentApp: (p: Omit<PaymentApp, "id">) => void;
   updatePaymentApp: (
@@ -337,6 +349,28 @@ export const useStore = create<State & Actions>()(
         set((state) => {
           state.loyaltyRules = state.loyaltyRules.filter((r) => r.id !== id);
         }),
+
+      addCampaignProgram: (p, storeIds) => {
+        const id = newId();
+        set((state) => {
+          state.programs.push({ ...p, id });
+          // 同一 storeId の重複指定は 1 件に畳む (membership は複合キー一意)
+          for (const storeId of new Set(storeIds)) {
+            state.memberships.push({ programId: id, storeId });
+          }
+        });
+        return id;
+      },
+      removeUserProgram: (id) => {
+        // master 由来は削除不可 (UI 側でもボタンを隠すが、ここでも防御)
+        if (isMasterProgram(id)) return;
+        set((state) => {
+          state.programs = state.programs.filter((p) => p.id !== id);
+          state.memberships = state.memberships.filter(
+            (m) => m.programId !== id,
+          );
+        });
+      },
 
       addPaymentApp: (p) =>
         set((state) => {
