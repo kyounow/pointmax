@@ -27,7 +27,18 @@ export type RegistrySource = {
   produces: ProducesKind[];         // このソースから出るエンティティ種別
   extractionScope: ExtractionScope; // 抽出範囲 (店舗数が膨大なソース対策)
   enabled: boolean;                 // 一時的に止めたい時 false
+  crawl?: RegistryCrawl;            // 索引ハブ型ソースの 2 段階クロール (省略時は単発 fetch)
   notes?: string;
+};
+
+// 索引ハブ型ソースの 2 段階クロール設定。
+// mode: "index" — source.url を campaign-index extractor で読んで個別キャンペーン
+// 詳細ページの URL を列挙し、各子 URL を本来の extractor で抽出 → 1 つの
+// ExtractedSource に統合して extracted/<id>.json に書く (後段 propose は従来同形)。
+// maxChildren — 1 run で fetch する子ページ上限 (省略時 5、ハードキャップ 10)。
+export type RegistryCrawl = {
+  mode: "index";
+  maxChildren?: number;
 };
 
 export type RegistryFile = {
@@ -38,7 +49,9 @@ export type RegistryFile = {
   // optional: 未指定でも fetch / propose は動く (ドキュメント用途)。
   // SYNC_HISTORY に「どの extractor が何 version で出力したか」を残すため
   // sync:report が任意で参照する。
-  extractorVersions?: Partial<Record<ExtractorKind, string>>;
+  // campaign-index は crawl: index の 1 段目専用 prompt (ExtractorKind ではない) だが
+  // version 管理は同じ場所で行う。
+  extractorVersions?: Partial<Record<ExtractorKind | "campaign-index", string>>;
 };
 
 export type ExtractorKind =
@@ -230,7 +243,7 @@ export type ExtractedProgram = Evidence & {
   bonusType?: "primary" | "addOn";
   validFrom?: string;       // ISO date (YYYY-MM-DD). 公式明示時のみ。
   validTo?: string;         // ISO date (YYYY-MM-DD). 公式明示時のみ。
-  recurringDays?: number[]; // 曜日限定 (0=日..6=土)
+  recurringDays?: number[]; // 毎月の日にち限定 (1〜31)。domain の ruleActiveAt (now.getDate()) と同義。曜日ではない
   description?: string;
   officialUrl?: string;
   entryUrl?: string;        // エントリー/参加サイト URL (公式情報源 URL とは分離)

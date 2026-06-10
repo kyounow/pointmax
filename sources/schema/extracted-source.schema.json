@@ -294,8 +294,8 @@
           },
           "recurringDays": {
             "type": "array",
-            "items": { "type": "integer", "minimum": 0, "maximum": 6 },
-            "description": "曜日限定 (0=日 .. 6=土)。明示時のみ。"
+            "items": { "type": "integer", "minimum": 1, "maximum": 31 },
+            "description": "毎月の日にち限定 (1=1日 .. 31=31日)。domain の ruleActiveAt (now.getDate()) と同義で、曜日ではない。例: 5のつく日 → [5,15,25]。明示時のみ。"
           },
           "description": { "type": "string" },
           "officialUrl": { "type": "string", "format": "uri" },

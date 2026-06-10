@@ -1,9 +1,9 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-05-31T22:05:07.144Z",
-  "promptVersion": "campaign-vUnknown",
+  "fetchedAt": "2026-06-10T14:06:24.452Z",
+  "promptVersion": "campaign-v3.1",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): 汎thought I have browsed the URL. Now I need to go through the content and apply the extraction rules. **Observations from the browsed content:** * Many campaigns involve \"抽選で\" (by lottery), \"全額還元\" (full cashback - often by lottery), \"最大○○ポイント\" (maximum points - rate unclear), \"山分け\" (share points)"
+  "notes": "[crawl:index] index=https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign 子ページ 2 件 (成功 1 / 失敗 1)\n✓ https://pay.rakuten.co.jp/campaign/pay-5and0day/?scid=wi_cash_cpn (5と0のつく日は楽天ペイ！お支払いが全額還元のチャンス！ 2026/6/1&#65374;2026/8/3 詳細を見る) → 0件\n  notes: 「特典 対象日ごとに抽選で100名さまに、楽天ポイントを対象日のご利用合計金額に対して全額還元」と記載されており、抽選による還元のため抽出対象外と判断しました。\n✗ https://pay.rakuten.co.jp/campaign/tokyo-gogo/?scid=wi_cash_cpn (楽天ペイ主催｜東京ポイントを交換するなら楽天ペイ！東京GOGOキャンペーン！ 2026/6/1&#65374;2026/7/1 詳細を見る) → nonJson\nindex notes: 抽選系、新規/初回利用系、紹介系、アプリ機能系、および楽天ペイメント・楽天Edy以外のサービスへのリンクを除外しました。"
 }

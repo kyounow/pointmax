@@ -77,4 +77,35 @@ describe("registry.yaml 整合性契約", () => {
     expect(jre?.produces).toContain("programs");
     expect(jre?.produces).toContain("memberships");
   });
+
+  // ── crawl: index (A-1 索引ハブ 2 段階クロール) の契約 ──
+  it("crawl 設定は mode=index のみで、campaign extractor のソースに限る", () => {
+    const crawlSources = registry.sources.filter((s) => s.crawl !== undefined);
+    expect(crawlSources.length).toBeGreaterThan(0);
+    for (const s of crawlSources) {
+      expect(s.crawl?.mode).toBe("index");
+      // 現状 index crawl の 2 段目は campaign extractor のみを想定
+      // (他 extractor で使う時はこの契約を緩める)
+      expect(s.extractor).toBe("campaign");
+      if (s.crawl?.maxChildren !== undefined) {
+        expect(s.crawl.maxChildren).toBeGreaterThanOrEqual(1);
+        expect(s.crawl.maxChildren).toBeLessThanOrEqual(10);
+      }
+    }
+  });
+
+  it("crawl: index 用の campaign-index prompt が存在する", () => {
+    expect(
+      existsSync(
+        resolve(REPO_ROOT, "sources/extractors/campaign-index.prompt.md"),
+      ),
+    ).toBe(true);
+  });
+
+  it("索引ハブ既知の 2 source (jre/rakuten-pay) が crawl: index 化されている", () => {
+    for (const id of ["jre-point-campaigns", "rakuten-pay-campaigns"]) {
+      const s = registry.sources.find((x) => x.id === id);
+      expect(s?.crawl?.mode, id).toBe("index");
+    }
+  });
 });

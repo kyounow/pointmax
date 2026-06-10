@@ -57,6 +57,11 @@
 ### マスタ自動アップデート
 - `sources/registry.yaml` に各カード・ポイント・決済アプリの公式 URL を登録。
 - `npm run sync:fetch -- <id>` で Gemini に渡し、構造化 JSON を `sources/extracted/<id>.json` に出力。
+- キャンペーン一覧が**索引ハブ** (実データが個別詳細の子ページ) のソースは
+  registry に `crawl: { mode: index, maxChildren: N }` を設定すると 2 段階クロール:
+  1 段目 (`campaign-index` prompt) で詳細ページ URL を列挙 → 2 段目で各子ページを
+  campaign extractor で抽出 → 1 つの extracted JSON に統合 (後段 propose は従来同形)。
+  子 URL は同一ドメインの http(s) のみ・最大 10 件にガード。
 - `npm run sync:propose` で現在 seed と diff、`autoApplicable`/`needsReview` に分類:
   - confidence ≥ 0.9 / rate 変動 ±10pp 以内 / 倍率 0.5x〜2x / 既存と衝突なし → auto
   - それ以外 (excludedCategory / lowConfidence / referenceChange / unsupportedDateClaim 等) → review
@@ -148,6 +153,7 @@ scripts/sync/
   fetch-source.ts      # 1 ソース取得 (Gemini URL Context Tool + pre-fetch fallback + retry)
   fetch-all.ts         # 週次 cron 用: 全 enabled ソースを順次取得
   fetch-response.ts    # Gemini レスポンス分類 (success/retryable/error)
+  crawl-index.ts       # 索引ハブ型ソースの 2 段階クロール (子 URL 列挙 → 個別抽出 → 統合)
   diff-and-propose.ts  # seed vs extracted の差分 → ProposalReport
   propose-helpers.ts   # propose<Entity> 個別関数群
   apply-proposals.ts   # autoApplicable を seed-additions.ts に書き出し
