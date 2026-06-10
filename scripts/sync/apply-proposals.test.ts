@@ -3,6 +3,7 @@ import {
   bucketProposals,
   buildSeedAdditionsContent,
   emitObjectLiteral,
+  mergeOverrides,
   mergeWithExisting,
 } from "./apply-proposals";
 import type { Proposal } from "./types";
@@ -133,11 +134,14 @@ describe("buildSeedAdditionsContent", () => {
       paymentApps: [],
       programs: [],
       memberships: [],
+      programOverrides: [],
     });
     expect(out).toContain("export const ADDED_STORES: Store[] = [];");
     expect(out).toContain("export const ADDED_PAYMENT_APPS: PaymentApp[] = [];");
     expect(out).toContain("export const ADDED_PROGRAMS: BenefitProgram[] = [];");
     expect(out).toContain("export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [];");
+    expect(out).toContain("export const PROGRAM_OVERRIDES: ProgramOverride[] = [];");
+    expect(out).toContain('import type { ProgramOverride } from "./seed-overrides";');
     expect(out).toContain("AUTO-GENERATED");
   });
 
@@ -149,9 +153,102 @@ describe("buildSeedAdditionsContent", () => {
       paymentApps: [],
       programs: [],
       memberships: [],
+      programOverrides: [{ id: "prog-a", validTo: "2026-07-31" }],
     });
     expect(out).toContain(
       'export const ADDED_STORES: Store[] = [\n  { id: "kura-sushi", name: "くら寿司", category: "飲食" },\n];',
     );
+    expect(out).toContain(
+      'export const PROGRAM_OVERRIDES: ProgramOverride[] = [\n  { id: "prog-a", validTo: "2026-07-31" },\n];',
+    );
+  });
+});
+
+// ─── Phase 4 (B-1): updateField/programs → PROGRAM_OVERRIDES 経路 ───
+
+const mkUpdate = (
+  collection: Proposal["collection"],
+  id: string,
+  field: string,
+  from: unknown,
+  to: unknown,
+): Proposal => ({
+  type: "updateField",
+  collection,
+  id,
+  field,
+  from,
+  to,
+  sourceId: "test",
+  confidence: 0.95,
+  evidence: { evidenceQuote: "x", explicitness: 0.95, ambiguity: 0.05 },
+});
+
+describe("bucketProposals — programOverrides", () => {
+  it("updateField/programs の rate/validFrom/validTo は programOverrides に入る (skip しない)", () => {
+    const ps: Proposal[] = [
+      mkUpdate("programs", "prog-a", "rate", 0.05, 0.07),
+      mkUpdate("programs", "prog-a", "validTo", "2026-06-30", "2026-07-31"),
+      mkUpdate("programs", "prog-b", "validFrom", "2026-06-01", "2026-07-01"),
+    ];
+    const { buckets, skipped } = bucketProposals(ps);
+    expect(buckets.programOverrides).toEqual([
+      { id: "prog-a", rate: 0.07 },
+      { id: "prog-a", validTo: "2026-07-31" },
+      { id: "prog-b", validFrom: "2026-07-01" },
+    ]);
+    expect(skipped).toEqual([]);
+  });
+
+  it("programs 以外の updateField / 対象外フィールドは従来どおり skip", () => {
+    const ps: Proposal[] = [
+      mkUpdate("cards", "c1", "defaultRate", 0.01, 0.02),
+      mkUpdate("programs", "prog-a", "name", "旧名", "新名"),
+    ];
+    const { buckets, skipped } = bucketProposals(ps);
+    expect(buckets.programOverrides).toEqual([]);
+    expect(skipped).toEqual(
+      expect.arrayContaining([
+        { type: "updateField", collection: "cards", count: 1 },
+        { type: "updateField", collection: "programs", count: 1 },
+      ]),
+    );
+  });
+});
+
+describe("mergeOverrides", () => {
+  it("新規 id は追加、同 id はフィールド単位で後勝ちマージ", () => {
+    const { merged, added, updated } = mergeOverrides(
+      [{ id: "prog-a", rate: 0.05 }],
+      [
+        { id: "prog-a", validTo: "2026-07-31" },
+        { id: "prog-b", rate: 0.02 },
+      ],
+    );
+    expect(merged).toEqual([
+      { id: "prog-a", rate: 0.05, validTo: "2026-07-31" },
+      { id: "prog-b", rate: 0.02 },
+    ]);
+    expect(added).toBe(1);
+    expect(updated).toBe(1);
+  });
+
+  it("同 id の同フィールドは新しい値が勝つ (キャンペーン再延長等)", () => {
+    const { merged } = mergeOverrides(
+      [{ id: "prog-a", validTo: "2026-07-31" }],
+      [{ id: "prog-a", validTo: "2026-08-31" }],
+    );
+    expect(merged).toEqual([{ id: "prog-a", validTo: "2026-08-31" }]);
+  });
+
+  it("既存内の同 id 重複も先に畳んでからマージ", () => {
+    const { merged } = mergeOverrides(
+      [
+        { id: "prog-a", rate: 0.05 },
+        { id: "prog-a", validTo: "2026-07-31" },
+      ],
+      [],
+    );
+    expect(merged).toEqual([{ id: "prog-a", rate: 0.05, validTo: "2026-07-31" }]);
   });
 });

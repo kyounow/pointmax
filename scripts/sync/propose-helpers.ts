@@ -520,7 +520,7 @@ export function proposePrograms(
       });
       continue;
     }
-    // 既存 program: rate 変動のみ提案 (proposeLoyaltyRules と同方式の最小経路)
+    // 既存 program: rate 変動を提案 (proposeLoyaltyRules と同方式)
     if (found.rate !== p.rate) {
       result.push(
         buildRateUpdate(
@@ -533,6 +533,29 @@ export function proposePrograms(
           evidence,
         ),
       );
+    }
+    // 期間変更 (B-2): キャンペーン延長 / 期間訂正の検知。
+    // - 抽出側に値がある場合のみ比較 (省略 = 「言及なし」であり削除主張ではない)
+    // - auto はせず必ず needsReview (periodChange)。sync:approve で承認適用できる
+    // - evidence に日付根拠が無ければ unsupportedDateClaim を優先 (hallucination 防御)
+    for (const field of ["validFrom", "validTo"] as const) {
+      const next = p[field];
+      if (next === undefined) continue;
+      if (found[field] === next) continue;
+      result.push({
+        type: "updateField",
+        collection: "programs",
+        id: found.id,
+        field,
+        from: found[field],
+        to: next,
+        sourceId: data.sourceId,
+        confidence,
+        evidence,
+        reviewReason: detectUnsupportedDateClaim(p, evidence.evidenceQuote)
+          ? "unsupportedDateClaim"
+          : "periodChange",
+      } satisfies UpdateFieldProposal);
     }
   }
   return result;
@@ -814,6 +837,16 @@ function parseDateEndMs(s: string | undefined): number | null {
   ).getTime();
 }
 
+function parseDateStartMs(s: string | undefined): number | null {
+  if (!s) return null;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return new Date(
+    Number(m[1]), Number(m[2]) - 1, Number(m[3]),
+    0, 0, 0, 0,
+  ).getTime();
+}
+
 /**
  * 新規 program が campaign auto-merge の安全条件を全て満たすか判定する。
  * 安全条件は 7 つの AND チェック、1 つでも外れたら false (idCollision に降格)。
@@ -832,6 +865,15 @@ export function isCampaignAutoMergeable(
   const validToMs = parseDateEndMs(p.validTo);
   if (validToMs === null) return false;
   if (validToMs <= now.getTime()) return false;
+
+  // 2.5 (B-5) malformed 期間ガード: validFrom がある場合は parse 可能かつ
+  // validTo 以前であること。validFrom > validTo は ruleActiveAt が常に
+  // 非アクティブ判定する死にデータなので auto-merge しない。
+  if (p.validFrom !== undefined) {
+    const validFromMs = parseDateStartMs(p.validFrom);
+    if (validFromMs === null) return false;
+    if (validFromMs > validToMs) return false;
+  }
 
   // 3. rate ∈ (0, CAMPAIGN_AUTO_RATE_MAX]
   if (!Number.isFinite(p.rate)) return false;

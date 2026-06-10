@@ -1,11 +1,13 @@
 // sources/proposed-migrations.json の autoApplicable を実コードに反映する。
 //
-// v1.0 first cut の対応範囲:
-//   - addRecord/stores         → ADDED_STORES に追加
-//   - addRecord/loyaltyRules   → ADDED_LOYALTY_RULES に追加
-//   - addRecord/cards          → ADDED_CARDS に追加
-//   - addRecord/paymentApps    → ADDED_PAYMENT_APPS に追加
-//   - 上記以外 (updateField / referenceChange / delete) は console.warn して skip
+// 対応範囲:
+//   - addRecord/<collection>   → seed-additions.ts の ADDED_* に追加
+//   - updateField/programs (rate / validFrom / validTo)
+//                              → seed-additions.ts の PROGRAM_OVERRIDES に追加
+//                                (手書き seed-data-programs.ts は書き換えず、
+//                                 seed() 合成時に部分上書き。改善計画 B-1/B-2)
+//   - 上記以外 (delete / referenceChange / 他 collection の updateField) は
+//     console.warn して skip (delete は Phase 5 の removals で対応予定)
 //
 // 既存の seed-additions.ts に登録済みの id は重複排除。
 // SEED_VERSION には触れない: 版数は手動リリース粒度。cron は
@@ -23,7 +25,9 @@ import type {
   AddRecordProposal,
   Proposal,
   ProposalReport,
+  UpdateFieldProposal,
 } from "./types";
+import { OVERRIDABLE_PROGRAM_FIELDS } from "./types";
 import {
   ADDED_CARDS,
   ADDED_LOYALTY_RULES,
@@ -31,7 +35,9 @@ import {
   ADDED_PAYMENT_APPS,
   ADDED_PROGRAMS,
   ADDED_STORES,
+  PROGRAM_OVERRIDES,
 } from "../../src/state/seed-additions";
+import type { ProgramOverride } from "../../src/state/seed-overrides";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
@@ -84,6 +90,9 @@ export type Buckets = {
   paymentApps: Record<string, unknown>[];
   programs: Record<string, unknown>[];
   memberships: Record<string, unknown>[];
+  // updateField/programs (rate / validFrom / validTo) 由来の部分上書き。
+  // seed() が合成の最後に適用する (src/state/seed-overrides.ts)。
+  programOverrides: ProgramOverride[];
 };
 
 export function bucketProposals(
@@ -96,10 +105,24 @@ export function bucketProposals(
     paymentApps: [],
     programs: [],
     memberships: [],
+    programOverrides: [],
   };
   const skippedMap = new Map<string, number>();
 
   for (const p of proposals) {
+    // updateField/programs の override 対象フィールドは PROGRAM_OVERRIDES へ
+    if (
+      p.type === "updateField" &&
+      p.collection === "programs" &&
+      OVERRIDABLE_PROGRAM_FIELDS.has((p as UpdateFieldProposal).field)
+    ) {
+      const up = p as UpdateFieldProposal;
+      buckets.programOverrides.push({
+        id: up.id,
+        [up.field]: up.to,
+      } as ProgramOverride);
+      continue;
+    }
     if (p.type !== "addRecord") {
       const key = `${p.type}/${p.collection}`;
       skippedMap.set(key, (skippedMap.get(key) ?? 0) + 1);
@@ -193,6 +216,32 @@ export function mergeMemberships<T extends MembershipLike>(
   return { merged: [...existing, ...newOnes], added, skipped };
 }
 
+// PROGRAM_OVERRIDES のマージ: 同 id はフィールド単位で後勝ち
+// (新しい cron 値が古い override を上書き。別フィールドは共存)。
+export function mergeOverrides(
+  existing: ProgramOverride[],
+  incoming: ProgramOverride[],
+): { merged: ProgramOverride[]; added: number; updated: number } {
+  const byId = new Map<string, ProgramOverride>();
+  for (const o of existing) {
+    const prev = byId.get(o.id);
+    byId.set(o.id, prev ? { ...prev, ...o } : { ...o });
+  }
+  let added = 0;
+  let updated = 0;
+  for (const o of incoming) {
+    const prev = byId.get(o.id);
+    if (prev) {
+      byId.set(o.id, { ...prev, ...o });
+      updated += 1;
+    } else {
+      byId.set(o.id, { ...o });
+      added += 1;
+    }
+  }
+  return { merged: [...byId.values()], added, updated };
+}
+
 // ───────────────────────────────────────────────────────────────
 // TypeScript code emit
 // ───────────────────────────────────────────────────────────────
@@ -241,6 +290,7 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
     "  Store,",
     "  StoreProgramMembership,",
     "} from \"../domain/types\";",
+    "import type { ProgramOverride } from \"./seed-overrides\";",
     "",
     emitArrayConst("ADDED_STORES", "Store", buckets.stores),
     "",
@@ -253,6 +303,12 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
     emitArrayConst("ADDED_PROGRAMS", "BenefitProgram", buckets.programs),
     "",
     emitArrayConst("ADDED_MEMBERSHIPS", "StoreProgramMembership", buckets.memberships),
+    "",
+    emitArrayConst(
+      "PROGRAM_OVERRIDES",
+      "ProgramOverride",
+      buckets.programOverrides as unknown as Record<string, unknown>[],
+    ),
     "",
   ].join("\n");
 }
@@ -279,16 +335,16 @@ function main(): void {
     return;
   }
 
-  // 1. autoApplicable を addRecord ごとに分類
+  // 1. autoApplicable を addRecord / programOverride ごとに分類
   const { buckets, skipped } = bucketProposals(report.autoApplicable);
   if (skipped.length > 0) {
-    console.log("⚠️ 以下は v1.0 first cut では未対応のため skip:");
+    console.log("⚠️ 以下は実書き込み経路が無いため skip (delete は Phase 5 で対応予定):");
     for (const s of skipped) {
       console.log(`     ${s.type}/${s.collection}: ${s.count} 件`);
     }
   }
 
-  // 2. 既存 seed-additions.ts とマージ (id 重複は skip)
+  // 2. 既存 seed-additions.ts とマージ (id 重複は skip / override は後勝ち)
   const merge = {
     stores: mergeWithExisting(ADDED_STORES, buckets.stores),
     loyaltyRules: mergeWithExisting(ADDED_LOYALTY_RULES, buckets.loyaltyRules),
@@ -297,6 +353,7 @@ function main(): void {
     programs: mergeWithExisting(ADDED_PROGRAMS, buckets.programs),
     memberships: mergeMemberships(ADDED_MEMBERSHIPS, buckets.memberships),
   };
+  const overrideMerge = mergeOverrides(PROGRAM_OVERRIDES, buckets.programOverrides);
   console.log("📋 merge result (existing + new, deduped by id):");
   console.log(
     `     stores:        +${merge.stores.added} (skipped ${merge.stores.skipped}) → total ${merge.stores.merged.length}`,
@@ -316,6 +373,9 @@ function main(): void {
   console.log(
     `     memberships:   +${merge.memberships.added} (skipped ${merge.memberships.skipped}) → total ${merge.memberships.merged.length}`,
   );
+  console.log(
+    `     overrides:     +${overrideMerge.added} (updated ${overrideMerge.updated}) → total ${overrideMerge.merged.length}`,
+  );
 
   // 3. seed-additions.ts のコンテンツを構築
   const mergedBuckets: Buckets = {
@@ -325,6 +385,7 @@ function main(): void {
     paymentApps: merge.paymentApps.merged as Record<string, unknown>[],
     programs: merge.programs.merged as Record<string, unknown>[],
     memberships: merge.memberships.merged as Record<string, unknown>[],
+    programOverrides: overrideMerge.merged,
   };
   const newContent = buildSeedAdditionsContent(mergedBuckets);
 

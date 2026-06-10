@@ -59,6 +59,43 @@ const rateUpdate: Proposal = {
   reviewReason: "rateDeltaTooLarge",
 };
 
+const periodUpdate: Proposal = {
+  type: "updateField",
+  collection: "programs",
+  id: "prog-dcard-bic",
+  field: "validTo",
+  from: "2026-06-30",
+  to: "2026-07-31",
+  sourceId: "d-pay-campaigns",
+  confidence: 0.95,
+  evidence,
+  reviewReason: "periodChange",
+};
+
+// 実書き込み経路の無い type/field (Phase 4 時点で未対応のもの)
+const cardUpdate: Proposal = {
+  type: "updateField",
+  collection: "cards",
+  id: "rakuten-card",
+  field: "defaultRate",
+  from: 0.01,
+  to: 0.02,
+  sourceId: "rakuten-card-page",
+  confidence: 0.95,
+  evidence,
+  reviewReason: "rateDeltaTooLarge",
+};
+
+const deleteProposal: Proposal = {
+  type: "delete",
+  collection: "programs",
+  id: "prog-old-campaign",
+  sourceId: "expired-cleanup",
+  confidence: 1.0,
+  evidence,
+  reviewReason: "expiredCampaign",
+};
+
 const baseReport = (needsReview: Proposal[]): ProposalReport => ({
   generatedAt: "2026-06-10T00:00:00.000Z",
   fromSeedVersion: 41,
@@ -122,7 +159,14 @@ describe("computeProposalId", () => {
 // ───────────────────────────────────────────────────────────────
 
 describe("selectProposalsByIds", () => {
-  const report = baseReport([storeAdd, programAdd, rateUpdate]);
+  const report = baseReport([
+    storeAdd,
+    programAdd,
+    rateUpdate,
+    periodUpdate,
+    cardUpdate,
+    deleteProposal,
+  ]);
 
   it("ID で needsReview から addRecord を選択する", () => {
     const sel = selectProposalsByIds(report, [computeProposalId(programAdd)]);
@@ -138,11 +182,22 @@ describe("selectProposalsByIds", () => {
     expect(sel.missing).toEqual(["pro-ffffffffff"]);
   });
 
-  it("addRecord 以外は unsupported に入る", () => {
-    const sel = selectProposalsByIds(report, [computeProposalId(rateUpdate)]);
+  it("updateField/programs の rate / validTo は承認可能 (Phase 4 override layer)", () => {
+    const sel = selectProposalsByIds(report, [
+      computeProposalId(rateUpdate),
+      computeProposalId(periodUpdate),
+    ]);
+    expect(sel.found).toHaveLength(2);
+    expect(sel.unsupported).toEqual([]);
+  });
+
+  it("実書き込み経路の無い type/field (updateField/cards, delete) は unsupported に入る", () => {
+    const sel = selectProposalsByIds(report, [
+      computeProposalId(cardUpdate),
+      computeProposalId(deleteProposal),
+    ]);
     expect(sel.found).toEqual([]);
-    expect(sel.unsupported).toHaveLength(1);
-    expect(sel.unsupported[0].type).toBe("updateField");
+    expect(sel.unsupported).toHaveLength(2);
   });
 
   it("同一 ID の重複指定は 1 件として扱う", () => {
@@ -201,9 +256,16 @@ describe("formatListLine", () => {
     expect(line).toContain("paypay-campaigns");
   });
 
-  it("updateField は id.field と未対応マーク ✋ を含む", () => {
+  it("承認可能な updateField/programs に ✋ は付かない", () => {
     const line = formatListLine(rateUpdate);
-    expect(line).toContain("✋");
+    expect(line).not.toContain("✋");
     expect(line).toContain("prog-dcard-bic.rate");
+  });
+
+  it("未対応の type/field (updateField/cards, delete) は ✋ を含む", () => {
+    expect(formatListLine(cardUpdate)).toContain("✋");
+    expect(formatListLine(cardUpdate)).toContain("rakuten-card.defaultRate");
+    expect(formatListLine(deleteProposal)).toContain("✋");
+    expect(formatListLine(deleteProposal)).toContain("prog-old-campaign");
   });
 });
