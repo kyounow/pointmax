@@ -459,3 +459,52 @@ sources:
         - https://www.aeon.co.jp/efv/wcc/dento.html (詳細頁、未検証)
       ★ enabled:false で温存中。seed 追加要件は seven-card-plus と同様。
       撤退条件 (Plan より): 抽出歩留まり < 50% なら見送り、SESSION_LOG に「source 不在で再凍結」記録。
+
+  - id: merpay-news-campaigns
+    label: メルペイ ニュース/キャンペーン一覧 (公式)
+    url: https://jp.merpay.com/news/
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: false
+    crawl:
+      mode: index
+      maxChildren: 5
+    notes: |
+      ★ 2026-06-11 追加 (改善計画 A-2 キャンペーンソース拡充、enabled:false)。
+      メルペイのニュース一覧 (キャンペーン告知が news 記事として掲載される構造)。
+      paymentAppId=pa-merpay (seed では enabled:false のためユーザーが「使う」ON に
+      するまで Calculator には出ない = 取込先行は安全)。還元通貨 mercari-pt。
+      索引ハブ構造のため crawl: index を設定 — 1 段目で news 記事 URL を列挙、
+      2 段目で campaign extractor が「店舗×率×期間」が揃う記事だけ抽出
+      (CM 出演/コラボ等の PR 記事は extractor が 0 件で弾く想定)。
+      ★ 事前検証 (2026-06-11 probe): https://jp.merpay.com/news/ は 200。
+      記事例: 20260512_merpay 等。/campaign/ /event/ 直下パスは 404。
+      有効化手順: 手動 `npm run sync:fetch -- merpay-news-campaigns` で
+      子ページ選択と抽出品質を確認 → enabled:true 化。
+
+  - id: aupay-ponta-up
+    label: au PAY Pontaポイントアップ (公式 LP)
+    url: https://wallet.auone.jp/contents/lp/pontaup/index.html
+    extractor: ongoing-program
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: false
+    notes: |
+      ★ 2026-06-11 追加 (改善計画 A-2、enabled:false)。
+      au PAY の Ponta ポイントアップ常設施策 LP (wallet.auone.jp トップから動線あり)。
+      paymentAppId 候補=pa-au-pay (seed では enabled:false)、還元通貨 ponta。
+      ★ 事前検証 (2026-06-11 probe): wallet.auone.jp ルートは 200、本 LP は
+      未 fetch (ルートの href から発見)。なお旧候補は全滅:
+        - aupay.au.com → DNS 解決不可 (ドメイン自体が存在しない)
+        - wallet.auone.jp/contents/sp/cp/index.html → ソフト 404 (IBS0404)
+        - www.au.com/payment/aupay/campaign/ → 404
+      有効化手順: 手動 fetch で LP の内容 (店舗別ポイントアップが載っているか) を
+      確認 → 常設なら ongoing-program のまま、期間限定一覧なら extractor を
+      campaign + crawl: index に切替えて enabled:true 化。
