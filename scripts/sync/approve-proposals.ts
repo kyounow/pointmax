@@ -18,7 +18,9 @@
 //   - addRecord 全般 (ADDED_* へ)
 //   - updateField/programs の rate / validFrom / validTo (PROGRAM_OVERRIDES へ。
 //     キャンペーンの率改定・期間延長の承認経路、Phase 4 override layer)
-// delete の承認適用は removals (Phase 5) で対応予定。
+//   - delete/programs (REMOVED_PROGRAM_IDS = tombstone へ。期限切れキャンペーン
+//     削除の承認経路、Phase 5。seed() が cascade 除外、mergeSeed が既存ユーザー
+//     からも除去。手書き seed ファイルの物理削除は不要)
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -30,7 +32,9 @@ import {
   buildSeedAdditionsContent,
   mergeMemberships,
   mergeOverrides,
+  mergeRemovals,
   mergeWithExisting,
+  pruneRemovedFromBuckets,
   type Buckets,
 } from "./apply-proposals";
 import { buildReviewQueue } from "./report";
@@ -42,6 +46,7 @@ import {
   ADDED_PROGRAMS,
   ADDED_STORES,
   PROGRAM_OVERRIDES,
+  REMOVED_PROGRAM_IDS,
 } from "../../src/state/seed-additions";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -90,8 +95,8 @@ function printUsage(): void {
       "  npm run sync:approve -- <ID> --dry-run         書き込まずに内容確認",
       "",
       "ID は REVIEW_QUEUE.md の各項目見出し先頭 (例: pro-1a2b3c4d5e) か --list で確認。",
-      "対応 type: addRecord 全般 + updateField/programs の rate/validFrom/validTo。",
-      "delete の承認適用は Phase 5 (removals) で対応予定。",
+      "対応 type: addRecord 全般 + updateField/programs (rate/validFrom/validTo)",
+      "         + delete/programs (期限切れキャンペーン削除 = tombstone)。",
     ].join("\n"),
   );
 }
@@ -242,15 +247,12 @@ function main(): void {
   if (sel.unsupported.length > 0) {
     console.error(
       "💥 以下は sync:approve 未対応の type/field です " +
-        "(対応: addRecord 全般 + updateField/programs の rate/validFrom/validTo):",
+        "(対応: addRecord 全般 / updateField/programs の rate/validFrom/validTo / delete/programs):",
     );
     for (const p of sel.unsupported) {
       console.error(`   ${proposalIdOf(p)}  ${p.type}/${p.collection}`);
     }
-    console.error(
-      "   delete (期限切れ削除) は Phase 5 で対応予定。" +
-        "それまでは手動で seed ファイルを編集してください。",
-    );
+    console.error("   未対応分は手動で seed ファイルを編集してください。");
     process.exit(1);
   }
   if (sel.found.length === 0) {
@@ -280,6 +282,7 @@ function main(): void {
     memberships: mergeMemberships(ADDED_MEMBERSHIPS, buckets.memberships),
   };
   const overrideMerge = mergeOverrides(PROGRAM_OVERRIDES, buckets.programOverrides);
+  const removalMerge = mergeRemovals(REMOVED_PROGRAM_IDS, buckets.removedProgramIds);
   const added = Object.entries(merge)
     .map(([k, v]) => [k, v.added] as const)
     .filter(([, n]) => n > 0)
@@ -289,9 +292,11 @@ function main(): void {
     overrideMerge.added + overrideMerge.updated > 0
       ? `, overrides +${overrideMerge.added}/upd ${overrideMerge.updated}`
       : "";
+  const removalStr =
+    removalMerge.added > 0 ? `, removals +${removalMerge.added}` : "";
   const skipped = Object.values(merge).reduce((s, v) => s + v.skipped, 0);
   console.log(
-    `📋 seed-additions 反映: ${added || "なし"}${overrideStr}${skipped > 0 ? ` (既存重複 skip ${skipped})` : ""}`,
+    `📋 seed-additions 反映: ${added || "なし"}${overrideStr}${removalStr}${skipped > 0 ? ` (既存重複 skip ${skipped})` : ""}`,
   );
 
   if (args.dryRun) {
@@ -299,7 +304,7 @@ function main(): void {
     return;
   }
 
-  const mergedBuckets: Buckets = {
+  const mergedBuckets: Buckets = pruneRemovedFromBuckets({
     stores: merge.stores.merged as Record<string, unknown>[],
     loyaltyRules: merge.loyaltyRules.merged as Record<string, unknown>[],
     cards: merge.cards.merged as Record<string, unknown>[],
@@ -307,7 +312,8 @@ function main(): void {
     programs: merge.programs.merged as Record<string, unknown>[],
     memberships: merge.memberships.merged as Record<string, unknown>[],
     programOverrides: overrideMerge.merged,
-  };
+    removedProgramIds: removalMerge.merged,
+  });
   writeFileSync(SEED_ADDITIONS_PATH, buildSeedAdditionsContent(mergedBuckets));
   console.log(`✓ wrote ${SEED_ADDITIONS_PATH}`);
 

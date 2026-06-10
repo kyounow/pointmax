@@ -452,8 +452,9 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "全件無視も OK (リストとしての参照のみ)。",
   expiredCampaign:
     "validTo が 30 日以上前に終了した campaign。Calculator では isRuleActiveAt() で自動 skip されているため機能的影響なし、" +
-    "seed のサイズ/可読性のために削除を提案。承認する場合は seed-data-programs.ts (or seed-additions.ts) から該当 program と関連 memberships を手動削除して PR。" +
-    "翌年同条件で再開する季節 campaign の場合は削除せず validTo を更新で対応。",
+    "seed のサイズ/可読性のために削除を提案。承認する場合は `npm run sync:approve -- <ID>` — tombstone (REMOVED_PROGRAM_IDS) 化され、" +
+    "seed から program + 関連 memberships が cascade 除外、既存ユーザーの端末からも次回更新で除去される (手動の seed ファイル編集は不要)。" +
+    "翌年同条件で再開する季節 campaign の場合は削除せず validTo の periodChange (延長) で対応。",
   periodChange:
     "既存 program の validFrom/validTo が公式ページの記載と異なる (キャンペーン延長 / 期間訂正)。" +
     "evidenceQuote の期間根拠を確認し、正しければ sync:approve で承認 → PROGRAM_OVERRIDES 経由で seed に反映される。" +

@@ -55,7 +55,11 @@ export function UpdateBanner() {
     (p) => p.status === "applicable",
   ).length;
   const conflicts = conflictItems(plan);
-  const totalChanges = additionCount + autoApplyCount;
+  // Phase 5: 公式 program の内容更新伝播 / tombstone 削除も適用件数に含める
+  const seedUpdatedCount = merged?.updatedPrograms.length ?? 0;
+  const seedRemovedCount = merged?.removedPrograms.length ?? 0;
+  const totalChanges =
+    additionCount + autoApplyCount + seedUpdatedCount + seedRemovedCount;
 
   if (!hasData) return null;
   if (lastSeedVersion >= SEED_VERSION) return null;
@@ -106,7 +110,9 @@ export function UpdateBanner() {
           <strong>サンプルデータの新バージョン v{SEED_VERSION}</strong>
           <br />
           <small>
-            自動適用: {totalChanges}件 (追加{additionCount} / 更新{autoApplyCount})
+            自動適用: {totalChanges}件 (追加{additionCount} / 更新
+            {autoApplyCount + seedUpdatedCount}
+            {seedRemovedCount > 0 && <> / 削除{seedRemovedCount}</>})
             {conflicts.length > 0 && (
               <>
                 {" / "}
@@ -170,6 +176,23 @@ export function UpdateBanner() {
                 {merged.diff.paymentApps.length > 0 && (
                   <li>支払方法: {merged.diff.paymentApps.length}件</li>
                 )}
+              </ul>
+            </div>
+          )}
+          {merged && (seedUpdatedCount > 0 || seedRemovedCount > 0) && (
+            <div className="update-detail-section">
+              <h4>
+                特典・キャンペーンの内容更新
+                {seedRemovedCount > 0 && "・終了削除"}（
+                {seedUpdatedCount + seedRemovedCount} 件）
+              </h4>
+              <ul className="diff-counts">
+                {merged.updatedPrograms.map((p) => (
+                  <li key={`u-${p.id}`}>更新: {p.name}</li>
+                ))}
+                {merged.removedPrograms.map((p) => (
+                  <li key={`d-${p.id}`}>削除: {p.name}</li>
+                ))}
               </ul>
             </div>
           )}

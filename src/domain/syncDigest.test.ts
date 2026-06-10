@@ -95,3 +95,55 @@ describe("buildSyncGroups", () => {
     expect(groups[0].items[0]).toBe("楽天Pay 5%還元 (5.0%)");
   });
 });
+
+// ─── Phase 5: 更新/削除の extras ───
+
+describe("syncDigest extras (Phase 5)", () => {
+  const updated = {
+    id: "prog-a",
+    name: "Aキャンペーン",
+    rate: 0.05,
+    currencyId: "d-pt",
+    validTo: "2026-07-31",
+  };
+  const removed = {
+    id: "prog-old",
+    name: "終了キャンペーン",
+    rate: 0.03,
+    currencyId: "d-pt",
+  };
+
+  it("追加 0 件でも更新/削除があれば非空 digest (通知される)", () => {
+    expect(
+      syncDigest(emptyDiff(), { updatedPrograms: [updated] }),
+    ).not.toBe("");
+    expect(
+      syncDigest(emptyDiff(), { removedPrograms: [removed] }),
+    ).not.toBe("");
+  });
+
+  it("同じ campaign の再延長 (validTo 変化) は別 digest (再通知される)", () => {
+    const d1 = syncDigest(emptyDiff(), { updatedPrograms: [updated] });
+    const d2 = syncDigest(emptyDiff(), {
+      updatedPrograms: [{ ...updated, validTo: "2026-08-31" }],
+    });
+    expect(d1).not.toBe(d2);
+  });
+
+  it("buildSyncGroups が更新/削除グループを生成する", () => {
+    const groups = buildSyncGroups(
+      emptyDiff(),
+      { store: (s) => s, program: (p) => p },
+      { updatedPrograms: [updated], removedPrograms: [removed] },
+    );
+    const labels = groups.map((g) => g.label);
+    expect(labels).toContain("内容更新 (還元率・期間)");
+    expect(labels).toContain("終了・削除");
+    expect(groups.find((g) => g.label === "内容更新 (還元率・期間)")?.items[0]).toBe(
+      "Aキャンペーン (5.0%、〜2026-07-31)",
+    );
+    expect(groups.find((g) => g.label === "終了・削除")?.items[0]).toBe(
+      "終了キャンペーン",
+    );
+  });
+});
