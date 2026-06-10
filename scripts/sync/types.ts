@@ -245,6 +245,7 @@ export type ExtractedProgram = Evidence & {
   validFrom?: string;       // ISO date (YYYY-MM-DD). 公式明示時のみ。
   validTo?: string;         // ISO date (YYYY-MM-DD). 公式明示時のみ。
   recurringDays?: number[]; // 毎月の日にち限定 (1〜31)。domain の ruleActiveAt (now.getDate()) と同義。曜日ではない
+  recurringWeekdays?: number[]; // 曜日限定 (0=日..6=土)。domain の ruleActiveAt (now.getDay()) と同義 (C-6)
   description?: string;
   officialUrl?: string;
   entryUrl?: string;        // エントリー/参加サイト URL (公式情報源 URL とは分離)

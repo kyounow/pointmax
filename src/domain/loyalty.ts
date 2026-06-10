@@ -120,6 +120,7 @@ export function bestLoyalties(
         validFrom: p.validFrom,
         validTo: p.validTo,
         recurringDays: p.recurringDays,
+        recurringWeekdays: p.recurringWeekdays,
         notes: p.notes,
       });
     }

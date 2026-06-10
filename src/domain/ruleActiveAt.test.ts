@@ -3,7 +3,95 @@ import {
   isRuleActiveAt,
   daysUntilValidTo,
   classifyCampaignStatus,
+  formatRulePeriod,
 } from "./ruleActiveAt";
+
+// ───────────────────────────────────────────────────────────────
+// recurringWeekdays (C-6 曜日限定)
+// ───────────────────────────────────────────────────────────────
+
+describe("recurringWeekdays (C-6 曜日限定)", () => {
+  const sunday = new Date("2026-06-14T12:00:00");
+  const monday = new Date("2026-06-15T12:00:00");
+
+  it("テスト前提: 2026-06-14 は日曜 / 06-15 は月曜", () => {
+    expect(sunday.getDay()).toBe(0);
+    expect(monday.getDay()).toBe(1);
+  });
+
+  it("曜日一致で active、不一致で inactive", () => {
+    expect(isRuleActiveAt({ recurringWeekdays: [0] }, sunday)).toBe(true);
+    expect(isRuleActiveAt({ recurringWeekdays: [0] }, monday)).toBe(false);
+    expect(isRuleActiveAt({ recurringWeekdays: [0, 6] }, monday)).toBe(false);
+    expect(isRuleActiveAt({ recurringWeekdays: [0, 1] }, monday)).toBe(true);
+  });
+
+  it("validFrom/validTo と AND 結合 (期間外なら曜日一致でも inactive)", () => {
+    expect(
+      isRuleActiveAt(
+        { validFrom: "2026-07-01", recurringWeekdays: [0] },
+        sunday,
+      ),
+    ).toBe(false);
+    expect(
+      isRuleActiveAt(
+        {
+          validFrom: "2026-06-01",
+          validTo: "2026-06-30",
+          recurringWeekdays: [0],
+        },
+        sunday,
+      ),
+    ).toBe(true);
+  });
+
+  it("recurringDays とも AND 結合 (日にちと曜日の両方一致が必要)", () => {
+    // 6/14 = 日曜かつ 14 日
+    expect(
+      isRuleActiveAt({ recurringDays: [14], recurringWeekdays: [0] }, sunday),
+    ).toBe(true);
+    expect(
+      isRuleActiveAt({ recurringDays: [15], recurringWeekdays: [0] }, sunday),
+    ).toBe(false);
+  });
+
+  it("空配列は制限なし扱い (既存 recurringDays と同セマンティクス)", () => {
+    expect(isRuleActiveAt({ recurringWeekdays: [] }, monday)).toBe(true);
+  });
+
+  it("classifyCampaignStatus は曜日の影響を受けない (期間そのものの状態を表す)", () => {
+    expect(
+      classifyCampaignStatus(
+        { validFrom: "2026-06-01", validTo: "2026-06-30" },
+        monday,
+      ),
+    ).toBe("active");
+  });
+});
+
+describe("formatRulePeriod", () => {
+  it("recurringWeekdays は「毎週 X 曜」表示", () => {
+    expect(formatRulePeriod({ recurringWeekdays: [0] })).toBe("毎週 日 曜");
+    expect(formatRulePeriod({ recurringWeekdays: [0, 6] })).toBe(
+      "毎週 日/土 曜",
+    );
+  });
+
+  it("期間 + 日にち + 曜日を併記する", () => {
+    expect(
+      formatRulePeriod({
+        validFrom: "2026-06-01",
+        validTo: "2026-06-30",
+        recurringDays: [5, 15],
+        recurringWeekdays: [0],
+      }),
+    ).toBe("2026-06-01〜 〜2026-06-30 毎月 5/15 日 毎週 日 曜");
+  });
+
+  it("範囲外の曜日値は無視され、有効値が無ければ表示しない", () => {
+    expect(formatRulePeriod({ recurringWeekdays: [7, -1] })).toBe("常時");
+  });
+});
 
 // ───────────────────────────────────────────────────────────────
 // classifyCampaignStatus (C-1: isRuleActiveAt と同じローカルタイム境界)

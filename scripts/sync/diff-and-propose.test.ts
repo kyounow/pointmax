@@ -671,6 +671,30 @@ describe("proposePrograms (PR-D1)", () => {
     expect(record.officialUrl).toBe("https://example.com/about");
   });
 
+  it("recurringWeekdays は addRecord の record に伝播する (C-6 曜日キャンペーン)", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-sunday-camp",
+          name: "毎週日曜 +3%",
+          paymentAppId: "pa-d-pay",
+          rate: 0.03,
+          currencyId: "d-pt",
+          validFrom: "2026-06-01",
+          recurringWeekdays: [0],
+          evidenceQuote: "2026年6月1日から、期間中の毎週日曜は対象店で+3%",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.recurringWeekdays).toEqual([0]);
+  });
+
   it("既存 program の rate 変動は updateField", () => {
     const seed: SeedShape = {
       ...emptySeed,

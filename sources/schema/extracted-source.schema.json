@@ -297,6 +297,11 @@
             "items": { "type": "integer", "minimum": 1, "maximum": 31 },
             "description": "毎月の日にち限定 (1=1日 .. 31=31日)。domain の ruleActiveAt (now.getDate()) と同義で、曜日ではない。例: 5のつく日 → [5,15,25]。明示時のみ。"
           },
+          "recurringWeekdays": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0, "maximum": 6 },
+            "description": "曜日限定 (0=日曜 .. 6=土曜)。例: 毎週日曜 → [0]。日にち限定 (recurringDays) とは別フィールド。明示時のみ。"
+          },
           "description": { "type": "string" },
           "officialUrl": { "type": "string", "format": "uri" },
           "entryUrl": { "type": "string", "format": "uri", "description": "エントリー / 参加サイト URL。officialUrl が制度解説ページ、entryUrl はユーザーが踏む先 (例: キャンペーン参加ページ、提携店検索トップ)。" },
