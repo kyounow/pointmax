@@ -1768,6 +1768,30 @@ details summary {
   color: #fff;
 }
 
+/* === 残日数チップ (CampaignsScreen 終了日列、C-5) ===
+   campaign-badge スコープ外の単独利用版。色は days-remaining と同系統 */
+.rule-days-left {
+  display: inline-block;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(120, 120, 130, 0.18);
+}
+.rule-days-left.warning {
+  background: rgba(255, 200, 0, 0.35);
+}
+.rule-days-left.urgent {
+  background: rgba(255, 100, 100, 0.4);
+  color: #fff;
+}
+
+/* まもなく終了インジケータ (CalcTodayBanner、C-5) */
+.today-banner-ending-soon {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
 /* === Note chips (CalculatorScreen result rule) === */
 .note-chips {
   display: inline-flex;

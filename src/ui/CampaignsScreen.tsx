@@ -6,12 +6,34 @@ import {
   isRuleActiveAt,
   formatRulePeriod,
   classifyCampaignStatus,
+  daysUntilValidTo,
   type CampaignStatus,
 } from "../domain/ruleActiveAt";
 import type { BenefitProgram } from "../domain/types";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import { useNameResolvers } from "./hooks/useNameResolvers";
+import { useToday } from "./hooks/useToday";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
+
+// 終了日セル: 日付 + 終了間近カウントダウン (C-5)。
+// あと 7 日以内は warning、3 日以内は urgent (RuleStatusBadge と同じ閾値)。
+function validToWithCountdown(validTo: string | undefined, today: Date) {
+  if (!validTo) return "-";
+  const days = daysUntilValidTo(validTo, today);
+  if (days === null || days < 0) return validTo; // 期限切れ/不正は日付のみ
+  const cls = days <= 3 ? "urgent" : days <= 7 ? "warning" : "";
+  return (
+    <span>
+      {validTo}{" "}
+      <span
+        className={`rule-days-left ${cls}`}
+        title={days === 0 ? "今日 23:59:59 まで" : `あと ${days} 日で終了`}
+      >
+        {days === 0 ? "本日まで" : `あと${days}日`}
+      </span>
+    </span>
+  );
+}
 
 function statusBadge(s: CampaignStatus) {
   switch (s) {
@@ -62,6 +84,9 @@ export function CampaignsScreen() {
   );
 
   const [activeTab, setActiveTab] = useState<TabKey>("all");
+  // 同じ暦日の間は参照固定、日付が変わると自動更新 (C-2)。
+  // 分類・カウントダウン・isRuleActiveAt の基準時刻を画面全体で統一する。
+  const today = useToday();
 
   const cardName = (id: string) => {
     const c = cards.find((c) => c.id === id);
@@ -84,20 +109,33 @@ export function CampaignsScreen() {
   );
 
   // ─── タブ別フィルター (programs) ───
-  const filteredPrograms = useMemo(
-    () =>
+  // 「期限あり」タブは終了が近い順にソート (C-5: 使い逃し防止)。
+  // 他タブは従来どおり登録順。
+  const filteredPrograms = useMemo(() => {
+    const base =
       activeTab === "all"
         ? campaignPrograms
         : campaignPrograms.filter(
-            (p) => classifyCampaignStatus(p) === activeTab,
-          ),
-    [campaignPrograms, activeTab],
-  );
+            (p) => classifyCampaignStatus(p, today) === activeTab,
+          );
+    if (activeTab !== "active") return base;
+    return [...base].sort((a, b) => {
+      const da = daysUntilValidTo(a.validTo, today);
+      const db = daysUntilValidTo(b.validTo, today);
+      // validTo なし (null) は末尾
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db;
+    });
+  }, [campaignPrograms, activeTab, today]);
 
   // ─── タブごとの件数 ───
   const tabCounts = useMemo(() => {
     const count = (key: CampaignStatus) =>
-      campaignPrograms.filter((r) => classifyCampaignStatus(r) === key).length;
+      campaignPrograms.filter(
+        (r) => classifyCampaignStatus(r, today) === key,
+      ).length;
     return {
       all: campaignPrograms.length,
       active: count("active"),
@@ -105,14 +143,14 @@ export function CampaignsScreen() {
       expired: count("expired"),
       future: count("future"),
     };
-  }, [campaignPrograms]);
+  }, [campaignPrograms, today]);
 
   // ─── 列定義: BenefitProgram ───
   const programColumns: ColumnDef<BenefitProgram>[] = [
     {
       key: "status",
       label: "状態",
-      view: (p) => statusBadge(classifyCampaignStatus(p)),
+      view: (p) => statusBadge(classifyCampaignStatus(p, today)),
     },
     {
       key: "name",
@@ -153,13 +191,13 @@ export function CampaignsScreen() {
     {
       key: "validTo",
       label: "終了日",
-      view: (p) => p.validTo ?? "-",
+      view: (p) => validToWithCountdown(p.validTo, today),
     },
     {
       key: "period",
       label: "期間",
       view: (p) => {
-        const active = isRuleActiveAt(p);
+        const active = isRuleActiveAt(p, today);
         return (
           <span title={active ? "今日有効" : "今日は対象外"}>
             {active ? "✓ " : "○ "}
@@ -190,8 +228,26 @@ export function CampaignsScreen() {
     },
     {
       key: "notes",
-      label: "メモ",
-      view: (p) => sanitizeNoteForDisplay(p.notes) ?? "-",
+      label: "条件・メモ",
+      // C-7: conditions (適用条件、これまで未表示) を notes と併記
+      view: (p) => {
+        const cleaned = sanitizeNoteForDisplay(p.notes);
+        if (!p.conditions && !cleaned) return "-";
+        return (
+          <span>
+            {p.conditions && (
+              <span
+                style={{ color: "#b45309" }}
+                title="このプログラムの適用条件"
+              >
+                ⚠ {p.conditions}
+              </span>
+            )}
+            {p.conditions && cleaned && <br />}
+            {cleaned}
+          </span>
+        );
+      },
     },
   ];
 
