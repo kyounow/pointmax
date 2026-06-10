@@ -24,7 +24,7 @@ import type {
   SyncHistorySourceCount,
   UpdateFieldProposal,
 } from "./types";
-import { SYNC_HISTORY_MAX_ENTRIES } from "./types";
+import { SYNC_HISTORY_MAX_ENTRIES, computeProposalId } from "./types";
 import { seed } from "../../src/state/seed";
 
 // ───────────────────────────────────────────────────────────────
@@ -453,11 +453,13 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
 
 function formatProposalDetail(p: Proposal): string {
   const lines: string[] = [];
+  // 旧 run の proposed-migrations.json (proposalId 未付与) でも表示できるよう fallback
+  const pid = p.proposalId ?? computeProposalId(p);
 
   if (p.type === "addRecord") {
     const ap = p as AddRecordProposal;
     const rec = ap.record;
-    lines.push(`#### \`${p.type}/${p.collection}\` from \`${p.sourceId}\``);
+    lines.push(`#### \`${pid}\` — \`${p.type}/${p.collection}\` from \`${p.sourceId}\``);
     // Show key record fields
     const recStr = Object.entries(rec)
       .filter(([k]) => k !== "notes")
@@ -475,14 +477,14 @@ function formatProposalDetail(p: Proposal): string {
       typeof up.to === "number"
         ? `${(up.to * 100).toFixed(3)}%`
         : JSON.stringify(up.to);
-    lines.push(`#### \`${p.type}/${p.collection}\` \`${up.id}\` from \`${p.sourceId}\``);
+    lines.push(`#### \`${pid}\` — \`${p.type}/${p.collection}\` \`${up.id}\` from \`${p.sourceId}\``);
     lines.push(`- フィールド: \`${up.field}\``);
     lines.push(`- 変更: \`${fromStr}\` → \`${toStr}\``);
   } else if (p.type === "delete") {
-    lines.push(`#### \`${p.type}/${p.collection}\` \`${(p as { id: string }).id}\` from \`${p.sourceId}\``);
+    lines.push(`#### \`${pid}\` — \`${p.type}/${p.collection}\` \`${(p as { id: string }).id}\` from \`${p.sourceId}\``);
   } else if (p.type === "referenceChange") {
     const rp = p as { type: string; collection: string; id: string; field: string; from: unknown; to: unknown; sourceId: string };
-    lines.push(`#### \`${p.type}/${p.collection}\` \`${rp.id}\` from \`${p.sourceId}\``);
+    lines.push(`#### \`${pid}\` — \`${p.type}/${p.collection}\` \`${rp.id}\` from \`${p.sourceId}\``);
     lines.push(`- フィールド: \`${rp.field}\``);
     lines.push(`- 変更: \`${JSON.stringify(rp.from)}\` → \`${JSON.stringify(rp.to)}\``);
   }
@@ -491,7 +493,15 @@ function formatProposalDetail(p: Proposal): string {
   if (p.evidence?.evidenceQuote) {
     lines.push(`- 評価: \`evidenceQuote="${p.evidence.evidenceQuote.slice(0, 120)}"\``);
   }
-  lines.push(`- 対応案: 手動で seed ファイルに反映するか、不要なら無視`);
+  if (p.type === "addRecord") {
+    lines.push(
+      `- 対応案: 取り込むなら \`npm run sync:approve -- ${pid}\`、不要なら無視`,
+    );
+  } else {
+    lines.push(
+      `- 対応案: 手動で seed ファイルに反映するか、不要なら無視 (sync:approve は addRecord のみ対応)`,
+    );
+  }
 
   return lines.join("\n");
 }
@@ -602,6 +612,12 @@ export function buildReviewQueue(report: ProposalReport): string {
   }
 
   lines.push("## 操作");
+  lines.push(
+    "- **取り込みたい項目がある場合 (半自動)**: ローカルでこのブランチを checkout し、" +
+      "`npm run sync:approve -- <ID> [<ID> ...]` を実行 (ID は各項目見出しの先頭)。" +
+      "seed-additions.ts への反映・queue からの除去・REVIEW_QUEUE.md の再生成まで自動。" +
+      "`npm run sync:approve -- --list` で一覧表示。実行後 `npm test && npm run build` を確認して commit",
+  );
   lines.push(
     "- このまま **merge** すると、要レビュー項目を読み込んだ証拠として記録されるだけ (実体 seed 変更はなし)",
   );

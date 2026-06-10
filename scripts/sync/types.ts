@@ -12,6 +12,7 @@
 //                     ─▶ apply-proposals.ts / GitHub Actions
 //                     ─▶ seed.ts / MIGRATIONS / PR or Issue
 
+import { createHash } from "node:crypto";
 import type { CollectionName } from "../../src/domain/migrations";
 
 // ===========================================================
@@ -278,6 +279,9 @@ export type ProposalReport = {
   toSeedVersion: number;
   autoApplicable: Proposal[];
   needsReview: Proposal[];
+  // sync:approve で人手承認 → seed-additions に適用済みの項目 (監査ログ)。
+  // needsReview から移動され、次回 sync:propose で全体が再生成されるまで残る。
+  manuallyApproved?: Proposal[];
   summary: {
     autoApplicableCount: number;
     needsReviewCount: number;
@@ -296,6 +300,11 @@ type ProposalBase = {
   sourceId: string;
   confidence: number;        // computeConfidence(evidence)
   evidence: Evidence;
+  // 安定 proposal ID (collection 3 文字 prefix + 内容 hash 10 桁、computeProposalId)。
+  // diff-and-propose が書き込み時に付与し、REVIEW_QUEUE.md の表示と
+  // sync:approve の項目指定に使う。内容が同じ限り週をまたいでも同じ ID、
+  // 内容が変われば別 ID (古い ID の承認で新内容が適用される事故を防ぐ)。
+  proposalId?: string;
   // needsReview 行きの理由 (autoApplicable には付かない)
   reviewReason?: ReviewReason;
 };
@@ -434,6 +443,52 @@ function clamp01(n: number): number {
   if (n < 0) return 0;
   if (n > 1) return 1;
   return n;
+}
+
+// === proposal ID ===
+// REVIEW_QUEUE.md の項目表示と sync:approve の項目指定に使う安定 ID。
+// 形式: `<collection 先頭 3 文字>-<sha1 先頭 10 桁>` (例: pro-1a2b3c4d5e)。
+// hash 対象は「proposal の本質的内容」のみ:
+//   - addRecord    : type / collection / sourceId / record
+//   - それ以外     : type / collection / sourceId / id / field / to
+//     (from は適用後に変わる現在値、evidence/confidence は run ごとに揺れるため除外)
+// 同じ内容なら週をまたいでも同じ ID で、内容が変われば別 ID になる。
+
+// JSON.stringify はキー順序が挿入順依存のため、hash 用に再帰的に
+// キーをソートした安定表現を作る (undefined 値のキーは除外)。
+function stableStringify(v: unknown): string {
+  if (v === null || typeof v !== "object") return JSON.stringify(v) ?? "null";
+  if (Array.isArray(v)) return `[${v.map(stableStringify).join(",")}]`;
+  const entries = Object.entries(v as Record<string, unknown>)
+    .filter(([, val]) => val !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return `{${entries
+    .map(([k, val]) => `${JSON.stringify(k)}:${stableStringify(val)}`)
+    .join(",")}}`;
+}
+
+export function computeProposalId(p: Proposal): string {
+  const core =
+    p.type === "addRecord"
+      ? {
+          t: p.type,
+          c: p.collection,
+          s: p.sourceId,
+          r: (p as AddRecordProposal).record,
+        }
+      : {
+          t: p.type,
+          c: p.collection,
+          s: p.sourceId,
+          id: (p as { id?: string }).id,
+          f: (p as { field?: string }).field,
+          to: (p as { to?: unknown }).to,
+        };
+  const hash = createHash("sha1")
+    .update(stableStringify(core))
+    .digest("hex")
+    .slice(0, 10);
+  return `${p.collection.slice(0, 3)}-${hash}`;
 }
 
 // === 自動マージ閾値 ===

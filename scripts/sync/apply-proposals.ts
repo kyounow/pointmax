@@ -77,7 +77,7 @@ function printUsage(): void {
 // Bucket addRecord proposals by collection
 // ───────────────────────────────────────────────────────────────
 
-type Buckets = {
+export type Buckets = {
   stores: Record<string, unknown>[];
   loyaltyRules: Record<string, unknown>[];
   cards: Record<string, unknown>[];
