@@ -498,7 +498,10 @@ export function computeProposalId(p: Proposal): string {
 //  - updateField/programs の rate / validFrom / validTo: PROGRAM_OVERRIDES へ
 //    (Phase 4 override layer。手書き seed-data-programs.ts を書き換えずに
 //    既存 program のフィールド更新を反映)
-// それ以外 (delete / referenceChange / 他 collection の updateField) は
+//  - delete/programs: REMOVED_PROGRAM_IDS (tombstone) へ (Phase 5。seed() が
+//    program + memberships を cascade 除外し、mergeSeed が既存ユーザーの
+//    localStorage からも除去する。手書きファイルの物理削除は不要)
+// それ以外 (referenceChange / 他 collection の updateField/delete) は
 // 経路が無いため apply は skip、approve は中止する。
 export const OVERRIDABLE_PROGRAM_FIELDS = new Set<string>([
   "rate",
@@ -511,6 +514,7 @@ export function isApplicableProposal(p: Proposal): boolean {
   if (p.type === "updateField" && p.collection === "programs") {
     return OVERRIDABLE_PROGRAM_FIELDS.has((p as UpdateFieldProposal).field);
   }
+  if (p.type === "delete" && p.collection === "programs") return true;
   return false;
 }
 

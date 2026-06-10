@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { mergeSeed, diffCount } from "./mergeSeed";
+import { mergeSeed, diffCount, changeCount } from "./mergeSeed";
 import type {
+  BenefitProgram,
   Card,
   ConversionEdge,
   Currency,
   LoyaltyRule,
   PointCard,
   Store,
+  StoreProgramMembership,
 } from "./types";
 
 const empty = {
@@ -93,6 +95,184 @@ describe("mergeSeed", () => {
     expect(result.diff.cards.map((c) => c.id)).toEqual(["b"]);
     expect(result.diff.currencies.map((c) => c.id)).toEqual(["c2"]);
     expect(result.diff.stores.map((s) => s.id)).toEqual(["s1"]);
+  });
+});
+
+// ─── Phase 5: 公式 program の更新伝播 + tombstone 削除 ───
+
+const prog = (
+  id: string,
+  over: Partial<BenefitProgram> = {},
+): BenefitProgram => ({
+  id,
+  name: id,
+  rate: 0.05,
+  currencyId: "d-pt",
+  validFrom: "2026-06-01",
+  validTo: "2026-06-30",
+  ...over,
+});
+
+const mem = (programId: string, storeId: string): StoreProgramMembership => ({
+  programId,
+  storeId,
+});
+
+describe("mergeSeed — 公式 program の内容更新伝播 (Phase 5)", () => {
+  it("公式由来 + 未編集の program は seed の最新内容に置換される (期間延長の伝播)", () => {
+    const current = {
+      ...empty,
+      programs: [prog("prog-a", { validTo: "2026-06-30" })],
+    };
+    const seed = {
+      ...empty,
+      programs: [prog("prog-a", { validTo: "2026-07-31" })], // override で延長済み
+    };
+    const result = mergeSeed(current, seed);
+    expect(result.programs?.[0].validTo).toBe("2026-07-31");
+    expect(result.updatedPrograms).toHaveLength(1);
+    expect(result.updatedPrograms[0].id).toBe("prog-a");
+    expect(result.diff.programs).toHaveLength(0); // 追加ではなく更新
+  });
+
+  it("rate 改定も伝播する", () => {
+    const result = mergeSeed(
+      { ...empty, programs: [prog("prog-a", { rate: 0.05 })] },
+      { ...empty, programs: [prog("prog-a", { rate: 0.07 })] },
+    );
+    expect(result.programs?.[0].rate).toBe(0.07);
+    expect(result.updatedPrograms).toHaveLength(1);
+  });
+
+  it("ユーザー編集済み (userModifiedAt あり) は保護され置換されない", () => {
+    const edited = prog("prog-a", {
+      rate: 0.1,
+      userModifiedAt: "2026-06-01T00:00:00.000Z",
+    });
+    const result = mergeSeed(
+      { ...empty, programs: [edited] },
+      { ...empty, programs: [prog("prog-a", { rate: 0.07 })] },
+    );
+    expect(result.programs?.[0].rate).toBe(0.1);
+    expect(result.updatedPrograms).toHaveLength(0);
+  });
+
+  it("内容が同一なら何もしない + 配列参照を維持 (no-op memo 保全)", () => {
+    const programs = [prog("prog-a")];
+    const result = mergeSeed(
+      { ...empty, programs },
+      { ...empty, programs: [prog("prog-a")] },
+    );
+    expect(result.updatedPrograms).toHaveLength(0);
+    expect(result.programs).toBe(programs);
+  });
+
+  it("キー順序が違っても同内容なら更新扱いしない (persist/restore 耐性)", () => {
+    const reordered = {
+      validTo: "2026-06-30",
+      rate: 0.05,
+      currencyId: "d-pt",
+      name: "prog-a",
+      id: "prog-a",
+      validFrom: "2026-06-01",
+    } as BenefitProgram;
+    const result = mergeSeed(
+      { ...empty, programs: [reordered] },
+      { ...empty, programs: [prog("prog-a")] },
+    );
+    expect(result.updatedPrograms).toHaveLength(0);
+  });
+
+  it("ユーザー独自 program (seed に無い id) は触らない", () => {
+    const userProg = prog("uuid-user-prog", { rate: 0.02 });
+    const result = mergeSeed(
+      { ...empty, programs: [userProg] },
+      { ...empty, programs: [prog("prog-a")] },
+    );
+    expect(result.programs?.find((p) => p.id === "uuid-user-prog")?.rate).toBe(
+      0.02,
+    );
+    expect(result.updatedPrograms).toHaveLength(0);
+  });
+});
+
+describe("mergeSeed — tombstone 削除 (Phase 5)", () => {
+  it("removedProgramIds の program と memberships が cascade 除去される", () => {
+    const current = {
+      ...empty,
+      programs: [prog("prog-old"), prog("prog-keep")],
+      memberships: [
+        mem("prog-old", "store-1"),
+        mem("prog-old", "store-2"),
+        mem("prog-keep", "store-1"),
+      ],
+    };
+    const seed = { ...empty, programs: [prog("prog-keep")] }; // seed からは削除済み
+    const result = mergeSeed(current, seed, {
+      removedProgramIds: ["prog-old"],
+    });
+    expect(result.programs?.map((p) => p.id)).toEqual(["prog-keep"]);
+    expect(result.memberships).toHaveLength(1);
+    expect(result.removedPrograms.map((p) => p.id)).toEqual(["prog-old"]);
+    expect(result.removedMembershipCount).toBe(2);
+  });
+
+  it("ユーザー編集済み program は tombstone があっても保護される", () => {
+    const edited = prog("prog-old", {
+      userModifiedAt: "2026-06-01T00:00:00.000Z",
+    });
+    const result = mergeSeed(
+      { ...empty, programs: [edited], memberships: [mem("prog-old", "s1")] },
+      { ...empty },
+      { removedProgramIds: ["prog-old"] },
+    );
+    expect(result.programs).toHaveLength(1);
+    expect(result.memberships).toHaveLength(1);
+    expect(result.removedPrograms).toHaveLength(0);
+  });
+
+  it("該当なし (既に削除済み端末) なら no-op + 参照維持", () => {
+    const programs = [prog("prog-keep")];
+    const memberships = [mem("prog-keep", "s1")];
+    const result = mergeSeed(
+      { ...empty, programs, memberships },
+      { ...empty, programs: [prog("prog-keep")], memberships: [mem("prog-keep", "s1")] },
+      { removedProgramIds: ["prog-gone-long-ago"] },
+    );
+    expect(result.programs).toBe(programs);
+    expect(result.memberships).toBe(memberships);
+    expect(result.removedPrograms).toHaveLength(0);
+    expect(result.removedMembershipCount).toBe(0);
+  });
+
+  it("opts 省略時は従来挙動 (削除なし)", () => {
+    const result = mergeSeed(
+      { ...empty, programs: [prog("prog-a")] },
+      { ...empty },
+    );
+    expect(result.programs).toHaveLength(1);
+    expect(result.removedPrograms).toHaveLength(0);
+  });
+});
+
+describe("changeCount", () => {
+  it("追加 + 更新 + 削除を合算する", () => {
+    const result = mergeSeed(
+      {
+        ...empty,
+        programs: [prog("prog-upd", { rate: 0.05 }), prog("prog-del")],
+      },
+      {
+        ...empty,
+        programs: [prog("prog-upd", { rate: 0.07 }), prog("prog-new")],
+      },
+      { removedProgramIds: ["prog-del"] },
+    );
+    // 追加 1 (prog-new) + 更新 1 (prog-upd) + 削除 1 (prog-del)
+    expect(diffCount(result.diff)).toBe(1);
+    expect(result.updatedPrograms).toHaveLength(1);
+    expect(result.removedPrograms).toHaveLength(1);
+    expect(changeCount(result)).toBe(3);
   });
 });
 

@@ -19,12 +19,20 @@ import { useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../../state/store";
 import { seed } from "../../state/seed";
-import { mergeSeed, diffCount, type MergeResult } from "../../domain/mergeSeed";
+import { REMOVED_PROGRAM_IDS } from "../../state/seed-additions";
+import {
+  mergeSeed,
+  diffCount,
+  changeCount,
+  type MergeResult,
+} from "../../domain/mergeSeed";
 
 export type SeedMergeResult = {
   merged: MergeResult | null;
-  /** merged.diff の総件数。merged=null なら 0。 */
+  /** merged.diff (追加分) の総件数。merged=null なら 0。 */
   additionCount: number;
+  /** 追加 + 内容更新 + 削除の総件数 (Phase 5)。merged=null なら 0。 */
+  totalChangeCount: number;
   /** 現在 state にデータがあるか (空 state なら mergeSeed をスキップ)。 */
   hasData: boolean;
 };
@@ -80,6 +88,7 @@ export function useSeedMerge(): SeedMergeResult {
         memberships,
       },
       seed(),
+      { removedProgramIds: REMOVED_PROGRAM_IDS },
     );
   }, [
     hasData,
@@ -95,6 +104,7 @@ export function useSeedMerge(): SeedMergeResult {
   ]);
 
   const additionCount = merged ? diffCount(merged.diff) : 0;
+  const totalChangeCount = merged ? changeCount(merged) : 0;
 
-  return { merged, additionCount, hasData };
+  return { merged, additionCount, totalChangeCount, hasData };
 }

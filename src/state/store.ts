@@ -29,6 +29,7 @@ import {
   resetPaymentAppToSeedValues,
 } from "./userModified";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
+import { REMOVED_PROGRAM_IDS } from "./seed-additions";
 import { preservePreferences } from "./preferenceMerge";
 import {
   MIGRATIONS,
@@ -418,8 +419,11 @@ export const useStore = create<State & Actions>()(
             programs: state.programs,
             memberships: state.memberships,
           };
-          // 1. 追加分マージ (mergeSeed; add-only)
-          const merged = mergeSeedFn(currentShape, seed());
+          // 1. seed マージ: 追加 (add-only) + 公式由来・未編集 program の
+          //    内容更新伝播 + tombstone (REMOVED_PROGRAM_IDS) 削除 (Phase 5)
+          const merged = mergeSeedFn(currentShape, seed(), {
+            removedProgramIds: REMOVED_PROGRAM_IDS,
+          });
 
           // 2. マイグレーション計画 (現在の state + 追加後で再計算)
           const plan = planMigrations(

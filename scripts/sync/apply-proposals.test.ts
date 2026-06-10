@@ -4,7 +4,9 @@ import {
   buildSeedAdditionsContent,
   emitObjectLiteral,
   mergeOverrides,
+  mergeRemovals,
   mergeWithExisting,
+  pruneRemovedFromBuckets,
 } from "./apply-proposals";
 import type { Proposal } from "./types";
 
@@ -135,12 +137,14 @@ describe("buildSeedAdditionsContent", () => {
       programs: [],
       memberships: [],
       programOverrides: [],
+      removedProgramIds: [],
     });
     expect(out).toContain("export const ADDED_STORES: Store[] = [];");
     expect(out).toContain("export const ADDED_PAYMENT_APPS: PaymentApp[] = [];");
     expect(out).toContain("export const ADDED_PROGRAMS: BenefitProgram[] = [];");
     expect(out).toContain("export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [];");
     expect(out).toContain("export const PROGRAM_OVERRIDES: ProgramOverride[] = [];");
+    expect(out).toContain("export const REMOVED_PROGRAM_IDS: string[] = [];");
     expect(out).toContain('import type { ProgramOverride } from "./seed-overrides";');
     expect(out).toContain("AUTO-GENERATED");
   });
@@ -154,12 +158,16 @@ describe("buildSeedAdditionsContent", () => {
       programs: [],
       memberships: [],
       programOverrides: [{ id: "prog-a", validTo: "2026-07-31" }],
+      removedProgramIds: ["prog-old-campaign"],
     });
     expect(out).toContain(
       'export const ADDED_STORES: Store[] = [\n  { id: "kura-sushi", name: "くら寿司", category: "飲食" },\n];',
     );
     expect(out).toContain(
       'export const PROGRAM_OVERRIDES: ProgramOverride[] = [\n  { id: "prog-a", validTo: "2026-07-31" },\n];',
+    );
+    expect(out).toContain(
+      'export const REMOVED_PROGRAM_IDS: string[] = [\n  "prog-old-campaign",\n];',
     );
   });
 });
@@ -213,6 +221,86 @@ describe("bucketProposals — programOverrides", () => {
         { type: "updateField", collection: "programs", count: 1 },
       ]),
     );
+  });
+});
+
+// ─── Phase 5 (B-3): delete/programs → REMOVED_PROGRAM_IDS (tombstone) 経路 ───
+
+const mkDelete = (
+  collection: Proposal["collection"],
+  id: string,
+): Proposal => ({
+  type: "delete",
+  collection,
+  id,
+  sourceId: "expired-cleanup",
+  confidence: 1.0,
+  evidence: { evidenceQuote: "validTo=2026-05-31 (30日前に終了)", explicitness: 1, ambiguity: 0 },
+  reviewReason: "expiredCampaign",
+});
+
+describe("bucketProposals — removedProgramIds", () => {
+  it("delete/programs は removedProgramIds に入る (skip しない)", () => {
+    const { buckets, skipped } = bucketProposals([
+      mkDelete("programs", "prog-old-1"),
+      mkDelete("programs", "prog-old-2"),
+    ]);
+    expect(buckets.removedProgramIds).toEqual(["prog-old-1", "prog-old-2"]);
+    expect(skipped).toEqual([]);
+  });
+
+  it("programs 以外の delete は従来どおり skip", () => {
+    const { buckets, skipped } = bucketProposals([mkDelete("stores", "store-x")]);
+    expect(buckets.removedProgramIds).toEqual([]);
+    expect(skipped).toEqual([
+      { type: "delete", collection: "stores", count: 1 },
+    ]);
+  });
+});
+
+describe("mergeRemovals", () => {
+  it("union + 重複なし (冪等)", () => {
+    const { merged, added } = mergeRemovals(
+      ["prog-a"],
+      ["prog-a", "prog-b", "prog-b"],
+    );
+    expect(merged).toEqual(["prog-a", "prog-b"]);
+    expect(added).toBe(1);
+  });
+});
+
+describe("pruneRemovedFromBuckets", () => {
+  const base = {
+    stores: [],
+    loyaltyRules: [],
+    cards: [],
+    paymentApps: [],
+    programs: [
+      { id: "prog-old", name: "旧" },
+      { id: "prog-keep", name: "維持" },
+    ] as Record<string, unknown>[],
+    memberships: [
+      { programId: "prog-old", storeId: "s1" },
+      { programId: "prog-keep", storeId: "s1" },
+    ] as Record<string, unknown>[],
+    programOverrides: [
+      { id: "prog-old", validTo: "2026-05-31" },
+      { id: "prog-keep", rate: 0.07 },
+    ],
+    removedProgramIds: ["prog-old"],
+  };
+
+  it("tombstone 対象の program / memberships / override を生成物から落とす", () => {
+    const pruned = pruneRemovedFromBuckets(base);
+    expect(pruned.programs.map((p) => p.id)).toEqual(["prog-keep"]);
+    expect(pruned.memberships.map((m) => m.programId)).toEqual(["prog-keep"]);
+    expect(pruned.programOverrides.map((o) => o.id)).toEqual(["prog-keep"]);
+    expect(pruned.removedProgramIds).toEqual(["prog-old"]); // tombstone 自体は維持
+  });
+
+  it("removedProgramIds が空なら同一参照を返す", () => {
+    const noRemovals = { ...base, removedProgramIds: [] };
+    expect(pruneRemovedFromBuckets(noRemovals)).toBe(noRemovals);
   });
 });
 

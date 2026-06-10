@@ -293,3 +293,5 @@ export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [
 ];
 
 export const PROGRAM_OVERRIDES: ProgramOverride[] = [];
+
+export const REMOVED_PROGRAM_IDS: string[] = [];

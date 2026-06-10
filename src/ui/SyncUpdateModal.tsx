@@ -37,19 +37,35 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
   const [seen] = useState(readSeen);
 
   // Wave 4 B-7: 共有 hook 経由で mergeSeed (UpdateBanner と同じ計算ロジック)
-  const { merged, additionCount: count } = useSeedMerge();
-  const digest = merged ? syncDigest(merged.diff) : "";
+  // Phase 5: 追加だけでなく program の内容更新 / 終了削除も通知対象に含める
+  const { merged, totalChangeCount: count } = useSeedMerge();
+  const digest = merged
+    ? syncDigest(merged.diff, {
+        updatedPrograms: merged.updatedPrograms,
+        removedPrograms: merged.removedPrograms,
+      })
+    : "";
 
   const groups = useMemo(() => {
     if (!merged || count === 0) return [];
     const storeName = new Map(merged.stores.map((s) => [s.id, s.name]));
-    const programName = new Map(
-      (merged.programs ?? []).map((p) => [p.id, p.name]),
+    // 削除された program の名前は merged.programs に居ないため
+    // removedPrograms 自身から解決する
+    const programName = new Map([
+      ...(merged.programs ?? []).map((p) => [p.id, p.name] as const),
+      ...merged.removedPrograms.map((p) => [p.id, p.name] as const),
+    ]);
+    return buildSyncGroups(
+      merged.diff,
+      {
+        store: (id) => storeName.get(id) ?? id,
+        program: (id) => programName.get(id) ?? id,
+      },
+      {
+        updatedPrograms: merged.updatedPrograms,
+        removedPrograms: merged.removedPrograms,
+      },
     );
-    return buildSyncGroups(merged.diff, {
-      store: (id) => storeName.get(id) ?? id,
-      program: (id) => programName.get(id) ?? id,
-    });
   }, [merged, count]);
 
   const visible =
@@ -103,7 +119,7 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
         <h2 id="sync-update-title" className="sync-update-title">最新データが届いています</h2>
         <p className="sync-update-lead">
           公式マスタの自動同期で <strong>{count} 件</strong>{" "}
-          の項目が追加されました。「アプリに反映」で取り込めます。
+          の追加・更新があります。「アプリに反映」で取り込めます。
         </p>
 
         <div className="sync-update-body">

@@ -32,8 +32,13 @@ import {
   ADDED_PROGRAMS,
   ADDED_STORES,
   PROGRAM_OVERRIDES,
+  REMOVED_PROGRAM_IDS,
 } from "./seed-additions";
 import { applyProgramOverrides } from "./seed-overrides";
+
+// tombstone (削除済み program id) の Set。seed() の programs/memberships
+// フィルタと、mergeSeed のユーザー localStorage からの除去の両方で参照する。
+const REMOVED_PROGRAM_ID_SET = new Set(REMOVED_PROGRAM_IDS);
 import { BLOCKED_STORE_IDS } from "./seed-blocklist";
 import { resolveCategory } from "./seed-category-aliases";
 import { SEED_CURRENCIES } from "./seed-data-currencies";
@@ -565,6 +570,10 @@ export const seed = (): SeedReturn => {
     // apply/approve が蓄積する部分上書き) を合成の最後に適用。
     // 手書き seed-data-programs.ts を codegen で書き換えずに既存 program の
     // フィールド更新を反映するための override layer (改善計画 B-1/B-2)。
+    // REMOVED_PROGRAM_IDS (tombstone) の program は手書きファイルを
+    // 物理削除せずに seed から除外し、memberships も cascade 除外する
+    // (改善計画 Phase 5 / B-3。ユーザー localStorage からの除去は
+    // mergeSeed の removedProgramIds オプションが担う)。
     programs: applyProgramOverrides(
       [
         ...SEED_BENEFIT_PROGRAMS,
@@ -573,7 +582,7 @@ export const seed = (): SeedReturn => {
         ),
       ],
       PROGRAM_OVERRIDES,
-    ),
+    ).filter((p) => !REMOVED_PROGRAM_ID_SET.has(p.id)),
     memberships: [
       ...SEED_STORE_PROGRAM_MEMBERSHIPS,
       ...ADDED_MEMBERSHIPS.filter(
@@ -581,6 +590,6 @@ export const seed = (): SeedReturn => {
           (sm) => sm.programId === m.programId && sm.storeId === m.storeId,
         ),
       ),
-    ],
+    ].filter((m) => !REMOVED_PROGRAM_ID_SET.has(m.programId)),
   };
 };

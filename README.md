@@ -52,7 +52,9 @@
 ### マスタデータ管理
 - 起動時に GitHub Pages 上の公式マスタ JSON (`master.json`) と差分マージ可能。
 - ユーザー独自のカード／プログラム／店舗を保持したまま「新しいマスタの追加分だけ取り込み」できる
-  **add-only マージ**。
+  **add-only マージ**。プログラム (特典・キャンペーン) は加えて、**未編集の公式由来コピー**に限り
+  内容更新 (還元率改定・期間延長) と終了キャンペーンの削除 (tombstone) も伝播する
+  (ユーザーが編集したものは従来どおり保護され、更新も削除もされない)。
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
 - 「サンプル投入」「ローカルデータ初期化」「JSONエクスポート/インポート」は設定画面から。
@@ -208,8 +210,8 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   各項目には安定 ID が振られ、取り込みたいものはレビュー PR ブランチ上で
   `npm run sync:approve -- <ID> [<ID> ...]` を実行すると seed-additions.ts への反映・
   queue からの除去・REVIEW_QUEUE.md 再生成まで半自動で完了する
-  (`--list` で一覧、`--dry-run` で確認のみ。対応: addRecord 全般 +
-  updateField/programs の rate/validFrom/validTo。delete は順次対応予定)
+  (`--list` で一覧、`--dry-run` で確認のみ。対応: addRecord 全般 /
+  updateField/programs の rate・validFrom・validTo / delete/programs)
 - `sync.config.json` の `autoMergeEnabled` で auto-merge の ON/OFF、`maxAutoChangesPerRun` が安全弁
   （超過時は全件 review 降格）
 - 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (最大 104 件、newest first)。
@@ -229,7 +231,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | 既存 program の **期間変更** (validFrom/validTo) | ❌ しない (`periodChange` で needsReview) | キャンペーン延長/期間訂正の検知。承認は `npm run sync:approve -- <ID>` → `PROGRAM_OVERRIDES` 経由で反映 |
 | 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge |
 | 新規 **programs / cards / paymentApps** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
-| **削除提案** (validTo+30 日経過 campaign など) | ❌ しない | 誤削除防止のため必ず人手レビュー |
+| **削除提案** (validTo+30 日経過 campaign など) | ❌ しない (`expiredCampaign` で needsReview) | 誤削除防止のため必ず人手レビュー。承認は `npm run sync:approve -- <ID>` → tombstone (`REMOVED_PROGRAM_IDS`) 化。seed から program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。ユーザー編集済みは保護) |
 
 ---
 

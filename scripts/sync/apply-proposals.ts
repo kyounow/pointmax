@@ -23,6 +23,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
   AddRecordProposal,
+  DeleteProposal,
   Proposal,
   ProposalReport,
   UpdateFieldProposal,
@@ -36,6 +37,7 @@ import {
   ADDED_PROGRAMS,
   ADDED_STORES,
   PROGRAM_OVERRIDES,
+  REMOVED_PROGRAM_IDS,
 } from "../../src/state/seed-additions";
 import type { ProgramOverride } from "../../src/state/seed-overrides";
 
@@ -93,6 +95,9 @@ export type Buckets = {
   // updateField/programs (rate / validFrom / validTo) 由来の部分上書き。
   // seed() が合成の最後に適用する (src/state/seed-overrides.ts)。
   programOverrides: ProgramOverride[];
+  // delete/programs 由来の tombstone。seed() が program + memberships を
+  // cascade 除外し、mergeSeed が既存ユーザーの localStorage からも除去する。
+  removedProgramIds: string[];
 };
 
 export function bucketProposals(
@@ -106,6 +111,7 @@ export function bucketProposals(
     programs: [],
     memberships: [],
     programOverrides: [],
+    removedProgramIds: [],
   };
   const skippedMap = new Map<string, number>();
 
@@ -121,6 +127,11 @@ export function bucketProposals(
         id: up.id,
         [up.field]: up.to,
       } as ProgramOverride);
+      continue;
+    }
+    // delete/programs は tombstone (REMOVED_PROGRAM_IDS) へ
+    if (p.type === "delete" && p.collection === "programs") {
+      buckets.removedProgramIds.push((p as DeleteProposal).id);
       continue;
     }
     if (p.type !== "addRecord") {
@@ -214,6 +225,45 @@ export function mergeMemberships<T extends MembershipLike>(
     added += 1;
   }
   return { merged: [...existing, ...newOnes], added, skipped };
+}
+
+// REMOVED_PROGRAM_IDS のマージ: 重複なし union (冪等)。
+export function mergeRemovals(
+  existing: string[],
+  incoming: string[],
+): { merged: string[]; added: number } {
+  const seen = new Set(existing);
+  let added = 0;
+  const merged = [...existing];
+  for (const id of incoming) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    merged.push(id);
+    added += 1;
+  }
+  return { merged, added };
+}
+
+// tombstone 適用後の生成物クリーンアップ: 削除された program 本体 /
+// その memberships / override が機械生成側 (ADDED_* / PROGRAM_OVERRIDES) に
+// 残っていれば物理的に落とす。seed() 側のフィルタで挙動は同じだが、
+// 生成ファイルに死にデータを残さないための整理。手書き seed-data-programs.ts
+// は触らない (tombstone フィルタが除外を担う)。
+export function pruneRemovedFromBuckets(buckets: Buckets): Buckets {
+  if (buckets.removedProgramIds.length === 0) return buckets;
+  const removed = new Set(buckets.removedProgramIds);
+  return {
+    ...buckets,
+    programs: buckets.programs.filter(
+      (p) => !removed.has(p.id as string),
+    ),
+    memberships: buckets.memberships.filter(
+      (m) => !removed.has(m.programId as string),
+    ),
+    programOverrides: buckets.programOverrides.filter(
+      (o) => !removed.has(o.id),
+    ),
+  };
 }
 
 // PROGRAM_OVERRIDES のマージ: 同 id はフィールド単位で後勝ち
@@ -310,7 +360,17 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
       buckets.programOverrides as unknown as Record<string, unknown>[],
     ),
     "",
+    emitStringArrayConst("REMOVED_PROGRAM_IDS", buckets.removedProgramIds),
+    "",
   ].join("\n");
+}
+
+function emitStringArrayConst(name: string, ids: string[]): string {
+  if (ids.length === 0) {
+    return `export const ${name}: string[] = [];`;
+  }
+  const lines = ids.map((id) => `  ${JSON.stringify(id)},`);
+  return `export const ${name}: string[] = [\n${lines.join("\n")}\n];`;
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -354,6 +414,7 @@ function main(): void {
     memberships: mergeMemberships(ADDED_MEMBERSHIPS, buckets.memberships),
   };
   const overrideMerge = mergeOverrides(PROGRAM_OVERRIDES, buckets.programOverrides);
+  const removalMerge = mergeRemovals(REMOVED_PROGRAM_IDS, buckets.removedProgramIds);
   console.log("📋 merge result (existing + new, deduped by id):");
   console.log(
     `     stores:        +${merge.stores.added} (skipped ${merge.stores.skipped}) → total ${merge.stores.merged.length}`,
@@ -376,9 +437,12 @@ function main(): void {
   console.log(
     `     overrides:     +${overrideMerge.added} (updated ${overrideMerge.updated}) → total ${overrideMerge.merged.length}`,
   );
+  console.log(
+    `     removals:      +${removalMerge.added} → total ${removalMerge.merged.length}`,
+  );
 
-  // 3. seed-additions.ts のコンテンツを構築
-  const mergedBuckets: Buckets = {
+  // 3. seed-additions.ts のコンテンツを構築 (tombstone 対象の生成物は prune)
+  const mergedBuckets: Buckets = pruneRemovedFromBuckets({
     stores: merge.stores.merged as Record<string, unknown>[],
     loyaltyRules: merge.loyaltyRules.merged as Record<string, unknown>[],
     cards: merge.cards.merged as Record<string, unknown>[],
@@ -386,7 +450,8 @@ function main(): void {
     programs: merge.programs.merged as Record<string, unknown>[],
     memberships: merge.memberships.merged as Record<string, unknown>[],
     programOverrides: overrideMerge.merged,
-  };
+    removedProgramIds: removalMerge.merged,
+  });
   const newContent = buildSeedAdditionsContent(mergedBuckets);
 
   if (args.dryRun) {

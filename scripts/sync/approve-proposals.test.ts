@@ -72,7 +72,18 @@ const periodUpdate: Proposal = {
   reviewReason: "periodChange",
 };
 
-// 実書き込み経路の無い type/field (Phase 4 時点で未対応のもの)
+// delete/programs (期限切れキャンペーン) は Phase 5 で承認可能
+const deleteProposal: Proposal = {
+  type: "delete",
+  collection: "programs",
+  id: "prog-old-campaign",
+  sourceId: "expired-cleanup",
+  confidence: 1.0,
+  evidence,
+  reviewReason: "expiredCampaign",
+};
+
+// 実書き込み経路の無い type/field (未対応のもの)
 const cardUpdate: Proposal = {
   type: "updateField",
   collection: "cards",
@@ -86,14 +97,14 @@ const cardUpdate: Proposal = {
   reviewReason: "rateDeltaTooLarge",
 };
 
-const deleteProposal: Proposal = {
+const storeDelete: Proposal = {
   type: "delete",
-  collection: "programs",
-  id: "prog-old-campaign",
-  sourceId: "expired-cleanup",
+  collection: "stores",
+  id: "store-x",
+  sourceId: "test",
   confidence: 1.0,
   evidence,
-  reviewReason: "expiredCampaign",
+  reviewReason: "deletion",
 };
 
 const baseReport = (needsReview: Proposal[]): ProposalReport => ({
@@ -166,6 +177,7 @@ describe("selectProposalsByIds", () => {
     periodUpdate,
     cardUpdate,
     deleteProposal,
+    storeDelete,
   ]);
 
   it("ID で needsReview から addRecord を選択する", () => {
@@ -191,10 +203,16 @@ describe("selectProposalsByIds", () => {
     expect(sel.unsupported).toEqual([]);
   });
 
-  it("実書き込み経路の無い type/field (updateField/cards, delete) は unsupported に入る", () => {
+  it("delete/programs (期限切れキャンペーン) は承認可能 (Phase 5 tombstone)", () => {
+    const sel = selectProposalsByIds(report, [computeProposalId(deleteProposal)]);
+    expect(sel.found).toHaveLength(1);
+    expect(sel.unsupported).toEqual([]);
+  });
+
+  it("実書き込み経路の無い type/field (updateField/cards, delete/stores) は unsupported に入る", () => {
     const sel = selectProposalsByIds(report, [
       computeProposalId(cardUpdate),
-      computeProposalId(deleteProposal),
+      computeProposalId(storeDelete),
     ]);
     expect(sel.found).toEqual([]);
     expect(sel.unsupported).toHaveLength(2);
@@ -262,10 +280,15 @@ describe("formatListLine", () => {
     expect(line).toContain("prog-dcard-bic.rate");
   });
 
-  it("未対応の type/field (updateField/cards, delete) は ✋ を含む", () => {
+  it("承認可能な delete/programs に ✋ は付かない", () => {
+    const line = formatListLine(deleteProposal);
+    expect(line).not.toContain("✋");
+    expect(line).toContain("prog-old-campaign");
+  });
+
+  it("未対応の type/field (updateField/cards, delete/stores) は ✋ を含む", () => {
     expect(formatListLine(cardUpdate)).toContain("✋");
     expect(formatListLine(cardUpdate)).toContain("rakuten-card.defaultRate");
-    expect(formatListLine(deleteProposal)).toContain("✋");
-    expect(formatListLine(deleteProposal)).toContain("prog-old-campaign");
+    expect(formatListLine(storeDelete)).toContain("✋");
   });
 });
