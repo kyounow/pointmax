@@ -100,6 +100,11 @@ export type LoyaltyRule = {
   // 1 件以上 = 「今日 (now.getDate())」がリスト内にある時のみアクティブ。
   // validFrom/validTo の範囲チェックと **AND** で結合される (期間内かつ recurring 日付一致)。
   recurringDays?: number[];
+  // 特定曜日にのみ有効になる繰り返しパターン (任意、改善計画 C-6)。
+  // 値の範囲は 0〜6 (0=日曜 .. 6=土曜)。例: 「毎週日曜 +N%」→ [0]。
+  // undefined / 空配列 = 曜日制限なし。1 件以上 = 「今日 (now.getDay())」が
+  // リスト内にある時のみアクティブ。validFrom/validTo/recurringDays と **AND** 結合。
+  recurringWeekdays?: number[];
 };
 
 // PointMax v3: 還元プログラム
@@ -132,7 +137,8 @@ export type BenefitProgram = {
   // ─── 期間 ───
   validFrom?: string;
   validTo?: string;
-  recurringDays?: number[];
+  recurringDays?: number[];     // 毎月の日にち限定 (1-31)。LoyaltyRule と同セマンティクス
+  recurringWeekdays?: number[]; // 曜日限定 (0=日..6=土)。LoyaltyRule と同セマンティクス (C-6)
 
   // ─── Meta ───
   description?: string;

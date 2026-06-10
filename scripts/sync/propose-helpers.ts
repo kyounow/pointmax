@@ -502,6 +502,8 @@ export function proposePrograms(
       if (p.validFrom !== undefined) rec.validFrom = p.validFrom;
       if (p.validTo !== undefined) rec.validTo = p.validTo;
       if (p.recurringDays !== undefined) rec.recurringDays = p.recurringDays;
+      if (p.recurringWeekdays !== undefined)
+        rec.recurringWeekdays = p.recurringWeekdays;
       if (p.description !== undefined) rec.description = p.description;
       if (p.officialUrl !== undefined) rec.officialUrl = p.officialUrl;
       if (p.entryUrl !== undefined) rec.entryUrl = p.entryUrl;

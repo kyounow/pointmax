@@ -42,8 +42,7 @@ export function CalcTodayBanner({
   ).length;
   const recurringActive = [...allRules, ...programs].filter(
     (r) =>
-      "recurringDays" in r &&
-      r.recurringDays?.length &&
+      (r.recurringDays?.length || r.recurringWeekdays?.length) &&
       isRuleActiveAt(r, now),
   ).length;
   const totalActive = timeBoundActive + ongoingActive + recurringActive;

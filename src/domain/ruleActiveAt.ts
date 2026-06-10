@@ -1,6 +1,6 @@
 // キャンペーン期間判定の共通ヘルパ。
-// StoreRule / LoyaltyRule の validFrom / validTo / recurringDays を受け取り、
-// 指定時刻にそのルールがアクティブかを返す。
+// StoreRule / LoyaltyRule の validFrom / validTo / recurringDays /
+// recurringWeekdays を受け取り、指定時刻にそのルールがアクティブかを返す。
 //
 // 仕様:
 //   - validFrom / validTo はどちらも optional (ISO date 文字列 "YYYY-MM-DD")
@@ -9,13 +9,15 @@
 //   - validTo のみ指定 → その日まで (23:59:59 末まで含む)
 //   - 両方指定 → 区間 [validFrom 00:00, validTo 23:59:59] にあればアクティブ
 //   - validTo が validFrom より前など不正データは active=false (安全側)
-//   - recurringDays: 今日 (1〜31) がリスト内にない場合は非アクティブ
-//     validFrom/validTo の範囲チェックと AND で結合される
+//   - recurringDays: 今日の日にち (1〜31) がリスト内にない場合は非アクティブ
+//   - recurringWeekdays: 今日の曜日 (0=日..6=土) がリスト内にない場合は非アクティブ (C-6)
+//   - 全条件は AND で結合される (期間内 かつ 日にち一致 かつ 曜日一致)
 
 type WithValidWindow = {
   validFrom?: string;
   validTo?: string;
   recurringDays?: number[];
+  recurringWeekdays?: number[];
 };
 
 export function isRuleActiveAt(
@@ -31,26 +33,40 @@ export function isRuleActiveAt(
     const to = parseDateEnd(rule.validTo);
     if (to === null || t > to) return false;
   }
-  // recurringDays: 今日 (1〜31) がリスト内にない場合は非アクティブ
+  // recurringDays: 今日の日にち (1〜31) がリスト内にない場合は非アクティブ
   if (rule.recurringDays && rule.recurringDays.length > 0) {
     const day = now.getDate();
     if (!rule.recurringDays.includes(day)) return false;
   }
+  // recurringWeekdays: 今日の曜日 (0=日..6=土) がリスト内にない場合は非アクティブ
+  if (rule.recurringWeekdays && rule.recurringWeekdays.length > 0) {
+    const weekday = now.getDay();
+    if (!rule.recurringWeekdays.includes(weekday)) return false;
+  }
   return true;
 }
 
-// 期間・recurringDays を人間が読みやすい文字列に整形する共通フォーマッタ。
-// RulesScreen / CampaignsScreen / PaymentAppsScreen で共用。
+const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"] as const;
+
+// 期間・recurringDays / recurringWeekdays を人間が読みやすい文字列に整形する
+// 共通フォーマッタ。RulesScreen / CampaignsScreen / PaymentAppsScreen で共用。
 export function formatRulePeriod(rule: {
   validFrom?: string;
   validTo?: string;
   recurringDays?: number[];
+  recurringWeekdays?: number[];
 }): string {
   const parts: string[] = [];
   if (rule.validFrom) parts.push(`${rule.validFrom}〜`);
   if (rule.validTo) parts.push(`〜${rule.validTo}`);
   if (rule.recurringDays && rule.recurringDays.length > 0) {
     parts.push(`毎月 ${rule.recurringDays.join("/")} 日`);
+  }
+  if (rule.recurringWeekdays && rule.recurringWeekdays.length > 0) {
+    const labels = rule.recurringWeekdays
+      .filter((w) => w >= 0 && w <= 6)
+      .map((w) => WEEKDAY_LABELS[w]);
+    if (labels.length > 0) parts.push(`毎週 ${labels.join("/")} 曜`);
   }
   return parts.length > 0 ? parts.join(" ") : "常時";
 }
