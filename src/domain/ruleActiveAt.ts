@@ -88,6 +88,42 @@ function parseDateEnd(s: string): number | null {
 }
 
 /**
+ * キャンペーン期間の状態分類 (CampaignsScreen のタブ/バッジ用)。
+ * - "future"  : validFrom 当日 00:00 (ローカル) より前
+ * - "expired" : validTo 当日 23:59:59.999 (ローカル) より後
+ * - "ongoing" : validFrom のみ指定 (期限未告知の長期プログラム)
+ * - "active"  : 上記以外 (期間範囲内)
+ *
+ * isRuleActiveAt と同じ parseDateStart / parseDateEnd を共有し、日付境界を
+ * ローカルタイムで統一する。旧実装 (CampaignsScreen 内ローカル関数) は
+ * `new Date("YYYY-MM-DD")` の UTC parse で判定しており、JST では validFrom
+ * 当日 00:00〜09:00 に「Calculator は適用中なのに画面は 🕒 未来開始」と
+ * 表示が割れていた (改善計画 C-1)。
+ *
+ * recurringDays は分類に影響しない (期間そのものの状態を表すため。今日が
+ * 対象日かどうかは isRuleActiveAt が担う)。不正な日付文字列は該当チェックを
+ * スキップする (旧実装の isNaN ガードと同じ寛容さ)。
+ */
+export type CampaignStatus = "active" | "expired" | "future" | "ongoing";
+
+export function classifyCampaignStatus(
+  rule: { validFrom?: string; validTo?: string },
+  now: Date = new Date(),
+): CampaignStatus {
+  const t = now.getTime();
+  if (rule.validFrom) {
+    const from = parseDateStart(rule.validFrom);
+    if (from !== null && t < from) return "future";
+  }
+  if (rule.validTo) {
+    const to = parseDateEnd(rule.validTo);
+    if (to !== null && t > to) return "expired";
+  }
+  if (rule.validFrom && !rule.validTo) return "ongoing";
+  return "active";
+}
+
+/**
  * validTo までの残日数を計算。
  * - validTo 当日: 0
  * - validTo 翌日 (期限切れ): -1 (呼び出し側で「期限切れ」扱いを判断)

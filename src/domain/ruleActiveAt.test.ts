@@ -1,5 +1,120 @@
 import { describe, it, expect } from "vitest";
-import { isRuleActiveAt, daysUntilValidTo } from "./ruleActiveAt";
+import {
+  isRuleActiveAt,
+  daysUntilValidTo,
+  classifyCampaignStatus,
+} from "./ruleActiveAt";
+
+// ───────────────────────────────────────────────────────────────
+// classifyCampaignStatus (C-1: isRuleActiveAt と同じローカルタイム境界)
+// ───────────────────────────────────────────────────────────────
+
+describe("classifyCampaignStatus", () => {
+  const now = new Date("2026-06-15T12:00:00"); // ローカル時刻 (Z なし)
+
+  it("validFrom 未来 → future", () => {
+    expect(classifyCampaignStatus({ validFrom: "2026-07-01" }, now)).toBe(
+      "future",
+    );
+    expect(
+      classifyCampaignStatus(
+        { validFrom: "2026-07-01", validTo: "2026-07-31" },
+        now,
+      ),
+    ).toBe("future");
+  });
+
+  it("validTo 過去 → expired", () => {
+    expect(
+      classifyCampaignStatus(
+        { validFrom: "2026-05-01", validTo: "2026-05-31" },
+        now,
+      ),
+    ).toBe("expired");
+    expect(classifyCampaignStatus({ validTo: "2026-06-14" }, now)).toBe(
+      "expired",
+    );
+  });
+
+  it("validFrom のみ (過去) → ongoing", () => {
+    expect(classifyCampaignStatus({ validFrom: "2026-01-01" }, now)).toBe(
+      "ongoing",
+    );
+  });
+
+  it("期間内 → active (validTo 当日も含む)", () => {
+    expect(
+      classifyCampaignStatus(
+        { validFrom: "2026-06-01", validTo: "2026-06-30" },
+        now,
+      ),
+    ).toBe("active");
+    expect(classifyCampaignStatus({ validTo: "2026-06-15" }, now)).toBe(
+      "active",
+    );
+  });
+
+  it("validFrom 当日の深夜 0:00〜 はローカル基準で即 active (旧 UTC parse の 9 時間ズレ解消)", () => {
+    // 旧実装は new Date("2026-06-15") = UTC 深夜 (JST 09:00) と比較していたため、
+    // JST 00:00〜09:00 に「Calculator は適用中なのに画面は未来開始」と割れていた。
+    const justAfterMidnight = new Date("2026-06-15T00:30:00"); // ローカル 0:30
+    expect(
+      classifyCampaignStatus(
+        { validFrom: "2026-06-15", validTo: "2026-06-30" },
+        justAfterMidnight,
+      ),
+    ).toBe("active");
+    expect(
+      isRuleActiveAt(
+        { validFrom: "2026-06-15", validTo: "2026-06-30" },
+        justAfterMidnight,
+      ),
+    ).toBe(true);
+  });
+
+  it("isRuleActiveAt との整合契約: future/expired ⟺ inactive、active ⟺ active (recurringDays なしの場合)", () => {
+    const rules = [
+      { validFrom: "2026-07-01", validTo: "2026-07-31" },
+      { validFrom: "2026-05-01", validTo: "2026-05-31" },
+      { validFrom: "2026-06-01", validTo: "2026-06-30" },
+      { validFrom: "2026-06-15", validTo: "2026-06-15" },
+      { validFrom: "2026-01-01" },
+      { validTo: "2026-06-14" },
+      {},
+    ];
+    const probes = [
+      new Date("2026-06-15T00:00:00"),
+      new Date("2026-06-15T08:59:59"), // 旧バグの 9 時間窓内
+      new Date("2026-06-15T12:00:00"),
+      new Date("2026-06-30T23:59:59"),
+      new Date("2026-07-01T00:00:00"),
+    ];
+    for (const rule of rules) {
+      for (const t of probes) {
+        const status = classifyCampaignStatus(rule, t);
+        const active = isRuleActiveAt(rule, t);
+        if (status === "future" || status === "expired") {
+          expect(active, `${JSON.stringify(rule)} @ ${t.toISOString()}`).toBe(
+            false,
+          );
+        } else {
+          expect(active, `${JSON.stringify(rule)} @ ${t.toISOString()}`).toBe(
+            true,
+          );
+        }
+      }
+    }
+  });
+
+  it("不正な日付文字列はチェックをスキップ (旧実装の isNaN ガードと同等)", () => {
+    expect(classifyCampaignStatus({ validFrom: "invalid" }, now)).toBe(
+      "ongoing",
+    );
+    expect(
+      classifyCampaignStatus({ validFrom: "invalid", validTo: "2026-06-30" }, now),
+    ).toBe("active");
+  });
+});
 
 describe("isRuleActiveAt", () => {
   const now = new Date("2026-06-15T12:00:00");

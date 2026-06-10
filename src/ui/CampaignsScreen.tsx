@@ -2,46 +2,16 @@ import { useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { cardLabel } from "../domain/cardLabel";
-import { isRuleActiveAt, formatRulePeriod } from "../domain/ruleActiveAt";
+import {
+  isRuleActiveAt,
+  formatRulePeriod,
+  classifyCampaignStatus,
+  type CampaignStatus,
+} from "../domain/ruleActiveAt";
 import type { BenefitProgram } from "../domain/types";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
-
-type CampaignStatus = "active" | "expired" | "future" | "ongoing";
-
-function classifyCampaign(rule: {
-  validFrom?: string;
-  validTo?: string;
-}): CampaignStatus {
-  const now = new Date();
-
-  // future: validFrom が未来
-  if (rule.validFrom) {
-    const from = new Date(rule.validFrom);
-    if (!Number.isNaN(from.getTime()) && now.getTime() < from.getTime()) {
-      return "future";
-    }
-  }
-
-  // expired: validTo が過去 (期間が明示的に終わってる場合のみ)
-  if (rule.validTo) {
-    const to = new Date(rule.validTo);
-    to.setHours(23, 59, 59, 999);
-    if (!Number.isNaN(to.getTime()) && now.getTime() > to.getTime()) {
-      return "expired";
-    }
-  }
-
-  // ongoing: validFrom only (validTo なし、期限未告知の長期プログラム)
-  // recurringDays が今日 hit しなくても、期間自体は終わってないので ongoing 扱い
-  if (rule.validFrom && !rule.validTo) {
-    return "ongoing";
-  }
-
-  // active: 両方 set + 期間範囲内
-  return "active";
-}
 
 function statusBadge(s: CampaignStatus) {
   switch (s) {
@@ -118,14 +88,16 @@ export function CampaignsScreen() {
     () =>
       activeTab === "all"
         ? campaignPrograms
-        : campaignPrograms.filter((p) => classifyCampaign(p) === activeTab),
+        : campaignPrograms.filter(
+            (p) => classifyCampaignStatus(p) === activeTab,
+          ),
     [campaignPrograms, activeTab],
   );
 
   // ─── タブごとの件数 ───
   const tabCounts = useMemo(() => {
     const count = (key: CampaignStatus) =>
-      campaignPrograms.filter((r) => classifyCampaign(r) === key).length;
+      campaignPrograms.filter((r) => classifyCampaignStatus(r) === key).length;
     return {
       all: campaignPrograms.length,
       active: count("active"),
@@ -140,7 +112,7 @@ export function CampaignsScreen() {
     {
       key: "status",
       label: "状態",
-      view: (p) => statusBadge(classifyCampaign(p)),
+      view: (p) => statusBadge(classifyCampaignStatus(p)),
     },
     {
       key: "name",
