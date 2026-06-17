@@ -1,9 +1,9 @@
 {
   "sourceId": "jcb-jpoint-partners",
   "sourceUrl": "https://j-pointpartner.jcb.co.jp/search",
-  "fetchedAt": "2026-05-31T22:06:37.070Z",
+  "fetchedAt": "2026-06-17T22:55:12.207Z",
   "promptVersion": "jcb-jpoint-vUnknown",
   "extractor": "jcb-jpoint",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): I have browsed the J-POINT パートナー search page. Now I need to extract the information as per the `systemInstruction`. Here's a breakdown of the extraction process: **1. Identify Programs (Multipliers)** I need to create programs for each unique multiplier, for both JCB W and JCB Gold cards. The mult"
+  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
 }

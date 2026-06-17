@@ -1,9 +1,9 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-06-10T14:06:24.452Z",
-  "promptVersion": "campaign-v3.1",
+  "fetchedAt": "2026-06-17T22:54:59.691Z",
+  "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] index=https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign 子ページ 2 件 (成功 1 / 失敗 1)\n✓ https://pay.rakuten.co.jp/campaign/pay-5and0day/?scid=wi_cash_cpn (5と0のつく日は楽天ペイ！お支払いが全額還元のチャンス！ 2026/6/1&#65374;2026/8/3 詳細を見る) → 0件\n  notes: 「特典 対象日ごとに抽選で100名さまに、楽天ポイントを対象日のご利用合計金額に対して全額還元」と記載されており、抽選による還元のため抽出対象外と判断しました。\n✗ https://pay.rakuten.co.jp/campaign/tokyo-gogo/?scid=wi_cash_cpn (楽天ペイ主催｜東京ポイントを交換するなら楽天ペイ！東京GOGOキャンペーン！ 2026/6/1&#65374;2026/7/1 詳細を見る) → nonJson\nindex notes: 抽選系、新規/初回利用系、紹介系、アプリ機能系、および楽天ペイメント・楽天Edy以外のサービスへのリンクを除外しました。"
+  "notes": "[crawl:index] index=https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign 子ページ 5 件 (成功 0 / 失敗 5)\n✗ https://pay.rakuten.co.jp/campaign/pay-5and0day/?scid=wi_cash_cpn (5と0のつく日は楽天ペイ！お支払いが全額還元のチャンス！ 2026/6/1～2026/8/3 詳細を見る) → nonJson\n✗ https://pay.rakuten.co.jp/campaign/tokyo-gogo/?scid=wi_cash_cpn (楽天ペイ主催｜東京ポイントを交換するなら楽天ペイ！東京GOGOキャンペーン！ 2026/6/1～2026/7/1 詳細を見る) → empty\n✗ https://pay.rakuten.co.jp/campaign/debut-bonus/?scid=wi_cash_cpn (最大1,000ポイント進呈！楽天ペイデビューボーナス 2026/6/1～2026/7/1 詳細を見る) → empty\n✗ https://pay.rakuten.co.jp/campaign/digital-payroll/?scid=wi_cash_cpn (楽天ペイ残高で給与を受け取った方限定！もれなく還元率アップ！ 2026/6/15～2026/8/3 詳細を見る) → empty\n✗ https://pay.rakuten.co.jp/campaign/edy-precharge/?scid=wi_cash_cpn (楽天ペイアプリからはじめて楽天Edyを登録すると今すぐ楽天Edy150円分がもらえる 常時開催 詳細を見る) → empty\nindex notes: 抽選系、友だち紹介、アプリ機能系、および楽天ペイ以外のサービスキャンペーンを除外しました。"
 }

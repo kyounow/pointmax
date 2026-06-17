@@ -3,6 +3,31 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-06-18 (auto 1 件 / review 143 件)
+
+- 平均 confidence: 0.90 / source 数: 14
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| Pontaポイント 提携店・サービス (公式) | 提携店舗 | 1 |
+
+### Review queue 内訳 (143 件)
+| 理由 | 件数 |
+|---|---:|
+| lowConfidence | 76 |
+| idCollision | 46 |
+| excludedCategory | 13 |
+| userBlocked | 8 |
+
+<details><summary>追加項目 1 件</summary>
+
+### Pontaポイント 提携店・サービス (公式) / 提携店舗 (1)
+- Pontaカード提示 0.5% → 羽田空港ペットホテル
+
+</details>
+
+---
+
 ## 2026-06-15 (auto 0 件 / review 33 件)
 
 - source 数: 14
