@@ -1,9 +1,9 @@
 {
   "sourceId": "jre-point-campaigns",
   "sourceUrl": "https://www.jrepoint.jp/campaign/list/",
-  "fetchedAt": "2026-05-31T22:04:47.488Z",
+  "fetchedAt": "2026-06-17T22:53:36.547Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The provided URL lists numerous campaigns, primarily for JR East's station buildings and \"Ekinaka\" (in-station) stores. Many of these are localized to specific station buildings (e.g., \"ビーンズ赤羽\", \"エスパル郡山\", \"アトレ吉祥寺\") and often feature daily or short-term \"X倍デー\" for individual shops within those facili"
+  "notes": "[crawl:index] index=https://www.jrepoint.jp/campaign/list/ 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: 提供されたリンク一覧の中に、キャンペーン詳細ページに該当するURLはありませんでした。"
 }

@@ -2,6 +2,40 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-06-18",
+      "generatedAt": "2026-06-17T22:55:47.376Z",
+      "totalCount": 1,
+      "avgConfidence": 0.902,
+      "sourcesProcessed": 14,
+      "bySource": [
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "count": 1,
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → 羽田空港ペットホテル",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 143,
+        "byReason": {
+          "idCollision": 46,
+          "lowConfidence": 76,
+          "userBlocked": 8,
+          "excludedCategory": 13
+        }
+      }
+    },
+    {
       "date": "2026-06-15",
       "generatedAt": "2026-06-14T22:18:17.846Z",
       "totalCount": 0,
