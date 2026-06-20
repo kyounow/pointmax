@@ -19,6 +19,18 @@ export const SEED_CARDS: Card[] = [
     defaultCurrencyId: "jal-mile",
   },
   {
+    // JALカードSuica 普通カード。CLUB-Aゴールド (jal-suica) と違い JRE→マイルは
+    // 1500pt→750マイル (0.5)。gate 用途で enabled:false (デフォルトはゴールド側が有効)。
+    // 保有者が「使う」を ON にすると edge jre-to-jal-normal が解放される。
+    // 両カード保有時は bestPath が max-product でゴールド (0.6667) を自動優先。
+    id: "jal-suica-normal",
+    name: "JALカードSuica（普通）",
+    grade: "普通",
+    defaultRate: 0.01,
+    defaultCurrencyId: "jal-mile",
+    enabled: false,
+  },
+  {
     id: "rakuten-card",
     name: "楽天カード",
     grade: "通常",

@@ -403,6 +403,53 @@ describe("MIGRATIONS v41 (WAON→JAL を aeon-card ゲート化)", () => {
   });
 });
 
+describe("MIGRATIONS v42 (jre-to-jal を CLUB-Aゴールド 0.6667 に修正)", () => {
+  const mkState = (rate: number): SeedShape => ({
+    cards: [],
+    currencies: [],
+    stores: [],
+    edges: [
+      {
+        id: "jre-to-jal",
+        fromCurrencyId: "jre",
+        toCurrencyId: "jal-mile",
+        rate,
+        requiredCardIds: ["jal-suica"],
+      },
+    ],
+    pointCards: [],
+    loyaltyRules: [],
+    paymentApps: [],
+  });
+
+  it("v42: rate 0.5 の既存ユーザは applicable、適用後 0.6667 になる", () => {
+    const state = mkState(0.5);
+    const plan = planMigrations(state, 41, 42, MIGRATIONS);
+    expect(plan).toHaveLength(1);
+    expect(plan[0].status).toBe("applicable");
+    const applied = applyMigrationsByKey(state, plan, autoApplicableKeys(plan));
+    const edge = applied.edges.find((e) => e.id === "jre-to-jal");
+    expect(edge?.rate).toBe(0.6667);
+  });
+
+  it("v42: 既に 0.6667 のユーザは alreadyApplied (no-op)", () => {
+    const state = mkState(0.6667);
+    const plan = planMigrations(state, 41, 42, MIGRATIONS);
+    expect(plan).toHaveLength(1);
+    expect(plan[0].status).toBe("alreadyApplied");
+  });
+
+  it("v42: rate を手編集済 (例 0.55) は conflict", () => {
+    const state = mkState(0.55);
+    const plan = planMigrations(state, 41, 42, MIGRATIONS);
+    expect(plan).toHaveLength(1);
+    expect(plan[0].status).toBe("conflict");
+    if (plan[0].status === "conflict") {
+      expect(plan[0].currentValue).toBe(0.55);
+    }
+  });
+});
+
 describe("MIGRATIONS v34 (ponta⇄d 相互交換廃止)", () => {
   it("v34: ponta-to-d / d-to-ponta が既存ユーザの edges から削除される", () => {
     const state: SeedShape = {

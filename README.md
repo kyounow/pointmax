@@ -250,7 +250,7 @@ PointMax は 2 つの version を独立管理:
 
 | 種類 | 用途 | 現在値 |
 |---|---|---|
-| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **41** |
+| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **42** |
 | `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **5** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
@@ -290,6 +290,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **v6.1.1** — `SyncUpdateModal` のクラッシュ修正。「アプリに反映」/「閉じる」押下で `visible` が false に変わる再レンダー時、早期 return より後ろに置かれた `useRef`/`useEffect` が Rules of Hooks 違反 ("Rendered fewer hooks than expected") を起こし全画面が白くなっていた。hooks を早期 return より前へ移動。SEED_VERSION 41 / PERSIST_SCHEMA 5 据え置き
 - **v6.2.0** — lint エラーを全解消し、CI ゲートを `lint:hooks` (rules-of-hooks のみ) から full `npm run lint` に昇格。`set-state-in-effect`/`immutability` は React 公認の「prop 変化時に state 調整」(render-guard) パターンで解消 (Calculator 同率展開・Dialog・EdgeDetailPanel)、`only-export-components` は React Flow の `nodeTypes`/`edgeTypes` と `useDialog`/`DialogContext` を別ファイルへ分離。暫定 `eslint.hooks.config.js` は撤去。挙動・SEED_VERSION 41・PERSIST_SCHEMA 5 据え置き
 - **v6.3.0** — キャンペーン収集/取込/期間ライフサイクル大幅強化 (PR #84-#92 の 9 本)。収集: 索引ハブの 2 段階クロール (`crawl: index`、実在リンク照合で捏造 URL 遮断) + 手動登録フォーム復活。取込: `sync:approve` (review 承認 1 コマンド化)・`PROGRAM_OVERRIDES` (rate/期間変更の実書き込み)・`REMOVED_PROGRAM_IDS` (期限切れ削除 tombstone)。期間: 日付判定のローカルタイム統一・`useToday` (日付跨ぎ自動更新)・終了カウントダウン・`recurringWeekdays` (曜日限定)・公式 program の更新/削除が既存ユーザーの端末にも伝播 (未編集分のみ、編集済みは保護)。tests 565→687。SEED_VERSION 41 / PERSIST_SCHEMA 5 据え置き
+- **v6.4.0** — JALカードSuica の JRE POINT → JAL マイル交換レート修正。CLUB-Aゴールド (`jal-suica`) を 1500pt→1000マイル (0.6667) に訂正 (従来 0.5 は普通カード相当の誤り)、普通カード版を新カード `jal-suica-normal` (enabled:false) + edge `jre-to-jal-normal` (1500pt→750マイル) として追加。両カード保有時はゴールドが優先。既存ユーザーには migration v42 で rate 修正を反映。SEED_VERSION 41→42 / PERSIST_SCHEMA 5 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版)。`ExtractorKind` は計 7 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
