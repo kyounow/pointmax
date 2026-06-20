@@ -236,4 +236,30 @@ describe("SEED_EDGES の通貨参照整合性", () => {
       expect(c?.enabled, `card ${id} は enabled:false 想定`).toBe(false);
     }
   });
+
+  // v6.4.0: JALカードSuica の JRE→JAL マイルをカード grade 別レートに分離
+  it("v6.4.0: jre-to-jal (CLUB-Aゴールド) は rate 0.6667 / requiredCardIds ['jal-suica']", () => {
+    const { edges } = seed();
+    const e = edges.find((x) => x.id === "jre-to-jal");
+    expect(e, "edge jre-to-jal が未登録").toBeDefined();
+    expect(e?.rate).toBe(0.6667);
+    expect(e?.requiredCardIds).toEqual(["jal-suica"]);
+  });
+
+  it("v6.4.0: jre-to-jal-normal (普通カード) は rate 0.5 / requiredCardIds ['jal-suica-normal']", () => {
+    const { edges } = seed();
+    const e = edges.find((x) => x.id === "jre-to-jal-normal");
+    expect(e, "edge jre-to-jal-normal が未登録").toBeDefined();
+    expect(e?.fromCurrencyId).toBe("jre");
+    expect(e?.toCurrencyId).toBe("jal-mile");
+    expect(e?.rate).toBe(0.5);
+    expect(e?.requiredCardIds).toEqual(["jal-suica-normal"]);
+  });
+
+  it("v6.4.0: gate カード jal-suica-normal が enabled:false で存在", () => {
+    const c = SEED_CARDS.find((x) => x.id === "jal-suica-normal");
+    expect(c, "card jal-suica-normal が未登録").toBeDefined();
+    expect(c?.enabled).toBe(false);
+    expect(c?.defaultCurrencyId).toBe("jal-mile");
+  });
 });

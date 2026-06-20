@@ -166,6 +166,23 @@ export function conflictItems(
 // v0.8 リリースで履歴をリセット。v1.0 以降の差分を積み上げる予定
 export const MIGRATIONS: VersionMigration[] = [
   {
+    toVersion: 42,
+    date: "2026-06-20",
+    changes: [
+      {
+        type: "updateField",
+        collection: "edges",
+        id: "jre-to-jal",
+        field: "rate",
+        from: 0.5,
+        to: 0.6667,
+        notes:
+          "JALカードSuica CLUB-Aゴールド の JRE→JAL マイルは 1500pt→1000マイル (0.6667) が正。" +
+          "従来 0.5 は普通カード相当だったため修正。普通カードは新 edge jre-to-jal-normal で別途表現。",
+      },
+    ],
+  },
+  {
     toVersion: 41,
     date: "2026-05-29",
     changes: [

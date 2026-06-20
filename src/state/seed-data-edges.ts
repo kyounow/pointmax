@@ -136,9 +136,19 @@ export const SEED_EDGES: ConversionEdge[] = [
     id: "jre-to-jal",
     fromCurrencyId: "jre",
     toCurrencyId: "jal-mile",
-    rate: 0.5,
+    rate: 0.6667, // 1500pt → 1000マイル (= 1000/1500)。CLUB-Aゴールド 優遇
     requiredCardIds: ["jal-suica"],
-    notes: "1500pt → 750マイル (JALカードSuica 会員特典)",
+    notes: "1500pt → 1000マイル (JALカードSuica CLUB-Aゴールド 会員特典)",
+  },
+  {
+    // 普通カード版。ゴールド (jre-to-jal, 0.6667) より低レート。
+    // 両カード保有時は bestPath が max-product でゴールド経路を自動選択する。
+    id: "jre-to-jal-normal",
+    fromCurrencyId: "jre",
+    toCurrencyId: "jal-mile",
+    rate: 0.5, // 1500pt → 750マイル。JALカードSuica 普通カード
+    requiredCardIds: ["jal-suica-normal"],
+    notes: "1500pt → 750マイル (JALカードSuica 普通カード 会員特典)",
   },
   {
     id: "jre-to-edy",

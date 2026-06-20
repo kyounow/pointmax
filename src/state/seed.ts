@@ -64,7 +64,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 41;
+export const SEED_VERSION = 42;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -80,6 +80,16 @@ export const SEED_CHANGELOG: {
   date: string;
   summary: string;
 }[] = [
+  {
+    version: 42,
+    date: "2026-06-20",
+    summary:
+      "v6.4.0: JALカードSuica の JRE POINT → JAL マイル交換レートを修正。" +
+      "CLUB-Aゴールド (jal-suica) を 1500pt→1000マイル (0.6667) に (従来 0.5 は普通カード相当の誤り)。" +
+      "普通カード版を新カード jal-suica-normal (enabled:false) + edge jre-to-jal-normal " +
+      "(1500pt→750マイル, 0.5) として新設。両カード保有時はゴールドが優先。" +
+      "既存ユーザーには migration v42 で rate 修正を反映。",
+  },
   {
     version: 41,
     date: "2026-05-29",

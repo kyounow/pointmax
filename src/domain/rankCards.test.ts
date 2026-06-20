@@ -493,6 +493,51 @@ describe("rankCards", () => {
     expect(result[0].reachable).toBe(false); // パスが見つからない
   });
 
+  // v6.4.0: ゴールド + 普通カード 両保有時、JRE→JAL マイルはゴールド (0.6667) が優先される
+  it("両カード保有時は jre-to-jal (ゴールド 0.6667) が jre-to-jal-normal (0.5) より優先される", () => {
+    // JRE を貯めるカード + ゴールド/普通の両 gate カードを保有
+    const cards: Card[] = [
+      { id: "view", name: "ビューカード", defaultRate: 0.01, defaultCurrencyId: "jre" },
+      { id: "jal-suica", name: "JALカードSuica", defaultRate: 0.01, defaultCurrencyId: "jal-mile" },
+      {
+        id: "jal-suica-normal",
+        name: "JALカードSuica（普通）",
+        defaultRate: 0.01,
+        defaultCurrencyId: "jal-mile",
+      },
+    ];
+    const edges: ConversionEdge[] = [
+      {
+        id: "jre-to-jal",
+        fromCurrencyId: "jre",
+        toCurrencyId: "jal-mile",
+        rate: 0.6667,
+        requiredCardIds: ["jal-suica"],
+      },
+      {
+        id: "jre-to-jal-normal",
+        fromCurrencyId: "jre",
+        toCurrencyId: "jal-mile",
+        rate: 0.5,
+        requiredCardIds: ["jal-suica-normal"],
+      },
+    ];
+    const result = rankCardsRankings({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "jal-mile",
+      cards,
+      stores: baseStores,
+      edges,
+    });
+    const view = result.find((r) => r.card.id === "view");
+    expect(view, "view カードの ranking が無い").toBeDefined();
+    expect(view?.reachable).toBe(true);
+    // 100 JRE → ゴールド経路 (0.6667) で 66.67 マイル。普通 (0.5=50) には劣化しない
+    expect(view?.pathSteps).toHaveLength(1);
+    expect(view?.pathSteps[0].id).toBe("jre-to-jal");
+    expect(view?.finalAmount).toBeCloseTo(66.67, 2);
+  });
+
   // v3.6.0 で発覚したバグの回帰テスト:
   // 「target 通貨に primary 経路で到達できないが、chargeBased paymentApp の
   //   addOn 経由で earn できる場合、reachable=true で earn 量を正しく表示する」
