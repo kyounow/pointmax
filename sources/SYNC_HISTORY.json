@@ -2,6 +2,127 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-06-25",
+      "generatedAt": "2026-06-24T22:23:49.791Z",
+      "totalCount": 13,
+      "avgConfidence": 0.902,
+      "sourcesProcessed": 14,
+      "bySource": [
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "count": 13,
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) W向け → マクドナルド",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) W向け → すき家",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) W向け → 吉野家",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) W向け → ガスト",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) W向け → バーミヤン",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) W向け → サンマルクカフェ",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) W向け → ジョナサン",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) W向け → ジョーシン",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) W向け → 丸善ジュンク堂書店",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) W向け → コジマ",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) W向け → ソフマップ",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) W向け → 三井のカーシェアーズ",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) W向け → 好日山荘",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 297,
+        "byReason": {
+          "idCollision": 33,
+          "lowConfidence": 146,
+          "missingStoreBody": 44,
+          "missingProgramBody": 26,
+          "excludedCategory": 20,
+          "userBlocked": 4,
+          "storeAdditionsDisabled": 24
+        }
+      }
+    },
+    {
       "date": "2026-06-22",
       "generatedAt": "2026-06-21T22:22:41.635Z",
       "totalCount": 0,

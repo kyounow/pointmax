@@ -1,9 +1,9 @@
 {
   "sourceId": "smbc-v-gold-7percent",
   "sourceUrl": "https://www.smbc-card.com/mem/cardinfo/cardinfo9001629.jsp",
-  "fetchedAt": "2026-06-17T22:52:06.551Z",
+  "fetchedAt": "2026-06-24T22:19:54.692Z",
   "promptVersion": "card-vUnknown",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The page describes a \"対象のコンビニ・飲食店で最大8％還元！\" (Up to 8%還元 at eligible convenience stores and restaurants!) program for various Sumitomo Mitsui Cards, including the `smbc-v-gold-7percent` card. **Default Rate:** The page states \"上記ポイント還元率は、通常のポイント分を含んだ還元率です。\" and under \"ポイント付与について\" -> \"通常のポイント分\" it say"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): I have browsed the URL. Now I need to extract the relevant information and format it as JSON. Here's a summary of the key information from the page: * **Default Rate**: The page states \"合計200円（税込）につき、0.5％～1％ポイント還元\" for \"通常のポイント分\". For \"三井住友カード ゴールド VISA/ Mastercard\" which is the context of `smbc-"
 }

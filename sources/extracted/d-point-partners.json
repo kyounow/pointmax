@@ -1,28 +1,204 @@
 {
   "sourceId": "d-point-partners",
   "sourceUrl": "https://dpoint.docomo.ne.jp/content/feature/point_realstore.html",
-  "fetchedAt": "2026-06-17T22:50:05.467Z",
+  "fetchedAt": "2026-06-24T22:15:47.401Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
   "stores": [
     {
-      "storeId": "wendys-first-kitchen",
+      "storeId": "conv-lawson",
+      "name": "ローソン",
+      "category": "コンビニ",
+      "evidenceQuote": "コンビニでつかう：ローソン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "conv-familymart",
+      "name": "ファミリーマート",
+      "category": "コンビニ",
+      "evidenceQuote": "コンビニでつかう：ファミリーマート",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "lawson-store100",
+      "name": "ローソンストア100",
+      "category": "コンビニ",
+      "evidenceQuote": "コンビニでつかう：ローソンストア100",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "poplar",
+      "name": "ポプラ",
+      "category": "コンビニ",
+      "evidenceQuote": "コンビニでつかう：ポプラ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "conv-7eleven",
+      "name": "セブン‐イレブン",
+      "category": "コンビニ",
+      "evidenceQuote": "コンビニでつかう：セブン‐イレブン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "conv-ministop",
+      "name": "ミニストップ",
+      "category": "コンビニ",
+      "evidenceQuote": "コンビニでつかう：ミニストップ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "seicomart",
+      "name": "セイコーマート",
+      "category": "コンビニ",
+      "evidenceQuote": "コンビニでつかう：セイコーマート",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "daily-yamazaki",
+      "name": "デイリーヤマザキ",
+      "category": "コンビニ",
+      "evidenceQuote": "コンビニでつかう：デイリーヤマザキ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mcdonalds",
+      "name": "マクドナルド",
+      "category": "飲食",
+      "evidenceQuote": "ファストフードでつかう：マクドナルド",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sukiya",
+      "name": "すき家",
+      "category": "飲食",
+      "evidenceQuote": "ファストフードでつかう：すき家",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mister-donut",
+      "name": "ミスタードーナツ",
+      "category": "飲食",
+      "evidenceQuote": "ファストフードでつかう：ミスタードーナツ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mos-burger",
+      "name": "モスバーガー",
+      "category": "飲食",
+      "evidenceQuote": "ファストフードでつかう：モスバーガー",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "wendys-firstkitchen",
       "name": "ウェンディーズ・ファーストキッチン",
       "category": "飲食",
-      "evidenceQuote": "ウェンディーズ・ファーストキッチン: dポイントをつかおう",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ファストフードでつかう：ウェンディーズ・ファーストキッチン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
       "storeId": "matsuya",
       "name": "松屋",
       "category": "飲食",
-      "evidenceQuote": "松屋: dポイントをつかおう",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "ファストフードでつかう：松屋",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yoshinoya",
+      "name": "吉野家",
+      "category": "飲食",
+      "evidenceQuote": "ファストフードでつかう：吉野家",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kfc",
+      "name": "ケンタッキーフライドチキン",
+      "category": "飲食",
+      "evidenceQuote": "ファストフードでつかう：ケンタッキーフライドチキン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kappa-sushi",
+      "name": "かっぱ寿司",
+      "category": "飲食",
+      "evidenceQuote": "レストランでつかう：かっぱ寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "gusto",
+      "name": "ガスト",
+      "category": "飲食",
+      "evidenceQuote": "レストランでつかう：ガスト",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hamazushi",
+      "name": "はま寿司",
+      "category": "飲食",
+      "evidenceQuote": "レストランでつかう：はま寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kamakura-pasta",
+      "name": "鎌倉パスタ",
+      "category": "飲食",
+      "evidenceQuote": "レストランでつかう：鎌倉パスタ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hidakaya",
+      "name": "日高屋",
+      "category": "飲食",
+      "evidenceQuote": "レストランでつかう：日高屋",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "gyukaku",
+      "name": "牛角",
+      "category": "飲食",
+      "evidenceQuote": "レストランでつかう：牛角",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "uobei",
+      "name": "魚べい",
+      "category": "飲食",
+      "evidenceQuote": "レストランでつかう：魚べい",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kura-sushi",
+      "name": "くら寿司",
+      "category": "飲食",
+      "evidenceQuote": "レストランでつかう：くら寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     }
   ],
   "loyaltyRules": [],
-  "notes": "このページはdポイントの『利用（支払い）』に関する加盟店情報であり、dポイントカード提示による『獲得』に関する還元率の記載がありませんでした。そのためloyaltyRulesは抽出されませんでした。一部店舗はd払いのみ利用可能と明記されています。主要チェーン店のみをstoresに追加しました。"
+  "notes": "このページはdポイントを『使える』店舗のリストであり、dポイントカード提示で『貯まる』還元率については記載がありませんでした。d払いのみ対応の店舗も含まれます。そのため、loyaltyRulesは抽出していません。"
 }
