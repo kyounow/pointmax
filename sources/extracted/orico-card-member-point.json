@@ -1,19 +1,32 @@
 {
   "sourceId": "orico-card-member-point",
   "sourceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-  "fetchedAt": "2026-06-17T22:53:24.495Z",
+  "fetchedAt": "2026-06-24T22:20:32.550Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Orico Card THE POINTの基本還元率、入会後キャンペーン、オリコモール利用時の還元率を抽出。JCB, Mastercardブランド対応。 [sync] schema 違反で除去したアイテム: cards:1, storeRules:1。",
+  "notes": "「入会後6ヵ月間は還元率が2.0％にアップ」はカード全体のキャンペーンであり、特定店舗・カテゴリのルールではないためstoreRules/categoryRulesには含めません。",
   "cards": [
     {
-      "cardId": "orico-the-point",
+      "cardId": "orico-card-member-point",
       "defaultRate": 0.01,
       "defaultCurrencyId": "orico-pt",
       "evidenceQuote": "還元率は常に1.0％以上！100円で1オリコポイントがたまる！",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/#features",
       "explicitness": 1,
       "ambiguity": 0
+    }
+  ],
+  "storeRules": [
+    {
+      "cardId": "orico-card-member-point",
+      "storeId": "orico-mall",
+      "rate": 0.015,
+      "currencyId": "orico-pt",
+      "evidenceQuote": "オリコモールのご利用でさらに0.5％のオリコポイントを特別加算！",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/#features",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     }
   ]
 }

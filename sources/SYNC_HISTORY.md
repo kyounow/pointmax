@@ -3,6 +3,46 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-06-25 (auto 13 件 / review 297 件)
+
+- 平均 confidence: 0.90 / source 数: 14
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| JCB J-POINT パートナー (旧 Oki Doki ランド、公式) | 提携店舗 | 13 |
+
+### Review queue 内訳 (297 件)
+| 理由 | 件数 |
+|---|---:|
+| lowConfidence | 146 |
+| missingStoreBody | 44 |
+| idCollision | 33 |
+| missingProgramBody | 26 |
+| storeAdditionsDisabled | 24 |
+| excludedCategory | 20 |
+| userBlocked | 4 |
+
+<details><summary>追加項目 13 件</summary>
+
+### JCB J-POINT パートナー (旧 Oki Doki ランド、公式) / 提携店舗 (13)
+- J-POINT パートナー (20倍) W向け → マクドナルド
+- J-POINT パートナー (20倍) W向け → すき家
+- J-POINT パートナー (20倍) W向け → 吉野家
+- J-POINT パートナー (20倍) W向け → ガスト
+- J-POINT パートナー (20倍) W向け → バーミヤン
+- J-POINT パートナー (20倍) W向け → サンマルクカフェ
+- J-POINT パートナー (20倍) W向け → ジョナサン
+- J-POINT パートナー (2倍) W向け → ジョーシン
+- J-POINT パートナー (2倍) W向け → 丸善ジュンク堂書店
+- J-POINT パートナー (2倍) W向け → コジマ
+- J-POINT パートナー (2倍) W向け → ソフマップ
+- J-POINT パートナー (2倍) W向け → 三井のカーシェアーズ
+- J-POINT パートナー (2倍) W向け → 好日山荘
+
+</details>
+
+---
+
 ## 2026-06-22 (auto 0 件 / review 99 件)
 
 - source 数: 14
