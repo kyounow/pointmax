@@ -1005,7 +1005,27 @@ describe("proposePrograms (PR-D1)", () => {
       expect(ps[0].reviewReason).toBe("idCollision");
     });
 
-    it("confidence < 0.95 なら auto 不可 (campaign 用厳格化)", () => {
+    it("confidence ≥ 0.90 (逐語根拠の健全 campaign) は auto 可 (閾値 0.95→0.90 緩和)", () => {
+      const data = baseSource({
+        extractor: "campaign",
+        programs: [
+          {
+            programId: "prog-midconf",
+            pointCardId: "jre-pointcard",
+            rate: 0.03,
+            currencyId: "jre",
+            validTo: futureValidTo,
+            evidenceQuote: "3%、期間 2099年12月31日まで",
+            explicitness: 0.95, // 0.95 * (1 - 0.05) = 0.9025 ≥ 0.90 → auto
+            ambiguity: 0.05,
+          },
+        ],
+      });
+      const ps = proposePrograms(data, richSeed);
+      expect(ps[0].reviewReason).toBeUndefined(); // ← 旧 0.95 では idCollision だった
+    });
+
+    it("confidence < 0.90 なら auto 不可 (曖昧な抽出は従来どおり review)", () => {
       const data = baseSource({
         extractor: "campaign",
         programs: [
@@ -1016,8 +1036,8 @@ describe("proposePrograms (PR-D1)", () => {
             currencyId: "jre",
             validTo: futureValidTo,
             evidenceQuote: "3%、期間 2099年12月31日まで",
-            explicitness: 0.95, // 0.95 * (1 - 0.05) = 0.9025 < 0.95
-            ambiguity: 0.05,
+            explicitness: 0.9, // 0.9 * (1 - 0.1) = 0.81 < 0.90
+            ambiguity: 0.1,
           },
         ],
       });
@@ -1658,16 +1678,35 @@ describe("proposeExpiredCampaignDeletions", () => {
     expect(proposeExpiredCampaignDeletions(s, now)).toEqual([]);
   });
 
-  it("validTo が grace 超過 (30日以上前) は DeleteProposal を返す", () => {
+  it("validTo が grace 超過 (30日以上前) は自動削除 DeleteProposal (reviewReason 無し)", () => {
     const s = makeSeed([{ ...baseProgram, validTo: "2026-04-01" }]); // 56日前
     const ps = proposeExpiredCampaignDeletions(s, now);
     expect(ps).toHaveLength(1);
     expect(ps[0].type).toBe("delete");
     expect(ps[0].collection).toBe("programs");
     expect((ps[0] as { id: string }).id).toBe("prog-test");
-    expect(ps[0].reviewReason).toBe("expiredCampaign");
+    expect(ps[0].reviewReason).toBeUndefined(); // ← 自動削除 (auto)
     expect(ps[0].evidence.evidenceQuote).toContain("validTo=2026-04-01");
     expect(ps[0].evidence.evidenceQuote).toMatch(/5[0-9]日前/); // TZ 差で 55-56 のレンジ
+  });
+
+  it("延長ガード: 同 run で期間変更がある program は自動削除せず review (expiredCampaign)", () => {
+    const s = makeSeed([{ ...baseProgram, validTo: "2026-04-01" }]); // 56日前
+    const extended = new Set(["prog-test"]);
+    const ps = proposeExpiredCampaignDeletions(s, now, undefined, extended);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].type).toBe("delete");
+    expect((ps[0] as { id: string }).id).toBe("prog-test");
+    expect(ps[0].reviewReason).toBe("expiredCampaign"); // ← 延長中の誤削除防止で人手判断へ
+    expect(ps[0].evidence.evidenceQuote).toContain("期間変更提案あり");
+  });
+
+  it("延長ガードは対象 id のみ: 別 id の延長は当該 program の自動削除を妨げない", () => {
+    const s = makeSeed([{ ...baseProgram, validTo: "2026-04-01" }]); // 56日前
+    const extended = new Set(["prog-other"]); // prog-test とは別
+    const ps = proposeExpiredCampaignDeletions(s, now, undefined, extended);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBeUndefined(); // ← 自動削除のまま
   });
 
   it("関連 memberships が evidence に列挙される (5 件まで)", () => {

@@ -239,8 +239,9 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview。反映は `seed-additions.ts` の `PROGRAM_OVERRIDES` (部分上書き) 経由で、手書き seed ファイルは書き換えない |
 | 既存 program の **期間変更** (validFrom/validTo) | ❌ しない (`periodChange` で needsReview) | キャンペーン延長/期間訂正の検知。承認は `npm run sync:approve -- <ID>` → `PROGRAM_OVERRIDES` 経由で反映 |
 | 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge |
-| 新規 **programs / cards / paymentApps** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
-| **削除提案** (validTo+30 日経過 campaign など) | ❌ しない (`expiredCampaign` で needsReview) | 誤削除防止のため必ず人手レビュー。承認は `npm run sync:approve -- <ID>` → tombstone (`REMOVED_PROGRAM_IDS`) 化。seed から program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。ユーザー編集済みは保護) |
+| 新規 **campaign program** (campaign extractor 由来) | ✅ する (安全条件を全て満たせば) | `isCampaignAutoMergeable` の全ゲート通過時のみ auto: 期間明示 (validTo 未来) / rate≤30% / 既存参照整合 / lifestyle 無し / confidence ≥ **0.90**。1 つでも外れたら needsReview (`idCollision`)。confidence は逐語根拠つきキャンペーンが ≥0.90 に乗るよう campaign プロンプトを校正 (v3.3、`explicitness=1.0`)。閾値は旧 0.95 → 0.90 (構造ゲートが既に強力なため) |
+| 新規 **cards / paymentApps / 非キャンペーン program** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
+| **期限切れ campaign の削除** (validTo+30 日経過) | ✅ する (**自動削除**) | 既に非アクティブで還元計算に影響しないためクリーンアップを自動化。tombstone (`REMOVED_PROGRAM_IDS`) 化で program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。編集済みは保護)。**安全弁**: 同 run で期間変更 (`periodChange`) が提案されている program は延長中の可能性を考慮し自動削除せず needsReview (`expiredCampaign`)。件数 cap / apply 後の test・build gate / `autoMergeEnabled` も従来どおり適用 |
 
 ---
 

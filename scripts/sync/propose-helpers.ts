@@ -730,8 +730,23 @@ export function buildRateUpdate(
 // validTo + grace 日数を経過した program に対する DeleteProposal を生成。
 // Calculator は isRuleActiveAt() で自動 skip 済みのため機能影響なしだが、
 // seed の可読性/サイズ維持のため定期的にクリーンアップ。
-// 誤削除防止のため必ず needsReview (=expiredCampaign 理由付き) で投入し、
-// 人手承認 → seed-data-programs.ts (or seed-additions.ts) から手動削除する運用。
+//
+// 【自動削除 (週次 cron)】
+// 期限切れ削除は本質的に低リスク (既に非アクティブで還元計算に効いていない) なため、
+// grace 経過済の削除は autoApplicable (reviewReason 無し) として投入し、週次 cron で
+// 自動適用する。適用先は apply-proposals.ts の delete/programs → REMOVED_PROGRAM_IDS
+// (tombstone)。seed から program + memberships が cascade 除外され、mergeSeed が
+// 既存ユーザーの localStorage からも除去する (未編集の公式由来のみ)。安全弁は
+// 既存機構を流用: maxAutoChangesPerRun (件数 cap)、apply 後の `npm test && npm run
+// build` ゲート、autoMergeEnabled マスタスイッチ。
+//
+// 【延長ガード (extendedProgramIds)】
+// tombstone は永久フィルタ (seed() が同 id を恒久的に除外) のため、誤って延長中の
+// キャンペーンを削除すると再 fetch しても同 id は復活しない。これを防ぐため、同一 run で
+// 期間変更 (validFrom/validTo の periodChange) が提案された program は自動削除せず、
+// reviewReason="expiredCampaign" で needsReview に留める (人手が延長=periodChange 承認 か
+// 終了=本削除承認 を選べる)。extendedProgramIds は diff-and-propose.ts が Phase 1 の
+// periodChange 提案から集約して渡す。
 // ───────────────────────────────────────────────────────────────
 
 export const EXPIRED_CAMPAIGN_GRACE_DAYS = 30;
@@ -751,6 +766,7 @@ export function proposeExpiredCampaignDeletions(
   current: SeedShape,
   now: Date = new Date(),
   graceDays: number = EXPIRED_CAMPAIGN_GRACE_DAYS,
+  extendedProgramIds: ReadonlySet<string> = new Set(),
 ): Proposal[] {
   const cutoffMs = now.getTime() - graceDays * 24 * 60 * 60 * 1000;
   const memberships = current.memberships ?? [];
@@ -762,6 +778,10 @@ export function proposeExpiredCampaignDeletions(
     if (validToMs === null) continue;
     if (validToMs > cutoffMs) continue; // grace 内なのでスキップ
 
+    // 同一 run で期間変更 (延長/訂正) が提案されている program は自動削除しない。
+    // 延長中キャンペーンを tombstone 化すると復活不可になるため、人手判断に回す。
+    const hasPendingExtension = extendedProgramIds.has(p.id);
+
     const cascade = memberships.filter((m) => m.programId === p.id);
     const daysExpired = Math.floor(
       (now.getTime() - validToMs) / (1000 * 60 * 60 * 24),
@@ -770,8 +790,11 @@ export function proposeExpiredCampaignDeletions(
     const cascadeStoreIds = cascade.map((m) => m.storeId);
     const cascadeSummary =
       cascade.length > 0
-        ? ` 関連 memberships ${cascade.length} 件も同時削除推奨 (${cascadeStoreIds.slice(0, 5).join(", ")}${cascade.length > 5 ? ` 他 ${cascade.length - 5} 件` : ""})`
+        ? ` 関連 memberships ${cascade.length} 件も同時削除 (${cascadeStoreIds.slice(0, 5).join(", ")}${cascade.length > 5 ? ` 他 ${cascade.length - 5} 件` : ""})`
         : "";
+    const extensionNote = hasPendingExtension
+      ? " ⚠ 同 run で期間変更提案あり: 延長なら periodChange を、終了なら本削除を承認。"
+      : "";
 
     proposals.push({
       type: "delete",
@@ -781,11 +804,12 @@ export function proposeExpiredCampaignDeletions(
       confidence: 1.0,
       evidence: {
         evidenceQuote:
-          `validTo=${p.validTo} (${daysExpired}日前に終了)。${cascadeSummary}`.trim(),
+          `validTo=${p.validTo} (${daysExpired}日前に終了)。${cascadeSummary}${extensionNote}`.trim(),
         explicitness: 1.0,
         ambiguity: 0,
       },
-      reviewReason: "expiredCampaign",
+      // grace 経過済は自動削除 (reviewReason 無し)。ただし延長提案中は人手判断へ。
+      reviewReason: hasPendingExtension ? "expiredCampaign" : undefined,
     });
   }
   return proposals;
@@ -804,7 +828,7 @@ export function proposeExpiredCampaignDeletions(
 //    系の lifestyle 条件付き program の混入を防ぐ)
 // 2. validTo 必須 + 未来日 (既に終了した campaign は提案不要)
 // 3. rate ∈ (0, CAMPAIGN_AUTO_RATE_MAX] (30% を超える率は誤抽出疑い)
-// 4. confidence ≥ CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD (通常 0.9 → 0.95)
+// 4. confidence ≥ CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD (0.90)
 // 5. cardIds / pointCardId / paymentAppId / currencyId が全て seed に
 //    存在 (未定義の参照を防ぐ)
 // 6. lifestyle 系キーワード除外 (memory feedback_pointmax_lifestyle_programs
@@ -812,8 +836,18 @@ export function proposeExpiredCampaignDeletions(
 // 7. proposePrograms の他の reviewReason (selfReportedExclusion /
 //    unsupportedDateClaim / zeroOrInvalidRate) に該当しない (=
 //    その他のチェックは従来どおり通った後の最終ゲートとして本関数)
-
-export const CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD = 0.95;
+//
+// 【校正メモ (confidence 閾値 0.95 → 0.90)】
+// 旧 0.95 は、campaign extractor が逐語根拠つき (= 上記 1-3,5-7 の構造条件を
+// 全て満たした) 健全キャンペーンに対しても実質到達不能だった。Gemini の自然な
+// 自己評価は explicitness=0.9 / ambiguity=0.1 (= プロンプト模範例の数値) で
+// confidence=0.81 となり、「期間明示 + 既存参照 + 妥当 rate + lifestyle 無し」を
+// 満たしてもキャンペーンが一切 auto 反映されない状態だった (REVIEW_QUEUE の
+// lowConfidence 過半数の主因)。本関数の他 6 条件 (特に期間の逐語明記・rate≤30%・
+// 参照整合) が既に強力な構造ゲートになっているため、自己申告 confidence の足切りは
+// 0.90 で十分。併せて campaign.prompt.md の校正 (逐語根拠は explicitness=1.0) で
+// 健全キャンペーンが ≥0.90 に乗るようにした。
+export const CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD = 0.9;
 export const CAMPAIGN_AUTO_RATE_MAX = 0.3;
 
 // memory: feedback_pointmax_lifestyle_programs.md の禁止カテゴリ。
