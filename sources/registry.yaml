@@ -17,7 +17,7 @@ version: 1
 # 新規 extractor 追加 / version bump 時はここを更新。sync:report が SYNC_HISTORY に
 # version matrix を記録するために参照 (省略しても動作影響なし)。
 extractorVersions:
-  campaign: v3.2  # 2026-06-11 C-6: recurringWeekdays (曜日限定) 追加
+  campaign: v3.3  # 2026-06-25: confidence 校正 (逐語根拠=explicitness 1.0) + auto 閾値 0.95→0.90
   campaign-index: v1.0  # crawl: index の 1 段目 (子 URL 列挙専用、ExtractedSource は出力しない)
   card: v1.1
   jal-tokuyaku: v1.0

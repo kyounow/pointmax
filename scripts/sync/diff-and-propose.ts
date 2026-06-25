@@ -431,10 +431,31 @@ function main(): void {
   }
 
   // Phase 2: 期限切れキャンペーンの削除提案 (seed 全体 1 回だけ評価、ソース非依存)
-  const expiredProposals = proposeExpiredCampaignDeletions(current);
+  //   grace 経過済は autoApplicable (自動削除) として投入するが、同一 run で
+  //   期間変更 (periodChange = validFrom/validTo の updateField) が出ている program は
+  //   延長中の可能性があるため自動削除せず needsReview に留める (tombstone は復活不可)。
+  const extendedProgramIds = new Set<string>();
+  for (const p of allProposals) {
+    if (
+      p.type === "updateField" &&
+      p.collection === "programs" &&
+      (p.field === "validTo" || p.field === "validFrom")
+    ) {
+      extendedProgramIds.add(p.id);
+    }
+  }
+  const expiredProposals = proposeExpiredCampaignDeletions(
+    current,
+    undefined,
+    undefined,
+    extendedProgramIds,
+  );
   if (expiredProposals.length > 0) {
+    const autoCount = expiredProposals.filter((p) => !p.reviewReason).length;
+    const guardedCount = expiredProposals.length - autoCount;
     console.log(
-      `🧹 expired-cleanup: ${expiredProposals.length} 件の campaign を削除候補に追加`,
+      `🧹 expired-cleanup: ${expiredProposals.length} 件の期限切れ campaign を検出` +
+        ` (自動削除 ${autoCount} 件 / 延長提案ありで review 保留 ${guardedCount} 件)`,
     );
   }
   allProposals.push(...expiredProposals);

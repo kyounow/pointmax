@@ -403,7 +403,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   missingStoreBody: "🟠 missingStoreBody (store 本体なし membership)",
   missingProgramBody: "🟠 missingProgramBody (program 本体なし membership)",
   storeAdditionsDisabled: "⏸ storeAdditionsDisabled (store 追加は手動キュレ運用)",
-  expiredCampaign: "🟠 expiredCampaign (validTo+30日経過、削除候補)",
+  expiredCampaign: "🟠 expiredCampaign (期限切れだが同 run で期間変更提案あり、人手判断)",
   periodChange: "🟣 periodChange (キャンペーン期間の変更/延長)",
 };
 
@@ -451,10 +451,10 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "ここに列挙された店舗は cron が検知した「seed に未追加の店舗候補」で、必要な場合は手動で seed-data-stores.ts に追加 → 次回 cron で関連 membership が自動取り込まれる。" +
     "全件無視も OK (リストとしての参照のみ)。",
   expiredCampaign:
-    "validTo が 30 日以上前に終了した campaign。Calculator では isRuleActiveAt() で自動 skip されているため機能的影響なし、" +
-    "seed のサイズ/可読性のために削除を提案。承認する場合は `npm run sync:approve -- <ID>` — tombstone (REMOVED_PROGRAM_IDS) 化され、" +
-    "seed から program + 関連 memberships が cascade 除外、既存ユーザーの端末からも次回更新で除去される (手動の seed ファイル編集は不要)。" +
-    "翌年同条件で再開する季節 campaign の場合は削除せず validTo の periodChange (延長) で対応。",
+    "validTo が 30 日以上前に終了した campaign。通常はこの run で**自動削除** (auto-sync PR で tombstone 化) されるが、" +
+    "**同一 run で期間変更 (periodChange) が提案されている**ため、延長中の可能性を考慮して自動削除せず人手判断に回した項目。" +
+    "延長を反映するなら該当 program の periodChange を `npm run sync:approve` で承認、本当に終了したのなら本削除 (delete) を承認する。" +
+    "tombstone は復活不可 (同 id は seed から恒久除外) のため、延長中キャンペーンを誤って tombstone 化しないようにこのガードが働く。",
   periodChange:
     "既存 program の validFrom/validTo が公式ページの記載と異なる (キャンペーン延長 / 期間訂正)。" +
     "evidenceQuote の期間根拠を確認し、正しければ sync:approve で承認 → PROGRAM_OVERRIDES 経由で seed に反映される。" +
