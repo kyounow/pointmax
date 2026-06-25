@@ -1,11 +1,11 @@
 {
   "sourceId": "jal-card-tokuyaku-list",
   "sourceUrl": "https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201",
-  "fetchedAt": "2026-06-24T22:14:51.258Z",
+  "fetchedAt": "2026-06-25T14:09:55.624Z",
   "promptVersion": "jal-tokuyaku-v1.1",
   "extractor": "jal-tokuyaku",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "提供されたURLは「レストラン・予約サイト」カテゴリの検索結果であり、掲載店舗のほとんどが地域限定の個店でした。抽出スコープ「chains-only」に基づき、全国チェーンであるロイヤルホストのみを抽出しました。",
+  "notes": "ページには多数の店舗がリストされていますが、抽出スコープの「chains-only」に基づき、全国チェーンと判断できる「ロイヤルホスト」のみを抽出しました。その他は地域密着型の店舗と判断し対象外としました。また、ページは複数ページに分かれていますが、初回表示の20件を基に判断しました。",
   "categoryRules": [
     {
       "cardId": "jal-suica",
@@ -22,7 +22,7 @@
       "storeId": "royal-host",
       "name": "ロイヤルホスト",
       "category": "JAL特約店",
-      "evidenceQuote": "ロイヤルホスト JAL CARD 決済でマイルが2倍",
+      "evidenceQuote": "ロイヤルホスト 決済でマイルが 2 倍",
       "explicitness": 0.9,
       "ambiguity": 0.05
     }

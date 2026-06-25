@@ -1,3808 +1,32 @@
 {
-  "generatedAt": "2026-06-24T22:23:49.791Z",
+  "generatedAt": "2026-06-25T14:14:10.549Z",
   "fromSeedVersion": 42,
   "toSeedVersion": 42,
-  "autoApplicable": [
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-20x",
-        "storeId": "mcdonalds"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "マクドナルド（モバイルオーダー・マックデリバリー(R)サービス限定）ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-664914d2f0"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-20x",
-        "storeId": "sukiya"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "すき家 ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-34119651ef"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-20x",
-        "storeId": "yoshinoya"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "吉野家 ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-f2c51cd70d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-20x",
-        "storeId": "gusto"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ガスト ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-e2ca5e0b20"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-20x",
-        "storeId": "bamiyan"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "バーミヤン ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-d02e91c4b8"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-20x",
-        "storeId": "saint-marc-cafe"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "サンマルクカフェ ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-923185adb0"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-20x",
-        "storeId": "jonathan"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ジョナサン ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-0fe40285cc"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "joshin"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ジョーシン ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-8deef642fa"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "maruzen-junkudo-shoten"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "丸善・ジュンク堂書店 ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-51f70e0c9b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "kojima"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コジマ ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-3d0f780228"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "softmap"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ソフマップ ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-881e99c13d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "mitsui-car-shares"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "三井のカーシェアーズ ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-99049b21c3"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "kojitsu-sanso"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "好日山荘 ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-dc29e378b2"
-    }
-  ],
+  "autoApplicable": [],
   "needsReview": [
     {
       "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-d-pay-campaign-lawson-20260715",
-        "name": "ローソン限定！d払いでお買物がお得に！",
-        "rate": 0.1,
-        "currencyId": "d-pt",
-        "paymentAppId": "pa-d-pay",
-        "bonusType": "primary",
-        "validFrom": "2026-07-01",
-        "validTo": "2026-07-15"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "期間: 2026年7月1日(水)～2026年7月15日(水). 全国のローソン、ナチュラルローソン、ローソンストア100でd払いでお支払いいただくと、dポイントが10%還元されます。",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-1b630f6f30"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-d-pay-campaign-マツモトキヨシグループ-20260714",
-        "name": "マツモトキヨシグループ d払い利用で+5%還元",
-        "rate": 0.05,
-        "currencyId": "d-pt",
-        "paymentAppId": "pa-d-pay",
-        "bonusType": "addOn",
-        "validFrom": "2026-06-15",
-        "validTo": "2026-07-14"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "期間: 2026年6月15日(日)～2026年7月14日(月). 全国のマツモトキヨシ、ココカラファインでd払いでお支払いいただくと、通常の還元に加えて+5%のdポイントを還元いたします。",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-849f980388"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-d-pay-campaign-eneos-20260630",
-        "name": "ENEOS d払い2%還元キャンペーン",
-        "rate": 0.02,
-        "currencyId": "d-pt",
-        "paymentAppId": "pa-d-pay",
-        "bonusType": "primary",
-        "validFrom": "2026-06-01",
-        "validTo": "2026-06-30"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "期間: 2026年6月1日(月)～2026年6月30日(火). ENEOSのサービスステーションでd払いを利用すると、dポイントが2%還元されます。",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-bb07789a4f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-d-pay-campaign-ドラッグユタカ-20260731",
-        "name": "ドラッグユタカ d払い+3%還元",
-        "rate": 0.03,
-        "currencyId": "d-pt",
-        "paymentAppId": "pa-d-pay",
-        "bonusType": "addOn",
-        "validFrom": "2026-07-01",
-        "validTo": "2026-07-31"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "期間: 2026年7月1日(水)～2026年7月31日(金). 全国のドラッグユタカでd払いを利用すると、通常の還元に加えて+3%のdポイントを還元いたします。",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-b74d57980b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-d-pay-campaign-ヤマダデンキ-20260720",
-        "name": "ヤマダデンキ d払いキャンペーン",
-        "rate": 0.05,
-        "currencyId": "d-pt",
-        "paymentAppId": "pa-d-pay",
-        "bonusType": "primary",
-        "validFrom": "2026-07-10",
-        "validTo": "2026-07-20"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "期間: 2026年7月10日(金)～2026年7月20日(月). 全国のヤマダデンキでd払いを利用すると、dポイントが5%還元されます。",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-c53d2c4135"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-d-pay-campaign-lawson-20260715",
-        "storeId": "conv-lawson"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "対象店舗：ローソン",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-9e2255a786"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-d-pay-campaign-lawson-20260715",
-        "storeId": "natural-lawson"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "対象店舗：ナチュラルローソン",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-5abfd4295b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-d-pay-campaign-lawson-20260715",
-        "storeId": "lawson-store100"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "対象店舗：ローソンストア100",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-3de90aa9d2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-d-pay-campaign-マツモトキヨシグループ-20260714",
-        "storeId": "matsukiyo"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "対象店舗：マツモトキヨシ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-e9c6b25d74"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-d-pay-campaign-マツモトキヨシグループ-20260714",
-        "storeId": "cocokara"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "対象店舗：ココカラファイン",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-c926b3fbb9"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-d-pay-campaign-eneos-20260630",
-        "storeId": "eneos"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "対象店舗：ENEOS",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-618052a943"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-d-pay-campaign-ドラッグユタカ-20260731",
-        "storeId": "drug-yutaka"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "対象店舗：ドラッグユタカ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-8acff183de"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-d-pay-campaign-ヤマダデンキ-20260720",
-        "storeId": "yamada-denki"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "対象店舗：ヤマダデンキ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-4825393d31"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-jcb-jpoint-10x",
-        "name": "J-POINT パートナー (10倍)",
-        "rate": 0.1,
-        "currencyId": "j-point",
-        "cardIds": [
-          "jcb-w"
-        ],
-        "bonusType": "primary",
-        "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-        "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "海外でのお買い物 ポイント 2 倍 (通常 2倍を海外店舗と判断し、10倍をGold限定と判断)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-783838abb4"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-jcb-jpoint-gold-10x",
-        "name": "J-POINT パートナー (Gold プレミアムでおトク 10倍)",
-        "rate": 0.05,
-        "currencyId": "j-point",
-        "cardIds": [
-          "jcb-gold"
-        ],
-        "bonusType": "primary",
-        "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-        "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。プレミアムカード(JCB Goldなど)のみ対象。"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "タクシーアプリ『GO』 ポイント 10 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-89ba2f77f5"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-jcb-jpoint-6x",
-        "name": "J-POINT パートナー (6倍)",
-        "rate": 0.06,
-        "currencyId": "j-point",
-        "cardIds": [
-          "jcb-w"
-        ],
-        "bonusType": "primary",
-        "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-        "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。登録不要。"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "オリックスレンタカー ポイント 6 倍 登録不要",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-835c666d86"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-jcb-jpoint-5x",
-        "name": "J-POINT パートナー (5倍)",
-        "rate": 0.05,
-        "currencyId": "j-point",
-        "cardIds": [
-          "jcb-w"
-        ],
-        "bonusType": "primary",
-        "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-        "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "洋服の青山 ポイント 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-29cac7042d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-jcb-jpoint-gold-5x",
-        "name": "J-POINT パートナー (Gold プレミアムでおトク 5倍)",
-        "rate": 0.025,
-        "currencyId": "j-point",
-        "cardIds": [
-          "jcb-gold"
-        ],
-        "bonusType": "primary",
-        "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-        "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。プレミアムカード(JCB Goldなど)のみ対象。"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "App Store ポイント 最大 5 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-0e215ba052"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-jcb-jpoint-4x",
-        "name": "J-POINT パートナー (4倍)",
-        "rate": 0.04,
-        "currencyId": "j-point",
-        "cardIds": [
-          "jcb-w"
-        ],
-        "bonusType": "primary",
-        "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-        "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "高島屋 ポイント 最大 4 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-55319c5142"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-5x",
-        "storeId": "app-store"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "App Store ポイント 最大 5 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-5e77ffdd87"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-3x",
-        "storeId": "qoo10"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Qoo10 ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-a80fb6ab59"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-5x",
-        "storeId": "google-play"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Google Play ポイント 最大 5 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-a9a667ea8b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-20x",
-        "storeId": "domino-pizza"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ドミノ・ピザ ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-d9ee8483e6"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-20x",
-        "storeId": "disney-plus"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ディズニープラス ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-f99b52d31f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-3x",
-        "storeId": "uber-eats"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Uber Eats ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-d6239c051e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-5x",
-        "storeId": "comic-cmoa"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コミックシーモア ポイント 最大 5 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-ff5c70dc38"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-10x",
-        "storeId": "go-taxi-app"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "タクシーアプリ『GO』 ポイント 10 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-48a4d167d1"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-5x",
-        "storeId": "u-next"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "U-NEXT ポイント 最大 5 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-27b6d28b88"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-20x",
-        "storeId": "universal-studios-japan"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ユニバーサル・スタジオ・ジャパン ポイント 最大 20 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-e53479fd48"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "times-parking"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "タイムズパーキング （タイムズクラブアプリ精算限定）ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-a83df90a58"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "seijo-ishii"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "成城石井・成城石井.com（オンラインショップ）・Le Bar a Vin 52 AZABU TOKYO ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-4bacaad273"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-5x",
-        "storeId": "youfukun-no-aoyama"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "洋服の青山 ポイント 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-21e2066d79"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-5x",
-        "storeId": "aoki"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "AOKI ポイント 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-41f36cda16"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-2x",
-        "storeId": "abroad-shopping"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "海外でのお買い物 ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-90e5ff8f96"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-10x",
-        "storeId": "uber"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Uber ポイント 10 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-894b007684"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "tobu-dept"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "東武百貨店 池袋店 ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-f4ac67c7bb"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "yamaya"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "やまや ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-ee6a1c7055"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "wellpark"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ウェルパーク ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-e8678b0ad9"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-5x",
-        "storeId": "domestic-hotel-online-booking"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "国内宿泊オンライン予約 ポイント 最大 5 倍 登録不要",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-73ed6d11a8"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-5x",
-        "storeId": "hulu"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Hulu ポイント 最大 5 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-f7125c4fbe"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-3x",
-        "storeId": "keio-dept"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "京王百貨店 ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-fc300b71fd"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "kiso-ji-group"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "木曽路グループ ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-fb80954123"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-3x",
-        "storeId": "owndays"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "OWNDAYS／オンデーズ ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-320e5eddfa"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-10x",
-        "storeId": "s-ride"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "S.RIDE ポイント 10 倍 プレミアムでおトク",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-c4fc124a83"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-gold-5x",
-        "storeId": "jcb-travel"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "「JCBトラベル」 JTBや近畿日本ツーリストなど ポイント 最大 5 倍 登録不要",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-d644a378bb"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "kokumin"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コクミン ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-8627e18f59"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "nagashima-resort"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ナガシマリゾート ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-22b2e403b6"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-5x",
-        "storeId": "poplar"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ポプラグループ ポイント 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-1131bb4f19"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "sekai-no-yamachan"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "世界の山ちゃん／山 ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-3f43433a6e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "takashimaya-group-sc"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-0e94dd958e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "kkday"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "アジア最大級のオプショナルツアーサイト KKday ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-4c4ad56b10"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-5x",
-        "storeId": "haruyama-chain"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "はるやまチェーン ポイント 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-41480d9a06"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "fuji-corporation"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "フジ・コーポレーション ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-87df4d1581"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-6x",
-        "storeId": "orix-rent-a-car"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "オリックスレンタカー ポイント 6 倍 登録不要",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-cdb3f5c999"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "james"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ジェームス ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-5fab8aca08"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "konaka-group"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コナカグループ ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-08c40663c7"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-3x",
-        "storeId": "budget-rent-a-car"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "バジェット・レンタカー ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-e01466b00a"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "ducks"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ダックス ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-1ef7f31c7a"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "super-drug-himawari"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "スーパードラッグひまわり ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-b2a26df8c8"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "hotel-chinzanso-tokyo"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ホテル椿山荘東京 ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-9e9bdcea81"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "happy-drug"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ハッピー・ドラッグ ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-013ee80349"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-3x",
-        "storeId": "fukudaya-dept"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "福田屋百貨店 ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-7bd44481fa"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "hakone-kowakien-yunessun"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "箱根小涌園ユネッサン ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-346db756e1"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-2x",
-        "storeId": "bridgestone-sports-online-store"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ブリヂストンスポーツオンラインストア ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-a33f390144"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-jcb-jpoint-5x",
-        "storeId": "megane-salon-look"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "メガネサロンルック・ルックコンタクト ポイント 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-894003e4df"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-paypay-seven-eleven-onigiri-sushi-2026-06",
-        "name": "セブンイレブン 対象おにぎり・寿司をPayPayで購入で最大20%戻ってくる",
-        "rate": 0.2,
-        "currencyId": "paypay",
-        "paymentAppId": "pa-paypay",
-        "bonusType": "primary",
-        "validFrom": "2026-06-01",
-        "validTo": "2026-06-30"
-      },
-      "sourceId": "paypay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "セブンイレブンの対象おにぎり・寿司をPayPayで買うと最大20%戻ってくる 2026/6/1 〜 6/30",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-85b866b4d1"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-paypay-seven-eleven-onigiri-sushi-2026-06",
-        "storeId": "conv-7eleven"
-      },
-      "sourceId": "paypay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "セブンイレブンの対象おにぎり・寿司",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-58871a94bd"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "au",
-        "notes": "レート表記なし。他の通信キャリアでのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "au: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-b41d3d25c8"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "geo"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ゲオ: 200円＝ 1P",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-bea19d27db"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "seijo-ishii",
-        "notes": "レート表記なし。他のスーパーのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "成城石井: 200円＝ 1P",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-bf0c0a90c1"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "yakuyodo",
-        "notes": "レート表記なし。他のドラッグストアのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "薬王堂: 200円＝ 1P",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-4bb5c84632"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-1pc",
-        "storeId": "willertravel",
-        "notes": "記載がないが、他のリクルート系サービスと同様の還元率と仮定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "WILLER TRAVEL: 1%還元 (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-8cf3b87391"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "samsonite",
-        "notes": "レート表記なし。他のファッション・雑貨店のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "サムソナイト: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-a35617883e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "toku-taku",
-        "notes": "レート表記なし。他の交通機関のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "得タク: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-7023a176e7"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-1pc",
-        "storeId": "relux",
-        "notes": "記載がないが、他のリクルート系サービスと同様の還元率と仮定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "Relux: 1%還元 (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-ac02eb9439"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "lawson-travel",
-        "notes": "レート表記なし。他の旅行代理店のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ローソントラベル: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-71f752d6d7"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "lawson-ticket-travel",
-        "notes": "レート表記なし。他の旅行代理店のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ローチケ旅行: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-2c2d34f0b8"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "koppe-tajima",
-        "notes": "レート表記なし。他の飲食店のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "コッペ田島: 200円＝ 1P",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-16e98587e7"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "doutor-coffee-farm",
-        "notes": "レート表記なし。他のカフェのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ドトール珈琲農園・ドトール珈琲店: 200円＝ 1P",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-8ae45f9bfd"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-1pc",
-        "storeId": "hotpepper-beauty-clinic",
-        "notes": "記載がないが、他のリクルート系サービスと同様の還元率と仮定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "HOT PEPPER Beauty 美容クリニック: 1%還元 (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-872c52dccd"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "morecos-plus",
-        "notes": "レート表記なし。他の美容系サービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "morecos+ (モアコス): 200円＝ 1P",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-0a4c5b57a2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "ubereats",
-        "notes": "レート表記なし。他の飲食店のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "Uber Eats: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-3b9935e8de"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "geo-takuhai-rental",
-        "notes": "レート表記なし。他のエンタメ系のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ゲオ宅配レンタル: 200円＝ 1P",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-0e4d581900"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "smari",
-        "notes": "レート表記なし。他の生活サービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "スマリ SMARI: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-6c88c1678d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "hmv-books-online",
-        "notes": "レート表記なし。他の音楽・映像店のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "HMV&BOOKS online: 200円＝ 1P",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-f6df54e7ab"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "carseven",
-        "notes": "レート表記なし。他の車・バイクサービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "カーセブン: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-cdf2dcb491"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "carnext",
-        "notes": "レート表記なし。他の車・バイクサービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "カーネクスト: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-b3b970058f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "hokkaido-kei-park",
-        "notes": "レート表記なし。他の車・バイクサービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "北海道軽パーク: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-9b48edab5d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "asahi-shimbun-digital",
-        "notes": "レート表記なし。他の書店のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "朝日新聞（デジタル版）: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-cacc6d5659"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "sapporo-regent-golf-club",
-        "notes": "レート表記なし。他のスポーツ施設のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "札幌リージェントゴルフ倶楽部: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-904e2828c1"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "sports-club-renaissance",
-        "notes": "レート表記なし。他のスポーツ施設のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "スポーツクラブ ルネサンス: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-461bb175a4"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "gaba",
-        "notes": "レート表記なし。他のビジネス・教育サービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "Gabaマンツーマン英会話: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-f897696e7e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "art-hikkoshi-center",
-        "notes": "レート表記なし。他の引越しサービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "アート引越センター: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-1a23fef622"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "sakai-hikkoshi",
-        "notes": "レート表記なし。他の引越しサービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "サカイ引越センター: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-5185a3dd68"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "heart-hikkoshi",
-        "notes": "レート表記なし。他の引越しサービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ハート引越センター: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-14e47a0dbb"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "au-denki",
-        "notes": "レート表記なし。他の電気・ガスサービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "auでんき: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-8208f4ee04"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "ponta-denki",
-        "notes": "レート表記なし。他の電気・ガスサービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "Pontaでんき: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-71caa56bbc"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "mitsuuorko-denki-gas",
-        "notes": "レート表記なし。他の電気・ガスサービスのPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ミツウロコでんき・都市ガス: 200円＝ 1P (推定)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-ddc48b82c8"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-ponta-card-0.5pc",
-        "storeId": "oimaru-matsuzakaya",
-        "notes": "レート表記なし。他の百貨店のPonta利用例から推定。詳細は要確認。"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "高島屋: 200円＝ 1P",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-a197f8a418"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-smbc-touch-conveni-75pct",
-        "name": "SMBC タッチ決済コンビニ・飲食店 最大+7.5%",
-        "rate": 0.075,
-        "currencyId": "v-pt",
-        "cardIds": [
-          "smbc-v",
-          "olive"
-        ],
-        "paymentAppId": "pa-visa-touch",
-        "bonusType": "primary",
-        "description": "対象のコンビニ・飲食店でスマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用で+7.5%還元。",
-        "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-        "conditions": "Visa/Mastercardタッチ決済またはモバイルオーダー利用時のみ。一部対象外店舗あり。"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元。さらに！既存サービスと組み合わせると最大20％ポイント還元。スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-8a810dbdcf"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-olive-eraberu-tokuten-1pct",
-        "name": "Olive 選べる特典 +1%",
-        "rate": 0.01,
-        "currencyId": "v-pt",
-        "cardIds": [
-          "olive"
-        ],
-        "bonusType": "addOn",
-        "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると+1%還元。",
-        "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-        "conditions": "Oliveアカウントの選べる特典にて「Vポイントアッププログラム＋1％」を選択。Olive プラチナプリファードは2つ選択で+2%。"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "Oliveアカウントの選べる特典：＋1％ Oliveアカウントの選べる特典※で「Vポイントアッププログラム＋1％」をご選択",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-e1988a65ef"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-smbc-7eleven-extra-3pct",
-        "name": "セブン-イレブン スマホタッチ決済 +3% (Vポイント交換可)",
-        "rate": 0.03,
-        "currencyId": "v-pt",
-        "cardIds": [
-          "smbc-v",
-          "olive"
-        ],
-        "paymentAppId": "pa-visa-touch",
-        "bonusType": "addOn",
-        "description": "セブン-イレブンにてスマホのVisa/Mastercardタッチ決済で支払うと、追加で+3%還元 (うち0.5%はセブンマイルでVポイントに交換可)。",
-        "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-        "conditions": "セブン-イレブンでスマホのVisa/Mastercardタッチ決済利用時。セブン-イレブンアプリの会員コード提示で0.5%はセブンマイルとして付与。"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "セブン-イレブン（※1）で、スマホのVisaのタッチ決済・Mastercardタッチ決済（※2）で支払うと、最大11％（※3）ポイント還元！（※4,5）「3％」のうち0.5％は、お支払い時のセブン-イレブンアプリの会員コード提示によって付与されたセブンマイルです。セブンマイルはVポイントへと交換できます。",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "pro-56a142e8aa"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "seicomart"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: セイコーマート",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-d49955cb94"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "conv-7eleven"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: セブン‐イレブン",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-59e0803777"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "poplar"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: ポプラ",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-9c9a0a8e09"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "conv-ministop"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: ミニストップ",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-4e3b613f30"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "conv-lawson"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: ローソン",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-f681acdb18"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "mcdonalds"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: マクドナルド",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-ba36f5915b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "mos-burger"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: モスバーガー",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-9e19870baf"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "kfc"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: ケンタッキーフライドチキン",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-dee1ebf867"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "yoshinoya"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: 吉野家",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-5600afc50f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "saizeriya"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: サイゼリヤ",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-85f6dc9e4e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "gusto"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: ガスト",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-9eeb218ca0"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "bamiyan"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: バーミヤン",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-676086784d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "shabuyo"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: しゃぶ葉",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-5b578771d7"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "jonathan"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: ジョナサン",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-f48adc2f90"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "yumetoan"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: 夢庵",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-01c4998efc"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "sukiya"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: すき家",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-b478b8190b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "hamazushi"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: はま寿司",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-062edf9040"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "cocos"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: ココス",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-5fa700c6b1"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "starbucks"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: スターバックス (モバイルオーダーのみ対象)",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-f159a475f3"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "doutor"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: ドトールコーヒーショップ",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-0f06746ac3"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "excelsior-cafe"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: エクセルシオール カフェ",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-faafdac9f3"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-touch-conveni-75pct",
-        "storeId": "kappa-sushi"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Vポイント加算対象店舗: かっぱ寿司",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-cd918a8742"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-smbc-7eleven-extra-3pct",
-        "storeId": "conv-7eleven"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "セブン-イレブン（※1）で、スマホのVisaのタッチ決済・Mastercardタッチ決済（※2）で支払うと、最大11％（※3）ポイント還元！",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingProgramBody",
-      "proposalId": "mem-b00b661f38"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "skylark-group",
-        "notes": "レートは明記されていませんが、すかいらーくグループの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ガスト バーミヤン しゃぶ葉 ジョナサン 夢庵 ステーキガスト から好し むさしの森珈琲 藍屋 魚屋路 グラッチェガーデンズ ラ・オハナ とんから亭 桃菜 ゆめあん食堂 八郎そば",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-d9a0d94497"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "nakau",
-        "notes": "レートは明記されていませんが、なか卯の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "なか卯",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-ccf40bafc2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "jolly-pasta",
-        "notes": "レートは明記されていませんが、ジョリーパスタの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ジョリーパスタ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-bd2f1968ff"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "jukusei-yakiniku-ichiban",
-        "notes": "レートは明記されていませんが、熟成焼肉いちばんの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "熟成焼肉いちばん",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-f28d328efd"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "olive-no-oka",
-        "notes": "レートは明記されていませんが、オリーブの丘の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "オリーブの丘",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-de6aae877e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "katsuan",
-        "notes": "レートは明記されていませんが、かつ庵の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "かつ庵",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-1b3993b49d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "kyubeya",
-        "notes": "レートは明記されていませんが、久兵衛屋の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "久兵衛屋",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-b2a71d93b6"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "zetteria",
-        "notes": "レートは明記されていませんが、ZETTERIAの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ZETTERIA",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-1f717b7823"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "new-balance",
-        "notes": "レートは明記されていませんが、ニューバランスの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ニューバランス",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-7de6a6bfbf"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "kojitsu-sanso",
-        "notes": "レートは明記されていませんが、好日山荘の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "好日山荘",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-06ddaaa06d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "doutor",
-        "notes": "レートは明記されていませんが、ドトールの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ドトールコーヒーショップ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-f91f8c53cd"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "excelsior-cafe",
-        "notes": "レートは明記されていませんが、エクセルシオールカフェの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "エクセルシオール カフェ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-745e14e1d3"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "megane-ichiba",
-        "notes": "レートは明記されていませんが、眼鏡市場の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "眼鏡市場",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-0ce6df1a44"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "alook",
-        "notes": "レートは明記されていませんが、ALOOKの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ALOOK",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-344bc3d2ee"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "lens-style",
-        "notes": "レートは明記されていませんが、レンズスタイルの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "レンズスタイル",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-e3cb83c1f2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "junkudo",
-        "notes": "レートは明記されていませんが、ジュンク堂書店の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ジュンク堂書店",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-1a69006d5b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "maruzen-junkudo-shoten",
-        "notes": "レートは明記されていませんが、丸善の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "丸善",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-8408a0ea12"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "ganko",
-        "notes": "レートは明記されていませんが、がんこの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "がんこ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-016603e187"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "kinokuniya",
-        "notes": "レートは明記されていませんが、紀伊國屋書店の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "紀伊國屋書店",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-f33d95c0ec"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "d-plus",
-        "notes": "レートは明記されていませんが、ディープラスの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ディープラス",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-b4b9e56731"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "fuji-citio",
-        "notes": "レートは明記されていませんが、富士シティオの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "富士シティオ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-fa36df92f2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "camera-no-kitamura",
-        "notes": "レートは明記されていませんが、カメラのキタムラの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "カメラのキタムラ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-0827b27c7d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "gyukaku",
-        "notes": "レートは明記されていませんが、牛角の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "牛角",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-c50478e8d2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "ja-zennoh-a-coop",
-        "notes": "レートは明記されていませんが、JA全農Aコープの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "JA全農Aコープ(東日本エリア） JA全農Aコープ(近畿・東海エリア)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-27598dc1be"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "yofuku-no-aoyama",
-        "notes": "レートは明記されていませんが、洋服の青山の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "洋服の青山",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-c76d815a8a"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "suit-square",
-        "notes": "レートは明記されていませんが、SUIT SQUAREの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "SUIT SQUARE",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-dc350d0855"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "makeman",
-        "notes": "レートは明記されていませんが、メイクマンの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "メイクマン",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-37ad790a4b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "shinseido",
-        "notes": "レートは明記されていませんが、新星堂の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "新星堂",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-e14aa7dacc"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "wondergoo",
-        "notes": "レートは明記されていませんが、WonderGOOの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "WonderGOO",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-2cb1a8da6c"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "wonderrex",
-        "notes": "レートは明記されていませんが、WonderREXの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "WonderREX",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-31499270e5"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "dept-ryubo",
-        "notes": "レートは明記されていませんが、デパートリウボウの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "デパートリウボウ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-1f065fe242"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "booklive",
-        "notes": "レートは明記されていませんが、ブックライブの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ブックライブ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-9dbaf9fd91"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "joshin",
-        "notes": "レートは明記されていませんが、Joshinの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "Joshin（ジョーシン）",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-5656f9a1d5"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "iris-plaza",
-        "notes": "レートは明記されていませんが、アイリスプラザの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "アイリスプラザ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-cf899880e2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "kansai-electric-power",
-        "notes": "レートは明記されていませんが、関西電力の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "関西電力",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-247d516bef"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "mitsui-car-shares",
-        "notes": "レートは明記されていませんが、三井のカーシェアーズの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "三井のカーシェアーズ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-0af1938ef6"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "jalannet",
-        "notes": "レートは明記されていませんが、じゃらんnetの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "じゃらんnet",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-8d65897e3d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "hotpepper-beauty",
-        "notes": "レートは明記されていませんが、ホットペッパービューティーの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ホットペッパービューティー",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-55ba8e4e23"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "hotpepper-gourmet",
-        "notes": "レートは明記されていませんが、ホットペッパーグルメの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ホットペッパーグルメ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-8b0e856d78"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "jalan-golf",
-        "notes": "レートは明記されていませんが、じゃらんゴルフの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "じゃらんゴルフ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-7bf5a4c48e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "autobacs",
-        "notes": "レートは明記されていませんが、オートバックスの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "オートバックス",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-4fb17337bf"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "books-misumi",
-        "notes": "レートは明記されていませんが、BOOKSmisumiの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "BOOKSmisumi",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-7c5e97c430"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "asahiya-shoten",
-        "notes": "レートは明記されていませんが、旭屋書店の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "旭屋書店",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-faa920cf61"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "drug-yutaka",
-        "notes": "レートは明記されていませんが、ドラッグユタカの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ドラッグユタカ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-d8df0b8e00"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "mammy-mart",
-        "notes": "レートは明記されていませんが、マミーマートの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "マミーマート",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-faf21829bc"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "drugstore-mac",
-        "notes": "レートは明記されていませんが、ドラッグストアmacの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ドラッグストアmac",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-a56b157ced"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "make-man",
-        "notes": "レートは明記されていませんが、メイクマンの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "メイクマン",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-a9bd59fbfd"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "net-off",
-        "notes": "レートは明記されていませんが、ネットオフの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ネットオフ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-3d78921fb2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "go-today-shaire-salon",
-        "notes": "レートは明記されていませんが、GO TODAY SHAiRE SALONの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "GO TODAY SHAiRE SALON",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-a419374565"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "eleven",
-        "notes": "レートは明記されていませんが、エレナの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "エレナ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-853ea9953f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "kfc",
-        "notes": "レートは明記されていませんが、KFCの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ケンタッキー・フライド・チキン",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-7b4ed33d85"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "jre-point-card",
-        "notes": "レートは明記されていませんが、JRE POINTの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "JRE POINT",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-e6aeba19ef"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "hitachi-chain-store",
-        "notes": "レートは明記されていませんが、日立チェーンストールの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "日立チェーンストール",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-26280c6793"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "toku-taku",
-        "notes": "レートは明記されていませんが、得タクの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "得タク(タクシー)",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-09899e8ec6"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "epark-relax-este",
-        "notes": "レートは明記されていませんが、EPARKリラク＆エステの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "EPARKリラク＆エステ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-362488e2a7"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "tokyo-musen",
-        "notes": "レートは明記されていませんが、東京無線の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "東京無線",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-fce9381e2c"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "shikoku-electric-power",
-        "notes": "レートは明記されていませんが、四国電力の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "四国電力",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-fd4e304bfc"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "ucarpack",
-        "notes": "レートは明記されていませんが、ユーカーパックの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ユーカーパック",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-aa6200c282"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "keiyo-gas",
-        "notes": "レートは明記されていませんが、京葉ガスの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "京葉ガス",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-dd8dee1aae"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "gunma-bank-debit",
-        "notes": "レートは明記されていませんが、ぐんぎんVisaデビットの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "ぐんぎんVisaデビット",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-e59f010c1a"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "ricola-point",
-        "notes": "レートは明記されていませんが、リコラポイントの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "リコラポイント",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-f4b7fcc790"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "cd-energy-direct-point-denki",
-        "notes": "レートは明記されていませんが、CDエナジーダイレクトの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "CDエナジーダイレクト Vスタイルプラス",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-0d8c4d40bf"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "green-dog-cat",
-        "notes": "レートは明記されていませんが、GREEN DOG & CATの一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "GREEN DOG & CAT",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-8c1b54bc0f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "tsutaya-net-kaitori",
-        "notes": "レートは明記されていませんが、TSUTAYAネット買取の一般的なVポイント還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "TSUTAYAネット買取",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-f5d03f1db9"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "ooga-yakkyoku",
-        "notes": "一般的なTポイント/Vポイントのドラッグストア還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "大賀薬局",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-5d42b74bd8"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-vpoint-card-0.5pc",
-        "storeId": "kojima",
-        "notes": "一般的なTポイント/Vポイントの家電量販店還元率0.5%を仮定。証拠不足のためambiguity高め。"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.48999999999999994,
-      "evidence": {
-        "evidenceQuote": "コジマ",
-        "explicitness": 0.7,
-        "ambiguity": 0.3
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "mem-02a0b6c821"
-    },
-    {
-      "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "abroad-shopping",
-        "name": "海外でのお買い物",
-        "category": "その他"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "海外でのお買い物 ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-46c6243d3d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "ace-contact",
-        "name": "エースコンタクト",
-        "category": "コンタクト"
+        "id": "17live",
+        "name": "17LIVE(ワンセブンライブ)",
+        "category": "エンタメ・チケット"
       },
       "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "エースコンタクト たまる つかえる アプリ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-3b04087cb2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "aiya",
-        "name": "藍屋",
-        "category": "飲食"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "その他すかいらーくグループ飲食店: 藍屋",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-5949281dbf"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "albis",
-        "name": "アルビス",
-        "category": "スーパー"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "アルビス たまる つかえる",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-cad255f466"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "all-sports-community",
-        "name": "オールスポーツコミュニティ／スナップスナップ",
-        "category": "スポーツ"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "オールスポーツコミュニティ／スナップスナップ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-5b08b3aa6c"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "ana",
-        "name": "ANA",
-        "category": "旅行代理店"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "ANA",
+        "evidenceQuote": "17LIVE(ワンセブンライブ) たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "userBlocked",
-      "proposalId": "sto-8d9d4b8d5b"
+      "proposalId": "sto-926029de10"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "aoki",
-        "name": "AOKI",
-        "category": "ファッション"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "AOKI ポイント 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-e91f0a043f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "apamanshop",
+        "id": "apaman-shop",
         "name": "アパマンショップ",
         "category": "不動産・住宅"
       },
@@ -3814,349 +38,79 @@
         "ambiguity": 0.1
       },
       "reviewReason": "excludedCategory",
-      "proposalId": "sto-07ca37ce7c"
+      "proposalId": "sto-74d449e922"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "app-store",
-        "name": "App Store",
-        "category": "ネット通販"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "App Store ポイント 最大 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-d78b01769f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "baguette",
-        "name": "バケット",
-        "category": "飲食"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "バケット：楽天ポイントカード加盟店",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-fa7c33d57d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "big-boy",
-        "name": "ビッグボーイ",
-        "category": "飲食"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "ビッグボーイ：楽天ポイントカード加盟店",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-fbe2a9127f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "bistro309",
-        "name": "BISTRO309",
-        "category": "飲食"
-      },
-      "sourceId": "rakuten-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "BISTRO309：楽天ポイントカード加盟店",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-4093d2ce98"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "bluechip",
-        "name": "ブルーチップ",
-        "category": "サービス"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "ブルーチップ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-8e22139dc0"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "bridgestone-sports-online-store",
-        "name": "ブリヂストンスポーツオンラインストア",
-        "category": "スポーツ"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ブリヂストンスポーツオンラインストア ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-b58c5b080f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "central-park",
-        "name": "セントラルパーク",
-        "category": "商業施設"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "セントラルパーク",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-5d9a12bee5"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "chargespot",
-        "name": "ChargeSPOT",
-        "category": "生活サービス"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "ChargeSPOT",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-01effc3c24"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "chawan",
-        "name": "chawan",
-        "category": "飲食"
-      },
-      "sourceId": "smbc-vpoint-up",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "その他すかいらーくグループ飲食店: chawan",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-1e3623af63"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "club-netz",
-        "name": "クラブネッツ",
-        "category": "サービス"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "クラブネッツ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-9200c40050"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "comic-cmoa",
-        "name": "コミックシーモア",
-        "category": "書籍・文房具"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コミックシーモア ポイント 最大 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-5394a4c18b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "conv-7eleven",
-        "name": "セブン‐イレブン",
-        "category": "コンビニ"
-      },
-      "sourceId": "d-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コンビニでつかう：セブン‐イレブン",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-ba04903ba2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "conv-familymart",
-        "name": "ファミリーマート",
-        "category": "コンビニ"
-      },
-      "sourceId": "d-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コンビニでつかう：ファミリーマート",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-7ae0617a0a"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "conv-lawson",
-        "name": "ローソン",
-        "category": "コンビニ"
-      },
-      "sourceId": "d-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コンビニでつかう：ローソン",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-aa3a071a77"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "conv-ministop",
-        "name": "ミニストップ",
-        "category": "コンビニ"
-      },
-      "sourceId": "d-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コンビニでつかう：ミニストップ",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-4696bd7dc9"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "creal",
-        "name": "CREAL",
-        "category": "金融"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "CREAL",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-0b80a54350"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "daily-news",
-        "name": "毎日新聞",
+        "id": "au-bookpass",
+        "name": "auブックパス",
         "category": "書店"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "毎日新聞",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-bc10a3213d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "daily-yamazaki",
-        "name": "デイリーヤマザキ",
-        "category": "コンビニ"
-      },
-      "sourceId": "d-point-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コンビニでつかう：デイリーヤマザキ",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-3e51fb072f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "daiwashoken-connect",
-        "name": "CONNECT 大和コネクト証券",
-        "category": "金融"
       },
       "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "CONNECT 大和コネクト証券 たまる つかえる アプリ",
+        "evidenceQuote": "auブックパス たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-8204c144ed"
+      "reviewReason": "userBlocked",
+      "proposalId": "sto-2b599ab741"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "au-denki",
+        "name": "auでんき",
+        "category": "電気・ガス"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "auでんき たまる",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "idCollision",
+      "proposalId": "sto-06d987e9fa"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "auto-info",
+        "name": "オート・インフォ",
+        "category": "車・バイク"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "オート・インフォ たまる",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "userBlocked",
+      "proposalId": "sto-195e9859e8"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "denki-hikaku-insweb",
+        "name": "でんきの比較インズウェブ",
+        "category": "電気・ガス"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "でんきの比較インズウェブ たまる",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "userBlocked",
+      "proposalId": "sto-eb40ca53d7"
     },
     {
       "type": "addRecord",
@@ -4180,97 +134,43 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "disney-plus",
-        "name": "ディズニープラス",
-        "category": "ネットサービス"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ディズニープラス ポイント 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-96efccc2d8"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "domestic-hotel-online-booking",
-        "name": "国内宿泊オンライン予約",
-        "category": "旅行代理店"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "国内宿泊オンライン予約 ポイント 最大 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-07ca022610"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "dots-onix",
-        "name": "ONIX",
-        "category": "車・バイク"
+        "id": "diamond-sha",
+        "name": "ダイヤモンド社",
+        "category": "書店"
       },
       "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "ONIX たまる",
+        "evidenceQuote": "ダイヤモンド社 たまる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-da07abe379"
+      "reviewReason": "userBlocked",
+      "proposalId": "sto-7fdc41d1ef"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "ducks",
-        "name": "ダックス",
-        "category": "ドラッグストア"
+        "id": "doutor-coffee-farm",
+        "name": "ドトール珈琲農園・ドトール珈琲店",
+        "category": "飲食"
       },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ダックス ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-eafa4c19b6"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "eneos-denki-gas",
-        "name": "ＥＮＥＯＳでんき・都市ガス",
-        "category": "電気・ガス"
-      },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "ＥＮＥＯＳでんき ＥＮＥＯＳ都市ガス",
+        "evidenceQuote": "ドトール珈琲農園・ドトール珈琲店 たまる つかえる アプリ",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-655c8c54ae"
+      "proposalId": "sto-798cbcf8c9"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "eneron",
+        "id": "eneone",
         "name": "エネワン（株式会社サイサン）",
         "category": "電気・ガス"
       },
@@ -4282,61 +182,25 @@
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-2e5f199edb"
+      "proposalId": "sto-25aae3b1cd"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "fuji-corporation",
-        "name": "フジ・コーポレーション",
-        "category": "車・バイク"
+        "id": "fukuro-shosabo",
+        "name": "本と珈琲 梟書茶房",
+        "category": "飲食"
       },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "フジ・コーポレーション ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-c1e323766e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "fujimaru-park",
-        "name": "藤丸パーク",
-        "category": "商業施設"
-      },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "藤丸パーク",
+        "evidenceQuote": "本と珈琲 梟書茶房 たまる つかえる アプリ",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-b421d9f52d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "fukudaya-dept",
-        "name": "福田屋百貨店",
-        "category": "百貨店"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "福田屋百貨店 ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-0370a7d4d1"
+      "proposalId": "sto-c2a88d4bee"
     },
     {
       "type": "addRecord",
@@ -4360,415 +224,73 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "go-taxi-app",
-        "name": "タクシーアプリ『GO』",
-        "category": "交通"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "タクシーアプリ『GO』 ポイント 10 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-26c69b4ab0"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "google-play",
-        "name": "Google Play",
-        "category": "ネットサービス"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Google Play ポイント 最大 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-bbf1431215"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "h-c-mitsusawa",
-        "name": "ホームセンターみつわ",
-        "category": "ホームセンター"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "ホームセンターみつわ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-a1ce7cd663"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "hakone-kowakien-yunessun",
-        "name": "箱根小涌園ユネッサン",
-        "category": "レジャー・エンタメ"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "箱根小涌園ユネッサン ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-798ef2e6f7"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "happy-drug",
-        "name": "ハッピー・ドラッグ",
-        "category": "ドラッグストア"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ハッピー・ドラッグ ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-c80439cc94"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "haruyama-chain",
-        "name": "はるやまチェーン",
-        "category": "ファッション"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "はるやまチェーン ポイント 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-af3cc0ca18"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "hulu",
-        "name": "Hulu",
-        "category": "ネットサービス"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Hulu ポイント 最大 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-09104f03cd"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "human-resocia",
-        "name": "日本メディカルシステム",
-        "category": "医療"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "日本メディカルシステム",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-725b71288b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "hyundai-mobility-japan",
-        "name": "Hyundai Mobility Japan",
-        "category": "車・バイク"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "Hyundai Mobility Japan",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "userBlocked",
-      "proposalId": "sto-47a9824577"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "james",
-        "name": "ジェームス",
-        "category": "車・バイク"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ジェームス ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-dccd698a30"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "japan-road-service",
-        "name": "日本ロードサービス（JRS）",
-        "category": "車・バイク"
+        "id": "jihanpi",
+        "name": "ジハンピ",
+        "category": "飲食"
       },
       "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "日本ロードサービス（JRS） たまる",
+        "evidenceQuote": "ジハンピ たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-daf3ad181d"
+      "proposalId": "sto-afbe2f6ca8"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "jcb-travel",
-        "name": "JCBトラベル",
-        "category": "旅行代理店"
+        "id": "karomama-plus",
+        "name": "カロママ プラス",
+        "category": "生活・暮らし・ペット"
       },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "「JCBトラベル」 JTBや近畿日本ツーリストなど ポイント 最大 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-029b51713f"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "jihampi",
-        "name": "ジハンピ",
-        "category": "サービス"
-      },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "ジハンピ",
+        "evidenceQuote": "カロママ プラス たまる",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "lowConfidence",
+      "proposalId": "sto-9b7317c9c6"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "koppe-tajima",
+        "name": "コッペ田島",
+        "category": "飲食"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "コッペ田島 たまる つかえる アプリ",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "lowConfidence",
+      "proposalId": "sto-2cfc132792"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "life-net",
+        "name": "Life Net",
+        "category": "その他"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "Life Net たまる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "excludedCategory",
-      "proposalId": "sto-0199b4b64a"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "jomo-news",
-        "name": "上毛新聞",
-        "category": "書店"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "上毛新聞",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-7dc57953d9"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "kagu-no-taishodo",
-        "name": "家具の大正堂",
-        "category": "家具・インテリア"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "家具の大正堂",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-688775e4cf"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "kanamic-cloud-service",
-        "name": "カナミッククラウドサービス",
-        "category": "ビジネス・教育"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "カナミッククラウドサービス",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-497ab35080"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "kawatoku-dept",
-        "name": "川徳百貨店(パルクアベニュー・カワトク)",
-        "category": "百貨店"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "川徳百貨店(パルクアベニュー･カワトク)",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-9255489766"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "keio-dept",
-        "name": "京王百貨店",
-        "category": "百貨店"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "京王百貨店 ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-176ecf4323"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "kitamura-shashinki-ten",
-        "name": "北村写真機店",
-        "category": "カメラ・写真"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "北村写真機店",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-508305f8ef"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "kkday",
-        "name": "KKday",
-        "category": "旅行代理店"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "アジア最大級のオプショナルツアーサイト KKday ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-676feda13b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "kokumin",
-        "name": "コクミン",
-        "category": "ドラッグストア"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コクミン ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-d17c78db3e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "konaka-group",
-        "name": "コナカグループ",
-        "category": "ファッション"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "コナカグループ ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-7799d0fddb"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "la-citta-della",
-        "name": "ラ チッタデッラ",
-        "category": "商業施設"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "ラ チッタデッラ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-0474e3a600"
+      "proposalId": "sto-5c018bd3ea"
     },
     {
       "type": "addRecord",
@@ -4792,199 +314,73 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "maimai-point-club",
-        "name": "まいにちポイントくらぶ",
-        "category": "サービス"
+        "id": "nihon-road-service",
+        "name": "日本ロードサービス（JRS）",
+        "category": "車・バイク"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "まいにちポイントくらぶ",
+        "evidenceQuote": "日本ロードサービス（JRS） たまる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-25ebe90f43"
+      "reviewReason": "lowConfidence",
+      "proposalId": "sto-33ab6cd3aa"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "marsu",
-        "name": "マーソ（人間ドック）",
-        "category": "医療"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "マーソ（人間ドック）",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-50ab042b1d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "maruetsu",
-        "name": "マルエツ",
+        "id": "nisimuta",
+        "name": "ニシムタ",
         "category": "スーパー"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "マルエツ",
+        "evidenceQuote": "ニシムタ たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-34a3a33bcc"
+      "proposalId": "sto-9c6024efd7"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "mine-drug",
-        "name": "ミネドラッグ",
-        "category": "ドラッグストア"
+        "id": "oisix",
+        "name": "Oisix",
+        "category": "ネット通販"
       },
       "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "ミネドラッグ たまる つかえる アプリ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-fdd860b9b3"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "mitsuuorko-denki-gas",
-        "name": "ミツウロコでんき・都市ガス",
-        "category": "電気・ガス"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "ミツウロコでんき・都市ガス たまる",
+        "evidenceQuote": "Oisix（リクルートIDでのログインの場合） たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-9c99f7ae9b"
+      "proposalId": "sto-a73445f93d"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "nagashima-resort",
-        "name": "ナガシマリゾート",
-        "category": "レジャー・エンタメ"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ナガシマリゾート ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-d9344a062b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "oil-by-bijyutsu-techo",
-        "name": "OIL by 美術手帖",
-        "category": "書店"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "OIL by 美術手帖",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-669d983f3c"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "oimaru-matsuzakaya",
-        "name": "大丸・松坂屋",
-        "category": "百貨店"
+        "id": "onix",
+        "name": "ONIX",
+        "category": "車・バイク"
       },
       "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "高島屋 たまる つかえる アプリ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-3baccfe103"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "okinawa-meeti-by-ryubostore",
-        "name": "OKINAWA meeti by RYUBOSTORE",
-        "category": "スーパー"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "OKINAWA meeti by RYUBOSTORE",
+        "evidenceQuote": "ONIX たまる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-9b24b3d06a"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "ooga-yakkyoku",
-        "name": "大賀薬局",
-        "category": "ドラッグストア"
-      },
-      "sourceId": "ponta-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "大賀薬局 たまる つかえる アプリ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "idCollision",
-      "proposalId": "sto-947a694ccc"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "owndays",
-        "name": "OWNDAYS",
-        "category": "メガネ"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "OWNDAYS／オンデーズ ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-3f2f0439e1"
+      "proposalId": "sto-9719fec7c2"
     },
     {
       "type": "addRecord",
@@ -5026,91 +422,109 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "qoo10",
-        "name": "Qoo10",
-        "category": "ネット通販"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Qoo10 ポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-2ea2fe81cb"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "regza-cloud-timeon",
-        "name": "レグザクラウドサービス「TimeOn（タイムオン）」",
-        "category": "家電"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "レグザクラウドサービス「TimeOn（タイムオン）」",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-1d8a8342dc"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "risk-monster",
-        "name": "リスクモンスター",
-        "category": "ビジネス・教育"
+        "id": "ponta-question",
+        "name": "Pontaクエスチョン",
+        "category": "その他"
       },
       "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "リスクモンスター たまる",
+        "evidenceQuote": "Pontaクエスチョン たまる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-bfb38e39ce"
+      "reviewReason": "excludedCategory",
+      "proposalId": "sto-de2ceb4f5f"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "riubo-net-super",
-        "name": "りうぼうネットスーパー",
-        "category": "スーパー"
+        "id": "pontabitco-farm",
+        "name": "Pontaビットコin牧場",
+        "category": "その他"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "りうぼうネットスーパー",
+        "evidenceQuote": "Pontaビットコin牧場 たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-e9f9e8e834"
+      "reviewReason": "excludedCategory",
+      "proposalId": "sto-4bb6b11d9e"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "riubo-store",
-        "name": "リウボウストア",
-        "category": "スーパー"
+        "id": "pontaplay",
+        "name": "Ponta PLAY",
+        "category": "その他"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "リウボウストア",
+        "evidenceQuote": "Ponta PLAY たまる",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "excludedCategory",
+      "proposalId": "sto-99bc9c3ef8"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "president-sha",
+        "name": "プレジデント社",
+        "category": "書店"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "プレジデント社 たまる",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "userBlocked",
+      "proposalId": "sto-9cfbfb9793"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "puralee",
+        "name": "プラリー",
+        "category": "生活・暮らし・ペット"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "プラリー たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-a4f9fc7575"
+      "proposalId": "sto-5b43e79b0d"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "receipt-de-ponta",
+        "name": "レシート de Ponta",
+        "category": "生活サービス"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "レシート de Ponta たまる",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "lowConfidence",
+      "proposalId": "sto-5a44d0c576"
     },
     {
       "type": "addRecord",
@@ -5123,7 +537,7 @@
       "sourceId": "jal-card-tokuyaku-list",
       "confidence": 0.855,
       "evidence": {
-        "evidenceQuote": "ロイヤルホスト JAL CARD 決済でマイルが2倍",
+        "evidenceQuote": "ロイヤルホスト 決済でマイルが 2 倍",
         "explicitness": 0.9,
         "ambiguity": 0.05
       },
@@ -5134,109 +548,19 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "s-ride",
-        "name": "S.RIDE",
-        "category": "交通"
+        "id": "seijo-ishii",
+        "name": "成城石井",
+        "category": "スーパー"
       },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "S.RIDE ポイント 10 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-c82e8f019b"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "seibunkan-shoten",
-        "name": "精文館書店",
-        "category": "書店"
-      },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "精文館書店",
+        "evidenceQuote": "成城石井 たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-70db46aac2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "seven-mile",
-        "name": "セブンマイル",
-        "category": "サービス"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "セブンマイル",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-9e8341c94d"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "shaddy-salad-kan",
-        "name": "シャディ・サラダ館",
-        "category": "雑貨"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "シャディ・サラダ館",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-4a91ff70c0"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "shimauma-print",
-        "name": "しまうまプリント",
-        "category": "カメラ・写真"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "しまうまプリント",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-ac8a642bf8"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "shueisha",
-        "name": "集英社",
-        "category": "書店"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "集英社",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-4184425e4e"
+      "proposalId": "sto-8a8a9b6c2b"
     },
     {
       "type": "addRecord",
@@ -5260,217 +584,91 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "studio-mario",
-        "name": "スタジオマリオ（写真館）",
-        "category": "カメラ・写真"
+        "id": "sunlive",
+        "name": "サンリブ",
+        "category": "スーパー"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "スタジオマリオ（写真館）",
+        "evidenceQuote": "サンリブ たまる つかえる アプリ",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-f0726fec17"
+      "proposalId": "sto-8629040c2b"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "sunrise",
-        "name": "サンスター",
-        "category": "日用品"
+        "id": "suntory-account",
+        "name": "サントリーアカウント",
+        "category": "その他"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "サンスター",
+        "evidenceQuote": "サントリーアカウント たまる",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "excludedCategory",
+      "proposalId": "sto-576cbd3b30"
+    },
+    {
+      "type": "addRecord",
+      "collection": "stores",
+      "record": {
+        "id": "tabelog",
+        "name": "食べログ",
+        "category": "飲食"
+      },
+      "sourceId": "ponta-partners",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "食べログ たまる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-f215627ff5"
+      "proposalId": "sto-100404a0d5"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "takahashi",
-        "name": "タカハシ",
-        "category": "ファッション"
+        "id": "telasa",
+        "name": "TELASA（テラサ）",
+        "category": "音楽・映像"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "タカハシ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-da05b0610a"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "takashimaya-group-sc",
-        "name": "タカシマヤグループのショッピングセンター・レストラン街",
-        "category": "百貨店"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-cc24d120d2"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "taya-group",
-        "name": "TAYAグループ",
-        "category": "美容"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "TAYA",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-a7efe70de7"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "tone-mobile",
-        "name": "トーンモバイル",
-        "category": "通信"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "トーンモバイル",
+        "evidenceQuote": "TELASA（テラサ） たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "userBlocked",
-      "proposalId": "sto-1765845d20"
+      "proposalId": "sto-efaa813404"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "toshin-hochokicenter",
-        "name": "トーシン補聴器センター",
-        "category": "医療"
+        "id": "uber-eats",
+        "name": "Uber Eats",
+        "category": "ネット通販"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "トーシン補聴器センター",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-96d7366805"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "tsutaya-conditioning",
-        "name": "TSUTAYA Conditioning",
-        "category": "スポーツ"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "TSUTAYA Conditioning",
+        "evidenceQuote": "Uber Eats たまる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-97ddbe4c2a"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "u-next",
-        "name": "U-NEXT",
-        "category": "ネットサービス"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "U-NEXT ポイント 最大 5 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "excludedCategory",
-      "proposalId": "sto-29fb800c9e"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "uber",
-        "name": "Uber",
-        "category": "交通"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "Uber ポイント 10 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-0286176f80"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "universal-language",
-        "name": "UNIVERSAL LANGUAGE",
-        "category": "ファッション"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "UNIVERSAL LANGUAGE",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-11dcc3b816"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "universal-studios-japan",
-        "name": "ユニバーサル・スタジオ・ジャパン",
-        "category": "レジャー・エンタメ"
-      },
-      "sourceId": "jcb-jpoint-partners",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ユニバーサル・スタジオ・ジャパン ポイント 最大 20 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "storeAdditionsDisabled",
-      "proposalId": "sto-68b4901446"
+      "proposalId": "sto-9da0c538be"
     },
     {
       "type": "addRecord",
@@ -5494,96 +692,60 @@
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "v-eco-select",
-        "name": "Vポイント×Eco Select",
-        "category": "生活サービス"
+        "id": "winticket",
+        "name": "WINTICKET(ウィンチケット)",
+        "category": "エンタメ・チケット"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "Vポイント×Eco Select",
+        "evidenceQuote": "WINTICKET(ウィンチケット) たまる つかえる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-2871cb9143"
+      "proposalId": "sto-e2ff061c36"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "v-money",
-        "name": "Vマネー",
-        "category": "電子マネー"
+        "id": "yakuodo",
+        "name": "薬王堂",
+        "category": "ドラッグストア"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "Vマネー",
+        "evidenceQuote": "薬王堂 たまる つかえる アプリ",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "sto-e7d067fe9c"
+      "proposalId": "sto-fe8782894f"
     },
     {
       "type": "addRecord",
       "collection": "stores",
       "record": {
-        "id": "v-trip",
-        "name": "Vトリップ",
-        "category": "旅行代理店"
+        "id": "zurich-ponta",
+        "name": "チューリッヒ/Ponta充実補償プラン",
+        "category": "保険"
       },
-      "sourceId": "v-point-partners",
+      "sourceId": "ponta-partners",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "Vトリップ",
+        "evidenceQuote": "チューリッヒ/Ponta充実補償プラン たまる",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-cbf4516363"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "yamada-denki",
-        "name": "ヤマダデンキ",
-        "category": "家電量販店"
-      },
-      "sourceId": "d-pay-campaigns",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "全国のヤマダデンキ",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-4b364cada3"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "zoomore",
-        "name": "Zoomore",
-        "category": "ペット"
-      },
-      "sourceId": "v-point-partners",
-      "confidence": 0.81,
-      "evidence": {
-        "evidenceQuote": "Zoomore",
-        "explicitness": 0.9,
-        "ambiguity": 0.1
-      },
-      "reviewReason": "lowConfidence",
-      "proposalId": "sto-5755827c8b"
+      "reviewReason": "excludedCategory",
+      "proposalId": "sto-a48bf52ac7"
     }
   ],
   "summary": {
-    "autoApplicableCount": 13,
-    "needsReviewCount": 297,
+    "autoApplicableCount": 0,
+    "needsReviewCount": 41,
     "sourcesProcessed": 14,
     "sourcesFailed": 0
   }
