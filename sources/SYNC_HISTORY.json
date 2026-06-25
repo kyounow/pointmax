@@ -3,6 +3,24 @@
   "entries": [
     {
       "date": "2026-06-25",
+      "generatedAt": "2026-06-25T14:14:10.549Z",
+      "totalCount": 0,
+      "avgConfidence": null,
+      "sourcesProcessed": 14,
+      "bySource": [],
+      "items": [],
+      "reviewStats": {
+        "total": 41,
+        "byReason": {
+          "userBlocked": 8,
+          "excludedCategory": 11,
+          "idCollision": 2,
+          "lowConfidence": 20
+        }
+      }
+    },
+    {
+      "date": "2026-06-25",
       "generatedAt": "2026-06-24T22:23:49.791Z",
       "totalCount": 13,
       "avgConfidence": 0.902,
