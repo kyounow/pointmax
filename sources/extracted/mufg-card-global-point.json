@@ -1,9 +1,21 @@
 {
   "sourceId": "mufg-card-global-point",
   "sourceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
-  "fetchedAt": "2026-06-24T22:20:17.915Z",
+  "fetchedAt": "2026-06-28T22:03:45.064Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "グローバルポイント利用規程のページであり、具体的な店舗ごとの還元率やカテゴリごとの還元率の情報は記載されていません。基本ポイント付与に関する記述のみ抽出しました。特定のチェーン店情報の記載もありませんでした。"
+  "notes": "グローバルポイント利用規程ページであり、特定店舗やカテゴリの還元率情報は記載されていませんでした。基本ポイントに関する記述のみを抽出しています。グローバルPLUSによる優遇ポイントはカードの種類や月間利用額による変動があるため、デフォルトの基本還元率のみを記載しました。",
+  "cards": [
+    {
+      "cardId": "mufg-card",
+      "defaultRate": 0.001,
+      "defaultCurrencyId": "mufg-pt",
+      "evidenceQuote": "1回払いまたはボーナス一括払いを指定した場合、ショッピング利用代金の支払として、約定支払日に支払うべき約定支払額（1千円未満切捨て）に対して、1千円につき1ポイントを約定支払日に本会員に付与します。",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "storeRules": [],
+  "categoryRules": []
 }

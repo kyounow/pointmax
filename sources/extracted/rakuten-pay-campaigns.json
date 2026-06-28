@@ -1,9 +1,9 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-06-24T22:20:57.225Z",
+  "fetchedAt": "2026-06-28T22:04:57.705Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] index=https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: ページ読み取りモードだが、`browse`ツールがHTMLのhref属性を出力せず、リンクテキストとURLを紐付けできないため、キャンペーン詳細URLを特定できませんでした。"
+  "notes": "[crawl:index] index=https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: 提供されたページ本文には、キャンペーン詳細ページへのリンクが一切含まれていませんでした。"
 }

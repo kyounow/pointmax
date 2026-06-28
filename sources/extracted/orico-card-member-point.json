@@ -1,32 +1,34 @@
 {
   "sourceId": "orico-card-member-point",
   "sourceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-  "fetchedAt": "2026-06-24T22:20:32.550Z",
+  "fetchedAt": "2026-06-28T22:03:55.524Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "「入会後6ヵ月間は還元率が2.0％にアップ」はカード全体のキャンペーンであり、特定店舗・カテゴリのルールではないためstoreRules/categoryRulesには含めません。",
+  "notes": "Orico Card THE POINTの基本還元率と、オリコモール利用時の追加還元について抽出しました。特定のチェーン店舗での高還元は記載されていませんでした。",
   "cards": [
     {
       "cardId": "orico-card-member-point",
       "defaultRate": 0.01,
       "defaultCurrencyId": "orico-pt",
-      "evidenceQuote": "還元率は常に1.0％以上！100円で1オリコポイントがたまる！",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/#features",
+      "evidenceQuote": "100円につき1オリコポイント（基本ポイント還元率1.0%）",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/#point_rate",
       "explicitness": 1,
       "ambiguity": 0
     }
   ],
-  "storeRules": [
+  "categoryRules": [
     {
       "cardId": "orico-card-member-point",
-      "storeId": "orico-mall",
-      "rate": 0.015,
+      "category": "ネット通販",
+      "rate": 0.005,
       "currencyId": "orico-pt",
-      "evidenceQuote": "オリコモールのご利用でさらに0.5％のオリコポイントを特別加算！",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/#features",
+      "notes": "オリコモール経由のネットショッピングで特別加算される0.5%。カードショッピング1%とオリコモール利用加算0.5%以上とは別に加算されるものです。",
+      "validFrom": "2026-04-01",
       "explicitness": 0.9,
-      "ambiguity": 0.1
+      "ambiguity": 0.1,
+      "evidenceQuote": "オリコモールのご利用でさらに0.5％のオリコポイントを特別加算！",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/#anc-04"
     }
   ]
 }

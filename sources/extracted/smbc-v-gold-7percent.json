@@ -1,9 +1,381 @@
 {
   "sourceId": "smbc-v-gold-7percent",
   "sourceUrl": "https://www.smbc-card.com/mem/cardinfo/cardinfo9001629.jsp",
-  "fetchedAt": "2026-06-24T22:19:54.692Z",
-  "promptVersion": "card-vUnknown",
+  "fetchedAt": "2026-06-28T22:03:14.371Z",
+  "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): I have browsed the URL. Now I need to extract the relevant information and format it as JSON. Here's a summary of the key information from the page: * **Default Rate**: The page states \"合計200円（税込）につき、0.5％～1％ポイント還元\" for \"通常のポイント分\". For \"三井住友カード ゴールド VISA/ Mastercard\" which is the context of `smbc-"
+  "notes": "「三井住友カード ゴールド VISA/ Mastercard（NL）」を対象カードとして情報を抽出。モバイルオーダーの対象店舗が2025年9月16日より追加されているが、その期間指定はせず常時ルールとして記述。Oliveフレキシブルペイの還元率は今回のカードIDと異なるため抽出せず。",
+  "cards": [
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "defaultRate": 0.005,
+      "defaultCurrencyId": "v-pt",
+      "evidenceQuote": "通常のポイント分 合計200円（税込）につき、0.5％～1％ポイント還元",
+      "explicitness": 0.7,
+      "ambiguity": 0.3
+    }
+  ],
+  "storeRules": [
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "seven-eleven",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ●セイコーマート（※2） ●セブン-イレブン ●ポプラ（※3） ●ミニストップ ●ローソン（※4）●マクドナルド ●モスバーガー（※5） ●ケンタッキーフライドチキン ●吉野家 ●サイゼリヤ ●ガスト ●バーミヤン ●しゃぶ葉 ●ジョナサン ●夢庵 ●その他すかいらーくグループ飲食店（※6）●すき家 ●はま寿司 ●ココス ●ドトールコーヒーショップ ●エクセルシオール カフェ ●かっぱ寿司 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "seicomart",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ●セイコーマート（※2） ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "poplar",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●ポプラ（※3） ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "ministop",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●ミニストップ ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "lawson",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●ローソン（※4）... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "mcdonalds",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●マクドナルド ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "mos-burger",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●モスバーガー（※5） ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "kfc",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●ケンタッキーフライドチキン ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "yoshinoya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●吉野家 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "saizeriya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●サイゼリヤ ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "gusto",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●ガスト ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "bamiyan",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●バーミヤン ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "syabu-yo",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●しゃぶ葉 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "jonathan",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●ジョナサン ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "yumean",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●夢庵 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "sukiyabashi",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●すき家 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "hamazushi",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●はま寿司 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "cocos",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●ココス ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "doutor-coffee",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●ドトールコーヒーショップ ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "excelsior-cafe",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●エクセルシオール カフェ ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "kappa-sushi",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "【対象店舗】 ... ●かっぱ寿司 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "starbucks",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "モバイルオーダー対象店舗 ... ●スターバックス（※4） ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "steak-gusto",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... ステーキガスト ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "kara-yoshi",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... から好し ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "musashino-mori-coffee",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... むさしの森珈琲 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "aiya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... 藍屋 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "grazie-gardens",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... グラッチェガーデンズ ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "sakana-yoro",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... 魚屋路 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "chawan",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... chawan ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "la-ohana",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... La Ohana ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "tonkaratei",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... とんから亭 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "yumean-shokudo",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... ゆめあん食堂 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "momo-na",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... 桃菜 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "hachiro-soba",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... 八郎そば ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "san-maru-san",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6） ... 三〇三 ... 対象のコンビニ・飲食店で、スマホのタッチ決済またはモバイルオーダー（※5）で支払うと、ご利用金額200円（税込）につき7％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "seven-eleven",
+      "rate": 0.1,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-default",
+      "evidenceQuote": "さらに条件達成で、セブン‐イレブン最大11％還元 ... その他のクレジットカードでの取引は「最大10％還元」であり、「対象のコンビニ・飲食店で7％還元」に加えて3％が付与された合計還元率です。",
+      "explicitness": 0.8,
+      "ambiguity": 0.3
+    }
+  ]
 }
