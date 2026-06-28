@@ -3,6 +3,43 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-06-29 (auto 12 件 / review 184 件)
+
+- 平均 confidence: 0.90 / source 数: 13
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| JCB J-POINT パートナー (旧 Oki Doki ランド、公式) | 提携店舗 | 12 |
+
+### Review queue 内訳 (184 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 112 |
+| storeAdditionsDisabled | 55 |
+| idCollision | 9 |
+| missingProgramBody | 6 |
+| lowConfidence | 2 |
+
+<details><summary>追加項目 12 件</summary>
+
+### JCB J-POINT パートナー (旧 Oki Doki ランド、公式) / 提携店舗 (12)
+- J-POINT パートナー (20倍) Gold向け → すき家
+- J-POINT パートナー (20倍) Gold向け → 吉野家
+- J-POINT パートナー (20倍) Gold向け → ガスト
+- J-POINT パートナー (20倍) Gold向け → バーミヤン
+- J-POINT パートナー (20倍) Gold向け → サンマルクカフェ
+- J-POINT パートナー (20倍) Gold向け → ジョナサン
+- J-POINT パートナー (2倍) Gold向け → 丸善ジュンク堂書店
+- J-POINT パートナー (2倍) Gold向け → ジョーシン
+- J-POINT パートナー (2倍) Gold向け → コジマ
+- J-POINT パートナー (2倍) Gold向け → ソフマップ
+- J-POINT パートナー (2倍) Gold向け → 三井のカーシェアーズ
+- J-POINT パートナー (2倍) Gold向け → 好日山荘
+
+</details>
+
+---
+
 ## 2026-06-25 (auto 0 件 / review 41 件)
 
 - source 数: 14

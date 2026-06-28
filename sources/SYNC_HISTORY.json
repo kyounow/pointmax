@@ -2,6 +2,118 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-06-29",
+      "generatedAt": "2026-06-28T22:07:49.550Z",
+      "totalCount": 12,
+      "avgConfidence": 0.902,
+      "sourcesProcessed": 13,
+      "bySource": [
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "count": 12,
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) Gold向け → すき家",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) Gold向け → 吉野家",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) Gold向け → ガスト",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) Gold向け → バーミヤン",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) Gold向け → サンマルクカフェ",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) Gold向け → ジョナサン",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) Gold向け → 丸善ジュンク堂書店",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) Gold向け → ジョーシン",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) Gold向け → コジマ",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) Gold向け → ソフマップ",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) Gold向け → 三井のカーシェアーズ",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) Gold向け → 好日山荘",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 184,
+        "byReason": {
+          "idCollision": 9,
+          "lowConfidence": 2,
+          "missingStoreBody": 112,
+          "missingProgramBody": 6,
+          "storeAdditionsDisabled": 55
+        }
+      }
+    },
+    {
       "date": "2026-06-25",
       "generatedAt": "2026-06-25T14:14:10.549Z",
       "totalCount": 0,
