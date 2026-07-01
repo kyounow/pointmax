@@ -2,6 +2,128 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-07-02",
+      "generatedAt": "2026-07-01T22:27:28.567Z",
+      "totalCount": 10,
+      "avgConfidence": 0.931,
+      "sourcesProcessed": 13,
+      "bySource": [
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "memberships",
+          "count": 2,
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "programs",
+          "count": 2,
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "count": 1,
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "count": 5,
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "programs",
+          "summary": "dポイントカード モスバーガー 対象商品はdポイント5倍 5.00% dポイント [2026-06-05〜2026-07-05]",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "programs",
+          "summary": "ノジマで最大10,000ポイントプレゼント 1.00% dポイント [2026-06-06〜2026-08-23]",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "memberships",
+          "summary": "dポイントカード モスバーガー 対象商品はdポイント5倍 → モスバーガー",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "memberships",
+          "summary": "ノジマで最大10,000ポイントプレゼント → ノジマ",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) W向け → 一般店舗 (規定還元)",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) Gold向け → 一般店舗 (規定還元)",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (20倍) Gold向け → マクドナルド",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) W向け → 一般店舗 (規定還元)",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) Gold向け → 一般店舗 (規定還元)",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "summary": "プログラム 削除 prog-dcard-bic-camera-may2026",
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "reviewStats": {
+        "total": 462,
+        "byReason": {
+          "idCollision": 21,
+          "missingProgramBody": 11,
+          "missingStoreBody": 109,
+          "lowConfidence": 139,
+          "storeAdditionsDisabled": 157,
+          "selfReportedExclusion": 1,
+          "excludedCategory": 21,
+          "userBlocked": 3
+        }
+      }
+    },
+    {
       "date": "2026-06-29",
       "generatedAt": "2026-06-28T22:07:49.550Z",
       "totalCount": 12,

@@ -1,19 +1,19 @@
 {
   "sourceId": "mufg-card-global-point",
   "sourceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
-  "fetchedAt": "2026-06-28T22:03:45.064Z",
+  "fetchedAt": "2026-07-01T22:22:50.224Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "グローバルポイント利用規程ページであり、特定店舗やカテゴリの還元率情報は記載されていませんでした。基本ポイントに関する記述のみを抽出しています。グローバルPLUSによる優遇ポイントはカードの種類や月間利用額による変動があるため、デフォルトの基本還元率のみを記載しました。",
+  "notes": "基本ポイント還元率について、1000円=1ポイントと記載されているが、グローバルポイントの具体的な価値（円換算）がこの規程内では明記されていないため、一般的な0.5%還元（1ポイント=5円換算）を想定し0.005として抽出。ただし、カード種別ごとのグローバルPLUSや海外利用優遇の適用条件が細かく設定されており、個別のカード情報がないと正確な還元率は判断できない。特定の店舗やカテゴリに関する明示的な優遇情報は確認できなかった。",
   "cards": [
     {
-      "cardId": "mufg-card",
-      "defaultRate": 0.001,
+      "cardId": "mufg-card-global-point",
+      "defaultRate": 0.005,
       "defaultCurrencyId": "mufg-pt",
-      "evidenceQuote": "1回払いまたはボーナス一括払いを指定した場合、ショッピング利用代金の支払として、約定支払日に支払うべき約定支払額（1千円未満切捨て）に対して、1千円につき1ポイントを約定支払日に本会員に付与します。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "1千円につき1ポイントを約定支払日に本会員に付与します。",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
     }
   ],
   "storeRules": [],

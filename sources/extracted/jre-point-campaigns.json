@@ -1,9 +1,9 @@
 {
   "sourceId": "jre-point-campaigns",
   "sourceUrl": "https://www.jrepoint.jp/campaign/list/",
-  "fetchedAt": "2026-06-28T22:04:25.669Z",
+  "fetchedAt": "2026-07-01T22:24:02.894Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] index=https://www.jrepoint.jp/campaign/list/ 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: Unable to extract campaign detail URLs as the browse tool returned only text content, and explicit URLs for individual campaigns were not present in the text. Cannot parse HTML for href attributes."
+  "notes": "[crawl:index] index=https://www.jrepoint.jp/campaign/list/ 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: HTML parsing library (BeautifulSoup) not available, unable to extract campaign URLs."
 }

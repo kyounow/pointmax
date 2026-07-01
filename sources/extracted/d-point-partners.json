@@ -1,9 +1,28 @@
 {
   "sourceId": "d-point-partners",
   "sourceUrl": "https://dpoint.docomo.ne.jp/content/feature/point_realstore.html",
-  "fetchedAt": "2026-06-28T22:00:57.801Z",
-  "promptVersion": "point-partner-vUnknown",
+  "fetchedAt": "2026-07-01T22:19:33.817Z",
+  "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "stores": [
+    {
+      "storeId": "wendys-first-kitchen",
+      "name": "ウェンディーズ・ファーストキッチン",
+      "category": "飲食",
+      "evidenceQuote": "ウェンディーズ・ファーストキッチン もっとみる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "matsuya",
+      "name": "松屋",
+      "category": "飲食",
+      "evidenceQuote": "松屋 もっとみる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "loyaltyRules": [],
+  "notes": "dポイントカード提示によるポイント還元率の記載がないため、loyaltyRulesは抽出できません。掲載店舗の一部はd払いのみ対応です。"
 }

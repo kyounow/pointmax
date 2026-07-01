@@ -1,9 +1,11 @@
 {
   "sourceId": "ponta-partners",
   "sourceUrl": "https://point.recruit.co.jp/point/?tab=pointUseService",
-  "fetchedAt": "2026-06-28T22:02:42.306Z",
-  "promptVersion": "point-partner-vUnknown",
+  "fetchedAt": "2026-07-01T22:21:21.009Z",
+  "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "stores": [],
+  "loyaltyRules": [],
+  "notes": "チェーン店のポイント還元率がページ上で明示されていないため、loyaltyRulesは抽出できませんでした。個店の還元率は記載されているものの、チェーン店抽出スコープの対象外です。"
 }
