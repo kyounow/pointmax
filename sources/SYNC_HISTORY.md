@@ -3,6 +3,53 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-07-02 (auto 10 件 / review 462 件)
+
+- 平均 confidence: 0.93 / source 数: 13
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| d払い キャンペーン一覧 (公式) | 提携店舗 | 2 |
+| d払い キャンペーン一覧 (公式) | プログラム | 2 |
+| expired-cleanup | プログラム | 1 |
+| JCB J-POINT パートナー (旧 Oki Doki ランド、公式) | 提携店舗 | 5 |
+
+### Review queue 内訳 (462 件)
+| 理由 | 件数 |
+|---|---:|
+| storeAdditionsDisabled | 157 |
+| lowConfidence | 139 |
+| missingStoreBody | 109 |
+| idCollision | 21 |
+| excludedCategory | 21 |
+| missingProgramBody | 11 |
+| userBlocked | 3 |
+| selfReportedExclusion | 1 |
+
+<details><summary>追加項目 10 件</summary>
+
+### d払い キャンペーン一覧 (公式) / プログラム (2)
+- dポイントカード モスバーガー 対象商品はdポイント5倍 5.00% dポイント [2026-06-05〜2026-07-05]
+- ノジマで最大10,000ポイントプレゼント 1.00% dポイント [2026-06-06〜2026-08-23]
+
+### d払い キャンペーン一覧 (公式) / 提携店舗 (2)
+- dポイントカード モスバーガー 対象商品はdポイント5倍 → モスバーガー
+- ノジマで最大10,000ポイントプレゼント → ノジマ
+
+### JCB J-POINT パートナー (旧 Oki Doki ランド、公式) / 提携店舗 (5)
+- J-POINT パートナー (20倍) W向け → 一般店舗 (規定還元)
+- J-POINT パートナー (20倍) Gold向け → 一般店舗 (規定還元)
+- J-POINT パートナー (20倍) Gold向け → マクドナルド
+- J-POINT パートナー (2倍) W向け → 一般店舗 (規定還元)
+- J-POINT パートナー (2倍) Gold向け → 一般店舗 (規定還元)
+
+### expired-cleanup / プログラム (1)
+- プログラム 削除 prog-dcard-bic-camera-may2026
+
+</details>
+
+---
+
 ## 2026-06-29 (auto 12 件 / review 184 件)
 
 - 平均 confidence: 0.90 / source 数: 13

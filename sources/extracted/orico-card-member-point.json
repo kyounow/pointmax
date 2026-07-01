@@ -1,34 +1,58 @@
 {
   "sourceId": "orico-card-member-point",
   "sourceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-  "fetchedAt": "2026-06-28T22:03:55.524Z",
+  "fetchedAt": "2026-07-01T22:23:19.697Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Orico Card THE POINTの基本還元率と、オリコモール利用時の追加還元について抽出しました。特定のチェーン店舗での高還元は記載されていませんでした。",
+  "notes": "「入会後6ヵ月間」の特典期間は個別の入会日に依存するため、validFrom/validToは設定していません。",
   "cards": [
     {
       "cardId": "orico-card-member-point",
       "defaultRate": 0.01,
       "defaultCurrencyId": "orico-pt",
-      "evidenceQuote": "100円につき1オリコポイント（基本ポイント還元率1.0%）",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/#point_rate",
+      "evidenceQuote": "還元率は常に1.0％以上！100円で1オリコポイントがたまる！",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
       "explicitness": 1,
       "ambiguity": 0
     }
   ],
+  "storeRules": [],
   "categoryRules": [
     {
       "cardId": "orico-card-member-point",
       "category": "ネット通販",
-      "rate": 0.005,
+      "rate": 0.02,
       "currencyId": "orico-pt",
-      "notes": "オリコモール経由のネットショッピングで特別加算される0.5%。カードショッピング1%とオリコモール利用加算0.5%以上とは別に加算されるものです。",
-      "validFrom": "2026-04-01",
+      "evidenceQuote": "オリコモールを経由しネットショッピングした場合、カードご利用分（1.0％）+オリコモールご利用分（+0.5%以上）+特別加算（0.5％）で2%以上のオリコポイントがたまります。",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
+      "explicitness": 0.9,
+      "ambiguity": 0.3,
+      "notes": "オリコモール経由のネットショッピング特典。一部ショップは対象外・加算率が異なります。"
+    },
+    {
+      "cardId": "orico-card-member-point",
+      "category": "all",
+      "rate": 0.02,
+      "currencyId": "orico-pt",
+      "evidenceQuote": "入会後6ヵ月間は還元率が2.0％にアップ！",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
       "explicitness": 0.9,
       "ambiguity": 0.1,
-      "evidenceQuote": "オリコモールのご利用でさらに0.5％のオリコポイントを特別加算！",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/#anc-04"
+      "notes": "入会後6ヵ月間のキャンペーン。期間中のご利用金額50万円（5,000オリコポイント）が上限です。"
+    },
+    {
+      "cardId": "orico-card-member-point",
+      "category": "鉄道・交通",
+      "rate": 0.02,
+      "currencyId": "orico-pt",
+      "evidenceQuote": "ETCのご利用分も入会後6ヵ月は2倍ポイントがたまります。",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
+      "explicitness": 0.9,
+      "ambiguity": 0.1,
+      "notes": "ETCカード利用分も入会後6ヵ月間はポイント2倍。"
     }
-  ]
+  ],
+  "loyaltyRules": [],
+  "paymentApps": []
 }
