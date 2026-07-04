@@ -321,15 +321,25 @@ export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-jcb-jpoint-gold-2x", storeId: "kojitsu-sanso" },
   { programId: "prog-d-pointcard-mos-burger-05", storeId: "mos-burger" },
   { programId: "prog-d-pointcard-nojima-10000", storeId: "nojima" },
-  { programId: "prog-jcb-jpoint-20x", storeId: "general" },
-  { programId: "prog-jcb-jpoint-gold-20x", storeId: "general" },
   { programId: "prog-jcb-jpoint-gold-20x", storeId: "mcdonalds" },
-  { programId: "prog-jcb-jpoint-2x", storeId: "general" },
-  { programId: "prog-jcb-jpoint-gold-2x", storeId: "general" },
 ];
 
 export const PROGRAM_OVERRIDES: ProgramOverride[] = [];
 
 export const REMOVED_PROGRAM_IDS: string[] = [
   "prog-dcard-bic-camera-may2026",
+];
+
+// PR #103 の auto-sync で、jcb-jpoint extractor が店舗特定不能な項目
+// (「クレカ乗車 ポイント20倍」「海外でのお買い物 ポイント2倍」等) を
+// 規定還元表示用ダミー store "general" (src/state/seed-data-stores.ts) への
+// membership として誤って混入させた 4 件。confidence 0.9025 ≥ 0.9 で
+// autoApplicable を通過し、7/02 に本番配信済み。既存ユーザーの localStorage
+// にも mergeSeed (add-only) で入っているため、tombstone (この定数) で除去する。
+// キー形式: "programId|storeId" (mergeSeed.mergeMemberships と同形式)。
+export const REMOVED_MEMBERSHIP_KEYS: string[] = [
+  "prog-jcb-jpoint-20x|general",
+  "prog-jcb-jpoint-gold-20x|general",
+  "prog-jcb-jpoint-2x|general",
+  "prog-jcb-jpoint-gold-2x|general",
 ];

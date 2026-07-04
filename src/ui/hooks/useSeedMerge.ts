@@ -19,7 +19,10 @@ import { useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../../state/store";
 import { seed } from "../../state/seed";
-import { REMOVED_PROGRAM_IDS } from "../../state/seed-additions";
+import {
+  REMOVED_PROGRAM_IDS,
+  REMOVED_MEMBERSHIP_KEYS,
+} from "../../state/seed-additions";
 import {
   mergeSeed,
   diffCount,
@@ -88,7 +91,10 @@ export function useSeedMerge(): SeedMergeResult {
         memberships,
       },
       seed(),
-      { removedProgramIds: REMOVED_PROGRAM_IDS },
+      {
+        removedProgramIds: REMOVED_PROGRAM_IDS,
+        removedMembershipKeys: REMOVED_MEMBERSHIP_KEYS,
+      },
     );
   }, [
     hasData,

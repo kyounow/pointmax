@@ -9,6 +9,8 @@
 //   - 既存ID / 既存 name と衝突                          → "idCollision"
 //   - BLOCKED_STORE_IDS 入りの id                        → "userBlocked"
 //   - EXCLUDED_CATEGORIES (金融/保険/医療等)             → "excludedCategory"
+//   - PSEUDO_STORE_IDS 入りの storeId (memberships/loyaltyRules)
+//                                                          → "pseudoStoreTarget"
 //
 // 全て満たさない場合 reviewReason は undefined となり、autoApplicable に分類される。
 //
@@ -16,7 +18,7 @@
 // (dedupeAcrossProposals) や category cap は diff-and-propose.ts 側で実施。
 
 import type { SeedShape } from "../../src/domain/mergeSeed";
-import { BLOCKED_STORE_IDS } from "../../src/state/seed-blocklist";
+import { BLOCKED_STORE_IDS, PSEUDO_STORE_IDS } from "../../src/state/seed-blocklist";
 import { resolveCategory } from "../../src/state/seed-category-aliases";
 import {
   CONFIDENCE_AUTO_THRESHOLD,
@@ -283,6 +285,12 @@ export function proposeLoyaltyRules(
       ],
     );
 
+    // 規定還元表示用ダミー store ("general" 等) への loyaltyRule 混入防止 (#103)。
+    // base 判定より強い override として最優先で降格 (店舗特定不能な項目の
+    // 受け皿誤マッピング防止が最重要のため)。
+    const pseudoGuardReason: ReviewReason | undefined =
+      PSEUDO_STORE_IDS.has(r.storeId) ? "pseudoStoreTarget" : guardReason;
+
     const programId = deriveLoyaltyProgramId(r.pointCardId, r.rate);
     if (!programId) {
       // rate 不正。現行同様 needsReview 1 件で可視化 (auto-merge 不可)。
@@ -359,7 +367,7 @@ export function proposeLoyaltyRules(
         sourceId: data.sourceId,
         confidence,
         evidence,
-        reviewReason: guardReason,
+        reviewReason: pseudoGuardReason,
       });
       seenMemberships.add(mkey);
     }
@@ -581,7 +589,7 @@ export function proposeMemberships(
       (x) => x.programId === m.programId && x.storeId === m.storeId,
     );
     if (found) continue; // 既存 membership は更新経路なし (PR-D1 は最小)
-    const reviewReason = resolveReviewReason(
+    const baseReviewReason = resolveReviewReason(
       confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
       [
         () =>
@@ -590,6 +598,13 @@ export function proposeMemberships(
             : undefined,
       ],
     );
+    // 規定還元表示用ダミー store ("general" 等) への membership 混入防止 (#103)。
+    // 他の判定より強い override として最優先で降格。
+    const reviewReason: ReviewReason | undefined = PSEUDO_STORE_IDS.has(
+      m.storeId,
+    )
+      ? "pseudoStoreTarget"
+      : baseReviewReason;
     const rec: Record<string, unknown> = {
       programId: m.programId,
       storeId: m.storeId,
@@ -664,7 +679,7 @@ export function proposeJalTokuyakuMemberships(
     const mkey = `${JAL_TOKUYAKU_PROGRAM_ID}__${st.storeId}`;
     if (seenMemberships.has(mkey)) continue;
     const { evidence, confidence } = evidenceAndConfidence(st);
-    const reviewReason = resolveReviewReason(
+    const baseReviewReason = resolveReviewReason(
       confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
       [
         () =>
@@ -673,6 +688,12 @@ export function proposeJalTokuyakuMemberships(
             : undefined,
       ],
     );
+    // 規定還元表示用ダミー store ("general" 等) への membership 混入防止 (#103)。
+    const reviewReason: ReviewReason | undefined = PSEUDO_STORE_IDS.has(
+      st.storeId,
+    )
+      ? "pseudoStoreTarget"
+      : baseReviewReason;
     result.push({
       type: "addRecord",
       collection: "memberships",

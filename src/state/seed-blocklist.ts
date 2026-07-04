@@ -51,3 +51,32 @@ export const BLOCKED_STORE_IDS = new Set<string>([
   "waterone", // サイサン系水
   "shaddy-salada-kan", // ギフト専門店
 ]);
+
+// ===========================================================
+// PSEUDO_STORE_IDS
+// ===========================================================
+// BLOCKED_STORE_IDS とは意味論が異なる: BLOCKED は「PointMax の用途に合わず
+// seed から除外したい実店舗系 id」。こちらは「実店舗ではなく、Calculator の
+// 規定還元率確認用に seed に必須のダミー store」。
+//
+// 例: "general" (src/state/seed-data-stores.ts) = 「一般店舗 (規定還元)」。
+// Calculator のデフォルト選択店で、店舗未選択時の規定還元率を表示するための
+// プレースホルダ。実在店舗ではないため、ここに実 program の membership /
+// loyaltyRule が紐づくと「一般店舗を選んだのに特定キャンペーンの倍率が乗る」
+// という誤表示になる。
+//
+// 背景 (#103 incident): jcb-jpoint extractor が「クレカ乗車 ポイント20倍」
+// 「海外でのお買い物 ポイント2倍」のような店舗特定不能な項目を、プロンプト
+// INJECT で見えていた既存 store "general" の受け皿として誤って割り当てた。
+// confidence が閾値を超え、"general" が既存 store のため missingStoreBody
+// ガードも発動せず auto-merge されてしまった (7/02 本番配信、seed-additions.ts
+// の REMOVED_MEMBERSHIP_KEYS で除去済み)。
+//
+// 再発防止として:
+//   - scripts/sync/propose-helpers.ts: memberships / loyaltyRules の storeId が
+//     ここに含まれる場合、reviewReason="pseudoStoreTarget" で必ず needsReview に降格
+//   - scripts/sync/inject-prompt.ts: このリストの store を INJECT 一覧から除外
+//     (Gemini がそもそも受け皿候補として見れないようにする)
+export const PSEUDO_STORE_IDS = new Set<string>([
+  "general", // 一般店舗 (規定還元確認用ダミー、実店舗ではない)
+]);

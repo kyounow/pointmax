@@ -21,7 +21,7 @@ extractorVersions:
   campaign-index: v1.0  # crawl: index の 1 段目 (子 URL 列挙専用、ExtractedSource は出力しない)
   card: v1.1
   jal-tokuyaku: v1.0
-  jcb-jpoint: v1.0
+  jcb-jpoint: v1.1  # 2026-07-04: #103 対応、店舗特定不能項目の「一般店舗」受け皿禁止を明記
   ongoing-program: v1.1  # 2026-06-10 修正: prompt 本文は PR #37 以降 v1.1 (旧記載 v1.0 は不整合)
   payment-app: v1.1
   point-partner: v1.2
