@@ -16,6 +16,7 @@
 // マーカー自体は出力にも保存される (再注入が冪等)。
 
 import { seed } from "../../src/state/seed";
+import { PSEUDO_STORE_IDS } from "../../src/state/seed-blocklist";
 
 // ───────────────────────────────────────────────────────────────
 // Types
@@ -122,7 +123,13 @@ function collectRecords(
   kind: InjectableEntity,
   filter?: { field: string; value: string },
 ): Record<string, unknown>[] {
-  const all = data[kind] as unknown as Record<string, unknown>[];
+  let all = data[kind] as unknown as Record<string, unknown>[];
+  // PSEUDO_STORE_IDS (規定還元表示用ダミー store、例: "general") は Gemini に
+  // 「既存 store」として見せない。プロンプト INJECT で見えると、店舗特定不能な
+  // 項目の受け皿として誤って割り当てられるリスクがある (#103 incident 対応)。
+  if (kind === "stores") {
+    all = all.filter((r) => !PSEUDO_STORE_IDS.has(String(r.id)));
+  }
   if (!filter) return all;
   return all.filter((r) => {
     const v = r[filter.field];

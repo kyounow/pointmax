@@ -255,6 +255,38 @@ describe("mergeSeed — tombstone 削除 (Phase 5)", () => {
   });
 });
 
+describe("mergeSeed — removedMembershipKeys (#103 対応)", () => {
+  it("該当キー完全一致の membership が除去される", () => {
+    const current = {
+      ...empty,
+      memberships: [
+        mem("prog-jcb-jpoint-20x", "general"),
+        mem("prog-jcb-jpoint-20x", "starbucks"),
+      ],
+    };
+    const result = mergeSeed(
+      current,
+      { ...empty },
+      { removedMembershipKeys: ["prog-jcb-jpoint-20x|general"] },
+    );
+    expect(result.memberships).toEqual([
+      mem("prog-jcb-jpoint-20x", "starbucks"),
+    ]);
+    expect(result.removedMembershipKeyCount).toBe(1);
+  });
+
+  it("キー不一致の membership は残る", () => {
+    const memberships = [mem("prog-a", "store-a"), mem("prog-b", "store-b")];
+    const result = mergeSeed(
+      { ...empty, memberships },
+      { ...empty },
+      { removedMembershipKeys: ["prog-x|store-x"] },
+    );
+    expect(result.memberships).toBe(memberships);
+    expect(result.removedMembershipKeyCount).toBe(0);
+  });
+});
+
 describe("changeCount", () => {
   it("追加 + 更新 + 削除を合算する", () => {
     const result = mergeSeed(

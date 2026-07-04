@@ -372,6 +372,25 @@ describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
     expect(proposeLoyaltyRules(data, seed)).toEqual([]);
   });
 
+  it("#103 回帰: loyaltyRule storeId=general の membership は pseudoStoreTarget", () => {
+    const data = baseSource({
+      loyaltyRules: [
+        {
+          pointCardId: "rakuten-pointcard",
+          storeId: "general",
+          rate: 0.005,
+          evidenceQuote: "海外でのお買い物 0.5%還元",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeLoyaltyRules(data, emptySeed);
+    const mem = ps.find((p) => p.collection === "memberships");
+    expect(mem).toBeDefined();
+    expect(mem?.reviewReason).toBe("pseudoStoreTarget");
+  });
+
   it("paymentApp の chargeBased 変更は要レビュー", () => {
     const seed: SeedShape = {
       ...emptySeed,
@@ -1194,6 +1213,42 @@ describe("proposeMemberships (PR-D1)", () => {
       ],
     });
     expect(proposeMemberships(data, seed)).toEqual([]);
+  });
+
+  it("#103 回帰: storeId=general への membership は pseudoStoreTarget で needsReview に降格", () => {
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [
+        {
+          programId: "prog-jcb-jpoint-20x",
+          storeId: "general",
+          evidenceQuote: "クレカ乗車 ポイント20倍",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeMemberships(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBe("pseudoStoreTarget");
+  });
+
+  it("通常 storeId (general 以外) は従来どおり auto (reviewReason なし)", () => {
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [
+        {
+          programId: "prog-jcb-jpoint-20x",
+          storeId: "starbucks",
+          evidenceQuote: "スターバックス J-POINT 20倍",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeMemberships(data, emptySeed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBeUndefined();
   });
 });
 

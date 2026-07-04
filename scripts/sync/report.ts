@@ -405,6 +405,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   storeAdditionsDisabled: "⏸ storeAdditionsDisabled (store 追加は手動キュレ運用)",
   expiredCampaign: "🟠 expiredCampaign (期限切れだが同 run で期間変更提案あり、人手判断)",
   periodChange: "🟣 periodChange (キャンペーン期間の変更/延長)",
+  pseudoStoreTarget: "🔴 pseudoStoreTarget (規定還元用ダミー store への誤マッピング疑い)",
 };
 
 const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
@@ -459,6 +460,11 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "既存 program の validFrom/validTo が公式ページの記載と異なる (キャンペーン延長 / 期間訂正)。" +
     "evidenceQuote の期間根拠を確認し、正しければ sync:approve で承認 → PROGRAM_OVERRIDES 経由で seed に反映される。" +
     "誤抽出 (別キャンペーンの期間を拾った等) の場合は無視。",
+  pseudoStoreTarget:
+    "membership/loyaltyRule の storeId が PSEUDO_STORE_IDS (例: \"general\" = 規定還元表示用ダミー store) を指している。" +
+    "店舗を特定できない項目 (例: 「海外でのお買い物」「クレカ乗車」等) を Gemini が受け皿として誤って汎用 store に" +
+    "割り当てた疑いが高い (#103 incident と同型)。正しい店舗が特定できるなら手動で該当 storeId に修正して取り込み、" +
+    "特定できないなら無視 (このまま auto-merge すると規定還元の表示が壊れるため必ず人手判断)。",
 };
 
 function formatProposalDetail(p: Proposal): string {
@@ -573,6 +579,7 @@ export function buildReviewQueue(report: ProposalReport): string {
       "autoMergeDisabled",    // 🛡 auto-merge 無効化で降格された健全な auto 候補 (手動テスト等)
       "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
       "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
+      "pseudoStoreTarget",    // 🔴 規定還元用ダミー store への誤マッピング疑い、早めに目を通す
       "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
       "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
       "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目

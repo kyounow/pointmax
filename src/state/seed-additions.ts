@@ -321,11 +321,7 @@ export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-jcb-jpoint-gold-2x", storeId: "kojitsu-sanso" },
   { programId: "prog-d-pointcard-mos-burger-05", storeId: "mos-burger" },
   { programId: "prog-d-pointcard-nojima-10000", storeId: "nojima" },
-  { programId: "prog-jcb-jpoint-20x", storeId: "general" },
-  { programId: "prog-jcb-jpoint-gold-20x", storeId: "general" },
   { programId: "prog-jcb-jpoint-gold-20x", storeId: "mcdonalds" },
-  { programId: "prog-jcb-jpoint-2x", storeId: "general" },
-  { programId: "prog-jcb-jpoint-gold-2x", storeId: "general" },
 ];
 
 export const PROGRAM_OVERRIDES: ProgramOverride[] = [];

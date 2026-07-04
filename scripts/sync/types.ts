@@ -342,7 +342,10 @@ export type ReviewReason =
   | "expiredCampaign"         // validTo + grace (30日) 経過済の campaign 削除提案。誤削除防止のため必ず人手レビュー
   | "periodChange"            // 既存 program の validFrom/validTo 変更 (キャンペーン延長/期間訂正)。誤期間適用防止のため必ず人手レビュー (sync:approve で承認可)
   | "safetyFailed"            // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
-  | "autoMergeDisabled";      // auto-merge 候補だが autoMergeEnabled=false / force_review_only=true のため review に降格 (手動テスト等)
+  | "autoMergeDisabled"       // auto-merge 候補だが autoMergeEnabled=false / force_review_only=true のため review に降格 (手動テスト等)
+  | "pseudoStoreTarget";      // 規定還元表示用ダミー store (PSEUDO_STORE_IDS、例: "general") への
+                              // membership/loyaltyRule 提案。店舗特定不能な項目の受け皿誤マッピングを
+                              // 防止 (#103 incident: jcb-jpoint extractor が general を受け皿にした事故対応)
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";
