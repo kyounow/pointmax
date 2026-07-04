@@ -399,6 +399,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   userBlocked: "⚫ userBlocked",
   selfReportedExclusion: "🟠 selfReportedExclusion",
   unsupportedDateClaim: "🔴 unsupportedDateClaim",
+  unsupportedRateClaim: "🔴 unsupportedRateClaim (rate 根拠なし、hallucination 疑い)",
   zeroOrInvalidRate: "🔴 zeroOrInvalidRate",
   missingStoreBody: "🟠 missingStoreBody (store 本体なし membership)",
   missingProgramBody: "🟠 missingProgramBody (program 本体なし membership)",
@@ -437,8 +438,11 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "Gemini 自身が evidenceQuote で「対象外」「見送り」「記載なし」等と表明。Gemini の良心 hallucination 抑制が機能した結果。基本は無視で OK。",
   unsupportedDateClaim:
     "validFrom/validTo が抽出されたが evidenceQuote に日付の根拠 (期間 / YYYY年 / まで 等) が見当たらない。日付の hallucination 疑い。元 URL を直接確認の上採否を判断。",
+  unsupportedRateClaim:
+    "rate が抽出されたが evidenceQuote に数値根拠 (% / 倍 / 円→pt 等) が見当たらない。" +
+    "「最大◯◯ポイントプレゼント」のような曖昧な文言から Gemini が rate を hallucinate した疑い。元 URL を直接確認の上採否を判断。",
   zeroOrInvalidRate:
-    "rate=0 抽出。Gemini が還元率を読み取れなかった疑い。実際の値を URL で確認の上、手動キュレートで取り込むか、prompt 改善後に再 fetch すること。",
+    "rate=0 / 負 / 非有限 / 過大 (30%超) の抽出。Gemini が還元率を正しく読み取れなかった疑い。実際の値を URL で確認の上、手動キュレートで取り込むか、prompt 改善後に再 fetch すること。",
   missingStoreBody:
     "membership 提案だが、参照先 store 本体が seed 未存在 + 同 run の auto 候補にも無い (例: category cap で deferred された場合)。" +
     "そのまま auto-merge すると孤児 membership (店名解決できない、UI で店舗未表示) が seed に残るため降格。store 本体を手動キュレートで追加するか、" +
@@ -461,10 +465,11 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "evidenceQuote の期間根拠を確認し、正しければ sync:approve で承認 → PROGRAM_OVERRIDES 経由で seed に反映される。" +
     "誤抽出 (別キャンペーンの期間を拾った等) の場合は無視。",
   pseudoStoreTarget:
-    "membership/loyaltyRule の storeId が PSEUDO_STORE_IDS (例: \"general\" = 規定還元表示用ダミー store) を指している。" +
-    "店舗を特定できない項目 (例: 「海外でのお買い物」「クレカ乗車」等) を Gemini が受け皿として誤って汎用 store に" +
-    "割り当てた疑いが高い (#103 incident と同型)。正しい店舗が特定できるなら手動で該当 storeId に修正して取り込み、" +
-    "特定できないなら無視 (このまま auto-merge すると規定還元の表示が壊れるため必ず人手判断)。",
+    "membership/loyaltyRule/program 等が擬似エンティティ (例: \"general\" = 規定還元表示用ダミー store、" +
+    "\"pa-default\" = 「通常クレカ決済」基本モード) を指している。" +
+    "店舗/決済手段を特定できない項目 (例: 「海外でのお買い物」「クレカ乗車」等) を Gemini が受け皿として誤って汎用エンティティに" +
+    "割り当てた疑いが高い (#103 incident と同型)。正しい参照先が特定できるなら手動で修正して取り込み、" +
+    "特定できないなら無視 (このまま auto-merge すると規定還元表示 / 最頻決済モードの計算が壊れるため必ず人手判断)。",
 };
 
 function formatProposalDetail(p: Proposal): string {
@@ -579,7 +584,8 @@ export function buildReviewQueue(report: ProposalReport): string {
       "autoMergeDisabled",    // 🛡 auto-merge 無効化で降格された健全な auto 候補 (手動テスト等)
       "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
       "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
-      "pseudoStoreTarget",    // 🔴 規定還元用ダミー store への誤マッピング疑い、早めに目を通す
+      "unsupportedRateClaim", // 🔴 rate hallucination 疑い、早めに目を通す
+      "pseudoStoreTarget",    // 🔴 擬似エンティティへの誤マッピング疑い、早めに目を通す
       "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
       "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
       "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目

@@ -34,3 +34,23 @@ export function detectUnsupportedDateClaim(
   if (!evidenceQuote) return true; // 日付主張あるが evidence なし → unsupported
   return !DATE_EVIDENCE_PATTERNS.some((p) => p.test(evidenceQuote));
 }
+
+// rate (還元率) があるのに evidenceQuote に数値根拠が無い場合を検知。
+// Gemini が「最大◯◯ポイントプレゼント」のような曖昧なプレゼント企画文言から
+// rate を hallucinate するのを防ぐ (detectUnsupportedDateClaim と対称)。
+// 実害第1号: prog-d-pointcard-nojima-10000 (evidenceQuote「ノジマで最大10,000
+// ポイントプレゼント」に rate 1% の根拠皆無、auto 通過・配信済み)。
+const RATE_EVIDENCE_PATTERNS = [
+  /\d+(\.\d+)?\s*[%％]/,                          // "3%" "1.5％"
+  /\d+(\.\d+)?\s*倍/,                              // "20倍"
+  /\d+\s*円.{0,12}?\d+\s*(ポイント|pt|P|マイル)/i, // "200円につき1ポイント" 等
+];
+
+export function detectUnsupportedRateClaim(
+  rate: number | undefined,
+  evidenceQuote: string | undefined,
+): boolean {
+  if (!rate || rate === 0) return false; // rate 不正は zeroOrInvalidRate の担当
+  if (!evidenceQuote) return true; // rate 主張あるが evidence なし → unsupported
+  return !RATE_EVIDENCE_PATTERNS.some((p) => p.test(evidenceQuote));
+}

@@ -275,3 +275,20 @@ describe("#103 回帰: general への membership 混入防止", () => {
     expect(offending, JSON.stringify(offending)).toEqual([]);
   });
 });
+
+// M5 回帰防止: prog-d-pointcard-nojima-10000 は rate 捏造疑い濃厚 (evidenceQuote
+// 「ノジマで最大10,000ポイントプレゼント」に rate 1% の根拠皆無) のため tombstone 化した。
+// REMOVED_PROGRAM_IDS への再登録漏れ / 再混入がないことを保証する。
+describe("M5 回帰: prog-d-pointcard-nojima-10000 の除去", () => {
+  it("seed() の programs に存在しない", () => {
+    const { programs } = seed();
+    expect(programs.some((p) => p.id === "prog-d-pointcard-nojima-10000")).toBe(false);
+  });
+  it("seed() の memberships に紐づく membership も存在しない (cascade)", () => {
+    const { memberships } = seed();
+    const offending = (memberships ?? []).filter(
+      (m) => m.programId === "prog-d-pointcard-nojima-10000",
+    );
+    expect(offending, JSON.stringify(offending)).toEqual([]);
+  });
+});

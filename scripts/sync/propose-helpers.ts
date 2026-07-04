@@ -9,8 +9,12 @@
 //   - 既存ID / 既存 name と衝突                          → "idCollision"
 //   - BLOCKED_STORE_IDS 入りの id                        → "userBlocked"
 //   - EXCLUDED_CATEGORIES (金融/保険/医療等)             → "excludedCategory"
-//   - PSEUDO_STORE_IDS 入りの storeId (memberships/loyaltyRules)
+//   - PSEUDO_STORE_IDS / PSEUDO_STORE_IDS 入りの参照 (擬似エンティティ:
+//     ダミー store "general" / 基本決済モード "pa-default" 等)
 //                                                          → "pseudoStoreTarget"
+//   - rate はあるが evidenceQuote に数値根拠 (%/倍/円→pt) が無い  → "unsupportedRateClaim"
+//   - membership の overrideRate が不正 (非有限/0以下/30%超)     → "zeroOrInvalidRate"
+//   - membership の overrideCurrencyId が未知参照                → "referenceChange"
 //
 // 全て満たさない場合 reviewReason は undefined となり、autoApplicable に分類される。
 //
@@ -18,7 +22,12 @@
 // (dedupeAcrossProposals) や category cap は diff-and-propose.ts 側で実施。
 
 import type { SeedShape } from "../../src/domain/mergeSeed";
-import { BLOCKED_STORE_IDS, PSEUDO_STORE_IDS } from "../../src/state/seed-blocklist";
+import { isSafeHttpUrl } from "../../src/domain/urlSafety";
+import {
+  BLOCKED_STORE_IDS,
+  PSEUDO_PAYMENT_APP_IDS,
+  PSEUDO_STORE_IDS,
+} from "../../src/state/seed-blocklist";
 import { resolveCategory } from "../../src/state/seed-category-aliases";
 import {
   CONFIDENCE_AUTO_THRESHOLD,
@@ -35,7 +44,11 @@ import type {
   ReviewReason,
   UpdateFieldProposal,
 } from "./types";
-import { detectSelfReportedExclusion, detectUnsupportedDateClaim } from "./evidence-check";
+import {
+  detectSelfReportedExclusion,
+  detectUnsupportedDateClaim,
+  detectUnsupportedRateClaim,
+} from "./evidence-check";
 
 // Extracted* レコードから Evidence のみを抜き出す。
 // Extracted は各エンティティに Evidence のフィールドを混ぜている (型上のフラット化)
@@ -423,21 +436,27 @@ export function proposePaymentApps(
       });
       continue;
     }
+    // H3: pa-default 等の擬似決済アプリへの updateField は auto-merge させない。
+    // Calculator の最頻モードで誤発火するリスクがあるため必ず人手判断へ。
+    const isPseudoPaymentApp = PSEUDO_PAYMENT_APP_IDS.has(existing.id);
     if (
       a.defaultBonusRate != null &&
       existing.defaultBonusRate !== a.defaultBonusRate
     ) {
+      const rateUpdate = buildRateUpdate(
+        existing.id,
+        "paymentApps",
+        existing.defaultBonusRate ?? 0,
+        a.defaultBonusRate,
+        data.sourceId,
+        confidence,
+        evidence,
+        "defaultBonusRate",
+      );
       result.push(
-        buildRateUpdate(
-          existing.id,
-          "paymentApps",
-          existing.defaultBonusRate ?? 0,
-          a.defaultBonusRate,
-          data.sourceId,
-          confidence,
-          evidence,
-          "defaultBonusRate",
-        ),
+        isPseudoPaymentApp
+          ? { ...rateUpdate, reviewReason: "pseudoStoreTarget" }
+          : rateUpdate,
       );
     }
     if (a.chargeBased != null && existing.chargeBased !== a.chargeBased) {
@@ -452,7 +471,9 @@ export function proposePaymentApps(
         sourceId: data.sourceId,
         confidence,
         evidence,
-        reviewReason: "referenceChange", // 構造変更扱いで人間レビュー
+        reviewReason: isPseudoPaymentApp
+          ? "pseudoStoreTarget"
+          : "referenceChange", // 構造変更扱いで人間レビュー
       } satisfies UpdateFieldProposal);
     }
   }
@@ -489,6 +510,19 @@ export function proposePrograms(
             ? "unsupportedDateClaim"
             : undefined,
         () => (!p.rate || p.rate === 0 ? "zeroOrInvalidRate" : undefined),
+        // rate は抽出されたが evidenceQuote に数値根拠 (%/倍/円→pt) が無い場合、
+        // rate hallucination 疑いとして date claim より強く優先 (M1、#nojima incident 対応)。
+        () =>
+          detectUnsupportedRateClaim(p.rate, evidence.evidenceQuote)
+            ? "unsupportedRateClaim"
+            : undefined,
+        // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等)
+        // への参照は特定不能項目の受け皿誤マッピング疑いとして最優先降格 (H3)。
+        () =>
+          p.paymentAppId !== undefined &&
+          PSEUDO_PAYMENT_APP_IDS.has(p.paymentAppId)
+            ? "pseudoStoreTarget"
+            : undefined,
       ]);
       const reviewReason: ReviewReason | undefined = integrityIssue
         ? integrityIssue
@@ -513,8 +547,27 @@ export function proposePrograms(
       if (p.recurringWeekdays !== undefined)
         rec.recurringWeekdays = p.recurringWeekdays;
       if (p.description !== undefined) rec.description = p.description;
-      if (p.officialUrl !== undefined) rec.officialUrl = p.officialUrl;
-      if (p.entryUrl !== undefined) rec.entryUrl = p.entryUrl;
+      // H1: javascript:/data: 等の危険スキーム URL は stored XSS の元になるため、
+      // program 自体は正当なことが多い (URL 無しでも機能する) ことを踏まえ、
+      // フィールドごと drop する (program 全体を降格させない)。
+      if (p.officialUrl !== undefined) {
+        if (isSafeHttpUrl(p.officialUrl)) {
+          rec.officialUrl = p.officialUrl;
+        } else {
+          console.warn(
+            `⚠ unsafe officialUrl dropped: sourceId=${data.sourceId} programId=${p.programId} url=${p.officialUrl}`,
+          );
+        }
+      }
+      if (p.entryUrl !== undefined) {
+        if (isSafeHttpUrl(p.entryUrl)) {
+          rec.entryUrl = p.entryUrl;
+        } else {
+          console.warn(
+            `⚠ unsafe entryUrl dropped: sourceId=${data.sourceId} programId=${p.programId} url=${p.entryUrl}`,
+          );
+        }
+      }
       if (p.conditions !== undefined) rec.conditions = p.conditions;
       if (p.monthlyCapAmountYen !== undefined)
         rec.monthlyCapAmountYen = p.monthlyCapAmountYen;
@@ -600,11 +653,35 @@ export function proposeMemberships(
     );
     // 規定還元表示用ダミー store ("general" 等) への membership 混入防止 (#103)。
     // 他の判定より強い override として最優先で降格。
-    const reviewReason: ReviewReason | undefined = PSEUDO_STORE_IDS.has(
+    const pseudoReviewReason: ReviewReason | undefined = PSEUDO_STORE_IDS.has(
       m.storeId,
     )
       ? "pseudoStoreTarget"
       : baseReviewReason;
+    // H2: overrideRate / overrideCurrencyId のガード。
+    // overrideRate は非有限/0以下/CAMPAIGN_AUTO_RATE_MAX (30%) 超なら
+    // 「rate=0/負/非有限/過大の抽出」= zeroOrInvalidRate に降格。
+    // overrideCurrencyId は seed に存在しない未知参照なら referenceChange
+    // (「検証できない参照」の意味で既存 reason を流用) に降格。
+    const reviewReason: ReviewReason | undefined = resolveReviewReason(
+      pseudoReviewReason,
+      [
+        () =>
+          m.overrideCurrencyId !== undefined &&
+          !current.currencies.some((c) => c.id === m.overrideCurrencyId)
+            ? "referenceChange"
+            : undefined,
+        () =>
+          m.overrideRate !== undefined &&
+          !(
+            Number.isFinite(m.overrideRate) &&
+            m.overrideRate > 0 &&
+            m.overrideRate <= CAMPAIGN_AUTO_RATE_MAX
+          )
+            ? "zeroOrInvalidRate"
+            : undefined,
+      ],
+    );
     const rec: Record<string, unknown> = {
       programId: m.programId,
       storeId: m.storeId,
@@ -906,10 +983,31 @@ function parseDateStartMs(s: string | undefined): number | null {
 
 /**
  * 新規 program が campaign auto-merge の安全条件を全て満たすか判定する。
- * 安全条件は 7 つの AND チェック、1 つでも外れたら false (idCollision に降格)。
+ * 安全条件は AND チェック、1 つでも外れたら false (idCollision に降格)。
+ *
+ * 値域ガード (M2、いずれか外れたら false):
+ *   - monthlyCapAmountYen : undefined || (Number.isFinite && > 0)
+ *   - bonusType           : undefined || "primary" || "addOn"
+ *   - recurringDays       : undefined || 全要素が Number.isInteger && 1〜31
+ *   - recurringWeekdays   : undefined || 全要素が Number.isInteger && 0〜6
  */
 export function isCampaignAutoMergeable(
-  p: { rate: number; validTo?: string; cardIds?: string[]; pointCardId?: string; paymentAppId?: string; currencyId: string; name?: string; description?: string; conditions?: string },
+  p: {
+    rate: number;
+    validFrom?: string;
+    validTo?: string;
+    cardIds?: string[];
+    pointCardId?: string;
+    paymentAppId?: string;
+    currencyId: string;
+    name?: string;
+    description?: string;
+    conditions?: string;
+    monthlyCapAmountYen?: number;
+    bonusType?: string;
+    recurringDays?: number[];
+    recurringWeekdays?: number[];
+  },
   data: ExtractedSource,
   current: SeedShape,
   confidence: number,
@@ -961,6 +1059,33 @@ export function isCampaignAutoMergeable(
   const text = [p.name ?? "", p.description ?? "", p.conditions ?? ""].join(" ");
   for (const kw of LIFESTYLE_KEYWORDS) {
     if (text.includes(kw)) return false;
+  }
+
+  // 7. 値域ガード (M2): 構造は妥当でも値が壊れている場合の防御。
+  if (p.monthlyCapAmountYen !== undefined) {
+    if (
+      !Number.isFinite(p.monthlyCapAmountYen) ||
+      p.monthlyCapAmountYen <= 0
+    ) {
+      return false;
+    }
+  }
+  if (
+    p.bonusType !== undefined &&
+    p.bonusType !== "primary" &&
+    p.bonusType !== "addOn"
+  ) {
+    return false;
+  }
+  if (p.recurringDays !== undefined) {
+    for (const d of p.recurringDays) {
+      if (!Number.isInteger(d) || d < 1 || d > 31) return false;
+    }
+  }
+  if (p.recurringWeekdays !== undefined) {
+    for (const d of p.recurringWeekdays) {
+      if (!Number.isInteger(d) || d < 0 || d > 6) return false;
+    }
   }
 
   return true;

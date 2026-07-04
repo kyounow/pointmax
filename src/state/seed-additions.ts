@@ -206,7 +206,6 @@ export const ADDED_PAYMENT_APPS: PaymentApp[] = [];
 
 export const ADDED_PROGRAMS: BenefitProgram[] = [
   { id: "prog-d-pointcard-mos-burger-05", name: "dポイントカード モスバーガー 対象商品はdポイント5倍", rate: 0.05, currencyId: "d-pt", pointCardId: "d-pointcard", bonusType: "addOn", validFrom: "2026-06-05", validTo: "2026-07-05" },
-  { id: "prog-d-pointcard-nojima-10000", name: "ノジマで最大10,000ポイントプレゼント", rate: 0.01, currencyId: "d-pt", pointCardId: "d-pointcard", bonusType: "addOn", validFrom: "2026-06-06", validTo: "2026-08-23" },
 ];
 
 export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [
@@ -294,7 +293,7 @@ export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "american-drug", notes: "税抜換算" },
   { programId: "prog-rakuten-pointcard-0.5pc", storeId: "akakabe-group", notes: "税抜換算" },
   { programId: "prog-ponta-card-0.5pc", storeId: "haneda-airport-pet-hotel" },
-  { programId: "prog-jcb-jpoint-20x", storeId: "mcdonalds" },
+  { programId: "prog-jcb-jpoint-20x", storeId: "mcdonalds", notes: "モバイルオーダー・マックデリバリー限定" },
   { programId: "prog-jcb-jpoint-20x", storeId: "sukiya" },
   { programId: "prog-jcb-jpoint-20x", storeId: "yoshinoya" },
   { programId: "prog-jcb-jpoint-20x", storeId: "gusto" },
@@ -320,12 +319,12 @@ export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-jcb-jpoint-gold-2x", storeId: "mitsui-car-shares" },
   { programId: "prog-jcb-jpoint-gold-2x", storeId: "kojitsu-sanso" },
   { programId: "prog-d-pointcard-mos-burger-05", storeId: "mos-burger" },
-  { programId: "prog-d-pointcard-nojima-10000", storeId: "nojima" },
-  { programId: "prog-jcb-jpoint-gold-20x", storeId: "mcdonalds" },
+  { programId: "prog-jcb-jpoint-gold-20x", storeId: "mcdonalds", notes: "モバイルオーダー・マックデリバリー限定" },
 ];
 
 export const PROGRAM_OVERRIDES: ProgramOverride[] = [];
 
 export const REMOVED_PROGRAM_IDS: string[] = [
   "prog-dcard-bic-camera-may2026",
+  "prog-d-pointcard-nojima-10000",
 ];
