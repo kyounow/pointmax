@@ -80,3 +80,29 @@ export const BLOCKED_STORE_IDS = new Set<string>([
 export const PSEUDO_STORE_IDS = new Set<string>([
   "general", // 一般店舗 (規定還元確認用ダミー、実店舗ではない)
 ]);
+
+// ===========================================================
+// REMOVED_MEMBERSHIP_KEYS (membership 単体 tombstone)
+// ===========================================================
+// 公式 seed から誤配信された membership を、既存ユーザーの localStorage から
+// も除去するためのキーリスト。mergeSeed の removedMembershipKeys オプション
+// (useSeedMerge 経由) が消費する。キー形式: "programId|storeId"
+// (mergeSeed.mergeMemberships の複合キーと同形式)。
+//
+// ★ このファイル (手書き) に置く理由: seed-additions.ts は AUTO-GENERATED で
+//   cron の apply-proposals (buildSeedAdditionsContent) がファイル全体を
+//   再生成するため、codegen が emit しない定数をそこに置くと次回 cron で
+//   消えて import が壊れる。REMOVED_PROGRAM_IDS と違いこちらは codegen
+//   非対応 (手動事故対応専用) なので、再生成対象外の本ファイルに置く。
+//
+// #103 incident: jcb-jpoint extractor が店舗特定不能な項目 (「クレカ乗車
+// ポイント20倍」「海外でのお買い物 ポイント2倍」) をダミー store "general"
+// への membership として混入させた 4 件。confidence 0.9025 ≥ 0.9 で
+// autoApplicable を通過し、7/02 に本番配信済み。既存ユーザーの localStorage
+// にも mergeSeed (add-only) で入っているため tombstone で除去する。
+export const REMOVED_MEMBERSHIP_KEYS: string[] = [
+  "prog-jcb-jpoint-20x|general",
+  "prog-jcb-jpoint-gold-20x|general",
+  "prog-jcb-jpoint-2x|general",
+  "prog-jcb-jpoint-gold-2x|general",
+];

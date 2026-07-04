@@ -19,10 +19,11 @@ import { useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../../state/store";
 import { seed } from "../../state/seed";
-import {
-  REMOVED_PROGRAM_IDS,
-  REMOVED_MEMBERSHIP_KEYS,
-} from "../../state/seed-additions";
+import { REMOVED_PROGRAM_IDS } from "../../state/seed-additions";
+// REMOVED_MEMBERSHIP_KEYS は手書きファイル側 (seed-blocklist.ts)。
+// seed-additions.ts は cron の codegen が全再生成するため、codegen が
+// emit しない定数を置くと次回 cron で消えて import が壊れる。
+import { REMOVED_MEMBERSHIP_KEYS } from "../../state/seed-blocklist";
 import {
   mergeSeed,
   diffCount,
