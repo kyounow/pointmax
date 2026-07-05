@@ -82,6 +82,21 @@ export const PSEUDO_STORE_IDS = new Set<string>([
 ]);
 
 // ===========================================================
+// PSEUDO_PAYMENT_APP_IDS
+// ===========================================================
+// PSEUDO_STORE_IDS と同様の意味論: 実在の決済アプリではなく「カード直接払い」を
+// 表す基本モード。特定不能な決済手段の受け皿にされると Calculator の最頻モード
+// (支払方法未選択時のデフォルト) で誤発火するため、sync の auto 対象にしない。
+//
+// 例: "pa-default" (src/state/seed-data-cards.ts) = 「通常クレカ決済」。
+// PSEUDO_STORE_IDS の "general" と構造上同型のリスクを持つため、同じガード方式
+// (propose-helpers.ts で参照時 reviewReason="pseudoStoreTarget" に降格、
+// inject-prompt.ts の INJECT からも除外) を適用する。
+export const PSEUDO_PAYMENT_APP_IDS = new Set<string>([
+  "pa-default", // 通常クレカ決済 (基本モード、実在の決済アプリではない)
+]);
+
+// ===========================================================
 // REMOVED_MEMBERSHIP_KEYS (membership 単体 tombstone)
 // ===========================================================
 // 公式 seed から誤配信された membership を、既存ユーザーの localStorage から

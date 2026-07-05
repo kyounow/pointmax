@@ -13,6 +13,7 @@ import { useToday } from "./hooks/useToday";
 import { cardLabel } from "../domain/cardLabel";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
 import { byId } from "../domain/entityIndex";
+import { isSafeHttpUrl } from "../domain/urlSafety";
 import type { StoreProgramMembership } from "../domain/types";
 
 type BonusTypeKey = "primary" | "addOn";
@@ -216,7 +217,7 @@ export function ProgramsScreen() {
                       })()}
                       {(() => {
                         const url = p.entryUrl ?? p.officialUrl;
-                        if (!url) return null;
+                        if (!url || !isSafeHttpUrl(url)) return null;
                         const label = p.entryUrl ? "エントリー" : "公式";
                         return (
                           <div style={{ marginTop: 2 }}>

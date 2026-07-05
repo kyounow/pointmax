@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { detectSelfReportedExclusion, detectUnsupportedDateClaim } from "./evidence-check";
+import {
+  detectSelfReportedExclusion,
+  detectUnsupportedDateClaim,
+  detectUnsupportedRateClaim,
+} from "./evidence-check";
 
 describe("detectSelfReportedExclusion", () => {
   it("「記載がない」を含むと true", () => {
@@ -45,5 +49,34 @@ describe("detectUnsupportedDateClaim", () => {
       { validTo: "2026-05-31" },
       "2026年5月31日まで対象",
     )).toBe(false);
+  });
+});
+
+describe("detectUnsupportedRateClaim", () => {
+  it("rate undefined → false (zeroOrInvalidRate の担当)", () => {
+    expect(detectUnsupportedRateClaim(undefined, "何か引用")).toBe(false);
+  });
+  it("rate=0 → false (zeroOrInvalidRate の担当)", () => {
+    expect(detectUnsupportedRateClaim(0, "何か引用")).toBe(false);
+  });
+  it("evidence に「3%」根拠あり → false", () => {
+    expect(detectUnsupportedRateClaim(0.03, "対象店舗で3%還元")).toBe(false);
+  });
+  it("evidence に「20 倍」根拠あり → false", () => {
+    expect(detectUnsupportedRateClaim(0.2, "対象店舗でポイント20 倍")).toBe(false);
+  });
+  it("evidence に「200円につき1ポイント」根拠あり → false", () => {
+    expect(
+      detectUnsupportedRateClaim(0.005, "200円につき1ポイント進呈"),
+    ).toBe(false);
+  });
+  it("evidence に「最大10,000ポイントプレゼント」のみ (数値根拠なし) → true", () => {
+    expect(
+      detectUnsupportedRateClaim(0.01, "ノジマで最大10,000ポイントプレゼント"),
+    ).toBe(true);
+  });
+  it("evidenceQuote 無し → true", () => {
+    expect(detectUnsupportedRateClaim(0.03, undefined)).toBe(true);
+    expect(detectUnsupportedRateClaim(0.03, "")).toBe(true);
   });
 });

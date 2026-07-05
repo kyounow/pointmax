@@ -190,6 +190,8 @@ npm run sync:propose               # 全 extracted vs seed の差分提案
 npm run sync:apply                 # autoApplicable を seed-additions.ts へ
 npm run sync:approve -- --list     # needsReview 一覧 (ID 付き) を表示
 npm run sync:approve -- <ID> ...   # 指定 needsReview 項目を seed-additions.ts へ承認適用
+                                    # (⚠ chore/sync-review-queue ブランチ上の commit は次回 cron の
+                                    #  ブランチ再構築で失われるため、approve 後は速やかに PR をマージすること)
 npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE 生成
 ```
 

@@ -329,6 +329,10 @@ function main(): void {
   console.log(
     "📦 次は `npm test && npm run build` で整合確認のうえ commit してください。",
   );
+  console.log(
+    "⚠ このブランチ (chore/sync-review-queue) 上の commit は次回 cron でブランチが" +
+      "再構築されると失われます。approve 後は速やかに PR をマージしてください。",
+  );
 }
 
 const isMain =

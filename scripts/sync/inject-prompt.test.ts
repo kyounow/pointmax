@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { injectExistingEntities } from "./inject-prompt";
 import { seed } from "../../src/state/seed";
+import { PSEUDO_PAYMENT_APP_IDS } from "../../src/state/seed-blocklist";
 
 describe("injectExistingEntities", () => {
   it("INJECT:stores マーカーが Markdown テーブルに置換される", () => {
@@ -129,7 +130,16 @@ describe("post-cron 追加エンティティのカバレッジ契約", () => {
     ["currencies", () => seed().currencies.map((c) => c.id)],
     ["cards", () => seed().cards.map((c) => c.id)],
     ["pointCards", () => seed().pointCards.map((p) => p.id)],
-    ["paymentApps", () => seed().paymentApps.map((a) => a.id)],
+    [
+      "paymentApps",
+      // PSEUDO_PAYMENT_APP_IDS (例: "pa-default" = 基本決済モード) は
+      // H3 対応で INJECT から意図的に除外されるため、期待値からも除く
+      // (PSEUDO_STORE_IDS の "general" が stores から除外されるのと同型)。
+      () =>
+        seed()
+          .paymentApps.map((a) => a.id)
+          .filter((id) => !PSEUDO_PAYMENT_APP_IDS.has(id)),
+    ],
   ] as const)(
     "INJECT:%s は全 seed エンティティ ID を漏れなく含む",
     (entity, getSeedIds) => {

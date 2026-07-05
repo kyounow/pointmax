@@ -335,7 +335,8 @@ export type ReviewReason =
   | "userBlocked"             // src/state/seed-blocklist.ts でユーザが除外指定
   | "selfReportedExclusion"   // evidenceQuote に Gemini 自身による除外記述を検知
   | "unsupportedDateClaim"    // validFrom/validTo があるのに evidenceQuote に日付根拠がない
-  | "zeroOrInvalidRate"       // rate=0 または未定義。Gemini が還元率を抽出できなかった疑い
+  | "unsupportedRateClaim"    // rate が抽出されたが evidenceQuote に数値根拠 (%/倍/円→pt) がない。rate hallucination 疑い
+  | "zeroOrInvalidRate"       // rate=0 / 負 / 非有限 / 過大 (>30%) の抽出。Gemini が還元率を正しく抽出できなかった疑い
   | "missingStoreBody"        // membership 提案だが、参照先 store 本体が seed 未存在 + 同 run autoApplicable にも無い (category cap 等で deferred 済の orphan を防止)
   | "missingProgramBody"      // membership 提案だが、参照先 program 本体が seed 未存在 + 同 run autoApplicable にも無い (proposePrograms の idCollision 強制 → membership だけ通過するケースを防止)
   | "storeAdditionsDisabled"  // 新規 store 追加を cron では行わない方針 (キャンペーン情報の獲得に注力)。proposeStores の出力は他の理由が無い場合この理由で needsReview に
@@ -343,9 +344,9 @@ export type ReviewReason =
   | "periodChange"            // 既存 program の validFrom/validTo 変更 (キャンペーン延長/期間訂正)。誤期間適用防止のため必ず人手レビュー (sync:approve で承認可)
   | "safetyFailed"            // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
   | "autoMergeDisabled"       // auto-merge 候補だが autoMergeEnabled=false / force_review_only=true のため review に降格 (手動テスト等)
-  | "pseudoStoreTarget";      // 規定還元表示用ダミー store (PSEUDO_STORE_IDS、例: "general") への
-                              // membership/loyaltyRule 提案。店舗特定不能な項目の受け皿誤マッピングを
-                              // 防止 (#103 incident: jcb-jpoint extractor が general を受け皿にした事故対応)
+  | "pseudoStoreTarget";      // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等) への
+                              // 参照。店舗/決済手段を特定できない項目の受け皿誤マッピングを防止
+                              // (#103 incident: jcb-jpoint extractor が general を受け皿にした事故対応)
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";

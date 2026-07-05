@@ -994,7 +994,7 @@ describe("proposePrograms (PR-D1)", () => {
             rate: 0.03,
             currencyId: "jre",
             validTo: "2020-01-01",
-            evidenceQuote: "期間 2020年1月1日まで",
+            evidenceQuote: "期間 2020年1月1日まで、3%還元",
             explicitness: 1.0,
             ambiguity: 0.0,
           },
@@ -1795,5 +1795,408 @@ describe("proposeExpiredCampaignDeletions", () => {
   it("不正な validTo フォーマットは無視 (削除しない、安全側)", () => {
     const s = makeSeed([{ ...baseProgram, validTo: "invalid-date" }]);
     expect(proposeExpiredCampaignDeletions(s, now)).toEqual([]);
+  });
+});
+
+// ─── 監査由来の auto-merge ガード強化 (H1-H3 / M1 / M2) ───
+
+describe("H1: entryUrl/officialUrl の URL スキーム検証", () => {
+  it("entryUrl=javascript:... の campaign は rec から entryUrl が drop されるが program 自体は auto 可", () => {
+    const richSeed: SeedShape = {
+      ...emptySeed,
+      currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-xss-entry",
+          name: "怪しいキャンペーン",
+          rate: 0.03,
+          currencyId: "jre",
+          validTo: "2099-12-31",
+          entryUrl: "javascript:alert(1)",
+          officialUrl: "https://example.com/official",
+          evidenceQuote: "期間 2099年12月31日まで、3%還元",
+          explicitness: 1.0,
+          ambiguity: 0.0,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    expect(ps).toHaveLength(1);
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.entryUrl).toBeUndefined();
+    expect(record.officialUrl).toBe("https://example.com/official");
+    // program 自体は auto-merge 可能 (URL 以外は健全)
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("officialUrl=data:... も drop される", () => {
+    const richSeed: SeedShape = {
+      ...emptySeed,
+      currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-xss-official",
+          rate: 0.03,
+          currencyId: "jre",
+          validTo: "2099-12-31",
+          officialUrl: "data:text/html,<script>alert(1)</script>",
+          evidenceQuote: "期間 2099年12月31日まで、3%還元",
+          explicitness: 1.0,
+          ambiguity: 0.0,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.officialUrl).toBeUndefined();
+  });
+
+  it("正常な https:// URL は drop されない", () => {
+    const richSeed: SeedShape = {
+      ...emptySeed,
+      currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-safe-url",
+          rate: 0.03,
+          currencyId: "jre",
+          validTo: "2099-12-31",
+          entryUrl: "https://example.com/entry",
+          evidenceQuote: "期間 2099年12月31日まで、3%還元",
+          explicitness: 1.0,
+          ambiguity: 0.0,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.entryUrl).toBe("https://example.com/entry");
+  });
+});
+
+describe("H2: membership overrideRate / overrideCurrencyId ガード", () => {
+  const seedWithCurrency: SeedShape = {
+    ...emptySeed,
+    currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+  };
+
+  it("overrideRate=5.0 (500%) の membership → zeroOrInvalidRate", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [
+        {
+          programId: "prog-a",
+          storeId: "store-a",
+          overrideRate: 5.0,
+          evidenceQuote: "特別に500%還元 (誤抽出想定)",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeMemberships(data, seedWithCurrency);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
+  });
+
+  it("overrideRate=0.02 (2%) は従来どおり auto", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [
+        {
+          programId: "prog-a",
+          storeId: "store-a",
+          overrideRate: 0.02,
+          evidenceQuote: "この店舗限定 2%",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeMemberships(data, seedWithCurrency);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("overrideRate=0 は zeroOrInvalidRate", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [
+        {
+          programId: "prog-a",
+          storeId: "store-a",
+          overrideRate: 0,
+          evidenceQuote: "0%表記 (誤抽出想定)",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeMemberships(data, seedWithCurrency);
+    expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
+  });
+
+  it("overrideRate が負の値は zeroOrInvalidRate", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [
+        {
+          programId: "prog-a",
+          storeId: "store-a",
+          overrideRate: -0.01,
+          evidenceQuote: "負の値 (誤抽出想定)",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeMemberships(data, seedWithCurrency);
+    expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
+  });
+
+  it("overrideCurrencyId 未知 → referenceChange", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [
+        {
+          programId: "prog-a",
+          storeId: "store-a",
+          overrideCurrencyId: "unknown-currency",
+          evidenceQuote: "この店舗は別通貨",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeMemberships(data, seedWithCurrency);
+    expect(ps[0].reviewReason).toBe("referenceChange");
+  });
+
+  it("overrideCurrencyId が既知なら reviewReason は付かない", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [
+        {
+          programId: "prog-a",
+          storeId: "store-a",
+          overrideCurrencyId: "jre",
+          evidenceQuote: "この店舗は同一通貨",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposeMemberships(data, seedWithCurrency);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+});
+
+describe("H3: pa-default (通常クレカ決済) の受け皿ガード", () => {
+  it("paymentAppId=pa-default の campaign program → pseudoStoreTarget", () => {
+    const richSeed: SeedShape = {
+      ...emptySeed,
+      currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+      paymentApps: [{ id: "pa-default", name: "通常クレカ決済" }],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-pseudo-payment",
+          rate: 0.03,
+          currencyId: "jre",
+          paymentAppId: "pa-default",
+          validTo: "2099-12-31",
+          evidenceQuote: "期間 2099年12月31日まで、通常決済で3%",
+          explicitness: 1.0,
+          ambiguity: 0.0,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    expect(ps[0].reviewReason).toBe("pseudoStoreTarget");
+  });
+
+  it("既存 paymentApp=pa-default への defaultBonusRate 更新は pseudoStoreTarget に降格", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      paymentApps: [{ id: "pa-default", name: "通常クレカ決済", defaultBonusRate: 0.01 }],
+    };
+    const data = baseSource({
+      extractor: "payment-app",
+      paymentApps: [
+        {
+          paymentAppId: "pa-default",
+          defaultBonusRate: 0.02,
+          evidenceQuote: "通常クレカ決済は2%還元に改定",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposePaymentApps(data, seed);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBe("pseudoStoreTarget");
+  });
+});
+
+describe("M1: rate の逐語根拠検証 (unsupportedRateClaim)", () => {
+  it("rate 根拠なし (「最大◯◯ポイントプレゼント」) → unsupportedRateClaim", () => {
+    const richSeed: SeedShape = {
+      ...emptySeed,
+      currencies: [{ id: "d-pt", name: "dポイント", kind: "point" }],
+      pointCards: [{ id: "d-pointcard", name: "dポイントカード", currencyId: "d-pt" }],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-d-pointcard-nojima-10000",
+          name: "ノジマで最大10,000ポイントプレゼント",
+          pointCardId: "d-pointcard",
+          rate: 0.01,
+          currencyId: "d-pt",
+          bonusType: "addOn",
+          validTo: "2099-12-31",
+          evidenceQuote: "ノジマで最大10,000ポイントプレゼント",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    expect(ps[0].reviewReason).toBe("unsupportedRateClaim");
+  });
+
+  it("evidence に「3%」根拠あれば通常どおり auto 判定に進む", () => {
+    const richSeed: SeedShape = {
+      ...emptySeed,
+      currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+      pointCards: [{ id: "jre-pointcard", name: "JRE POINTカード", currencyId: "jre" }],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-with-rate-evidence",
+          name: "対象店舗3%還元",
+          pointCardId: "jre-pointcard",
+          rate: 0.03,
+          currencyId: "jre",
+          validTo: "2099-12-31",
+          evidenceQuote: "対象店舗で3%還元、2099年12月31日まで",
+          explicitness: 1.0,
+          ambiguity: 0.0,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+});
+
+describe("M2: isCampaignAutoMergeable 値域ガードパック", () => {
+  const richSeed: SeedShape = {
+    ...emptySeed,
+    currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+  };
+  const baseProgramFields = {
+    rate: 0.03,
+    currencyId: "jre",
+    validTo: "2099-12-31",
+    explicitness: 1.0,
+    ambiguity: 0.0,
+  };
+
+  it("monthlyCapAmountYen=-100 は auto 不可", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-neg-cap",
+          ...baseProgramFields,
+          monthlyCapAmountYen: -100,
+          evidenceQuote: "月上限あり、期間 2099年12月31日まで 3%",
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    expect(ps[0].reviewReason).toBe("idCollision");
+  });
+
+  it("bonusType='bonus' (不正値) は auto 不可", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-bad-bonustype",
+          ...baseProgramFields,
+          bonusType: "bonus" as unknown as "primary" | "addOn",
+          evidenceQuote: "期間 2099年12月31日まで 3%",
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    expect(ps[0].reviewReason).toBe("idCollision");
+  });
+
+  it("recurringDays=[32] (範囲外) は auto 不可", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-bad-recurring-days",
+          ...baseProgramFields,
+          recurringDays: [32],
+          evidenceQuote: "毎月32日 (誤抽出想定)、期間 2099年12月31日まで 3%",
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    expect(ps[0].reviewReason).toBe("idCollision");
+  });
+
+  it("recurringWeekdays=[7] (範囲外) は auto 不可", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-bad-recurring-weekdays",
+          ...baseProgramFields,
+          recurringWeekdays: [7],
+          evidenceQuote: "曜日限定 (誤抽出想定)、期間 2099年12月31日まで 3%",
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    expect(ps[0].reviewReason).toBe("idCollision");
+  });
+
+  it("正常な monthlyCapAmountYen / bonusType / recurringDays / recurringWeekdays は auto 可", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-valid-fields",
+          ...baseProgramFields,
+          monthlyCapAmountYen: 5000,
+          bonusType: "addOn",
+          recurringDays: [1, 15],
+          recurringWeekdays: [0, 6],
+          evidenceQuote: "毎月1日・15日の週末は3%、期間 2099年12月31日まで",
+        },
+      ],
+    });
+    const ps = proposePrograms(data, richSeed);
+    expect(ps[0].reviewReason).toBeUndefined();
   });
 });

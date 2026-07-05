@@ -16,7 +16,7 @@
 // マーカー自体は出力にも保存される (再注入が冪等)。
 
 import { seed } from "../../src/state/seed";
-import { PSEUDO_STORE_IDS } from "../../src/state/seed-blocklist";
+import { PSEUDO_PAYMENT_APP_IDS, PSEUDO_STORE_IDS } from "../../src/state/seed-blocklist";
 
 // ───────────────────────────────────────────────────────────────
 // Types
@@ -129,6 +129,11 @@ function collectRecords(
   // 項目の受け皿として誤って割り当てられるリスクがある (#103 incident 対応)。
   if (kind === "stores") {
     all = all.filter((r) => !PSEUDO_STORE_IDS.has(String(r.id)));
+  }
+  // PSEUDO_PAYMENT_APP_IDS (基本決済モード、例: "pa-default" = 「通常クレカ決済」)
+  // も同様に Gemini に「既存 paymentApp」として見せない (H3、stores と同じパターン)。
+  if (kind === "paymentApps") {
+    all = all.filter((r) => !PSEUDO_PAYMENT_APP_IDS.has(String(r.id)));
   }
   if (!filter) return all;
   return all.filter((r) => {

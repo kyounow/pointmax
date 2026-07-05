@@ -16,6 +16,7 @@ import { useNameResolvers } from "./hooks/useNameResolvers";
 import { useToday } from "./hooks/useToday";
 import { useDialog } from "./dialog/useDialog";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
+import { isSafeHttpUrl } from "../domain/urlSafety";
 import { CampaignForm } from "./CampaignForm";
 
 // 終了日セル: 日付 + 終了間近カウントダウン (C-5)。
@@ -217,7 +218,7 @@ export function CampaignsScreen() {
       label: "リンク",
       view: (p) => {
         const url = p.entryUrl ?? p.officialUrl;
-        if (!url) return "-";
+        if (!url || !isSafeHttpUrl(url)) return "-";
         const label = p.entryUrl ? "エントリー" : "公式";
         return (
           <a

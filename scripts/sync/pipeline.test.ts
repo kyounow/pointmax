@@ -48,7 +48,7 @@ const emptyCurrent: SeedShape = {
   memberships: [],
 };
 
-const ev = { evidenceQuote: "store name (期間 2030/1/1〜2030/12/31)", explicitness: 1, ambiguity: 0 };
+const ev = { evidenceQuote: "store name 5%還元 (期間 2030/1/1〜2030/12/31)", explicitness: 1, ambiguity: 0 };
 
 const campaignSource: ExtractedSource = {
   sourceId: "test-paypay-campaigns",
