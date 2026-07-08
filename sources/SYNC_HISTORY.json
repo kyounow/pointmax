@@ -2,6 +2,609 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-07-09",
+      "generatedAt": "2026-07-08T22:11:52.499Z",
+      "totalCount": 81,
+      "avgConfidence": 0.903,
+      "sourcesProcessed": 14,
+      "bySource": [
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "count": 22,
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "count": 59,
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → ドラッグユタカ",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → WILLER TRAVEL",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → サムソナイト",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → 得タク",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → Relux",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → ローソントラベル",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → ローチケ旅行",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → morecos+ (モアコス)",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → ゲオ宅配レンタル",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → スマリ SMARI",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → HMV&BOOKS online",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → カーネクスト",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → カーセブン",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → 北海道軽パーク",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → 朝日新聞（デジタル版）",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → 札幌リージェントゴルフ倶楽部",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → スポーツクラブ ルネサンス",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → auでんき",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → アート引越センター",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → 株式会社サカイ引越センター",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → ハート引越センター",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "ponta-partners",
+          "collection": "memberships",
+          "summary": "Pontaカード提示 0.5% → Gabaマンツーマン英会話",
+          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → オートバックス",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ステーキガスト",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → から好し",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → むさしの森珈琲",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 魚屋路",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → グラッチェガーデンズ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → La Ohana",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → とんから亭",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 桃菜",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ゆめあん食堂",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 八郎そば",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → なか卯",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ジョリーパスタ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 熟成焼肉いちばん",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → オリーブの丘",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → かつ庵",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 久兵衛屋",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ゼッテリア",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ニューバランス",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 好日山荘",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ドラッグユタカ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → マミーマート",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ドトール",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → エクセルシオール カフェ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 眼鏡市場",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ALOOK",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → レンズスタイル",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ジュンク堂書店",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 丸善ジュンク堂書店",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → がんこ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 紀伊國屋書店",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ディープラス",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 富士シティオ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → カメラのキタムラ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ドラッグストアmac",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 牛角",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → JA全農Aコープ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → SUIT SQUARE",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → メイクマン",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 新星堂",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → WonderGOO",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → WonderREX",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → デパートリウボウ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ネットオフ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → GO TODAY SHAiRE SALON",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → エレナ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → アイリスプラザ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 関西電力",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 三井のカーシェアーズ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → BOOKSmisumi",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 旭屋書店",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → Shoplist",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → GREEN DOG & CAT",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → EPARKリラク＆エステ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 四国電力",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → ユーカーパック",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → 京葉ガス",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → クスリのアオキ",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "v-point-partners",
+          "collection": "memberships",
+          "summary": "Vポイントカード提示 0.5% → TSUTAYAネット買取",
+          "sourceLabel": "Vポイント (旧Tポイント) 加盟店 (公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 115,
+        "byReason": {
+          "lowConfidence": 7,
+          "missingStoreBody": 12,
+          "idCollision": 58,
+          "storeAdditionsDisabled": 33,
+          "excludedCategory": 3,
+          "userBlocked": 2
+        }
+      }
+    },
+    {
       "date": "2026-07-06",
       "generatedAt": "2026-07-05T22:05:37.711Z",
       "totalCount": 0,
