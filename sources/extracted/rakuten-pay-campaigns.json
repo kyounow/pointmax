@@ -1,9 +1,9 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-07-01T22:24:41.133Z",
+  "fetchedAt": "2026-07-12T21:54:45.044Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] index=https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign 子ページ 5 件 (成功 0 / 失敗 5)\n✗ https://cash.rakuten.co.jp/campaign/detail/2026/0803_5or0_pay_full_return/ (5と0のつく日は楽天ペイ！お支払いが全額還元のチャンス！) → notFound(404)\n✗ https://cash.rakuten.co.jp/campaign/detail/2026/07_kanagawa_20percent_return/ (神奈川県内の対象店舗にて最大20％還元) → notFound(404)\n✗ https://cash.rakuten.co.jp/campaign/detail/2026/07_tokyo_gogo_campaign/ (東京ポイントを交換するなら楽天ペイ！東京GOGOキャンペーン！) → notFound(404)\n✗ https://cash.rakuten.co.jp/campaign/detail/2026/0714_mcdonalds_full_return/ (マクドナルド｜マックデリバリーサービスご利用で50名に1名全額還元！) → notFound(404)\n✗ https://cash.rakuten.co.jp/campaign/detail/2026/0710_bic_ikebukuro_5percent/ (ビックカメラ｜池袋のビックカメラ限定！楽天ペイでお支払いすると最大5%分ポイント還元) → notFound(404)\nindex notes: 「はじめて楽天ペイ残高にチャージすると300万ポイント山分け」は山分けのため除外。「チャージの日！5と0のつく日は抽選で全額還元！」は抽選のため除外。「楽天モバイルご利用者限定！抽選で総額200万ポイントが当たる 最強ドリームチャンス！」は抽選かつ対象者限定のため除外。「送る or 受け取ると当たる！楽天ペイアプリ プレミアム抽選会！」は抽選のため除外。「毎日挑戦！ジャンケンチャレンジ」は抽選のた"
+  "notes": "[crawl:index] 索引ページの子 URL 列挙に失敗: fetch status=empty。子ページ抽出は未実施。"
 }

@@ -1,11 +1,11 @@
 {
   "sourceId": "jal-card-tokuyaku-list",
   "sourceUrl": "https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201",
-  "fetchedAt": "2026-07-01T22:16:25.294Z",
+  "fetchedAt": "2026-07-12T21:46:01.275Z",
   "promptVersion": "jal-tokuyaku-v1.1",
   "extractor": "jal-tokuyaku",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "このURLは「レストラン・予約サイト」カテゴリの検索結果ページであり、多くの個店がリストされています。抽出スコープ「chains-only」に基づき、主要チェーンと判断できる「ロイヤルホスト」のみを追加しました。ページには他にも多くの店舗が掲載されていますが、広域チェーンであるかどうかの判断が難しいため、それらは対象外としました。",
+  "notes": "このページはJAL特約店の一覧の一部（レストラン・予約サイトの1ページ目）です。抽出スコープchains-onlyに従い、全国チェーンの「ロイヤルホスト」のみを追加しました。",
   "categoryRules": [
     {
       "cardId": "jal-suica",

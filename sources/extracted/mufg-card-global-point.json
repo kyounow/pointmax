@@ -1,21 +1,19 @@
 {
   "sourceId": "mufg-card-global-point",
   "sourceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
-  "fetchedAt": "2026-07-01T22:22:50.224Z",
+  "fetchedAt": "2026-07-12T21:52:30.705Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "基本ポイント還元率について、1000円=1ポイントと記載されているが、グローバルポイントの具体的な価値（円換算）がこの規程内では明記されていないため、一般的な0.5%還元（1ポイント=5円換算）を想定し0.005として抽出。ただし、カード種別ごとのグローバルPLUSや海外利用優遇の適用条件が細かく設定されており、個別のカード情報がないと正確な還元率は判断できない。特定の店舗やカテゴリに関する明示的な優遇情報は確認できなかった。",
+  "notes": "グローバルポイントの基本還元率と還元通貨を抽出しました。特定の店舗やカテゴリに関する優遇情報は、本利用規程からは確認できませんでした。一部、特定カード種別（プラチナ・アメックス、スヌーピーカード）に紐づく優遇は記載されていましたが、全カード共通のルールではないため、storeRules/categoryRulesには含めていません。",
   "cards": [
     {
       "cardId": "mufg-card-global-point",
-      "defaultRate": 0.005,
+      "defaultRate": 0.001,
       "defaultCurrencyId": "mufg-pt",
       "evidenceQuote": "1千円につき1ポイントを約定支払日に本会員に付与します。",
-      "explicitness": 0.5,
-      "ambiguity": 0.5
+      "explicitness": 0.95,
+      "ambiguity": 0
     }
-  ],
-  "storeRules": [],
-  "categoryRules": []
+  ]
 }

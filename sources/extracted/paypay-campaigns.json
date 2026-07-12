@@ -1,9 +1,9 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-07-01T22:27:14.714Z",
+  "fetchedAt": "2026-07-12T21:55:20.087Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): ```json { \"sourceId\": \"paypay-campaigns\", \"sourceUrl\": \"https://paypay.ne.jp/event/\", \"fetchedAt\": \"2026-07-01T22:27:00Z\", \"promptVersion\": \"campaign-v3.3\", \"extractor\": \"gemini-flash-1.5\", \"geminiModel\": \"gemini-flash-1.5\", \"programs\": [], \"memberships\": [], \"stores\": [], \"notes"
+  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
 }

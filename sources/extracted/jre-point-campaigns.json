@@ -1,9 +1,9 @@
 {
   "sourceId": "jre-point-campaigns",
   "sourceUrl": "https://www.jrepoint.jp/campaign/list/",
-  "fetchedAt": "2026-07-01T22:24:02.894Z",
+  "fetchedAt": "2026-07-12T21:54:32.780Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] index=https://www.jrepoint.jp/campaign/list/ 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: HTML parsing library (BeautifulSoup) not available, unable to extract campaign URLs."
+  "notes": "[crawl:index] index=https://www.jrepoint.jp/campaign/list/ 子ページ 5 件 (成功 0 / 失敗 5)\n✗ https://www.jrepoint.jp/campaign/entry/0000030571/ (【モバイルＳｕｉｃａ限定】スマホでピピッ♪交通系電子マネー使っトク！？キャンペーン) → allUrlsFailed\n✗ https://www.jrepoint.jp/campaign/entry/0000029961/ (水曜日はエキナカSuicaの日) → allUrlsFailed\n✗ https://www.jrepoint.jp/campaign/entry/0000030248/ (タッチでエキナカ 入場券ポイントバック！) → empty\n✗ https://www.jrepoint.jp/campaign/entry/0000030612/ (富士ガーデン２倍DAY0714) → empty\n✗ https://www.jrepoint.jp/campaign/entry/0000030613/ (武蔵新城生鮮２倍デー) → empty\nindex notes: 「抽選系」は「10,000ポイントプレゼントキャンペーン！」のみタイトルから判断し抽出対象外とするべきか迷いましたが、今回は一般的なキャンペーンと判断し含めました。"
 }
