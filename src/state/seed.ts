@@ -606,10 +606,10 @@ export const seed = (): SeedReturn => {
     ).filter((p) => !REMOVED_PROGRAM_ID_SET.has(p.id)),
     memberships: [
       ...SEED_STORE_PROGRAM_MEMBERSHIPS,
+      // v6: 手書きと自動同期分の重複排除は membership.id で行う
+      // (id 規約 m-{programId}-{storeId} が program×store 一意性を担保)。
       ...ADDED_MEMBERSHIPS.filter(
-        (m) => !SEED_STORE_PROGRAM_MEMBERSHIPS.some(
-          (sm) => sm.programId === m.programId && sm.storeId === m.storeId,
-        ),
+        (m) => !SEED_STORE_PROGRAM_MEMBERSHIPS.some((sm) => sm.id === m.id),
       ),
     ].filter((m) => !REMOVED_PROGRAM_ID_SET.has(m.programId)),
   };

@@ -51,6 +51,7 @@ const jalTokuyakuProgram: BenefitProgram = {
 };
 
 const jalTokuyakuMembership: StoreProgramMembership = {
+  id: "m-prog-jal-tokuyaku-eneos",
   programId: "prog-jal-tokuyaku",
   storeId: "eneos",
 };
@@ -66,6 +67,7 @@ const addOnProgram: BenefitProgram = {
 };
 
 const addOnMembership: StoreProgramMembership = {
+  id: "m-prog-addon-test-eneos",
   programId: "prog-addon-test",
   storeId: "eneos",
 };
@@ -146,7 +148,7 @@ describe("evaluatePrograms", () => {
       store: eneosStore,
       paymentApp: noApp,
       programs: [expiredProgram],
-      memberships: [{ programId: "prog-expired", storeId: "eneos" }],
+      memberships: [{ id: "m-prog-expired-eneos", programId: "prog-expired", storeId: "eneos" }],
       now: new Date("2026-05-14"),
     });
     expect(result.primary).toBeNull();
@@ -177,8 +179,8 @@ describe("evaluatePrograms", () => {
       paymentApp: noApp,
       programs: [lowRateProgram, highRateProgram],
       memberships: [
-        { programId: "prog-low", storeId: "eneos" },
-        { programId: "prog-high", storeId: "eneos" },
+        { id: "m-prog-low-eneos", programId: "prog-low", storeId: "eneos" },
+        { id: "m-prog-high-eneos", programId: "prog-high", storeId: "eneos" },
       ],
     });
     expect(result.primary?.program.id).toBe("prog-high");
@@ -203,7 +205,7 @@ describe("evaluatePrograms", () => {
       memberships: [
         jalTokuyakuMembership,
         addOnMembership,
-        { programId: "prog-addon-2", storeId: "eneos" },
+        { id: "m-prog-addon-2-eneos", programId: "prog-addon-2", storeId: "eneos" },
       ],
     });
     expect(result.primary?.program.id).toBe("prog-jal-tokuyaku");
@@ -215,6 +217,7 @@ describe("evaluatePrograms", () => {
 
   it("membership の overrideRate が program.rate を上書きする", () => {
     const membershipWithOverride: StoreProgramMembership = {
+      id: "m-prog-jal-tokuyaku-eneos",
       programId: "prog-jal-tokuyaku",
       storeId: "eneos",
       overrideRate: 0.03,
@@ -263,7 +266,7 @@ describe("evaluatePrograms", () => {
       programs: [jalTokuyakuProgram, fictionalRakutenPrimary],
       memberships: [
         jalTokuyakuMembership,
-        { programId: "prog-fictional-rakuten", storeId: "eneos" },
+        { id: "m-prog-fictional-rakuten-eneos", programId: "prog-fictional-rakuten", storeId: "eneos" },
       ],
     });
     expect(result.primaryCandidates).toHaveLength(2);
@@ -399,8 +402,8 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
       paymentApp: visaTouch,
       programs: [smbcProg, oliveProg],
       memberships: [
-        { programId: "prog-smbc-7p", storeId: "conv-7eleven" },
-        { programId: "prog-olive-8p", storeId: "conv-7eleven" },
+        { id: "m-prog-smbc-7p-conv-7eleven", programId: "prog-smbc-7p", storeId: "conv-7eleven" },
+        { id: "m-prog-olive-8p-conv-7eleven", programId: "prog-olive-8p", storeId: "conv-7eleven" },
       ],
       now: new Date("2026-05-14"),
     });
@@ -415,8 +418,8 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
       paymentApp: visaTouch,
       programs: [smbcProg, oliveProg],
       memberships: [
-        { programId: "prog-smbc-7p", storeId: "conv-7eleven" },
-        { programId: "prog-olive-8p", storeId: "conv-7eleven" },
+        { id: "m-prog-smbc-7p-conv-7eleven", programId: "prog-smbc-7p", storeId: "conv-7eleven" },
+        { id: "m-prog-olive-8p-conv-7eleven", programId: "prog-olive-8p", storeId: "conv-7eleven" },
       ],
       now: new Date("2026-05-14"),
     });
@@ -430,7 +433,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
       store: sevenElevenStore,
       paymentApp: noApp,
       programs: [smbcProg],
-      memberships: [{ programId: "prog-smbc-7p", storeId: "conv-7eleven" }],
+      memberships: [{ id: "m-prog-smbc-7p-conv-7eleven", programId: "prog-smbc-7p", storeId: "conv-7eleven" }],
       now: new Date("2026-05-14"),
     });
     expect(result.primary).toBeNull();
@@ -443,8 +446,8 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
       paymentApp: noApp,
       programs: [rakutenBaseProg, rakutenZeroFiveProg],
       memberships: [
-        { programId: "prog-rakuten-ichiba-base", storeId: "rakuten-ichiba" },
-        { programId: "prog-rakuten-ichiba-zero-five-day", storeId: "rakuten-ichiba" },
+        { id: "m-prog-rakuten-ichiba-base-rakuten-ichiba", programId: "prog-rakuten-ichiba-base", storeId: "rakuten-ichiba" },
+        { id: "m-prog-rakuten-ichiba-zero-five-day-rakuten-ichiba", programId: "prog-rakuten-ichiba-zero-five-day", storeId: "rakuten-ichiba" },
       ],
       now: new Date("2026-05-14"), // 14日 = 5/0のつく日ではない
     });
@@ -460,8 +463,8 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
       paymentApp: noApp,
       programs: [rakutenBaseProg, rakutenZeroFiveProg],
       memberships: [
-        { programId: "prog-rakuten-ichiba-base", storeId: "rakuten-ichiba" },
-        { programId: "prog-rakuten-ichiba-zero-five-day", storeId: "rakuten-ichiba" },
+        { id: "m-prog-rakuten-ichiba-base-rakuten-ichiba", programId: "prog-rakuten-ichiba-base", storeId: "rakuten-ichiba" },
+        { id: "m-prog-rakuten-ichiba-zero-five-day-rakuten-ichiba", programId: "prog-rakuten-ichiba-zero-five-day", storeId: "rakuten-ichiba" },
       ],
       now: new Date("2026-05-05"), // 5日 = 5/0のつく日
     });
@@ -475,7 +478,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
       store: bicCameraStore,
       paymentApp: dPay,
       programs: [dcardBicProg],
-      memberships: [{ programId: "prog-dcard-bic-camera-may2026", storeId: "bic-camera" }],
+      memberships: [{ id: "m-prog-dcard-bic-camera-may2026-bic-camera", programId: "prog-dcard-bic-camera-may2026", storeId: "bic-camera" }],
       now: new Date("2026-05-20"),
     });
     expect(result.primary?.program.id).toBe("prog-dcard-bic-camera-may2026");
@@ -488,7 +491,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
       store: bicCameraStore,
       paymentApp: dPay,
       programs: [dcardBicProg],
-      memberships: [{ programId: "prog-dcard-bic-camera-may2026", storeId: "bic-camera" }],
+      memberships: [{ id: "m-prog-dcard-bic-camera-may2026-bic-camera", programId: "prog-dcard-bic-camera-may2026", storeId: "bic-camera" }],
       now: new Date("2026-06-01"), // 期間後
     });
     expect(result.primary).toBeNull();
@@ -501,8 +504,8 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
       paymentApp: noApp,
       programs: [mercardProg, mercardDay8Prog],
       memberships: [
-        { programId: "prog-mercard-mercari", storeId: "mercari" },
-        { programId: "prog-mercard-mercari-day8", storeId: "mercari" },
+        { id: "m-prog-mercard-mercari-mercari", programId: "prog-mercard-mercari", storeId: "mercari" },
+        { id: "m-prog-mercard-mercari-day8-mercari", programId: "prog-mercard-mercari-day8", storeId: "mercari" },
       ],
       now: new Date("2026-05-14"),
     });
@@ -517,8 +520,8 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
       paymentApp: noApp,
       programs: [mercardProg, mercardDay8Prog],
       memberships: [
-        { programId: "prog-mercard-mercari", storeId: "mercari" },
-        { programId: "prog-mercard-mercari-day8", storeId: "mercari" },
+        { id: "m-prog-mercard-mercari-mercari", programId: "prog-mercard-mercari", storeId: "mercari" },
+        { id: "m-prog-mercard-mercari-day8-mercari", programId: "prog-mercard-mercari-day8", storeId: "mercari" },
       ],
       now: new Date("2026-05-08"), // 8日
     });
@@ -748,7 +751,7 @@ describe("scope 分岐 (v6)", () => {
       paymentApp: noApp,
       programs: [memberOnly],
       // 別 store の membership のみ (any-store には無い)
-      memberships: [{ programId: "prog-member", storeId: "other-store" }],
+      memberships: [{ id: "m-prog-member-other-store", programId: "prog-member", storeId: "other-store" }],
     });
     expect(result.primary).toBeNull();
   });
@@ -768,7 +771,7 @@ describe("scope 分岐 (v6)", () => {
       store: anyStore,
       paymentApp: noApp,
       programs: [memberOnly],
-      memberships: [{ programId: "prog-member", storeId: "any-store" }],
+      memberships: [{ id: "m-prog-member-any-store", programId: "prog-member", storeId: "any-store" }],
     });
     expect(result.primary?.program.id).toBe("prog-member");
   });

@@ -29,6 +29,8 @@ import {
   PSEUDO_STORE_IDS,
 } from "../../src/state/seed-blocklist";
 import { resolveCategory } from "../../src/state/seed-category-aliases";
+// membership 突合キーは id 導出に統一 (membershipId が唯一の生成源)。
+import { membershipId } from "../../src/state/defineMemberships";
 import {
   CONFIDENCE_AUTO_THRESHOLD,
   EXCLUDED_CATEGORIES,
@@ -296,7 +298,7 @@ export function proposeLoyaltyRules(
   // 既存 + 同 run 内で出した program / membership を覚えて重複提案を防ぐ
   const seenPrograms = new Set((current.programs ?? []).map((p) => p.id));
   const seenMemberships = new Set(
-    (current.memberships ?? []).map((m) => `${m.programId}__${m.storeId}`),
+    (current.memberships ?? []).map((m) => membershipId(m.programId, m.storeId)),
   );
   for (const r of data.loyaltyRules) {
     const { evidence, confidence } = evidenceAndConfidence(r);
@@ -388,7 +390,7 @@ export function proposeLoyaltyRules(
     }
 
     // store ↔ rate-program の membership。既存/同 run 重複は skip。
-    const mkey = `${programId}__${r.storeId}`;
+    const mkey = membershipId(programId, r.storeId);
     if (!seenMemberships.has(mkey)) {
       const rec: Record<string, unknown> = {
         programId,
@@ -667,14 +669,14 @@ export function proposeMemberships(
   current: SeedShape,
 ): Proposal[] {
   if (!data.memberships || data.memberships.length === 0) return [];
-  const existing = current.memberships ?? [];
+  const existingIds = new Set(
+    (current.memberships ?? []).map((x) => membershipId(x.programId, x.storeId)),
+  );
   const result: Proposal[] = [];
   for (const m of data.memberships) {
     const { evidence, confidence } = evidenceAndConfidence(m);
-    const found = existing.find(
-      (x) => x.programId === m.programId && x.storeId === m.storeId,
-    );
-    if (found) continue; // 既存 membership は更新経路なし (PR-D1 は最小)
+    // 既存 membership は id 突合で判定 (更新経路なし。PR-D1 は最小)
+    if (existingIds.has(membershipId(m.programId, m.storeId))) continue;
     const baseReviewReason = resolveReviewReason(
       confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
       [
@@ -781,12 +783,12 @@ export function proposeJalTokuyakuMemberships(
   );
 
   const seenMemberships = new Set(
-    (current.memberships ?? []).map((m) => `${m.programId}__${m.storeId}`),
+    (current.memberships ?? []).map((m) => membershipId(m.programId, m.storeId)),
   );
   const result: Proposal[] = [];
   for (const st of data.stores) {
     if (exceptionStoreIds.has(st.storeId)) continue;
-    const mkey = `${JAL_TOKUYAKU_PROGRAM_ID}__${st.storeId}`;
+    const mkey = membershipId(JAL_TOKUYAKU_PROGRAM_ID, st.storeId);
     if (seenMemberships.has(mkey)) continue;
     const { evidence, confidence } = evidenceAndConfidence(st);
     const baseReviewReason = resolveReviewReason(

@@ -40,6 +40,9 @@ import {
   REMOVED_PROGRAM_IDS,
 } from "../../src/state/seed-additions";
 import type { ProgramOverride } from "../../src/state/seed-overrides";
+// membership id は src/state の membershipId() が唯一の生成源。
+// scripts は既に src/state を import しているため、規約をここに複製せず共有する。
+import { membershipId } from "../../src/state/defineMemberships";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
@@ -201,27 +204,32 @@ export function mergeWithExisting<T extends Identifiable>(
   return { merged: [...existing, ...newOnes], added, skipped };
 }
 
-// Merge StoreProgramMembership records (dedupe by programId+storeId composite key)
+// Merge StoreProgramMembership records (dedupe by membership.id = m-{programId}-{storeId})。
+// v6: 複合キー ("programId|storeId") 直書きをやめ、他エンティティと同じ id 突合に統一
+// (id 生成は src/state の membershipId() が唯一の源)。
 type MembershipLike = { programId?: string; storeId?: string };
+
+const membershipKey = (m: MembershipLike): string | null =>
+  m.programId && m.storeId ? membershipId(m.programId, m.storeId) : null;
 
 export function mergeMemberships<T extends MembershipLike>(
   existing: T[],
   newRecords: Record<string, unknown>[],
 ): { merged: T[]; added: number; skipped: number } {
   const existingKeys = new Set(
-    existing.map((m) => `${m.programId}|${m.storeId}`).filter((k) => !k.startsWith("|")),
+    existing.map(membershipKey).filter((k): k is string => k !== null),
   );
   let added = 0;
   let skipped = 0;
   const newOnes: T[] = [];
   for (const r of newRecords) {
-    const key = `${r.programId}|${r.storeId}`;
-    if (existingKeys.has(key)) {
+    const key = membershipKey(r as MembershipLike);
+    if (key !== null && existingKeys.has(key)) {
       skipped += 1;
       continue;
     }
     newOnes.push(r as unknown as T);
-    existingKeys.add(key);
+    if (key !== null) existingKeys.add(key);
     added += 1;
   }
   return { merged: [...existing, ...newOnes], added, skipped };
@@ -324,6 +332,17 @@ function emitArrayConst(
   return `export const ${name}: ${type}[] = [\n${lines.join("\n")}\n];`;
 }
 
+// membership record に規約 id (`m-{programId}-{storeId}`) を先頭付与する。
+// 既存 id は破棄して membershipId() で再計算 (id を単一の権威に統一)。
+function withMembershipId(m: Record<string, unknown>): Record<string, unknown> {
+  const rest = { ...m };
+  delete rest.id;
+  return {
+    id: membershipId(m.programId as string, m.storeId as string),
+    ...rest,
+  };
+}
+
 export function buildSeedAdditionsContent(buckets: Buckets): string {
   const timestamp = new Date().toISOString();
   return [
@@ -352,7 +371,13 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
     "",
     emitArrayConst("ADDED_PROGRAMS", "BenefitProgram", buckets.programs),
     "",
-    emitArrayConst("ADDED_MEMBERSHIPS", "StoreProgramMembership", buckets.memberships),
+    emitArrayConst(
+      "ADDED_MEMBERSHIPS",
+      "StoreProgramMembership",
+      // v6: emit 時に membership.id (`m-{programId}-{storeId}`) を先頭付与。
+      // 既に id を持つ record は規約 id で置換 (重複 key を作らない)。
+      buckets.memberships.map(withMembershipId),
+    ),
     "",
     emitArrayConst(
       "PROGRAM_OVERRIDES",

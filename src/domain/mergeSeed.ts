@@ -34,15 +34,14 @@ export type MergeOptions = {
    */
   removedProgramIds?: ReadonlyArray<string>;
   /**
-   * 誤 merge された StoreProgramMembership の tombstone (seed-additions の
-   * REMOVED_MEMBERSHIP_KEYS)。StoreProgramMembership は id を持たない複合キー
-   * (programId+storeId) レコードのため、removedProgramIds の id ベース delete
-   * とは別に「programId|storeId」キー完全一致で除去する (#103 の general
-   * 混入対応)。対象は公式 id (prog-* 等) の membership のみを想定しており、
-   * ユーザー作成分は UUID programId のためキーが衝突せず安全。
-   * userModifiedAt チェックは行わない (membership 自体に編集概念が無いため)。
+   * 誤 merge された StoreProgramMembership の tombstone (seed-blocklist の
+   * REMOVED_MEMBERSHIP_IDS)。v6 で membership に id (`m-{programId}-{storeId}`)
+   * が付いたため、他エンティティ (cards / programs 等) と同じ id 完全一致で
+   * 除去する (#103 の general 混入対応)。対象は公式 id (m-prog-* 等) の
+   * membership のみを想定しており、ユーザー作成分は UUID programId 由来で
+   * id が衝突せず安全。userModifiedAt チェックは行わない (単体事故対応のため)。
    */
-  removedMembershipKeys?: ReadonlyArray<string>;
+  removedMembershipIds?: ReadonlyArray<string>;
 };
 
 export type MergeResult = SeedShape & {
@@ -59,10 +58,10 @@ export type MergeResult = SeedShape & {
   /** cascade 除去された membership 数 */
   removedMembershipCount: number;
   /**
-   * removedMembershipKeys (単体キー tombstone) により除去された membership 数。
+   * removedMembershipIds (単体 id tombstone) により除去された membership 数。
    * removedMembershipCount (program tombstone の cascade 分) とは別集計。
    */
-  removedMembershipKeyCount: number;
+  removedMembershipIdCount: number;
 };
 
 type Identifiable = { id: string };
@@ -75,22 +74,6 @@ function mergeArray<T extends Identifiable>(
   const existingIds = new Set(current.map((x) => x.id));
   const added = next.filter((x) => !existingIds.has(x.id));
   // 追加 0 件なら current の参照をそのまま返して下流の memo / 参照等価判定を維持
-  if (added.length === 0) return { merged: current, added };
-  return { merged: [...current, ...added], added };
-}
-
-// StoreProgramMembership は id を持たないため (programId, storeId) の複合キーで重複排除
-function mergeMemberships(
-  current: StoreProgramMembership[],
-  next: StoreProgramMembership[],
-): { merged: StoreProgramMembership[]; added: StoreProgramMembership[] } {
-  if (next.length === 0) return { merged: current, added: [] };
-  const existingKeys = new Set(
-    current.map((m) => `${m.programId}:${m.storeId}`),
-  );
-  const added = next.filter(
-    (m) => !existingKeys.has(`${m.programId}:${m.storeId}`),
-  );
   if (added.length === 0) return { merged: current, added };
   return { merged: [...current, ...added], added };
 }
@@ -167,22 +150,20 @@ function applyProgramRemovals(
   };
 }
 
-// removedMembershipKeys (単体 membership tombstone) の適用。
-// "programId|storeId" キー完全一致のものを filter で除去する。
-// StoreProgramMembership は id を持たないため removedProgramIds の cascade
-// 除去 (program 経由) とは別経路 (誤 merge された特定 membership 単体を狙い撃ちする用途)。
+// removedMembershipIds (単体 membership tombstone) の適用。
+// membership.id 完全一致のものを filter で除去する。
+// removedProgramIds の cascade 除去 (program 経由) とは別経路
+// (誤 merge された特定 membership 単体を狙い撃ちする用途)。
 // 除去が無ければ入力配列の参照をそのまま返す。
-function applyMembershipKeyRemovals(
+function applyMembershipIdRemovals(
   memberships: StoreProgramMembership[],
-  removedKeys: ReadonlyArray<string>,
+  removedIds: ReadonlyArray<string>,
 ): { memberships: StoreProgramMembership[]; removedCount: number } {
-  if (removedKeys.length === 0) {
+  if (removedIds.length === 0) {
     return { memberships, removedCount: 0 };
   }
-  const tombstones = new Set(removedKeys);
-  const next = memberships.filter(
-    (m) => !tombstones.has(`${m.programId}|${m.storeId}`),
-  );
+  const tombstones = new Set(removedIds);
+  const next = memberships.filter((m) => !tombstones.has(m.id));
   if (next.length === memberships.length) {
     return { memberships, removedCount: 0 };
   }
@@ -193,9 +174,10 @@ function applyMembershipKeyRemovals(
 //   1. add-only: seed にあって current に無い ID を追加 (従来挙動)
 //   2. 更新伝播: 公式由来 + 未編集の program は seed の最新内容に置換 (Phase 5)
 //   3. tombstone: removedProgramIds の program + memberships を除去 (Phase 5)
-//   4. membership tombstone: removedMembershipKeys の membership 単体を除去 (#103 対応)
+//   4. membership tombstone: removedMembershipIds の membership 単体を除去 (#103 対応)
 // ユーザー編集済みレコード (userModifiedAt あり) は 2/3 の対象外として保護。
-// (4 は membership 自体に編集概念が無いため userModifiedAt 保護の対象外)
+// membership は id ベースの add-only なので、既存 id (ユーザー編集済み含む) は
+// seed 側の同 id で上書きされず構造的に保護される (4 は単体事故対応)。
 export function mergeSeed(
   current: SeedShape,
   seed: SeedShape,
@@ -209,7 +191,8 @@ export function mergeSeed(
   const loyaltyRules = mergeArray(current.loyaltyRules, seed.loyaltyRules);
   const paymentApps = mergeArray(current.paymentApps, seed.paymentApps);
   const programsMerge = mergeArray(current.programs ?? [], seed.programs ?? []);
-  const membershipsMerge = mergeMemberships(
+  // v6: membership も id を持つため他エンティティと同じ id ベース add-only merge。
+  const membershipsMerge = mergeArray(
     current.memberships ?? [],
     seed.memberships ?? [],
   );
@@ -223,9 +206,9 @@ export function mergeSeed(
     opts?.removedProgramIds ?? [],
   );
 
-  const membershipKeyRemoval = applyMembershipKeyRemovals(
+  const membershipIdRemoval = applyMembershipIdRemovals(
     removal.memberships,
-    opts?.removedMembershipKeys ?? [],
+    opts?.removedMembershipIds ?? [],
   );
 
   return {
@@ -237,7 +220,7 @@ export function mergeSeed(
     loyaltyRules: loyaltyRules.merged,
     paymentApps: paymentApps.merged,
     programs: removal.programs,
-    memberships: membershipKeyRemoval.memberships,
+    memberships: membershipIdRemoval.memberships,
     diff: {
       cards: cards.added,
       currencies: currencies.added,
@@ -252,7 +235,7 @@ export function mergeSeed(
     updatedPrograms,
     removedPrograms: removal.removed,
     removedMembershipCount: removal.removedMembershipCount,
-    removedMembershipKeyCount: membershipKeyRemoval.removedCount,
+    removedMembershipIdCount: membershipIdRemoval.removedCount,
   };
 }
 

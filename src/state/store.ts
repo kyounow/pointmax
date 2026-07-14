@@ -30,6 +30,7 @@ import {
   resetPaymentAppToSeedValues,
 } from "./userModified";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
+import { membershipId } from "./defineMemberships";
 import { REMOVED_PROGRAM_IDS } from "./seed-additions";
 import { preservePreferences } from "./preferenceMerge";
 import {
@@ -354,9 +355,13 @@ export const useStore = create<State & Actions>()(
         const id = newId();
         set((state) => {
           state.programs.push({ ...p, id });
-          // 同一 storeId の重複指定は 1 件に畳む (membership は複合キー一意)
+          // 同一 storeId の重複指定は 1 件に畳む (membership は id 一意)
           for (const storeId of new Set(storeIds)) {
-            state.memberships.push({ programId: id, storeId });
+            state.memberships.push({
+              id: membershipId(id, storeId),
+              programId: id,
+              storeId,
+            });
           }
         });
         return id;

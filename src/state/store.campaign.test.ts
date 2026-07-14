@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useStore } from "./store";
 import { SEED_BENEFIT_PROGRAMS } from "./seed-data-programs";
+import { membershipId } from "./defineMemberships";
 
 const baseProgram = {
   name: "テスト手動キャンペーン +5%",
@@ -63,7 +64,13 @@ describe("addCampaignProgram / removeUserProgram (A-4)", () => {
     const master = SEED_BENEFIT_PROGRAMS[0];
     useStore.setState({
       programs: [master],
-      memberships: [{ programId: master.id, storeId: "store-x" }],
+      memberships: [
+        {
+          id: membershipId(master.id, "store-x"),
+          programId: master.id,
+          storeId: "store-x",
+        },
+      ],
     });
     useStore.getState().removeUserProgram(master.id);
     const s = useStore.getState();

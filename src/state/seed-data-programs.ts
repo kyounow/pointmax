@@ -1,4 +1,5 @@
 import type { BenefitProgram, StoreProgramMembership } from "../domain/types";
+import { defineMemberships } from "./defineMemberships";
 
 // PointMax v3: BenefitProgram の seed データ。
 // PR 1: JAL特約店 1 件
@@ -733,269 +734,288 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   // ═══════════════════════════════════════════════════════════════
   // PR 1: JAL特約店 加盟店 12 件
   // ═══════════════════════════════════════════════════════════════
-  { programId: "prog-jal-tokuyaku", storeId: "eneos" },
-  { programId: "prog-jal-tokuyaku", storeId: "idemitsu" },
-  { programId: "prog-jal-tokuyaku", storeId: "welcia" },
-  { programId: "prog-jal-tokuyaku", storeId: "matsukiyo" },
-  { programId: "prog-jal-tokuyaku", storeId: "kinokuniya" },
-  { programId: "prog-jal-tokuyaku", storeId: "aeon" },
-  { programId: "prog-jal-tokuyaku", storeId: "daimaru-matsuzakaya" },
-  { programId: "prog-jal-tokuyaku", storeId: "muji" },
-  { programId: "prog-jal-tokuyaku", storeId: "uniqlo" },
-  { programId: "prog-jal-tokuyaku", storeId: "royal-host" },
-  { programId: "prog-jal-tokuyaku", storeId: "tsuruha" },
-  { programId: "prog-jal-tokuyaku", storeId: "conv-familymart" },
+  ...defineMemberships("prog-jal-tokuyaku", [
+    "eneos",
+    "idemitsu",
+    "welcia",
+    "matsukiyo",
+    "kinokuniya",
+    "aeon",
+    "daimaru-matsuzakaya",
+    "muji",
+    "uniqlo",
+    "royal-host",
+    "tsuruha",
+    "conv-familymart",
+  ]),
 
   // ═══════════════════════════════════════════════════════════════
   // PR 2 A: StoreRule 系 memberships
   // ═══════════════════════════════════════════════════════════════
 
   // A-1: 楽天カード × 楽天市場 通常
-  { programId: "prog-rakuten-ichiba-base", storeId: "rakuten-ichiba" },
+  ...defineMemberships("prog-rakuten-ichiba-base", ["rakuten-ichiba"]),
 
   // A-2: 楽天市場「5と0のつく日」
-  { programId: "prog-rakuten-ichiba-zero-five-day", storeId: "rakuten-ichiba" },
+  ...defineMemberships("prog-rakuten-ichiba-zero-five-day", ["rakuten-ichiba"]),
 
   // A-3: SMBC 7% タッチ決済 22 stores
-  { programId: "prog-smbc-7p", storeId: "conv-7eleven" },
-  { programId: "prog-smbc-7p", storeId: "conv-lawson" },
-  { programId: "prog-smbc-7p", storeId: "mcdonalds" },
-  { programId: "prog-smbc-7p", storeId: "conv-ministop" },
-  { programId: "prog-smbc-7p", storeId: "sukiya" },
-  { programId: "prog-smbc-7p", storeId: "saizeriya" },
-  { programId: "prog-smbc-7p", storeId: "gusto" },
-  { programId: "prog-smbc-7p", storeId: "doutor" },
-  { programId: "prog-smbc-7p", storeId: "starbucks" },
-  { programId: "prog-smbc-7p", storeId: "mos-burger" },
-  { programId: "prog-smbc-7p", storeId: "kfc" },
-  { programId: "prog-smbc-7p", storeId: "yoshinoya" },
-  { programId: "prog-smbc-7p", storeId: "bamiyan" },
-  { programId: "prog-smbc-7p", storeId: "jonathan" },
-  { programId: "prog-smbc-7p", storeId: "yumetoan" },
-  { programId: "prog-smbc-7p", storeId: "hamazushi" },
-  { programId: "prog-smbc-7p", storeId: "cocos" },
-  { programId: "prog-smbc-7p", storeId: "excelsior-cafe" },
-  { programId: "prog-smbc-7p", storeId: "kappa-sushi" },
-  { programId: "prog-smbc-7p", storeId: "shabuyo" },
-  { programId: "prog-smbc-7p", storeId: "seicomart" },
-  { programId: "prog-smbc-7p", storeId: "poplar" },
-  // V5-3 follow-up: すかいらーくグループ minor チェーン拡張 (ongoing-program 抽出より)
-  { programId: "prog-smbc-7p", storeId: "aiya" },
-  { programId: "prog-smbc-7p", storeId: "grazie-gardens" },
-  { programId: "prog-smbc-7p", storeId: "steak-gusto" },
-  { programId: "prog-smbc-7p", storeId: "karaage-karayoshi" },
-  { programId: "prog-smbc-7p", storeId: "musashino-mori-coffee" },
-  { programId: "prog-smbc-7p", storeId: "uoya-michi" },
-  { programId: "prog-smbc-7p", storeId: "chawan" },
-  { programId: "prog-smbc-7p", storeId: "la-ohana" },
-  { programId: "prog-smbc-7p", storeId: "tonkara-tei" },
-  { programId: "prog-smbc-7p", storeId: "yumean-shokudo" },
-  { programId: "prog-smbc-7p", storeId: "monana" },
-  { programId: "prog-smbc-7p", storeId: "hachiro-soba" },
-  { programId: "prog-smbc-7p", storeId: "sanmarusan" },
+  ...defineMemberships("prog-smbc-7p", [
+    "conv-7eleven",
+    "conv-lawson",
+    "mcdonalds",
+    "conv-ministop",
+    "sukiya",
+    "saizeriya",
+    "gusto",
+    "doutor",
+    "starbucks",
+    "mos-burger",
+    "kfc",
+    "yoshinoya",
+    "bamiyan",
+    "jonathan",
+    "yumetoan",
+    "hamazushi",
+    "cocos",
+    "excelsior-cafe",
+    "kappa-sushi",
+    "shabuyo",
+    "seicomart",
+    "poplar",
+    // V5-3 follow-up: すかいらーくグループ minor チェーン拡張 (ongoing-program 抽出より)
+    "aiya",
+    "grazie-gardens",
+    "steak-gusto",
+    "karaage-karayoshi",
+    "musashino-mori-coffee",
+    "uoya-michi",
+    "chawan",
+    "la-ohana",
+    "tonkara-tei",
+    "yumean-shokudo",
+    "monana",
+    "hachiro-soba",
+    "sanmarusan",
+  ]),
 
   // A-4: Olive 8% スマホタッチ決済 22 stores (SMBC と同じ店舗)
-  { programId: "prog-olive-8p", storeId: "conv-7eleven" },
-  { programId: "prog-olive-8p", storeId: "conv-lawson" },
-  { programId: "prog-olive-8p", storeId: "mcdonalds" },
-  { programId: "prog-olive-8p", storeId: "conv-ministop" },
-  { programId: "prog-olive-8p", storeId: "sukiya" },
-  { programId: "prog-olive-8p", storeId: "saizeriya" },
-  { programId: "prog-olive-8p", storeId: "gusto" },
-  { programId: "prog-olive-8p", storeId: "doutor" },
-  { programId: "prog-olive-8p", storeId: "starbucks" },
-  { programId: "prog-olive-8p", storeId: "mos-burger" },
-  { programId: "prog-olive-8p", storeId: "kfc" },
-  { programId: "prog-olive-8p", storeId: "yoshinoya" },
-  { programId: "prog-olive-8p", storeId: "bamiyan" },
-  { programId: "prog-olive-8p", storeId: "jonathan" },
-  { programId: "prog-olive-8p", storeId: "yumetoan" },
-  { programId: "prog-olive-8p", storeId: "hamazushi" },
-  { programId: "prog-olive-8p", storeId: "cocos" },
-  { programId: "prog-olive-8p", storeId: "excelsior-cafe" },
-  { programId: "prog-olive-8p", storeId: "kappa-sushi" },
-  { programId: "prog-olive-8p", storeId: "shabuyo" },
-  { programId: "prog-olive-8p", storeId: "seicomart" },
-  { programId: "prog-olive-8p", storeId: "poplar" },
-  // V5-3 follow-up: すかいらーくグループ minor チェーン拡張 (ongoing-program 抽出より)
-  { programId: "prog-olive-8p", storeId: "aiya" },
-  { programId: "prog-olive-8p", storeId: "grazie-gardens" },
-  { programId: "prog-olive-8p", storeId: "steak-gusto" },
-  { programId: "prog-olive-8p", storeId: "karaage-karayoshi" },
-  { programId: "prog-olive-8p", storeId: "musashino-mori-coffee" },
-  { programId: "prog-olive-8p", storeId: "uoya-michi" },
-  { programId: "prog-olive-8p", storeId: "chawan" },
-  { programId: "prog-olive-8p", storeId: "la-ohana" },
-  { programId: "prog-olive-8p", storeId: "tonkara-tei" },
-  { programId: "prog-olive-8p", storeId: "yumean-shokudo" },
-  { programId: "prog-olive-8p", storeId: "monana" },
-  { programId: "prog-olive-8p", storeId: "hachiro-soba" },
-  { programId: "prog-olive-8p", storeId: "sanmarusan" },
+  ...defineMemberships("prog-olive-8p", [
+    "conv-7eleven",
+    "conv-lawson",
+    "mcdonalds",
+    "conv-ministop",
+    "sukiya",
+    "saizeriya",
+    "gusto",
+    "doutor",
+    "starbucks",
+    "mos-burger",
+    "kfc",
+    "yoshinoya",
+    "bamiyan",
+    "jonathan",
+    "yumetoan",
+    "hamazushi",
+    "cocos",
+    "excelsior-cafe",
+    "kappa-sushi",
+    "shabuyo",
+    "seicomart",
+    "poplar",
+    // V5-3 follow-up: すかいらーくグループ minor チェーン拡張 (ongoing-program 抽出より)
+    "aiya",
+    "grazie-gardens",
+    "steak-gusto",
+    "karaage-karayoshi",
+    "musashino-mori-coffee",
+    "uoya-michi",
+    "chawan",
+    "la-ohana",
+    "tonkara-tei",
+    "yumean-shokudo",
+    "monana",
+    "hachiro-soba",
+    "sanmarusan",
+  ]),
 
   // A-5: JALカードSuica × Suicaチャージ
-  { programId: "prog-jal-suica-charge", storeId: "suica-charge" },
+  ...defineMemberships("prog-jal-suica-charge", ["suica-charge"]),
 
   // A-6: JALカードSuica × えきねっと新幹線
-  { programId: "prog-jal-suica-ekinet-shinkansen", storeId: "ekinet-shinkansen" },
+  ...defineMemberships("prog-jal-suica-ekinet-shinkansen", [
+    "ekinet-shinkansen",
+  ]),
 
   // A-7: JALカードSuica × えきねっと在来線
-  { programId: "prog-jal-suica-ekinet-zairaisen", storeId: "ekinet-zairaisen" },
+  ...defineMemberships("prog-jal-suica-ekinet-zairaisen", ["ekinet-zairaisen"]),
 
   // A-8: ビューカード × Suicaチャージ
-  { programId: "prog-viewcard-suica-charge", storeId: "suica-charge" },
+  ...defineMemberships("prog-viewcard-suica-charge", ["suica-charge"]),
 
   // A-9: メルカード × メルカリ
-  { programId: "prog-mercard-mercari", storeId: "mercari" },
+  ...defineMemberships("prog-mercard-mercari", ["mercari"]),
 
   // A-10: メルカード × メルカリ 毎月8日
-  { programId: "prog-mercard-mercari-day8", storeId: "mercari" },
+  ...defineMemberships("prog-mercard-mercari-day8", ["mercari"]),
 
   // A-11: dカード × d払い × ビックカメラ 期間限定
-  { programId: "prog-dcard-bic-camera-may2026", storeId: "bic-camera" },
+  ...defineMemberships("prog-dcard-bic-camera-may2026", ["bic-camera"]),
 
   // ═══════════════════════════════════════════════════════════════
   // PR 2 B: LoyaltyRule 系 memberships
   // ═══════════════════════════════════════════════════════════════
 
   // B-1: 楽天ポイントカード 0.5% memberships
-  // SEED_LOYALTY_RULES から
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "conv-familymart" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "gusto" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "seiyu" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "tsuruha" },
-  // ADDED_LOYALTY_RULES から (rakuten-pointcard 0.5%)
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "kfc" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "bamiyan" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "shabuyo" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "jonathan" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "yumetoan" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "aiya" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "grazie-gardens" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "sukiya" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "hamazushi" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "cocos" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "big-boy" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "hanaya-yohei" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "royal-host" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "yoshinoya" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "coco-ichibanya" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "daily-yamazaki" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "poplar" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "beisia" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "kaldi-coffee-farm" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "commodi-iida" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "ooga-yakkyoku" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "hands" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "golf-five" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "alpen-mountains" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "alpen-outdoors" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "kojitsu-sanso" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "joshin" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "edion" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "kojima" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "angie" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "maruzen-junkudo-shoten" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "gyokukodo" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "super-kids-land" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "ari-san-hikkoshi" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "sakai-hikkoshi" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "heart-hikkoshi" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "toku-taku" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "seagull-japan" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "haneda-airport-pet-hotel" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "pet-design" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "pet-land-peace-one" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "rakuten-mobile" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "apollo-station" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "eneos" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "enejet" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "enex-fleet" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "cosmo-oil" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "cygnus-oil" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "autobacs" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "a-pit-autobacs" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "j-net-rent-a-car" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "sky-rent-a-car" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "nippon-rent-a-car" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "cd-energy-direct-point-denki" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "tokyu-hotel" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "excel-hotel-tokyu" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "hotel-keihan-chain" },
-  // v3.5.0: Phase A 楽天 追加
-  // welcia: ウエルシアは楽天ポイントカード加盟 (Sonnet 検証)
-  // nico-pet: 公式 JSON にあるが storeId mismatch (`nicopet` → `nico-pet`) で漏れていた
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "welcia" },
-  { programId: "prog-rakuten-pointcard-0.5pc", storeId: "nico-pet" },
+  ...defineMemberships("prog-rakuten-pointcard-0.5pc", [
+    // SEED_LOYALTY_RULES から
+    "conv-familymart",
+    "gusto",
+    "seiyu",
+    "tsuruha",
+    // ADDED_LOYALTY_RULES から (rakuten-pointcard 0.5%)
+    "kfc",
+    "bamiyan",
+    "shabuyo",
+    "jonathan",
+    "yumetoan",
+    "aiya",
+    "grazie-gardens",
+    "sukiya",
+    "hamazushi",
+    "cocos",
+    "big-boy",
+    "hanaya-yohei",
+    "royal-host",
+    "yoshinoya",
+    "coco-ichibanya",
+    "daily-yamazaki",
+    "poplar",
+    "beisia",
+    "kaldi-coffee-farm",
+    "commodi-iida",
+    "ooga-yakkyoku",
+    "hands",
+    "golf-five",
+    "alpen-mountains",
+    "alpen-outdoors",
+    "kojitsu-sanso",
+    "joshin",
+    "edion",
+    "kojima",
+    "angie",
+    "maruzen-junkudo-shoten",
+    "gyokukodo",
+    "super-kids-land",
+    "ari-san-hikkoshi",
+    "sakai-hikkoshi",
+    "heart-hikkoshi",
+    "toku-taku",
+    "seagull-japan",
+    "haneda-airport-pet-hotel",
+    "pet-design",
+    "pet-land-peace-one",
+    "rakuten-mobile",
+    "apollo-station",
+    "eneos",
+    "enejet",
+    "enex-fleet",
+    "cosmo-oil",
+    "cygnus-oil",
+    "autobacs",
+    "a-pit-autobacs",
+    "j-net-rent-a-car",
+    "sky-rent-a-car",
+    "nippon-rent-a-car",
+    "cd-energy-direct-point-denki",
+    "tokyu-hotel",
+    "excel-hotel-tokyu",
+    "hotel-keihan-chain",
+    // v3.5.0: Phase A 楽天 追加
+    // welcia: ウエルシアは楽天ポイントカード加盟 (Sonnet 検証)
+    // nico-pet: 公式 JSON にあるが storeId mismatch (`nicopet` → `nico-pet`) で漏れていた
+    "welcia",
+    "nico-pet",
+  ]),
 
   // B-2: 楽天ポイントカード 1% memberships
-  { programId: "prog-rakuten-pointcard-1pc", storeId: "mcdonalds" },
-  { programId: "prog-rakuten-pointcard-1pc", storeId: "doutor" },
+  ...defineMemberships("prog-rakuten-pointcard-1pc", ["mcdonalds", "doutor"]),
 
   // B-3: dポイントカード 0.5% memberships
-  { programId: "prog-d-pointcard-0.5pc", storeId: "conv-lawson" },
-  { programId: "prog-d-pointcard-0.5pc", storeId: "conv-familymart" },
-  { programId: "prog-d-pointcard-0.5pc", storeId: "sukiya" },
-  { programId: "prog-d-pointcard-0.5pc", storeId: "eneos" },
-  { programId: "prog-d-pointcard-0.5pc", storeId: "gusto" },
-  { programId: "prog-d-pointcard-0.5pc", storeId: "takashimaya" },
-  // v3.5.0: Phase A 高信頼度追加 (Sonnet + Gemini 両方が支持)
-  { programId: "prog-d-pointcard-0.5pc", storeId: "yoshinoya" },
-  { programId: "prog-d-pointcard-0.5pc", storeId: "welcia" },
-  { programId: "prog-d-pointcard-0.5pc", storeId: "tsuruha" },
+  ...defineMemberships("prog-d-pointcard-0.5pc", [
+    "conv-lawson",
+    "conv-familymart",
+    "sukiya",
+    "eneos",
+    "gusto",
+    "takashimaya",
+    // v3.5.0: Phase A 高信頼度追加 (Sonnet + Gemini 両方が支持)
+    "yoshinoya",
+    "welcia",
+    "tsuruha",
+  ]),
 
   // B-4: dポイントカード 1% memberships
-  { programId: "prog-d-pointcard-1pc", storeId: "mcdonalds" },
-  { programId: "prog-d-pointcard-1pc", storeId: "matsukiyo" },
-  { programId: "prog-d-pointcard-1pc", storeId: "nojima" },
-  { programId: "prog-d-pointcard-1pc", storeId: "cocokara" },
+  ...defineMemberships("prog-d-pointcard-1pc", [
+    "mcdonalds",
+    "matsukiyo",
+    "nojima",
+    "cocokara",
+  ]),
 
   // B-5: Pontaカード 0.5% memberships
-  { programId: "prog-ponta-card-0.5pc", storeId: "conv-lawson" },
-  { programId: "prog-ponta-card-0.5pc", storeId: "sukiya" },
-  { programId: "prog-ponta-card-0.5pc", storeId: "idemitsu" },
-  // v3.5.0: Phase 2 Ponta 拡張 (Gemini が示唆、Sonnet が store 存在を確認)
-  { programId: "prog-ponta-card-0.5pc", storeId: "kfc" },
-  { programId: "prog-ponta-card-0.5pc", storeId: "doutor" },
-  { programId: "prog-ponta-card-0.5pc", storeId: "joshin" },
-  { programId: "prog-ponta-card-0.5pc", storeId: "apollo-station" },
+  ...defineMemberships("prog-ponta-card-0.5pc", [
+    "conv-lawson",
+    "sukiya",
+    "idemitsu",
+    // v3.5.0: Phase 2 Ponta 拡張 (Gemini が示唆、Sonnet が store 存在を確認)
+    "kfc",
+    "doutor",
+    "joshin",
+    "apollo-station",
+  ]),
 
   // B-6: Pontaカード 1% memberships (ADDED_LOYALTY_RULES)
-  { programId: "prog-ponta-card-1pc", storeId: "jalannet" },
-  { programId: "prog-ponta-card-1pc", storeId: "hotpepper-beauty" },
-  { programId: "prog-ponta-card-1pc", storeId: "hotpepper-gourmet" },
-  { programId: "prog-ponta-card-1pc", storeId: "jalan-golf" },
-  { programId: "prog-ponta-card-1pc", storeId: "jal-rentacar" },
+  ...defineMemberships("prog-ponta-card-1pc", [
+    "jalannet",
+    "hotpepper-beauty",
+    "hotpepper-gourmet",
+    "jalan-golf",
+    "jal-rentacar",
+  ]),
 
   // B-7: Vポイントカード 0.5% memberships
-  { programId: "prog-vpoint-card-0.5pc", storeId: "conv-familymart" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "welcia" },
-  // v3.5.0: Phase 2 V 拡張
-  // 飲食大手 (旧Tポイント時代からの主要加盟先)
-  { programId: "prog-vpoint-card-0.5pc", storeId: "yoshinoya" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "sukiya" },
-  // すかいらーくグループ
-  { programId: "prog-vpoint-card-0.5pc", storeId: "gusto" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "jonathan" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "shabuyo" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "yumetoan" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "bamiyan" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "aiya" },
-  // ゼンショーグループ
-  { programId: "prog-vpoint-card-0.5pc", storeId: "cocos" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "hamazushi" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "big-boy" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "hanaya-yohei" },
-  // 家電・書店・GS
-  { programId: "prog-vpoint-card-0.5pc", storeId: "edion" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "tsutaya" },
-  { programId: "prog-vpoint-card-0.5pc", storeId: "eneos" },
+  ...defineMemberships("prog-vpoint-card-0.5pc", [
+    "conv-familymart",
+    "welcia",
+    // v3.5.0: Phase 2 V 拡張
+    // 飲食大手 (旧Tポイント時代からの主要加盟先)
+    "yoshinoya",
+    "sukiya",
+    // すかいらーくグループ
+    "gusto",
+    "jonathan",
+    "shabuyo",
+    "yumetoan",
+    "bamiyan",
+    "aiya",
+    // ゼンショーグループ
+    "cocos",
+    "hamazushi",
+    "big-boy",
+    "hanaya-yohei",
+    // 家電・書店・GS
+    "edion",
+    "tsutaya",
+    "eneos",
+  ]),
 
   // B-8: nanacoカード 1% memberships
   // 注: nanaco は「カード提示で貯まる loyalty」と「電子マネー決済で貯まる」の
   // 2 モードがある。ここは loyalty (提示で貯まる) 加盟店のみ = セブン&アイグループ。
   // 「電子マネーとして使えるだけ」の店 (吉野家・マック等) はここに入れない。
   // 電子マネー支払側の還元は将来 PaymentApp として nanaco をモデル化する別議題。
-  { programId: "prog-nanaco-card-1pc", storeId: "conv-7eleven" },
+  ...defineMemberships("prog-nanaco-card-1pc", ["conv-7eleven"]),
 
   // B-9: WAONカード 0.5% memberships
   // 注: WAON も nanaco と同じく loyalty / 電子マネー の 2 モードがある。
@@ -1003,25 +1023,29 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   // ウエルシアはイオングループ傘下のドラッグなので loyalty 加盟。
   // ファミマ・ローソン・ガスト・吉野家・ビックカメラ・コスモ石油は WAON 電子マネー
   // 決済は可能だが loyalty 提示加盟ではないため除外。
-  { programId: "prog-waon-card-0.5pc", storeId: "aeon" },
-  { programId: "prog-waon-card-0.5pc", storeId: "conv-ministop" },
-  // v3.5.0: WAON loyalty 拡張 (カード提示でポイントが貯まる加盟店)
-  // - welcia: イオン系ドラッグ、WAON POINT 提示加盟 (確認済)
-  // - tsuruha: 提示・支払どちらでも WAON POINT 加盟 (Gemini 検証で確認)
-  // - cosmo-oil: 提示のみで WAON POINT 加盟 (e-money 支払では貯まらないので注意)
-  { programId: "prog-waon-card-0.5pc", storeId: "welcia" },
-  { programId: "prog-waon-card-0.5pc", storeId: "tsuruha" },
-  { programId: "prog-waon-card-0.5pc", storeId: "cosmo-oil" },
+  ...defineMemberships("prog-waon-card-0.5pc", [
+    "aeon",
+    "conv-ministop",
+    // v3.5.0: WAON loyalty 拡張 (カード提示でポイントが貯まる加盟店)
+    // - welcia: イオン系ドラッグ、WAON POINT 提示加盟 (確認済)
+    // - tsuruha: 提示・支払どちらでも WAON POINT 加盟 (Gemini 検証で確認)
+    // - cosmo-oil: 提示のみで WAON POINT 加盟 (e-money 支払では貯まらないので注意)
+    "welcia",
+    "tsuruha",
+    "cosmo-oil",
+  ]),
 
   // B-10: JRE POINT カード 0.5% memberships (8 件)
-  { programId: "prog-jre-pointcard-0.5pc", storeId: "newdays" },
-  { programId: "prog-jre-pointcard-0.5pc", storeId: "kiosk" },
-  { programId: "prog-jre-pointcard-0.5pc", storeId: "acure" },
-  { programId: "prog-jre-pointcard-0.5pc", storeId: "ecute" },
-  { programId: "prog-jre-pointcard-0.5pc", storeId: "gransta" },
-  { programId: "prog-jre-pointcard-0.5pc", storeId: "atre" },
-  { programId: "prog-jre-pointcard-0.5pc", storeId: "lumine" },
-  { programId: "prog-jre-pointcard-0.5pc", storeId: "newoman" },
+  ...defineMemberships("prog-jre-pointcard-0.5pc", [
+    "newdays",
+    "kiosk",
+    "acure",
+    "ecute",
+    "gransta",
+    "atre",
+    "lumine",
+    "newoman",
+  ]),
 
   // ═══════════════════════════════════════════════════════════════
   // PR 2 C: PaymentApp 系 memberships
@@ -1037,22 +1061,26 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   // C-12: nanaco 電子マネー memberships
   // セブン-イレブン (loyalty 加盟) は除外。e-money のみで貯まる店:
   // - 吉野家 / マクドナルド / ツルハ / ENEOS / ビックカメラ (Gemini 検証)
-  { programId: "prog-pa-nanaco-base", storeId: "yoshinoya" },
-  { programId: "prog-pa-nanaco-base", storeId: "mcdonalds" },
-  { programId: "prog-pa-nanaco-base", storeId: "tsuruha" },
-  { programId: "prog-pa-nanaco-base", storeId: "eneos" },
-  { programId: "prog-pa-nanaco-base", storeId: "bic-camera" },
+  ...defineMemberships("prog-pa-nanaco-base", [
+    "yoshinoya",
+    "mcdonalds",
+    "tsuruha",
+    "eneos",
+    "bic-camera",
+  ]),
 
   // C-13: WAON 電子マネー memberships
   // イオン系 (aeon/ministop/welcia/tsuruha/cosmo-oil) は loyalty 加盟なので除外。
   // ENEOS は WAON 給油非対応のため対象外。
   // e-money のみで貯まる店 = ファミマ/ローソン/ガスト/吉野家/マクドナルド/ビックカメラ
-  { programId: "prog-pa-waon-base", storeId: "conv-familymart" },
-  { programId: "prog-pa-waon-base", storeId: "conv-lawson" },
-  { programId: "prog-pa-waon-base", storeId: "gusto" },
-  { programId: "prog-pa-waon-base", storeId: "yoshinoya" },
-  { programId: "prog-pa-waon-base", storeId: "mcdonalds" },
-  { programId: "prog-pa-waon-base", storeId: "bic-camera" },
+  ...defineMemberships("prog-pa-waon-base", [
+    "conv-familymart",
+    "conv-lawson",
+    "gusto",
+    "yoshinoya",
+    "mcdonalds",
+    "bic-camera",
+  ]),
 
   // V5: JCB J-POINT パートナー memberships
   // V5-2 で W 系列 / Gold 系列の 2 系列に分離 (10 件 = W6 + Gold9、高島屋は Gold のみプレミアム)
@@ -1061,63 +1089,69 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   // Gold (jcb-gold): 2倍 / 3倍 / 4倍 (高島屋プレミアム) / 20倍
 
   // ─── W 系列 (jcb-w) ───
-  { programId: "prog-jcb-jpoint-2x", storeId: "mercari" },
-  { programId: "prog-jcb-jpoint-2x", storeId: "welcia" },
-  { programId: "prog-jcb-jpoint-2x", storeId: "apollo-station" },
-  { programId: "prog-jcb-jpoint-2x", storeId: "bic-camera" },
-  { programId: "prog-jcb-jpoint-2x", storeId: "mos-burger" },
-  // V5-2: 高島屋を W では 2倍 (実効 2%) に移管 (Gold プレミアム 4倍 = 2% と同等)
-  { programId: "prog-jcb-jpoint-2x", storeId: "takashimaya" },
-  { programId: "prog-jcb-jpoint-3x", storeId: "amazon" },
-  { programId: "prog-jcb-jpoint-3x", storeId: "conv-7eleven" },
-  { programId: "prog-jcb-jpoint-20x", storeId: "starbucks" },
+  ...defineMemberships("prog-jcb-jpoint-2x", [
+    "mercari",
+    "welcia",
+    "apollo-station",
+    "bic-camera",
+    "mos-burger",
+    // V5-2: 高島屋を W では 2倍 (実効 2%) に移管 (Gold プレミアム 4倍 = 2% と同等)
+    "takashimaya",
+  ]),
+  ...defineMemberships("prog-jcb-jpoint-3x", ["amazon", "conv-7eleven"]),
+  ...defineMemberships("prog-jcb-jpoint-20x", ["starbucks"]),
 
   // ─── Gold 系列 (jcb-gold) ───
-  { programId: "prog-jcb-jpoint-gold-2x", storeId: "mercari" },
-  { programId: "prog-jcb-jpoint-gold-2x", storeId: "welcia" },
-  { programId: "prog-jcb-jpoint-gold-2x", storeId: "apollo-station" },
-  { programId: "prog-jcb-jpoint-gold-2x", storeId: "bic-camera" },
-  { programId: "prog-jcb-jpoint-gold-2x", storeId: "mos-burger" },
-  { programId: "prog-jcb-jpoint-gold-3x", storeId: "amazon" },
-  { programId: "prog-jcb-jpoint-gold-3x", storeId: "conv-7eleven" },
-  { programId: "prog-jcb-jpoint-gold-4x", storeId: "takashimaya" },
-  { programId: "prog-jcb-jpoint-gold-20x", storeId: "starbucks" },
+  ...defineMemberships("prog-jcb-jpoint-gold-2x", [
+    "mercari",
+    "welcia",
+    "apollo-station",
+    "bic-camera",
+    "mos-burger",
+  ]),
+  ...defineMemberships("prog-jcb-jpoint-gold-3x", ["amazon", "conv-7eleven"]),
+  ...defineMemberships("prog-jcb-jpoint-gold-4x", ["takashimaya"]),
+  ...defineMemberships("prog-jcb-jpoint-gold-20x", ["starbucks"]),
 
   // ═══════════════════════════════════════════════════════════════
   // v6.5.0: エポス ゴールド/プラチナ優待 + たまるマーケット memberships
   // ═══════════════════════════════════════════════════════════════
 
   // (a) マルイ優待 (2倍)
-  { programId: "prog-epos-gp-marui", storeId: "marui" },
+  ...defineMemberships("prog-epos-gp-marui", ["marui"]),
 
   // (b) 選べるポイントアップ (2倍)。対象300以上のうち seed 実在 store を列挙
   // (マルエツ・成城石井は store 未登録のため対象外)。
-  { programId: "prog-epos-gp-selectable-pointup", storeId: "conv-7eleven" },
-  { programId: "prog-epos-gp-selectable-pointup", storeId: "conv-familymart" },
-  { programId: "prog-epos-gp-selectable-pointup", storeId: "conv-lawson" },
-  { programId: "prog-epos-gp-selectable-pointup", storeId: "conv-ministop" },
-  { programId: "prog-epos-gp-selectable-pointup", storeId: "aeon" },
-  { programId: "prog-epos-gp-selectable-pointup", storeId: "seiyu" },
-  { programId: "prog-epos-gp-selectable-pointup", storeId: "matsukiyo" },
-  { programId: "prog-epos-gp-selectable-pointup", storeId: "welcia" },
-  { programId: "prog-epos-gp-selectable-pointup", storeId: "tsuruha" },
-  {
-    programId: "prog-epos-gp-selectable-pointup",
-    storeId: "suica-charge",
-    notes: "モバイルSuicaチャージが対象ショップ (エポスゴールド定番の使い方)",
-  },
-  {
-    programId: "prog-epos-gp-selectable-pointup",
-    storeId: "marui",
-    overrideRate: 0.015,
-    notes: "マルイ登録時は通常2pt+ボーナス1pt=1.5% (2025-04改定の影響なし)",
-  },
+  ...defineMemberships("prog-epos-gp-selectable-pointup", [
+    "conv-7eleven",
+    "conv-familymart",
+    "conv-lawson",
+    "conv-ministop",
+    "aeon",
+    "seiyu",
+    "matsukiyo",
+    "welcia",
+    "tsuruha",
+    [
+      "suica-charge",
+      { notes: "モバイルSuicaチャージが対象ショップ (エポスゴールド定番の使い方)" },
+    ],
+    [
+      "marui",
+      {
+        overrideRate: 0.015,
+        notes: "マルイ登録時は通常2pt+ボーナス1pt=1.5% (2025-04改定の影響なし)",
+      },
+    ],
+  ]),
 
   // (c) たまるマーケット (2/3/4倍)。倍率は 2026-07 実測
   // 楽天市場2倍 / Yahoo!2倍 / ユニクロ2倍 / じゃらん3倍 / 無印4倍
-  { programId: "prog-epos-tamaru-2x", storeId: "rakuten-ichiba" },
-  { programId: "prog-epos-tamaru-2x", storeId: "yahoo-shopping" },
-  { programId: "prog-epos-tamaru-2x", storeId: "uniqlo" },
-  { programId: "prog-epos-tamaru-3x", storeId: "jalannet" },
-  { programId: "prog-epos-tamaru-4x", storeId: "muji" },
+  ...defineMemberships("prog-epos-tamaru-2x", [
+    "rakuten-ichiba",
+    "yahoo-shopping",
+    "uniqlo",
+  ]),
+  ...defineMemberships("prog-epos-tamaru-3x", ["jalannet"]),
+  ...defineMemberships("prog-epos-tamaru-4x", ["muji"]),
 ];

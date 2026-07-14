@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { mergeSeed, diffCount, changeCount } from "./mergeSeed";
+import { membershipId } from "../state/defineMemberships";
 import type {
   BenefitProgram,
   Card,
@@ -114,9 +115,15 @@ const prog = (
   ...over,
 });
 
-const mem = (programId: string, storeId: string): StoreProgramMembership => ({
+const mem = (
+  programId: string,
+  storeId: string,
+  over: Partial<StoreProgramMembership> = {},
+): StoreProgramMembership => ({
+  id: membershipId(programId, storeId),
   programId,
   storeId,
+  ...over,
 });
 
 describe("mergeSeed — 公式 program の内容更新伝播 (Phase 5)", () => {
@@ -257,8 +264,43 @@ describe("mergeSeed — tombstone 削除 (Phase 5)", () => {
   });
 });
 
-describe("mergeSeed — removedMembershipKeys (#103 対応)", () => {
-  it("該当キー完全一致の membership が除去される", () => {
+describe("mergeSeed — membership の id ベース add-only merge (v6)", () => {
+  it("seed にだけある id の membership が追加される", () => {
+    const result = mergeSeed(
+      { ...empty, memberships: [mem("prog-a", "s1")] },
+      { ...empty, memberships: [mem("prog-a", "s1"), mem("prog-a", "s2")] },
+    );
+    expect(result.memberships?.map((m) => m.id)).toEqual([
+      membershipId("prog-a", "s1"),
+      membershipId("prog-a", "s2"),
+    ]);
+    expect(result.diff.memberships?.map((m) => m.id)).toEqual([
+      membershipId("prog-a", "s2"),
+    ]);
+  });
+
+  it("既存 id (ユーザー編集済み overrideRate) は seed 側で上書きされず保護される", () => {
+    // add-only merge のため、同 id が seed にあっても current の内容 (userModifiedAt +
+    // 編集済み overrideRate) が構造的に維持される。
+    const edited = mem("prog-a", "s1", {
+      overrideRate: 0.1,
+      userModifiedAt: "2026-06-01T00:00:00.000Z",
+    });
+    const result = mergeSeed(
+      { ...empty, memberships: [edited] },
+      { ...empty, memberships: [mem("prog-a", "s1", { overrideRate: 0.03 })] },
+    );
+    expect(result.memberships).toHaveLength(1);
+    expect(result.memberships?.[0].overrideRate).toBe(0.1);
+    expect(result.memberships?.[0].userModifiedAt).toBe(
+      "2026-06-01T00:00:00.000Z",
+    );
+    expect(result.diff.memberships).toHaveLength(0);
+  });
+});
+
+describe("mergeSeed — removedMembershipIds (#103 対応)", () => {
+  it("該当 id 完全一致の membership が除去される", () => {
     const current = {
       ...empty,
       memberships: [
@@ -266,26 +308,24 @@ describe("mergeSeed — removedMembershipKeys (#103 対応)", () => {
         mem("prog-jcb-jpoint-20x", "starbucks"),
       ],
     };
-    const result = mergeSeed(
-      current,
-      { ...empty },
-      { removedMembershipKeys: ["prog-jcb-jpoint-20x|general"] },
-    );
+    const result = mergeSeed(current, { ...empty }, {
+      removedMembershipIds: [membershipId("prog-jcb-jpoint-20x", "general")],
+    });
     expect(result.memberships).toEqual([
       mem("prog-jcb-jpoint-20x", "starbucks"),
     ]);
-    expect(result.removedMembershipKeyCount).toBe(1);
+    expect(result.removedMembershipIdCount).toBe(1);
   });
 
-  it("キー不一致の membership は残る", () => {
+  it("id 不一致の membership は残る", () => {
     const memberships = [mem("prog-a", "store-a"), mem("prog-b", "store-b")];
     const result = mergeSeed(
       { ...empty, memberships },
       { ...empty },
-      { removedMembershipKeys: ["prog-x|store-x"] },
+      { removedMembershipIds: [membershipId("prog-x", "store-x")] },
     );
     expect(result.memberships).toBe(memberships);
-    expect(result.removedMembershipKeyCount).toBe(0);
+    expect(result.removedMembershipIdCount).toBe(0);
   });
 });
 
