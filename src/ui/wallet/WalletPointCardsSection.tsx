@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
-import { useStore } from "../state/store";
-import { isMasterProgram } from "../state/seed";
-import { CurrencyIcon } from "./CurrencyIcon";
-import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
-import type { PointCard } from "../domain/types";
-import { groupBy } from "../domain/groupBy";
-import { PointCardStoresPreview } from "./PointCardStoresPreview";
-import { sanitizeNoteForDisplay } from "../domain/noteParser";
+import { useStore } from "../../state/store";
+import { isMasterProgram } from "../../state/seed";
+import { CurrencyIcon } from "../CurrencyIcon";
+import { ResponsiveTable, type ColumnDef } from "../ResponsiveTable";
+import type { PointCard } from "../../domain/types";
+import { groupBy } from "../../domain/groupBy";
+import { PointCardStoresPreview } from "../PointCardStoresPreview";
+import { sanitizeNoteForDisplay } from "../../domain/noteParser";
 
 // program × membership から合成する「加盟店 × 還元率」表示行 (旧 LoyaltyRule 相当)。
 // v6 PR-1e で手動 loyaltyRule は BenefitProgram + membership に統一されたため、
@@ -24,8 +24,14 @@ type PcStoreRule = {
   notes?: string;
 };
 
-export function PointCardsScreen() {
-  // Wave 5 B-1: 個別 subscribe → 単一 useShallow に集約
+type Props = {
+  // ?highlight=<pointCardId> の対象 id (後続 PR の導線用)。
+  highlightId?: string;
+};
+
+// PointCardsScreen (旧 #pointcards) の内容を移植したウォレットのポイントカードセクション。
+// 優先順位 ↑↓ / 二重取り提示還元ルールの追加・削除まで機能等価。
+export function WalletPointCardsSection({ highlightId }: Props) {
   const {
     pointCards,
     currencies,
@@ -251,7 +257,7 @@ export function PointCardsScreen() {
   ];
 
   return (
-    <section>
+    <div>
       <h2>ポイントカード（二重取り用）</h2>
       <p className="hint">
         クレカ決済の還元と<strong>別軸</strong>で、店頭提示で貯まるポイントカード。計算画面で「ポイントカード併用ボーナス」として表示されます。
@@ -279,10 +285,7 @@ export function PointCardsScreen() {
           value={pcName}
           onChange={(e) => setPcName(e.target.value)}
         />
-        <select
-          value={pcCurrency}
-          onChange={(e) => setPcCurrency(e.target.value)}
-        >
+        <select value={pcCurrency} onChange={(e) => setPcCurrency(e.target.value)}>
           <option value="">貯まる通貨</option>
           {currencies.map((c) => (
             <option key={c.id} value={c.id}>
@@ -298,6 +301,7 @@ export function PointCardsScreen() {
         columns={pointCardColumns}
         onSave={(id, patch) => updatePointCard(id, patch)}
         onDelete={removePointCard}
+        highlightId={highlightId}
         extraActions={(p) => {
           const i = pointCards.findIndex((x) => x.id === p.id);
           return (
@@ -346,10 +350,7 @@ export function PointCardsScreen() {
           setLrNotes("");
         }}
       >
-        <select
-          value={lrPointCard}
-          onChange={(e) => setLrPointCard(e.target.value)}
-        >
+        <select value={lrPointCard} onChange={(e) => setLrPointCard(e.target.value)}>
           <option value="">ポイントカード</option>
           {pointCards.map((p) => (
             <option key={p.id} value={p.id}>
@@ -392,6 +393,6 @@ export function PointCardsScreen() {
         onDelete={removeUserProgram}
         testId="loyalty-rules"
       />
-    </section>
+    </div>
   );
 }

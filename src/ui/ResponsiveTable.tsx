@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export type ColumnDef<T> = {
   key: string;
@@ -35,6 +35,10 @@ type Props<T extends { id: string }> = {
   empty?: string;
   // ID prefix (テーブル複数並ぶ画面で衝突回避用)
   testId?: string;
+  // id が一致する行を一時ハイライト (row-flash) + scrollIntoView する。
+  // ウォレットの ?highlight=<id> 導線用 (PR-2b1)。省略時 (undefined) は無効。
+  // 一致行がなければ何もしない (副作用なし)。
+  highlightId?: string;
 };
 
 export function ResponsiveTable<T extends { id: string }>({
@@ -48,11 +52,23 @@ export function ResponsiveTable<T extends { id: string }>({
   readOnly,
   empty = "まだありません",
   testId,
+  highlightId,
 }: Props<T>) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<T | null>(null);
   // 確認ダイアログ表示中の二重クリック防止
   const [saving, setSaving] = useState(false);
+
+  // highlightId 変化時、一致行を画面内へスクロール (視覚的な flash は CSS アニメが担当)。
+  // 属性セレクタは CSS.escape で id 内の特殊文字を無害化する。
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = rootRef.current?.querySelector<HTMLElement>(
+      `[data-row-id="${CSS.escape(highlightId)}"]`,
+    );
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightId]);
 
   const startEdit = (row: T) => {
     setEditingId(row.id);
@@ -102,7 +118,7 @@ export function ResponsiveTable<T extends { id: string }>({
   const hasActions = !readOnly && (onSave || onDelete || extraActions);
 
   return (
-    <div className="responsive-table" data-testid={testId}>
+    <div className="responsive-table" data-testid={testId} ref={rootRef}>
       <table>
         <thead>
           <tr>
@@ -120,7 +136,13 @@ export function ResponsiveTable<T extends { id: string }>({
             const display = isEditing && draft ? draft : row;
             const deletable = !canDelete || canDelete(display);
             return (
-              <tr key={row.id} className={isEditing ? "row-editing" : ""}>
+              <tr
+                key={row.id}
+                data-row-id={row.id}
+                className={`${isEditing ? "row-editing" : ""}${
+                  highlightId && row.id === highlightId ? " row-flash" : ""
+                }`.trim()}
+              >
                 {columns.map((c) => (
                   <td key={c.key} data-label={c.label}>
                     <div className="cell-content">
