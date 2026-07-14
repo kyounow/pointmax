@@ -1,5 +1,6 @@
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
+import { downloadJsonFile } from "../state/exportFile";
 import type { SchemaMigrationStrategy } from "../state/persist-versions";
 
 type Props = {
@@ -16,20 +17,19 @@ export function SchemaUpgradeModal({ strategy }: Props) {
   );
 
   const handleExport = () => {
-    const json = exportLegacyState();
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const date = new Date().toISOString().slice(0, 10);
-    a.download = `pointmax-legacy-backup-${date}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // reset 直前の localStorage 全データ (empty 化前の _legacyPersistedState) を
+    // バックアップ出力する。App.tsx の通常エクスポートと同じ blob ダウンロード util を共用。
+    downloadJsonFile(exportLegacyState(), "pointmax-legacy-backup");
   };
 
   const handleApply = () => {
+    applySchemaMigration();
+  };
+
+  // 「エクスポート → 続けて反映」を 1 操作で。バックアップを取り損ねたまま
+  // reset される事故を減らす (reset 後は旧データを取り戻せないため)。
+  const handleExportThenApply = () => {
+    handleExport();
     applySchemaMigration();
   };
 
@@ -62,6 +62,9 @@ export function SchemaUpgradeModal({ strategy }: Props) {
 
         <div className="schema-upgrade-actions">
           <button onClick={handleExport}>JSON エクスポート (推奨)</button>
+          <button onClick={handleExportThenApply}>
+            エクスポートしてから続行
+          </button>
           <button className="primary schema-upgrade-primary" onClick={handleApply}>
             アップデート適用
           </button>

@@ -19,6 +19,9 @@
 - 還元は **BenefitProgram** という単一モデルに統合。1 つのプログラムが
   カード／ポイントカード／決済アプリのいずれかに紐づき、`primary`（排他・最高採用）と
   `addOn`（上乗せ）の 2 種類で重ね合わせを表現する。
+- 各プログラムは適用範囲 **`scope`** を必須で持つ（v6）。`all-stores` = 全店適用
+  （決済アプリのベース/上乗せ系。membership を持ってはいけない）、`member-stores` =
+  StoreProgramMembership のある店舗のみ。以前の「membership 行数からの推論」は廃止。
 - 支払アプリは紐付けカード別の還元率を持てる（例: d払い × dカード = 1%、d払い × 他社 = 0%）。
 - カードからのチャージ式アプリ（楽天Pay/d払い/PayPay 等）と直接決済（Visaタッチ/iD等）は
   主従関係をUIで切り替え表示。例：「**[d払い] の残高にカードからチャージ、dカード**」
@@ -255,7 +258,7 @@ PointMax は 2 つの version を独立管理:
 | 種類 | 用途 | 現在値 |
 |---|---|---|
 | `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **43** |
-| `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **5** |
+| `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **6** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
 - `passthrough`: 互換あり、何もしない
@@ -270,6 +273,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 | 2 | `reset` | v5.0.0 で V4 未満を強制アプデ化（旧 passthrough、SEED_VERSION 30+ 回ぶんを取りこぼした「ゴーストデータ」化のため公式マスタ再初期化） |
 | 3 | `reset` | v5.0.0 で V4 未満を強制アプデ化（同上） |
 | 4 | `passthrough` | v5.0.0 `BenefitProgram.entryUrl` 新設（任意フィールドの純加算で旧 v4 localStorage は無問題） |
+| 5 | `reset` | schema v6 破壊的刷新（`BenefitProgram.scope` 必須化。以降のトレイン PR で membership id 必須化 / `Card.familyId` / `optIn` / `LoyaltyRule` 削除を積む起点） |
 
 今後 schema を変更する場合は `PERSIST_SCHEMA_VERSION` を bump し、`SCHEMA_MIGRATIONS` に対応するエントリを追加する。
 
@@ -296,6 +300,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **v6.3.0** — キャンペーン収集/取込/期間ライフサイクル大幅強化 (PR #84-#92 の 9 本)。収集: 索引ハブの 2 段階クロール (`crawl: index`、実在リンク照合で捏造 URL 遮断) + 手動登録フォーム復活。取込: `sync:approve` (review 承認 1 コマンド化)・`PROGRAM_OVERRIDES` (rate/期間変更の実書き込み)・`REMOVED_PROGRAM_IDS` (期限切れ削除 tombstone)。期間: 日付判定のローカルタイム統一・`useToday` (日付跨ぎ自動更新)・終了カウントダウン・`recurringWeekdays` (曜日限定)・公式 program の更新/削除が既存ユーザーの端末にも伝播 (未編集分のみ、編集済みは保護)。tests 565→687。SEED_VERSION 41 / PERSIST_SCHEMA 5 据え置き
 - **v6.4.0** — JALカードSuica の JRE POINT → JAL マイル交換レート修正。CLUB-Aゴールド (`jal-suica`) を 1500pt→1000マイル (0.6667) に訂正 (従来 0.5 は普通カード相当の誤り)、普通カード版を新カード `jal-suica-normal` (enabled:false) + edge `jre-to-jal-normal` (1500pt→750マイル) として追加。両カード保有時はゴールドが優先。既存ユーザーには migration v42 で rate 修正を反映。SEED_VERSION 41→42 / PERSIST_SCHEMA 5 据え置き
 - **v6.5.0** — エポスカードを 3 グレード体制に拡張 (`epos-gold` / `epos-platinum` 追加、いずれも enabled:false)。基本還元は全グレード 0.5% で共通とし、グレード差は program で表現: マルイ・モディ 2倍 (G/P 限定 1.0%)、選べるポイントアップ 2倍 (G/P 限定、**2025-04 改定後の倍率** — 旧 3倍への退行防止テスト付き、マルイ登録時は override 1.5%、モバイルSuicaチャージ含む実在 store 11 件)。ポイントアップサイト**たまるマーケット**を J-POINT パートナー同型でモデル化 (`prog-epos-tamaru-{2,3,4}x`、楽天市場/Yahoo!ショッピング/ユニクロ/じゃらん/無印良品)。エポス→dポイント等価交換 edge 追加 (Ponta 1:1 は au 回線契約者限定のため意図的に見送り、ANA 優遇 0.6 は 2026-03 終了済み)。sync に新 extractor `epos-tamaru` + キャンペーンソース `epos-news-campaigns` を enabled:false でステージング。SEED_VERSION 42→43 / PERSIST_SCHEMA 5 据え置き
+- **schema v6 (PERSIST_SCHEMA 5→6)** — `BenefitProgram.scope` を必須化 (`all-stores` = 全店適用・membership 不可 / `member-stores` = membership のある店のみ)。「membership 行数からの適用範囲推論」を廃止し、`programEvaluator` / `loyalty` は scope のみで判定 (`membershipIndex.programsWithMembership` を削除)。エクスポート JSON に `schemaVersion` を埋め、`importJson` は旧バージョン (欠落含む) を明確なメッセージで拒否 (公式 `master.json` を読む `syncFromUrl` はガード対象外)。validators に scope enum + 「all-stores なのに membership」矛盾検出を追加。v5 localStorage は `reset` で v6 へ再初期化 (`SchemaUpgradeModal` に「エクスポートしてから続行」ボタン追加、export util を `exportFile.ts` に集約)。sync は `ExtractedProgram.scope` を任意追加 + propose 層の derive-on-missing (scope 欠落時に membership 有無から補完、`🧭 scope-derive:` ログ) でプロンプト未改訂でも同期継続。以降のトレイン PR (membership id 必須化 / `Card.familyId` / `optIn` / `LoyaltyRule` 削除) の起点。PERSIST_SCHEMA 5→6
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
@@ -321,6 +326,9 @@ sync インフラ修正系の PR (#19-#26、#33-#35、#37、#39 等) は tag な
   エクスポート JSON はローカル全データ (カード/通貨/店舗/交換ルート/ポイントカード/
   loyalty ルール/支払方法/プログラム/メンバーシップ) のスナップショットで、インポートで
   まるごと復元できる (プログラム/メンバーシップ欄が無い旧フォーマットは既存値を保持)。
+  エクスポート JSON には `schemaVersion` が埋め込まれ、**現在のアプリと版が異なる (欠落含む) 旧形式の
+  インポートは明確なメッセージで拒否**される (v6 未満のファイルは現行アプリで再エクスポートが必要)。
+  この版ガードは import 経路のみで、公式 `master.json` の URL 同期には影響しない。
 - **データの保持 (耐久性)**: ブラウザ利用（特に iOS Safari を非インストールで使う場合）は、
   長期間アクセスしないと `localStorage` が自動削除されたり、容量逼迫時に消去されることがあります。
   対策として、アプリ起動時に**永続ストレージ**（`navigator.storage.persist()`）を自動要求し、

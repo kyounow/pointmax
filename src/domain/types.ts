@@ -115,10 +115,16 @@ export type LoyaltyRule = {
 // 該当しない program はその場面で無視される。
 //
 // store への加盟関係は StoreProgramMembership (M2M) で別管理。
-// membership が一件も無い program は「全 store に適用」と解釈 (= PaymentApp の上乗せ系で使う)。
 export type BenefitProgram = {
   id: string;                      // 例: "prog-jal-tokuyaku"
   name: string;                    // 例: "JALカード特約店"
+
+  // 適用範囲 (v6 で必須化)。membership 行数からの推論 (旧挙動: membership が
+  // 一件も無い program = 全 store 適用) は廃止し、明示フィールドで表す。
+  //   "all-stores"    : 全 store に適用 (= PaymentApp のベース/上乗せ系)。
+  //                     membership を持ってはいけない (validators で矛盾検出)。
+  //   "member-stores" : membership のある store のみに適用 (loyalty / 特約店系)。
+  scope: "all-stores" | "member-stores";
 
   // ─── 発動要件 ───
   cardIds?: string[];              // クレカ保有者 (OR セマンティクス)

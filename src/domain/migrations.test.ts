@@ -515,14 +515,15 @@ describe("MIGRATIONS v35 (ファミペイ廃止)", () => {
         { id: "pa-rakuten-pay", name: "楽天Pay" },
       ],
       programs: [
-        { id: "prog-famipay-base", name: "x", rate: 0.005, currencyId: "edy" },
+        { id: "prog-famipay-base", name: "x", scope: "all-stores", rate: 0.005, currencyId: "edy" },
         {
           id: "prog-famima-card-addon",
           name: "y",
+          scope: "all-stores",
           rate: 0.005,
           currencyId: "edy",
         },
-        { id: "prog-keep", name: "z", rate: 0.01, currencyId: "rakuten-pt" },
+        { id: "prog-keep", name: "z", scope: "all-stores", rate: 0.01, currencyId: "rakuten-pt" },
       ],
     };
     const plan = planMigrations(state, 34, 35, MIGRATIONS);
@@ -545,7 +546,7 @@ describe("MIGRATIONS v35 (ファミペイ廃止)", () => {
       loyaltyRules: [],
       paymentApps: [{ id: "pa-rakuten-pay", name: "楽天Pay" }],
       programs: [
-        { id: "prog-keep", name: "z", rate: 0.01, currencyId: "rakuten-pt" },
+        { id: "prog-keep", name: "z", scope: "all-stores", rate: 0.01, currencyId: "rakuten-pt" },
       ],
     };
     const plan = planMigrations(state, 34, 35, MIGRATIONS);

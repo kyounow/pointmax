@@ -8,6 +8,7 @@ import { SEED_BENEFIT_PROGRAMS } from "./seed-data-programs";
 
 const baseProgram = {
   name: "テスト手動キャンペーン +5%",
+  scope: "member-stores" as const,
   rate: 0.05,
   currencyId: "d-pt",
   bonusType: "addOn" as const,

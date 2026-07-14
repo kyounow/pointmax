@@ -42,6 +42,7 @@ const visaTouch: PaymentApp = {
 
 const jalTokuyakuProgram: BenefitProgram = {
   id: "prog-jal-tokuyaku",
+  scope: "member-stores",
   name: "JALカード特約店",
   cardIds: ["jal-suica", "jal-card"],
   rate: 0.02,
@@ -56,6 +57,7 @@ const jalTokuyakuMembership: StoreProgramMembership = {
 
 const addOnProgram: BenefitProgram = {
   id: "prog-addon-test",
+  scope: "member-stores",
   name: "上乗せテスト",
   cardIds: ["jal-suica"],
   rate: 0.005,
@@ -113,6 +115,7 @@ describe("evaluatePrograms", () => {
   it("membership 無し program (= global) で paymentAppId match → primary に match", () => {
     const globalProgram: BenefitProgram = {
       id: "prog-global-visa",
+      scope: "all-stores",
       name: "Visa タッチ上乗せ",
       paymentAppId: "pa-visa-touch",
       rate: 0.01,
@@ -152,6 +155,7 @@ describe("evaluatePrograms", () => {
   it("primary 複数候補から最大 rate 選択", () => {
     const lowRateProgram: BenefitProgram = {
       id: "prog-low",
+      scope: "member-stores",
       name: "低還元",
       cardIds: ["jal-suica"],
       rate: 0.01,
@@ -160,6 +164,7 @@ describe("evaluatePrograms", () => {
     };
     const highRateProgram: BenefitProgram = {
       id: "prog-high",
+      scope: "member-stores",
       name: "高還元",
       cardIds: ["jal-suica"],
       rate: 0.03,
@@ -183,6 +188,7 @@ describe("evaluatePrograms", () => {
   it("addOn 複数 → 全部 addOns に含まれる", () => {
     const addOn2: BenefitProgram = {
       id: "prog-addon-2",
+      scope: "member-stores",
       name: "上乗せ2",
       cardIds: ["jal-suica"],
       rate: 0.003,
@@ -243,6 +249,7 @@ describe("evaluatePrograms", () => {
     // - prog-fictional-rakuten (rakuten-pt 1%) ※ jal-suica にも適用される架空 primary
     const fictionalRakutenPrimary: BenefitProgram = {
       id: "prog-fictional-rakuten",
+      scope: "member-stores",
       name: "架空 rakuten primary",
       cardIds: ["jal-suica"],
       rate: 0.01,
@@ -313,6 +320,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
 
   const smbcProg: BenefitProgram = {
     id: "prog-smbc-7p",
+    scope: "member-stores",
     name: "SMBC 7%",
     cardIds: ["smbc-v"],
     paymentAppId: "pa-visa-touch",
@@ -323,6 +331,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
   };
   const oliveProg: BenefitProgram = {
     id: "prog-olive-8p",
+    scope: "member-stores",
     name: "Olive 8%",
     cardIds: ["olive"],
     paymentAppId: "pa-visa-touch",
@@ -333,6 +342,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
   };
   const rakutenBaseProg: BenefitProgram = {
     id: "prog-rakuten-ichiba-base",
+    scope: "member-stores",
     name: "楽天カード × 楽天市場 通常",
     cardIds: ["rakuten-card"],
     rate: 0.03,
@@ -341,6 +351,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
   };
   const rakutenZeroFiveProg: BenefitProgram = {
     id: "prog-rakuten-ichiba-zero-five-day",
+    scope: "member-stores",
     name: "楽天市場 5/0のつく日",
     cardIds: ["rakuten-card"],
     rate: 0.04,
@@ -351,6 +362,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
   };
   const dcardBicProg: BenefitProgram = {
     id: "prog-dcard-bic-camera-may2026",
+    scope: "member-stores",
     name: "d払い × ビックカメラ",
     cardIds: ["dcard"],
     paymentAppId: "pa-d-pay",
@@ -362,6 +374,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
   };
   const mercardProg: BenefitProgram = {
     id: "prog-mercard-mercari",
+    scope: "member-stores",
     name: "メルカード × メルカリ",
     cardIds: ["mercard"],
     rate: 0.04,
@@ -370,6 +383,7 @@ describe("PR 2 StoreRule 系 programs (evaluatePrograms)", () => {
   };
   const mercardDay8Prog: BenefitProgram = {
     id: "prog-mercard-mercari-day8",
+    scope: "member-stores",
     name: "メルカード × メルカリ 毎月8日",
     cardIds: ["mercard"],
     rate: 0.08,
@@ -532,6 +546,7 @@ describe("PR 2 PaymentApp 系 programs (global programs, addOn)", () => {
 
   const rakutenPayBaseProg: BenefitProgram = {
     id: "prog-rakuten-pay-base",
+    scope: "all-stores",
     name: "楽天Pay ベース",
     paymentAppId: "pa-rakuten-pay",
     rate: 0.01,
@@ -540,6 +555,7 @@ describe("PR 2 PaymentApp 系 programs (global programs, addOn)", () => {
   };
   const rakutenPayAddonProg: BenefitProgram = {
     id: "prog-rakuten-pay-rakuten-card-addon",
+    scope: "all-stores",
     name: "楽天Pay × 楽天カード 上乗せ",
     paymentAppId: "pa-rakuten-pay",
     cardIds: ["rakuten-card"],
@@ -617,6 +633,7 @@ describe("chargeBased paymentApp での cardIds-only program 除外 (v5.1.2)", (
   // Olive 選べる特典 (cardIds=olive、paymentAppId 未指定、addOn) — 本バグの原因 program
   const oliveSelectableBenefit: BenefitProgram = {
     id: "prog-olive-vpoint-up-selected-benefit",
+    scope: "all-stores",
     name: "Olive 選べる特典 +1%",
     cardIds: ["olive"],
     rate: 0.01,
@@ -627,6 +644,7 @@ describe("chargeBased paymentApp での cardIds-only program 除外 (v5.1.2)", (
   // 楽天Pay base (paymentAppId 指定、cardIds 未指定、primary) — 除外対象外
   const rakutenPayBaseProg: BenefitProgram = {
     id: "prog-rakuten-pay-base",
+    scope: "all-stores",
     name: "楽天Pay ベース",
     paymentAppId: "pa-rakuten-pay",
     rate: 0.01,
@@ -679,5 +697,79 @@ describe("chargeBased paymentApp での cardIds-only program 除外 (v5.1.2)", (
     });
     expect(result.primary?.program.id).toBe("prog-rakuten-pay-base");
     expect(result.primary?.effectiveRate).toBe(0.01);
+  });
+});
+
+// v6: 適用範囲 (scope) 分岐の正負。
+// membership 有無からの推論を廃止し、program.scope のみで「全店適用 / 加盟店限定」を判定する。
+describe("scope 分岐 (v6)", () => {
+  const card: Card = {
+    id: "some-card",
+    name: "カード",
+    defaultRate: 0.01,
+    defaultCurrencyId: "v-pt",
+  };
+  const anyStore: Store = { id: "any-store", name: "任意店", category: "汎用" };
+  const noApp: PaymentApp = { id: "pa-no-app", name: "直接決済" };
+
+  it("all-stores program は membership が無くても全店で発火する", () => {
+    const allStores: BenefitProgram = {
+      id: "prog-all",
+      name: "全店 primary",
+      scope: "all-stores",
+      cardIds: ["some-card"],
+      rate: 0.01,
+      currencyId: "v-pt",
+      bonusType: "primary",
+    };
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [allStores],
+      memberships: [], // membership 一切なし
+    });
+    expect(result.primary?.program.id).toBe("prog-all");
+  });
+
+  it("member-stores program は当該 store の membership が無ければ不発 (旧: 全店発火バグ)", () => {
+    const memberOnly: BenefitProgram = {
+      id: "prog-member",
+      name: "加盟店限定 primary",
+      scope: "member-stores",
+      cardIds: ["some-card"],
+      rate: 0.01,
+      currencyId: "v-pt",
+      bonusType: "primary",
+    };
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [memberOnly],
+      // 別 store の membership のみ (any-store には無い)
+      memberships: [{ programId: "prog-member", storeId: "other-store" }],
+    });
+    expect(result.primary).toBeNull();
+  });
+
+  it("member-stores program は加盟 store で発火する", () => {
+    const memberOnly: BenefitProgram = {
+      id: "prog-member",
+      name: "加盟店限定 primary",
+      scope: "member-stores",
+      cardIds: ["some-card"],
+      rate: 0.01,
+      currencyId: "v-pt",
+      bonusType: "primary",
+    };
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [memberOnly],
+      memberships: [{ programId: "prog-member", storeId: "any-store" }],
+    });
+    expect(result.primary?.program.id).toBe("prog-member");
   });
 });

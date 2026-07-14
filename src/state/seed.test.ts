@@ -148,6 +148,46 @@ describe("nanaco/WAON の loyalty × e-money 排他制約 (二重取り防止)",
   );
 });
 
+// v6: BenefitProgram.scope の seed 契約。
+//   - 全 program に有効な scope が付いている。
+//   - member-stores program は必ず membership を 1 件以上持つ (0 件は「非加盟店で
+//     絶対に発火しない死にデータ」= seed バグ)。import 経路では過渡状態として許容するが
+//     seed 契約としては禁止。
+//   - all-stores program は membership を持たない (validators の矛盾検出と対の関係)。
+describe("BenefitProgram.scope の seed 契約 (v6)", () => {
+  it("seed() の全 program が有効な scope を持つ", () => {
+    const { programs } = seed();
+    const bad = programs
+      .filter((p) => p.scope !== "all-stores" && p.scope !== "member-stores")
+      .map((p) => `${p.id}: scope=${JSON.stringify(p.scope)}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
+  it("member-stores program は全て membership を 1 件以上持つ", () => {
+    const { programs, memberships } = seed();
+    const withMembership = new Set(memberships.map((m) => m.programId));
+    const orphan = programs
+      .filter((p) => p.scope === "member-stores" && !withMembership.has(p.id))
+      .map((p) => p.id);
+    expect(
+      orphan,
+      `membership 0 件の member-stores program (非加盟店で発火しない死にデータ): ${orphan.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("all-stores program は membership を持たない (validators の矛盾検出と整合)", () => {
+    const { programs, memberships } = seed();
+    const withMembership = new Set(memberships.map((m) => m.programId));
+    const contradictory = programs
+      .filter((p) => p.scope === "all-stores" && withMembership.has(p.id))
+      .map((p) => p.id);
+    expect(
+      contradictory,
+      `all-stores なのに membership を持つ program: ${contradictory.join(", ")}`,
+    ).toEqual([]);
+  });
+});
+
 // v4.0.0 ①: ルーティングテーブル拡充に伴い、edges の参照整合性を CI で保証する。
 // 通貨を追加 / リネームしたとき、edge の from/to が dangling になるのを検出。
 describe("SEED_EDGES の通貨参照整合性", () => {

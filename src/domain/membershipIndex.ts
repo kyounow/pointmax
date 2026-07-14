@@ -16,28 +16,26 @@
 //   - index は memberships 配列に対する純粋関数なので、`memberships` 参照が
 //     変わらない限り再利用可能 (Zustand selector で memoize するのに適する)。
 //   - 同一 storeId に複数 membership がある場合 (異なる programId)、配列に積まれる。
+//   - v6: 「全 store 適用」判定は program.scope を見るようになったため、
+//     旧 programsWithMembership 集合は廃止した (byStore のみ保持)。
 
 import type { StoreProgramMembership } from "./types";
 
 export type MembershipIndex = {
   /** storeId → 当該 store に紐づく memberships。未登録 storeId は undefined */
   byStore: Map<string, StoreProgramMembership[]>;
-  /** membership を 1 件以上持つ programId 集合 (「全 store 適用 program」判定の補集合) */
-  programsWithMembership: Set<string>;
 };
 
 export function buildMembershipIndex(
   memberships: StoreProgramMembership[],
 ): MembershipIndex {
   const byStore = new Map<string, StoreProgramMembership[]>();
-  const programsWithMembership = new Set<string>();
   for (const m of memberships) {
-    programsWithMembership.add(m.programId);
     const arr = byStore.get(m.storeId);
     if (arr) arr.push(m);
     else byStore.set(m.storeId, [m]);
   }
-  return { byStore, programsWithMembership };
+  return { byStore };
 }
 
 /** index 経由で storeId に紐づく memberships を取得。未登録は空配列を返す。 */

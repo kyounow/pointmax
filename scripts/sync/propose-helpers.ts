@@ -132,6 +132,24 @@ export function deriveLoyaltyProgramId(
 }
 
 // ───────────────────────────────────────────────────────────────
+// v6 scope の derive-on-missing。
+// extracted program に scope が無い場合 (旧プロンプト出力 / キャッシュ)、
+// 同抽出の memberships に当該 programId が現れるか (= 特定店限定) で導出する。
+//   memberships に出現あり → "member-stores"
+//   出現なし               → "all-stores"
+// updateField 経路は作らない (scope 変更 = 構造変更なのでレビュー対象外 = 手動)。
+// ───────────────────────────────────────────────────────────────
+export function deriveProgramScope(
+  programId: string,
+  memberships: ExtractedSource["memberships"],
+): "all-stores" | "member-stores" {
+  const hasMembership = (memberships ?? []).some(
+    (m) => m.programId === programId,
+  );
+  return hasMembership ? "member-stores" : "all-stores";
+}
+
+// ───────────────────────────────────────────────────────────────
 // stores: 新規追加のみ (既存 store の更新提案は現状なし)
 // ───────────────────────────────────────────────────────────────
 
@@ -314,6 +332,8 @@ export function proposeLoyaltyRules(
         record: {
           id: `prog-${r.pointCardId}-invalid-${r.storeId}`,
           name: `${pcName.get(r.pointCardId) ?? r.pointCardId} 提示 (rate不正)`,
+          // loyalty 系 program は常に店舗紐付き = member-stores。
+          scope: "member-stores",
           pointCardId: r.pointCardId,
           rate: r.rate ?? 0,
           currencyId: r.currencyId ?? pcCurrency.get(r.pointCardId) ?? "",
@@ -352,6 +372,8 @@ export function proposeLoyaltyRules(
         record: {
           id: programId,
           name: `${pcName.get(r.pointCardId) ?? r.pointCardId} 提示 ${pct}%`,
+          // loyalty 系 program は常に店舗紐付き = member-stores。
+          scope: "member-stores",
           pointCardId: r.pointCardId,
           rate: r.rate,
           currencyId,
@@ -492,10 +514,15 @@ export function proposePrograms(
   if (!data.programs || data.programs.length === 0) return [];
   const existing = current.programs ?? [];
   const result: Proposal[] = [];
+  // v6: scope が抽出に無く derive-on-missing で補完した件数 (末尾でログ)。
+  let scopeDeriveCount = 0;
   for (const p of data.programs) {
     const { evidence, confidence } = evidenceAndConfidence(p);
     const found = existing.find((x) => x.id === p.programId);
     if (!found) {
+      // v6: scope は抽出優先、無ければ memberships 有無から導出。
+      const scope = p.scope ?? deriveProgramScope(p.programId, data.memberships);
+      if (p.scope === undefined) scopeDeriveCount++;
       // 新規 program は原則 idCollision で要レビュー (ライブ還元計算に直結)。
       // PR #60 (B 段階): campaign 専用 source の高品質 program は auto-merge
       // を許可。integrity チェック (selfReported/unsupportedDate/zeroRate) が
@@ -534,6 +561,7 @@ export function proposePrograms(
       const rec: Record<string, unknown> = {
         id: p.programId,
         name: p.name ?? p.programId,
+        scope,
         rate: p.rate,
         currencyId: p.currencyId,
       };
@@ -620,6 +648,11 @@ export function proposePrograms(
           : "periodChange",
       } satisfies UpdateFieldProposal);
     }
+  }
+  if (scopeDeriveCount > 0) {
+    console.log(
+      `🧭 scope-derive: ${scopeDeriveCount} 件 (source=${data.sourceId}) — extracted に scope 欠落、memberships 有無から補完`,
+    );
   }
   return result;
 }

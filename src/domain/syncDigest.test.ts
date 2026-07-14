@@ -86,6 +86,7 @@ describe("buildSyncGroups", () => {
         {
           id: "prog-x",
           name: "楽天Pay 5%還元",
+          scope: "all-stores",
           rate: 0.05,
           currencyId: "rakuten-pt",
         },
@@ -102,6 +103,7 @@ describe("syncDigest extras (Phase 5)", () => {
   const updated = {
     id: "prog-a",
     name: "Aキャンペーン",
+    scope: "member-stores" as const,
     rate: 0.05,
     currencyId: "d-pt",
     validTo: "2026-07-31",
@@ -109,6 +111,7 @@ describe("syncDigest extras (Phase 5)", () => {
   const removed = {
     id: "prog-old",
     name: "終了キャンペーン",
+    scope: "member-stores" as const,
     rate: 0.03,
     currencyId: "d-pt",
   };

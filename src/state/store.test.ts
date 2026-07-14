@@ -3,6 +3,7 @@
 // ここでは store action 固有の「ガード条件」「ストア state への反映」のみ検査。
 import { describe, it, expect, beforeEach } from "vitest";
 import { useStore } from "./store";
+import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
 import type {
   BenefitProgram,
   Card,
@@ -224,6 +225,7 @@ describe("store: exportJson / importJson は programs / memberships を保持す
   const program: BenefitProgram = {
     id: "prog-a4-test",
     name: "A4 テストプログラム",
+    scope: "member-stores",
     rate: 0.05,
     currencyId: "rakuten-pt",
   };
@@ -244,10 +246,12 @@ describe("store: exportJson / importJson は programs / memberships を保持す
     expect(useStore.getState().memberships).toEqual([membership]);
   });
 
-  it("programs / memberships 欄が無い旧フォーマットの import は既存値を保持する", () => {
+  it("programs / memberships 欄が無い (schemaVersion は現行) import は既存値を保持する", () => {
     useStore.setState({ programs: [program], memberships: [membership] });
+    // v6 の import ガードを通すため schemaVersion は現行値。programs/memberships 欄のみ欠落。
     const legacyJson = JSON.stringify({
       version: 1,
+      schemaVersion: PERSIST_SCHEMA_VERSION,
       cards: [],
       currencies: [],
       stores: [],
@@ -269,6 +273,7 @@ describe("store: importJson 入力バリデーション (A6/D2)", () => {
 
   it("妥当な JSON は受理される", () => {
     const good = JSON.stringify({
+      schemaVersion: PERSIST_SCHEMA_VERSION,
       cards: [{ id: "c1", name: "C", defaultRate: 0.01, defaultCurrencyId: "cur1" }],
       currencies: [{ id: "cur1", name: "C1" }],
       stores: [],
@@ -280,7 +285,9 @@ describe("store: importJson 入力バリデーション (A6/D2)", () => {
   });
 
   it("card.defaultRate が文字列の不正 JSON を拒否し State を汚染しない", () => {
+    // schemaVersion は現行値にして、rate 検証まで到達させる (schemaVersion 短絡ではなく値検証で弾く)。
     const bad = JSON.stringify({
+      schemaVersion: PERSIST_SCHEMA_VERSION,
       cards: [{ id: "c1", name: "C", defaultRate: "x", defaultCurrencyId: "cur1" }],
       currencies: [{ id: "cur1", name: "C1" }],
       stores: [],

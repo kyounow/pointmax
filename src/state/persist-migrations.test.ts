@@ -68,8 +68,8 @@ function runMigrate(
 // -----------------------------------------------------------------------
 
 describe("PERSIST_SCHEMA_VERSION", () => {
-  it("現在のスキーマバージョンは 5 である (v5.0.0 V4 未満 reset 化 + entryUrl 追加)", () => {
-    expect(PERSIST_SCHEMA_VERSION).toBe(5);
+  it("現在のスキーマバージョンは 6 である (v6.0.0 scope 必須化の破壊的刷新、v5 を reset 化)", () => {
+    expect(PERSIST_SCHEMA_VERSION).toBe(6);
   });
 });
 

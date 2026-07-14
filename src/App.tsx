@@ -22,6 +22,7 @@ import { UpdateBanner } from "./ui/UpdateBanner";
 import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
 import { SyncUpdateModal } from "./ui/SyncUpdateModal";
 import { useStore } from "./state/store";
+import { downloadJsonFile } from "./state/exportFile";
 import { recordTabView } from "./state/usageStats";
 import { requestPersistentStorage } from "./state/storagePersistence";
 import { useDialog } from "./ui/dialog/useDialog";
@@ -133,17 +134,7 @@ function App() {
   }, [drawerOpen]);
 
   const handleExport = () => {
-    const json = exportJson();
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const date = new Date().toISOString().slice(0, 10);
-    a.download = `pointmax-${date}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadJsonFile(exportJson(), "pointmax");
   };
 
   const handleImportClick = () => {

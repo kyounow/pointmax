@@ -14,7 +14,9 @@
 // v3.3 で 2 → 3 に bump (state.rules / addRule 系の物理削除)。
 // v4.0.0 で 3 → 4 に bump (preferredCurrencyIds 新設)。
 // v5.0.0 で 4 → 5 に bump (V4 未満を一括 reset 化、V5 環境への引き上げ)。
-export const PERSIST_SCHEMA_VERSION = 5;
+// v6.0.0 で 5 → 6 に bump (schema v6 破壊的刷新の起点。scope 必須化 +
+//   以降のトレイン PR で membership id / familyId / optIn / LoyaltyRule 削除)。
+export const PERSIST_SCHEMA_VERSION = 6;
 
 /**
  * schema migration の戦略型。
@@ -76,4 +78,18 @@ export const SCHEMA_MIGRATIONS: Record<number, SchemaMigrationStrategy> = {
   // entryUrl は任意フィールドの純加算で旧 v4 localStorage は無問題 → passthrough。
   // 新規 programs/memberships は SyncUpdateModal の差分検知 + UpdateBanner 経由で反映。
   4: { type: "passthrough" },
+  // v6.0.0 で schema を破壊的に刷新。BenefitProgram.scope を必須化し
+  // (membership 行数からの適用範囲推論を廃止)、以降のトレイン PR で
+  // membership id 必須化 / Card.familyId / BenefitProgram.optIn / LoyaltyRule 物理削除
+  // を積む。旧 v5 localStorage は新構造と互換性が無いため公式マスタで再初期化する。
+  // reset は本トレインで 1 回のみ (v6→7 の enabled 反転は transform で行う)。
+  5: {
+    type: "reset",
+    reason:
+      "PointMax v6 にアップデートします。還元プログラムのデータ構造を刷新しました " +
+      "(適用範囲 scope の必須化ほか)。旧バージョンの設定は新形式と互換性が無いため、" +
+      "公式マスタ (最新 SEED_VERSION) で再初期化します。" +
+      "手書き設定がなければ影響はほぼゼロです。" +
+      "念のため下の「エクスポートしてから続行」で JSON バックアップを保存できます。",
+  },
 };

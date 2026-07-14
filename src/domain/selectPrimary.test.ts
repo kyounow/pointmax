@@ -11,7 +11,14 @@ function mkMatch(
   currencyId: string,
   bonusType: "primary" | "addOn" = "primary",
 ): ProgramMatch {
-  const program: BenefitProgram = { id, name: id, rate, currencyId, bonusType };
+  const program: BenefitProgram = {
+    id,
+    name: id,
+    scope: "member-stores",
+    rate,
+    currencyId,
+    bonusType,
+  };
   return { program, effectiveRate: rate, effectiveCurrencyId: currencyId };
 }
 

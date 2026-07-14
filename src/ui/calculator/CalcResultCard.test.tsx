@@ -62,6 +62,7 @@ describe("CalcResultCard", () => {
     const capProgram: BenefitProgram = {
       id: "prog-cap",
       name: "上限付き高還元",
+      scope: "member-stores",
       rate: 0.05,
       currencyId: "rakuten-pt",
       monthlyCapAmountYen: 40000,
@@ -82,6 +83,7 @@ describe("CalcResultCard", () => {
     const program: BenefitProgram = {
       id: "prog-cap",
       name: "通常還元",
+      scope: "member-stores",
       rate: 0.05,
       currencyId: "rakuten-pt",
     };

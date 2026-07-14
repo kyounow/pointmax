@@ -19,6 +19,7 @@ import type {
   Store,
   StoreProgramMembership,
 } from "../domain/types";
+import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
 
 export type ImportData = {
   cards: Card[];
@@ -57,6 +58,13 @@ const RATE = (key: string): FieldCheck => ({
   check: isNonNegNum,
   kind: "0以上の有限数",
 });
+// enum フィールド (許容値のいずれか)。v6: BenefitProgram.scope の必須 + 値域検証に使う。
+const ENUM = (key: string, allowed: readonly string[]): FieldCheck => ({
+  key,
+  check: (v) => typeof v === "string" && allowed.includes(v),
+  kind: `${allowed.join(" / ")} のいずれか`,
+});
+const PROGRAM_SCOPES = ["all-stores", "member-stores"] as const;
 
 function checkItem(
   item: unknown,
@@ -85,9 +93,32 @@ function checkArray(
   return null;
 }
 
+// validateImportData のオプション。
+// requireSchemaVersion: ユーザー JSON import 経路 (importJson) のみ true にする。
+//   export JSON には schemaVersion が埋め込まれるため、旧バージョンのファイルを弾ける。
+//   一方 syncFromUrl が読む公式 master.json (generate-master 生成) は schemaVersion を
+//   持たないので、この経路では false のまま (seed() 由来データの検証も同様に通す)。
+export type ValidateImportOptions = {
+  requireSchemaVersion?: boolean;
+};
+
 // 外部 JSON を ImportData として検証。最初に見つかったエラーを返す。
-export function validateImportData(data: unknown): Validated<ImportData> {
+export function validateImportData(
+  data: unknown,
+  opts: ValidateImportOptions = {},
+): Validated<ImportData> {
   if (!isObject(data)) return { ok: false, error: "JSONが不正です" };
+
+  // import 経路のバージョンガード (欠落含めて現行 schema と不一致なら拒否)。
+  // master.json 経路 (requireSchemaVersion 未指定) はガードしない。
+  if (opts.requireSchemaVersion && data.schemaVersion !== PERSIST_SCHEMA_VERSION) {
+    return {
+      ok: false,
+      error:
+        `このファイルは旧バージョンの形式です (v${PERSIST_SCHEMA_VERSION} 未満)。` +
+        "現在のアプリで再エクスポートしたファイルを取り込んでください。",
+    };
+  }
 
   const errors = [
     checkArray(
@@ -120,7 +151,14 @@ export function validateImportData(data: unknown): Validated<ImportData> {
     checkArray(
       data.programs,
       "programs",
-      [STR("id"), STR("name"), RATE("rate"), STR("currencyId")],
+      // v6: scope を必須 + enum 検証 (all-stores / member-stores)。
+      [
+        STR("id"),
+        STR("name"),
+        RATE("rate"),
+        STR("currencyId"),
+        ENUM("scope", PROGRAM_SCOPES),
+      ],
       false,
     ),
     checkArray(
@@ -134,5 +172,37 @@ export function validateImportData(data: unknown): Validated<ImportData> {
   for (const err of errors) {
     if (err !== null) return { ok: false, error: err };
   }
+
+  // v6: scope 整合性のクロスチェック。
+  //   「all-stores なのに membership を持つ」program は矛盾 (全店適用 program は
+  //   membership を持ってはいけない) → import ではエラーにする。
+  //   「member-stores なのに membership 0 件」はユーザー作成の過渡状態を許容するため
+  //   ここでは弾かない (seed 契約としては seed.test.ts の assert が担保)。
+  const scopeError = checkProgramScopeConsistency(data);
+  if (scopeError !== null) return { ok: false, error: scopeError };
+
   return { ok: true, value: data as unknown as ImportData };
+}
+
+// all-stores program が membership を持っていないかを検証する。
+// programs / memberships のどちらかが無ければ検証不要 (null)。
+function checkProgramScopeConsistency(
+  data: Record<string, unknown>,
+): string | null {
+  if (!Array.isArray(data.programs) || !Array.isArray(data.memberships)) {
+    return null;
+  }
+  const allStoresIds = new Set<string>();
+  for (const p of data.programs) {
+    if (isObject(p) && p.scope === "all-stores" && isStr(p.id)) {
+      allStoresIds.add(p.id);
+    }
+  }
+  if (allStoresIds.size === 0) return null;
+  for (const m of data.memberships) {
+    if (isObject(m) && isStr(m.programId) && allStoresIds.has(m.programId)) {
+      return `program "${m.programId}" は scope=all-stores ですが membership を持っています (全店適用 program は membership 不可)`;
+    }
+  }
+  return null;
 }

@@ -205,7 +205,7 @@ export const ADDED_CARDS: Card[] = [];
 export const ADDED_PAYMENT_APPS: PaymentApp[] = [];
 
 export const ADDED_PROGRAMS: BenefitProgram[] = [
-  { id: "prog-d-pointcard-mos-burger-05", name: "dポイントカード モスバーガー 対象商品はdポイント5倍", rate: 0.05, currencyId: "d-pt", pointCardId: "d-pointcard", bonusType: "addOn", validFrom: "2026-06-05", validTo: "2026-07-05" },
+  { id: "prog-d-pointcard-mos-burger-05", scope: "member-stores", name: "dポイントカード モスバーガー 対象商品はdポイント5倍", rate: 0.05, currencyId: "d-pt", pointCardId: "d-pointcard", bonusType: "addOn", validFrom: "2026-06-05", validTo: "2026-07-05" },
 ];
 
 export const ADDED_MEMBERSHIPS: StoreProgramMembership[] = [
