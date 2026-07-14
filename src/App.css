@@ -1561,6 +1561,77 @@ details summary {
   animation: wallet-flash 2.4s ease-out;
 }
 
+/* ウォレット PR-2b2: カード起点の opt-in 特典 一次導線 (details 展開) */
+.wallet-optin {
+  margin: 0 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+.wallet-optin-summary {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  list-style-position: inside;
+}
+.wallet-optin-body {
+  padding: 4px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wallet-optin-cardoff {
+  margin: 0;
+  font-size: 12px;
+  color: var(--warn, #b45309);
+}
+.wallet-optin-program {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.wallet-optin-program:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.wallet-optin-program-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.wallet-optin-program-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+.wallet-optin-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.wallet-optin-cond {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--warn, #b45309);
+}
+
+/* ウォレット PR-2b2: たまにしか使わない追加フォームを details で下へ降格 (上級) */
+.wallet-advanced-form {
+  margin: 8px 0 12px;
+}
+.wallet-advanced-form-summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  list-style: none;
+  padding: 4px 0;
+}
+.wallet-advanced-form-summary::-webkit-details-marker {
+  display: none;
+}
+
 /* v7 暫定オンボーディング案内 (CalculatorScreen、保有カード 0 枚時) */
 .onboarding-box {
   border: 1px solid var(--border);

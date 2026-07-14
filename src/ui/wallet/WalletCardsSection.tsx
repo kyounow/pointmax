@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../../state/store";
 import { isMasterCard } from "../../state/seed";
 import { isSubstantiveCardPatch } from "../../state/userModified";
 import { CARD_FAMILIES } from "../../state/seed-data-card-families";
 import { ResponsiveTable, type ColumnDef } from "../ResponsiveTable";
-import type { Card } from "../../domain/types";
+import type { BenefitProgram, Card } from "../../domain/types";
+import { cardLabel } from "../../domain/cardLabel";
 import { useNameResolvers } from "../hooks/useNameResolvers";
 import { useDialog } from "../dialog/useDialog";
 import { buildCardGroups } from "./cardGroups";
@@ -22,23 +23,31 @@ export function WalletCardsSection({ highlightId }: Props) {
   const {
     cards,
     currencies,
+    programs,
+    birthMonth,
     addCard,
     updateCard,
     setCardEnabled,
+    setProgramEnabled,
+    setBirthMonth,
     removeCard,
     resetCardToSeed,
   } = useStore(
     useShallow((s) => ({
       cards: s.cards,
       currencies: s.currencies,
+      programs: s.programs,
+      birthMonth: s.birthMonth,
       addCard: s.addCard,
       updateCard: s.updateCard,
       setCardEnabled: s.setCardEnabled,
+      setProgramEnabled: s.setProgramEnabled,
+      setBirthMonth: s.setBirthMonth,
       removeCard: s.removeCard,
       resetCardToSeed: s.resetCardToSeed,
     })),
   );
-  const { confirm, alert } = useDialog();
+  const { confirm, alert, prompt } = useDialog();
 
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
@@ -58,6 +67,80 @@ export function WalletCardsSection({ highlightId }: Props) {
     );
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [highlightId, cards]);
+
+  // opt-in 特典 (optIn===true) を、その program の cardIds に含まれる cardId ごとに集約。
+  // カード起点の「特典 N 件」一次導線 (PR-2b2) の描画に使う。1 program が複数カードを
+  // 対象にする場合は各カードの配下に重複して現れる (カード視点では別導線)。
+  const optInProgramsByCardId = useMemo(() => {
+    const map = new Map<string, BenefitProgram[]>();
+    for (const prog of programs) {
+      if (prog.optIn !== true || !prog.cardIds) continue;
+      for (const cid of prog.cardIds) {
+        const arr = map.get(cid);
+        if (arr) arr.push(prog);
+        else map.set(cid, [prog]);
+      }
+    }
+    return map;
+  }, [programs]);
+
+  // birthdayMonthOnly 特典を持つカード id の集合。カードを ON にした瞬間の
+  // 「誕生月を設定しますか？」遅延プロンプト (PR-2b2) の発火判定に使う。
+  const birthdayCardIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const prog of programs) {
+      if (prog.birthdayMonthOnly !== true || !prog.cardIds) continue;
+      for (const cid of prog.cardIds) set.add(cid);
+    }
+    return set;
+  }, [programs]);
+
+  // 誕生月の遅延プロンプト: birthMonth 未設定のとき、その場で 1-12 を入力させる
+  // 簡素な dialog (既存 prompt を流用)。範囲外・空入力は無視 (設定画面からいつでも
+  // 変更できるため軽量に留める)。キャンセル (null) は何もしない。
+  const promptBirthMonth = async () => {
+    const res = await prompt({
+      title: "誕生月を設定しますか？",
+      message:
+        "このカードには誕生月限定の特典があります。誕生月 (1〜12) を設定すると、" +
+        "その特典が計算に反映されます。あとで設定画面からも変更できます。",
+      inputType: "number",
+      min: 1,
+      step: "1",
+      placeholder: "例: 3 (3月)",
+      okText: "設定",
+      cancelText: "あとで",
+    });
+    if (res == null) return; // キャンセル
+    const m = Number(res);
+    if (Number.isInteger(m) && m >= 1 && m <= 12) {
+      setBirthMonth(m);
+    } else if (res.trim() !== "") {
+      await alert({
+        title: "誕生月は 1〜12 で入力してください",
+        level: "error",
+      });
+    }
+  };
+
+  // カードの「使う」トグル本体。exclusive family の自動 OFF 通知 (既存) に加え、
+  // ON かつ birthdayMonthOnly 特典を持つカードで birthMonth 未設定なら誕生月プロンプトを続けて出す。
+  const handleToggleEnabled = async (cardId: string, checked: boolean) => {
+    // setCardEnabled は exclusive family なら兄弟カードを自動 OFF にし、その名前配列を返す。
+    // 空でなければ「無言で切り替えない」ため通知する。
+    const disabled = setCardEnabled(cardId, checked);
+    if (disabled.length > 0) {
+      await alert({
+        title: `${disabled.join("、")} を OFF にしました`,
+        message:
+          "同シリーズ（グレード違い）のカードは同時に1枚のみ有効化できます。",
+        level: "info",
+      });
+    }
+    if (checked && birthMonth == null && birthdayCardIds.has(cardId)) {
+      await promptBirthMonth();
+    }
+  };
 
   const columns: ColumnDef<Card>[] = [
     {
@@ -138,19 +221,7 @@ export function WalletCardsSection({ highlightId }: Props) {
             <input
               type="checkbox"
               checked={on}
-              onChange={(e) => {
-                // setCardEnabled は exclusive family なら兄弟カードを自動 OFF にし、
-                // その名前配列を返す。空でなければ「無言で切り替えない」ため通知する。
-                const disabled = setCardEnabled(c.id, e.target.checked);
-                if (disabled.length > 0) {
-                  void alert({
-                    title: `${disabled.join("、")} を OFF にしました`,
-                    message:
-                      "同シリーズ（グレード違い）のカードは同時に1枚のみ有効化できます。",
-                    level: "info",
-                  });
-                }
-              }}
+              onChange={(e) => void handleToggleEnabled(c.id, e.target.checked)}
             />
             <span>{on ? "使う" : "OFF"}</span>
           </label>
@@ -306,20 +377,100 @@ export function WalletCardsSection({ highlightId }: Props) {
                   highlightId={highlightId}
                   testId={`cards-${block.familyId}`}
                 />
+                {block.cards.map((c) => (
+                  <CardOptInPrograms
+                    key={c.id}
+                    card={c}
+                    programs={optInProgramsByCardId.get(c.id) ?? []}
+                    cardEnabled={c.enabled === true}
+                    onToggle={setProgramEnabled}
+                  />
+                ))}
               </div>
             );
           }
           return (
-            <ResponsiveTable
-              key={`singles-${i}`}
-              rows={block.cards}
-              {...tableProps}
-              highlightId={highlightId}
-              testId="cards-singles"
-            />
+            <div key={`singles-${i}`}>
+              <ResponsiveTable
+                rows={block.cards}
+                {...tableProps}
+                highlightId={highlightId}
+                testId="cards-singles"
+              />
+              {block.cards.map((c) => (
+                <CardOptInPrograms
+                  key={c.id}
+                  card={c}
+                  programs={optInProgramsByCardId.get(c.id) ?? []}
+                  cardEnabled={c.enabled === true}
+                  onToggle={setProgramEnabled}
+                />
+              ))}
+            </div>
           );
         })
       )}
     </div>
+  );
+}
+
+// カード起点の opt-in 特典 一次導線 (PR-2b2)。そのカードを cardIds に含む optIn 特典が
+// あるとき「◯◯ の特典 N 件」を details で展開し、各特典の名称 / 説明 / 適用条件 +
+// 「使う」トグル (store.setProgramEnabled) を出す。ProgramsScreen の暫定トグル (PR-1d)
+// と同じ state を触るため挙動は一貫する。カード自体が OFF のときは注記を添える。
+// (非 export のローカルコンポーネント: fast-refresh の only-export-components を満たす)
+function CardOptInPrograms({
+  card,
+  programs,
+  cardEnabled,
+  onToggle,
+}: {
+  card: Card;
+  programs: BenefitProgram[];
+  cardEnabled: boolean;
+  onToggle: (programId: string, enabled: boolean) => void;
+}) {
+  if (programs.length === 0) return null;
+  return (
+    <details className="wallet-optin" data-testid={`optin-${card.id}`}>
+      <summary className="wallet-optin-summary">
+        {cardLabel(card)} の特典 {programs.length} 件
+      </summary>
+      <div className="wallet-optin-body">
+        {!cardEnabled && (
+          <p className="wallet-optin-cardoff">
+            ⚠
+            このカード自体が「使う」OFF です。特典を ON にしても、カードを ON
+            にするまで計算には反映されません。
+          </p>
+        )}
+        {programs.map((prog) => {
+          const on = prog.enabled === true;
+          return (
+            <div key={prog.id} className="wallet-optin-program">
+              <div className="wallet-optin-program-head">
+                <span className="wallet-optin-program-name">{prog.name}</span>
+                <label
+                  className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={(e) => onToggle(prog.id, e.target.checked)}
+                  />
+                  <span>{on ? "使う" : "OFF"}</span>
+                </label>
+              </div>
+              {prog.description && (
+                <p className="wallet-optin-desc">{prog.description}</p>
+              )}
+              {prog.conditions && (
+                <p className="wallet-optin-cond">⚠ 条件: {prog.conditions}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </details>
   );
 }

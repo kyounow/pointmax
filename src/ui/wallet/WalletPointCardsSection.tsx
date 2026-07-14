@@ -328,64 +328,75 @@ export function WalletPointCardsSection({ highlightId }: Props) {
 
       <h3 style={{ marginTop: 24 }}>店舗 × ポイントカード 提示還元ルール</h3>
       <p className="hint">
-        例: ローソンでdポイントカード提示 → 200円ごとに1ptなど。クレカ決済とは別途加算されます。
+        店頭提示で貯まる自作の還元ルール一覧。クレカ決済とは別途加算されます。追加は下の
+        「カスタム還元ルールを追加 (上級)」から。
       </p>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!lrPointCard || !lrStore) return;
-          // 店舗 × ポイントカード提示還元を program + membership に変換して atomic 追加。
-          // currencyId は addUserLoyaltyProgram が pointCard.currencyId で補完する。
-          addUserLoyaltyProgram({
-            storeId: lrStore,
-            pointCardId: lrPointCard,
-            rate: Number(lrRate),
-            notes: lrNotes.trim() || undefined,
-          });
-          setLrPointCard("");
-          setLrStore("");
-          setLrRate("0.005");
-          setLrNotes("");
-        }}
-      >
-        <select value={lrPointCard} onChange={(e) => setLrPointCard(e.target.value)}>
-          <option value="">ポイントカード</option>
-          {pointCards.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <select value={lrStore} onChange={(e) => setLrStore(e.target.value)}>
-          <option value="">店舗</option>
-          {storesByCategory.map((g) => (
-            <optgroup key={g.key} label={g.key}>
-              {g.items.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.001"
-          min="0"
-          placeholder="0.005 (=0.5%)"
-          value={lrRate}
-          onChange={(e) => setLrRate(e.target.value)}
-        />
-        <input
-          placeholder="メモ (任意)"
-          value={lrNotes}
-          onChange={(e) => setLrNotes(e.target.value)}
-        />
-        <button type="submit">追加</button>
-      </form>
+      {/* PR-2b2: 日常操作 (トグル/優先順位/一覧確認) を上に、たまにしか使わない追加フォームを
+          details で下へ降格。既定は閉じる。一覧 (自作ルールの管理表) は details の外で常に表示。 */}
+      <details className="wallet-advanced-form">
+        <summary className="wallet-advanced-form-summary">
+          ▸ カスタム還元ルールを追加 (上級)
+        </summary>
+        <p className="hint">
+          例: ローソンでdポイントカード提示 → 200円ごとに1ptなど。
+        </p>
+        <form
+          className="row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!lrPointCard || !lrStore) return;
+            // 店舗 × ポイントカード提示還元を program + membership に変換して atomic 追加。
+            // currencyId は addUserLoyaltyProgram が pointCard.currencyId で補完する。
+            addUserLoyaltyProgram({
+              storeId: lrStore,
+              pointCardId: lrPointCard,
+              rate: Number(lrRate),
+              notes: lrNotes.trim() || undefined,
+            });
+            setLrPointCard("");
+            setLrStore("");
+            setLrRate("0.005");
+            setLrNotes("");
+          }}
+        >
+          <select value={lrPointCard} onChange={(e) => setLrPointCard(e.target.value)}>
+            <option value="">ポイントカード</option>
+            {pointCards.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          <select value={lrStore} onChange={(e) => setLrStore(e.target.value)}>
+            <option value="">店舗</option>
+            {storesByCategory.map((g) => (
+              <optgroup key={g.key} label={g.key}>
+                {g.items.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.001"
+            min="0"
+            placeholder="0.005 (=0.5%)"
+            value={lrRate}
+            onChange={(e) => setLrRate(e.target.value)}
+          />
+          <input
+            placeholder="メモ (任意)"
+            value={lrNotes}
+            onChange={(e) => setLrNotes(e.target.value)}
+          />
+          <button type="submit">追加</button>
+        </form>
+      </details>
 
       <ResponsiveTable
         rows={userLoyaltyRows}
