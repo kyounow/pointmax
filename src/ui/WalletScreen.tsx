@@ -26,17 +26,19 @@ export function WalletScreen() {
 
   return (
     <section>
+      {/* UX-8(1) / PR-2e: role=tablist/tab は tabpanel を伴わない orphan ARIA だった
+          ため撤去。「選択中」セクションは aria-current で表現する。 */}
       <div
         className="campaign-tabs wallet-segments"
         style={{ marginBottom: 16 }}
-        role="tablist"
+        role="group"
         aria-label="ウォレットの種類"
       >
         {SEGMENTS.map(({ id, label }) => (
           <button
             key={id}
-            role="tab"
-            aria-selected={section === id}
+            type="button"
+            aria-current={section === id ? "true" : undefined}
             className={section === id ? "active" : ""}
             onClick={() => navigate(walletSectionHash(id))}
           >

@@ -158,7 +158,8 @@ describe("WalletScreen", () => {
     // 初期はクレカ、ポイントカードセクションの見出しは無い
     expect(screen.queryByText("保有しているポイントカード")).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "ポイントカード" }));
+    // PR-2e: セグメントは role=tab を撤去し通常 button + aria-current に変更。
+    fireEvent.click(screen.getByRole("button", { name: "ポイントカード" }));
 
     // hash が更新される (navigate 同期)
     expect(window.location.hash).toContain("wallet/point-cards");
