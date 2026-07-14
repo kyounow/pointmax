@@ -13,6 +13,7 @@ export const SEED_STORES: Store[] = [
   { id: "rakuten-ichiba", name: "楽天市場", category: "ネット通販" },
   { id: "amazon", name: "Amazon", category: "ネット通販" },
   { id: "mercari", name: "メルカリ", category: "ネット通販" },
+  { id: "yahoo-shopping", name: "Yahoo!ショッピング", category: "ネット通販" },
   // コンビニ
   {
     id: "conv-7eleven",
@@ -99,6 +100,7 @@ export const SEED_STORES: Store[] = [
   { id: "tsuruha", name: "ツルハドラッグ", category: "ドラッグストア" },
   // 百貨店・家電量販店・ドラッグストア (主にdポイント加盟)
   { id: "takashimaya", name: "高島屋", category: "百貨店" },
+  { id: "marui", name: "マルイ（モディ・マルイウェブチャネル含む）", category: "百貨店" },
   { id: "nojima", name: "ノジマ", category: "家電量販店" },
   { id: "bic-camera", name: "ビックカメラ", category: "家電量販店" },
   { id: "cocokara", name: "ココカラファイン", category: "ドラッグストア" },

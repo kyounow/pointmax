@@ -96,7 +96,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**344 ケース / 22 ファイル**） |
+| テスト | Vitest（**747 ケース / 38 ファイル**） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
 
@@ -150,13 +150,13 @@ src/state/
 | エンティティ | 件数 |
 |---|---|
 | 通貨 (currencies) | 22 |
-| カード (cards) | 19 |
+| カード (cards) | 24 |
 | ポイントカード (pointCards) | 7 |
 | 決済アプリ (paymentApps) | 11 |
-| 店舗 (stores) | 265（手キュレート + 自動同期分） |
-| BenefitProgram (programs) | 41 |
-| StoreProgramMembership (memberships) | 317 |
-| 交換エッジ (edges) | 54 |
+| 店舗 (stores) | 267（手キュレート + 自動同期分） |
+| BenefitProgram (programs) | 46 |
+| StoreProgramMembership (memberships) | 367 |
+| 交換エッジ (edges) | 60 |
 
 ### 自動同期パイプライン
 
@@ -182,7 +182,7 @@ scripts/sync/
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (344 ケース)
+npm run test         # Vitest (747 ケース)
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
 npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出
@@ -253,7 +253,7 @@ PointMax は 2 つの version を独立管理:
 
 | 種類 | 用途 | 現在値 |
 |---|---|---|
-| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **42** |
+| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **43** |
 | `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **5** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
@@ -294,7 +294,8 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **v6.2.0** — lint エラーを全解消し、CI ゲートを `lint:hooks` (rules-of-hooks のみ) から full `npm run lint` に昇格。`set-state-in-effect`/`immutability` は React 公認の「prop 変化時に state 調整」(render-guard) パターンで解消 (Calculator 同率展開・Dialog・EdgeDetailPanel)、`only-export-components` は React Flow の `nodeTypes`/`edgeTypes` と `useDialog`/`DialogContext` を別ファイルへ分離。暫定 `eslint.hooks.config.js` は撤去。挙動・SEED_VERSION 41・PERSIST_SCHEMA 5 据え置き
 - **v6.3.0** — キャンペーン収集/取込/期間ライフサイクル大幅強化 (PR #84-#92 の 9 本)。収集: 索引ハブの 2 段階クロール (`crawl: index`、実在リンク照合で捏造 URL 遮断) + 手動登録フォーム復活。取込: `sync:approve` (review 承認 1 コマンド化)・`PROGRAM_OVERRIDES` (rate/期間変更の実書き込み)・`REMOVED_PROGRAM_IDS` (期限切れ削除 tombstone)。期間: 日付判定のローカルタイム統一・`useToday` (日付跨ぎ自動更新)・終了カウントダウン・`recurringWeekdays` (曜日限定)・公式 program の更新/削除が既存ユーザーの端末にも伝播 (未編集分のみ、編集済みは保護)。tests 565→687。SEED_VERSION 41 / PERSIST_SCHEMA 5 据え置き
 - **v6.4.0** — JALカードSuica の JRE POINT → JAL マイル交換レート修正。CLUB-Aゴールド (`jal-suica`) を 1500pt→1000マイル (0.6667) に訂正 (従来 0.5 は普通カード相当の誤り)、普通カード版を新カード `jal-suica-normal` (enabled:false) + edge `jre-to-jal-normal` (1500pt→750マイル) として追加。両カード保有時はゴールドが優先。既存ユーザーには migration v42 で rate 修正を反映。SEED_VERSION 41→42 / PERSIST_SCHEMA 5 据え置き
-- **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版)。`ExtractorKind` は計 7 種類
+- **v6.5.0** — エポスカードを 3 グレード体制に拡張 (`epos-gold` / `epos-platinum` 追加、いずれも enabled:false)。基本還元は全グレード 0.5% で共通とし、グレード差は program で表現: マルイ・モディ 2倍 (G/P 限定 1.0%)、選べるポイントアップ 2倍 (G/P 限定、**2025-04 改定後の倍率** — 旧 3倍への退行防止テスト付き、マルイ登録時は override 1.5%、モバイルSuicaチャージ含む実在 store 11 件)。ポイントアップサイト**たまるマーケット**を J-POINT パートナー同型でモデル化 (`prog-epos-tamaru-{2,3,4}x`、楽天市場/Yahoo!ショッピング/ユニクロ/じゃらん/無印良品)。エポス→dポイント等価交換 edge 追加 (Ponta 1:1 は au 回線契約者限定のため意図的に見送り、ANA 優遇 0.6 は 2026-03 終了済み)。sync に新 extractor `epos-tamaru` + キャンペーンソース `epos-news-campaigns` を enabled:false でステージング。SEED_VERSION 42→43 / PERSIST_SCHEMA 5 据え置き
+- **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
 sync インフラ修正系の PR (#19-#26、#33-#35、#37、#39 等) は tag なしで運用。

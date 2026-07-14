@@ -224,8 +224,19 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "epos",
     toCurrencyId: "ana-mile",
     rate: 0.5,
-    notes: "1,000pt = 500マイル",
+    notes:
+      "1,000pt = 500マイル。ゴールド/プラチナの優遇 (1pt=0.6マイル) は" +
+      "2026-03-31で終了済み — 復活させない",
   },
+  {
+    id: "epos-to-d",
+    fromCurrencyId: "epos",
+    toCurrencyId: "d-pt",
+    rate: 1,
+    notes: "1pt = 1dポイント (1,000pt以上500pt単位、交換約1〜2か月)",
+  },
+  // エポス→Ponta 1:1 は au/UQ/povo1.0 回線契約者限定のため意図的に未登録
+  // (ライフスタイル条件)。マルイ商品券への交換は 2025-09-30 で終了済み。
 
   // AMEXメンバーシップ・リワード (AMEXプロパーカードで貯まる)
   {

@@ -20,6 +20,7 @@ extractorVersions:
   campaign: v3.3  # 2026-06-25: confidence 校正 (逐語根拠=explicitness 1.0) + auto 閾値 0.95→0.90
   campaign-index: v1.0  # crawl: index の 1 段目 (子 URL 列挙専用、ExtractedSource は出力しない)
   card: v1.1
+  epos-tamaru: v1.0  # 2026-07-15 新設
   jal-tokuyaku: v1.0
   jcb-jpoint: v1.1  # 2026-07-04: #103 対応、店舗特定不能項目の「一般店舗」受け皿禁止を明記
   ongoing-program: v1.1  # 2026-06-10 修正: prompt 本文は PR #37 以降 v1.1 (旧記載 v1.0 は不整合)
@@ -508,3 +509,53 @@ sources:
       有効化手順: 手動 fetch で LP の内容 (店舗別ポイントアップが載っているか) を
       確認 → 常設なら ongoing-program のまま、期間限定一覧なら extractor を
       campaign + crawl: index に切替えて enabled:true 化。
+
+  - id: epos-tamaru-market
+    label: たまるマーケット (EPOS ポイントアップサイト、公式)
+    url: https://tamaru.eposcard.co.jp/
+    extractor: epos-tamaru
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: true
+    notes: |
+      ★ 2026-07-15 追加 (EPOS 3グレード対応)。
+      トップページは注目ショップ中心のため網羅には 50音別索引
+      https://tamaru.eposcard.co.jp/shop_list/indexed/{a|ka|sa|ta|na|ha|ma|ya|ra|wa}/
+      が使える (現状 crawl:index は campaign extractor 限定の契約のため単一 URL
+      fetch で開始)。本体サイトは Shift_JIS だが encoding 自動検出 (#34) 対応済み。
+      倍率は総倍率 (rate=0.5%×N)、ゴールド/プラチナ個別上乗せは conditions 文言のみ。
+      ★ 手動 fetch 検証済み (2026-07-15) → enabled:true 化 (jcb-jpoint-partners と同格):
+      attempt 1 が Gemini 503 / 2 が nonJson → 3 の pre-fetch fallback で success。
+      programs 16 (2〜10倍+、rate=0.005×N 全一致) / memberships 49 / stores 54。
+      手シード 5 店 (楽天市場2/Yahoo!2/ユニクロ2/じゃらん3/無印4倍) と倍率完全一致、
+      定額付与型 (ZOZOTOWN) 除外・G/P 個別上乗せ (Adidas 9倍) の conditions 記録も
+      プロンプト指示どおり動作。schema 違反 memberships 14 件は graceful 除去 (許容)。
+      新規 store は storeAdditionsDisabled / chain-promote の既存ガードに従う。
+
+  - id: epos-news-campaigns
+    label: エポスカード お知らせ/キャンペーン (公式)
+    url: https://www.eposcard.co.jp/articles/
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: false
+    crawl:
+      mode: index
+      maxChildren: 5
+    notes: |
+      ★ 2026-07-15 追加 (enabled:false ステージング)。エポスは公開キャンペーン索引が
+      存在しない (campaign/index.html は404、個別 /campaign/{数字ID}.html に分散、
+      エポスNet 内一覧は要ログイン) ため、お知らせアーカイブを暫定ハブとして
+      crawl:index で子記事から抽出する merpay-news-campaigns 同型構成。
+      ★ 事前検証 (2026-07-15 probe): /articles/archive/index.html は 404、
+      /articles/ が 200 でお知らせ/キャンペーン記事の索引 (子記事 /articles/news/*.html
+      等) だったため URL を /articles/ に採用。cardIds 候補
+      ["epos-card","epos-gold","epos-platinum"]、還元通貨 epos。優待 (割引) 系サイト
+      「エポトクプラザ」はポイント還元でないため対象外。有効化手順: 手動 fetch で
+      子ページ選択と抽出品質を確認 → enabled:true 化。

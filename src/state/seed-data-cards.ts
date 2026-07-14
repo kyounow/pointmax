@@ -150,9 +150,37 @@ export const SEED_CARDS: Card[] = [
   {
     // エポスカード (年会費永年無料)、200円=1エポスポイント = 0.5%
     // 丸井での 10% off 等の優遇は割引なので rate 計算では扱わない
+    // 3グレード体制 (一般 / ゴールド / プラチナ) の一般。グレード差はマルイ2倍・
+    // 選べるポイントアップ等の program で表現。ポイントアップサイト「たまるマーケット」
+    // 経由の還元 (2/3/4倍) は 3 グレード共通で prog-epos-tamaru-* にモデル化。
     id: "epos-card",
     name: "エポスカード",
     grade: "一般",
+    defaultRate: 0.005,
+    defaultCurrencyId: "epos",
+    enabled: false,
+  },
+  {
+    // エポスゴールド。年会費5,000円 (年間50万円利用 or インビテーション or
+    // ファミリーゴールド経由で永年無料)。基本還元は一般と同じ 200円=1pt=0.5%。
+    // グレード差は program で表現 (prog-epos-gp-marui / prog-epos-gp-selectable-pointup)。
+    // 年間利用ボーナス (50万→2,500pt / 100万→10,000pt 上限) は利用額連動のため
+    // rate 未反映 (JCB/SMBC ゴールドと同方針)。
+    id: "epos-gold",
+    name: "エポスゴールド",
+    grade: "ゴールド",
+    defaultRate: 0.005,
+    defaultCurrencyId: "epos",
+    enabled: false,
+  },
+  {
+    // エポスプラチナ。年会費30,000円 (インビ or 年間100万円利用で20,000円)。基本 0.5%。
+    // 年間ボーナス (100万→20,000pt 〜 1,500万→100,000pt、50万未満0.3%/50-100万3,000pt
+    // は2025-04新設) は利用額連動のため rate 未反映。
+    // 誕生月ポイント2倍はユーザー固有月のため未モデル化。
+    id: "epos-platinum",
+    name: "エポスプラチナ",
+    grade: "プラチナ",
     defaultRate: 0.005,
     defaultCurrencyId: "epos",
     enabled: false,
