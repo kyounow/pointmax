@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import { bestPath } from "./bestPath";
 import { isRuleActiveAt } from "./ruleActiveAt";
+import { isProgramPreferenceActive } from "./programEvaluator";
 import { membersFor, type MembershipIndex } from "./membershipIndex";
 import type { PathCache } from "./pathCache";
 
@@ -71,6 +72,8 @@ export function bestLoyalties(
   membershipIndex?: MembershipIndex,
   /** optional: 事前構築済 path cache (rankCards から再利用、bestPath 重複呼出削減) */
   pathCache?: PathCache,
+  /** optional: ユーザーの誕生月 (1-12)。birthdayMonthOnly program の発火判定に使う (PR-1d)。 */
+  userBirthMonth?: number,
 ): LoyaltyResult[] {
   if (maxStacks <= 0) return [];
 
@@ -95,6 +98,8 @@ export function bestLoyalties(
 
     for (const p of programs) {
       if (!p.pointCardId) continue;
+      // R1 (PR-1d): per-user preference / 誕生月ゲート (通常 program 評価と同一判定)。
+      if (!isProgramPreferenceActive(p, now, userBirthMonth)) continue;
       if (!isRuleActiveAt(p, now)) continue;
       if (!ownedById.has(p.pointCardId)) continue;
 

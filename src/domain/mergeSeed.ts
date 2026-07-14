@@ -91,10 +91,55 @@ function stableStringify(v: unknown): string {
     .join(",")}}`;
 }
 
+// R1 (PR-1d): program の per-user preference キー。seed/master には出荷されず
+// (generate-master で strip)、ローカル (ユーザーの opt-in ON/OFF) が所有する。
+// 公式更新の差分比較・伝播からは除外し、置換時は carry-over する。
+const PROGRAM_PREFERENCE_KEYS = ["enabled"] as const satisfies ReadonlyArray<
+  keyof BenefitProgram
+>;
+
+// preference キー (enabled) を除いた正規形で stableStringify する。
+// enabled はローカル所有キーなので「公式差分あり」の判定に含めない
+// (ユーザーが opt-in を ON にしただけで公式更新と誤検知しないため)。
+// userModifiedAt は propagate 前段で早期 return 済のためここでは考慮不要だが、
+// 念のため正規形からも外す (公式は出荷しないキー)。
+function stableStringifyProgramContent(p: BenefitProgram): string {
+  const rec = { ...p } as Record<string, unknown>;
+  for (const k of PROGRAM_PREFERENCE_KEYS) delete rec[k];
+  delete rec.userModifiedAt;
+  return stableStringify(rec);
+}
+
+// 公式更新 (incoming) を採用する際、local の preference キー (enabled) を carry-over
+// した正規形を返す。incoming が当該キーを **持たない** (= seed/master の R1 出荷) 場合のみ
+// local の値を引き継ぐ。incoming が明示する場合 (ユーザー export 等) はそちらを尊重。
+// preferenceMerge.preservePreferences (cards 用) の program 版で、意味は同一。
+function withProgramPreferencesPreserved(
+  local: BenefitProgram,
+  incoming: BenefitProgram,
+): BenefitProgram {
+  const localRec = local as Record<string, unknown>;
+  const incomingRec = incoming as Record<string, unknown>;
+  let changed = false;
+  const merged: Record<string, unknown> = { ...incomingRec };
+  for (const k of PROGRAM_PREFERENCE_KEYS) {
+    if (!(k in incomingRec) && localRec[k] !== undefined) {
+      merged[k] = localRec[k];
+      changed = true;
+    }
+  }
+  return (changed ? merged : incoming) as BenefitProgram;
+}
+
 // 公式 program の内容更新をローカルコピーに伝播する。
 // 対象: seed に同 id が存在 + ローカルが未編集 (userModifiedAt なし) + 内容差分あり。
 // ユーザー編集済み (userModifiedAt あり) は保護 (「公式に戻す」で復元可能な既存規約)。
 // 変更が無ければ入力配列の参照をそのまま返す (no-op 時の memo 維持)。
+//
+// R1 (PR-1d): 内容差分は preference キー (enabled) を除いた正規形で比較し、公式更新を
+// 採用する時は local の enabled を carry-over する。これにより「ユーザーが ON にした
+// opt-in program に公式が rate 改定を出す」→ 更新は届くが enabled は維持される。
+// 逆に「enabled だけが違う」ケースは公式差分ゼロと判定され誤って updated 扱いしない。
 function propagateProgramUpdates(
   merged: BenefitProgram[],
   seedPrograms: BenefitProgram[],
@@ -106,9 +151,11 @@ function propagateProgramUpdates(
     if (p.userModifiedAt !== undefined) return p;
     const official = seedById.get(p.id);
     if (official === undefined) return p;
-    if (stableStringify(p) === stableStringify(official)) return p;
+    if (stableStringifyProgramContent(p) === stableStringifyProgramContent(official))
+      return p;
+    // 公式差分あり: 通知リストには公式値を積み、実体は local の enabled を carry-over。
     updated.push(official);
-    return official;
+    return withProgramPreferencesPreserved(p, official);
   });
   if (updated.length === 0) return { programs: merged, updated };
   return { programs: next, updated };

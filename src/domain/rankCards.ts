@@ -68,6 +68,12 @@ export type RankInput = {
    * 値を渡すことで日付跨ぎの再計算も担保する。
    */
   now?: Date;
+  /**
+   * ユーザーの誕生月 (1-12、PR-1d)。birthdayMonthOnly=true の program が
+   * 「今月 (now の月) === userBirthMonth」の時のみ発火する判定に使う。
+   * 未設定なら birthdayMonthOnly program は常に不発。store.birthMonth から渡す。
+   */
+  userBirthMonth?: number;
 };
 
 // 異種通貨 addOn 分離表示用のエントリ (v5.1.3 audit-fix C)。
@@ -153,6 +159,7 @@ export function rankCards(
     programs = [],
     memberships = [],
     now,
+    userBirthMonth,
   } = input;
   // 単一の評価時刻。MAIN / FULL 両スコープ + loyalty + 全 evaluatePrograms で共有
   const evalNow = now ?? new Date();
@@ -198,6 +205,7 @@ export function rankCards(
       memberships,
       membershipIndex,
       pathCache,
+      userBirthMonth,
     );
     const loyaltyTotal = loyalties.reduce(
       (sum, r) => sum + (r.reachable ? r.finalAmount : 0),
@@ -217,6 +225,7 @@ export function rankCards(
             memberships,
             membershipIndex,
             now: evalNow,
+            userBirthMonth,
           })
         : null;
 
@@ -319,6 +328,7 @@ export function rankCards(
         memberships,
         membershipIndex,
         now: evalNow,
+        userBirthMonth,
       });
       // primary は target 通貨への path 込みで再選択 (監査残 B 対応)
       const primary = selectPrimaryForTarget(
@@ -390,6 +400,7 @@ export function rankCards(
         memberships,
         membershipIndex,
         now: evalNow,
+        userBirthMonth,
       });
 
       // primary は target 通貨への path 込みで再選択 (監査残 B 対応)。

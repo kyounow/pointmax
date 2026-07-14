@@ -205,6 +205,81 @@ describe("mergeSeed — 公式 program の内容更新伝播 (Phase 5)", () => {
   });
 });
 
+// ─── PR-1d: opt-in の enabled (preference) を更新伝播で保護 ───
+describe("mergeSeed — program preference (enabled) の保護 (PR-1d)", () => {
+  it("(a) ユーザーが ON にした opt-in program に公式が rate 改定 → 更新は届き enabled は維持", () => {
+    // local: opt-in を ON (enabled:true) + 旧 rate。seed(公式): enabled 出荷せず + 新 rate。
+    const local = prog("prog-optin", {
+      optIn: true,
+      enabled: true,
+      rate: 0.01,
+      validFrom: undefined,
+      validTo: undefined,
+    });
+    const official = prog("prog-optin", {
+      optIn: true,
+      rate: 0.02, // rate 改定
+      validFrom: undefined,
+      validTo: undefined,
+    });
+    const result = mergeSeed(
+      { ...empty, programs: [local] },
+      { ...empty, programs: [official] },
+    );
+    const merged = result.programs?.find((p) => p.id === "prog-optin");
+    expect(merged?.rate).toBe(0.02); // 公式更新が届く
+    expect(merged?.enabled).toBe(true); // ユーザーの ON は維持 (carry-over)
+    expect(result.updatedPrograms).toHaveLength(1);
+  });
+
+  it("(b) enabled だけが違う (公式内容は同一) → 誤って更新扱いしない + enabled 維持", () => {
+    const local = prog("prog-optin", {
+      optIn: true,
+      enabled: true, // ユーザー ON
+      rate: 0.01,
+      validFrom: undefined,
+      validTo: undefined,
+    });
+    const official = prog("prog-optin", {
+      optIn: true, // enabled は出荷しない、rate も同一
+      rate: 0.01,
+      validFrom: undefined,
+      validTo: undefined,
+    });
+    const result = mergeSeed(
+      { ...empty, programs: [local] },
+      { ...empty, programs: [official] },
+    );
+    // preference キーを除いた内容は同一 → updated に載らない
+    expect(result.updatedPrograms).toHaveLength(0);
+    const merged = result.programs?.find((p) => p.id === "prog-optin");
+    expect(merged?.enabled).toBe(true); // ON 維持
+  });
+
+  it("enabled:false (明示 OFF) も rate 改定後に維持される", () => {
+    const local = prog("prog-optin", {
+      optIn: true,
+      enabled: false,
+      rate: 0.01,
+      validFrom: undefined,
+      validTo: undefined,
+    });
+    const official = prog("prog-optin", {
+      optIn: true,
+      rate: 0.03,
+      validFrom: undefined,
+      validTo: undefined,
+    });
+    const result = mergeSeed(
+      { ...empty, programs: [local] },
+      { ...empty, programs: [official] },
+    );
+    const merged = result.programs?.find((p) => p.id === "prog-optin");
+    expect(merged?.rate).toBe(0.03);
+    expect(merged?.enabled).toBe(false);
+  });
+});
+
 describe("mergeSeed — tombstone 削除 (Phase 5)", () => {
   it("removedProgramIds の program と memberships が cascade 除去される", () => {
     const current = {

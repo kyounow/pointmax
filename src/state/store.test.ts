@@ -1,7 +1,7 @@
 // store.ts の action の薄い integration テスト。
 // pure helper (userModified.ts / seed.ts のルックアップ) は別ファイルで個別テスト済み。
 // ここでは store action 固有の「ガード条件」「ストア state への反映」のみ検査。
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { useStore } from "./store";
 import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
 import type {
@@ -461,5 +461,171 @@ describe("store: importJson 入力バリデーション (A6/D2)", () => {
     const res = useStore.getState().importJson(bad);
     expect(res.ok).toBe(false);
     expect(useStore.getState().cards).toHaveLength(0); // set() に到達しない
+  });
+});
+
+// ─── v6 PR-1d: program の opt-in preference (enabled) + 誕生月 ───
+
+describe("store: setProgramEnabled (v6 PR-1d)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  const optInProgram: BenefitProgram = {
+    id: "prog-optin",
+    name: "opt-in 特典",
+    scope: "all-stores",
+    rate: 0.01,
+    currencyId: "v-pt",
+    optIn: true,
+  };
+
+  it("enabled:true を書き込む (opt-in の有効化)。userModifiedAt はスタンプしない", () => {
+    useStore.setState({ programs: [optInProgram] });
+    useStore.getState().setProgramEnabled("prog-optin", true);
+    const p = useStore.getState().programs[0];
+    expect(p.enabled).toBe(true);
+    expect(p.userModifiedAt).toBeUndefined(); // preference なので stamp なし
+  });
+
+  it("enabled:false を書き込む (明示 OFF)", () => {
+    useStore.setState({ programs: [{ ...optInProgram, enabled: true }] });
+    useStore.getState().setProgramEnabled("prog-optin", false);
+    expect(useStore.getState().programs[0].enabled).toBe(false);
+  });
+
+  it("存在しない programId は no-op", () => {
+    useStore.setState({ programs: [optInProgram] });
+    expect(() =>
+      useStore.getState().setProgramEnabled("nope", true),
+    ).not.toThrow();
+    expect(useStore.getState().programs[0].enabled).toBeUndefined();
+  });
+});
+
+describe("store: setBirthMonth (v6 PR-1d)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("1-12 の値を設定できる", () => {
+    useStore.getState().setBirthMonth(7);
+    expect(useStore.getState().birthMonth).toBe(7);
+  });
+
+  it("undefined でクリアできる", () => {
+    useStore.setState({ birthMonth: 5 });
+    useStore.getState().setBirthMonth(undefined);
+    expect(useStore.getState().birthMonth).toBeUndefined();
+  });
+
+  it("範囲外 (0 / 13 / 非整数) は無視する", () => {
+    useStore.setState({ birthMonth: 3 });
+    useStore.getState().setBirthMonth(0);
+    expect(useStore.getState().birthMonth).toBe(3);
+    useStore.getState().setBirthMonth(13);
+    expect(useStore.getState().birthMonth).toBe(3);
+    useStore.getState().setBirthMonth(7.5);
+    expect(useStore.getState().birthMonth).toBe(3);
+  });
+});
+
+describe("store: importJson の program enabled carry-over (v6 PR-1d)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  const optInProgram: BenefitProgram = {
+    id: "prog-optin",
+    name: "opt-in 特典",
+    scope: "all-stores",
+    rate: 0.01,
+    currencyId: "v-pt",
+    optIn: true,
+  };
+
+  // 公式 master 相当 (enabled キーを持たない) の import JSON を作る
+  const masterJson = (programEnabled?: boolean) =>
+    JSON.stringify({
+      version: 1,
+      schemaVersion: PERSIST_SCHEMA_VERSION,
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [],
+      programs: [
+        programEnabled === undefined
+          ? optInProgram // enabled キーなし
+          : { ...optInProgram, enabled: programEnabled },
+      ],
+      memberships: [],
+    });
+
+  it("incoming に enabled キーが無い → local の enabled:true を維持 (公式 master 取込)", () => {
+    useStore.setState({ programs: [{ ...optInProgram, enabled: true }] });
+    const res = useStore.getState().importJson(masterJson(undefined));
+    expect(res.ok).toBe(true);
+    expect(useStore.getState().programs[0].enabled).toBe(true);
+  });
+
+  it("incoming が enabled:false を明示 → そちらを採用 (ユーザー自身の export)", () => {
+    useStore.setState({ programs: [{ ...optInProgram, enabled: true }] });
+    const res = useStore.getState().importJson(masterJson(false));
+    expect(res.ok).toBe(true);
+    expect(useStore.getState().programs[0].enabled).toBe(false);
+  });
+});
+
+describe("store: syncFromUrl の program enabled carry-over (v6 PR-1d)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const optInProgram: BenefitProgram = {
+    id: "prog-optin",
+    name: "opt-in 特典",
+    scope: "all-stores",
+    rate: 0.01,
+    currencyId: "v-pt",
+    optIn: true,
+  };
+
+  it("公式 master (enabled 非出荷) を全置換取込しても local の enabled:true が保持される", async () => {
+    // local: opt-in を ON にしたユーザー
+    useStore.setState({
+      programs: [{ ...optInProgram, enabled: true }],
+      syncUrl: "https://example.test/master.json",
+    });
+    // master.json は enabled を出荷しない (R1)
+    const master = {
+      version: 43,
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [],
+      pointCards: [],
+      loyaltyRules: [],
+      paymentApps: [],
+      programs: [optInProgram], // enabled キーなし
+      memberships: [],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: async () => JSON.stringify(master),
+      }),
+    );
+
+    const res = await useStore.getState().syncFromUrl();
+    expect(res.ok).toBe(true);
+    // 公式 rate は届き、ユーザーの opt-in ON は巻き戻らない
+    expect(useStore.getState().programs[0].rate).toBe(0.01);
+    expect(useStore.getState().programs[0].enabled).toBe(true);
   });
 });

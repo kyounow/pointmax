@@ -17,6 +17,33 @@ export type ProgramMatch = {
   membership?: StoreProgramMembership;
 };
 
+/**
+ * program の per-user preference / 誕生月ゲートを評価する (v6 PR-1d、R1 規約)。
+ * enabled / optIn / birthdayMonthOnly はいずれもユーザー所有の要件で、
+ * seed/master には出荷されない。ここで一元判定して評価パス (通常 program /
+ * loyalty program) 双方から共有する。
+ *
+ * 不発 (false) 条件:
+ *   - `enabled === false`                       → ユーザーが明示的に「使わない」
+ *   - `optIn === true` かつ `enabled !== true`  → 登録/選択制の未選択 (既定 OFF)
+ *   - `birthdayMonthOnly === true` かつ
+ *       (`userBirthMonth` 未設定 or now の月 (1-12) と不一致) → 誕生月外
+ * いずれにも該当しなければ有効 (true)。
+ */
+export function isProgramPreferenceActive(
+  p: Pick<BenefitProgram, "enabled" | "optIn" | "birthdayMonthOnly">,
+  now: Date,
+  userBirthMonth?: number,
+): boolean {
+  if (p.enabled === false) return false;
+  if (p.optIn === true && p.enabled !== true) return false;
+  if (p.birthdayMonthOnly === true) {
+    if (userBirthMonth == null) return false;
+    if (now.getMonth() + 1 !== userBirthMonth) return false;
+  }
+  return true;
+}
+
 export type ProgramEvalResult = {
   // primary: 排他的、effectiveRate 数値最大を選んだ 1 件 (もしくは null = 該当なし)。
   // 後方互換のため残す。target 通貨を考慮した選択をしたい caller は primaryCandidates を使う。
@@ -44,8 +71,19 @@ export function evaluatePrograms(args: {
   now?: Date;
   /** optional: 事前構築済 membership index。複数 store/card で再利用するときに渡す。 */
   membershipIndex?: MembershipIndex;
+  /** optional: ユーザーの誕生月 (1-12)。birthdayMonthOnly program の発火判定に使う。 */
+  userBirthMonth?: number;
 }): ProgramEvalResult {
-  const { card, store, paymentApp, programs, memberships, now = new Date(), membershipIndex } = args;
+  const {
+    card,
+    store,
+    paymentApp,
+    programs,
+    memberships,
+    now = new Date(),
+    membershipIndex,
+    userBirthMonth,
+  } = args;
 
   // 1. この store に該当する membership を抽出 (index が渡されていれば O(1) lookup)
   const storeMembers = membershipIndex
@@ -68,6 +106,9 @@ export function evaluatePrograms(args: {
   const candidates = programs.filter((p) => {
     // pointCardId 系は別 phase で評価
     if (p.pointCardId) return false;
+    // R1 (PR-1d): per-user preference / 誕生月ゲート。
+    //   enabled===false (明示 OFF) / optIn 未選択 / 誕生月外 は不発。
+    if (!isProgramPreferenceActive(p, now, userBirthMonth)) return false;
     // chargeBased early-exit: paymentAppId を持たない program は paymentApp 経由で発動しない
     if (filterChargeBased && !p.paymentAppId) return false;
     // この store に紐づく？ or 全 store 適用 (scope="all-stores")？

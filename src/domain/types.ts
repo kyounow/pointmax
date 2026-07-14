@@ -177,6 +177,26 @@ export type BenefitProgram = {
   recurringDays?: number[];     // 毎月の日にち限定 (1-31)。LoyaltyRule と同セマンティクス
   recurringWeekdays?: number[]; // 曜日限定 (0=日..6=土)。LoyaltyRule と同セマンティクス (C-6)
 
+  // ─── opt-in / 誕生月ゲート (v6 PR-1d、R1 規約) ───
+  // optIn: true = 登録/選択制の特典 (Olive 選べる特典・エポス選べるポイントアップ等)。
+  //   既定 OFF 出荷。**seed / master は optIn:true のみ出荷し enabled は書かない**
+  //   (enabled はユーザー所有キー。R1: seed/master は per-user preference キーを出荷しない)。
+  //   評価では「optIn===true かつ enabled!==true」の program は不発 = ユーザーが明示的に
+  //   「使う」(enabled:true) を選ぶまで還元計算に載らない。
+  optIn?: boolean;
+  // birthdayMonthOnly: true = ユーザーの誕生月のみ有効 (settings.birthMonth 参照)。
+  //   評価時刻 now の月 (1-12) が RankInput.userBirthMonth と一致する時のみ発火。
+  //   userBirthMonth 未設定なら常に不発 (安全側)。誕生月クーポン系の表現用。
+  birthdayMonthOnly?: boolean;
+  // enabled: **ユーザー所有キー** (R1: seed / master には書かない)。
+  //   undefined = 既定 (optIn でない program は有効 / optIn:true の program は未選択で無効)。
+  //   true  = ユーザーが「使う」を選択 (opt-in 特典の有効化)。
+  //   false = ユーザーが明示的に「使わない」= 常に不発。
+  //   preference 変更なので userModifiedAt はスタンプしない (SUBSTANTIVE 対象外)。
+  //   全置換取込 (syncFromUrl / importJson) / 更新伝播 (mergeSeed) では id マッチで
+  //   ローカル値を carry-over し、公式更新で巻き戻らないよう保護する (preference 保護 2 経路)。
+  enabled?: boolean;
+
   // ─── Meta ───
   description?: string;
   officialUrl?: string;            // 情報源 URL (詳細・解説ページ)
