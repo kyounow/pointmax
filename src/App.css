@@ -2357,7 +2357,7 @@ details summary {
   }
 }
 
-/* ── 更新履歴タブ (SyncHistoryScreen) ── */
+/* ── マスタ更新履歴 (設定内 SyncHistorySection、PR-2d で更新履歴タブから降格) ── */
 .sync-history-pr-link {
   color: var(--accent);
   text-decoration: none;
@@ -2365,6 +2365,38 @@ details summary {
 }
 .sync-history-pr-link:hover {
   text-decoration: underline;
+}
+/* 最新 1 件のプレビュー行 (日付 + 件数) — 常時表示 */
+.sync-history-preview {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 12px 0 6px 0;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+}
+.sync-history-preview-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.sync-history-preview-date {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+/* 全履歴の折りたたみ */
+.sync-history-more {
+  margin-top: 4px;
+}
+.sync-history-more > summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--accent);
+  padding: 4px 0;
 }
 .sync-history-list {
   list-style: none;

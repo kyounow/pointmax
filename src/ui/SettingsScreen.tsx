@@ -5,6 +5,9 @@ import { useDialog } from "./dialog/useDialog";
 import { DEFAULT_SYNC_URL } from "../state/seed";
 import { byId } from "../domain/entityIndex";
 import { getUsageStats, clearUsageStats } from "../state/usageStats";
+import { useRoute } from "../navigation";
+import { SyncHistorySection } from "./settings/SyncHistorySection";
+import { shouldExpandSyncHistory } from "./settings/settingsRoute";
 import {
   getPersistenceStatus,
   requestPersistentStorage,
@@ -44,6 +47,10 @@ export function SettingsScreen() {
       0,
   );
   const dialog = useDialog();
+  // PR-2d: #settings/history (旧 #sync-history 由来含む) で来たら
+  // マスタ更新履歴セクションを自動展開 + スクロールする。
+  const route = useRoute();
+  const historyExpanded = shouldExpandSyncHistory(route);
   const [draftUrl, setDraftUrl] = useState(syncUrl || DEFAULT_SYNC_URL);
   const [busy, setBusy] = useState(false);
 
@@ -187,6 +194,10 @@ export function SettingsScreen() {
   return (
     <section>
       <h2>設定</h2>
+
+      {/* PR-2d: 旧「更新履歴」タブを設定内へ降格。今後の自動反映の事後確認窓口に
+          なるため設定上部に配置する。 */}
+      <SyncHistorySection expanded={historyExpanded} />
 
       <h3 style={{ marginTop: 8 }}>データ管理</h3>
       <p className="hint">
