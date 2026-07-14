@@ -50,6 +50,14 @@
   なし）。結果カードは折り畳みヘッダに短い理由バッジ（`ルート未登録` / `通貨OFF`）、展開ビューに
   次アクション CTA（`no-path` → 交換ルート画面 / `currency-blocked` → ウォレット/ポイントカード）を出す。
   CTA 遷移先の `EdgesScreen`（lazy, ~190KB）は計算画面マウント後のアイドル時に先読みする。
+- **計算フォームの同日内復元（PR-3d / UX-6）**: 金額・優先通貨タブ（＋任意で店舗）を
+  独立キー `pointmax:calc-form:v1` に保存し、**同じ暦日のうちだけ**マウント時に復元する。
+  保存形は `{ date: "YYYY-MM-DD"(ローカル), amount, activeCurrencyId, storeId? }`。日付判定は
+  `useToday` と同じローカル暦日基準（`localDateKey`）で、**保存日が今日と一致する場合のみ**採用し、
+  翌日以降は無視（キーは次の書き込みで上書き）。復元にはガードがあり、`activeCurrencyId` は
+  **優先通貨リストに現存する**場合のみ／`storeId` は**実在する**場合のみ採用する（外れていれば既定挙動）。
+  `sessionStorage` は Android PWA の kill で消えるため不採用。`usageStats` / `onboardingDismissed` と
+  同型の schema-reset 非依存キーで、read/write 失敗は try/catch で握りつぶす（送信は一切しない）。
 
 ### 優先通貨（v4.0.0）
 - 「普段ためたい通貨」を **順序付きリスト** で登録（CurrenciesScreen で ↑↓× 管理）。

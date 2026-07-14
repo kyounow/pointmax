@@ -10,6 +10,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { recordCalcEvent, getRecentStoreIds } from "../state/usageStats";
+import {
+  readCalcFormDraft,
+  saveCalcFormDraft,
+  resolveCalcFormRestore,
+  localDateKey,
+} from "../state/calcFormDraft";
 import { rankCards, nearlyEqual } from "../domain/rankCards";
 import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
@@ -57,15 +63,32 @@ export function CalculatorScreen() {
     })),
   );
 
+  // PR-3d (UX-6): 計算フォームの「同日内」復元。マウント時に独立 localStorage キー
+  // (pointmax:calc-form:v1) の下書きを 1 回だけ読み、保存日が今日 (useToday と同じ
+  // ローカル暦日基準 = localDateKey) のときだけ初期値に採用する。翌日以降は無視。
+  // ガード込み: activeCurrencyId は優先通貨リストに現存する場合のみ / storeId は実在時のみ。
+  // lazy initializer なので初回 render だけ実行される (以後の再 render では走らない)。
+  const [restored] = useState(() =>
+    resolveCalcFormRestore(readCalcFormDraft(), {
+      now: new Date(),
+      preferredCurrencyIds,
+      storeExists: (id) => stores.some((s) => s.id === id),
+    }),
+  );
+
   // デフォルトは「一般店舗 (規定還元)」。基本還元率の確認用。
-  // store-id "general" が存在しない場合 (極端なリセット直後) は空文字フォールバック
-  const [storeId, setStoreId] = useState("general");
+  // store-id "general" が存在しない場合 (極端なリセット直後) は空文字フォールバック。
+  // PR-3d: 同日の下書きに実在店舗があれば復元。
+  const [storeId, setStoreId] = useState(restored.storeId ?? "general");
   const [storeSearch, setStoreSearch] = useState("");
   const [storeCategory, setStoreCategory] = useState(""); // "" = 全カテゴリ
-  const [amount, setAmount] = useState("10000");
+  const [amount, setAmount] = useState(restored.amount ?? "10000");
   // activeCurrencyId = 現在表示中の対象通貨 (= 通貨タブの選択中タブ)。
   // preferred があれば既定で先頭、無ければ fallback select で都度選択。
-  const [activeCurrencyId, setActiveCurrencyId] = useState("");
+  // PR-3d: 同日の下書きに優先通貨として現存する id があれば復元 (無ければ既定 "")。
+  const [activeCurrencyId, setActiveCurrencyId] = useState(
+    restored.activeCurrencyId ?? "",
+  );
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   // today-banner: 内訳の展開状態 (初期は折り畳み)
   const [todayBreakdownOpen, setTodayBreakdownOpen] = useState(false);
@@ -155,6 +178,19 @@ export function CalculatorScreen() {
       recordCalcEvent(storeId, activeCurrencyId);
     }
   }, [result, storeId, activeCurrencyId]);
+
+  // PR-3d (UX-6): 同日内復元用に、金額 / 優先通貨タブ / 店舗の変更を独立キーへ書き出す。
+  // effect でまとめ書きするので、入力中の連続変更も commit ごとに 1 回に集約される
+  // (debounce 不要の軽さ)。date は useToday 基準のローカル暦日を保存し、翌日以降の読み出しで
+  // 無視できるようにする (日付が変わると today が更新され、次の書き込みで date も更新される)。
+  useEffect(() => {
+    saveCalcFormDraft({
+      date: localDateKey(today),
+      amount,
+      activeCurrencyId: activeCurrencyId || null,
+      storeId,
+    });
+  }, [today, amount, activeCurrencyId, storeId]);
 
   // UX-7: 対象外カードの CTA「交換ルートを見る →」で EdgesScreen (lazy, ~190KB の
   // @xyflow chunk) への遷移が増えるため、計算画面マウント後のアイドル時に同 chunk を
