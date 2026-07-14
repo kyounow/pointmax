@@ -4,11 +4,10 @@
 // C-2: 評価時刻 now は親 (useToday) から受け取り、日付跨ぎで自動更新される。
 // C-5: 7 日以内に終了するアクティブキャンペーンの件数を「⌛ まもなく終了」で表示。
 
-import type { BenefitProgram, LoyaltyRule } from "../../domain/types";
+import type { BenefitProgram } from "../../domain/types";
 import { isRuleActiveAt, daysUntilValidTo } from "../../domain/ruleActiveAt";
 
 type Props = {
-  loyaltyRules: LoyaltyRule[];
   programs: BenefitProgram[];
   /** 評価時刻 (親の useToday())。省略時は現在時刻 */
   now?: Date;
@@ -17,7 +16,6 @@ type Props = {
 };
 
 export function CalcTodayBanner({
-  loyaltyRules,
   programs,
   now: nowProp,
   open,
@@ -30,17 +28,16 @@ export function CalcTodayBanner({
     weekday: "short",
   });
 
-  // アクティブ期間ルールの集計 (programs + loyaltyRules)
-  const allRules = [...loyaltyRules];
+  // アクティブ期間 program の集計 (v6 PR-1e で loyaltyRules を統合、programs 一本化)
   const allProgramsWithDates = programs.filter((p) => p.validFrom || p.validTo);
 
-  const timeBoundActive = [...allRules, ...allProgramsWithDates].filter(
+  const timeBoundActive = allProgramsWithDates.filter(
     (r) => r.validTo && isRuleActiveAt(r, now),
   ).length;
-  const ongoingActive = [...allRules, ...allProgramsWithDates].filter(
+  const ongoingActive = allProgramsWithDates.filter(
     (r) => !r.validTo && r.validFrom && isRuleActiveAt(r, now),
   ).length;
-  const recurringActive = [...allRules, ...programs].filter(
+  const recurringActive = programs.filter(
     (r) =>
       (r.recurringDays?.length || r.recurringWeekdays?.length) &&
       isRuleActiveAt(r, now),
@@ -48,7 +45,7 @@ export function CalcTodayBanner({
   const totalActive = timeBoundActive + ongoingActive + recurringActive;
 
   // C-5: 7 日以内に終了するアクティブな期間限定 (使い逃し防止の注意喚起)
-  const endingSoon = [...allRules, ...allProgramsWithDates].filter((r) => {
+  const endingSoon = allProgramsWithDates.filter((r) => {
     if (!r.validTo || !isRuleActiveAt(r, now)) return false;
     const days = daysUntilValidTo(r.validTo, now);
     return days !== null && days >= 0 && days <= 7;

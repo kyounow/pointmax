@@ -1,7 +1,6 @@
 import type {
   BenefitProgram,
   ConversionEdge,
-  LoyaltyRule,
   PointCard,
   StoreProgramMembership,
 } from "./types";
@@ -11,10 +10,26 @@ import { isProgramPreferenceActive } from "./programEvaluator";
 import { membersFor, type MembershipIndex } from "./membershipIndex";
 import type { PathCache } from "./pathCache";
 
+// BenefitProgram を loyalty 評価用に (store × pointCard × rate) 単位へ展開した中間表現。
+// 旧 LoyaltyRule 型の物理削除 (v6 PR-1e) に伴い、evaluator 内部と LoyaltyResult.rule の
+// 形だけをこのローカル型で表す (UI は id / rate / validFrom / validTo / notes を参照)。
+export type LoyaltyCandidate = {
+  id: string;
+  storeId: string;
+  pointCardId: string;
+  rate: number;
+  currencyId?: string;
+  validFrom?: string;
+  validTo?: string;
+  recurringDays?: number[];
+  recurringWeekdays?: number[];
+  notes?: string;
+};
+
 export type LoyaltyResult = {
   pointCard: PointCard;
-  // rule は LoyaltyRule (旧型、ユーザーカスタム) か BenefitProgram (v3 プログラムベース) のいずれか
-  rule: LoyaltyRule;
+  // rule は BenefitProgram (pointCardId 付き) を loyalty 候補へ展開したもの
+  rule: LoyaltyCandidate;
   earnedAmount: number;
   earnedCurrencyId: string;
   pathSteps: ConversionEdge[];
@@ -29,21 +44,29 @@ export function bestLoyalty(
   amount: number,
   targetCurrencyId: string,
   ownedPointCards: PointCard[],
-  loyaltyRules: LoyaltyRule[],
   edges: ConversionEdge[],
   preferredPointCardIds?: string[],
   now: Date = new Date(),
+  availableCardIds?: ReadonlySet<string>,
+  programs?: BenefitProgram[],
+  memberships?: StoreProgramMembership[],
+  userBirthMonth?: number,
 ): LoyaltyResult | null {
   const top = bestLoyalties(
     storeId,
     amount,
     targetCurrencyId,
     ownedPointCards,
-    loyaltyRules,
     edges,
     1,
     preferredPointCardIds,
     now,
+    availableCardIds,
+    programs,
+    memberships,
+    undefined,
+    undefined,
+    userBirthMonth,
   );
   return top[0] ?? null;
 }
@@ -60,7 +83,6 @@ export function bestLoyalties(
   amount: number,
   targetCurrencyId: string,
   ownedPointCards: PointCard[],
-  loyaltyRules: LoyaltyRule[],
   edges: ConversionEdge[],
   maxStacks: number,
   preferredPointCardIds?: string[],
@@ -79,16 +101,10 @@ export function bestLoyalties(
 
   const ownedById = new Map(ownedPointCards.map((p) => [p.id, p]));
 
-  // 旧型 LoyaltyRule (ユーザーカスタム) からの候補
-  const loyaltyApplicable = loyaltyRules.filter(
-    (r) =>
-      r.storeId === storeId &&
-      ownedById.has(r.pointCardId) &&
-      isRuleActiveAt(r, now),
-  );
-
-  // v3 BenefitProgram ベースの loyalty 候補 (pointCardId を持つ programs)
-  const programApplicable: LoyaltyRule[] = [];
+  // BenefitProgram ベースの loyalty 候補 (pointCardId を持つ programs)。
+  // v6 PR-1e でユーザーカスタムの手動追加も addUserLoyaltyProgram 経由で
+  // program + membership に統一されたため、評価パスは programs 一本化。
+  const programApplicable: LoyaltyCandidate[] = [];
   if (programs && memberships) {
     // この store の membership を持つ programs + 全 store 適用 programs
     const storeMembers = membershipIndex
@@ -113,7 +129,7 @@ export function bestLoyalties(
       const effectiveRate = membership?.overrideRate ?? p.rate;
       const effectiveCurrencyId = membership?.overrideCurrencyId ?? p.currencyId;
 
-      // BenefitProgram を LoyaltyRule 形式に変換 (id は program.id で衝突回避)
+      // BenefitProgram を loyalty 候補形式に変換 (id は program.id で衝突回避)
       programApplicable.push({
         id: p.id,
         storeId,
@@ -129,9 +145,8 @@ export function bestLoyalties(
     }
   }
 
-  // 全候補: 旧型 + プログラムベース
-  // 同一 (pointCardId, store) で両方あれば最高 rate が採用される
-  const applicable = [...loyaltyApplicable, ...programApplicable];
+  // 候補はプログラムベースのみ (同一 pointCard で複数 active なら後段の sort/dedup で最高 rate 採用)
+  const applicable = programApplicable;
   if (applicable.length === 0) return [];
 
   const evaluated: LoyaltyResult[] = applicable.map((rule) => {

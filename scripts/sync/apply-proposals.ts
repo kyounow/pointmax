@@ -31,7 +31,6 @@ import type {
 import { OVERRIDABLE_PROGRAM_FIELDS } from "./types";
 import {
   ADDED_CARDS,
-  ADDED_LOYALTY_RULES,
   ADDED_MEMBERSHIPS,
   ADDED_PAYMENT_APPS,
   ADDED_PROGRAMS,
@@ -90,7 +89,6 @@ function printUsage(): void {
 
 export type Buckets = {
   stores: Record<string, unknown>[];
-  loyaltyRules: Record<string, unknown>[];
   cards: Record<string, unknown>[];
   paymentApps: Record<string, unknown>[];
   programs: Record<string, unknown>[];
@@ -108,7 +106,6 @@ export function bucketProposals(
 ): { buckets: Buckets; skipped: { type: string; collection: string; count: number }[] } {
   const buckets: Buckets = {
     stores: [],
-    loyaltyRules: [],
     cards: [],
     paymentApps: [],
     programs: [],
@@ -146,9 +143,6 @@ export function bucketProposals(
     switch (ap.collection) {
       case "stores":
         buckets.stores.push(ap.record);
-        break;
-      case "loyaltyRules":
-        buckets.loyaltyRules.push(ap.record);
         break;
       case "cards":
         buckets.cards.push(ap.record);
@@ -354,7 +348,6 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
     "import type {",
     "  BenefitProgram,",
     "  Card,",
-    "  LoyaltyRule,",
     "  PaymentApp,",
     "  Store,",
     "  StoreProgramMembership,",
@@ -362,8 +355,6 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
     "import type { ProgramOverride } from \"./seed-overrides\";",
     "",
     emitArrayConst("ADDED_STORES", "Store", buckets.stores),
-    "",
-    emitArrayConst("ADDED_LOYALTY_RULES", "LoyaltyRule", buckets.loyaltyRules),
     "",
     emitArrayConst("ADDED_CARDS", "Card", buckets.cards),
     "",
@@ -432,7 +423,6 @@ function main(): void {
   // 2. 既存 seed-additions.ts とマージ (id 重複は skip / override は後勝ち)
   const merge = {
     stores: mergeWithExisting(ADDED_STORES, buckets.stores),
-    loyaltyRules: mergeWithExisting(ADDED_LOYALTY_RULES, buckets.loyaltyRules),
     cards: mergeWithExisting(ADDED_CARDS, buckets.cards),
     paymentApps: mergeWithExisting(ADDED_PAYMENT_APPS, buckets.paymentApps),
     programs: mergeWithExisting(ADDED_PROGRAMS, buckets.programs),
@@ -443,9 +433,6 @@ function main(): void {
   console.log("📋 merge result (existing + new, deduped by id):");
   console.log(
     `     stores:        +${merge.stores.added} (skipped ${merge.stores.skipped}) → total ${merge.stores.merged.length}`,
-  );
-  console.log(
-    `     loyaltyRules:  +${merge.loyaltyRules.added} (skipped ${merge.loyaltyRules.skipped}) → total ${merge.loyaltyRules.merged.length}`,
   );
   console.log(
     `     cards:         +${merge.cards.added} (skipped ${merge.cards.skipped}) → total ${merge.cards.merged.length}`,
@@ -469,7 +456,6 @@ function main(): void {
   // 3. seed-additions.ts のコンテンツを構築 (tombstone 対象の生成物は prune)
   const mergedBuckets: Buckets = pruneRemovedFromBuckets({
     stores: merge.stores.merged as Record<string, unknown>[],
-    loyaltyRules: merge.loyaltyRules.merged as Record<string, unknown>[],
     cards: merge.cards.merged as Record<string, unknown>[],
     paymentApps: merge.paymentApps.merged as Record<string, unknown>[],
     programs: merge.programs.merged as Record<string, unknown>[],

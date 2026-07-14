@@ -16,7 +16,6 @@ const emptyBaseState = {
   stores: [],
   edges: [],
   pointCards: [],
-  loyaltyRules: [],
   paymentApps: [],
   programs: [],
   memberships: [],

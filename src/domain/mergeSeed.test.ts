@@ -6,7 +6,6 @@ import type {
   Card,
   ConversionEdge,
   Currency,
-  LoyaltyRule,
   PointCard,
   Store,
   StoreProgramMembership,
@@ -18,7 +17,6 @@ const empty = {
   stores: [] as Store[],
   edges: [] as ConversionEdge[],
   pointCards: [] as PointCard[],
-  loyaltyRules: [] as LoyaltyRule[],
   paymentApps: [] as never[],
 };
 
@@ -433,7 +431,6 @@ describe("diffCount", () => {
       stores: [],
       edges: [],
       pointCards: [],
-      loyaltyRules: [],
       paymentApps: [],
     };
     expect(diffCount(diff)).toBe(3);
@@ -447,7 +444,6 @@ describe("diffCount", () => {
         stores: [],
         edges: [],
         pointCards: [],
-        loyaltyRules: [],
         paymentApps: [],
       }),
     ).toBe(0);

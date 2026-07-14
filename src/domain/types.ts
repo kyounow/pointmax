@@ -110,37 +110,9 @@ export type PointCard = {
   notes?: string;
 };
 
-// 「店舗 × ポイントカード」の還元ルール。クレカ決済還元と二重取りで使う
-// validFrom / validTo: StoreRule と同じくキャンペーン期間
-//
-// @deprecated v3 PR 3: BenefitProgram (pointCardId フィールド) に統合。
-// ユーザーカスタムルール (UI 経由追加) には引き続き使用可。
-// seed データは programs/memberships に移行済み。master.json は loyaltyRules: [] で出力。
-export type LoyaltyRule = {
-  id: string;
-  storeId: string;
-  pointCardId: string;
-  rate: number;
-  currencyId?: string; // 通常は PointCard.currencyId と同じ。差異がある時のみ上書き
-  notes?: string;
-  validFrom?: string;
-  validTo?: string;
-  // 月内の特定日にのみ有効になる繰り返しパターン (任意)。
-  // 値の範囲は 1〜31 (日付)。例: 楽天「5と0のつく日」→ [5, 10, 15, 20, 25, 30]。
-  // undefined / 空配列 = 日付制限なし (常時有効、既存挙動)。
-  // 1 件以上 = 「今日 (now.getDate())」がリスト内にある時のみアクティブ。
-  // validFrom/validTo の範囲チェックと **AND** で結合される (期間内かつ recurring 日付一致)。
-  recurringDays?: number[];
-  // 特定曜日にのみ有効になる繰り返しパターン (任意、改善計画 C-6)。
-  // 値の範囲は 0〜6 (0=日曜 .. 6=土曜)。例: 「毎週日曜 +N%」→ [0]。
-  // undefined / 空配列 = 曜日制限なし。1 件以上 = 「今日 (now.getDay())」が
-  // リスト内にある時のみアクティブ。validFrom/validTo/recurringDays と **AND** 結合。
-  recurringWeekdays?: number[];
-};
-
 // PointMax v3: 還元プログラム
 // 「(発動者 × 場所 × 還元率)」を統一表現。
-// 旧 StoreRule / LoyaltyRule / PaymentApp.cardSpecificBonusRates の上位概念。
+// 旧 StoreRule / 提示還元ルール / PaymentApp.cardSpecificBonusRates の上位概念。
 //
 // 発動条件は cardIds / pointCardId / paymentAppId のいずれか or 組合せで指定。
 // 該当しない program はその場面で無視される。
@@ -174,8 +146,8 @@ export type BenefitProgram = {
   // ─── 期間 ───
   validFrom?: string;
   validTo?: string;
-  recurringDays?: number[];     // 毎月の日にち限定 (1-31)。LoyaltyRule と同セマンティクス
-  recurringWeekdays?: number[]; // 曜日限定 (0=日..6=土)。LoyaltyRule と同セマンティクス (C-6)
+  recurringDays?: number[];     // 毎月の日にち限定 (1-31)。ruleActiveAt (now.getDate()) と同義
+  recurringWeekdays?: number[]; // 曜日限定 (0=日..6=土)。ruleActiveAt (now.getDay()) と同義 (C-6)
 
   // ─── opt-in / 誕生月ゲート (v6 PR-1d、R1 規約) ───
   // optIn: true = 登録/選択制の特典 (Olive 選べる特典・エポス選べるポイントアップ等)。

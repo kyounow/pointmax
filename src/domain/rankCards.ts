@@ -2,7 +2,6 @@ import type {
   BenefitProgram,
   Card,
   ConversionEdge,
-  LoyaltyRule,
   PaymentApp,
   PointCard,
   Store,
@@ -57,7 +56,6 @@ export type RankInput = {
   stores: Store[];
   edges: ConversionEdge[];
   pointCards?: PointCard[];
-  loyaltyRules?: LoyaltyRule[];
   paymentApps?: PaymentApp[];
   programs?: BenefitProgram[];
   memberships?: StoreProgramMembership[];
@@ -154,7 +152,6 @@ export function rankCards(
     stores,
     edges,
     pointCards = [],
-    loyaltyRules = [],
     paymentApps = [],
     programs = [],
     memberships = [],
@@ -195,7 +192,6 @@ export function rankCards(
       payment.amount,
       targetCurrencyId,
       scopePointCards,
-      loyaltyRules,
       edges,
       maxStacks,
       store?.preferredPointCardIds,

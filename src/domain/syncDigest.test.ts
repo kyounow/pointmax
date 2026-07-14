@@ -8,7 +8,6 @@ const emptyDiff = (): Diff => ({
   stores: [],
   edges: [],
   pointCards: [],
-  loyaltyRules: [],
   paymentApps: [],
   programs: [],
   memberships: [],

@@ -8,7 +8,6 @@ import {
   promoteChainStoreAutoMerge,
   proposeCards,
   proposeJalTokuyakuMemberships,
-  proposeLoyaltyRules,
   proposeMemberships,
   proposePaymentApps,
   proposePrograms,
@@ -27,7 +26,6 @@ const emptySeed: SeedShape = {
   stores: [],
   edges: [],
   pointCards: [],
-  loyaltyRules: [],
   paymentApps: [],
 };
 
@@ -240,7 +238,7 @@ describe("proposeStores", () => {
   });
 });
 
-describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
+describe("proposeCards / proposePaymentApps", () => {
   it("既存 cardId に defaultRate 変動: auto", () => {
     const seed: SeedShape = {
       ...emptySeed,
@@ -270,129 +268,6 @@ describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
     expect(ps[0].reviewReason).toBeUndefined();
   });
 
-  it("PR-D2a: 未存在 rate バケツ → 新規 program(idCollision) + membership", () => {
-    const data = baseSource({
-      loyaltyRules: [
-        {
-          pointCardId: "rakuten-pointcard",
-          storeId: "kura-sushi",
-          rate: 0.005,
-          evidenceQuote: "x",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeLoyaltyRules(data, emptySeed);
-    expect(ps).toHaveLength(2);
-    const prog = ps.find((p) => p.collection === "programs");
-    const mem = ps.find((p) => p.collection === "memberships");
-    expect(prog?.type).toBe("addRecord");
-    // 決定論 slug 規約: prog-{pointCardId}-{rate%}pc
-    expect((prog as { record: { id: string } }).record.id).toBe(
-      "prog-rakuten-pointcard-0.5pc",
-    );
-    // 新規 program はライブ計算に効くため必ず needsReview
-    expect(prog?.reviewReason).toBe("idCollision");
-    expect(mem?.type).toBe("addRecord");
-    expect((mem as { record: { programId: string; storeId: string } }).record)
-      .toEqual({ programId: "prog-rakuten-pointcard-0.5pc", storeId: "kura-sushi" });
-    // clean・高 confidence の membership は auto 可 (reviewReason なし)
-    expect(mem?.reviewReason).toBeUndefined();
-  });
-
-  it("PR-D2a: 既存 rate バケツ program あり → membership のみ (program 重複なし)", () => {
-    const seed: SeedShape = {
-      ...emptySeed,
-      pointCards: [
-        { id: "rakuten-pointcard", name: "楽天ポイントカード", currencyId: "rakuten-pt" },
-      ],
-      programs: [
-        {
-          id: "prog-rakuten-pointcard-0.5pc",
-          name: "楽天ポイントカード提示 0.5%",
-          scope: "member-stores",
-          pointCardId: "rakuten-pointcard",
-          rate: 0.005,
-          currencyId: "rakuten-pt",
-          bonusType: "primary",
-        },
-      ],
-      memberships: [],
-    };
-    const data = baseSource({
-      loyaltyRules: [
-        {
-          pointCardId: "rakuten-pointcard",
-          storeId: "kura-sushi",
-          rate: 0.005,
-          evidenceQuote: "明示 0.5%",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeLoyaltyRules(data, seed);
-    expect(ps).toHaveLength(1);
-    expect(ps[0].collection).toBe("memberships");
-    expect(ps[0].reviewReason).toBeUndefined();
-  });
-
-  it("PR-D2a: 既存 membership は重複提案しない", () => {
-    const seed: SeedShape = {
-      ...emptySeed,
-      pointCards: [
-        { id: "rakuten-pointcard", name: "楽天ポイントカード", currencyId: "rakuten-pt" },
-      ],
-      programs: [
-        {
-          id: "prog-rakuten-pointcard-0.5pc",
-          name: "x",
-          scope: "member-stores",
-          pointCardId: "rakuten-pointcard",
-          rate: 0.005,
-          currencyId: "rakuten-pt",
-          bonusType: "primary",
-        },
-      ],
-      memberships: [
-        { programId: "prog-rakuten-pointcard-0.5pc", storeId: "kura-sushi" },
-      ],
-    };
-    const data = baseSource({
-      loyaltyRules: [
-        {
-          pointCardId: "rakuten-pointcard",
-          storeId: "kura-sushi",
-          rate: 0.005,
-          evidenceQuote: "x",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    expect(proposeLoyaltyRules(data, seed)).toEqual([]);
-  });
-
-  it("#103 回帰: loyaltyRule storeId=general の membership は pseudoStoreTarget", () => {
-    const data = baseSource({
-      loyaltyRules: [
-        {
-          pointCardId: "rakuten-pointcard",
-          storeId: "general",
-          rate: 0.005,
-          evidenceQuote: "海外でのお買い物 0.5%還元",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeLoyaltyRules(data, emptySeed);
-    const mem = ps.find((p) => p.collection === "memberships");
-    expect(mem).toBeDefined();
-    expect(mem?.reviewReason).toBe("pseudoStoreTarget");
-  });
-
   it("paymentApp の chargeBased 変更は要レビュー", () => {
     const seed: SeedShape = {
       ...emptySeed,
@@ -414,48 +289,6 @@ describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
     const ps = proposePaymentApps(data, seed);
     expect(ps).toHaveLength(1);
     expect(ps[0].reviewReason).toBe("referenceChange");
-  });
-});
-
-describe("rate=0 guard: zeroOrInvalidRate", () => {
-  it("loyaltyRule rate=0 → reviewReason zeroOrInvalidRate", () => {
-    const data = baseSource({
-      loyaltyRules: [
-        {
-          pointCardId: "d-point",
-          storeId: "some-store",
-          rate: 0,
-          evidenceQuote: "dポイント加盟店",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeLoyaltyRules(data, emptySeed);
-    // rate 不正 → 迷子 membership を作らず program 1件で可視化 (auto 不可)
-    expect(ps).toHaveLength(1);
-    expect(ps[0].collection).toBe("programs");
-    expect(ps[0].reviewReason).toBe("zeroOrInvalidRate");
-  });
-
-  it("loyaltyRule rate=0.005 → membership は reviewReason なし (正常抽出)", () => {
-    const data = baseSource({
-      loyaltyRules: [
-        {
-          pointCardId: "d-point",
-          storeId: "some-store",
-          rate: 0.005,
-          evidenceQuote: "0.5%還元",
-          explicitness: 0.95,
-          ambiguity: 0.05,
-        },
-      ],
-    });
-    const ps = proposeLoyaltyRules(data, emptySeed);
-    // 未存在バケツなので program(idCollision) + membership(clean)
-    const mem = ps.find((p) => p.collection === "memberships");
-    expect(mem).toBeDefined();
-    expect(mem?.reviewReason).toBeUndefined();
   });
 });
 
@@ -1696,7 +1529,7 @@ describe("promoteChainStoreAutoMerge", () => {
     ];
     const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
       stores: [],
-      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+      cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [],
     });
     expect(promoted).toBe(1);
     expect(proposals[0].reviewReason).toBeUndefined();
@@ -1706,7 +1539,7 @@ describe("promoteChainStoreAutoMerge", () => {
     const props = [disabledStore("store-mcd", "マクドナルド")];
     const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
       stores: [],
-      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+      cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [],
     });
     expect(promoted).toBe(0);
     expect(proposals[0].reviewReason).toBe("storeAdditionsDisabled");
@@ -1720,7 +1553,7 @@ describe("promoteChainStoreAutoMerge", () => {
     ];
     const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
       stores: [],
-      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+      cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [],
     });
     expect(promoted).toBe(0);
     expect(proposals[0].reviewReason).toBe("storeAdditionsDisabled");
@@ -1742,7 +1575,7 @@ describe("promoteChainStoreAutoMerge", () => {
     ];
     const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
       stores: [],
-      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+      cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [],
     });
     expect(promoted).toBe(0);
     expect(proposals[0].reviewReason).toBe("storeAdditionsDisabled");
@@ -1760,7 +1593,7 @@ describe("promoteChainStoreAutoMerge", () => {
         { id: "s2", name: "既存2", category: "飲食" },
         { id: "s3", name: "既存3", category: "飲食" },
       ] as never,
-      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+      cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [],
     });
     expect(promoted).toBe(1);
     expect(proposals[0].reviewReason).toBeUndefined();
@@ -1778,7 +1611,7 @@ describe("promoteChainStoreAutoMerge", () => {
     ];
     const { proposals, promoted } = promoteChainStoreAutoMerge(props, {
       stores: [],
-      cards: [], currencies: [], edges: [], pointCards: [], loyaltyRules: [], paymentApps: [],
+      cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [],
     });
     expect(promoted).toBe(0);
     expect(proposals[0].reviewReason).toBe("idCollision");

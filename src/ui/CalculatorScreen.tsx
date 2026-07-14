@@ -32,7 +32,6 @@ export function CalculatorScreen() {
     currencies,
     edges,
     pointCards,
-    loyaltyRules,
     paymentApps,
     programs,
     memberships,
@@ -45,7 +44,6 @@ export function CalculatorScreen() {
       currencies: s.currencies,
       edges: s.edges,
       pointCards: s.pointCards,
-      loyaltyRules: s.loyaltyRules,
       paymentApps: s.paymentApps,
       programs: s.programs,
       memberships: s.memberships,
@@ -110,7 +108,6 @@ export function CalculatorScreen() {
         stores,
         edges,
         pointCards,
-        loyaltyRules,
         paymentApps,
         programs,
         memberships,
@@ -128,7 +125,6 @@ export function CalculatorScreen() {
     stores,
     edges,
     pointCards,
-    loyaltyRules,
     paymentApps,
     programs,
     memberships,
@@ -232,7 +228,6 @@ export function CalculatorScreen() {
       </p>
 
       <CalcTodayBanner
-        loyaltyRules={loyaltyRules}
         programs={programs}
         now={today}
         open={todayBreakdownOpen}

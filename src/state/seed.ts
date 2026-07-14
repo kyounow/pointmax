@@ -18,7 +18,6 @@ import type {
   Card,
   ConversionEdge,
   Currency,
-  LoyaltyRule,
   PaymentApp,
   PointCard,
   Store,
@@ -26,7 +25,6 @@ import type {
 } from "../domain/types";
 import {
   ADDED_CARDS,
-  ADDED_LOYALTY_RULES,
   ADDED_MEMBERSHIPS,
   ADDED_PAYMENT_APPS,
   ADDED_PROGRAMS,
@@ -47,10 +45,7 @@ import {
   SEED_PAYMENT_APPS,
   SEED_POINT_CARDS,
 } from "./seed-data-cards";
-import {
-  SEED_LOYALTY_RULES,
-  SEED_STORES,
-} from "./seed-data-stores";
+import { SEED_STORES } from "./seed-data-stores";
 import { SEED_EDGES } from "./seed-data-edges";
 import {
   SEED_BENEFIT_PROGRAMS,
@@ -532,7 +527,6 @@ type SeedReturn = {
   stores: Store[];
   edges: ConversionEdge[];
   pointCards: PointCard[];
-  loyaltyRules: LoyaltyRule[];
   paymentApps: PaymentApp[];
   programs: BenefitProgram[];
   memberships: StoreProgramMembership[];
@@ -545,7 +539,7 @@ type SeedReturn = {
  * 合成ルール:
  *  - 手書きが常に前、追加分が後 (UI の並びはこの順)
  *  - id が重複した場合は手書きが勝つ (filter で排除)
- *  - BLOCKED_STORE_IDS に含まれる store と、それを参照する rules/loyaltyRules は除外
+ *  - BLOCKED_STORE_IDS に含まれる store と、それを参照する rules は除外
  *  - 追加 store の category は CATEGORY_ALIASES で正規化 (旧名 → 新名)
  */
 export const seed = (): SeedReturn => {
@@ -554,7 +548,6 @@ export const seed = (): SeedReturn => {
   const pointCards = SEED_POINT_CARDS;
   const paymentApps = SEED_PAYMENT_APPS;
   const stores = SEED_STORES;
-  const loyaltyRules = SEED_LOYALTY_RULES;
   const edges = SEED_EDGES;
 
   // 手書きで定義済みの id 集合 (自動同期分が衝突したら捨てるため)
@@ -579,10 +572,6 @@ export const seed = (): SeedReturn => {
     ],
     edges,
     pointCards,
-    loyaltyRules: [
-      ...loyaltyRules,
-      ...ADDED_LOYALTY_RULES.filter((r) => !BLOCKED_STORE_IDS.has(r.storeId)),
-    ],
     paymentApps: [
       ...paymentApps,
       ...ADDED_PAYMENT_APPS.filter((p) => !handwrittenPaymentAppIds.has(p.id)),

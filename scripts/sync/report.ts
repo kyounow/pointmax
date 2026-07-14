@@ -197,11 +197,6 @@ export function formatAutoItemLocalized(
         : "";
       return `${rec.name} ${pct(rec.rate)}${currencyName ? ` ${currencyName}` : ""}${period}`.trim();
     }
-    case "loyaltyRules": {
-      const storeName = resolver.store(String(rec.storeId));
-      const pointCardName = resolver.pointCard(String(rec.pointCardId));
-      return `${pointCardName} 提示 ${pct(rec.rate)} → ${storeName}`;
-    }
     case "cards":
       return `${rec.name}${rec.grade ? ` (${rec.grade})` : ""}`;
     case "paymentApps":
@@ -272,8 +267,6 @@ function formatAutoItem(p: Proposal): string {
     case "programs":
     case "campaigns":
       return `${rec.id} — ${rec.name} ${pct(rec.rate)} ${rec.currencyId ?? ""}${period}`.trim();
-    case "loyaltyRules":
-      return `${rec.id} ${rec.storeId} → ${rec.pointCardId} ${pct(rec.rate)}`;
     default:
       return `${rec.id ?? JSON.stringify(rec)}`;
   }

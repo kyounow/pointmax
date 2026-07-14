@@ -3,7 +3,6 @@ import type {
   Card,
   ConversionEdge,
   Currency,
-  LoyaltyRule,
   PaymentApp,
   PointCard,
   Store,
@@ -16,7 +15,6 @@ export type SeedShape = {
   stores: Store[];
   edges: ConversionEdge[];
   pointCards: PointCard[];
-  loyaltyRules: LoyaltyRule[];
   paymentApps: PaymentApp[];
   programs?: BenefitProgram[];
   memberships?: StoreProgramMembership[];
@@ -235,7 +233,6 @@ export function mergeSeed(
   const stores = mergeArray(current.stores, seed.stores);
   const edges = mergeArray(current.edges, seed.edges);
   const pointCards = mergeArray(current.pointCards, seed.pointCards);
-  const loyaltyRules = mergeArray(current.loyaltyRules, seed.loyaltyRules);
   const paymentApps = mergeArray(current.paymentApps, seed.paymentApps);
   const programsMerge = mergeArray(current.programs ?? [], seed.programs ?? []);
   // v6: membership も id を持つため他エンティティと同じ id ベース add-only merge。
@@ -264,7 +261,6 @@ export function mergeSeed(
     stores: stores.merged,
     edges: edges.merged,
     pointCards: pointCards.merged,
-    loyaltyRules: loyaltyRules.merged,
     paymentApps: paymentApps.merged,
     programs: removal.programs,
     memberships: membershipIdRemoval.memberships,
@@ -274,7 +270,6 @@ export function mergeSeed(
       stores: stores.added,
       edges: edges.added,
       pointCards: pointCards.added,
-      loyaltyRules: loyaltyRules.added,
       paymentApps: paymentApps.added,
       programs: programsMerge.added,
       memberships: membershipsMerge.added,
@@ -293,7 +288,6 @@ export function diffCount(diff: Diff): number {
     diff.stores.length +
     diff.edges.length +
     diff.pointCards.length +
-    diff.loyaltyRules.length +
     diff.paymentApps.length +
     (diff.programs?.length ?? 0) +
     (diff.memberships?.length ?? 0)

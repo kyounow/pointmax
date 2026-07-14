@@ -49,7 +49,6 @@ export function useSeedMerge(): SeedMergeResult {
     stores,
     edges,
     pointCards,
-    loyaltyRules,
     paymentApps,
     programs,
     memberships,
@@ -60,7 +59,6 @@ export function useSeedMerge(): SeedMergeResult {
       stores: s.stores,
       edges: s.edges,
       pointCards: s.pointCards,
-      loyaltyRules: s.loyaltyRules,
       paymentApps: s.paymentApps,
       programs: s.programs,
       memberships: s.memberships,
@@ -73,7 +71,6 @@ export function useSeedMerge(): SeedMergeResult {
       stores.length +
       edges.length +
       pointCards.length +
-      loyaltyRules.length +
       paymentApps.length >
     0;
 
@@ -86,7 +83,6 @@ export function useSeedMerge(): SeedMergeResult {
         stores,
         edges,
         pointCards,
-        loyaltyRules,
         paymentApps,
         programs,
         memberships,
@@ -104,7 +100,6 @@ export function useSeedMerge(): SeedMergeResult {
     stores,
     edges,
     pointCards,
-    loyaltyRules,
     paymentApps,
     programs,
     memberships,

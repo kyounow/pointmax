@@ -13,7 +13,6 @@ import type {
   Card,
   ConversionEdge,
   Currency,
-  LoyaltyRule,
   PaymentApp,
   PointCard,
   Store,
@@ -33,7 +32,6 @@ export type ImportData = {
   stores: Store[];
   edges: ConversionEdge[];
   pointCards?: PointCard[];
-  loyaltyRules?: LoyaltyRule[];
   paymentApps?: PaymentApp[];
   programs?: BenefitProgram[];
   memberships?: StoreProgramMembership[];
@@ -145,12 +143,6 @@ export function validateImportData(
       data.pointCards,
       "pointCards",
       [STR("id"), STR("name"), STR("currencyId")],
-      false,
-    ),
-    checkArray(
-      data.loyaltyRules,
-      "loyaltyRules",
-      [STR("id"), STR("storeId"), STR("pointCardId"), RATE("rate")],
       false,
     ),
     checkArray(data.paymentApps, "paymentApps", [STR("id"), STR("name")], false),

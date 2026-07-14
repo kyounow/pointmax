@@ -16,17 +16,28 @@ const emptyState = (): SeedShape => ({
   stores: [],
   edges: [],
   pointCards: [],
-  loyaltyRules: [],
   paymentApps: [],
 });
+
+// v6 PR-1e: LoyaltyRule 廃止に伴い、汎用マイグレーション engine のサンプル collection は
+// programs (rate フィールドを持つ) を使う。engine は collection 非依存なので挙動は不変。
+const prog = (id: string, rate: number): SeedShape["programs"] => [
+  {
+    id,
+    name: id,
+    scope: "member-stores",
+    pointCardId: "p",
+    rate,
+    currencyId: "c",
+    bonusType: "primary",
+  },
+];
 
 describe("planMigrations - updateField", () => {
   it("現在値が from と一致する場合は applicable", () => {
     const state: SeedShape = {
       ...emptyState(),
-      loyaltyRules: [
-        { id: "x", storeId: "s", pointCardId: "p", rate: 0.005 },
-      ],
+      programs: prog("x", 0.005),
     };
     const migrations: VersionMigration[] = [
       {
@@ -35,7 +46,7 @@ describe("planMigrations - updateField", () => {
         changes: [
           {
             type: "updateField",
-            collection: "loyaltyRules",
+            collection: "programs",
             id: "x",
             field: "rate",
             from: 0.005,
@@ -52,9 +63,7 @@ describe("planMigrations - updateField", () => {
   it("現在値が to と一致する場合は alreadyApplied", () => {
     const state: SeedShape = {
       ...emptyState(),
-      loyaltyRules: [
-        { id: "x", storeId: "s", pointCardId: "p", rate: 0.01 },
-      ],
+      programs: prog("x", 0.01),
     };
     const migrations: VersionMigration[] = [
       {
@@ -63,7 +72,7 @@ describe("planMigrations - updateField", () => {
         changes: [
           {
             type: "updateField",
-            collection: "loyaltyRules",
+            collection: "programs",
             id: "x",
             field: "rate",
             from: 0.005,
@@ -79,9 +88,7 @@ describe("planMigrations - updateField", () => {
   it("現在値が from とも to とも異なる場合は conflict (ユーザー編集)", () => {
     const state: SeedShape = {
       ...emptyState(),
-      loyaltyRules: [
-        { id: "x", storeId: "s", pointCardId: "p", rate: 0.007 },
-      ],
+      programs: prog("x", 0.007),
     };
     const migrations: VersionMigration[] = [
       {
@@ -90,7 +97,7 @@ describe("planMigrations - updateField", () => {
         changes: [
           {
             type: "updateField",
-            collection: "loyaltyRules",
+            collection: "programs",
             id: "x",
             field: "rate",
             from: 0.005,
@@ -115,7 +122,7 @@ describe("planMigrations - updateField", () => {
         changes: [
           {
             type: "updateField",
-            collection: "loyaltyRules",
+            collection: "programs",
             id: "missing",
             field: "rate",
             from: 0.005,
@@ -212,20 +219,18 @@ describe("applyMigration", () => {
   it("updateField はその field を to に書き換える", () => {
     const state: SeedShape = {
       ...emptyState(),
-      loyaltyRules: [
-        { id: "x", storeId: "s", pointCardId: "p", rate: 0.005 },
-      ],
+      programs: prog("x", 0.005),
     };
     const m: Migration = {
       type: "updateField",
-      collection: "loyaltyRules",
+      collection: "programs",
       id: "x",
       field: "rate",
       from: 0.005,
       to: 0.01,
     };
     const next = applyMigration(state, m);
-    expect(next.loyaltyRules[0].rate).toBe(0.01);
+    expect(next.programs![0].rate).toBe(0.01);
   });
 
   it("delete はレコードを除去する", () => {
@@ -244,20 +249,18 @@ describe("applyMigration", () => {
   it("元のstateは変更されない (immutable)", () => {
     const state: SeedShape = {
       ...emptyState(),
-      loyaltyRules: [
-        { id: "x", storeId: "s", pointCardId: "p", rate: 0.005 },
-      ],
+      programs: prog("x", 0.005),
     };
     const m: Migration = {
       type: "updateField",
-      collection: "loyaltyRules",
+      collection: "programs",
       id: "x",
       field: "rate",
       from: 0.005,
       to: 0.01,
     };
     applyMigration(state, m);
-    expect(state.loyaltyRules[0].rate).toBe(0.005);
+    expect(state.programs![0].rate).toBe(0.005);
   });
 });
 
@@ -265,10 +268,7 @@ describe("applyMigrationsByKey", () => {
   it("選択されたキーのマイグレーションのみ適用される", () => {
     const state: SeedShape = {
       ...emptyState(),
-      loyaltyRules: [
-        { id: "a", storeId: "s", pointCardId: "p", rate: 0.005 },
-        { id: "b", storeId: "s", pointCardId: "p", rate: 0.005 },
-      ],
+      programs: [...prog("a", 0.005)!, ...prog("b", 0.005)!],
     };
     const migrations: VersionMigration[] = [
       {
@@ -277,7 +277,7 @@ describe("applyMigrationsByKey", () => {
         changes: [
           {
             type: "updateField",
-            collection: "loyaltyRules",
+            collection: "programs",
             id: "a",
             field: "rate",
             from: 0.005,
@@ -285,7 +285,7 @@ describe("applyMigrationsByKey", () => {
           },
           {
             type: "updateField",
-            collection: "loyaltyRules",
+            collection: "programs",
             id: "b",
             field: "rate",
             from: 0.005,
@@ -297,8 +297,8 @@ describe("applyMigrationsByKey", () => {
     const plan = planMigrations(state, 5, 6, migrations);
     // 1つ目だけ適用
     const next = applyMigrationsByKey(state, plan, [plan[0].key]);
-    const a = next.loyaltyRules.find((r) => r.id === "a");
-    const b = next.loyaltyRules.find((r) => r.id === "b");
+    const a = next.programs!.find((r) => r.id === "a");
+    const b = next.programs!.find((r) => r.id === "b");
     expect(a?.rate).toBe(0.01);
     expect(b?.rate).toBe(0.005);
   });
@@ -319,7 +319,6 @@ describe("MIGRATIONS v13", () => {
         },
       ],
       pointCards: [],
-      loyaltyRules: [],
       paymentApps: [],
     };
     const plan = planMigrations(state, 12, 13, MIGRATIONS);
@@ -345,7 +344,6 @@ describe("MIGRATIONS v13", () => {
         },
       ],
       pointCards: [],
-      loyaltyRules: [],
       paymentApps: [],
     };
     const plan = planMigrations(state, 12, 13, MIGRATIONS);
@@ -374,7 +372,6 @@ describe("MIGRATIONS v41 (WAON→JAL を aeon-card ゲート化)", () => {
       },
     ],
     pointCards: [],
-    loyaltyRules: [],
     paymentApps: [],
   });
 
@@ -418,7 +415,6 @@ describe("MIGRATIONS v42 (jre-to-jal を CLUB-Aゴールド 0.6667 に修正)", 
       },
     ],
     pointCards: [],
-    loyaltyRules: [],
     paymentApps: [],
   });
 
@@ -462,7 +458,6 @@ describe("MIGRATIONS v34 (ponta⇄d 相互交換廃止)", () => {
         { id: "ponta-to-jal", fromCurrencyId: "ponta-pt", toCurrencyId: "jal-mile", rate: 0.5 },
       ],
       pointCards: [],
-      loyaltyRules: [],
       paymentApps: [],
     };
     // v33 → v34 で v34 の delete migration が適用対象になる
@@ -488,7 +483,6 @@ describe("MIGRATIONS v34 (ponta⇄d 相互交換廃止)", () => {
         { id: "ponta-to-jal", fromCurrencyId: "ponta-pt", toCurrencyId: "jal-mile", rate: 0.5 },
       ],
       pointCards: [],
-      loyaltyRules: [],
       paymentApps: [],
     };
     const plan = planMigrations(state, 33, 34, MIGRATIONS);
@@ -509,7 +503,6 @@ describe("MIGRATIONS v35 (ファミペイ廃止)", () => {
       stores: [],
       edges: [],
       pointCards: [],
-      loyaltyRules: [],
       paymentApps: [
         { id: "pa-famipay", name: "ファミペイ" },
         { id: "pa-rakuten-pay", name: "楽天Pay" },
@@ -543,7 +536,6 @@ describe("MIGRATIONS v35 (ファミペイ廃止)", () => {
       stores: [],
       edges: [],
       pointCards: [],
-      loyaltyRules: [],
       paymentApps: [{ id: "pa-rakuten-pay", name: "楽天Pay" }],
       programs: [
         { id: "prog-keep", name: "z", scope: "all-stores", rate: 0.01, currencyId: "rakuten-pt" },
@@ -572,7 +564,6 @@ describe("MIGRATIONS 全件 × optional collection 欠落 state 耐性 (回帰)"
       stores: [],
       edges: [],
       pointCards: [],
-      loyaltyRules: [],
       paymentApps: [],
       // programs / memberships は敢えて未定義
     }) as SeedShape;

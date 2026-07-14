@@ -20,7 +20,6 @@ export function syncDigest(diff: Diff, extras?: DigestExtras): string {
   for (const s of diff.stores) keys.push(`store:${s.id}`);
   for (const e of diff.edges) keys.push(`edge:${e.id}`);
   for (const p of diff.pointCards) keys.push(`pc:${p.id}`);
-  for (const l of diff.loyaltyRules) keys.push(`loy:${l.id}`);
   for (const a of diff.paymentApps) keys.push(`pa:${a.id}`);
   for (const p of diff.programs ?? []) keys.push(`prog:${p.id}`);
   for (const m of diff.memberships ?? [])
@@ -74,7 +73,6 @@ export function buildSyncGroups(
   push("店舗", diff.stores.map((s) => s.name));
   push("交換ルート", diff.edges.map((e) => e.id));
   push("ポイントカード", diff.pointCards.map((p) => p.name));
-  push("提示還元ルール", diff.loyaltyRules.map((l) => l.id));
   push("支払方法", diff.paymentApps.map((a) => a.name));
   push(
     "特典・キャンペーン",

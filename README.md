@@ -128,7 +128,10 @@ src/domain/
 
 > 旧 `StoreRule` / `LoyaltyRule` / `PaymentApp.cardSpecificBonusRates` は v3 で
 > **BenefitProgram + StoreProgramMembership** に統合済み。`StoreRule` 型は物理削除、
-> `LoyaltyRule` 型はユーザー独自ルール用に残るが seed では未使用（空配列）。
+> `LoyaltyRule` 型も v6 (schema v6 トレイン PR-1e) で物理削除した。手動の
+> 「店舗×ポイントカード提示還元」は store の `addUserLoyaltyProgram` が
+> BenefitProgram (`scope:"member-stores"` / `pointCardId`) + membership に変換して
+> atomic に追加する (旧 `addLoyaltyRule` の後継)。master.json も `loyaltyRules` 欄を持たない。
 
 ### Seed データの構造
 
@@ -140,7 +143,7 @@ src/state/
   userModified.ts               # 「公式」バッジの substantive 編集判定 (純関数)
   seed-data-currencies.ts       # 通貨マスタ
   seed-data-cards.ts            # Card / PointCard / PaymentApp
-  seed-data-stores.ts           # Store（LoyaltyRule 配列は空）
+  seed-data-stores.ts           # Store マスタ (提示還元は BenefitProgram に統合)
   seed-data-programs.ts         # BenefitProgram / StoreProgramMembership
   seed-data-edges.ts            # 通貨間交換レート
   seed-additions.ts             # 自動同期で追加されたデータ (auto-generated)

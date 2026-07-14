@@ -24,11 +24,11 @@ describe("bucketProposals", () => {
     const ps: Proposal[] = [
       mkAdd("stores", { id: "s1", name: "S1" }),
       mkAdd("stores", { id: "s2", name: "S2" }),
-      mkAdd("loyaltyRules", { id: "l1", pointCardId: "p", storeId: "s", rate: 0.005 }),
+      mkAdd("memberships", { programId: "prog-x", storeId: "s" }),
     ];
     const { buckets, skipped } = bucketProposals(ps);
     expect(buckets.stores).toHaveLength(2);
-    expect(buckets.loyaltyRules).toHaveLength(1);
+    expect(buckets.memberships).toHaveLength(1);
     expect(buckets.cards).toHaveLength(0);
     expect(skipped).toEqual([]);
   });
@@ -131,7 +131,6 @@ describe("buildSeedAdditionsContent", () => {
   it("空配列なら ADDED_STORES: Store[] = []; を出力", () => {
     const out = buildSeedAdditionsContent({
       stores: [],
-      loyaltyRules: [],
       cards: [],
       paymentApps: [],
       programs: [],
@@ -152,7 +151,6 @@ describe("buildSeedAdditionsContent", () => {
   it("配列の要素は object literal として出力", () => {
     const out = buildSeedAdditionsContent({
       stores: [{ id: "kura-sushi", name: "くら寿司", category: "飲食" }],
-      loyaltyRules: [],
       cards: [],
       paymentApps: [],
       programs: [],
@@ -272,7 +270,6 @@ describe("mergeRemovals", () => {
 describe("pruneRemovedFromBuckets", () => {
   const base = {
     stores: [],
-    loyaltyRules: [],
     cards: [],
     paymentApps: [],
     programs: [

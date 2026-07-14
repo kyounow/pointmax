@@ -30,7 +30,6 @@ import {
   proposeCards,
   proposeExpiredCampaignDeletions,
   proposeJalTokuyakuMemberships,
-  proposeLoyaltyRules,
   proposeMemberships,
   proposePaymentApps,
   proposePrograms,
@@ -45,7 +44,6 @@ export {
   proposeCards,
   proposeExpiredCampaignDeletions,
   proposeJalTokuyakuMemberships,
-  proposeLoyaltyRules,
   proposeMemberships,
   proposePaymentApps,
   proposePrograms,
@@ -423,7 +421,7 @@ function main(): void {
     const data = normalizeIds(raw);
     allProposals.push(...proposeStores(data, current));
     allProposals.push(...proposeCards(data, current));
-    allProposals.push(...proposeLoyaltyRules(data, current));
+    // v6 PR-1e: 抽出 loyaltyRules は propose では無視 (LoyaltyRule 廃止)。
     allProposals.push(...proposePaymentApps(data, current));
     allProposals.push(...proposePrograms(data, current));
     allProposals.push(...proposeMemberships(data, current));
