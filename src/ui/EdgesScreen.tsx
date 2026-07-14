@@ -278,6 +278,7 @@ export function EdgesScreen() {
             金額:{" "}
             <input
               type="number"
+              inputMode="numeric"
               min="1"
               step="1"
               value={routeAmountStr}

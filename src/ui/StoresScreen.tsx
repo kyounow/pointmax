@@ -104,6 +104,7 @@ export function StoresScreen() {
       edit: (s, set) => (
         <input
           type="number"
+          inputMode="numeric"
           min="0"
           max="5"
           step="1"

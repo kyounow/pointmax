@@ -216,6 +216,7 @@ export function PointCardsScreen() {
       edit: (r, set) => (
         <input
           type="number"
+          inputMode="decimal"
           step="0.001"
           min="0"
           value={r.rate}
@@ -383,6 +384,7 @@ export function PointCardsScreen() {
         </select>
         <input
           type="number"
+          inputMode="decimal"
           step="0.001"
           min="0"
           placeholder="0.005 (=0.5%)"

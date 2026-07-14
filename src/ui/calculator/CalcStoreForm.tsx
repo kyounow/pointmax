@@ -139,11 +139,13 @@ export function CalcStoreForm({
       <label>
         金額:
         <input
-          type="number"
-          min="0"
-          step="100"
+          // type=number のスクロール誤変更・"e" 入力を根絶するため text 化。
+          // 非数字を strip して整数のみ許容 (空文字はそのまま → 呼び出し側で未入力扱い)。
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
         />
         円
       </label>

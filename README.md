@@ -119,7 +119,6 @@ src/domain/
   currencyKind.ts     # 通貨種別 (point/mile/cashlike) のスタイル
   formatNum.ts        # 数値フォーマッタ
   groupBy.ts          # 汎用グルーピング
-  resolveRate.ts      # 型のみ (実装は v3 で programEvaluator に移管、ResolvedRate 型を後方互換維持)
 ```
 
 > 旧 `StoreRule` / `LoyaltyRule` / `PaymentApp.cardSpecificBonusRates` は v3 で
