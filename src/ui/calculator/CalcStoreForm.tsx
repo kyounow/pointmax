@@ -5,6 +5,7 @@
 import { useMemo } from "react";
 import type { Currency, Store } from "../../domain/types";
 import { groupBy } from "../../domain/groupBy";
+import { recordStoreSelection } from "../../state/usageStats";
 
 type Props = {
   stores: Store[];
@@ -117,7 +118,14 @@ export function CalcStoreForm({
             onChange={(e) => setStoreSearch(e.target.value)}
             aria-label="店舗を絞り込み検索"
           />
-          <select value={storeId} onChange={(e) => setStoreId(e.target.value)}>
+          <select
+            value={storeId}
+            onChange={(e) => {
+              setStoreId(e.target.value);
+              // PR-0b: 端末内利用統計へ店舗選択を記録 (空選択は内部で無視・送信なし)
+              recordStoreSelection(e.target.value);
+            }}
+          >
             <option value="">選択</option>
             {storesByCategory.map((g) => (
               <optgroup key={g.key} label={g.key}>
