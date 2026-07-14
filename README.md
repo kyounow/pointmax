@@ -66,9 +66,12 @@
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
 - 「サンプル投入」「ローカルデータ初期化」「JSONエクスポート/インポート」は設定画面から。
-- **更新履歴タブ**: 週次 cron で自動マージされた変更を時系列で閲覧
-  (`sources/SYNC_HISTORY.json` を bundle 同梱、最新 104 件、GitHub commit/PR への動線あり)。
-  自動マージが 0 件で要レビューのみの週も、件数と理由内訳 (`reviewStats`) を記録する。
+- **マスタ更新履歴** (設定画面内セクション、旧「更新履歴」タブ): 週次 cron で自動マージ
+  された変更を時系列で閲覧 (`sources/SYNC_HISTORY.json` を bundle 同梱、最新 104 件、
+  GitHub commit/PR への動線あり)。最新 1 件は設定上部に常時プレビュー表示し、全履歴は
+  折りたたみで展開する。`#settings/history` で直接開ける (旧 `#sync-history` からも自動
+  リダイレクト)。自動マージが 0 件で要レビューのみの週も、件数と理由内訳 (`reviewStats`)
+  を記録する。
 
 ### マスタ自動アップデート
 - `sources/registry.yaml` に各カード・ポイント・決済アプリの公式 URL を登録。
@@ -236,7 +239,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   （超過時は全件 review 降格）
 - 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (最大 104 件、newest first)。
   auto-merge 週は auto-sync PR が、要レビューのみの週は weekly-sync の「Publish SYNC_HISTORY to main」step が
-  履歴を main へ直 push し、いずれも `workflow_run` deploy でアプリ「更新履歴」タブに反映される。
+  履歴を main へ直 push し、いずれも `workflow_run` deploy でアプリの設定内「マスタ更新履歴」に反映される。
   GitHub の PR タブ (`auto-sync` ラベル絞り込み) + 履歴ファイルの両方で同じ情報を参照可
 - inject-prompt は実行時に `seed()` をライブ参照するため、seed に追加した新カード/通貨は
   自動でプロンプトへ反映される（回帰契約テストで保証）

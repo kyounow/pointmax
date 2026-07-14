@@ -14,7 +14,6 @@ const EdgesScreen = lazy(() =>
 import { CalculatorScreen } from "./ui/CalculatorScreen";
 import { WalletScreen } from "./ui/WalletScreen";
 import { SettingsScreen } from "./ui/SettingsScreen";
-import { SyncHistoryScreen } from "./ui/SyncHistoryScreen";
 import { UpdateBanner } from "./ui/UpdateBanner";
 import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
 import { SyncUpdateModal } from "./ui/SyncUpdateModal";
@@ -27,6 +26,7 @@ import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useRoute, navigate, replaceRoute, parseHash } from "./navigation";
 import { legacyWalletRedirect } from "./ui/wallet/walletRoute";
 import { legacyBenefitsRedirect } from "./ui/benefits/benefitsRoute";
+import { legacySettingsRedirect } from "./ui/settings/settingsRoute";
 
 type Tab =
   | "calculator"
@@ -35,7 +35,6 @@ type Tab =
   | "stores"
   | "benefits"
   | "edges"
-  | "sync-history"
   | "settings";
 
 const TABS: { id: Tab; label: string }[] = [
@@ -47,7 +46,7 @@ const TABS: { id: Tab; label: string }[] = [
   // PR-2c: プログラム / キャンペーン の 2 タブを「特典・キャンペーン」1 タブに統合。
   { id: "benefits", label: "特典・キャンペーン" },
   { id: "edges", label: "交換ルート" },
-  { id: "sync-history", label: "更新履歴" },
+  // PR-2d: 「更新履歴」トップレベルタブは廃止し、設定内「マスタ更新履歴」セクションへ降格。
   { id: "settings", label: "設定" },
 ];
 
@@ -61,11 +60,14 @@ function App() {
   // 新 hash へ replaceRoute)。
   //   PR-2b1: #cards / #pointcards / #paymentapps → "wallet"
   //   PR-2c:  #programs / #campaigns             → "benefits"
+  //   PR-2d:  #sync-history                      → "settings" (sub=history は SettingsScreen が解決)
   const effectiveTabId = legacyWalletRedirect(route.tab)
     ? "wallet"
     : legacyBenefitsRedirect(route.tab)
       ? "benefits"
-      : route.tab;
+      : legacySettingsRedirect(route.tab)
+        ? "settings"
+        : route.tab;
   const tab: Tab = TABS.find((t) => t.id === effectiveTabId)?.id ?? "calculator";
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Wave 5 B-1: useShallow に集約 (関数 + pendingMigration はまとめて取れる)
@@ -107,8 +109,11 @@ function App() {
     // 導出 tab 側で既に統合先を描画済みなので、ここでは URL の正規化のみ行う。
     //   PR-2b1: #cards / #pointcards / #paymentapps → #wallet 系
     //   PR-2c:  #programs / #campaigns             → #benefits
+    //   PR-2d:  #sync-history                      → #settings/history
     const legacy =
-      legacyWalletRedirect(initial.tab) ?? legacyBenefitsRedirect(initial.tab);
+      legacyWalletRedirect(initial.tab) ??
+      legacyBenefitsRedirect(initial.tab) ??
+      legacySettingsRedirect(initial.tab);
     if (legacy) {
       replaceRoute(legacy);
       return;
@@ -207,7 +212,7 @@ function App() {
     <div className="app">
       {pendingMigration && <SchemaUpgradeModal strategy={pendingMigration} />}
       {!pendingMigration && (
-        <SyncUpdateModal onViewHistory={() => navigate("sync-history")} />
+        <SyncUpdateModal onViewHistory={() => navigate("settings/history")} />
       )}
       <header className="appbar">
         <button
@@ -359,7 +364,6 @@ function App() {
             {tab === "stores" && <StoresScreen />}
             {tab === "benefits" && <BenefitsScreen />}
             {tab === "edges" && <EdgesScreen />}
-            {tab === "sync-history" && <SyncHistoryScreen />}
             {tab === "settings" && <SettingsScreen />}
           </Suspense>
         </ErrorBoundary>
