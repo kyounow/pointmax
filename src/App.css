@@ -1397,6 +1397,41 @@ details summary {
   white-space: nowrap;
 }
 
+/* PR-3a (UX-1): 店頭クイック入力チップ (直近店舗 / 金額プリセット)。
+   .row (flex-wrap) の中で全幅 1 行を占め、溢れは横スクロールで高さを固定する
+   → 結果 1 位の above-the-fold を守る (モバイルで 2 行以内)。 */
+.quick-chips {
+  display: flex;
+  flex: 1 0 100%;
+  width: 100%;
+  gap: 6px;
+  margin: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+.quick-chip {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.quick-chip:hover {
+  border-color: var(--accent);
+}
+.quick-chip.is-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
 /* キャンペーン期間限定ルールの badge */
 .campaign-badge {
   /* base shape, color via variants */

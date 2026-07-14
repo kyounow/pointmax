@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
-import { recordCalcEvent } from "../state/usageStats";
+import { recordCalcEvent, getRecentStoreIds } from "../state/usageStats";
 import { rankCards } from "../domain/rankCards";
 import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
@@ -17,7 +17,7 @@ import { isMasterCard } from "../state/seed";
 import { navigate } from "../navigation";
 import { CardComparisonSection } from "./CardComparisonSection";
 import { useToday } from "./hooks/useToday";
-import { CalcTodayBanner } from "./calculator/CalcTodayBanner";
+import { BannerSlot } from "./calculator/BannerSlot";
 import { CalcStoreForm } from "./calculator/CalcStoreForm";
 import { CalcCurrencyTabs } from "./calculator/CalcCurrencyTabs";
 import { CalcLoyaltyBanner } from "./calculator/CalcLoyaltyBanner";
@@ -152,6 +152,18 @@ export function CalculatorScreen() {
     }
   }, [result, storeId, activeCurrencyId]);
 
+  // PR-3a (UX-1): 直近店舗チップの id 列。保存済み計算履歴 (getRecentStoreIds) を
+  // 新しい順で読み、現在選択中の店舗を先頭に畳み込む (履歴未記録でも即チップ表示・
+  // active になり「現選択は active 表示」を満たす)。getRecentStoreIds は localStorage の
+  // 純粋 snapshot 読み取りなので render 中に呼んでよい。店舗を切り替えるたびに読み直す
+  // (同一店舗のまま金額だけ変えても直近"店舗"一覧は不変なので依存は storeId のみでよい。
+  //  ある店舗を離れる頃には前店舗の calcEvent は effect で記録済み)。
+  const recentStoreIds = useMemo(() => {
+    const stored = getRecentStoreIds(8);
+    if (!storeId) return stored;
+    return [storeId, ...stored.filter((id) => id !== storeId)].slice(0, 8);
+  }, [storeId]);
+
   // 比較対象: 非保有 (enabled !== true) かつ master pool のカード (v7)
   const comparisonItems = useMemo(
     () =>
@@ -231,15 +243,20 @@ export function CalculatorScreen() {
   return (
     <section>
       <h2>計算</h2>
+      {/* N-1: 上部の長文説明は above-the-fold を圧迫するため 1 行に簡素化。 */}
       <p className="hint">
-        支払い情報と「最終的に貯めたい通貨」を選ぶと、保有カード別に最適な交換ルートと最終取得量を表示します。ポイントカード併用ボーナスがある店舗ではクレカ還元と合算されます。
+        店舗・金額・貯めたい通貨を選ぶと、保有カード別の最適ルートと取得量を表示します。
       </p>
 
-      <CalcTodayBanner
+      {/* PR-3a (N-1): 通知系バナーは常時 1 枚まで。優先度
+          onboarding > update(SEED_VERSION) > today を BannerSlot が判定する。
+          onboarding(保有0枚) 時は通知枠を抑制し、下の 2 ステップ box が受け持つ。 */}
+      <BannerSlot
+        onboardingActive={!hasHeldCards}
         programs={programs}
         now={today}
-        open={todayBreakdownOpen}
-        onToggle={() => setTodayBreakdownOpen((v) => !v)}
+        todayOpen={todayBreakdownOpen}
+        onToggleToday={() => setTodayBreakdownOpen((v) => !v)}
       />
 
       <CalcStoreForm
@@ -256,6 +273,7 @@ export function CalculatorScreen() {
         activeCurrencyId={activeCurrencyId}
         setActiveCurrencyId={setActiveCurrencyId}
         showCurrencyFallback={preferredCurrencyIds.length === 0}
+        recentStoreIds={recentStoreIds}
       />
 
       {preferredCurrencyIds.length === 0 ? (
