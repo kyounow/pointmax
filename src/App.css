@@ -2083,6 +2083,80 @@ details summary {
   flex-basis: 100%;
 }
 
+/* UX-3: 折り畳みヘッダの 1位比 差額表示 (muted)。mobile でも折り返しに耐える。 */
+.rank-diff {
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rank-diff-lead {
+  color: var(--good);
+}
+
+/* UX-3: 展開ビュー先頭の積み上げサマリ ([基本 X%] + [上乗せ +Y%] = Z%)。
+   chip は note-chip と同じ「小さい角丸ラベル」視覚言語で統一。 */
+.rate-stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0 8px;
+}
+.rate-stack-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rate-stack-op {
+  color: var(--muted);
+  font-size: 11px;
+}
+.rate-stack-total {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--good);
+  font-variant-numeric: tabular-nums;
+  margin-left: 2px;
+}
+.rate-chip {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.rate-chip-base {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.rate-chip-addon {
+  background: rgba(78, 161, 255, 0.15);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.rate-chip-loyalty {
+  background: rgba(87, 199, 133, 0.15);
+  color: var(--good);
+  border: 1px solid var(--good);
+}
+
+/* DB-8: 最低交換単位の事後注記 chip (積み上げサマリと同じ chip 視覚言語、警告色)。 */
+.minunit-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+.minunit-chip {
+  background: rgba(255, 200, 0, 0.15);
+  color: #d4a017;
+  border: 1px solid #d4a017;
+  white-space: normal;
+}
+
 /* PointCardsScreen: 対象加盟店プレビュー */
 .pc-stores-preview {
   display: inline-block;

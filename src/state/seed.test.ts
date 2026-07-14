@@ -215,6 +215,18 @@ describe("SEED_EDGES の通貨参照整合性", () => {
     expect(bad, bad.join("\n")).toEqual([]);
   });
 
+  // DB-8: minFromUnits (最低交換単位) は optional だが、付与されている場合は正の有限数。
+  it("minFromUnits が付与されている edge はすべて正の有限数", () => {
+    const { edges } = seed();
+    const withMin = edges.filter((e) => e.minFromUnits !== undefined);
+    // 主要 edge に値が付いていること (機構が空振りしていない回帰ガード)
+    expect(withMin.length).toBeGreaterThan(0);
+    const bad = withMin
+      .filter((e) => !(Number.isFinite(e.minFromUnits) && e.minFromUnits! > 0))
+      .map((e) => `${e.id}: minFromUnits=${e.minFromUnits}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
   it("v4.0.0 で追加した orico-pt / mufg-pt の edges が存在する", () => {
     const { edges } = seed();
     const ids = new Set(edges.map((e) => e.id));

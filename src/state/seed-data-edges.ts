@@ -6,7 +6,10 @@
 //   - fromCurrencyId / toCurrencyId は seed-data-currencies.ts に存在する id
 //   - rate: from 1 単位 → to 何単位か (例: 2pt → 1マイル なら rate=0.5)
 //   - 双方向交換は 2 件のエッジ (例: v-to-jrkyupo + jrkyupo-to-v)
-//   - 最低交換単位や上限は計算には反映していない (notes に記載のみ)
+//   - 最低交換単位や上限は計算 (経路選択) には反映していない。上限は notes 記載のみ。
+//     最低交換単位は notes に加えて minFromUnits (from 通貨の単位数) にも構造化して持たせ、
+//     少額試算時に「◯◯ を △△ 貯めてから交換」を UI 注記する (DB-8)。経路選択には不使用
+//     (ConversionEdge.minFromUnits の JSDoc 参照 = pathCache の線形前提を壊さない)。
 import type { ConversionEdge } from "../domain/types";
 
 export const SEED_EDGES: ConversionEdge[] = [
@@ -30,6 +33,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "rakuten-pt",
     toCurrencyId: "jal-mile",
     rate: 0.5,
+    minFromUnits: 50, // 50pt以上
     notes: "2pt → 1マイル (50pt以上、月20,000pt上限)",
   },
 
@@ -61,6 +65,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "v-pt",
     toCurrencyId: "jrkyupo",
     rate: 1,
+    minFromUnits: 500, // 500pt単位
     notes: "500Vポイント → 500JRキューポ (双方向, 500pt単位)",
   },
   {
@@ -68,6 +73,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "jrkyupo",
     toCurrencyId: "v-pt",
     rate: 1,
+    minFromUnits: 500, // 500pt単位
     notes: "500JRキューポ → 500Vポイント (双方向, 500pt単位)",
   },
 
@@ -217,6 +223,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "epos",
     toCurrencyId: "jal-mile",
     rate: 0.5,
+    minFromUnits: 500, // 500pt単位
     notes: "1,000pt = 500マイル (500pt単位)",
   },
   {
@@ -233,6 +240,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "epos",
     toCurrencyId: "d-pt",
     rate: 1,
+    minFromUnits: 1000, // 1,000pt以上
     notes: "1pt = 1dポイント (1,000pt以上500pt単位、交換約1〜2か月)",
   },
   // エポス→Ponta 1:1 は au/UQ/povo1.0 回線契約者限定のため意図的に未登録
@@ -284,6 +292,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "jal-mile",
     toCurrencyId: "accor",
     rate: 0.4,
+    minFromUnits: 5000, // 5,000マイル単位 (最小交換)
     notes: "10,000マイル = 4,000pt (5,000マイル単位 = 1,000pt も可)",
   },
 
@@ -438,6 +447,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "orico-pt",
     toCurrencyId: "waon-pt",
     rate: 1,
+    minFromUnits: 1000, // 最低1,000P
     notes: "1,000オリコP → 1,000 WAON POINT (公式ポイント移行、最低1,000P)",
   },
   {
@@ -445,6 +455,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "orico-pt",
     toCurrencyId: "ponta-pt",
     rate: 0.8333,
+    minFromUnits: 1200, // 最低1,200P
     notes: "1,200オリコP → 1,000 Pontaポイント (公式、最低1,200P)",
   },
   {
@@ -452,6 +463,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "orico-pt",
     toCurrencyId: "d-pt",
     rate: 0.8333,
+    minFromUnits: 1200, // 最低1,200P
     notes: "1,200オリコP → 1,000 dポイント (公式、最低1,200P)",
   },
   {
@@ -459,6 +471,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "orico-pt",
     toCurrencyId: "ana-mile",
     rate: 0.6,
+    minFromUnits: 1000, // 最低1,000P
     notes: "1,000オリコP → 600 ANAマイル (公式、最低1,000P)",
   },
   {
@@ -466,6 +479,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "orico-pt",
     toCurrencyId: "jal-mile",
     rate: 0.5,
+    minFromUnits: 1000, // 最低1,000P
     notes: "1,000オリコP → 500 JALマイル (公式、最低1,000P)",
   },
 
@@ -478,6 +492,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "mufg-pt",
     toCurrencyId: "ponta-pt",
     rate: 4,
+    minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 800 Pontaポイント (公式、200P以上100P単位)",
   },
   {
@@ -485,6 +500,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "mufg-pt",
     toCurrencyId: "d-pt",
     rate: 4,
+    minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 800 dポイント (公式、200P以上100P単位)",
   },
   {
@@ -492,6 +508,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "mufg-pt",
     toCurrencyId: "rakuten-pt",
     rate: 3,
+    minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 600 楽天ポイント (公式、200P以上100P単位)",
   },
   {
@@ -499,6 +516,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "mufg-pt",
     toCurrencyId: "nanaco-pt",
     rate: 3,
+    minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 600 nanacoポイント (公式、200P以上100P単位)",
   },
   {
@@ -506,6 +524,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "mufg-pt",
     toCurrencyId: "waon-pt",
     rate: 3,
+    minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 600 WAON POINT (公式、200P以上100P単位)",
   },
   {
@@ -513,6 +532,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "mufg-pt",
     toCurrencyId: "jal-mile",
     rate: 2,
+    minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 400 JALマイル (公式、200P以上100P単位)",
   },
 ];

@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { recordCalcEvent, getRecentStoreIds } from "../state/usageStats";
-import { rankCards } from "../domain/rankCards";
+import { rankCards, nearlyEqual } from "../domain/rankCards";
 import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { isMasterCard } from "../state/seed";
@@ -200,6 +200,22 @@ export function CalculatorScreen() {
     return map;
   }, [result]);
 
+  // UX-3: 差額表示用の基準値。result は totalFinalAmount 降順ソート済 (rankCards)。
+  //   topTotal = 1位 (先頭 reachable) の totalFinalAmount。
+  //   secondBestTotal = 1位と ε 以上離れた次点の totalFinalAmount (同率 1 位は飛ばす)。
+  //     全カードが 1 位と実質同値なら undefined (= #1 に「2位より」を出さない)。
+  const { topTotal, secondBestTotal } = useMemo(() => {
+    const reachable = result?.filter((r) => r.reachable) ?? [];
+    if (reachable.length === 0) {
+      return { topTotal: undefined, secondBestTotal: undefined };
+    }
+    const top = reachable[0].totalFinalAmount;
+    const second = reachable.find(
+      (r) => !nearlyEqual(r.totalFinalAmount, top) && r.totalFinalAmount < top,
+    )?.totalFinalAmount;
+    return { topTotal: top, secondBestTotal: second };
+  }, [result]);
+
   // 入力が変わるたびに、同率 1 位の reachable カード全部を展開状態にリセット
   // (totalFinalAmount が最上位値と等しい全カード = displayRank 1 の集合)。
   // render 中 guard で実装 (effect 内 setState を避ける React 公認パターン)。
@@ -370,6 +386,8 @@ export function CalculatorScreen() {
               currencyName={currencyName}
               cardName={cardName}
               programById={programById}
+              topTotal={topTotal}
+              secondBestTotal={secondBestTotal}
             />
           ))}
           {/* v7: 保有 0 枚時は非保有 42 枚の比較リストを初回画面に出さない (オンボーディング優先)。
