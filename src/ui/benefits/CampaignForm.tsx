@@ -6,24 +6,33 @@
 // 仕様:
 //   - 発動の種類: 決済アプリ / ポイントカード提示 / クレジットカード のいずれか
 //   - 還元率は % 入力 (5 → rate 0.05)、貯まる通貨は対象選択時に自動補完 (変更可)
-//   - 開始日必須・終了日任意 (キャンペーンタブの分類セマンティクスと整合)
+//   - 開始日必須・終了日任意 (統合フィルタの期間分類セマンティクスと整合)
 //   - 曜日限定 (recurringWeekdays、C-6) を任意指定可
 //   - 対象店舗は検索付きチェックリストで 1 件以上必須
 // 追加された program はユーザー作成 (UUID id、非 master) として扱われ、
-// CampaignsScreen から削除できる。
+// BenefitsScreen から削除できる。
+//
+// PR-2c: 統合画面 (BenefitsScreen) 下部の <details> に埋め込んで使う。埋め込み時は
+// 開閉を親 <details> に委ねるため embedded=true を渡し、内部の ➕ 開閉ボタンを省く。
 
 import { useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
-import { useStore } from "../state/store";
-import { useDialog } from "./dialog/useDialog";
-import { cardLabel } from "../domain/cardLabel";
-import type { BenefitProgram } from "../domain/types";
+import { useStore } from "../../state/store";
+import { useDialog } from "../dialog/useDialog";
+import { cardLabel } from "../../domain/cardLabel";
+import type { BenefitProgram } from "../../domain/types";
 
 type TriggerKind = "paymentApp" | "pointCard" | "card";
 
 const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
-export function CampaignForm() {
+type Props = {
+  // true: 親 (<details>) が開閉を持つ埋め込みモード。内部の ➕ 開閉ボタン・見出しを省き、
+  //       フォーム本体を常時描画する。false (既定): 従来どおり自前の ➕ ボタンで開閉。
+  embedded?: boolean;
+};
+
+export function CampaignForm({ embedded = false }: Props) {
   const {
     cards,
     pointCards,
@@ -186,10 +195,12 @@ export function CampaignForm() {
       level: "success",
     });
     reset();
-    setOpen(false);
+    // 埋め込み時は親 <details> が開閉を持つので自前の open は触らない。
+    if (!embedded) setOpen(false);
   };
 
-  if (!open) {
+  // 非埋め込みで未展開なら ➕ ボタンのみ。埋め込みは常時フォーム本体を描画。
+  if (!embedded && !open) {
     return (
       <div style={{ margin: "8px 0 12px" }}>
         <button onClick={() => setOpen(true)}>➕ キャンペーンを手動追加</button>
@@ -207,12 +218,15 @@ export function CampaignForm() {
         borderRadius: 10,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <strong>キャンペーンを手動追加</strong>
-        <small className="hint" style={{ margin: 0 }}>
-          cron が拾えない店頭・アプリ内告知のキャンペーン用。自分のデータとして保存されます
-        </small>
-      </div>
+      {/* 埋め込み時は親 <summary> が見出しを兼ねるので内部見出しは省く */}
+      {!embedded && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <strong>キャンペーンを手動追加</strong>
+          <small className="hint" style={{ margin: 0 }}>
+            cron が拾えない店頭・アプリ内告知のキャンペーン用。自分のデータとして保存されます
+          </small>
+        </div>
+      )}
 
       <div className="row">
         <label>
@@ -399,10 +413,10 @@ export function CampaignForm() {
         <button
           onClick={() => {
             reset();
-            setOpen(false);
+            if (!embedded) setOpen(false);
           }}
         >
-          キャンセル
+          {embedded ? "クリア" : "キャンセル"}
         </button>
       </div>
     </div>

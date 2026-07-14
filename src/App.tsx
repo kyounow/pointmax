@@ -3,8 +3,7 @@ import { useShallow } from "zustand/shallow";
 import "./App.css";
 import { CurrenciesScreen } from "./ui/CurrenciesScreen";
 import { StoresScreen } from "./ui/StoresScreen";
-import { ProgramsScreen } from "./ui/ProgramsScreen";
-import { CampaignsScreen } from "./ui/CampaignsScreen";
+import { BenefitsScreen } from "./ui/BenefitsScreen";
 // Wave 6 B-4: EdgesScreen は @xyflow/react (174 KB JS + 15 KB CSS) を引き込む最重量画面。
 // 静的 import だと index.html の modulepreload に乗り、デフォルトの計算タブを開くだけで
 // 全ユーザーが React Flow を初期ロードする。lazy 化して「交換ルート」タブを開いた時だけ
@@ -27,14 +26,14 @@ import { useDialog } from "./ui/dialog/useDialog";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useRoute, navigate, replaceRoute, parseHash } from "./navigation";
 import { legacyWalletRedirect } from "./ui/wallet/walletRoute";
+import { legacyBenefitsRedirect } from "./ui/benefits/benefitsRoute";
 
 type Tab =
   | "calculator"
   | "wallet"
   | "currencies"
   | "stores"
-  | "programs"
-  | "campaigns"
+  | "benefits"
   | "edges"
   | "sync-history"
   | "settings";
@@ -45,8 +44,8 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "wallet", label: "ウォレット" },
   { id: "currencies", label: "通貨" },
   { id: "stores", label: "店舗" },
-  { id: "programs", label: "プログラム" },
-  { id: "campaigns", label: "キャンペーン" },
+  // PR-2c: プログラム / キャンペーン の 2 タブを「特典・キャンペーン」1 タブに統合。
+  { id: "benefits", label: "特典・キャンペーン" },
   { id: "edges", label: "交換ルート" },
   { id: "sync-history", label: "更新履歴" },
   { id: "settings", label: "設定" },
@@ -58,9 +57,15 @@ function App() {
   // route.sub / route.params は今回未消費だが、後続 PR (設定サブセクション・
   // ウォレットハイライト等) が useRoute の戻り値として利用できる状態にしてある。
   const route = useRoute();
-  // PR-2b1: 廃止した旧タブ (#cards / #pointcards / #paymentapps) からの流入は
-  // "wallet" として描画する (URL は下の正規化 effect で #wallet 系へ replaceRoute)。
-  const effectiveTabId = legacyWalletRedirect(route.tab) ? "wallet" : route.tab;
+  // 廃止した旧タブからの流入を統合先タブとして描画する (URL は下の正規化 effect で
+  // 新 hash へ replaceRoute)。
+  //   PR-2b1: #cards / #pointcards / #paymentapps → "wallet"
+  //   PR-2c:  #programs / #campaigns             → "benefits"
+  const effectiveTabId = legacyWalletRedirect(route.tab)
+    ? "wallet"
+    : legacyBenefitsRedirect(route.tab)
+      ? "benefits"
+      : route.tab;
   const tab: Tab = TABS.find((t) => t.id === effectiveTabId)?.id ?? "calculator";
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Wave 5 B-1: useShallow に集約 (関数 + pendingMigration はまとめて取れる)
@@ -98,9 +103,12 @@ function App() {
   // useRoute の snapshot と導出 tab は一致したまま (履歴エントリを増やさない)。
   useEffect(() => {
     const initial = parseHash(location.hash);
-    // PR-2b1: 旧タブ id は #wallet 系へ寄せる (replaceRoute は履歴を汚さない)。
-    // 導出 tab 側で既に wallet を描画済みなので、ここでは URL の正規化のみ行う。
-    const legacy = legacyWalletRedirect(initial.tab);
+    // 旧タブ id は統合先の新 hash へ寄せる (replaceRoute は履歴を汚さない)。
+    // 導出 tab 側で既に統合先を描画済みなので、ここでは URL の正規化のみ行う。
+    //   PR-2b1: #cards / #pointcards / #paymentapps → #wallet 系
+    //   PR-2c:  #programs / #campaigns             → #benefits
+    const legacy =
+      legacyWalletRedirect(initial.tab) ?? legacyBenefitsRedirect(initial.tab);
     if (legacy) {
       replaceRoute(legacy);
       return;
@@ -349,8 +357,7 @@ function App() {
             {tab === "wallet" && <WalletScreen />}
             {tab === "currencies" && <CurrenciesScreen />}
             {tab === "stores" && <StoresScreen />}
-            {tab === "programs" && <ProgramsScreen />}
-            {tab === "campaigns" && <CampaignsScreen />}
+            {tab === "benefits" && <BenefitsScreen />}
             {tab === "edges" && <EdgesScreen />}
             {tab === "sync-history" && <SyncHistoryScreen />}
             {tab === "settings" && <SettingsScreen />}
