@@ -6,7 +6,6 @@ import type {
   Card,
   ConversionEdge,
   Currency,
-  LoyaltyRule,
   PaymentApp,
   PointCard,
   Store,
@@ -102,7 +101,6 @@ type State = {
   stores: Store[];
   edges: ConversionEdge[];
   pointCards: PointCard[];
-  loyaltyRules: LoyaltyRule[];
   paymentApps: PaymentApp[];
   programs: BenefitProgram[];
   memberships: StoreProgramMembership[];
@@ -171,12 +169,24 @@ type Actions = {
   // 範囲外の値は無視 (何もしない)。birthdayMonthOnly program の判定に使う。
   setBirthMonth: (month?: number) => void;
 
-  addLoyaltyRule: (r: Omit<LoyaltyRule, "id">) => void;
-  updateLoyaltyRule: (
-    id: string,
-    patch: Partial<Omit<LoyaltyRule, "id">>,
-  ) => void;
-  removeLoyaltyRule: (id: string) => void;
+  // ユーザーが手動追加する「店舗 × ポイントカード提示還元」を BenefitProgram +
+  // membership に変換して atomic に登録する (v6 PR-1e、旧 addLoyaltyRule の後継)。
+  //   - program: uuid id / pointCardId / rate / scope:"member-stores" /
+  //     bonusType:"primary" / userModifiedAt=now。currencyId 省略時は
+  //     pointCard.currencyId で補完 (旧フォーム挙動を踏襲)。enabled は付けない
+  //     (undefined=有効。optIn ではない)。
+  //   - membership: membershipId() で id を採番し storeId と紐付け。
+  // program 単独 (membership 0 件) の過渡状態を作らないため両者を同一 set で追加する
+  // (DB-6 validator の member-stores × membership 0 件警告を発生させない)。
+  // 削除は removeUserProgram (cascade) を流用 (自作分のみ削除可)。
+  // 戻り値は生成された program id (UUID)。
+  addUserLoyaltyProgram: (args: {
+    storeId: string;
+    pointCardId: string;
+    rate: number;
+    currencyId?: string;
+    notes?: string;
+  }) => string;
 
   // ユーザー作成キャンペーン (BenefitProgram + 対象店舗 memberships) の一括追加 / 削除。
   // 改善計画 A-4: v3 で廃止した手動キャンペーン登録の復活 (CampaignsScreen のフォームから利用)。
@@ -226,7 +236,6 @@ const empty: State = {
   stores: [],
   edges: [],
   pointCards: [],
-  loyaltyRules: [],
   paymentApps: [],
   programs: [],
   memberships: [],
@@ -335,9 +344,6 @@ export const useStore = create<State & Actions>()(
       removeStore: (id) =>
         set((state) => {
           state.stores = state.stores.filter((st) => st.id !== id);
-          state.loyaltyRules = state.loyaltyRules.filter(
-            (r) => r.storeId !== id,
-          );
         }),
 
       addEdge: (e) =>
@@ -366,9 +372,6 @@ export const useStore = create<State & Actions>()(
       removePointCard: (id) =>
         set((state) => {
           state.pointCards = state.pointCards.filter((p) => p.id !== id);
-          state.loyaltyRules = state.loyaltyRules.filter(
-            (r) => r.pointCardId !== id,
-          );
         }),
       movePointCard: (id, direction) =>
         set((state) => {
@@ -421,19 +424,34 @@ export const useStore = create<State & Actions>()(
           state.birthMonth = month;
         }),
 
-      addLoyaltyRule: (r) =>
+      addUserLoyaltyProgram: ({ storeId, pointCardId, rate, currencyId, notes }) => {
+        const id = newId();
         set((state) => {
-          state.loyaltyRules.push({ ...r, id: newId() });
-        }),
-      updateLoyaltyRule: (id, patch) =>
-        set((state) => {
-          const idx = state.loyaltyRules.findIndex((r) => r.id === id);
-          if (idx >= 0) Object.assign(state.loyaltyRules[idx], patch);
-        }),
-      removeLoyaltyRule: (id) =>
-        set((state) => {
-          state.loyaltyRules = state.loyaltyRules.filter((r) => r.id !== id);
-        }),
+          // currencyId 省略時は pointCard.currencyId で補完 (旧フォーム挙動を踏襲)
+          const pc = state.pointCards.find((p) => p.id === pointCardId);
+          const program: BenefitProgram = {
+            id,
+            name: `${pc?.name ?? pointCardId} 提示`,
+            scope: "member-stores",
+            pointCardId,
+            rate,
+            currencyId: currencyId ?? pc?.currencyId ?? "",
+            bonusType: "primary",
+            // ユーザー作成物として印を付ける (公式扱いにならず mergeSeed の
+            // 内容更新伝播からも保護される)。enabled は付けない (undefined=有効)。
+            userModifiedAt: new Date().toISOString(),
+          };
+          if (notes !== undefined) program.notes = notes;
+          // program + membership を同一 set で atomic に追加 (過渡状態を作らない)
+          state.programs.push(program);
+          state.memberships.push({
+            id: membershipId(id, storeId),
+            programId: id,
+            storeId,
+          });
+        });
+        return id;
+      },
 
       addCampaignProgram: (p, storeIds) => {
         const id = newId();
@@ -522,7 +540,6 @@ export const useStore = create<State & Actions>()(
               stores: state.stores,
               edges: state.edges,
               pointCards: state.pointCards,
-              loyaltyRules: state.loyaltyRules,
               paymentApps: state.paymentApps,
               programs: state.programs,
               memberships: state.memberships,
@@ -534,7 +551,6 @@ export const useStore = create<State & Actions>()(
           state.stores = result.stores;
           state.edges = result.edges;
           state.pointCards = result.pointCards;
-          state.loyaltyRules = result.loyaltyRules;
           state.paymentApps = result.paymentApps;
           state.programs = result.programs ?? [];
           state.memberships = result.memberships ?? [];
@@ -548,7 +564,6 @@ export const useStore = create<State & Actions>()(
             stores: state.stores,
             edges: state.edges,
             pointCards: state.pointCards,
-            loyaltyRules: state.loyaltyRules,
             paymentApps: state.paymentApps,
             programs: state.programs,
             memberships: state.memberships,
@@ -579,7 +594,6 @@ export const useStore = create<State & Actions>()(
               stores: merged.stores,
               edges: merged.edges,
               pointCards: merged.pointCards,
-              loyaltyRules: merged.loyaltyRules,
               paymentApps: merged.paymentApps,
             },
             plan,
@@ -591,7 +605,6 @@ export const useStore = create<State & Actions>()(
           state.stores = finalState.stores;
           state.edges = finalState.edges;
           state.pointCards = finalState.pointCards;
-          state.loyaltyRules = finalState.loyaltyRules;
           state.paymentApps = finalState.paymentApps;
           state.programs = merged.programs ?? [];
           state.memberships = merged.memberships ?? [];
@@ -664,7 +677,6 @@ export const useStore = create<State & Actions>()(
               state.pointCards,
               ["enabled"],
             );
-            state.loyaltyRules = data.loyaltyRules ?? [];
             state.paymentApps = preservePreferences(
               data.paymentApps ?? [],
               state.paymentApps,
@@ -704,7 +716,6 @@ export const useStore = create<State & Actions>()(
             stores: s.stores,
             edges: s.edges,
             pointCards: s.pointCards,
-            loyaltyRules: s.loyaltyRules,
             paymentApps: s.paymentApps,
             // v6.x: 以前は programs / memberships を含めず、export→import で
             // カスタム / 同期済みプログラムが復元されなかった。全データのスナップショットにする。
@@ -740,7 +751,6 @@ export const useStore = create<State & Actions>()(
               state.pointCards,
               ["enabled"],
             );
-            state.loyaltyRules = data.loyaltyRules ?? [];
             state.paymentApps = preservePreferences(
               data.paymentApps ?? [],
               state.paymentApps,

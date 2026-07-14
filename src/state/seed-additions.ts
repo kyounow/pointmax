@@ -6,7 +6,6 @@
 import type {
   BenefitProgram,
   Card,
-  LoyaltyRule,
   PaymentApp,
   Store,
   StoreProgramMembership,
@@ -197,8 +196,6 @@ export const ADDED_STORES: Store[] = [
   { id: "suit-square", name: "SUIT SQUARE", category: "ファッション" },
   { id: "ucarpack", name: "ユーカーパック", category: "車・バイク" },
 ];
-
-export const ADDED_LOYALTY_RULES: LoyaltyRule[] = [];
 
 export const ADDED_CARDS: Card[] = [];
 

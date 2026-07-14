@@ -69,7 +69,6 @@ export type ProducesKind =
   | "cards"
   | "categoryRules"
   | "stores"
-  | "loyaltyRules"
   | "paymentApps"
   | "programs"
   | "memberships";
@@ -161,6 +160,10 @@ export type ExtractedSource = {
   storeRules?: ExtractedStoreRule[];
   categoryRules?: ExtractedCategoryRule[];
   stores?: ExtractedStore[];
+  // @deprecated v6 PR-1e: LoyaltyRule 廃止に伴い propose は loyaltyRules を無視する。
+  // 既存 extracted キャッシュ (point-partner 等) がまだ本欄を持つため受理はするが、
+  // 提案 (programs/memberships) には一切変換されない。プロンプト総改訂 (1f) で
+  // point-partner を programs+memberships 直接出力に切替後、本欄ごと削除予定。
   loyaltyRules?: ExtractedLoyaltyRule[];
   paymentApps?: ExtractedPaymentApp[];
   programs?: ExtractedProgram[];      // v3+ 正準モデル (campaign extractor 等)

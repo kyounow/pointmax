@@ -59,12 +59,10 @@ describe("buildAutoSummary", () => {
         },
         {
           type: "addRecord",
-          collection: "loyaltyRules",
+          collection: "memberships",
           record: {
-            id: "loy-test",
+            programId: "prog-rakuten-pointcard-1pc",
             storeId: "test-store",
-            pointCardId: "rakuten-pointcard",
-            rate: 0.01,
           },
           sourceId: "rakuten-point-partners",
           confidence: 0.96,
@@ -86,7 +84,7 @@ describe("buildAutoSummary", () => {
     expect(md).toContain("2 件の変更を自動反映");
     expect(md).toContain("rakuten-point-partners");
     expect(md).toContain("stores +1");
-    expect(md).toContain("loyaltyRules +1");
+    expect(md).toContain("memberships +1");
     expect(md).toContain("平均 confidence:");
     expect(md).toContain("🤖 GitHub Actions weekly sync");
   });
@@ -140,8 +138,8 @@ describe("buildAutoSummary", () => {
       autoApplicable: [
         {
           type: "updateField",
-          collection: "loyaltyRules",
-          id: "loy-test",
+          collection: "programs",
+          id: "prog-d-pointcard-0.5pc",
           field: "rate",
           from: 0.005,
           to: 0.01,
@@ -185,12 +183,10 @@ describe("buildReviewQueue", () => {
       needsReview: [
         {
           type: "addRecord",
-          collection: "loyaltyRules",
+          collection: "memberships",
           record: {
-            id: "loy-ponta-test",
+            programId: "prog-ponta-card-0.5pc",
             storeId: "test-store",
-            pointCardId: "ponta-card",
-            rate: 0.005,
           },
           sourceId: "ponta-partners",
           confidence: 0.49,

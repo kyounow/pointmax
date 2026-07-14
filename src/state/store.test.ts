@@ -3,6 +3,7 @@
 // ここでは store action 固有の「ガード条件」「ストア state への反映」のみ検査。
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { useStore } from "./store";
+import { rankCards } from "../domain/rankCards";
 import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
 import type {
   BenefitProgram,
@@ -607,7 +608,6 @@ describe("store: syncFromUrl の program enabled carry-over (v6 PR-1d)", () => {
       stores: [],
       edges: [],
       pointCards: [],
-      loyaltyRules: [],
       paymentApps: [],
       programs: [optInProgram], // enabled キーなし
       memberships: [],
@@ -627,5 +627,116 @@ describe("store: syncFromUrl の program enabled carry-over (v6 PR-1d)", () => {
     // 公式 rate は届き、ユーザーの opt-in ON は巻き戻らない
     expect(useStore.getState().programs[0].rate).toBe(0.01);
     expect(useStore.getState().programs[0].enabled).toBe(true);
+  });
+});
+
+// v6 PR-1e: 旧 addLoyaltyRule の後継。手動の「店舗×ポイントカード提示還元」を
+// BenefitProgram + membership に変換して atomic に追加する。
+describe("store: addUserLoyaltyProgram", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("program + membership を同一 action で atomic に追加する", () => {
+    useStore.setState({
+      pointCards: [{ id: "d-pc", name: "dポイントカード", currencyId: "d-pt" }],
+    });
+    const id = useStore.getState().addUserLoyaltyProgram({
+      storeId: "lawson",
+      pointCardId: "d-pc",
+      rate: 0.01,
+    });
+    const { programs, memberships } = useStore.getState();
+    expect(programs).toHaveLength(1);
+    expect(memberships).toHaveLength(1);
+    const p = programs[0];
+    expect(p.id).toBe(id);
+    expect(p.scope).toBe("member-stores");
+    expect(p.bonusType).toBe("primary");
+    expect(p.pointCardId).toBe("d-pc");
+    expect(p.rate).toBe(0.01);
+    // ユーザー作成物の印
+    expect(p.userModifiedAt).toBeTruthy();
+    // enabled は付けない (undefined = 有効。optIn ではない)
+    expect("enabled" in p).toBe(false);
+    // membership は membershipId 規約 (`m-{programId}-{storeId}`) で採番し program を指す
+    expect(memberships[0].programId).toBe(id);
+    expect(memberships[0].storeId).toBe("lawson");
+    expect(memberships[0].id).toBe(`m-${id}-lawson`);
+  });
+
+  it("currencyId 省略時は pointCard.currencyId で補完する", () => {
+    useStore.setState({
+      pointCards: [{ id: "d-pc", name: "dポイントカード", currencyId: "d-pt" }],
+    });
+    useStore.getState().addUserLoyaltyProgram({
+      storeId: "lawson",
+      pointCardId: "d-pc",
+      rate: 0.01,
+    });
+    expect(useStore.getState().programs[0].currencyId).toBe("d-pt");
+  });
+
+  it("currencyId を明示すればそれを使う", () => {
+    useStore.setState({
+      pointCards: [{ id: "d-pc", name: "dポイントカード", currencyId: "d-pt" }],
+    });
+    useStore.getState().addUserLoyaltyProgram({
+      storeId: "lawson",
+      pointCardId: "d-pc",
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+    });
+    expect(useStore.getState().programs[0].currencyId).toBe("rakuten-pt");
+  });
+
+  it("removeUserProgram で program + membership が cascade 削除される", () => {
+    useStore.setState({
+      pointCards: [{ id: "d-pc", name: "dポイントカード", currencyId: "d-pt" }],
+    });
+    const id = useStore.getState().addUserLoyaltyProgram({
+      storeId: "lawson",
+      pointCardId: "d-pc",
+      rate: 0.01,
+    });
+    useStore.getState().removeUserProgram(id);
+    expect(useStore.getState().programs).toHaveLength(0);
+    expect(useStore.getState().memberships).toHaveLength(0);
+  });
+
+  it("等価性: addUserLoyaltyProgram の loyalty が旧 LoyaltyRule と同じ還元 (rate×amount) を生む", () => {
+    const card: Card = {
+      id: "rakuten",
+      name: "楽天カード",
+      defaultRate: 0.01,
+      defaultCurrencyId: "rakuten-pt",
+    };
+    useStore.setState({
+      cards: [card],
+      stores: [{ id: "lawson", name: "ローソン" }],
+      pointCards: [{ id: "d-pc", name: "dポイントカード", currencyId: "d-pt" }],
+      edges: [],
+    });
+    useStore.getState().addUserLoyaltyProgram({
+      storeId: "lawson",
+      pointCardId: "d-pc",
+      rate: 0.01,
+    });
+    const s = useStore.getState();
+    const { rankings } = rankCards({
+      payment: { storeId: "lawson", amount: 10000 },
+      targetCurrencyId: "d-pt",
+      cards: s.cards,
+      stores: s.stores,
+      edges: s.edges,
+      pointCards: s.pointCards,
+      programs: s.programs,
+      memberships: s.memberships,
+    });
+    const top = rankings[0];
+    expect(top.loyalties).toHaveLength(1);
+    // 旧 { storeId: "lawson", pointCardId: "d-pc", rate: 0.01 } と同一: 10000 × 0.01 = 100 d-pt
+    expect(top.loyalties[0].finalAmount).toBe(100);
+    expect(top.loyalties[0].earnedCurrencyId).toBe("d-pt");
   });
 });

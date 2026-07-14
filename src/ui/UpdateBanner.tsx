@@ -41,7 +41,6 @@ export function UpdateBanner() {
       stores: merged.stores,
       edges: merged.edges,
       pointCards: merged.pointCards,
-      loyaltyRules: merged.loyaltyRules,
       paymentApps: merged.paymentApps,
       // v4.0.1: programs / memberships も含める。これが無いと
       // programs/paymentApps を対象にする migration (v35 ファミペイ削除等) の
@@ -101,8 +100,6 @@ export function UpdateBanner() {
         return "交換ルート";
       case "pointCards":
         return "ポイントカード";
-      case "loyaltyRules":
-        return "提示還元ルール";
       case "paymentApps":
         return "支払方法";
       default:
@@ -176,9 +173,6 @@ export function UpdateBanner() {
                 )}
                 {merged.diff.pointCards.length > 0 && (
                   <li>ポイントカード: {merged.diff.pointCards.length}件</li>
-                )}
-                {merged.diff.loyaltyRules.length > 0 && (
-                  <li>提示還元ルール: {merged.diff.loyaltyRules.length}件</li>
                 )}
                 {merged.diff.paymentApps.length > 0 && (
                   <li>支払方法: {merged.diff.paymentApps.length}件</li>

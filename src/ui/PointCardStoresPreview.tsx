@@ -1,8 +1,15 @@
 import { useState } from "react";
-import type { LoyaltyRule } from "../domain/types";
+
+// 表示に必要な最小形 (旧 LoyaltyRule の代わり)。PointCardsScreen が program×
+// membership から合成した「加盟店 × 還元率」の行を受け取る。
+type StoreRateRow = {
+  id: string;
+  storeId: string;
+  rate: number;
+};
 
 type Props = {
-  rules: LoyaltyRule[];
+  rules: StoreRateRow[];
   storeName: (id: string) => string;
 };
 

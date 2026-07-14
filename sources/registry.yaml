@@ -115,7 +115,6 @@ sources:
     extractor: point-partner
     produces:
       - stores
-      - loyaltyRules
     extractionScope: chains-only
     enabled: true
     notes: |
@@ -130,7 +129,6 @@ sources:
     extractor: point-partner
     produces:
       - stores
-      - loyaltyRules
     extractionScope: chains-only
     enabled: true
     notes: |
@@ -144,7 +142,6 @@ sources:
     extractor: point-partner
     produces:
       - stores
-      - loyaltyRules
     extractionScope: chains-only
     enabled: true
     notes: |
@@ -158,7 +155,6 @@ sources:
     extractor: point-partner
     produces:
       - stores
-      - loyaltyRules
     extractionScope: chains-only
     enabled: true
     notes: |

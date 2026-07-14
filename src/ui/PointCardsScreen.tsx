@@ -1,44 +1,56 @@
 import { useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
+import { isMasterProgram } from "../state/seed";
 import { CurrencyIcon } from "./CurrencyIcon";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
-import type { LoyaltyRule, PointCard } from "../domain/types";
+import type { PointCard } from "../domain/types";
 import { groupBy } from "../domain/groupBy";
 import { PointCardStoresPreview } from "./PointCardStoresPreview";
 import { sanitizeNoteForDisplay } from "../domain/noteParser";
 
+// program × membership から合成する「加盟店 × 還元率」表示行 (旧 LoyaltyRule 相当)。
+// v6 PR-1e で手動 loyaltyRule は BenefitProgram + membership に統一されたため、
+// 画面はこの形に展開して表示する (BenefitProgram 概念は UI に露出しない)。
+type PcStoreRule = {
+  id: string;
+  programId: string;
+  pointCardId: string;
+  storeId: string;
+  rate: number;
+  currencyId?: string;
+  validFrom?: string;
+  validTo?: string;
+  notes?: string;
+};
+
 export function PointCardsScreen() {
-  // Wave 5 B-1: 13 個別 subscribe → 単一 useShallow に集約
+  // Wave 5 B-1: 個別 subscribe → 単一 useShallow に集約
   const {
     pointCards,
     currencies,
     stores,
-    loyaltyRules,
     programs,
     memberships,
     addPointCard,
     updatePointCard,
     removePointCard,
     movePointCard,
-    addLoyaltyRule,
-    updateLoyaltyRule,
-    removeLoyaltyRule,
+    addUserLoyaltyProgram,
+    removeUserProgram,
   } = useStore(
     useShallow((s) => ({
       pointCards: s.pointCards,
       currencies: s.currencies,
       stores: s.stores,
-      loyaltyRules: s.loyaltyRules,
       programs: s.programs,
       memberships: s.memberships,
       addPointCard: s.addPointCard,
       updatePointCard: s.updatePointCard,
       removePointCard: s.removePointCard,
       movePointCard: s.movePointCard,
-      addLoyaltyRule: s.addLoyaltyRule,
-      updateLoyaltyRule: s.updateLoyaltyRule,
-      removeLoyaltyRule: s.removeLoyaltyRule,
+      addUserLoyaltyProgram: s.addUserLoyaltyProgram,
+      removeUserProgram: s.removeUserProgram,
     })),
   );
 
@@ -68,11 +80,14 @@ export function PointCardsScreen() {
   );
 
   // v3 では loyalty 情報の主要な置き場が BenefitProgram + StoreProgramMembership に
-  // 移った。表示用にカードごとに「旧 LoyaltyRule + program × membership を LoyaltyRule
-  // 形式に合成したもの」をまとめる。ここで作る合成 rule は id を `prog:<programId>:<storeId>`
-  // 形式にして本物の LoyaltyRule (`lr-*`) と衝突しないようにする。
-  const programBasedRulesByPointCard = useMemo(() => {
-    const map = new Map<string, LoyaltyRule[]>();
+  // 移った。表示用にカードごとに「program × membership を加盟店行に合成したもの」を
+  // まとめる。ここで作る合成 rule は id を `prog:<programId>:<storeId>` 形式にして
+  // 行 key の衝突 (master program は複数 membership を持つ) を避ける。
+  //   - programBasedRulesByPointCard: カード列「対象加盟店」プレビュー用 (全 program)
+  //   - userLoyaltyRows: 下部の管理表用 (ユーザー自作分 = 非 master のみ。削除可)
+  const { programBasedRulesByPointCard, userLoyaltyRows } = useMemo(() => {
+    const map = new Map<string, PcStoreRule[]>();
+    const userRows: PcStoreRule[] = [];
     const membershipsByProgram = new Map<string, typeof memberships>();
     for (const m of memberships) {
       const arr = membershipsByProgram.get(m.programId);
@@ -84,23 +99,28 @@ export function PointCardsScreen() {
       const mems = membershipsByProgram.get(prog.id) ?? [];
       // membership がない program は「全店共通」なので店舗一覧には載せない
       if (mems.length === 0) continue;
+      const isUser = !isMasterProgram(prog.id);
       const list = map.get(prog.pointCardId) ?? [];
       for (const m of mems) {
-        list.push({
+        const row: PcStoreRule = {
           id: `prog:${prog.id}:${m.storeId}`,
+          programId: prog.id,
           pointCardId: prog.pointCardId,
           storeId: m.storeId,
           rate: m.overrideRate ?? prog.rate,
           currencyId: m.overrideCurrencyId ?? prog.currencyId,
           validFrom: prog.validFrom,
           validTo: prog.validTo,
-          recurringDays: prog.recurringDays,
           notes: prog.notes ?? m.notes,
-        });
+        };
+        list.push(row);
+        // 管理表の削除は removeUserProgram(programId) なので id を programId にする
+        // (ユーザー自作 loyalty program は membership 1 件なので id は一意)。
+        if (isUser) userRows.push({ ...row, id: prog.id });
       }
       map.set(prog.pointCardId, list);
     }
-    return map;
+    return { programBasedRulesByPointCard: map, userLoyaltyRows: userRows };
   }, [programs, memberships]);
 
   const pointCardColumns: ColumnDef<PointCard>[] = [
@@ -141,10 +161,7 @@ export function PointCardsScreen() {
       key: "stores",
       label: "対象加盟店",
       view: (p) => {
-        // 旧 LoyaltyRule + Program ベースの両方をマージして表示
-        const legacy = loyaltyRules.filter((r) => r.pointCardId === p.id);
-        const fromPrograms = programBasedRulesByPointCard.get(p.id) ?? [];
-        const rules = [...legacy, ...fromPrograms];
+        const rules = programBasedRulesByPointCard.get(p.id) ?? [];
         return (
           <PointCardStoresPreview
             rules={rules}
@@ -198,7 +215,9 @@ export function PointCardsScreen() {
     },
   ];
 
-  const loyaltyColumns: ColumnDef<LoyaltyRule>[] = [
+  // 自作の提示還元ルールの一覧。表示専用 (追加はフォーム、削除は removeUserProgram)。
+  // 編集導線は Phase 2 (IA-4) で用意予定。
+  const loyaltyColumns: ColumnDef<PcStoreRule>[] = [
     {
       key: "pointCard",
       label: "ポイントカード",
@@ -213,17 +232,6 @@ export function PointCardsScreen() {
       key: "rate",
       label: "還元率",
       view: (r) => `${(r.rate * 100).toFixed(2)}%`,
-      edit: (r, set) => (
-        <input
-          type="number"
-          inputMode="decimal"
-          step="0.001"
-          min="0"
-          value={r.rate}
-          onChange={(e) => set({ rate: Number(e.target.value) })}
-          style={{ width: 100 }}
-        />
-      ),
     },
     {
       key: "campaign",
@@ -232,36 +240,11 @@ export function PointCardsScreen() {
         if (!r.validFrom && !r.validTo) return "-";
         return `${r.validFrom ?? "..."} 〜 ${r.validTo ?? "..."}`;
       },
-      edit: (r, set) => (
-        <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
-          <input
-            type="date"
-            value={r.validFrom ?? ""}
-            onChange={(e) => set({ validFrom: e.target.value || undefined })}
-            style={{ width: 130 }}
-            title="開始日 (未指定なら常時)"
-          />
-          <span>〜</span>
-          <input
-            type="date"
-            value={r.validTo ?? ""}
-            onChange={(e) => set({ validTo: e.target.value || undefined })}
-            style={{ width: 130 }}
-            title="終了日 (未指定なら無期限)"
-          />
-        </span>
-      ),
     },
     {
       key: "notes",
       label: "メモ",
       view: (r) => sanitizeNoteForDisplay(r.notes) ?? "-",
-      edit: (r, set) => (
-        <input
-          value={r.notes ?? ""}
-          onChange={(e) => set({ notes: e.target.value || undefined })}
-        />
-      ),
     },
   ];
 
@@ -347,7 +330,9 @@ export function PointCardsScreen() {
         onSubmit={(e) => {
           e.preventDefault();
           if (!lrPointCard || !lrStore) return;
-          addLoyaltyRule({
+          // 店舗 × ポイントカード提示還元を program + membership に変換して atomic 追加。
+          // currencyId は addUserLoyaltyProgram が pointCard.currencyId で補完する。
+          addUserLoyaltyProgram({
             storeId: lrStore,
             pointCardId: lrPointCard,
             rate: Number(lrRate),
@@ -400,10 +385,9 @@ export function PointCardsScreen() {
       </form>
 
       <ResponsiveTable
-        rows={loyaltyRules}
+        rows={userLoyaltyRows}
         columns={loyaltyColumns}
-        onSave={(id, patch) => updateLoyaltyRule(id, patch)}
-        onDelete={removeLoyaltyRule}
+        onDelete={removeUserProgram}
         testId="loyalty-rules"
       />
     </section>

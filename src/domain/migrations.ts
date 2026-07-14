@@ -6,7 +6,6 @@ export type CollectionName =
   | "stores"
   | "edges"
   | "pointCards"
-  | "loyaltyRules"
   | "paymentApps"
   | "programs"
   | "memberships";

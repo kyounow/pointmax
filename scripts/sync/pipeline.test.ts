@@ -42,7 +42,6 @@ const emptyCurrent: SeedShape = {
   ],
   edges: [],
   pointCards: [],
-  loyaltyRules: [],
   paymentApps: [],
   programs: [],
   memberships: [],

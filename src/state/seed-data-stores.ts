@@ -1,12 +1,11 @@
 // 店舗まわりのデータ:
 //   - SEED_STORES         : お店マスタ (category 必須、preferredPointCardIds 任意)
-//   - SEED_LOYALTY_RULES  : 店舗 × ポイントカード提示の還元率 (二重取り)
 //
 // 編集時のガイド:
-//   - pointCardId は seed-data-cards.ts に存在する id を参照
 //   - storeId / category は SEED_STORES と整合させる
+//   - 店舗 × ポイントカード提示の還元 (二重取り) は BenefitProgram (seed-data-programs.ts) で管理。
 //   - v3 PR 1 以降、JAL特約店の還元は BenefitProgram (seed-data-programs.ts) で管理。
-import type { LoyaltyRule, Store } from "../domain/types";
+import type { Store } from "../domain/types";
 
 export const SEED_STORES: Store[] = [
   // ネット通販
@@ -175,9 +174,3 @@ export const SEED_STORES: Store[] = [
   { id: "general", name: "一般店舗 (規定還元)", category: "汎用" },
 ];
 
-// 店舗 × ポイントカードの提示還元 (二重取り用)。
-// v3 PR 2 で全件を BenefitProgram (seed-data-programs.ts) に統合。
-// 旧 loyaltyRules は空配列に変更。PR 3 で型定義・evaluator ロジックを削除予定。
-export const SEED_LOYALTY_RULES: LoyaltyRule[] = [
-  // (空配列: v3 PR 2 で全件 BenefitProgram に移行済み)
-];

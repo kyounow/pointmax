@@ -40,7 +40,6 @@ import {
 import { buildReviewQueue } from "./report";
 import {
   ADDED_CARDS,
-  ADDED_LOYALTY_RULES,
   ADDED_MEMBERSHIPS,
   ADDED_PAYMENT_APPS,
   ADDED_PROGRAMS,
@@ -275,7 +274,6 @@ function main(): void {
   const { buckets } = bucketProposals(sel.found);
   const merge = {
     stores: mergeWithExisting(ADDED_STORES, buckets.stores),
-    loyaltyRules: mergeWithExisting(ADDED_LOYALTY_RULES, buckets.loyaltyRules),
     cards: mergeWithExisting(ADDED_CARDS, buckets.cards),
     paymentApps: mergeWithExisting(ADDED_PAYMENT_APPS, buckets.paymentApps),
     programs: mergeWithExisting(ADDED_PROGRAMS, buckets.programs),
@@ -306,7 +304,6 @@ function main(): void {
 
   const mergedBuckets: Buckets = pruneRemovedFromBuckets({
     stores: merge.stores.merged as Record<string, unknown>[],
-    loyaltyRules: merge.loyaltyRules.merged as Record<string, unknown>[],
     cards: merge.cards.merged as Record<string, unknown>[],
     paymentApps: merge.paymentApps.merged as Record<string, unknown>[],
     programs: merge.programs.merged as Record<string, unknown>[],

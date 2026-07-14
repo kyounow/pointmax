@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { rankCards, nearlyEqual, RANK_EPS } from "./rankCards";
+import { membershipId } from "../state/defineMemberships";
 import type { BenefitProgram, Card, ConversionEdge, PaymentApp, PointCard, Store, StoreProgramMembership } from "./types";
 
 // v6.0.0: rankCards は RankResult ({ rankings, upgrade }) を返すようになった。
@@ -10,6 +11,40 @@ function rankCardsRankings(
   options?: Parameters<typeof rankCards>[1],
 ) {
   return rankCards(input, options).rankings;
+}
+
+// v6 PR-1e: 旧 loyaltyRules は BenefitProgram (pointCardId + scope:"member-stores")
+// + membership へ統合された。テストの「店舗×ポイントカード提示還元」仕様を
+// program + membership に変換する (addUserLoyaltyProgram と等価な形)。返り値を
+// RankInput にスプレッドして使う (...loyaltyPrograms(rules, pointCards))。
+function loyaltyPrograms(
+  rules: {
+    id: string;
+    storeId: string;
+    pointCardId: string;
+    rate: number;
+    currencyId?: string;
+  }[],
+  pointCards: PointCard[],
+): { programs: BenefitProgram[]; memberships: StoreProgramMembership[] } {
+  const currencyOf = new Map(pointCards.map((p) => [p.id, p.currencyId]));
+  return {
+    programs: rules.map((r) => ({
+      id: r.id,
+      name: r.id,
+      scope: "member-stores",
+      pointCardId: r.pointCardId,
+      rate: r.rate,
+      currencyId:
+        r.currencyId ?? currencyOf.get(r.pointCardId) ?? `${r.pointCardId}-pt`,
+      bonusType: "primary",
+    })),
+    memberships: rules.map((r) => ({
+      id: membershipId(r.id, r.storeId),
+      programId: r.id,
+      storeId: r.storeId,
+    })),
+  };
 }
 
 // A3: ランキングの「実質同値」判定が浮動小数点 dust を許容することの回帰テスト。
@@ -223,9 +258,10 @@ describe("rankCards", () => {
         edge("rakuten-to-d", "rakuten-pt", "d-pt", 1),
       ],
       pointCards: [dCard],
-      loyaltyRules: [
-        { id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 },
-      ],
+      ...loyaltyPrograms(
+        [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+        [dCard],
+      ),
     });
     // 楽天カード: 100 楽天pt → d-pt 100 (rate 1)
     // ロイヤリティ: 100 dpt direct
@@ -261,10 +297,13 @@ describe("rankCards", () => {
         edge("rakuten-to-d", "rakuten-pt", "d-pt", 1),
       ],
       pointCards: [dCard, rakutenCard],
-      loyaltyRules: [
-        { id: "l1", storeId: "stack-shop", pointCardId: "d-card", rate: 0.01 },
-        { id: "l2", storeId: "stack-shop", pointCardId: "r-card", rate: 0.005 },
-      ],
+      ...loyaltyPrograms(
+        [
+          { id: "l1", storeId: "stack-shop", pointCardId: "d-card", rate: 0.01 },
+          { id: "l2", storeId: "stack-shop", pointCardId: "r-card", rate: 0.005 },
+        ],
+        [dCard, rakutenCard],
+      ),
     });
     // クレカ(楽天): 100 楽天pt → 100 d-pt
     // ロイヤリティ1: dカード 100 d-pt
@@ -409,9 +448,10 @@ describe("rankCards", () => {
       stores: [...baseStores, partsStore],
       edges: [],
       pointCards: [loyPtCard],
-      loyaltyRules: [
-        { id: "lr-pt", storeId: "parts-shop", pointCardId: "loy-pt", rate: 0.01 },
-      ],
+      ...loyaltyPrograms(
+        [{ id: "lr-pt", storeId: "parts-shop", pointCardId: "loy-pt", rate: 0.01 }],
+        [loyPtCard],
+      ),
     });
 
     // cardA: finalAmount=200, loyaltyTotal=100 → total=300
@@ -879,7 +919,10 @@ describe("rankCards v6.0.0: ポイントカード利用選択 + upgrade", () => 
       stores: baseStores,
       edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
       pointCards: [dCard],
-      loyaltyRules: [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+      ...loyaltyPrograms(
+        [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+        [dCard],
+      ),
     });
     expect(res.upgrade).toBeNull();
   });
@@ -892,7 +935,10 @@ describe("rankCards v6.0.0: ポイントカード利用選択 + upgrade", () => 
       stores: baseStores,
       edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
       pointCards: [{ ...dCard, enabled: false }],
-      loyaltyRules: [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+      ...loyaltyPrograms(
+        [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+        [dCard],
+      ),
     });
     // MAIN: dカード無効 → loyalty 二重取りなし
     expect(res.rankings[0].loyalties).toHaveLength(0);
@@ -938,7 +984,10 @@ describe("rankCards v6.0.0: ポイントカード利用選択 + upgrade", () => 
       stores: baseStores,
       edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
       pointCards: [dCard], // enabled 未設定
-      loyaltyRules: [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+      ...loyaltyPrograms(
+        [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+        [dCard],
+      ),
     });
     expect(res.rankings[0].loyalties).toHaveLength(1);
     expect(res.upgrade).toBeNull();
@@ -953,10 +1002,13 @@ describe("rankCards v6.0.0: ポイントカード利用選択 + upgrade", () => 
       stores: [...baseStores, stackStore],
       edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
       pointCards: [rCard, { ...dCard, enabled: false }],
-      loyaltyRules: [
-        { id: "lr", storeId: "s1", pointCardId: "r-card", rate: 0.005 }, // enabled、低レート
-        { id: "ld", storeId: "s1", pointCardId: "d-card", rate: 0.02 }, // disabled、高レート
-      ],
+      ...loyaltyPrograms(
+        [
+          { id: "lr", storeId: "s1", pointCardId: "r-card", rate: 0.005 }, // enabled、低レート
+          { id: "ld", storeId: "s1", pointCardId: "d-card", rate: 0.02 }, // disabled、高レート
+        ],
+        [rCard, dCard],
+      ),
     });
     // MAIN: maxStacks=1、r-card のみ → 10000×0.005=50
     expect(res.rankings[0].loyalties).toHaveLength(1);
