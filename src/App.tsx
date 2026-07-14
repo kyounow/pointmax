@@ -24,6 +24,7 @@ import { SyncUpdateModal } from "./ui/SyncUpdateModal";
 import { useStore } from "./state/store";
 import { useDialog } from "./ui/dialog/useDialog";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
+import { useRoute, navigate, replaceRoute, parseHash } from "./navigation";
 
 type Tab =
   | "calculator"
@@ -53,7 +54,12 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 function App() {
-  const [tab, setTab] = useState<Tab>("calculator");
+  // 画面状態は location.hash から導出する (PR-0d: hash ルーティング基盤)。
+  // route.tab が TABS の有効な id ならそれを採用、未知/空なら "calculator" に fallback。
+  // route.sub / route.params は今回未消費だが、後続 PR (設定サブセクション・
+  // ウォレットハイライト等) が useRoute の戻り値として利用できる状態にしてある。
+  const route = useRoute();
+  const tab: Tab = TABS.find((t) => t.id === route.tab)?.id ?? "calculator";
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Wave 5 B-1: useShallow に集約 (関数 + pendingMigration はまとめて取れる)
   const { exportJson, importJson, pendingMigration } = useStore(
@@ -76,6 +82,26 @@ function App() {
     TABS.find((t) => t.id === tab)?.label ?? "PointMax";
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 初回マウント時のみ: hash が空 or 未知 tab のとき履歴を汚さず calculator に正規化。
+  // replaceRoute は hashchange を発火しないが、parseHash("") も calculator を返すため
+  // useRoute の snapshot と導出 tab は一致したまま (履歴エントリを増やさない)。
+  useEffect(() => {
+    const initial = parseHash(location.hash);
+    const known = TABS.some((t) => t.id === initial.tab);
+    if (!location.hash || !known) replaceRoute("calculator");
+  }, []);
+
+  // tab 変化時に document.title を更新 (画面名 | PointMax)。
+  useEffect(() => {
+    document.title = `${activeTabLabel} | PointMax`;
+  }, [activeTabLabel]);
+
+  // tab 変化時のみ最上部へスクロールリセット。
+  // 規則: 同一 tab 内の sub / params 変化ではリセットしない (依存は tab のみ)。
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [tab]);
 
   // ドロワーが開いている時はESCで閉じる、bodyスクロール抑制
   useEffect(() => {
@@ -153,7 +179,7 @@ function App() {
   };
 
   const selectTab = (id: Tab) => {
-    setTab(id);
+    navigate(id);
     setDrawerOpen(false);
   };
 
@@ -161,7 +187,7 @@ function App() {
     <div className="app">
       {pendingMigration && <SchemaUpgradeModal strategy={pendingMigration} />}
       {!pendingMigration && (
-        <SyncUpdateModal onViewHistory={() => setTab("sync-history")} />
+        <SyncUpdateModal onViewHistory={() => navigate("sync-history")} />
       )}
       <header className="appbar">
         <button
@@ -174,7 +200,7 @@ function App() {
         <button
           type="button"
           className="brand"
-          onClick={() => setTab("calculator")}
+          onClick={() => navigate("calculator")}
           aria-label="計算画面に戻る"
           title="計算画面に戻る"
         >
@@ -192,7 +218,7 @@ function App() {
               aria-selected={tab === t.id}
               aria-controls="main-tabpanel"
               className={tab === t.id ? "active" : ""}
-              onClick={() => setTab(t.id)}
+              onClick={() => navigate(t.id)}
             >
               {t.label}
             </button>
