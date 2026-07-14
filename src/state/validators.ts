@@ -21,6 +21,11 @@ import type {
 } from "../domain/types";
 import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
 import { membershipId } from "./defineMemberships";
+import { CARD_FAMILIES } from "./seed-data-card-families";
+
+// Card.familyId が参照できる有効な family id 集合 (静的 import で OK。
+// CARD_FAMILIES は seed() に含まれない静的定数のため import 時に確定する)。
+const VALID_CARD_FAMILY_IDS = new Set(CARD_FAMILIES.map((f) => f.id));
 
 export type ImportData = {
   cards: Card[];
@@ -179,6 +184,10 @@ export function validateImportData(
   const membershipIdError = checkMembershipIds(data);
   if (membershipIdError !== null) return { ok: false, error: membershipIdError };
 
+  // v6 PR-1c: card.familyId が指定されている場合は CARD_FAMILIES に実在すること。
+  const cardFamilyError = checkCardFamilyIds(data);
+  if (cardFamilyError !== null) return { ok: false, error: cardFamilyError };
+
   // v6: scope 整合性のクロスチェック。
   //   「all-stores なのに membership を持つ」program は矛盾 (全店適用 program は
   //   membership を持ってはいけない) → import ではエラーにする。
@@ -208,6 +217,22 @@ function checkMembershipIds(data: Record<string, unknown>): string | null {
       return `membership id "${m.id}" が重複しています`;
     }
     seen.add(m.id);
+  }
+  return null;
+}
+
+// card.familyId が指定されている場合、CARD_FAMILIES に実在するかを検証する。
+// familyId は任意フィールドなので、未指定 (undefined) は素通し。
+// dangling な familyId は排他 invariant が効かない (family を引けない) 死にデータ。
+function checkCardFamilyIds(data: Record<string, unknown>): string | null {
+  if (!Array.isArray(data.cards)) return null;
+  for (let i = 0; i < data.cards.length; i++) {
+    const c = data.cards[i];
+    if (!isObject(c)) continue; // checkArray 側で既に弾かれている想定
+    if (c.familyId === undefined) continue;
+    if (!isStr(c.familyId) || !VALID_CARD_FAMILY_IDS.has(c.familyId)) {
+      return `cards[${i}].familyId "${String(c.familyId)}" が CARD_FAMILIES に存在しません`;
+    }
   }
   return null;
 }

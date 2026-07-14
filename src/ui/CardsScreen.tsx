@@ -10,18 +10,26 @@ import { useDialog } from "./dialog/useDialog";
 
 export function CardsScreen() {
   // Wave 5 B-1: 6 個別 subscribe → 単一 useShallow に集約
-  const { cards, currencies, addCard, updateCard, removeCard, resetCardToSeed } =
-    useStore(
-      useShallow((s) => ({
-        cards: s.cards,
-        currencies: s.currencies,
-        addCard: s.addCard,
-        updateCard: s.updateCard,
-        removeCard: s.removeCard,
-        resetCardToSeed: s.resetCardToSeed,
-      })),
-    );
-  const { confirm } = useDialog();
+  const {
+    cards,
+    currencies,
+    addCard,
+    updateCard,
+    setCardEnabled,
+    removeCard,
+    resetCardToSeed,
+  } = useStore(
+    useShallow((s) => ({
+      cards: s.cards,
+      currencies: s.currencies,
+      addCard: s.addCard,
+      updateCard: s.updateCard,
+      setCardEnabled: s.setCardEnabled,
+      removeCard: s.removeCard,
+      resetCardToSeed: s.resetCardToSeed,
+    })),
+  );
+  const { confirm, alert } = useDialog();
 
   const [name, setName] = useState("");
   const [grade, setGrade] = useState("");
@@ -110,11 +118,19 @@ export function CardsScreen() {
             <input
               type="checkbox"
               checked={on}
-              onChange={(e) =>
-                updateCard(c.id, {
-                  enabled: e.target.checked ? undefined : false,
-                })
-              }
+              onChange={(e) => {
+                // setCardEnabled は exclusive family なら兄弟カードを自動 OFF にし、
+                // その名前配列を返す。空でなければ「無言で切り替えない」ため通知する。
+                const disabled = setCardEnabled(c.id, e.target.checked);
+                if (disabled.length > 0) {
+                  void alert({
+                    title: `${disabled.join("、")} を OFF にしました`,
+                    message:
+                      "同シリーズ（グレード違い）のカードは同時に1枚のみ有効化できます。",
+                    level: "info",
+                  });
+                }
+              }}
             />
             <span>{on ? "使う" : "OFF"}</span>
           </label>

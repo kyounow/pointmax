@@ -36,7 +36,9 @@ type InjectParams = {
 
 // 各 entity のデフォルト列
 const DEFAULT_COLUMNS: Record<InjectableEntity, string[]> = {
-  cards: ["id", "name", "defaultRate", "defaultCurrencyId"],
+  // v6 PR-1c: familyId を既定列に追加 (Gemini がグレード系列を認識するための語彙。
+  // family 無しカードは "-" 表示)。プロンプト本文の改訂 (INJECT 明示列の更新) は PR-1f。
+  cards: ["id", "name", "defaultRate", "defaultCurrencyId", "familyId"],
   currencies: ["id", "name", "kind"],
   stores: ["id", "name", "category"],
   pointCards: ["id", "name", "currencyId"],

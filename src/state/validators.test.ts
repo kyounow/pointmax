@@ -199,6 +199,45 @@ describe("validateImportData: v6 membership id 検証", () => {
   });
 });
 
+describe("validateImportData: v6 PR-1c card.familyId 検証", () => {
+  it("familyId 未指定のカードは受理 (任意フィールド)", () => {
+    expect(validateImportData(valid).ok).toBe(true);
+  });
+
+  it("実在する familyId (family-epos) を持つカードを受理", () => {
+    const r = validateImportData({
+      ...valid,
+      cards: [
+        {
+          id: "epos-gold",
+          name: "エポスゴールド",
+          defaultRate: 0.005,
+          defaultCurrencyId: "cur1",
+          familyId: "family-epos",
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("CARD_FAMILIES に存在しない familyId を位置情報付きで拒否", () => {
+    const r = validateImportData({
+      ...valid,
+      cards: [
+        {
+          id: "c1",
+          name: "C",
+          defaultRate: 0.01,
+          defaultCurrencyId: "cur1",
+          familyId: "family-nonexistent",
+        },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("cards[0].familyId");
+  });
+});
+
 describe("validateImportData: schemaVersion ガード (import 経路のみ)", () => {
   const good = {
     ...valid,

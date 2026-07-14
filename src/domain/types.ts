@@ -29,6 +29,37 @@ export type Card = {
   defaultCurrencyId: string;
   enabled?: boolean;
   userModifiedAt?: string;
+  // familyId: 同一ブランドのグレード系列を束ねる family の id (CARD_FAMILIES を参照)。
+  //   例: epos-card / epos-gold / epos-platinum は同じ "family-epos" に属する。
+  //   family が exclusive (CardFamily.exclusive=true) の場合、store の enabled トグルで
+  //   「同 family の 1 枚だけ有効」という排他 invariant が適用される (物理的に切替型のカード)。
+  //   undefined = family に属さない単独カード (排他対象外)。
+  //   参照先の実在性は src/state/validators.ts が import 検証、seed 契約は seed.test.ts が担保。
+  familyId?: string;
+  // gradeLevel: family 内での並び順専用 (1=一般 / 2=ゴールド / 3=プラチナ 等)。
+  //   **計算には一切使用しない** (還元率やゲートに影響しない、純粋に表示順のヒント)。
+  //   family 内で重複しないこと (seed.test.ts で担保)。undefined = 単独カード。
+  gradeLevel?: number;
+};
+
+// カードの family (同一ブランドのグレード系列)。Card.familyId が参照する静的マスタ。
+// CARD_FAMILIES (src/state/seed-data-card-families.ts) が唯一の定義源で、
+// seed() の戻り値には含めず (SeedShape 不変)、UI / domain / validators から直接 import する。
+//
+// exclusive=true : 「物理的に同時保有しない切替型」。同 family のカードは同時に 1 枚しか
+//   有効化できず、あるカードを ON にすると兄弟カードが自動 OFF になる (store の排他 invariant)。
+//   例: EPOS の 3 グレード (一般/ゴールド/プラチナ)、JALカードSuica の 普通/ゴールド。
+// exclusive=false: 併存保有可。同 family でも複数枚を同時に有効化できる (排他しない)。
+//   例: JCB CARD W と JCB ゴールドは別カードとして両方保有・利用できる。
+//
+// YAGNI (PR-1c 設計判断): family 全体を参照する派生 (requiredCardFamilyIds /
+//   cardFamilyIds の静的展開) は本 PR では実装しない。現 seed は明示 cardIds で動いており
+//   family を参照する消費者が不在のため。導入条件は「family 全体を参照する edge/program が
+//   実際に必要になった時」で、その際は seed() 内・applyProgramOverrides の後に展開を置く。
+export type CardFamily = {
+  id: string;
+  name: string;
+  exclusive: boolean;
 };
 
 // プルダウン用店舗マスタ
