@@ -37,6 +37,7 @@ export function CalculatorScreen() {
     programs,
     memberships,
     preferredCurrencyIds,
+    birthMonth,
   } = useStore(
     useShallow((s) => ({
       cards: s.cards,
@@ -49,6 +50,7 @@ export function CalculatorScreen() {
       programs: s.programs,
       memberships: s.memberships,
       preferredCurrencyIds: s.preferredCurrencyIds,
+      birthMonth: s.birthMonth,
     })),
   );
 
@@ -113,6 +115,7 @@ export function CalculatorScreen() {
         programs,
         memberships,
         now: today,
+        userBirthMonth: birthMonth,
       },
       { includeDisabled: true },
     );
@@ -129,6 +132,7 @@ export function CalculatorScreen() {
     paymentApps,
     programs,
     memberships,
+    birthMonth,
   ]);
 
   const allRanked = rankResult?.rankings ?? null;

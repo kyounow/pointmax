@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { evaluatePrograms } from "./programEvaluator";
+import { evaluatePrograms, isProgramPreferenceActive } from "./programEvaluator";
 import type { BenefitProgram, Card, PaymentApp, Store, StoreProgramMembership } from "./types";
 
 // ─── テスト用フィクスチャ ───
@@ -774,5 +774,185 @@ describe("scope 分岐 (v6)", () => {
       memberships: [{ id: "m-prog-member-any-store", programId: "prog-member", storeId: "any-store" }],
     });
     expect(result.primary?.program.id).toBe("prog-member");
+  });
+});
+
+// v6 PR-1d: opt-in / enabled / birthdayMonthOnly の per-user preference ゲート。
+// R1 規約: seed/master は enabled を出荷せず、opt-in 特典は optIn:true で既定 OFF。
+describe("opt-in / enabled / birthdayMonthOnly ゲート (PR-1d)", () => {
+  const card: Card = {
+    id: "olive",
+    name: "Olive",
+    defaultRate: 0.005,
+    defaultCurrencyId: "v-pt",
+  };
+  const anyStore: Store = { id: "general", name: "一般店舗", category: "汎用" };
+  const noApp: PaymentApp = { id: "pa-no-app", name: "直接決済" };
+
+  // opt-in program (Olive 選べる特典型)。既定 OFF 出荷 (enabled は書かない)。
+  const optInAddOn: BenefitProgram = {
+    id: "prog-optin",
+    name: "opt-in addOn",
+    scope: "all-stores",
+    cardIds: ["olive"],
+    rate: 0.01,
+    currencyId: "v-pt",
+    bonusType: "addOn",
+    optIn: true,
+  };
+
+  it("optIn:true かつ enabled 未設定 → 不発 (opt-in 未選択、既定 OFF)", () => {
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [optInAddOn],
+      memberships: [],
+    });
+    expect(result.addOns).toHaveLength(0);
+    expect(result.primary).toBeNull();
+  });
+
+  it("optIn:true かつ enabled:true → 発火 (ユーザーが「使う」を選択)", () => {
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [{ ...optInAddOn, enabled: true }],
+      memberships: [],
+    });
+    expect(result.addOns).toHaveLength(1);
+    expect(result.addOns[0].program.id).toBe("prog-optin");
+    expect(result.addOns[0].effectiveRate).toBe(0.01);
+  });
+
+  it("optIn:true かつ enabled:false → 不発 (明示 OFF)", () => {
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [{ ...optInAddOn, enabled: false }],
+      memberships: [],
+    });
+    expect(result.addOns).toHaveLength(0);
+  });
+
+  it("optIn なし + enabled:false → 明示 OFF で不発 (通常 program の非表示)", () => {
+    const normalPrimary: BenefitProgram = {
+      id: "prog-normal",
+      name: "通常 primary",
+      scope: "all-stores",
+      cardIds: ["olive"],
+      rate: 0.02,
+      currencyId: "v-pt",
+      bonusType: "primary",
+      enabled: false,
+    };
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [normalPrimary],
+      memberships: [],
+    });
+    expect(result.primary).toBeNull();
+  });
+
+  it("optIn なし + enabled 未設定 → 従来どおり発火 (既定 ON)", () => {
+    const normalPrimary: BenefitProgram = {
+      id: "prog-normal",
+      name: "通常 primary",
+      scope: "all-stores",
+      cardIds: ["olive"],
+      rate: 0.02,
+      currencyId: "v-pt",
+      bonusType: "primary",
+    };
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [normalPrimary],
+      memberships: [],
+    });
+    expect(result.primary?.program.id).toBe("prog-normal");
+  });
+
+  // ─── birthdayMonthOnly ───
+  const birthdayProgram: BenefitProgram = {
+    id: "prog-birthday",
+    name: "誕生月ボーナス",
+    scope: "all-stores",
+    cardIds: ["olive"],
+    rate: 0.05,
+    currencyId: "v-pt",
+    bonusType: "primary",
+    birthdayMonthOnly: true,
+  };
+
+  it("birthdayMonthOnly: userBirthMonth が今月と一致 → 発火", () => {
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [birthdayProgram],
+      memberships: [],
+      now: new Date("2026-07-15"), // 7月
+      userBirthMonth: 7,
+    });
+    expect(result.primary?.program.id).toBe("prog-birthday");
+  });
+
+  it("birthdayMonthOnly: userBirthMonth が今月と不一致 → 不発", () => {
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [birthdayProgram],
+      memberships: [],
+      now: new Date("2026-07-15"), // 7月
+      userBirthMonth: 3,
+    });
+    expect(result.primary).toBeNull();
+  });
+
+  it("birthdayMonthOnly: userBirthMonth 未設定 → 不発 (安全側)", () => {
+    const result = evaluatePrograms({
+      card,
+      store: anyStore,
+      paymentApp: noApp,
+      programs: [birthdayProgram],
+      memberships: [],
+      now: new Date("2026-07-15"),
+      // userBirthMonth 未指定
+    });
+    expect(result.primary).toBeNull();
+  });
+});
+
+// isProgramPreferenceActive 単体 (通常 program / loyalty program 双方が共有する pure 判定)
+describe("isProgramPreferenceActive (PR-1d)", () => {
+  const now = new Date("2026-07-15"); // 7月
+
+  it("preference キー無し → 有効", () => {
+    expect(isProgramPreferenceActive({}, now)).toBe(true);
+  });
+  it("enabled:false → 無効", () => {
+    expect(isProgramPreferenceActive({ enabled: false }, now)).toBe(false);
+  });
+  it("optIn:true + enabled 未設定 → 無効", () => {
+    expect(isProgramPreferenceActive({ optIn: true }, now)).toBe(false);
+  });
+  it("optIn:true + enabled:true → 有効", () => {
+    expect(isProgramPreferenceActive({ optIn: true, enabled: true }, now)).toBe(true);
+  });
+  it("birthdayMonthOnly + 一致月 → 有効", () => {
+    expect(isProgramPreferenceActive({ birthdayMonthOnly: true }, now, 7)).toBe(true);
+  });
+  it("birthdayMonthOnly + 不一致月 → 無効", () => {
+    expect(isProgramPreferenceActive({ birthdayMonthOnly: true }, now, 12)).toBe(false);
+  });
+  it("birthdayMonthOnly + 未設定 → 無効", () => {
+    expect(isProgramPreferenceActive({ birthdayMonthOnly: true }, now)).toBe(false);
   });
 });

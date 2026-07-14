@@ -48,6 +48,8 @@ export function ProgramsScreen() {
         paymentApps: s.paymentApps,
       })),
     );
+  // v6 PR-1d 暫定導線: opt-in 特典の「使う」トグル (action は stable ref)。
+  const setProgramEnabled = useStore((s) => s.setProgramEnabled);
 
   const [filter, setFilter] = useState<FilterKey>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -131,6 +133,9 @@ export function ProgramsScreen() {
         <br />
         <small>
           「公式」バッジ: マスターデータ由来のプログラム。「addOn」: 他の還元に上乗せ加算。「primary」: 最高 rate を排他採用。
+          <br />
+          「選択制」の特典 (Olive 選べる特典・エポス選べるポイントアップ等) は既定 OFF です。
+          対象を登録・選択している場合は「使う」を ON にすると計算に反映されます。
         </small>
       </p>
 
@@ -171,6 +176,7 @@ export function ProgramsScreen() {
               <th>還元率</th>
               <th>貯まる通貨</th>
               <th>期間</th>
+              <th>使う</th>
               <th>加盟店</th>
             </tr>
           </thead>
@@ -282,6 +288,28 @@ export function ProgramsScreen() {
                       )}
                     </td>
 
+                    {/* 使う (v6 PR-1d 暫定導線): opt-in 特典のみトグルを露出。
+                        既定 OFF (enabled 未設定) の登録/選択制特典を ON にすると計算に載る。
+                        非 opt-in program は現状トグル対象外 (Phase 2 で全 program の表示制御を検討)。 */}
+                    <td data-label="使う">
+                      {p.optIn === true ? (
+                        <label
+                          className={`card-enabled-toggle ${p.enabled === true ? "is-on" : "is-off"}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={p.enabled === true}
+                            onChange={(e) =>
+                              setProgramEnabled(p.id, e.target.checked)
+                            }
+                          />
+                          <span>{p.enabled === true ? "使う" : "OFF"}</span>
+                        </label>
+                      ) : (
+                        <span style={{ color: "#9ca3af" }}>-</span>
+                      )}
+                    </td>
+
                     {/* 加盟店 */}
                     <td data-label="加盟店">
                       {global ? (
@@ -302,7 +330,7 @@ export function ProgramsScreen() {
                   {/* 展開行: 加盟店リスト */}
                   {isExpanded && (
                     <tr key={`${p.id}-expanded`} className="program-membership-row">
-                      <td colSpan={7} className="program-membership-cell">
+                      <td colSpan={8} className="program-membership-cell">
                         <div className="program-membership-body">
                           <strong className="program-membership-title">
                             加盟店一覧 ({mems.length} 件)

@@ -114,6 +114,10 @@ type State = {
   // 空配列なら Calculator は通貨未選択状態 (ユーザに選択を促す)。
   // PointCard preferredOrder と同じ「順序あり配列」パターン。
   preferredCurrencyIds: string[];
+  // v6 PR-1d: ユーザーの誕生月 (1-12)。birthdayMonthOnly=true の program が
+  // 「今月 === birthMonth」の時のみ発火する判定に使う (rankCards に userBirthMonth として渡す)。
+  // undefined = 未設定 (誕生月限定 program は常に不発)。persist 対象 (partialize 無し = 全 state 永続)。
+  birthMonth?: number;
   // schema migration 中フラグ。旧 version 検出時に migrate callback がセットし、
   // SchemaUpgradeModal で Apply 後にクリアされる。
   _pendingSchemaMigration?: SchemaMigrationStrategy;
@@ -163,6 +167,10 @@ type Actions = {
     direction: "up" | "down",
   ) => void;
 
+  // v6 PR-1d: ユーザーの誕生月 (1-12) を設定。undefined でクリア。
+  // 範囲外の値は無視 (何もしない)。birthdayMonthOnly program の判定に使う。
+  setBirthMonth: (month?: number) => void;
+
   addLoyaltyRule: (r: Omit<LoyaltyRule, "id">) => void;
   updateLoyaltyRule: (
     id: string,
@@ -180,6 +188,11 @@ type Actions = {
     storeIds: string[],
   ) => string;
   removeUserProgram: (id: string) => void;
+  // program の「使う」トグル専用 action (v6 PR-1d)。opt-in 特典の有効化/無効化。
+  // enabled は preference (ユーザー所有キー) なので userModifiedAt はスタンプしない
+  // (setCardEnabled と同セマンティクス)。true → enabled:true / false → enabled:false。
+  // UI トグルは Phase 2 (IA-3/IA-4) だが store API はここで用意。
+  setProgramEnabled: (programId: string, enabled: boolean) => void;
 
   addPaymentApp: (p: Omit<PaymentApp, "id">) => void;
   updatePaymentApp: (
@@ -222,6 +235,7 @@ const empty: State = {
   syncUrl: DEFAULT_SYNC_URL,
   lastSyncAt: null,
   preferredCurrencyIds: [],
+  // birthMonth は undefined で初期化 (誕生月未設定)
   // _pendingSchemaMigration / _legacyPersistedState は undefined で初期化
 };
 
@@ -396,6 +410,17 @@ export const useStore = create<State & Actions>()(
           ];
         }),
 
+      setBirthMonth: (month) =>
+        set((state) => {
+          // undefined でクリア。1-12 のみ受理し、範囲外は無視 (何もしない)。
+          if (month === undefined) {
+            state.birthMonth = undefined;
+            return;
+          }
+          if (!Number.isInteger(month) || month < 1 || month > 12) return;
+          state.birthMonth = month;
+        }),
+
       addLoyaltyRule: (r) =>
         set((state) => {
           state.loyaltyRules.push({ ...r, id: newId() });
@@ -435,6 +460,17 @@ export const useStore = create<State & Actions>()(
           );
         });
       },
+      setProgramEnabled: (programId, enabled) =>
+        set((state) => {
+          const idx = state.programs.findIndex((p) => p.id === programId);
+          if (idx < 0) return;
+          // enabled は preference (ユーザー所有キー) なので userModifiedAt は
+          // スタンプしない (setCardEnabled と同じく直接 draft を mutate)。
+          // opt-in 特典は enabled:true で明示的に「使う」= 評価に載る、
+          // enabled:false で明示 OFF。true/false を明示的に書き込む
+          // (opt-in program は enabled 不在=既定 OFF のため undefined 化はしない)。
+          state.programs[idx].enabled = enabled;
+        }),
 
       addPaymentApp: (p) =>
         set((state) => {
@@ -634,8 +670,14 @@ export const useStore = create<State & Actions>()(
               state.paymentApps,
               ["enabled", "userModifiedAt"],
             );
-            // 公式 master は全置換 (欠落欄は空配列)。
-            state.programs = data.programs ?? [];
+            // v6 PR-1d: programs も全置換だが enabled (opt-in の使う/使わない) は
+            // id マッチでローカル保持。公式 master は enabled を出荷しない (R1) ため
+            // opt-in ON が全上書きで巻き戻らない。ユーザー export (enabled 明示) は尊重。
+            state.programs = preservePreferences(
+              data.programs ?? [],
+              state.programs,
+              ["enabled"],
+            );
             state.memberships = data.memberships ?? [];
             state.lastSyncAt = new Date().toISOString();
           });
@@ -706,7 +748,16 @@ export const useStore = create<State & Actions>()(
             );
             // programs / memberships は preserve-on-missing (旧フォーマット import で
             // 同期済みデータを消さない。syncFromUrl は公式 master 全置換なので [] 既定)。
-            if (data.programs) state.programs = data.programs;
+            // v6 PR-1d: programs 置換時も enabled (opt-in の使う/使わない) を id マッチで保持。
+            // incoming が enabled キーを持たない (公式由来) → ローカル ON/OFF を carry-over、
+            // 明示する (ユーザー自身の export) → そちらを採用。
+            if (data.programs) {
+              state.programs = preservePreferences(
+                data.programs,
+                state.programs,
+                ["enabled"],
+              );
+            }
             if (data.memberships) state.memberships = data.memberships;
           });
           return { ok: true };

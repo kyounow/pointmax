@@ -105,9 +105,13 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "v-pt",
     bonusType: "addOn",
+    // R1 (PR-1d): 登録/選択制の特典 → optIn:true で既定 OFF 出荷。enabled は書かない
+    // (ユーザー所有キー)。ユーザーが「使う」を ON にした時のみ評価に載る。
+    optIn: true,
     description:
       "Oliveアカウントの「選べる特典」で「Vポイントアッププログラム+1%」を選択すると +1% Vポイント還元 (全店適用)。" +
-      "プラチナプリファードは 2 つ選択可で最大 +2%。",
+      "プラチナプリファードは 2 つ選択可で最大 +2%。" +
+      "既定OFF・「選べる特典」で選択している場合は「使う」をONに。",
     conditions:
       "Olive アカウント契約 + 「選べる特典」で当該特典を選択している場合のみ。" +
       "選択していない場合は 0% (PointMax は条件未追跡なのでユーザー判断で除外を推奨)。",
@@ -674,8 +678,12 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "epos",
     bonusType: "primary",
+    // R1 (PR-1d): 登録制の特典 (対象ショップ登録が前提) → optIn:true で既定 OFF 出荷。
+    // enabled は書かない (ユーザー所有キー)。登録ショップがある人が「使う」を ON にする。
+    optIn: true,
     description:
-      "ゴールド/プラチナ限定「選べるポイントアップショップ」登録ショップで 200円=2pt (合計1.0%)。2025年4月改定後の倍率 (旧3倍から縮小)。",
+      "ゴールド/プラチナ限定「選べるポイントアップショップ」登録ショップで 200円=2pt (合計1.0%)。2025年4月改定後の倍率 (旧3倍から縮小)。" +
+      "既定OFF・対象ショップを登録して使う場合は「使う」をONに。",
     conditions:
       "対象300以上から最大3ショップを登録した場合のみ (登録後3ヶ月間変更不可)。未登録ショップは通常0.5%。",
     officialUrl: "https://www.eposcard.co.jp/pointup/index.html",
