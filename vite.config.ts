@@ -48,6 +48,9 @@ export default defineConfig({
         // 大型依存を別 chunk に切り出して初期 bundle を軽量化。
         // - xyflow: グラフ画面 (EdgesScreen) でのみ使う、Calculator/Cards/Stores では不要
         // - react-vendor: React core (react / react-dom) を分離してブラウザキャッシュ効果を最大化
+        // - seed-data: seed マスタデータ群 (v6 トレイン PR-1a で分離)。コードと違い
+        //   データは cron 追加で単調増加するため、main chunk の 300 KiB ガードから
+        //   切り離す (eager import のままなので読み込みタイミングは不変)
         manualChunks(id: string) {
           if (id.includes("@xyflow/react")) return "xyflow";
           if (
@@ -56,6 +59,12 @@ export default defineConfig({
             id.includes("/node_modules/scheduler/")
           ) {
             return "react-vendor";
+          }
+          if (
+            id.includes("/src/state/seed-data-") ||
+            id.includes("/src/state/seed-additions")
+          ) {
+            return "seed-data";
           }
           return undefined;
         },
