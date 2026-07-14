@@ -68,6 +68,14 @@ const ENUM = (key: string, allowed: readonly string[]): FieldCheck => ({
   check: (v) => typeof v === "string" && allowed.includes(v),
   kind: `${allowed.join(" / ")} のいずれか`,
 });
+// 任意の正の数フィールド (undefined は許容。存在する場合のみ > 0 の有限数を要求)。
+// DB-8: ConversionEdge.minFromUnits は optional で正の数のみ検証する (最低交換単位は
+// 経路選択に不使用の post-hoc 注記用。負値・0 は無意味なので弾く)。
+const OPT_POS = (key: string): FieldCheck => ({
+  key,
+  check: (v) => v === undefined || (isNum(v) && v > 0),
+  kind: "正の有限数",
+});
 const PROGRAM_SCOPES = ["all-stores", "member-stores"] as const;
 
 function checkItem(
@@ -136,7 +144,13 @@ export function validateImportData(
     checkArray(
       data.edges,
       "edges",
-      [STR("id"), STR("fromCurrencyId"), STR("toCurrencyId"), RATE("rate")],
+      [
+        STR("id"),
+        STR("fromCurrencyId"),
+        STR("toCurrencyId"),
+        RATE("rate"),
+        OPT_POS("minFromUnits"), // DB-8: optional・存在時のみ正の数
+      ],
       true,
     ),
     checkArray(

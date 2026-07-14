@@ -89,6 +89,40 @@ export type AddOnBreakdownEntry = {
   pathSteps: ConversionEdge[];
 };
 
+// DB-8: 最低交換単位 (ConversionEdge.minFromUnits) を下回った交換ステップの事後注記。
+// 経路選択には一切影響せず (bestPath/pathCache は minFromUnits を見ない = 線形前提を維持)、
+// path 確定後に「この量では最低単位に満たない」ステップだけを検出して UI 注記する。
+// amountAtEdge = その edge に入る from 通貨量 (minFromUnits 未満のときにこの型が作られる)。
+export type MinUnitAnnotation = {
+  edgeId: string;
+  fromCurrencyId: string;   // 貯めるべき通貨 (UI で currencyName に逆引きして表示)
+  minFromUnits: number;     // 最低交換単位 (from 通貨の単位数)
+  amountAtEdge: number;     // 現状この edge を通過する量 (< minFromUnits)
+};
+
+// path の各ステップに入る from 通貨量を先頭から積み上げ、minFromUnits を下回るステップを
+// 検出する純関数。startAmount = 経路起点通貨 (= earnedAmount) の量、steps = 経路の edge 列。
+// rate 積で「次ステップに入る量」を伝播させるだけの線形計算 (pathCache と同じ前提)。
+export function detectMinUnitAnnotations(
+  startAmount: number,
+  steps: ConversionEdge[],
+): MinUnitAnnotation[] {
+  const annotations: MinUnitAnnotation[] = [];
+  let amount = startAmount;
+  for (const step of steps) {
+    if (step.minFromUnits != null && amount < step.minFromUnits) {
+      annotations.push({
+        edgeId: step.id,
+        fromCurrencyId: step.fromCurrencyId,
+        minFromUnits: step.minFromUnits,
+        amountAtEdge: amount,
+      });
+    }
+    amount = amount * step.rate;
+  }
+  return annotations;
+}
+
 export type CardRanking = {
   card: Card;
   resolved: ResolvedRate;
@@ -113,6 +147,9 @@ export type CardRanking = {
   // ポイントカード提示の二重取り
   loyalties: LoyaltyResult[];
   totalFinalAmount: number;
+  // DB-8: primary path が最低交換単位に満たない交換ステップの事後注記 (UI 注記専用)。
+  // 空配列 = 該当なし。addOn / loyalty 経路は対象外 (header の主結果 path のみ)。
+  minUnitAnnotations: MinUnitAnnotation[];
 };
 
 // v6.0.0: 「未使用のポイントカードを有効化すればこれだけお得になる」提案。
@@ -306,6 +343,7 @@ export function rankCards(
         appBonusBreakdown,
         loyalties,
         totalFinalAmount: baseFinal + appBonusTotal + loyaltyTotal,
+        minUnitAnnotations: detectMinUnitAnnotations(earnedAmount, path?.steps ?? []),
       };
     }
 
@@ -364,6 +402,7 @@ export function rankCards(
         appBonusBreakdown: [],
         loyalties,
         totalFinalAmount: baseFinal + loyaltyTotal,
+        minUnitAnnotations: detectMinUnitAnnotations(earnedAmount, path?.steps ?? []),
       };
     }
 
@@ -536,6 +575,10 @@ export function rankCards(
       appBonusBreakdown: best.appBonusBreakdown,
       loyalties,
       totalFinalAmount: best.total + loyaltyTotal,
+      minUnitAnnotations: detectMinUnitAnnotations(
+        best.cardEarned,
+        best.cardPathSteps,
+      ),
     };
   });
 

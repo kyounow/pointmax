@@ -7,9 +7,15 @@ import type { BenefitProgram, Currency } from "../../domain/types";
 import { cardLabel } from "../../domain/cardLabel";
 import { formatNum } from "../../domain/formatNum";
 import { formatRatio } from "../../domain/currencyKind";
+import { buildRateStackSummary } from "../../domain/rateStackSummary";
 import { NodePill } from "../NodePill";
 import { RuleStatusBadge } from "../RuleStatusBadge";
 import { NoteChips } from "../NoteChips";
+
+// 還元率をパーセント表記に整形 (0.005 → "0.5%")。formatNum で末尾ゼロを抑制。
+function fmtPct(rate: number): string {
+  return `${formatNum(rate * 100)}%`;
+}
 
 type Props = {
   ranking: CardRanking;
@@ -22,6 +28,10 @@ type Props = {
   currencyName: (id: string) => string;
   cardName: (id: string) => string;
   programById: Map<string, BenefitProgram>;
+  // UX-3: 差額表示用。topTotal = 1位の totalFinalAmount (reachable が 0 件なら undefined)。
+  //   secondBestTotal = 1位と ε 以上離れた次点の totalFinalAmount (存在時のみ、#1 の「2位より」用)。
+  topTotal?: number;
+  secondBestTotal?: number;
 };
 
 export function CalcResultCard({
@@ -34,6 +44,8 @@ export function CalcResultCard({
   currencyName,
   cardName,
   programById,
+  topTotal,
+  secondBestTotal,
 }: Props) {
   const reachableLoyalties = r.loyalties.filter((l) => l.reachable);
   const loyaltyTotal = reachableLoyalties.reduce(
@@ -109,6 +121,21 @@ export function CalcResultCard({
             )}
           </>
         )}
+        {/* UX-3: 1位比の差額。#1 は「2位より +N」(2位が存在する時のみ)、
+            それ以外の reachable 行は「(1位比 −N)」。totalFinalAmount 基準 (順位決定と同じ量)。 */}
+        {r.reachable &&
+          displayRank === 1 &&
+          topTotal !== undefined &&
+          secondBestTotal !== undefined && (
+            <span className="rank-diff rank-diff-lead" title="2位との差">
+              2位より +{formatNum(topTotal - secondBestTotal)}
+            </span>
+          )}
+        {r.reachable && displayRank > 1 && topTotal !== undefined && (
+          <span className="rank-diff" title="1位との差">
+            （1位比 −{formatNum(topTotal - r.totalFinalAmount)}）
+          </span>
+        )}
         {r.reachable && (
           <span className="final">
             {(() => {
@@ -147,6 +174,36 @@ export function CalcResultCard({
 
       {expanded && (
         <>
+          {/* UX-3: 積み上げサマリ。展開内容の先頭で「基本 X% + 上乗せ +Y% = Z%」を
+              chip で 1 行要約 (下の詳細内訳の要約行)。パーツが無ければ非表示。 */}
+          {(() => {
+            const summary = buildRateStackSummary(r);
+            if (summary.parts.length === 0) return null;
+            return (
+              <div className="rate-stack" aria-label="還元率の内訳サマリ">
+                {summary.parts.map((p, i) => (
+                  <span key={`${p.kind}-${i}`} className="rate-stack-seg">
+                    {i > 0 && (
+                      <span className="rate-stack-op" aria-hidden="true">
+                        +
+                      </span>
+                    )}
+                    <span className={`rate-chip rate-chip-${p.kind}`}>
+                      {p.kind === "base"
+                        ? `${p.label} ${fmtPct(p.rate)}`
+                        : `${p.label} +${fmtPct(p.rate)}`}
+                    </span>
+                  </span>
+                ))}
+                {summary.parts.length >= 2 && (
+                  <span className="rate-stack-total">
+                    = {fmtPct(summary.totalRate)}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
+
           <div className="result-meta">
             {r.resolved.source === "charge" && r.paymentApp ? (
               <>
@@ -232,6 +289,23 @@ export function CalcResultCard({
               </small>
             )}
           </div>
+
+          {/* DB-8: 最低交換単位に満たない交換ステップの事後注記 (折り畳みヘッダには出さない)。
+              経路選択には影響せず、貯めてから交換すればレート積どおりになる旨を chip で示す。 */}
+          {r.minUnitAnnotations.length > 0 && (
+            <div className="minunit-notes">
+              {r.minUnitAnnotations.map((a) => (
+                <span
+                  key={a.edgeId}
+                  className="rate-chip minunit-chip"
+                  title="この交換には最低交換単位があります。少額では単位に満たないため、貯めてから交換してください (経路選択には影響しません)。"
+                >
+                  {currencyName(a.fromCurrencyId)} は {formatNum(a.minFromUnits)}{" "}
+                  貯めてから交換 (最低交換単位)
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* v5.1.3: 異種通貨 addOn 分離表示。1 つでも appBonus がある場合
                 breakdown を通貨別に 1 行ずつ表示する。1 件のみのときは従来と

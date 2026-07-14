@@ -89,6 +89,17 @@ export type ConversionEdge = {
   // 例: JRE → JAL マイル の交換は JALカードSuica 保有者特典 → requiredCardIds: ["jal-suica"]
   // 参照する id は Card.id (PointCard.id ではない)。
   requiredCardIds?: string[];
+  // 最低交換単位 (from 通貨の単位数)。例: 「1,000pt 以上 500pt 単位」なら 1000。
+  //
+  // ⚠ 経路選択 (bestPath / pathCache) には一切使わない — **事後 (post-hoc) 注記専用**。
+  //   pathCache は「rate 積は amount に対し線形」という前提で (from,to) の product を 1 度だけ
+  //   計算して amount 倍で使い回す (pathCache.ts 参照)。最低単位を経路探索に持ち込むと
+  //   「この量では通れない」という amount 依存の非線形ゲートが混入し、線形前提が壊れて
+  //   キャッシュが無効化される。よって計算モデルは従来どおり「レート積どおり交換できる」ものと
+  //   し、少額で最低単位に満たないケースだけを path 確定後に検出して UI 注記する
+  //   (rankCards.detectMinUnitAnnotations)。値が満たされれば (貯めてから交換すれば) レート積は正しい。
+  //   validators では正の数チェックのみ (optional)。
+  minFromUnits?: number;
   notes?: string;
 };
 

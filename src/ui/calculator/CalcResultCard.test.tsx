@@ -43,6 +43,7 @@ function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
     appBonusBreakdown: [],
     loyalties: [],
     totalFinalAmount: 2000,
+    minUnitAnnotations: [],
     ...over,
   };
 }
@@ -121,6 +122,152 @@ describe("CalcResultCard", () => {
       />,
     );
     expect(screen.getByText("対象外")).toBeInTheDocument();
+  });
+
+  it("UX-3: #1 行は 2位が存在する時「2位より +N」を表示する", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ totalFinalAmount: 2000 })}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+        displayRank={1}
+        topTotal={2000}
+        secondBestTotal={1788}
+      />,
+    );
+    // 2000 - 1788 = 212
+    expect(screen.getByText(/2位より \+212/)).toBeInTheDocument();
+  });
+
+  it("UX-3: 2位が無い (全同率1位) 時は #1 に差額を出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ totalFinalAmount: 2000 })}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+        displayRank={1}
+        topTotal={2000}
+        secondBestTotal={undefined}
+      />,
+    );
+    expect(screen.queryByText(/2位より/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/1位比/)).not.toBeInTheDocument();
+  });
+
+  it("UX-3: 2位以下の行は「(1位比 −N)」を表示する", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ totalFinalAmount: 1877 })}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+        displayRank={2}
+        topTotal={2000}
+        secondBestTotal={1877}
+      />,
+    );
+    // 2000 - 1877 = 123、全角マイナス (−) を含む
+    expect(screen.getByText(/1位比 −123/)).toBeInTheDocument();
+  });
+
+  it("UX-3: 同率1位 (displayRank=1) は「2位より」を出す (「1位比」は出さない)", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ totalFinalAmount: 2000 })}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+        displayRank={1}
+        topTotal={2000}
+        secondBestTotal={1500}
+      />,
+    );
+    expect(screen.getByText(/2位より \+500/)).toBeInTheDocument();
+    expect(screen.queryByText(/1位比/)).not.toBeInTheDocument();
+  });
+
+  it("UX-3: 展開時に積み上げサマリ chip を表示する (基本 + 上乗せ = 合計)", () => {
+    const ranking = makeRanking({
+      resolved: {
+        rate: 0.005,
+        currencyId: "rakuten-pt",
+        source: "default",
+      },
+      appBonusBreakdown: [
+        {
+          programId: "prog-touch",
+          programName: "タッチ決済",
+          rate: 0.065,
+          earnedAmount: 32.5,
+          earnedCurrencyId: "rakuten-pt",
+          finalAmount: 32.5,
+          pathSteps: [],
+        },
+      ],
+    });
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.getByText("基本 0.5%")).toBeInTheDocument();
+    expect(screen.getByText("タッチ決済 +6.5%")).toBeInTheDocument();
+    // 0.5% + 6.5% = 7%
+    expect(screen.getByText("= 7%")).toBeInTheDocument();
+  });
+
+  it("DB-8: minUnitAnnotation がある時「貯めてから交換」chip を展開ビューに表示する", () => {
+    const ranking = makeRanking({
+      minUnitAnnotations: [
+        {
+          edgeId: "epos-to-jal",
+          fromCurrencyId: "epos",
+          minFromUnits: 500,
+          amountAtEdge: 2.5,
+        },
+      ],
+    });
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+        currencyName={(id: string) =>
+          id === "epos" ? "エポスポイント" : id
+        }
+      />,
+    );
+    expect(
+      screen.getByText(/エポスポイント は 500 貯めてから交換 \(最低交換単位\)/),
+    ).toBeInTheDocument();
+  });
+
+  it("DB-8: 折り畳み (非展開) 時は「貯めてから交換」chip を出さない", () => {
+    const ranking = makeRanking({
+      minUnitAnnotations: [
+        {
+          edgeId: "epos-to-jal",
+          fromCurrencyId: "epos",
+          minFromUnits: 500,
+          amountAtEdge: 2.5,
+        },
+      ],
+    });
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/貯めてから交換/)).not.toBeInTheDocument();
   });
 
   it("展開状態を header の aria-expanded に反映する (A11y)", () => {
