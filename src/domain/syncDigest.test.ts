@@ -23,15 +23,15 @@ describe("syncDigest", () => {
     const a: Diff = {
       ...emptyDiff(),
       memberships: [
-        { programId: "p1", storeId: "s1" },
-        { programId: "p1", storeId: "s2" },
+        { id: "m-p1-s1", programId: "p1", storeId: "s1" },
+        { id: "m-p1-s2", programId: "p1", storeId: "s2" },
       ],
     };
     const b: Diff = {
       ...emptyDiff(),
       memberships: [
-        { programId: "p1", storeId: "s2" },
-        { programId: "p1", storeId: "s1" },
+        { id: "m-p1-s2", programId: "p1", storeId: "s2" },
+        { id: "m-p1-s1", programId: "p1", storeId: "s1" },
       ],
     };
     expect(syncDigest(a)).toBe(syncDigest(b));
@@ -41,13 +41,13 @@ describe("syncDigest", () => {
   it("集合が変わると digest も変わる (次の cron バッチで再通知される)", () => {
     const before: Diff = {
       ...emptyDiff(),
-      memberships: [{ programId: "p1", storeId: "s1" }],
+      memberships: [{ id: "m-p1-s1", programId: "p1", storeId: "s1" }],
     };
     const after: Diff = {
       ...emptyDiff(),
       memberships: [
-        { programId: "p1", storeId: "s1" },
-        { programId: "p1", storeId: "s2" },
+        { id: "m-p1-s1", programId: "p1", storeId: "s1" },
+        { id: "m-p1-s2", programId: "p1", storeId: "s2" },
       ],
     };
     expect(syncDigest(before)).not.toBe(syncDigest(after));
@@ -59,7 +59,7 @@ describe("buildSyncGroups", () => {
     const diff: Diff = {
       ...emptyDiff(),
       stores: [{ id: "bic-camera", name: "ビックカメラ", category: "家電量販店" }],
-      memberships: [{ programId: "prog-ponta-card-0.5pc", storeId: "bic-camera" }],
+      memberships: [{ id: "m-prog-ponta-card-0.5pc-bic-camera", programId: "prog-ponta-card-0.5pc", storeId: "bic-camera" }],
     };
     const groups = buildSyncGroups(diff, {
       store: (id) => (id === "bic-camera" ? "ビックカメラ" : id),

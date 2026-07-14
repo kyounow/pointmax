@@ -1,3 +1,5 @@
+import { membershipId } from "./defineMemberships";
+
 // 自動同期で extracted/*.json には載るが、PointMax 用途と合わないため
 // 最終 seed には含めない storeId のリスト。
 //
@@ -69,8 +71,8 @@ export const BLOCKED_STORE_IDS = new Set<string>([
 // 「海外でのお買い物 ポイント2倍」のような店舗特定不能な項目を、プロンプト
 // INJECT で見えていた既存 store "general" の受け皿として誤って割り当てた。
 // confidence が閾値を超え、"general" が既存 store のため missingStoreBody
-// ガードも発動せず auto-merge されてしまった (7/02 本番配信、seed-additions.ts
-// の REMOVED_MEMBERSHIP_KEYS で除去済み)。
+// ガードも発動せず auto-merge されてしまった (7/02 本番配信、下部の
+// REMOVED_MEMBERSHIP_IDS で除去済み)。
 //
 // 再発防止として:
 //   - scripts/sync/propose-helpers.ts: memberships / loyaltyRules の storeId が
@@ -97,12 +99,13 @@ export const PSEUDO_PAYMENT_APP_IDS = new Set<string>([
 ]);
 
 // ===========================================================
-// REMOVED_MEMBERSHIP_KEYS (membership 単体 tombstone)
+// REMOVED_MEMBERSHIP_IDS (membership 単体 tombstone)
 // ===========================================================
 // 公式 seed から誤配信された membership を、既存ユーザーの localStorage から
-// も除去するためのキーリスト。mergeSeed の removedMembershipKeys オプション
-// (useSeedMerge 経由) が消費する。キー形式: "programId|storeId"
-// (mergeSeed.mergeMemberships の複合キーと同形式)。
+// も除去するための id リスト。mergeSeed の removedMembershipIds オプション
+// (useSeedMerge 経由) が消費する。v6 で membership.id (`m-{programId}-{storeId}`)
+// が付いたため、他エンティティ tombstone と同じ id 完全一致で除去する。
+// id 文字列は直書きせず membershipId() で機械生成する (規約の唯一の源)。
 //
 // ★ このファイル (手書き) に置く理由: seed-additions.ts は AUTO-GENERATED で
 //   cron の apply-proposals (buildSeedAdditionsContent) がファイル全体を
@@ -115,9 +118,9 @@ export const PSEUDO_PAYMENT_APP_IDS = new Set<string>([
 // への membership として混入させた 4 件。confidence 0.9025 ≥ 0.9 で
 // autoApplicable を通過し、7/02 に本番配信済み。既存ユーザーの localStorage
 // にも mergeSeed (add-only) で入っているため tombstone で除去する。
-export const REMOVED_MEMBERSHIP_KEYS: string[] = [
-  "prog-jcb-jpoint-20x|general",
-  "prog-jcb-jpoint-gold-20x|general",
-  "prog-jcb-jpoint-2x|general",
-  "prog-jcb-jpoint-gold-2x|general",
+export const REMOVED_MEMBERSHIP_IDS: string[] = [
+  membershipId("prog-jcb-jpoint-20x", "general"),
+  membershipId("prog-jcb-jpoint-gold-20x", "general"),
+  membershipId("prog-jcb-jpoint-2x", "general"),
+  membershipId("prog-jcb-jpoint-gold-2x", "general"),
 ];

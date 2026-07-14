@@ -167,12 +167,24 @@ export type BenefitProgram = {
 // program.id (= BenefitProgram.id) と store.id を結ぶ。
 // override は店舗ごとの個別 rate/currency 上書き (例: 同 program で大半 0.5% だが
 // 一部店舗だけ 1% の override が必要なケース)。
+//
+// id: v6 で必須化。規約は `m-{programId}-{storeId}` (program × store は一意)。
+//   生成は src/state/defineMemberships.ts の membershipId() が唯一の源で、
+//   直書きせず必ず同関数 (or defineMemberships DSL) を経由する。
+//   v6 以前の (programId, storeId) 複合キー運用 (mergeSeed の `:` / `|` 区切り
+//   キー) は廃止し、他エンティティと同じ id ベースの merge / tombstone に統一。
+// userModifiedAt: ユーザが overrideRate/overrideCurrencyId/notes を編集した日時
+//   (ISO 8601)。Card.userModifiedAt と同セマンティクス。id ベースの add-only
+//   merge では既存 id は上書きされないため、編集済み membership は構造的に保護
+//   される (公式 override 更新は既存 id には伝播しない = 現行挙動維持)。
 export type StoreProgramMembership = {
+  id: string;
   programId: string;
   storeId: string;
   overrideRate?: number;
   overrideCurrencyId?: string;
   notes?: string;
+  userModifiedAt?: string;
 };
 
 // 支払アプリ（楽天Pay/d払い/PayPay/Visaタッチ等）

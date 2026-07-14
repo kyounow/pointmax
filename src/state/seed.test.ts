@@ -307,7 +307,7 @@ describe("SEED_EDGES の通貨参照整合性", () => {
 // #103 回帰防止: "general" は Calculator の規定還元率確認用ダミー store
 // (実店舗ではない)。jcb-jpoint extractor が店舗特定不能な項目 (「クレカ乗車
 // ポイント20倍」等) をここに誤って membership 化した事故があり (7/02 本番配信済み、
-// REMOVED_MEMBERSHIP_KEYS で除去)、二度と混入しないことを保証する。
+// REMOVED_MEMBERSHIP_IDS で除去)、二度と混入しないことを保証する。
 describe("#103 回帰: general への membership 混入防止", () => {
   it("seed() の memberships に storeId === 'general' が存在しない", () => {
     const { memberships } = seed();

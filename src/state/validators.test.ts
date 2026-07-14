@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { validateImportData } from "./validators";
 import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
 import { seed } from "./seed";
+import { membershipId } from "./defineMemberships";
 
 const valid = {
   cards: [{ id: "c1", name: "C", defaultRate: 0.01, defaultCurrencyId: "cur1" }],
@@ -117,7 +118,9 @@ describe("validateImportData: v6 scope 検証", () => {
     const r = validateImportData({
       ...valid,
       programs: [program({ id: "prog-global", scope: "all-stores" })],
-      memberships: [{ programId: "prog-global", storeId: "s1" }],
+      memberships: [
+        { id: membershipId("prog-global", "s1"), programId: "prog-global", storeId: "s1" },
+      ],
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toContain("prog-global");
@@ -139,6 +142,60 @@ describe("validateImportData: v6 scope 検証", () => {
       memberships: [],
     });
     expect(r.ok).toBe(true);
+  });
+});
+
+describe("validateImportData: v6 membership id 検証", () => {
+  const mkProgram = {
+    id: "prog-1",
+    name: "P",
+    scope: "member-stores",
+    rate: 0.05,
+    currencyId: "cur1",
+  };
+
+  it("規約 id (m-{programId}-{storeId}) 一致の membership を受理", () => {
+    const r = validateImportData({
+      ...valid,
+      programs: [mkProgram],
+      memberships: [
+        { id: membershipId("prog-1", "s1"), programId: "prog-1", storeId: "s1" },
+      ],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("id 欠落の membership を拒否", () => {
+    const r = validateImportData({
+      ...valid,
+      programs: [mkProgram],
+      memberships: [{ programId: "prog-1", storeId: "s1" }],
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("memberships[0].id");
+  });
+
+  it("規約と一致しない id を拒否", () => {
+    const r = validateImportData({
+      ...valid,
+      programs: [mkProgram],
+      memberships: [{ id: "m-wrong", programId: "prog-1", storeId: "s1" }],
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("規約");
+  });
+
+  it("id 重複の membership を拒否", () => {
+    const r = validateImportData({
+      ...valid,
+      programs: [mkProgram],
+      memberships: [
+        { id: membershipId("prog-1", "s1"), programId: "prog-1", storeId: "s1" },
+        { id: membershipId("prog-1", "s1"), programId: "prog-1", storeId: "s1" },
+      ],
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("重複");
   });
 });
 

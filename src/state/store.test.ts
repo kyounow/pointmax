@@ -230,6 +230,7 @@ describe("store: exportJson / importJson は programs / memberships を保持す
     currencyId: "rakuten-pt",
   };
   const membership: StoreProgramMembership = {
+    id: "m-prog-a4-test-store-a4",
     programId: "prog-a4-test",
     storeId: "store-a4",
   };

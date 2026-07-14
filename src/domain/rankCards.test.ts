@@ -115,7 +115,7 @@ describe("rankCards", () => {
       },
     ];
     const memberships: StoreProgramMembership[] = [
-      { programId: "prog-amzn-rule", storeId: "amazon" },
+      { id: "m-prog-amzn-rule-amazon", programId: "prog-amzn-rule", storeId: "amazon" },
     ];
     const result = rankCardsRankings({
       payment: { storeId: "amazon", amount: 10000 },
@@ -147,7 +147,7 @@ describe("rankCards", () => {
       },
     ];
     const memberships: StoreProgramMembership[] = [
-      { programId: "prog-june-camp", storeId: "amazon" },
+      { id: "m-prog-june-camp-amazon", programId: "prog-june-camp", storeId: "amazon" },
     ];
     const base = {
       payment: { storeId: "amazon", amount: 10000 },
@@ -307,7 +307,7 @@ describe("rankCards", () => {
       },
     ];
     const memberships: StoreProgramMembership[] = [
-      { programId: "prog-cat-net", storeId: "amazon" },
+      { id: "m-prog-cat-net-amazon", programId: "prog-cat-net", storeId: "amazon" },
     ];
     const result = rankCardsRankings({
       payment: { storeId: "amazon", amount: 10000 },
@@ -482,7 +482,7 @@ describe("rankCards", () => {
       },
     ];
     const memberships: StoreProgramMembership[] = [
-      { programId: "prog-rakuten-jre", storeId: "any" },
+      { id: "m-prog-rakuten-jre-any", programId: "prog-rakuten-jre", storeId: "any" },
     ];
     const result = rankCardsRankings({
       payment: { storeId: "any", amount: 10000 },
@@ -568,7 +568,7 @@ describe("rankCards", () => {
       },
     ];
     const memberships: StoreProgramMembership[] = [
-      { programId: "prog-test-waon-base", storeId: "any" },
+      { id: "m-prog-test-waon-base-any", programId: "prog-test-waon-base", storeId: "any" },
     ];
 
     const result = rankCardsRankings({
@@ -623,7 +623,7 @@ describe("rankCards", () => {
       },
     ];
     const memberships: StoreProgramMembership[] = [
-      { programId: "prog-test-addon", storeId: "any" },
+      { id: "m-prog-test-addon-any", programId: "prog-test-addon", storeId: "any" },
     ];
     const edges = [edge("rakuten-to-ana", "rakuten-pt", "ana-mile", 0.5)];
 
@@ -785,8 +785,8 @@ describe("rankCards", () => {
       bonusType: "primary",
     };
     const memberships: StoreProgramMembership[] = [
-      { programId: "prog-jal-mile-primary", storeId: "eneos" },
-      { programId: "prog-rakuten-primary", storeId: "eneos" },
+      { id: "m-prog-jal-mile-primary-eneos", programId: "prog-jal-mile-primary", storeId: "eneos" },
+      { id: "m-prog-rakuten-primary-eneos", programId: "prog-rakuten-primary", storeId: "eneos" },
     ];
     // edge: rakuten-pt → v-pt のみ (jal-mile → v-pt は なし = 到達不能)
     const edges = [edge("rakuten-vpt", "rakuten-pt", "v-pt", 0.5)];
@@ -842,8 +842,8 @@ describe("rankCards", () => {
       bonusType: "primary",
     };
     const memberships: StoreProgramMembership[] = [
-      { programId: "prog-jal-mile-primary", storeId: "eneos" },
-      { programId: "prog-rakuten-primary", storeId: "eneos" },
+      { id: "m-prog-jal-mile-primary-eneos", programId: "prog-jal-mile-primary", storeId: "eneos" },
+      { id: "m-prog-rakuten-primary-eneos", programId: "prog-rakuten-primary", storeId: "eneos" },
     ];
     const edges = [edge("rakuten-vpt", "rakuten-pt", "v-pt", 0.5)]; // jal は target 同一通貨
 
@@ -980,6 +980,7 @@ describe("A1: monthlyCapAmountYen の per-tx クランプ", () => {
     monthlyCapAmountYen: 40000,
   };
   const capMembership: StoreProgramMembership = {
+    id: "m-prog-cap-cap-store",
     programId: "prog-cap",
     storeId: "cap-store",
   };

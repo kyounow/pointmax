@@ -20,6 +20,7 @@ import type {
   StoreProgramMembership,
 } from "../domain/types";
 import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
+import { membershipId } from "./defineMemberships";
 
 export type ImportData = {
   cards: Card[];
@@ -164,7 +165,8 @@ export function validateImportData(
     checkArray(
       data.memberships,
       "memberships",
-      [STR("programId"), STR("storeId")],
+      // v6: id を必須化 (programId/storeId は従来どおり必須)。
+      [STR("id"), STR("programId"), STR("storeId")],
       false,
     ),
   ];
@@ -172,6 +174,10 @@ export function validateImportData(
   for (const err of errors) {
     if (err !== null) return { ok: false, error: err };
   }
+
+  // v6: membership.id の規約整合 (`m-{programId}-{storeId}`) + 一意性。
+  const membershipIdError = checkMembershipIds(data);
+  if (membershipIdError !== null) return { ok: false, error: membershipIdError };
 
   // v6: scope 整合性のクロスチェック。
   //   「all-stores なのに membership を持つ」program は矛盾 (全店適用 program は
@@ -182,6 +188,28 @@ export function validateImportData(
   if (scopeError !== null) return { ok: false, error: scopeError };
 
   return { ok: true, value: data as unknown as ImportData };
+}
+
+// membership.id が規約 (`m-{programId}-{storeId}`) と一致し、かつ一意であることを
+// 検証する。checkArray で id/programId/storeId が文字列であることは保証済み。
+function checkMembershipIds(data: Record<string, unknown>): string | null {
+  if (!Array.isArray(data.memberships)) return null;
+  const seen = new Set<string>();
+  for (let i = 0; i < data.memberships.length; i++) {
+    const m = data.memberships[i];
+    if (!isObject(m) || !isStr(m.id) || !isStr(m.programId) || !isStr(m.storeId)) {
+      continue; // checkArray 側で既に弾かれている想定
+    }
+    const expected = membershipId(m.programId, m.storeId);
+    if (m.id !== expected) {
+      return `memberships[${i}].id が規約 (${expected}) と一致しません`;
+    }
+    if (seen.has(m.id)) {
+      return `membership id "${m.id}" が重複しています`;
+    }
+    seen.add(m.id);
+  }
+  return null;
 }
 
 // all-stores program が membership を持っていないかを検証する。
