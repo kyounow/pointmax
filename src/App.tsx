@@ -22,6 +22,7 @@ import { UpdateBanner } from "./ui/UpdateBanner";
 import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
 import { SyncUpdateModal } from "./ui/SyncUpdateModal";
 import { useStore } from "./state/store";
+import { recordTabView } from "./state/usageStats";
 import { useDialog } from "./ui/dialog/useDialog";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useRoute, navigate, replaceRoute, parseHash } from "./navigation";
@@ -96,6 +97,11 @@ function App() {
   useEffect(() => {
     document.title = `${activeTabLabel} | PointMax`;
   }, [activeTabLabel]);
+
+  // tab 変化時にローカル利用統計へタブ表示を記録 (PR-0b: 端末内のみ・送信なし)。
+  useEffect(() => {
+    recordTabView(tab);
+  }, [tab]);
 
   // tab 変化時のみ最上部へスクロールリセット。
   // 規則: 同一 tab 内の sub / params 変化ではリセットしない (依存は tab のみ)。

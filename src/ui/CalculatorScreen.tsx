@@ -6,9 +6,10 @@
 //   - CalcLoyaltyBanner : ポイントカード併用バナー
 //   - CalcResultCard    : 1 カードぶんの結果カード
 //   - CardComparisonSection : 非保有カード比較 (既存)
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
+import { recordCalcEvent } from "../state/usageStats";
 import { rankCards } from "../domain/rankCards";
 import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
@@ -139,6 +140,16 @@ export function CalculatorScreen() {
     () => (allRanked ? allRanked.filter((r) => r.card.enabled !== false) : null),
     [allRanked],
   );
+
+  // PR-0b: 有効な計算結果が描画されるたびにローカル利用統計へ記録 (端末内のみ・送信なし)。
+  // result が非 null (= storeId/activeCurrency/amount が揃い ranking 算出済) のときだけ記録。
+  // 同一 (store, 通貨) ペアの連続記録 (金額変更等の再計算) は usageStats 側の
+  // last-pair ガードで抑止されるため、ここでは result 参照の変化を起点にするだけでよい。
+  useEffect(() => {
+    if (result && storeId && activeCurrencyId) {
+      recordCalcEvent(storeId, activeCurrencyId);
+    }
+  }, [result, storeId, activeCurrencyId]);
 
   // 比較対象: enabled=false かつ master pool のカード
   const comparisonItems = useMemo(

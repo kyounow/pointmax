@@ -1,21 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { useDialog } from "./dialog/useDialog";
 import { DEFAULT_SYNC_URL } from "../state/seed";
+import { byId } from "../domain/entityIndex";
+import { getUsageStats, clearUsageStats } from "../state/usageStats";
 
 export function SettingsScreen() {
   // Wave 5 B-1: 5 個別 subscribe → 単一 useShallow に集約。
   // hasData は数値派生なので別 subscribe で OK (primitive 比較で十分)。
-  const { syncUrl, lastSyncAt, setSyncUrl, syncFromUrl, clearAll } = useStore(
-    useShallow((s) => ({
-      syncUrl: s.syncUrl,
-      lastSyncAt: s.lastSyncAt,
-      setSyncUrl: s.setSyncUrl,
-      syncFromUrl: s.syncFromUrl,
-      clearAll: s.clearAll,
-    })),
-  );
+  const { syncUrl, lastSyncAt, setSyncUrl, syncFromUrl, clearAll, stores } =
+    useStore(
+      useShallow((s) => ({
+        syncUrl: s.syncUrl,
+        lastSyncAt: s.lastSyncAt,
+        setSyncUrl: s.setSyncUrl,
+        syncFromUrl: s.syncFromUrl,
+        clearAll: s.clearAll,
+        stores: s.stores,
+      })),
+    );
   const hasData = useStore(
     (s) =>
       s.cards.length +
@@ -93,6 +97,43 @@ export function SettingsScreen() {
       danger: true,
     });
     if (ok) clearAll();
+  };
+
+  // PR-0b: ローカル利用統計 (この端末のみ・送信なし)。
+  // 独立キーからの読み取りなので state に保持し、クリア時のみ再取得する。
+  const [usage, setUsage] = useState(() => getUsageStats());
+  const storeById = useMemo(() => byId(stores), [stores]);
+  // 端末に記録があるか (無ければ firstRecordedAt は「今」の暫定値なので表示を抑制)
+  const hasUsageData =
+    Object.keys(usage.tabViews).length > 0 ||
+    Object.keys(usage.storeSelections).length > 0 ||
+    usage.calcEvents.length > 0;
+  const topTabs = useMemo(
+    () =>
+      Object.entries(usage.tabViews)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5),
+    [usage.tabViews],
+  );
+  const topStores = useMemo(
+    () =>
+      Object.entries(usage.storeSelections)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5),
+    [usage.storeSelections],
+  );
+
+  const handleClearUsage = async () => {
+    const ok = await dialog.confirm({
+      title: "利用統計をクリアしますか？",
+      message:
+        "この端末に記録された利用統計（タブ表示・店舗選択・計算実行）を削除します。\nこの操作は元に戻せません。",
+      okText: "クリア",
+      danger: true,
+    });
+    if (!ok) return;
+    clearUsageStats();
+    setUsage(getUsageStats());
   };
 
   return (
@@ -188,6 +229,74 @@ export function SettingsScreen() {
           ※ Gist URLは更新するとハッシュが変わる場合があるので、最新版を再取得することを推奨。
         </p>
       </details>
+
+      <h3 style={{ marginTop: 24 }}>利用統計 (この端末のみ)</h3>
+      <p className="hint">
+        画面の使われ方を把握するための軽量カウンタです。
+        <strong>この統計は端末内にのみ保存され、送信されません。</strong>
+      </p>
+
+      {!hasUsageData ? (
+        <p className="empty">まだ利用統計は記録されていません。</p>
+      ) : (
+        <div style={{ marginBottom: 12 }}>
+          <p className="hint" style={{ marginTop: 0 }}>
+            記録開始日:{" "}
+            <strong>
+              {new Date(usage.firstRecordedAt).toLocaleString("ja-JP")}
+            </strong>
+          </p>
+
+          <p className="hint" style={{ marginBottom: 4 }}>
+            <strong>タブ表示回数 (上位5)</strong>
+          </p>
+          {topTabs.length === 0 ? (
+            <p className="hint" style={{ marginTop: 0 }}>
+              記録なし
+            </p>
+          ) : (
+            <ul style={{ color: "var(--muted)", lineHeight: 1.8, marginTop: 0 }}>
+              {topTabs.map(([tabId, count]) => (
+                <li key={tabId}>
+                  {tabId}: {count} 回
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p className="hint" style={{ marginBottom: 4 }}>
+            <strong>店舗選択回数 (上位5)</strong>
+          </p>
+          {topStores.length === 0 ? (
+            <p className="hint" style={{ marginTop: 0 }}>
+              記録なし
+            </p>
+          ) : (
+            <ul style={{ color: "var(--muted)", lineHeight: 1.8, marginTop: 0 }}>
+              {topStores.map(([storeId, count]) => (
+                <li key={storeId}>
+                  {storeById.get(storeId)?.name ?? storeId}: {count} 回
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p className="hint">
+            計算実行イベント件数: <strong>{usage.calcEvents.length}</strong> 件
+            {usage.calcEvents.length >= 500 && "（上限500件）"}
+          </p>
+        </div>
+      )}
+
+      <div className="row" style={{ gap: 8, marginBottom: 8 }}>
+        <button
+          onClick={handleClearUsage}
+          disabled={!hasUsageData}
+          title="この端末に記録された利用統計を削除"
+        >
+          統計をクリア
+        </button>
+      </div>
     </section>
   );
 }
