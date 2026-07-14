@@ -19,6 +19,7 @@ function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
     pathProduct: 1,
     finalAmount: 50,
     reachable: true,
+    unreachableReason: null,
     paymentApp: null,
     appBonusRate: 0,
     appBonusFinalAmount: 0,

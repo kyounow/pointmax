@@ -1729,24 +1729,108 @@ details summary {
   padding: 16px 18px;
   margin: 12px 0;
 }
+/* ONB-1: タイトル行 + 「✕」手動クローズ */
+.onboarding-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
 .onboarding-box .onboarding-title {
-  margin: 0 0 12px;
+  margin: 0 0 4px;
   font-weight: 700;
   font-size: 15px;
+}
+.onboarding-close {
+  flex: none;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.onboarding-close:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+.onboarding-steps {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
 }
 .onboarding-box .onboarding-step {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 8px 0;
+  padding: 10px 0;
 }
 .onboarding-box .onboarding-step + .onboarding-step {
   border-top: 1px solid var(--border);
 }
+/* ✓ (完了) / 番号 (未完了) の丸バッジ */
+.onboarding-check {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.onboarding-step.done .onboarding-check {
+  border-color: var(--good);
+  background: var(--good);
+  color: #fff;
+}
+.onboarding-step-label {
+  flex: 1 1 auto;
+}
+.onboarding-step.done .onboarding-step-label {
+  color: var(--muted);
+}
+.onboarding-done-label {
+  flex: none;
+  color: var(--good);
+  font-size: 13px;
+  font-weight: 700;
+}
 .onboarding-box .onboarding-step button {
+  flex: none;
   white-space: nowrap;
+}
+
+/* UX-7: 対象外カードの理由バッジ (折り畳みヘッダ) と次アクション CTA (展開ビュー)。 */
+.unreachable-badge {
+  flex: none;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.unreachable-badge.unreachable-currency-blocked {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+.unreachable-cta {
+  margin-top: 8px;
+}
+.unreachable-cta-btn {
+  font-size: 13px;
+  white-space: nowrap;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* CardsScreen の「公式」マスターカードバッジ */

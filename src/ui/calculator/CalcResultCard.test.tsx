@@ -34,6 +34,7 @@ function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
     pathProduct: 1,
     finalAmount: 2000,
     reachable: true,
+    unreachableReason: null,
     paymentApp: null,
     appBonusRate: 0,
     appBonusFinalAmount: 0,
@@ -268,6 +269,80 @@ describe("CalcResultCard", () => {
       />,
     );
     expect(screen.queryByText(/貯めてから交換/)).not.toBeInTheDocument();
+  });
+
+  it("UX-7: no-path の対象外カードは折り畳みで「ルート未登録」バッジを出す", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ reachable: false, unreachableReason: "no-path" })}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+      />,
+    );
+    expect(screen.getByText("ルート未登録")).toBeInTheDocument();
+  });
+
+  it("UX-7: currency-blocked の対象外カードは「通貨OFF」バッジを出す", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          reachable: false,
+          unreachableReason: "currency-blocked",
+        })}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+      />,
+    );
+    expect(screen.getByText("通貨OFF")).toBeInTheDocument();
+  });
+
+  it("UX-7: no-path 展開時は「交換ルートを見る →」CTA を出す", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ reachable: false, unreachableReason: "no-path" })}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /交換ルートを見る/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("UX-7: currency-blocked 展開時は「ウォレットで確認 →」CTA を出す", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          reachable: false,
+          unreachableReason: "currency-blocked",
+        })}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /ウォレットで確認/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("UX-7: reachable なカードは理由バッジ/CTA を出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText("ルート未登録")).not.toBeInTheDocument();
+    expect(screen.queryByText("通貨OFF")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /交換ルートを見る/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("展開状態を header の aria-expanded に反映する (A11y)", () => {
