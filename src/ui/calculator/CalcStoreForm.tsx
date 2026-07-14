@@ -7,6 +7,9 @@ import type { Currency, Store } from "../../domain/types";
 import { groupBy } from "../../domain/groupBy";
 import { recordStoreSelection } from "../../state/usageStats";
 
+// PR-3a (UX-1): 店頭クイック入力の金額プリセット。ワンタップで amount に流し込む。
+const AMOUNT_PRESETS = [500, 1000, 3000, 5000, 10000] as const;
+
 type Props = {
   stores: Store[];
   currencies: Currency[];
@@ -22,6 +25,8 @@ type Props = {
   setActiveCurrencyId: (v: string) => void;
   /** 優先通貨が空のときだけ目標通貨 select を表示する */
   showCurrencyFallback: boolean;
+  /** PR-3a: 直近選択順の店舗 id (親が usageStats.getRecentStoreIds から供給)。 */
+  recentStoreIds: string[];
 };
 
 export function CalcStoreForm({
@@ -38,7 +43,32 @@ export function CalcStoreForm({
   activeCurrencyId,
   setActiveCurrencyId,
   showCurrencyFallback,
+  recentStoreIds,
 }: Props) {
+  // 店舗選択の共通処理: state 更新 + 端末内利用統計への記録 (select / チップ 共用)。
+  const selectStore = (id: string) => {
+    setStoreId(id);
+    // PR-0b: 端末内利用統計へ店舗選択を記録 (空選択は内部で無視・送信なし)
+    recordStoreSelection(id);
+  };
+
+  // id → 店舗名の解決 (直近店舗チップ用)。
+  const storeById = useMemo(() => {
+    const m = new Map<string, Store>();
+    for (const s of stores) m.set(s.id, s);
+    return m;
+  }, [stores]);
+
+  // 直近店舗チップ: 存在する店舗だけに絞り、新しい順を維持 (最大 8 件)。
+  const recentStores = useMemo(
+    () =>
+      recentStoreIds
+        .map((id) => storeById.get(id))
+        .filter((s): s is Store => s !== undefined)
+        .slice(0, 8),
+    [recentStoreIds, storeById],
+  );
+
   // 利用可能なカテゴリ一覧 (件数付き)
   const categoryOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -93,6 +123,27 @@ export function CalcStoreForm({
 
   return (
     <form className="row" onSubmit={(e) => e.preventDefault()}>
+      {/* PR-3a (UX-1): 直近店舗チップ。店舗 select の上にワンタップで再選択。
+          1 行横スクロールで高さを固定し、結果 1 位の above-the-fold を守る。 */}
+      {recentStores.length > 0 && (
+        <div
+          className="quick-chips quick-chips-stores"
+          role="group"
+          aria-label="直近の店舗"
+        >
+          {recentStores.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className={`quick-chip${storeId === s.id ? " is-active" : ""}`}
+              aria-pressed={storeId === s.id}
+              onClick={() => selectStore(s.id)}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
       <label>
         店舗:
         <span className="store-picker">
@@ -120,11 +171,7 @@ export function CalcStoreForm({
           />
           <select
             value={storeId}
-            onChange={(e) => {
-              setStoreId(e.target.value);
-              // PR-0b: 端末内利用統計へ店舗選択を記録 (空選択は内部で無視・送信なし)
-              recordStoreSelection(e.target.value);
-            }}
+            onChange={(e) => selectStore(e.target.value)}
           >
             <option value="">選択</option>
             {storesByCategory.map((g) => (
@@ -157,6 +204,25 @@ export function CalcStoreForm({
         />
         円
       </label>
+      {/* PR-3a (UX-1): 金額プリセットチップ。既存 amount state に即設定。 */}
+      <div
+        className="quick-chips quick-chips-amounts"
+        role="group"
+        aria-label="金額プリセット"
+      >
+        {AMOUNT_PRESETS.map((v) => (
+          <button
+            key={v}
+            type="button"
+            data-amount={v}
+            className={`quick-chip${amount === String(v) ? " is-active" : ""}`}
+            aria-pressed={amount === String(v)}
+            onClick={() => setAmount(String(v))}
+          >
+            {v.toLocaleString("ja-JP")}円
+          </button>
+        ))}
+      </div>
       {showCurrencyFallback && (
         // 優先通貨 未設定時の fallback: 従来どおり都度選択
         <label>

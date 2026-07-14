@@ -155,7 +155,10 @@ function App() {
         className={`content${hideBottomBar ? "" : " has-bottom-bar"}`}
         aria-label={activeTabLabel}
       >
-        <UpdateBanner />
+        {/* PR-3a (N-1): 計算画面では UpdateBanner を BannerSlot 経由の通知枠に一本化
+            (onboarding/today との優先度調停のため)。計算画面以外では従来どおり
+            main 上部に出す (挙動維持)。 */}
+        {tab !== "calculator" && <UpdateBanner />}
         {/* Wave 4 B-6 audit-fix: 各 Screen を ErrorBoundary で wrap。
             画面単位で隔離して、1 画面のエラーがアプリ全体を停止させないようにする。
             scopeName で console.error に画面名が残るので運用調査の起点になる。 */}

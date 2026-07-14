@@ -7,6 +7,7 @@ import {
   recordStoreSelection,
   recordCalcEvent,
   getUsageStats,
+  getRecentStoreIds,
   clearUsageStats,
 } from "./usageStats";
 
@@ -107,5 +108,63 @@ describe("usageStats (PR-0b ローカル利用統計)", () => {
   it("独立 localStorage キー pointmax:usage-stats:v1 に書き込む", () => {
     recordTabView("calculator");
     expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  });
+});
+
+describe("getRecentStoreIds (PR-3a 直近店舗チップ)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    clearUsageStats();
+  });
+
+  it("履歴も選択も無いときは空配列を返す", () => {
+    expect(getRecentStoreIds(8)).toEqual([]);
+  });
+
+  it("calcEvents から新しい順に unique な storeId を返す", () => {
+    // 通貨を毎回変えて last-pair skip を回避しつつ記録 (古い順に push される)
+    recordCalcEvent("store-a", "cur-1");
+    recordCalcEvent("store-b", "cur-2");
+    recordCalcEvent("store-c", "cur-3");
+    // 新しい順 → c, b, a
+    expect(getRecentStoreIds(8)).toEqual(["store-c", "store-b", "store-a"]);
+  });
+
+  it("同一 store の再計算は最新の1件だけ残し、直近順で unique 化する", () => {
+    recordCalcEvent("store-a", "cur-1");
+    recordCalcEvent("store-b", "cur-2");
+    recordCalcEvent("store-a", "cur-3"); // a を再計算 → a が最新へ
+    // 直近順 unique → a, b (a は 1 回だけ、最新位置)
+    expect(getRecentStoreIds(8)).toEqual(["store-a", "store-b"]);
+  });
+
+  it("limit で件数を制限する", () => {
+    recordCalcEvent("store-a", "cur-1");
+    recordCalcEvent("store-b", "cur-2");
+    recordCalcEvent("store-c", "cur-3");
+    expect(getRecentStoreIds(2)).toEqual(["store-c", "store-b"]);
+  });
+
+  it("limit<=0 は空配列", () => {
+    recordCalcEvent("store-a", "cur-1");
+    expect(getRecentStoreIds(0)).toEqual([]);
+  });
+
+  it("calcEvents が空なら storeSelections の回数上位で fallback する", () => {
+    // 計算履歴は無いが、選択記録はある状態
+    recordStoreSelection("store-x");
+    recordStoreSelection("store-y");
+    recordStoreSelection("store-y");
+    recordStoreSelection("store-z");
+    recordStoreSelection("store-z");
+    recordStoreSelection("store-z");
+    // 回数降順 → z(3), y(2), x(1)
+    expect(getRecentStoreIds(8)).toEqual(["store-z", "store-y", "store-x"]);
+  });
+
+  it("calcEvents があれば storeSelections より優先する (fallback しない)", () => {
+    recordStoreSelection("store-x"); // 選択のみの店舗
+    recordCalcEvent("store-a", "cur-1"); // 実計算した店舗
+    expect(getRecentStoreIds(8)).toEqual(["store-a"]);
   });
 });

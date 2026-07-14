@@ -151,6 +151,42 @@ export function getUsageStats(): UsageStats {
   return read();
 }
 
+/**
+ * 直近に計算した店舗 id を「新しい順」で最大 limit 件返す (重複排除)。
+ *
+ * PR-3a (UX-1) の店頭クイック入力 (直近店舗チップ) 用。storeSelections は
+ * *累計回数* しか持たず「直近選択順」を復元できないため、時刻付きの calcEvents を
+ * 使う。calcEvents は古い順 (末尾が最新) に push されるので末尾から走査する。
+ *
+ * calcEvents が空 (まだ一度も計算していない) のときは storeSelections の
+ * 選択回数上位で fallback する。どちらも空なら空配列。
+ */
+export function getRecentStoreIds(limit = 8): string[] {
+  if (limit <= 0) return [];
+  const stats = read();
+  const seen = new Set<string>();
+  const recent: string[] = [];
+  // 末尾 (最新) から走査し、初出の storeId だけを新しい順に集める。
+  for (
+    let i = stats.calcEvents.length - 1;
+    i >= 0 && recent.length < limit;
+    i--
+  ) {
+    const s = stats.calcEvents[i].s;
+    if (s && !seen.has(s)) {
+      seen.add(s);
+      recent.push(s);
+    }
+  }
+  if (recent.length > 0) return recent;
+  // fallback: 計算履歴が無い → 累計選択回数の多い順 (0 件は除外)
+  return Object.entries(stats.storeSelections)
+    .filter(([id, n]) => id && n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([id]) => id);
+}
+
 /** 利用統計を全消去する (last-pair ガードもリセット)。 */
 export function clearUsageStats(): void {
   lastPair = { s: "", c: "" };
