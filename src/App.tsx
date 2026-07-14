@@ -1,5 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { useShallow } from "zustand/shallow";
+import { lazy, Suspense, useEffect } from "react";
 import "./App.css";
 import { CurrenciesScreen } from "./ui/CurrenciesScreen";
 import { StoresScreen } from "./ui/StoresScreen";
@@ -14,47 +13,35 @@ const EdgesScreen = lazy(() =>
 import { CalculatorScreen } from "./ui/CalculatorScreen";
 import { WalletScreen } from "./ui/WalletScreen";
 import { SettingsScreen } from "./ui/SettingsScreen";
+import { DataHubScreen } from "./ui/DataHubScreen";
 import { UpdateBanner } from "./ui/UpdateBanner";
 import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
 import { SyncUpdateModal } from "./ui/SyncUpdateModal";
 import { useStore } from "./state/store";
-import { downloadJsonFile } from "./state/exportFile";
 import { recordTabView } from "./state/usageStats";
 import { requestPersistentStorage } from "./state/storagePersistence";
-import { useDialog } from "./ui/dialog/useDialog";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useRoute, navigate, replaceRoute, parseHash } from "./navigation";
 import { legacyWalletRedirect } from "./ui/wallet/walletRoute";
 import { legacyBenefitsRedirect } from "./ui/benefits/benefitsRoute";
 import { legacySettingsRedirect } from "./ui/settings/settingsRoute";
-
-type Tab =
-  | "calculator"
-  | "wallet"
-  | "currencies"
-  | "stores"
-  | "benefits"
-  | "edges"
-  | "settings";
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: "calculator", label: "計算" },
-  // PR-2b1: カード / ポイントカード / 支払方法 の 3 タブを「ウォレット」1 タブに統合。
-  { id: "wallet", label: "ウォレット" },
-  { id: "currencies", label: "通貨" },
-  { id: "stores", label: "店舗" },
-  // PR-2c: プログラム / キャンペーン の 2 タブを「特典・キャンペーン」1 タブに統合。
-  { id: "benefits", label: "特典・キャンペーン" },
-  { id: "edges", label: "交換ルート" },
-  // PR-2d: 「更新履歴」トップレベルタブは廃止し、設定内「マスタ更新履歴」セクションへ降格。
-  { id: "settings", label: "設定" },
-];
+import {
+  TABS,
+  DAILY_TABS,
+  DATA_MENU_TABS,
+  BOTTOM_BAR,
+  tabGroup,
+  bottomBarActiveSlot,
+  shouldHideBottomBar,
+  type Tab,
+} from "./ui/nav/navConfig";
+import { DataMenu } from "./ui/nav/DataMenu";
 
 function App() {
   // 画面状態は location.hash から導出する (PR-0d: hash ルーティング基盤)。
   // route.tab が TABS の有効な id ならそれを採用、未知/空なら "calculator" に fallback。
-  // route.sub / route.params は今回未消費だが、後続 PR (設定サブセクション・
-  // ウォレットハイライト等) が useRoute の戻り値として利用できる状態にしてある。
+  // route.sub / route.params は各画面 (設定サブセクション・ウォレットハイライト等) が
+  // useRoute の戻り値として利用する。
   const route = useRoute();
   // 廃止した旧タブからの流入を統合先タブとして描画する (URL は下の正規化 effect で
   // 新 hash へ replaceRoute)。
@@ -69,28 +56,7 @@ function App() {
         ? "settings"
         : route.tab;
   const tab: Tab = TABS.find((t) => t.id === effectiveTabId)?.id ?? "calculator";
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  // Wave 5 B-1: useShallow に集約 (関数 + pendingMigration はまとめて取れる)
-  const { exportJson, importJson, pendingMigration } = useStore(
-    useShallow((s) => ({
-      exportJson: s.exportJson,
-      importJson: s.importJson,
-      pendingMigration: s._pendingSchemaMigration,
-    })),
-  );
-  const hasData = useStore(
-    (s) =>
-      s.cards.length +
-        s.currencies.length +
-        s.stores.length +
-        s.edges.length >
-      0,
-  );
-  const dialog = useDialog();
-  const activeTabLabel =
-    TABS.find((t) => t.id === tab)?.label ?? "PointMax";
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeTabLabel = TABS.find((t) => t.id === tab)?.label ?? "PointMax";
 
   // PR-0c: マウント時に永続ストレージ (Storage API persist) を 1 回要求する。
   // iOS Safari 等での 7 日非アクセス自動削除 / 容量逼迫 eviction による
@@ -100,13 +66,14 @@ function App() {
     void requestPersistentStorage();
   }, []);
 
+  const pendingMigration = useStore((s) => s._pendingSchemaMigration);
+
   // 初回マウント時のみ: hash が空 or 未知 tab のとき履歴を汚さず calculator に正規化。
   // replaceRoute は hashchange を発火しないが、parseHash("") も calculator を返すため
   // useRoute の snapshot と導出 tab は一致したまま (履歴エントリを増やさない)。
   useEffect(() => {
     const initial = parseHash(location.hash);
     // 旧タブ id は統合先の新 hash へ寄せる (replaceRoute は履歴を汚さない)。
-    // 導出 tab 側で既に統合先を描画済みなので、ここでは URL の正規化のみ行う。
     //   PR-2b1: #cards / #pointcards / #paymentapps → #wallet 系
     //   PR-2c:  #programs / #campaigns             → #benefits
     //   PR-2d:  #sync-history                      → #settings/history
@@ -138,75 +105,8 @@ function App() {
     window.scrollTo(0, 0);
   }, [tab]);
 
-  // ドロワーが開いている時はESCで閉じる、bodyスクロール抑制
-  useEffect(() => {
-    if (!drawerOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDrawerOpen(false);
-    };
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [drawerOpen]);
-
-  const handleExport = () => {
-    downloadJsonFile(exportJson(), "pointmax");
-  };
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      if (hasData) {
-        const ok = await dialog.confirm({
-          title: "インポートで上書きしますか？",
-          message:
-            "現在のデータをインポートしたJSONで上書きします。\n編集中の内容は失われます。",
-          okText: "上書き",
-          danger: true,
-        });
-        if (!ok) {
-          e.target.value = "";
-          return;
-        }
-      }
-      const result = importJson(text);
-      if (!result.ok) {
-        await dialog.alert({
-          title: "インポート失敗",
-          message: result.error,
-          level: "error",
-        });
-      } else {
-        await dialog.alert({
-          title: "インポート完了",
-          message: "データを取り込みました。",
-          level: "success",
-        });
-      }
-    } catch (err) {
-      await dialog.alert({
-        title: "読み込みエラー",
-        message: err instanceof Error ? err.message : String(err),
-        level: "error",
-      });
-    } finally {
-      e.target.value = "";
-    }
-  };
-
-  const selectTab = (id: Tab) => {
-    navigate(id);
-    setDrawerOpen(false);
-  };
+  // PR-2e: 下部バー分の余白を確保するクラス (交換ルートは下部バー非表示なので付けない)。
+  const hideBottomBar = shouldHideBottomBar(tab);
 
   return (
     <div className="app">
@@ -216,13 +116,6 @@ function App() {
       )}
       <header className="appbar">
         <button
-          className="hamburger"
-          onClick={() => setDrawerOpen(true)}
-          aria-label="メニューを開く"
-        >
-          <span aria-hidden="true">☰</span>
-        </button>
-        <button
           type="button"
           className="brand"
           onClick={() => navigate("calculator")}
@@ -231,123 +124,35 @@ function App() {
         >
           PointMax
         </button>
-        <nav
-          className="tabs desktop-only"
-          role="tablist"
-          aria-label="メインナビゲーション"
-        >
-          {TABS.map((t) => (
+        {/* PR-2e: デスクトップナビ。daily 4 タブ + データ▾ ドロップダウン + 設定タブ。
+            UX-8(1): tablist/tab/tabpanel の ARIA は廃止し、現在タブに aria-current="page"
+            のみを付ける (main 側も role=tabpanel を除去して orphan ARIA を防ぐ)。 */}
+        <nav className="tabs desktop-only" aria-label="メインナビゲーション">
+          {DAILY_TABS.map((t) => (
             <button
               key={t.id}
-              role="tab"
-              aria-selected={tab === t.id}
-              aria-controls="main-tabpanel"
+              type="button"
+              aria-current={tab === t.id ? "page" : undefined}
               className={tab === t.id ? "active" : ""}
               onClick={() => navigate(t.id)}
             >
               {t.label}
             </button>
           ))}
+          <DataMenu items={DATA_MENU_TABS} active={tabGroup(tab) === "data"} />
+          <button
+            type="button"
+            aria-current={tab === "settings" ? "page" : undefined}
+            className={tab === "settings" ? "active" : ""}
+            onClick={() => navigate("settings")}
+          >
+            設定
+          </button>
         </nav>
-        <div className="active-tab-label mobile-only">{activeTabLabel}</div>
-        <div className="appbar-actions desktop-only">
-          <button
-            onClick={handleExport}
-            disabled={!hasData}
-            title="現在のデータをJSONファイルとしてダウンロード"
-          >
-            エクスポート
-          </button>
-          <button
-            onClick={handleImportClick}
-            title="JSONファイルから読み込み"
-          >
-            インポート
-          </button>
-        </div>
-        <input
-          type="file"
-          accept="application/json,.json"
-          ref={fileInputRef}
-          onChange={handleImportFile}
-          style={{ display: "none" }}
-        />
       </header>
 
-      {drawerOpen && (
-        <div
-          className="drawer-backdrop"
-          onClick={() => setDrawerOpen(false)}
-          role="presentation"
-        >
-          <aside
-            className="drawer"
-            onClick={(e) => e.stopPropagation()}
-            role="navigation"
-            aria-label="メニュー"
-          >
-            <div className="drawer-header">
-              <strong>PointMax</strong>
-              <button
-                className="drawer-close"
-                onClick={() => setDrawerOpen(false)}
-                aria-label="閉じる"
-              >
-                ×
-              </button>
-            </div>
-            <nav
-              className="drawer-tabs"
-              role="tablist"
-              aria-label="メインナビゲーション"
-            >
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  role="tab"
-                  aria-selected={tab === t.id}
-                  aria-controls="main-tabpanel"
-                  className={`drawer-tab ${tab === t.id ? "active" : ""}`}
-                  onClick={() => selectTab(t.id)}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </nav>
-            <hr className="drawer-divider" />
-            <div className="drawer-actions">
-              <button
-                onClick={() => {
-                  setDrawerOpen(false);
-                  handleExport();
-                }}
-                disabled={!hasData}
-              >
-                エクスポート
-              </button>
-              <button
-                onClick={() => {
-                  setDrawerOpen(false);
-                  handleImportClick();
-                }}
-              >
-                インポート
-              </button>
-              <small
-                className="hint"
-                style={{ padding: "8px 14px", fontSize: 11 }}
-              >
-                データ初期化・URL同期は「設定」タブから
-              </small>
-            </div>
-          </aside>
-        </div>
-      )}
-
       <main
-        className="content"
-        id="main-tabpanel"
-        role="tabpanel"
+        className={`content${hideBottomBar ? "" : " has-bottom-bar"}`}
         aria-label={activeTabLabel}
       >
         <UpdateBanner />
@@ -362,12 +167,40 @@ function App() {
             {tab === "wallet" && <WalletScreen />}
             {tab === "currencies" && <CurrenciesScreen />}
             {tab === "stores" && <StoresScreen />}
+            {tab === "data" && <DataHubScreen />}
             {tab === "benefits" && <BenefitsScreen />}
             {tab === "edges" && <EdgesScreen />}
             {tab === "settings" && <SettingsScreen />}
           </Suspense>
         </ErrorBoundary>
       </main>
+
+      {/* PR-2e: モバイル下部固定タブバー (計算 / 特典 / データ / 設定)。
+          交換ルート表示中はグラフ操作域を最大化するため非表示。
+          既知の確認残 (実機依存で未検証): モバイルでソフトキーボード表示時に
+          position:fixed の本バーが金額 input に被る可能性がある。実機で遮蔽が
+          起きる場合は visualViewport.resize でバーを退避させる対応を検討する。 */}
+      {!hideBottomBar && (
+        <nav className="bottom-bar mobile-only" aria-label="メインナビゲーション">
+          {BOTTOM_BAR.map((b) => {
+            const isActive = bottomBarActiveSlot(tab) === b.slot;
+            return (
+              <button
+                key={b.slot}
+                type="button"
+                className={isActive ? "bottom-bar-item active" : "bottom-bar-item"}
+                aria-current={isActive ? "page" : undefined}
+                onClick={() => navigate(b.target)}
+              >
+                <span className="bottom-bar-icon" aria-hidden="true">
+                  {b.icon}
+                </span>
+                <span className="bottom-bar-label">{b.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      )}
     </div>
   );
 }

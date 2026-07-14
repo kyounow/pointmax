@@ -17,10 +17,12 @@ export function CalcCurrencyTabs({
   currencyById,
 }: Props) {
   return (
+    // UX-8(1) / PR-2e: role=tablist/tab は tabpanel を伴わない orphan ARIA だったため撤去。
+    // 「選択中」は aria-current で表現する (通貨選択 = ページ内の現在項目)。
     <div
       className="campaign-tabs currency-tabs"
       style={{ marginBottom: 12 }}
-      role="tablist"
+      role="group"
       aria-label="目標通貨"
     >
       {preferredCurrencyIds.map((cid) => {
@@ -30,8 +32,8 @@ export function CalcCurrencyTabs({
         return (
           <button
             key={cid}
-            role="tab"
-            aria-selected={active}
+            type="button"
+            aria-current={active ? "true" : undefined}
             className={active ? "active" : ""}
             onClick={() => onSelect(cid)}
             title={`${c.name} で表示`}

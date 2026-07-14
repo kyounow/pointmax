@@ -8,7 +8,13 @@
 //   - 最新 1 件のプレビュー (日付 + 件数) は常時表示。
 //   - #settings/history (旧 #sync-history 含む) で details を自動展開 + scrollIntoView。
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { SettingsScreen } from "./SettingsScreen";
 import { DialogProvider } from "./dialog/DialogProvider";
@@ -50,6 +56,41 @@ describe("SettingsScreen 誕生月設定", () => {
     renderSettings();
     const select = screen.getByLabelText("誕生月") as HTMLSelectElement;
     expect(select.value).toBe("9");
+  });
+});
+
+describe("SettingsScreen データ管理 (IA-6 / PR-2e)", () => {
+  it("データ管理セクションに 5 操作がリスク昇順で並ぶ", () => {
+    renderSettings();
+    expect(
+      screen.getByRole("heading", { name: "データ管理", level: 3 }),
+    ).toBeInTheDocument();
+
+    // エクスポート → インポート → URL同期(全上書き) → サンプル投入 → 初期化 の順。
+    const ordered = [
+      screen.getByRole("button", { name: "エクスポート" }),
+      screen.getByRole("button", { name: "インポート" }),
+      screen.getByRole("button", { name: /URLから取得して全上書き/ }),
+      screen.getByRole("button", { name: "サンプル投入" }),
+      screen.getByRole("button", { name: "ローカルデータ初期化" }),
+    ];
+    // DOM 出現順が定義順どおりであることを確認。
+    for (let i = 1; i < ordered.length; i++) {
+      const rel = ordered[i - 1].compareDocumentPosition(ordered[i]);
+      expect(rel & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
+  it("サンプル投入は mergeFromSeed でシードを取り込む (件数が増える)", async () => {
+    renderSettings();
+    expect(useStore.getState().currencies.length).toBe(0);
+    fireEvent.click(screen.getByRole("button", { name: "サンプル投入" }));
+    // 確認ダイアログの「投入」を押す。
+    fireEvent.click(await screen.findByRole("button", { name: "投入" }));
+    // seed が取り込まれ通貨などが 0 件から増える (非同期ハンドラ完了待ち)。
+    await waitFor(() =>
+      expect(useStore.getState().currencies.length).toBeGreaterThan(0),
+    );
   });
 });
 

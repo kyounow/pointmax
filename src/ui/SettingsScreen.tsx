@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { useDialog } from "./dialog/useDialog";
@@ -6,6 +6,7 @@ import { DEFAULT_SYNC_URL } from "../state/seed";
 import { byId } from "../domain/entityIndex";
 import { getUsageStats, clearUsageStats } from "../state/usageStats";
 import { useRoute } from "../navigation";
+import { downloadJsonFile } from "../state/exportFile";
 import { SyncHistorySection } from "./settings/SyncHistorySection";
 import { shouldExpandSyncHistory } from "./settings/settingsRoute";
 import {
@@ -15,14 +16,18 @@ import {
 } from "../state/storagePersistence";
 
 export function SettingsScreen() {
-  // Wave 5 B-1: 5 個別 subscribe → 単一 useShallow に集約。
+  // Wave 5 B-1: 個別 subscribe → 単一 useShallow に集約。
   // hasData は数値派生なので別 subscribe で OK (primitive 比較で十分)。
+  // IA-6 (PR-2e): エクスポート/インポート/サンプル投入を App から設定「データ管理」へ移設。
   const {
     syncUrl,
     lastSyncAt,
     setSyncUrl,
     syncFromUrl,
     clearAll,
+    exportJson,
+    importJson,
+    mergeFromSeed,
     stores,
     birthMonth,
     setBirthMonth,
@@ -33,6 +38,9 @@ export function SettingsScreen() {
       setSyncUrl: s.setSyncUrl,
       syncFromUrl: s.syncFromUrl,
       clearAll: s.clearAll,
+      exportJson: s.exportJson,
+      importJson: s.importJson,
+      mergeFromSeed: s.mergeFromSeed,
       stores: s.stores,
       birthMonth: s.birthMonth,
       setBirthMonth: s.setBirthMonth,
@@ -60,6 +68,60 @@ export function SettingsScreen() {
       setSyncUrl(DEFAULT_SYNC_URL);
     }
   }, [syncUrl, setSyncUrl]);
+
+  // ── IA-6: エクスポート / インポート (旧 App appbar から移設) ──
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = () => {
+    downloadJsonFile(exportJson(), "pointmax");
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      if (hasData) {
+        const ok = await dialog.confirm({
+          title: "インポートで上書きしますか？",
+          message:
+            "現在のデータをインポートしたJSONで上書きします。\n編集中の内容は失われます。",
+          okText: "上書き",
+          danger: true,
+        });
+        if (!ok) {
+          e.target.value = "";
+          return;
+        }
+      }
+      const result = importJson(text);
+      if (!result.ok) {
+        await dialog.alert({
+          title: "インポート失敗",
+          message: result.error,
+          level: "error",
+        });
+      } else {
+        await dialog.alert({
+          title: "インポート完了",
+          message: "データを取り込みました。",
+          level: "success",
+        });
+      }
+    } catch (err) {
+      await dialog.alert({
+        title: "読み込みエラー",
+        message: err instanceof Error ? err.message : String(err),
+        level: "error",
+      });
+    } finally {
+      e.target.value = "";
+    }
+  };
 
   const handleSave = () => {
     setSyncUrl(draftUrl);
@@ -106,6 +168,26 @@ export function SettingsScreen() {
     }
   };
 
+  // ── サンプル投入: bundle 同梱の公式マスタを add-only マージ ──
+  // ユーザー編集は保持し、不足している公式項目だけ取り込む (非破壊)。
+  // 初期化直後にサンプルデータを戻したいとき等に使う。
+  const handleLoadSample = async () => {
+    const ok = await dialog.confirm({
+      title: "サンプルデータを投入しますか？",
+      message:
+        "公式マスタのサンプルデータ (カード・通貨・店舗・交換ルート・特典等) を現在のデータに追加します。\n" +
+        "あなたが編集・追加した項目は保持され、不足している公式項目のみ取り込みます。",
+      okText: "投入",
+    });
+    if (!ok) return;
+    mergeFromSeed();
+    await dialog.alert({
+      title: "投入完了",
+      message: "サンプルデータを取り込みました。",
+      level: "success",
+    });
+  };
+
   const formattedSyncTime = lastSyncAt
     ? new Date(lastSyncAt).toLocaleString("ja-JP")
     : "未実施";
@@ -147,7 +229,9 @@ export function SettingsScreen() {
     const ok = await dialog.confirm({
       title: "ローカルデータを初期化しますか？",
       message:
-        "ブラウザに保存されているこのアプリのデータ（カード／ポイント／店舗／ルール／交換ルート／支払方法）を全て削除します。\n公式マスタは「外部URLからのデータ同期」セクションから再取得できます。",
+        "ブラウザに保存されているこのアプリのデータ（カード／ポイント／店舗／ルール／交換ルート／支払方法）を全て削除します。\n" +
+        "公式マスタは「外部URLからのデータ同期」または「サンプル投入」から再取得できます。\n" +
+        "エクスポート済み JSON からインポートで復元できます。",
       okText: "初期化",
       danger: true,
     });
@@ -199,10 +283,139 @@ export function SettingsScreen() {
           なるため設定上部に配置する。 */}
       <SyncHistorySection expanded={historyExpanded} />
 
+      {/* IA-6 (PR-2e): エクスポート / インポート / URL同期 / サンプル投入 / 初期化 を
+          「データ管理」に集約。上から下へリスク昇順 (読取 → 追記/上書き → 全削除)。 */}
       <h3 style={{ marginTop: 8 }}>データ管理</h3>
       <p className="hint">
+        バックアップ・復元・同期・初期化をまとめています。
+        上から下へリスクの低い順に並んでいます。
+      </p>
+
+      {/* 1. エクスポート (読み取りのみ・非破壊) */}
+      <h4 style={{ margin: "12px 0 4px" }}>エクスポート</h4>
+      <p className="hint" style={{ marginTop: 0 }}>
+        現在のデータを JSON ファイルとしてダウンロードします（バックアップ用）。
+      </p>
+      <div className="row" style={{ gap: 8, marginBottom: 12 }}>
+        <button
+          onClick={handleExport}
+          disabled={!hasData}
+          title="現在のデータをJSONファイルとしてダウンロード"
+        >
+          エクスポート
+        </button>
+      </div>
+
+      {/* 2. インポート (現在データを上書き) */}
+      <h4 style={{ margin: "12px 0 4px" }}>インポート</h4>
+      <p className="hint" style={{ marginTop: 0 }}>
+        エクスポートした JSON ファイルから読み込みます（現在データを上書き）。
+      </p>
+      <div className="row" style={{ gap: 8, marginBottom: 12 }}>
+        <button onClick={handleImportClick} title="JSONファイルから読み込み">
+          インポート
+        </button>
+      </div>
+      <input
+        type="file"
+        accept="application/json,.json"
+        ref={fileInputRef}
+        onChange={handleImportFile}
+        style={{ display: "none" }}
+      />
+
+      {/* 3. 外部URLからのデータ同期 (全上書き) */}
+      <h4 style={{ margin: "12px 0 4px" }}>外部URLからのデータ同期</h4>
+      <p className="hint" style={{ marginTop: 0 }}>
+        マスタJSON（エクスポート形式と同じ）を公開URLに置けば、複数端末からまとめて取り込めます。
+        <br />
+        通常の差分マージはアプリ起動時の更新バナーで行えるため、ここでは
+        <strong>「URL から取得して全上書き」</strong>のみを残しています
+        （別端末で編集した内容を取り込みたいときに使用）。
+      </p>
+
+      <div className="row" style={{ marginBottom: 8 }}>
+        <input
+          type="url"
+          placeholder="https://gist.githubusercontent.com/.../raw/data.json"
+          value={draftUrl}
+          onChange={(e) => setDraftUrl(e.target.value)}
+          style={{ flex: 1, minWidth: 320 }}
+        />
+        <button onClick={handleSave} disabled={draftUrl === syncUrl}>
+          URL保存
+        </button>
+        <button
+          onClick={() => {
+            setDraftUrl(DEFAULT_SYNC_URL);
+            setSyncUrl(DEFAULT_SYNC_URL);
+          }}
+          disabled={draftUrl === DEFAULT_SYNC_URL && syncUrl === DEFAULT_SYNC_URL}
+          title={`デフォルト: ${DEFAULT_SYNC_URL}`}
+        >
+          デフォルトに戻す
+        </button>
+      </div>
+      {draftUrl === DEFAULT_SYNC_URL && (
+        <p className="hint" style={{ marginTop: 0 }}>
+          ✓ 公式マスタを参照中
+        </p>
+      )}
+
+      <div className="row" style={{ gap: 8, marginBottom: 8 }}>
+        <button className="primary" onClick={handleOverwrite} disabled={busy}>
+          {busy ? "同期中..." : "URLから取得して全上書き"}
+        </button>
+      </div>
+
+      <p className="hint">
+        最終同期: <strong>{formattedSyncTime}</strong>
+      </p>
+
+      <details style={{ marginTop: 8, marginBottom: 4 }}>
+        <summary>GitHub Gist で運用する例</summary>
+        <ol style={{ color: "var(--muted)", lineHeight: 1.8 }}>
+          <li>PointMax で「エクスポート」してJSONをダウンロード</li>
+          <li>
+            <a
+              href="https://gist.github.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              gist.github.com
+            </a>{" "}
+            で新規Gist作成 (Public または Secret)
+          </li>
+          <li>JSON内容をペースト → Save</li>
+          <li>「Raw」ボタンを右クリック → URLをコピー (Raw URL)</li>
+          <li>このURLを上欄に貼り付けて保存</li>
+          <li>別端末で同URLを設定 → 「URLから取得して全上書き」</li>
+        </ol>
+        <p className="hint">
+          ※ Gist URLは更新するとハッシュが変わる場合があるので、最新版を再取得することを推奨。
+        </p>
+      </details>
+
+      {/* 4. サンプル投入 (add-only マージ・非破壊) */}
+      <h4 style={{ margin: "16px 0 4px" }}>サンプル投入</h4>
+      <p className="hint" style={{ marginTop: 0 }}>
+        bundle 同梱の公式マスタ（サンプルデータ）を現在のデータに追加します。
+        あなたが編集・追加した項目は保持され、不足している公式項目だけを取り込みます。
+      </p>
+      <div className="row" style={{ gap: 8, marginBottom: 12 }}>
+        <button
+          onClick={handleLoadSample}
+          title="bundle 同梱の公式サンプルデータを追加取り込み"
+        >
+          サンプル投入
+        </button>
+      </div>
+
+      {/* 5. ローカルデータ初期化 (全削除) */}
+      <h4 style={{ margin: "16px 0 4px" }}>ローカルデータ初期化</h4>
+      <p className="hint" style={{ marginTop: 0 }}>
         ブラウザに保存されたこのアプリのデータを全削除します。
-        公式マスタはアプリ起動時の更新バナー（または下の URL 同期）から再取得できます。
+        公式マスタはアプリ起動時の更新バナー（または上の URL 同期・サンプル投入）から再取得できます。
       </p>
       <div className="row" style={{ gap: 8, marginBottom: 16 }}>
         <button
@@ -258,81 +471,6 @@ export function SettingsScreen() {
           </button>
         </div>
       )}
-
-      <h3 style={{ marginTop: 8 }}>外部URLからのデータ同期</h3>
-      <p className="hint">
-        マスタJSON（エクスポート形式と同じ）を公開URLに置けば、複数端末からまとめて取り込めます。
-        <br />
-        通常の差分マージはアプリ起動時の更新バナーで行えるため、ここでは
-        <strong>「URL から取得して全上書き」</strong>のみを残しています
-        （別端末で編集した内容を取り込みたいときに使用）。
-      </p>
-
-      <div className="row" style={{ marginBottom: 8 }}>
-        <input
-          type="url"
-          placeholder="https://gist.githubusercontent.com/.../raw/data.json"
-          value={draftUrl}
-          onChange={(e) => setDraftUrl(e.target.value)}
-          style={{ flex: 1, minWidth: 320 }}
-        />
-        <button onClick={handleSave} disabled={draftUrl === syncUrl}>
-          URL保存
-        </button>
-        <button
-          onClick={() => {
-            setDraftUrl(DEFAULT_SYNC_URL);
-            setSyncUrl(DEFAULT_SYNC_URL);
-          }}
-          disabled={draftUrl === DEFAULT_SYNC_URL && syncUrl === DEFAULT_SYNC_URL}
-          title={`デフォルト: ${DEFAULT_SYNC_URL}`}
-        >
-          デフォルトに戻す
-        </button>
-      </div>
-      {draftUrl === DEFAULT_SYNC_URL && (
-        <p className="hint" style={{ marginTop: 0 }}>
-          ✓ 公式マスタを参照中
-        </p>
-      )}
-
-      <div className="row" style={{ gap: 8, marginBottom: 12 }}>
-        <button
-          className="primary"
-          onClick={handleOverwrite}
-          disabled={busy}
-        >
-          {busy ? "同期中..." : "URLから取得して全上書き"}
-        </button>
-      </div>
-
-      <p className="hint">
-        最終同期: <strong>{formattedSyncTime}</strong>
-      </p>
-
-      <details style={{ marginTop: 18 }}>
-        <summary>GitHub Gist で運用する例</summary>
-        <ol style={{ color: "var(--muted)", lineHeight: 1.8 }}>
-          <li>PointMax で「エクスポート」してJSONをダウンロード</li>
-          <li>
-            <a
-              href="https://gist.github.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              gist.github.com
-            </a>{" "}
-            で新規Gist作成 (Public または Secret)
-          </li>
-          <li>JSON内容をペースト → Save</li>
-          <li>「Raw」ボタンを右クリック → URLをコピー (Raw URL)</li>
-          <li>このURLを上欄に貼り付けて保存</li>
-          <li>別端末で同URLを設定 → 「URLから取得して全上書き」</li>
-        </ol>
-        <p className="hint">
-          ※ Gist URLは更新するとハッシュが変わる場合があるので、最新版を再取得することを推奨。
-        </p>
-      </details>
 
       <h3 style={{ marginTop: 24 }}>利用統計 (この端末のみ)</h3>
       <p className="hint">

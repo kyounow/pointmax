@@ -745,115 +745,167 @@ details summary {
   cursor: help;
 }
 
-/* ==== Mobile drawer ==== */
-.hamburger {
-  display: none;
+/* ==== PR-2e: デスクトップ「データ ▾」ドロップダウン (menu button パターン) ==== */
+.data-menu {
+  position: relative;
+  display: inline-flex;
+}
+.data-menu-trigger {
   background: transparent;
   border: 1px solid transparent;
-  font-size: 22px;
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
+  color: var(--muted);
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
+  font: inherit;
 }
-.hamburger:hover {
+.data-menu-trigger:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+.data-menu-trigger.active {
+  color: var(--text);
   background: var(--panel-2);
   border-color: var(--border);
 }
-.active-tab-label {
-  display: none;
-  flex: 1;
-  font-weight: 600;
-  color: var(--text);
-  margin-left: 4px;
-}
-.drawer-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 200;
-  animation: dialog-fade-in 0.15s ease-out;
-}
-.drawer {
-  width: 80vw;
-  max-width: 320px;
-  height: 100%;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  padding: 14px;
+.data-menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  min-width: 160px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.4);
-  animation: drawer-slide-in 0.18s ease-out;
-  /* PWA safe area */
-  padding-top: max(14px, env(safe-area-inset-top));
-  padding-left: max(14px, env(safe-area-inset-left));
-  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
-@keyframes drawer-slide-in {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-.drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  font-size: 16px;
-  color: var(--accent);
-}
-.drawer-close {
+.data-menu-item {
+  text-align: left;
   background: transparent;
   border: 1px solid transparent;
-  width: 36px;
-  height: 36px;
-  font-size: 22px;
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  white-space: nowrap;
+}
+.data-menu-item:hover,
+.data-menu-item:focus-visible {
+  background: var(--panel-2);
+  border-color: var(--border);
+  outline: none;
+}
+
+/* ==== PR-2e: モバイル下部固定タブバー ==== */
+/* 既存の .desktop-only (mobile で隠す) と対になる .mobile-only (desktop で隠す) パターン。 */
+.mobile-only {
+  display: none;
+}
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  /* 表示/非表示は .mobile-only (desktop 非表示) と mobile media (flex) で制御 */
+  justify-content: space-around;
+  align-items: stretch;
+  gap: 2px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding: 4px 4px env(safe-area-inset-bottom);
+}
+.bottom-bar-item {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0;
-}
-.drawer-tabs {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.drawer-tab {
-  text-align: left;
-  padding: 12px 14px;
-  font-size: 15px;
+  gap: 2px;
+  background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
-  background: transparent;
+  color: var(--muted);
+  padding: 6px 2px;
+  min-height: 48px;
+  cursor: pointer;
+  font: inherit;
+}
+.bottom-bar-item:hover {
   color: var(--text);
 }
-.drawer-tab.active {
-  background: var(--panel-2);
-  border-color: var(--accent);
+.bottom-bar-item.active {
   color: var(--accent);
-  font-weight: 700;
+  background: var(--panel-2);
 }
-.drawer-divider {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 12px 0;
+.bottom-bar-icon {
+  font-size: 20px;
+  line-height: 1;
 }
-.drawer-actions {
+.bottom-bar-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ==== PR-2e: データハブ (#data) カードグリッド ==== */
+.data-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.data-hub-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+}
+.data-hub-card:hover {
+  border-color: var(--accent);
+  background: var(--panel-2);
+}
+.data-hub-icon {
+  font-size: 26px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.data-hub-body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
-.drawer-actions button {
-  text-align: left;
-  padding: 12px 14px;
-  font-size: 14px;
+.data-hub-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.data-hub-desc {
+  font-size: 12px;
+  color: var(--muted);
+}
+.data-hub-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.data-hub-count-unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
 }
 
 /* ==== Mobile responsive ==== */
@@ -861,11 +913,9 @@ details summary {
   .desktop-only {
     display: none !important;
   }
-  .hamburger {
-    display: inline-flex;
-  }
-  .active-tab-label {
-    display: block;
+  /* PR-2e: モバイルは下部固定タブバーを表示 (デスクトップでは .mobile-only で非表示)。 */
+  .bottom-bar {
+    display: flex;
   }
   .appbar {
     padding: 8px 12px;
@@ -881,6 +931,10 @@ details summary {
   .content {
     padding: 12px;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  /* PR-2e: 下部固定タブバー分の余白 (交換ルート等バー非表示時は has-bottom-bar を付けない)。 */
+  .content.has-bottom-bar {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
   /* Forms stack vertically */
   .row {
