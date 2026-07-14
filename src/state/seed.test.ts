@@ -292,3 +292,57 @@ describe("M5 回帰: prog-d-pointcard-nojima-10000 の除去", () => {
     expect(offending, JSON.stringify(offending)).toEqual([]);
   });
 });
+
+// v6.5.0: エポス 3グレード体制 + たまるマーケットの仕様固定テスト。
+// 公式値 (2026-07 確認済み) を CI で固定し、退行 (特に選べるポイントアップの
+// 2025-04 改定値 0.01 を旧 3倍 0.015 に戻す等) を防止する。
+describe("v6.5.0: エポス 3グレード + たまるマーケット", () => {
+  it("epos-gold / epos-platinum が enabled:false で存在し 0.5% / epos 通貨", () => {
+    const byId = new Map(SEED_CARDS.map((c) => [c.id, c]));
+    for (const id of ["epos-gold", "epos-platinum"]) {
+      const c = byId.get(id);
+      expect(c, `card ${id} が未登録`).toBeDefined();
+      expect(c?.enabled).toBe(false);
+      expect(c?.defaultRate).toBe(0.005);
+      expect(c?.defaultCurrencyId).toBe("epos");
+    }
+  });
+
+  it("prog-epos-gp-selectable-pointup は rate 0.01 (2025-04改定の2倍。旧3倍 0.015 への退行防止)", () => {
+    const { programs } = seed();
+    const p = programs.find((x) => x.id === "prog-epos-gp-selectable-pointup");
+    expect(p, "prog-epos-gp-selectable-pointup が未登録").toBeDefined();
+    expect(p?.rate).toBe(0.01);
+    // 旧 3倍 (0.015) に戻っていないことを明示的にガード
+    expect(p?.rate).not.toBe(0.015);
+  });
+
+  it("prog-epos-tamaru-{2,3,4}x の rate が 0.005×N と一致", () => {
+    const { programs } = seed();
+    const byId = new Map(programs.map((p) => [p.id, p]));
+    for (const n of [2, 3, 4]) {
+      const p = byId.get(`prog-epos-tamaru-${n}x`);
+      expect(p, `prog-epos-tamaru-${n}x が未登録`).toBeDefined();
+      expect(p?.rate).toBeCloseTo(0.005 * n, 10);
+    }
+  });
+
+  it("選べるポイントアップの marui membership は overrideRate 0.015", () => {
+    const { memberships } = seed();
+    const m = memberships.find(
+      (x) =>
+        x.programId === "prog-epos-gp-selectable-pointup" &&
+        x.storeId === "marui",
+    );
+    expect(m, "選べるポイントアップ × marui membership が未登録").toBeDefined();
+    expect(m?.overrideRate).toBe(0.015);
+  });
+
+  it("prog-epos-gp-marui の cardIds に一般 (epos-card) が含まれない", () => {
+    const { programs } = seed();
+    const p = programs.find((x) => x.id === "prog-epos-gp-marui");
+    expect(p, "prog-epos-gp-marui が未登録").toBeDefined();
+    expect(p?.cardIds).toBeDefined();
+    expect(p?.cardIds).not.toContain("epos-card");
+  });
+});

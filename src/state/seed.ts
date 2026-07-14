@@ -64,7 +64,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 42;
+export const SEED_VERSION = 43;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -80,6 +80,16 @@ export const SEED_CHANGELOG: {
   date: string;
   summary: string;
 }[] = [
+  {
+    version: 43,
+    date: "2026-07-15",
+    summary:
+      "v6.5.0: エポスカードを3グレード体制に拡張 (エポスゴールド/エポスプラチナ追加、enabled:false)。" +
+      "ゴールド/プラチナのマルイ2倍・選べるポイントアップ2倍 (2025-04改定値) を program 化、" +
+      "ポイントアップサイト「たまるマーケット」を J-POINT パートナー同型でモデル化 " +
+      "(2/3/4倍 + 楽天市場/Yahoo!/ユニクロ/じゃらん/無印)。エポス→dポイント等価交換エッジ追加。" +
+      "store 2件追加 (マルイ / Yahoo!ショッピング。ユニクロ・無印良品は既存)。",
+  },
   {
     version: 42,
     date: "2026-06-20",
@@ -183,6 +193,7 @@ export const SEED_CHANGELOG: {
     summary:
       "発行枚数上位カバー: master card pool に 5 枚追加 (全て enabled: false、ユーザは「使う」トグルで有効化)。" +
       "jal-card (普通)、aeon-card、jcb-w、epos-card、ana-visa。" +
+      "(エポスは後の v6.5.0 でゴールド epos-gold / プラチナ epos-platinum を追加し 3 グレード化)。" +
       "JCB CARD W 用に新通貨 j-point (J-POINT、2026/1 Oki Doki リニューアル後) を追加。" +
       "J-POINT → JAL/ANA マイル / MyJCB Pay の交換 edges 3 件、JAL カード普通版用の特約店/ファミマ rules 2 件も追加。" +
       "これで日本の発行枚数上位 9 ブランド (楽天/三井住友/JAL/AEON/JCB/d/PayPay/エポス/ANA) ほぼカバー。",

@@ -589,6 +589,95 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "ジョナサン等) は店頭決済含め対象。詳細は J-POINT パートナーサイトで確認。",
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
+
+  // ═══════════════════════════════════════════════════════════════
+  // v6.5.0: エポス ゴールド/プラチナ グレード優待 + たまるマーケット
+  // ───────────────────────────────────────────────────────────────
+  // エポスカードは 3 グレード体制 (一般 epos-card / ゴールド epos-gold /
+  // プラチナ epos-platinum)、基本還元はいずれも 200円=1pt=0.5% で共通。
+  // グレード差は「マルイ 2倍」「選べるポイントアップ 2倍」の 2 優待で表現する
+  // (いずれもゴールド/プラチナ限定、一般は 0.5% のまま)。
+  // - マルイ 2倍・選べるポイントアップ 2倍はどちらも 200円=2pt = 実効 1.0%。
+  //   2025-04 改定で選べるポイントアップは旧 3倍(1.5%) から 2倍(1.0%) に縮小済み。
+  // ポイントアップサイト「たまるマーケット」は JCB J-POINT パートナーと同型で、
+  // サイト経由の購入時にショップ別倍率が乗る (基本 0.5%×N)。3 グレード共通。
+  // 出典: https://www.eposcard.co.jp/pointup/index.html +
+  //       https://tamaru.eposcard.co.jp/ (2026-07 実測)
+  // ═══════════════════════════════════════════════════════════════
+
+  // (a) エポス ゴールド/プラチナ マルイ優待 (2倍)
+  {
+    id: "prog-epos-gp-marui",
+    name: "エポス ゴールド/プラチナ マルイ優待 (2倍)",
+    cardIds: ["epos-gold", "epos-platinum"],
+    rate: 0.01,
+    currencyId: "epos",
+    bonusType: "primary",
+    description:
+      "ゴールド/プラチナはマルイ・モディ・マルイウェブチャネルで 200円=2pt (1.0%、一般は0.5%)。一部商品・ショップ除く。",
+    officialUrl:
+      "https://faq.eposcard.co.jp/faq/show/63?category_id=17&site_domain=default",
+  },
+
+  // (b) エポス 選べるポイントアップ (2倍)
+  // ⚠ 2025-04 改定で旧 3倍(1.5%) → 2倍(1.0%) に縮小済み。ネット上の解説記事の多くは
+  //   旧 3倍のままなので、それを根拠に rate を 0.015 へ「修正」しないこと
+  //   (seed.test.ts に退行防止 assert あり)。
+  {
+    id: "prog-epos-gp-selectable-pointup",
+    name: "エポス 選べるポイントアップ (2倍)",
+    cardIds: ["epos-gold", "epos-platinum"],
+    rate: 0.01,
+    currencyId: "epos",
+    bonusType: "primary",
+    description:
+      "ゴールド/プラチナ限定「選べるポイントアップショップ」登録ショップで 200円=2pt (合計1.0%)。2025年4月改定後の倍率 (旧3倍から縮小)。",
+    conditions:
+      "対象300以上から最大3ショップを登録した場合のみ (登録後3ヶ月間変更不可)。未登録ショップは通常0.5%。",
+    officialUrl: "https://www.eposcard.co.jp/pointup/index.html",
+    entryUrl: "https://www.eposcard.co.jp/pointup/index.html",
+  },
+
+  // (c) たまるマーケット 3階層 (jcb-jpoint と同型、倍率=総倍率、rate = 0.005×N)
+  {
+    id: "prog-epos-tamaru-2x",
+    name: "たまるマーケット (2倍)",
+    cardIds: ["epos-card", "epos-gold", "epos-platinum"],
+    rate: 0.01,
+    currencyId: "epos",
+    bonusType: "primary",
+    description:
+      "たまるマーケット (エポスポイントUPサイト) 経由の購入で 2倍 (基本0.5%×2)。一部ショップはゴールド/プラチナに個別上乗せ倍率あり (ショップごと設定のため未モデル化)。",
+    conditions:
+      "たまるマーケットを経由して対象ショップで購入した場合のみボーナス付与。",
+    entryUrl: "https://tamaru.eposcard.co.jp/",
+  },
+  {
+    id: "prog-epos-tamaru-3x",
+    name: "たまるマーケット (3倍)",
+    cardIds: ["epos-card", "epos-gold", "epos-platinum"],
+    rate: 0.015,
+    currencyId: "epos",
+    bonusType: "primary",
+    description:
+      "たまるマーケット (エポスポイントUPサイト) 経由の購入で 3倍 (基本0.5%×3)。一部ショップはゴールド/プラチナに個別上乗せ倍率あり (ショップごと設定のため未モデル化)。",
+    conditions:
+      "たまるマーケットを経由して対象ショップで購入した場合のみボーナス付与。",
+    entryUrl: "https://tamaru.eposcard.co.jp/",
+  },
+  {
+    id: "prog-epos-tamaru-4x",
+    name: "たまるマーケット (4倍)",
+    cardIds: ["epos-card", "epos-gold", "epos-platinum"],
+    rate: 0.02,
+    currencyId: "epos",
+    bonusType: "primary",
+    description:
+      "たまるマーケット (エポスポイントUPサイト) 経由の購入で 4倍 (基本0.5%×4)。一部ショップはゴールド/プラチナに個別上乗せ倍率あり (ショップごと設定のため未モデル化)。",
+    conditions:
+      "たまるマーケットを経由して対象ショップで購入した場合のみボーナス付与。",
+    entryUrl: "https://tamaru.eposcard.co.jp/",
+  },
 ];
 
 // 店舗 × プログラムの加盟関係 (M2M)
@@ -947,4 +1036,42 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   { programId: "prog-jcb-jpoint-gold-3x", storeId: "conv-7eleven" },
   { programId: "prog-jcb-jpoint-gold-4x", storeId: "takashimaya" },
   { programId: "prog-jcb-jpoint-gold-20x", storeId: "starbucks" },
+
+  // ═══════════════════════════════════════════════════════════════
+  // v6.5.0: エポス ゴールド/プラチナ優待 + たまるマーケット memberships
+  // ═══════════════════════════════════════════════════════════════
+
+  // (a) マルイ優待 (2倍)
+  { programId: "prog-epos-gp-marui", storeId: "marui" },
+
+  // (b) 選べるポイントアップ (2倍)。対象300以上のうち seed 実在 store を列挙
+  // (マルエツ・成城石井は store 未登録のため対象外)。
+  { programId: "prog-epos-gp-selectable-pointup", storeId: "conv-7eleven" },
+  { programId: "prog-epos-gp-selectable-pointup", storeId: "conv-familymart" },
+  { programId: "prog-epos-gp-selectable-pointup", storeId: "conv-lawson" },
+  { programId: "prog-epos-gp-selectable-pointup", storeId: "conv-ministop" },
+  { programId: "prog-epos-gp-selectable-pointup", storeId: "aeon" },
+  { programId: "prog-epos-gp-selectable-pointup", storeId: "seiyu" },
+  { programId: "prog-epos-gp-selectable-pointup", storeId: "matsukiyo" },
+  { programId: "prog-epos-gp-selectable-pointup", storeId: "welcia" },
+  { programId: "prog-epos-gp-selectable-pointup", storeId: "tsuruha" },
+  {
+    programId: "prog-epos-gp-selectable-pointup",
+    storeId: "suica-charge",
+    notes: "モバイルSuicaチャージが対象ショップ (エポスゴールド定番の使い方)",
+  },
+  {
+    programId: "prog-epos-gp-selectable-pointup",
+    storeId: "marui",
+    overrideRate: 0.015,
+    notes: "マルイ登録時は通常2pt+ボーナス1pt=1.5% (2025-04改定の影響なし)",
+  },
+
+  // (c) たまるマーケット (2/3/4倍)。倍率は 2026-07 実測
+  // 楽天市場2倍 / Yahoo!2倍 / ユニクロ2倍 / じゃらん3倍 / 無印4倍
+  { programId: "prog-epos-tamaru-2x", storeId: "rakuten-ichiba" },
+  { programId: "prog-epos-tamaru-2x", storeId: "yahoo-shopping" },
+  { programId: "prog-epos-tamaru-2x", storeId: "uniqlo" },
+  { programId: "prog-epos-tamaru-3x", storeId: "jalannet" },
+  { programId: "prog-epos-tamaru-4x", storeId: "muji" },
 ];

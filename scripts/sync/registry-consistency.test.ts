@@ -37,6 +37,7 @@ describe("registry.yaml 整合性契約", () => {
     "payment-app",
     "campaign",
     "jcb-jpoint",
+    "epos-tamaru",
     "ongoing-program",
   ])(
     "schema の extractor enum に %s が含まれる",

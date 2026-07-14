@@ -62,6 +62,7 @@ export type ExtractorKind =
   | "payment-app"     // 決済アプリ詳細
   | "campaign"        // 期間限定キャンペーン一覧系 (loyaltyRules + validFrom/validTo)
   | "jcb-jpoint"      // JCB J-POINT パートナー (旧 Oki Doki ランド系、倍率階層別 programs + memberships)
+  | "epos-tamaru"     // たまるマーケット (EPOS ポイントアップサイト) 倍率一覧
   | "ongoing-program";// 常設優遇プログラム (validFrom/validTo を付けず、conditions に常時条件記述。jcb-jpoint の汎用版、銀行/カード会社の常設還元アップ等を抽出)
 
 export type ProducesKind =
