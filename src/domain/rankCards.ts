@@ -311,7 +311,7 @@ export function rankCards(
 
     // PaymentApp あり: 各 app を試算して最良を選択
     const compatibleApps = paymentApps.filter(
-      (pa) => pa.enabled !== false && isPaymentAppCompatible(card, pa),
+      (pa) => pa.enabled === true && isPaymentAppCompatible(card, pa), // v7: enabled === true のみ有効
     );
 
     // PaymentApp なし (互換なし) → direct 評価にフォールバック
@@ -564,10 +564,10 @@ export function rankCards(
     return { rankings: ranked, loyalties, loyaltyTotal };
   }
 
-  // ─── MAIN: 現在「使う」資産でのランキング ───
-  const enabledCards = cards.filter((c) => c.enabled !== false);
+  // ─── MAIN: 現在「使う」資産でのランキング (v7: enabled === true のみ有効) ───
+  const enabledCards = cards.filter((c) => c.enabled === true);
   const mainAvailableCardIds = new Set(enabledCards.map((c) => c.id));
-  const enabledPointCards = pointCards.filter((p) => p.enabled !== false);
+  const enabledPointCards = pointCards.filter((p) => p.enabled === true);
   // 「使わない」選択をしたポイント通貨 (deny-list)。交換ルートの起点・経由から除外される。
   const blockedCurrencyIds = computeBlockedCurrencyIds(cards, pointCards, programs);
   const mainTargetCards = includeDisabled ? cards : enabledCards;
@@ -582,7 +582,9 @@ export function rankCards(
   // クレカ軸 (disabled クレカの有効化) は既存 comparisonItems が担うので、ここでは
   // ポイントカード軸のみ動かす: availableCardIds は enabled のまま、blockedCurrencyIds を
   // 空 (= 何もブロックしない) にし、loyalty も全ポイントカードで評価する。
-  const hasDisabledPointCard = pointCards.some((p) => p.enabled === false);
+  // v7: 「未使用」= enabled !== true (undefined/false)。使っていない pointCard が
+  // あれば「全部 ON にしたら」の upgrade シナリオを算出する。
+  const hasDisabledPointCard = pointCards.some((p) => p.enabled !== true);
   let upgrade: ScopeUpgrade | null = null;
   if (hasDisabledPointCard) {
     const full = runScope(

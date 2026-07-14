@@ -109,7 +109,7 @@ export function CardsScreen() {
       // view モードでも編集を挟まず即トグルできるようにする。
       // 単一 boolean は「編集→保存」より直接クリックの方が UX が良い。
       view: (c) => {
-        const on = c.enabled !== false;
+        const on = c.enabled === true; // v7: enabled === true のみ「使う」
         return (
           <label
             className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}
@@ -137,14 +137,15 @@ export function CardsScreen() {
         );
       },
       edit: (c, set) => {
-        const on = c.enabled !== false;
+        const on = c.enabled === true; // v7: enabled === true のみ「使う」
         return (
           <label className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}>
             <input
               type="checkbox"
               checked={on}
               onChange={(e) =>
-                set({ enabled: e.target.checked ? undefined : false })
+                // v7: ON = enabled:true (明示値、preservePreferences の carry-over に載せる) / OFF = false
+                set({ enabled: e.target.checked ? true : false })
               }
             />
             <span>{on ? "使う" : "OFF"}</span>

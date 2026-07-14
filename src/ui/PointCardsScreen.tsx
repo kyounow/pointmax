@@ -178,7 +178,7 @@ export function PointCardsScreen() {
       label: "使う",
       width: 90,
       view: (p) => {
-        const on = p.enabled !== false;
+        const on = p.enabled === true; // v7: enabled === true のみ「使う」
         return (
           <label
             className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}
@@ -189,7 +189,8 @@ export function PointCardsScreen() {
               checked={on}
               onChange={(e) =>
                 updatePointCard(p.id, {
-                  enabled: e.target.checked ? undefined : false,
+                  // v7: ON = enabled:true (明示値) / OFF = false
+                  enabled: e.target.checked ? true : false,
                 })
               }
             />
@@ -198,14 +199,15 @@ export function PointCardsScreen() {
         );
       },
       edit: (p, set) => {
-        const on = p.enabled !== false;
+        const on = p.enabled === true; // v7: enabled === true のみ「使う」
         return (
           <label className={`card-enabled-toggle ${on ? "is-on" : "is-off"}`}>
             <input
               type="checkbox"
               checked={on}
               onChange={(e) =>
-                set({ enabled: e.target.checked ? undefined : false })
+                // v7: ON = enabled:true (明示値) / OFF = false
+                set({ enabled: e.target.checked ? true : false })
               }
             />
             <span>{on ? "使う" : "OFF"}</span>

@@ -24,7 +24,7 @@ export const SEED_CARDS: Card[] = [
   },
   {
     // JALカードSuica 普通カード。CLUB-Aゴールド (jal-suica) と違い JRE→マイルは
-    // 1500pt→750マイル (0.5)。gate 用途で enabled:false (デフォルトはゴールド側が有効)。
+    // 1500pt→750マイル (0.5)。gate 用途。v7 は seed が enabled を出荷せず全カード OFF 起点。
     // 保有者が「使う」を ON にすると edge jre-to-jal-normal が解放される。
     // family-jal-suica (exclusive): 従来は「両カード保有時は bestPath がゴールド優先」を
     // 許容していたが、PR-1c で排他化。この普通版を ON にするとゴールド版 (jal-suica) が
@@ -34,7 +34,6 @@ export const SEED_CARDS: Card[] = [
     grade: "普通",
     defaultRate: 0.01,
     defaultCurrencyId: "jal-mile",
-    enabled: false,
     familyId: "family-jal-suica",
     gradeLevel: 1,
   },
@@ -62,8 +61,8 @@ export const SEED_CARDS: Card[] = [
     defaultRate: 0.005,
     defaultCurrencyId: "v-pt",
   },
-  // 以下、現在ユーザーが保有していない参考カード (d払い/PayPay の特典構造を表現するため必要)
-  // ※ enabled: false で無効化済み。保有する場合はカード画面の「使う」トグルで個別に有効化して下さい
+  // 以下、d払い/PayPay の特典構造を表現するための参考カード。
+  // ※ v7 は seed が enabled を出荷せず全カード OFF 起点。保有する場合はカード画面の「使う」トグルで有効化して下さい
   {
     // 100円=1ポイント (1.0%)、dカード GOLD なら 1%
     id: "dcard",
@@ -71,7 +70,6 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.01,
     defaultCurrencyId: "d-pt",
-    enabled: false,
   },
   {
     // 200円=2 PayPayポイント (1.0%)、PayPayカードゴールドなら 1.5%
@@ -80,12 +78,11 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.01,
     defaultCurrencyId: "paypay",
-    enabled: false,
   },
 
   // === v18: 発行枚数上位カードを master pool に追加 ===
   // 既存 4 枚 (jal-suica/rakuten-card/saison-amex/smbc-v) + 参照 2 枚 (dcard/paypay-card) に
-  // 加えて、日本の発行枚数上位カードを enabled: false で導入。
+  // 加えて、日本の発行枚数上位カードを master pool に導入 (v7 は全カード OFF 起点)。
   // ユーザは CardsScreen の「使う」トグルで個別に有効化する。
   {
     // JAL カード普通 (ショッピングマイル・プレミアム加入前提で 100円=1マイル = 1.0%)
@@ -97,7 +94,6 @@ export const SEED_CARDS: Card[] = [
     grade: "普通 (ショッピングマイル・プレミアム加入前提)",
     defaultRate: 0.01,
     defaultCurrencyId: "jal-mile",
-    enabled: false,
   },
   {
     // イオンカード (一般)、200円=1WAON POINT = 0.5%
@@ -107,19 +103,17 @@ export const SEED_CARDS: Card[] = [
     grade: "一般",
     defaultRate: 0.005,
     defaultCurrencyId: "waon-pt",
-    enabled: false,
   },
   {
     // JMB JQ SUGOCA (JR九州 × JAL)。JQ CARD 系で JRキューポを貯める (基本 0.5%)。
     // 主な役割は「JALマイル ⇔ JRキューポ」相互交換の解放 (seed-data-edges の
-    // jrkyupo-to-jal / jal-to-jrkyupo の requiredCardIds)。enabled:false で
-    // デフォルト非表示、保有ユーザーが「使う」を ON にして利用する。
+    // jrkyupo-to-jal / jal-to-jrkyupo の requiredCardIds)。v7 は全カード OFF 起点、
+    // 保有ユーザーが「使う」を ON にして利用する。
     id: "jmb-jq-sugoca",
     name: "JMB JQ SUGOCA",
     grade: "通常",
     defaultRate: 0.005,
     defaultCurrencyId: "jrkyupo",
-    enabled: false,
   },
   {
     // JQ SUGOCA ANA (JR九州 × ANA)。JMB JQ SUGOCA の ANA 版。
@@ -129,7 +123,6 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.005,
     defaultCurrencyId: "jrkyupo",
-    enabled: false,
   },
   {
     // JCB CARD W (39 歳以下限定、Web 申込限定、2倍ポイント特典)
@@ -142,7 +135,6 @@ export const SEED_CARDS: Card[] = [
     grade: "通常 (39歳以下限定)",
     defaultRate: 0.01,
     defaultCurrencyId: "j-point",
-    enabled: false,
     familyId: "family-jcb",
     gradeLevel: 1,
   },
@@ -158,7 +150,6 @@ export const SEED_CARDS: Card[] = [
     grade: "ゴールド",
     defaultRate: 0.005,
     defaultCurrencyId: "j-point",
-    enabled: false,
     familyId: "family-jcb",
     gradeLevel: 2,
   },
@@ -175,7 +166,6 @@ export const SEED_CARDS: Card[] = [
     grade: "一般",
     defaultRate: 0.005,
     defaultCurrencyId: "epos",
-    enabled: false,
     familyId: "family-epos",
     gradeLevel: 1,
   },
@@ -192,7 +182,6 @@ export const SEED_CARDS: Card[] = [
     grade: "ゴールド",
     defaultRate: 0.005,
     defaultCurrencyId: "epos",
-    enabled: false,
     familyId: "family-epos",
     gradeLevel: 2,
   },
@@ -208,7 +197,6 @@ export const SEED_CARDS: Card[] = [
     grade: "プラチナ",
     defaultRate: 0.005,
     defaultCurrencyId: "epos",
-    enabled: false,
     familyId: "family-epos",
     gradeLevel: 3,
   },
@@ -222,7 +210,6 @@ export const SEED_CARDS: Card[] = [
     grade: "一般",
     defaultRate: 0.005,
     defaultCurrencyId: "v-pt",
-    enabled: false,
   },
 
   // === v20: 主要決済・特殊カバー追加 ===
@@ -236,7 +223,6 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.005,
     defaultCurrencyId: "jre",
-    enabled: false,
   },
   {
     // メルカード (メルカリ系)、通常 1.0% (メルカリ外)
@@ -247,7 +233,6 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.01,
     defaultCurrencyId: "mercari-pt",
-    enabled: false,
   },
   {
     // Olive フレキシブルペイ (一般)、三井住友グループの統合金融カード
@@ -259,7 +244,6 @@ export const SEED_CARDS: Card[] = [
     grade: "一般 (フレキシブルペイ)",
     defaultRate: 0.005,
     defaultCurrencyId: "v-pt",
-    enabled: false,
   },
 
   // === v24: 累積モデル対応 — au PAY / ファミペイ の cardSpecific 補完用 ===
@@ -271,7 +255,6 @@ export const SEED_CARDS: Card[] = [
     grade: "一般",
     defaultRate: 0.01,
     defaultCurrencyId: "ponta-pt",
-    enabled: false,
   },
   {
     // ファミマカード (2025/9 新)。クレカ単体は 200円=1 Vポイント = 0.5%。
@@ -282,7 +265,6 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.005,
     defaultCurrencyId: "v-pt",
-    enabled: false,
   },
   // v4.0.0 ①: ルーティングテーブル拡充で追加した通貨に紐づくカード
   {
@@ -294,7 +276,6 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.01,
     defaultCurrencyId: "orico-pt",
-    enabled: false,
   },
   {
     // 三菱UFJカード。1000円=1グローバルポイント なので defaultRate=0.001。
@@ -306,7 +287,6 @@ export const SEED_CARDS: Card[] = [
     grade: "通常",
     defaultRate: 0.001,
     defaultCurrencyId: "mufg-pt",
-    enabled: false,
   },
 ];
 
@@ -479,7 +459,6 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "au PAY カード経由チャージで +1.0% 上乗せ (合計 1.5%)。" +
       "au PAY ゴールド (年会費 11,000円) なら更に上振れ可能だが seed 未登録。" +
       "[v3 PR 2] BenefitProgram で評価: prog-au-pay-base + prog-au-pay-card-addon",
-    enabled: false,
   },
 
   // 【削除済 v4.0.1】pa-famipay (ファミペイ):
@@ -506,7 +485,6 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "メルペイ単体は還元なし (0%)。メルカード連携時のみ 1% 還元。" +
       "メルカリ売上金は自動的にメルペイ残高にチャージされる。" +
       "[v3 PR 2] BenefitProgram で評価: prog-merpay-mercard-addon",
-    enabled: false,
   },
 
   // nanaco 電子マネー (v3.6.0)
@@ -528,7 +506,6 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "ENEOS の燃料油は 2L1pt の特殊レートだが今版は 0.5% 統一 (実態より若干高め)。" +
       "チャージ時のカード還元 (セブンカード 0.5% 等) は未モデル化。" +
       "[v3.6.0] BenefitProgram で評価: prog-pa-nanaco-base (addOn、cardCurrencyId 上書き回避)",
-    enabled: false,
   },
 
   // WAON 電子マネー (v3.6.0)
@@ -551,6 +528,5 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "ENEOS は WAON 給油非対応のため対象外 (EV充電のみ可能)。" +
       "チャージ時のカード還元 (イオンカード 1% 等) は未モデル化。" +
       "[v3.6.0] BenefitProgram で評価: prog-pa-waon-base (addOn、cardCurrencyId 上書き回避)",
-    enabled: false,
   },
 ];

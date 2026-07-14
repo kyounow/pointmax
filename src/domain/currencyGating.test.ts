@@ -5,14 +5,16 @@ import {
 } from "./currencyGating";
 import type { BenefitProgram, Card, PointCard } from "./types";
 
-const card = (id: string, currency: string, enabled?: boolean): Card => ({
+// v7: enabled === true のみ有効。テスト意図の「有効な資産」は enabled を明示 true に
+// する必要があるため、helper のデフォルトを true にする (第3引数省略 = ON)。
+const card = (id: string, currency: string, enabled: boolean = true): Card => ({
   id,
   name: id,
   defaultRate: 0.01,
   defaultCurrencyId: currency,
   enabled,
 });
-const pc = (id: string, currency: string, enabled?: boolean): PointCard => ({
+const pc = (id: string, currency: string, enabled: boolean = true): PointCard => ({
   id,
   name: id,
   currencyId: currency,

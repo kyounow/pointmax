@@ -11,7 +11,14 @@
 を抽出してください。`campaign` extractor (期間限定+対象店舗) と `jcb-jpoint` extractor (J-POINT 倍率階層) を一般化した汎用版で、銀行アカウントや決済ブランドの**常設**還元アップ施策をモデル化するのが目的です。
 
 ## promptVersion
-`ongoing-program-v1.1`
+`ongoing-program-v1.2`
+
+### 改善履歴
+- v1.2 (2026-07-15): schema v7 トレイン最終化。`programs[]` に `scope` 出力を必須化。
+  **店舗紐付けなし (memberships を出さない全店適用) は `"all-stores"`、店舗紐付けあり
+  (memberships 出力) は `"member-stores"`**。`enabled` はユーザー所有の preference キーで
+  seed / master には載せない (opt-in 選択制も同様に `optIn` は出力しない) 旨を明記。
+- v1.1: ライフスタイル条件付き program の出力禁止を追加。
 
 ## 入力
 - `sourceUrl`: 常設優遇プログラム一覧ページ
@@ -33,23 +40,33 @@
 
 ```json
 {
-  "programId": "prog-olive-salary-bonus",
-  "name": "Olive 給与振込ボーナス",
-  "cardIds": ["olive"],
-  "rate": 0.01,
+  "programId": "prog-smbc-touch-conveni",
+  "name": "SMBC タッチ決済コンビニ高還元",
+  "scope": "member-stores",
+  "cardIds": ["smbc-v", "olive"],
+  "paymentAppId": "pa-visa-touch",
+  "rate": 0.075,
   "currencyId": "v-pt",
-  "bonusType": "addOn",
-  "description": "Olive アカウントを給与振込口座として指定で +1%",
-  "conditions": "給与振込月額 250万以上 (500万以上で +2%、500万以上+NISA連携で +3%)",
+  "bonusType": "primary",
+  "description": "Visa/Mastercard タッチ決済で対象コンビニ・飲食店 最大+7.5%",
+  "conditions": "Visa/Mastercard タッチ決済利用時のみ",
   "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "evidenceQuote": "Olive口座給与振込で +1%〜+3%",
-  "explicitness": 0.85,
-  "ambiguity": 0.15
+  "evidenceQuote": "Visa/Mastercardのタッチ決済 最大+7.5%",
+  "explicitness": 0.9,
+  "ambiguity": 0.1
 }
 ```
 
 **重要 (厳守)**:
 
+0. **`scope` を必ず出力する** (v7 必須):
+   - 店舗紐付けなし (memberships を出さない = カード保有だけで全店適用) → `"all-stores"`
+   - 店舗紐付けあり (memberships を出力 = 特定店舗で発動) → `"member-stores"`
+   - `scope` と memberships の有無は必ず一致させる (all-stores なのに memberships を出す /
+     member-stores なのに memberships を出さない、は矛盾)。
+   - **`enabled` / `optIn` は出力しない** — ユーザー所有の preference キーで seed / master には
+     載せない (アプリ側の「使う」トグルが管理する)。opt-in 相当の「選べる特典」を見つけても
+     `optIn` は付けず `conditions` に選択制である旨を記述するに留める。
 1. **`validFrom` / `validTo` は絶対に付けない**。期間情報がある場合 → このソースの対象外、出力しない (campaign extractor に渡る想定)
 2. **`conditions` に常時条件を詳細記述**: 「Olive 給与振込必須」「月額250万以上」「NISA口座連携」等の自然言語条件
 3. **`bonusType` の使い分け**:
@@ -125,7 +142,7 @@ paymentAppId 候補の選定に使用:
 
 ## ライフスタイル条件付き program は出力しない (絶対遵守、v1.1 追加)
 
-PointMax の `BenefitProgram` モデルは「**カード保有 + 決済利用で全員が享受**」を前提に設計されており、program ごとの `enabled` フィールドは存在しません。よって以下のような **ユーザーのライフスタイル状態に依存する** 還元アップ施策は **絶対に出力しない** (出力すると条件未達ユーザーにも自動付与され過大計算になる):
+PointMax の `BenefitProgram` は「**カード保有 + 決済利用で全員が享受**」を前提に評価されます。program の `enabled` はユーザー所有の preference キーで **抽出器が出力するものではありません** (seed / master には載せない)。よって以下のような **ユーザーのライフスタイル状態に依存する** 還元アップ施策は **絶対に出力しない** (出力すると条件未達ユーザーにも自動付与され過大計算になる):
 
 - 給与振込口座指定 / 引き落とし口座指定
 - 円預金 / 外貨預金の残高条件 (例: 月末残高 250万以上で +0.5%)
@@ -175,7 +192,7 @@ PointMax の `BenefitProgram` モデルは「**カード保有 + 決済利用で
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
   "fetchedAt": "2026-05-20T12:00:00Z",
-  "promptVersion": "ongoing-program-v1.0",
+  "promptVersion": "ongoing-program-v1.2",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
   "notes": "Olive 常設優遇 5 件 + セブン/IY スマホタッチ高還元 2 件確認",
@@ -183,6 +200,7 @@ PointMax の `BenefitProgram` モデルは「**カード保有 + 決済利用で
     {
       "programId": "prog-smbc-touch-conveni",
       "name": "SMBC タッチ決済コンビニ高還元",
+      "scope": "member-stores",
       "cardIds": ["smbc-v", "olive"],
       "paymentAppId": "pa-visa-touch",
       "rate": 0.075,

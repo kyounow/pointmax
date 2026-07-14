@@ -16,7 +16,11 @@
 // v5.0.0 で 4 → 5 に bump (V4 未満を一括 reset 化、V5 環境への引き上げ)。
 // v6.0.0 で 5 → 6 に bump (schema v6 破壊的刷新の起点。scope 必須化 +
 //   以降のトレイン PR で membership id / familyId / optIn / LoyaltyRule 削除)。
-export const PERSIST_SCHEMA_VERSION = 6;
+// v7.0.0 で 6 → 7 に bump (enabled デフォルト反転: v6 まで「enabled !== false = 有効」
+//   だったのを v7 で「enabled === true のみ有効」へ。seed は enabled を出荷せず全 OFF 起点。
+//   reset ではなく transform migration で旧 v6 データの有効状態を明示化してから反転する
+//   (mid-train セマンティクスの保存。SCHEMA_MIGRATIONS[6] 参照))。
+export const PERSIST_SCHEMA_VERSION = 7;
 
 /**
  * schema migration の戦略型。
@@ -91,5 +95,56 @@ export const SCHEMA_MIGRATIONS: Record<number, SchemaMigrationStrategy> = {
       "公式マスタ (最新 SEED_VERSION) で再初期化します。" +
       "手書き設定がなければ影響はほぼゼロです。" +
       "念のため下の「エクスポートしてから続行」で JSON バックアップを保存できます。",
+  },
+  // v7.0.0 で enabled デフォルトを反転。v6 まで「enabled !== false = 有効」
+  // (undefined/true = ON、false = OFF) だった判定を v7 で「enabled === true のみ有効」
+  // (undefined/false = OFF) に変える。reset だと mid-train でユーザーの「使う」設定が
+  // 全部消えてしまうため、transform で **意味を保存**する:
+  //   - 反転前に各行へ現在の有効状態を enabled = (enabled !== false) として明示的に
+  //     書き込む。これにより「v6 で undefined = ON」だったカードが v7 で誤って OFF 化
+  //     せず、ユーザーが実際に「使う」にしていた資産の状態が引き継がれる。
+  //   - programs の enabled 意味は v7 でも変わらない (PR-1d: optIn 前提)。ただし enabled は
+  //     ユーザー所有キー (R1) で undefined = 既定 のため、enabled === true (ユーザーが明示的に
+  //     ON にした opt-in 選択) のみ残し、それ以外の enabled キーは削除して既定に委ねる
+  //     (opt-in の既定 OFF / 通常 program の既定有効はどちらも undefined で正しく表現される。
+  //      現行 UI は opt-in program のみトグルを露出するので実データ上の enabled は
+  //      opt-in の true/false に限られ、false 削除は既定 OFF と同義で安全)。
+  // transform は SchemaUpgradeModal を経ず無告知適用される (reset のみ同意モーダル)。
+  6: {
+    type: "transform",
+    fn: (old: unknown): unknown => {
+      if (typeof old !== "object" || old === null) return old;
+      const s = old as Record<string, unknown>;
+      // cards / pointCards / paymentApps: 反転前に現在の有効状態を明示化。
+      const explicitEnable = (rows: unknown): unknown =>
+        Array.isArray(rows)
+          ? rows.map((r) =>
+              typeof r === "object" && r !== null
+                ? {
+                    ...(r as Record<string, unknown>),
+                    enabled:
+                      (r as Record<string, unknown>).enabled !== false,
+                  }
+                : r,
+            )
+          : rows;
+      // programs: enabled === true (opt-in ON) のみ残し、他は削除して既定へ委ねる。
+      const normalizePrograms = (rows: unknown): unknown =>
+        Array.isArray(rows)
+          ? rows.map((r) => {
+              if (typeof r !== "object" || r === null) return r;
+              const p = { ...(r as Record<string, unknown>) };
+              if (p.enabled !== true) delete p.enabled;
+              return p;
+            })
+          : rows;
+      return {
+        ...s,
+        cards: explicitEnable(s.cards),
+        pointCards: explicitEnable(s.pointCards),
+        paymentApps: explicitEnable(s.paymentApps),
+        programs: normalizePrograms(s.programs),
+      };
+    },
   },
 };

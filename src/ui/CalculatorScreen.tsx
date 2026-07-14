@@ -14,6 +14,7 @@ import { rankCards } from "../domain/rankCards";
 import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { isMasterCard } from "../state/seed";
+import { navigate } from "../navigation";
 import { CardComparisonSection } from "./CardComparisonSection";
 import { useToday } from "./hooks/useToday";
 import { CalcTodayBanner } from "./calculator/CalcTodayBanner";
@@ -135,9 +136,9 @@ export function CalculatorScreen() {
   // v6.0.0: 未使用ポイントカード有効化提案 (CalcUpgradeBanner へ)
   const upgrade = rankResult?.upgrade ?? null;
 
-  // 主結果: enabled なカード (既存 result と同等)
+  // 主結果: 保有 (enabled === true) なカード (v7)
   const result = useMemo(
-    () => (allRanked ? allRanked.filter((r) => r.card.enabled !== false) : null),
+    () => (allRanked ? allRanked.filter((r) => r.card.enabled === true) : null),
     [allRanked],
   );
 
@@ -151,18 +152,25 @@ export function CalculatorScreen() {
     }
   }, [result, storeId, activeCurrencyId]);
 
-  // 比較対象: enabled=false かつ master pool のカード
+  // 比較対象: 非保有 (enabled !== true) かつ master pool のカード (v7)
   const comparisonItems = useMemo(
     () =>
       allRanked
         ? allRanked.filter(
-            (r) => r.card.enabled === false && isMasterCard(r.card.id),
+            (r) => r.card.enabled !== true && isMasterCard(r.card.id),
           )
         : [],
     [allRanked],
   );
 
   const loyalties = result && result.length > 0 ? result[0].loyalties : [];
+
+  // v7: 保有カード (enabled === true) が 0 枚か。全 OFF 出荷なので初回起動は 0 枚 →
+  // 暫定オンボーディング導線を出し、非保有 42 枚の比較リスト (CardComparisonSection) は抑制する。
+  const hasHeldCards = useMemo(
+    () => cards.some((c) => c.enabled === true),
+    [cards],
+  );
 
   // 同率 rank 表示: totalFinalAmount 同値カードに同じ rank を割り当てる (#1, #1, #3 ...)
   const displayRankMap = useMemo(() => {
@@ -265,7 +273,30 @@ export function CalculatorScreen() {
         />
       )}
 
-      {!result && (
+      {/* v7 暫定オンボーディング (正式版は Phase 3 / PR-3c)。保有カード 0 枚のとき、
+          結果エリアに 2 ステップ案内を出す。「保有カードが登録されていません」文言の置換。 */}
+      {!hasHeldCards && (
+        <div className="onboarding-box">
+          <p className="onboarding-title">まずは 2 ステップで準備しましょう</p>
+          <div className="onboarding-step">
+            <span>① 保有しているクレジットカードを選ぶ</span>
+            <button type="button" onClick={() => navigate("cards")}>
+              カード画面を開く
+            </button>
+          </div>
+          <div className="onboarding-step">
+            <span>② よく貯める通貨を選ぶ</span>
+            <button type="button" onClick={() => navigate("currencies")}>
+              通貨画面を開く
+            </button>
+          </div>
+          <p className="hint" style={{ margin: "10px 0 0", fontSize: 13 }}>
+            カード画面で「使う」を ON にしたカードだけが計算対象になります。
+          </p>
+        </div>
+      )}
+
+      {hasHeldCards && !result && (
         <p className="empty">
           {preferredCurrencyIds.length === 0
             ? "店舗・金額・目標通貨を選択すると結果が表示されます。"
@@ -305,7 +336,8 @@ export function CalculatorScreen() {
 
       {result && (
         <div className="results">
-          {result.length === 0 && (
+          {/* 保有 0 枚時は上のオンボーディング案内が受け持つので、ここでは出さない */}
+          {result.length === 0 && hasHeldCards && (
             <p className="empty">保有カードが登録されていません。</p>
           )}
           {result.map((r) => (
@@ -322,7 +354,9 @@ export function CalculatorScreen() {
               programById={programById}
             />
           ))}
-          {comparisonItems.length > 0 && (
+          {/* v7: 保有 0 枚時は非保有 42 枚の比較リストを初回画面に出さない (オンボーディング優先)。
+              保有 1 枚以上なら従来どおり「使っていないカードだと？」の比較を表示。 */}
+          {hasHeldCards && comparisonItems.length > 0 && (
             <CardComparisonSection
               comparisonItems={comparisonItems}
               topReachableTotal={result.find((r) => r.reachable)?.totalFinalAmount ?? 0}

@@ -260,8 +260,8 @@ PointMax は 2 つの version を独立管理:
 
 | 種類 | 用途 | 現在値 |
 |---|---|---|
-| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **43** |
-| `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **6** |
+| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **44** |
+| `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **7** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
 - `passthrough`: 互換あり、何もしない
@@ -277,8 +277,9 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 | 3 | `reset` | v5.0.0 で V4 未満を強制アプデ化（同上） |
 | 4 | `passthrough` | v5.0.0 `BenefitProgram.entryUrl` 新設（任意フィールドの純加算で旧 v4 localStorage は無問題） |
 | 5 | `reset` | schema v6 破壊的刷新（`BenefitProgram.scope` 必須化。以降のトレイン PR で membership id 必須化 / `Card.familyId` / `optIn` / `LoyaltyRule` 削除を積む起点） |
+| 6 | `transform` | v7.0.0 `enabled` デフォルト反転。旧 v6 データの有効状態を `enabled = (enabled !== false)` として各行に明示化してから判定を反転する（reset せず「使う」設定を保存。programs は `enabled===true` の opt-in ON のみ残し他は削除して既定に委ねる） |
 
-今後 schema を変更する場合は `PERSIST_SCHEMA_VERSION` を bump し、`SCHEMA_MIGRATIONS` に対応するエントリを追加する。
+トレイン中の `reset` は v5→6 の 1 回のみ。v6→7 の `enabled` 反転は `transform` で無告知移行する（`SchemaUpgradeModal` の同意モーダルは `reset` 専用）。今後 schema を変更する場合は `PERSIST_SCHEMA_VERSION` を bump し、`SCHEMA_MIGRATIONS` に対応するエントリを追加する。
 
 ---
 
@@ -306,6 +307,9 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **schema v6 (PERSIST_SCHEMA 5→6)** — `BenefitProgram.scope` を必須化 (`all-stores` = 全店適用・membership 不可 / `member-stores` = membership のある店のみ)。「membership 行数からの適用範囲推論」を廃止し、`programEvaluator` / `loyalty` は scope のみで判定 (`membershipIndex.programsWithMembership` を削除)。エクスポート JSON に `schemaVersion` を埋め、`importJson` は旧バージョン (欠落含む) を明確なメッセージで拒否 (公式 `master.json` を読む `syncFromUrl` はガード対象外)。validators に scope enum + 「all-stores なのに membership」矛盾検出を追加。v5 localStorage は `reset` で v6 へ再初期化 (`SchemaUpgradeModal` に「エクスポートしてから続行」ボタン追加、export util を `exportFile.ts` に集約)。sync は `ExtractedProgram.scope` を任意追加 + propose 層の derive-on-missing (scope 欠落時に membership 有無から補完、`🧭 scope-derive:` ログ) でプロンプト未改訂でも同期継続。以降のトレイン PR (membership id 必須化 / `Card.familyId` / `optIn` / `LoyaltyRule` 削除) の起点。PERSIST_SCHEMA 5→6
 - **schema v6 トレイン PR-1d (BenefitProgram opt-in + preference 保護)** — `BenefitProgram.optIn?` (登録/選択制の特典。既定 OFF 出荷) / `birthdayMonthOnly?` (ユーザーの誕生月のみ有効) / `enabled?` (ユーザー所有キー) を追加。評価式 `isProgramPreferenceActive` (programEvaluator / loyalty で共有) が `enabled===false` (明示 OFF) / `optIn:true` かつ `enabled!==true` (opt-in 未選択) / `birthdayMonthOnly` の誕生月外 を不発にする。誕生月は `store.birthMonth` → `RankInput.userBirthMonth` (1-12) で評価式まで貫通。`store.setProgramEnabled` (opt-in トグル、`userModifiedAt` はスタンプしない) / `setBirthMonth` を追加。seed の `prog-olive-vpoint-up-selected-benefit` / `prog-epos-gp-selectable-pointup` を `optIn:true` 化 (既定 OFF、ProgramsScreen に暫定「使う」トグルを追加)。**R1 横断規約**: seed / master は per-user preference キー (`enabled` 等) を出荷しない (`generate-master` が programs から `enabled` / `userModifiedAt` を strip)。opt-in 特典は `optIn:true` のみで出荷し、既定 OFF は評価式が担う。preference 保護 2 経路 — (1) `mergeSeed.propagateProgramUpdates` は preference キーを除いた正規形で公式差分を判定し、更新採用時に local の `enabled` を carry-over (ユーザーが ON にした opt-in に公式が rate 改定を出しても ON 維持、`enabled` だけの差は公式更新と誤検知しない)、(2) 全上書き取込 (`syncFromUrl` / `importJson`) は programs にも `preferenceMerge.preservePreferences` を適用し、incoming が `enabled` を持たない (公式由来) 時は local 値を carry-over・明示する (ユーザー export) 時はそちらを採用。SEED_VERSION 43 / PERSIST_SCHEMA 6 据え置き
 - **schema v6 トレイン PR-1c (Card family + 排他)** — `Card.familyId?` (同一ブランドのグレード系列を束ねる) + `Card.gradeLevel?` (family 内の並び順専用・計算不使用) を追加。新型 `CardFamily = { id; name; exclusive }` を静的マスタ `CARD_FAMILIES` (seed() には含めない) で定義: `family-epos` (一般/ゴールド/プラチナ) と `family-jal-suica` (普通/CLUB-Aゴールド) は **exclusive** (物理的に切替型)、`family-jcb` (W/ゴールド) は非 exclusive (併存保有可)。カードの「使う」トグル (`setCardEnabled`) に排他 invariant を追加 — exclusive family のカードを ON にすると同 family の兄弟カードが自動 OFF になり、CardsScreen が「◯◯ を OFF にしました」を通知する。**挙動変更**: 従来 JALカードSuica 普通/ゴールドは「両方 ON でゴールド優先」だったが、両方 ON が不可能になった (同一ブランドの切替型のため意図的)。validators は `card.familyId` の `CARD_FAMILIES` 実在を検証、seed.test は family 内 gradeLevel 重複なし + familyId 実在を担保。sync の cards INJECT 既定列に `familyId` を追加 (Gemini のグレード系列認識語彙、プロンプト本文改訂は後続 PR)。SEED_VERSION 43 / PERSIST_SCHEMA 6 据え置き
+- **schema v6 トレイン PR-1b (membership id 必須化)** — `StoreProgramMembership.id` を必須化 (規約 `m-{programId}-{storeId}`)。id 生成関数 `membershipId()` と `defineMemberships` DSL を新設し、`mergeSeed` の複合キー (`:` / `|`) 運用を他エンティティと同じ id ベースの add-only merge / tombstone に統一。SEED_VERSION / PERSIST_SCHEMA 据え置き
+- **schema v6 トレイン PR-1e (LoyaltyRule 物理削除)** — 旧 `LoyaltyRule` 型と関連 state / action / 評価パス / validators / export・import 欄を全削除。手動の「店舗×ポイントカード提示還元」は `store.addUserLoyaltyProgram` が BenefitProgram (`scope:"member-stores"` / `pointCardId` / `userModifiedAt`) + membership を **同一 action で atomic に**追加する形へ統合 (フォームの見た目・入力項目は不変)。`master.json` も `loyaltyRules` 欄を持たない。SEED_VERSION / PERSIST_SCHEMA 6 据え置き
+- **schema v7 (PERSIST_SCHEMA 6→7、トレイン最終 PR-1f)** — `enabled` デフォルトを反転。**v7 は `enabled === true` のみ有効**（`undefined`/`false` = 無効）。`seed` / `master` は `enabled` を出荷せず、カード・ポイントカード・決済アプリは**全て OFF 起点**で出荷する (`generate-master` が全エンティティから `enabled` を strip、R1 規約の完成)。保有選択はユーザーが「使う」トグルで ON にする (`setCardEnabled` / `addCard` 等は `enabled:true` を明示、`preservePreferences` の carry-over に載る)。**暫定オンボーディング**: Calculator は保有カード 0 枚時に「① 保有カードを選ぶ / ② よく貯める通貨を選ぶ」の 2 ステップ案内を表示し、非保有 42 枚の比較リスト (`CardComparisonSection`) を初回画面で抑制する (正式版は Phase 3)。既存 v6 localStorage は `SCHEMA_MIGRATIONS[6]` の `transform` が有効状態を明示化してから反転するため「使う」設定を失わない。Gemini プロンプト総改訂 (programs を出す `campaign` / `jcb-jpoint` / `epos-tamaru` / `ongoing-program` に `scope` 出力を必須化、`enabled`/`optIn` 非出力を明記、`promptVersion` bump + `registry.yaml` 同期)。SEED_VERSION 43→44 / PERSIST_SCHEMA 6→7
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。

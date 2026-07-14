@@ -274,12 +274,14 @@ describe("store: setCardEnabled 排他 invariant (v6 PR-1c)", () => {
   });
 
   // exclusive family (family-epos) のフィクスチャ。gradeLevel は計算に不使用だが seed 準拠で付与。
+  // v7: 「保有中 (ON)」のカードは enabled:true を明示する (undefined は OFF になったため)。
   const eposCards = (): Card[] => [
     {
       id: "epos-card",
       name: "エポスカード",
       defaultRate: 0.005,
       defaultCurrencyId: "epos",
+      enabled: true,
       familyId: "family-epos",
       gradeLevel: 1,
     },
@@ -334,6 +336,7 @@ describe("store: setCardEnabled 排他 invariant (v6 PR-1c)", () => {
           name: "JCB CARD W",
           defaultRate: 0.01,
           defaultCurrencyId: "j-point",
+          enabled: true,
           familyId: "family-jcb",
           gradeLevel: 1,
         },
@@ -363,6 +366,7 @@ describe("store: setCardEnabled 排他 invariant (v6 PR-1c)", () => {
           name: "楽天カード",
           defaultRate: 0.01,
           defaultCurrencyId: "rakuten-pt",
+          enabled: true,
         },
         {
           id: "smbc-v",
@@ -382,7 +386,7 @@ describe("store: setCardEnabled 排他 invariant (v6 PR-1c)", () => {
 
   it("OFF 操作 (enabled=false) では排他 invariant は発火しない", () => {
     const cards = eposCards();
-    cards[1].enabled = undefined; // epos-gold も有効な状態から
+    cards[1].enabled = true; // v7: epos-gold も有効 (enabled:true) な状態から
     useStore.setState({ cards });
 
     const disabled = useStore.getState().setCardEnabled("epos-gold", false);
@@ -399,6 +403,7 @@ describe("store: setCardEnabled 排他 invariant (v6 PR-1c)", () => {
           name: "JALカードSuica",
           defaultRate: 0.01,
           defaultCurrencyId: "jal-mile",
+          enabled: true,
           familyId: "family-jal-suica",
           gradeLevel: 2,
         },
@@ -422,8 +427,8 @@ describe("store: setCardEnabled 排他 invariant (v6 PR-1c)", () => {
 
   it("updateCard 経由 (編集モード保存) でも排他 invariant が担保される", () => {
     useStore.setState({ cards: eposCards() });
-    // 編集モード保存は updateCard(id, { enabled: undefined }) で有効化する
-    useStore.getState().updateCard("epos-gold", { enabled: undefined });
+    // v7: 編集モード保存は updateCard(id, { enabled: true }) で有効化する
+    useStore.getState().updateCard("epos-gold", { enabled: true });
 
     expect(byId().get("epos-gold")?.enabled).not.toBe(false);
     expect(byId().get("epos-card")?.enabled).toBe(false); // 自動 OFF
@@ -462,6 +467,36 @@ describe("store: importJson 入力バリデーション (A6/D2)", () => {
     const res = useStore.getState().importJson(bad);
     expect(res.ok).toBe(false);
     expect(useStore.getState().cards).toHaveLength(0); // set() に到達しない
+  });
+});
+
+// ─── v7 PR-1f: ユーザー追加系 action は enabled:true を明示セット ───
+
+describe("store: 追加系 action は enabled:true を明示する (v7)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("addCard は enabled:true 付きで追加する (保有 = 使う)", () => {
+    useStore.getState().addCard({
+      name: "自作カード",
+      defaultRate: 0.01,
+      defaultCurrencyId: "cur1",
+    });
+    const c = useStore.getState().cards.at(-1);
+    expect(c?.enabled).toBe(true);
+  });
+
+  it("addPointCard は enabled:true 付きで追加する", () => {
+    useStore.getState().addPointCard({ name: "自作PC", currencyId: "cur1" });
+    const p = useStore.getState().pointCards.at(-1);
+    expect(p?.enabled).toBe(true);
+  });
+
+  it("addPaymentApp は enabled:true 付きで追加する", () => {
+    useStore.getState().addPaymentApp({ name: "自作Pay" });
+    const a = useStore.getState().paymentApps.at(-1);
+    expect(a?.enabled).toBe(true);
   });
 });
 
@@ -710,11 +745,14 @@ describe("store: addUserLoyaltyProgram", () => {
       name: "楽天カード",
       defaultRate: 0.01,
       defaultCurrencyId: "rakuten-pt",
+      enabled: true, // v7: 保有中 (使う)
     };
     useStore.setState({
       cards: [card],
       stores: [{ id: "lawson", name: "ローソン" }],
-      pointCards: [{ id: "d-pc", name: "dポイントカード", currencyId: "d-pt" }],
+      pointCards: [
+        { id: "d-pc", name: "dポイントカード", currencyId: "d-pt", enabled: true },
+      ],
       edges: [],
     });
     useStore.getState().addUserLoyaltyProgram({

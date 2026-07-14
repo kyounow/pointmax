@@ -326,6 +326,17 @@ function emitArrayConst(
   return `export const ${name}: ${type}[] = [\n${lines.join("\n")}\n];`;
 }
 
+// R1 (PR-1f): cards / paymentApps の enabled はユーザー所有 preference (v7 全 OFF 起点)
+// なので seed-additions.ts (= seed 出荷物) に含めない。抽出器や旧提案が誤って enabled を
+// 載せても emit 時に落とす安全網。
+function stripEnabledFromRecord(
+  r: Record<string, unknown>,
+): Record<string, unknown> {
+  const next = { ...r };
+  delete next.enabled;
+  return next;
+}
+
 // membership record に規約 id (`m-{programId}-{storeId}`) を先頭付与する。
 // 既存 id は破棄して membershipId() で再計算 (id を単一の権威に統一)。
 function withMembershipId(m: Record<string, unknown>): Record<string, unknown> {
@@ -356,9 +367,13 @@ export function buildSeedAdditionsContent(buckets: Buckets): string {
     "",
     emitArrayConst("ADDED_STORES", "Store", buckets.stores),
     "",
-    emitArrayConst("ADDED_CARDS", "Card", buckets.cards),
+    emitArrayConst("ADDED_CARDS", "Card", buckets.cards.map(stripEnabledFromRecord)),
     "",
-    emitArrayConst("ADDED_PAYMENT_APPS", "PaymentApp", buckets.paymentApps),
+    emitArrayConst(
+      "ADDED_PAYMENT_APPS",
+      "PaymentApp",
+      buckets.paymentApps.map(stripEnabledFromRecord),
+    ),
     "",
     emitArrayConst("ADDED_PROGRAMS", "BenefitProgram", buckets.programs),
     "",

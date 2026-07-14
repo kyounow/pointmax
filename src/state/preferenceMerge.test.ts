@@ -12,6 +12,15 @@ describe("preservePreferences", () => {
     expect(out[0].name).toBe("A"); // name は取込側 (データは置換)
   });
 
+  it("v7: 取込にキーが無く、ローカルに enabled=true → ユーザーの「使う」ON を保持 (全 OFF master 取込後も維持)", () => {
+    // v7 では master は enabled を出荷せず全 OFF 起点。ユーザーが ON にしたカード (enabled:true) が
+    // 公式 master 全置換取込 (incoming にキー無し) で巻き戻らないことを構造的に保証する。
+    const incoming: Rec[] = [{ id: "a", name: "A" }]; // 公式 master = enabled キー無し
+    const local: Rec[] = [{ id: "a", name: "A(local)", enabled: true }];
+    const out = preservePreferences(incoming, local, ["enabled"]);
+    expect(out[0].enabled).toBe(true);
+  });
+
   it("取込に enabled=false が明示 → リモート優先 (クロスデバイス export)", () => {
     const incoming: Rec[] = [{ id: "a", name: "A", enabled: false }];
     const local: Rec[] = [{ id: "a", name: "A", enabled: true }];
