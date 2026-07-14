@@ -519,16 +519,21 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: false
+    enabled: true
     notes: |
-      ★ 2026-07-15 追加 (EPOS 3グレード対応、enabled:false ステージング)。
+      ★ 2026-07-15 追加 (EPOS 3グレード対応)。
       トップページは注目ショップ中心のため網羅には 50音別索引
       https://tamaru.eposcard.co.jp/shop_list/indexed/{a|ka|sa|ta|na|ha|ma|ya|ra|wa}/
       が使える (現状 crawl:index は campaign extractor 限定の契約のため単一 URL
       fetch で開始)。本体サイトは Shift_JIS だが encoding 自動検出 (#34) 対応済み。
       倍率は総倍率 (rate=0.5%×N)、ゴールド/プラチナ個別上乗せは conditions 文言のみ。
-      有効化手順: 手動 npm run sync:fetch -- epos-tamaru-market で抽出品質確認 →
-      enabled:true 化。
+      ★ 手動 fetch 検証済み (2026-07-15) → enabled:true 化 (jcb-jpoint-partners と同格):
+      attempt 1 が Gemini 503 / 2 が nonJson → 3 の pre-fetch fallback で success。
+      programs 16 (2〜10倍+、rate=0.005×N 全一致) / memberships 49 / stores 54。
+      手シード 5 店 (楽天市場2/Yahoo!2/ユニクロ2/じゃらん3/無印4倍) と倍率完全一致、
+      定額付与型 (ZOZOTOWN) 除外・G/P 個別上乗せ (Adidas 9倍) の conditions 記録も
+      プロンプト指示どおり動作。schema 違反 memberships 14 件は graceful 除去 (許容)。
+      新規 store は storeAdditionsDisabled / chain-promote の既存ガードに従う。
 
   - id: epos-news-campaigns
     label: エポスカード お知らせ/キャンペーン (公式)
