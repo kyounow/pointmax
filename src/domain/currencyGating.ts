@@ -9,12 +9,12 @@
 //   ユーザーが取捨選択した対象ではないのでブロックしない。よって allow-list ではなく
 //   deny-list (opted-out した通貨のみブロック) で実装する。
 //
-// blocked 判定:
+// blocked 判定 (v7: 「使う」= enabled === true。undefined/false は「使わない」):
 //   通貨 C が blocked ⇔
-//     (enabled===false な pointCard で currencyId===C のものがある)
+//     (enabled!==true な pointCard で currencyId===C のものがある)
 //     かつ (C を貯められる有効資産が他に無い:
 //           enabled pointCard / enabled card default / enabled card の program 通貨)
-//   = ユーザーが明示的に「使わない」とし、かつ他経路でも貯まらない通貨だけを塞ぐ。
+//   = ユーザーが「使う」にしておらず、かつ他経路でも貯まらない通貨だけを塞ぐ。
 //
 // deny-list は 2 種類ある:
 //   - computeBlockedCurrencyIds (通常): Calculator (rankCards) 用。有効クレカの
@@ -35,12 +35,12 @@ function enabledCurrencyIds(
   const enabled = new Set<string>();
   const enabledCardIds = new Set<string>();
   for (const c of cards) {
-    if (c.enabled === false) continue;
+    if (c.enabled !== true) continue; // v7: enabled === true のみ有効
     enabledCardIds.add(c.id);
     enabled.add(c.defaultCurrencyId);
   }
   for (const p of pointCards) {
-    if (p.enabled === false) continue;
+    if (p.enabled !== true) continue; // v7: enabled === true のみ有効
     enabled.add(p.currencyId);
   }
   for (const prog of programs) {
@@ -66,7 +66,8 @@ export function computeBlockedCurrencyIds(
   const enabled = enabledCurrencyIds(cards, pointCards, programs);
   const blocked = new Set<string>();
   for (const p of pointCards) {
-    if (p.enabled === false && !enabled.has(p.currencyId)) {
+    // v7: 「使わない」= enabled !== true (undefined/false)。
+    if (p.enabled !== true && !enabled.has(p.currencyId)) {
       blocked.add(p.currencyId);
     }
   }
@@ -84,11 +85,12 @@ export function computeStrictBlockedCurrencyIds(
   pointCards: PointCard[],
 ): Set<string> {
   const enabledPointCurrencies = new Set(
-    pointCards.filter((p) => p.enabled !== false).map((p) => p.currencyId),
+    pointCards.filter((p) => p.enabled === true).map((p) => p.currencyId),
   );
   const blocked = new Set<string>();
   for (const p of pointCards) {
-    if (p.enabled === false && !enabledPointCurrencies.has(p.currencyId)) {
+    // v7: 「使わない」= enabled !== true。
+    if (p.enabled !== true && !enabledPointCurrencies.has(p.currencyId)) {
       blocked.add(p.currencyId);
     }
   }

@@ -83,10 +83,11 @@ function applyExclusiveFamilyInvariant(
   if (!target?.familyId || !EXCLUSIVE_FAMILY_IDS.has(target.familyId)) return [];
   const disabledNames: string[] = [];
   for (const c of cards) {
+    // v7: 「有効」= enabled === true。undefined/false は既に OFF なので触らない。
     if (
       c.id !== target.id &&
       c.familyId === target.familyId &&
-      c.enabled !== false
+      c.enabled === true
     ) {
       c.enabled = false;
       disabledNames.push(c.name);
@@ -258,7 +259,9 @@ export const useStore = create<State & Actions>()(
 
       addCard: (c) =>
         set((state) => {
-          state.cards.push({ ...c, id: newId() });
+          // v7: ユーザー追加カードは「保有」= 有効。enabled === true を明示セット
+          // (seed は enabled 非出荷で undefined = OFF が既定のため、明示しないと OFF になる)。
+          state.cards.push({ ...c, id: newId(), enabled: true });
         }),
       updateCard: (id, patch) =>
         set((state) => {
@@ -270,8 +273,8 @@ export const useStore = create<State & Actions>()(
               new Date(),
             );
             // 編集モード保存で enabled を「有効」に変えた場合も排他 invariant を担保
-            // (setCardEnabled を経ない経路。patch.enabled が false 以外 = 有効化)。
-            if ("enabled" in patch && patch.enabled !== false) {
+            // (setCardEnabled を経ない経路。v7 では patch.enabled === true が有効化)。
+            if ("enabled" in patch && patch.enabled === true) {
               applyExclusiveFamilyInvariant(state.cards, id);
             }
           }
@@ -281,9 +284,12 @@ export const useStore = create<State & Actions>()(
         set((state) => {
           const idx = state.cards.findIndex((c) => c.id === id);
           if (idx < 0) return;
-          // enabled 慣習: true → undefined (キー不在で「有効」), false → false。
+          // v7 enabled 慣習: true → true (明示 ON), false → false (明示 OFF)。
+          // ON を明示値 (undefined ではなく true) にするのは、公式 master 全置換取込時に
+          // preservePreferences が「incoming にキー無し + local に定義値あり」で carry-over
+          // する契約に載せるため (undefined だと carry されず ON が巻き戻る)。
           // preference 変更なので userModifiedAt はスタンプしない (直接 draft を mutate)。
-          state.cards[idx].enabled = enabled ? undefined : false;
+          state.cards[idx].enabled = enabled ? true : false;
           if (enabled) {
             autoDisabled = applyExclusiveFamilyInvariant(state.cards, id);
           }
@@ -362,7 +368,8 @@ export const useStore = create<State & Actions>()(
 
       addPointCard: (p) =>
         set((state) => {
-          state.pointCards.push({ ...p, id: newId() });
+          // v7: ユーザー追加は「使う」= 有効 (enabled === true を明示)。
+          state.pointCards.push({ ...p, id: newId(), enabled: true });
         }),
       updatePointCard: (id, patch) =>
         set((state) => {
@@ -492,7 +499,8 @@ export const useStore = create<State & Actions>()(
 
       addPaymentApp: (p) =>
         set((state) => {
-          state.paymentApps.push({ ...p, id: newId() });
+          // v7: ユーザー追加は「使う」= 有効 (enabled === true を明示)。
+          state.paymentApps.push({ ...p, id: newId(), enabled: true });
         }),
       updatePaymentApp: (id, patch) =>
         set((state) => {

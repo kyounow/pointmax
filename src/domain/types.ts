@@ -14,8 +14,9 @@ export type Currency = {
 // クレジットカード。defaultCurrencyId に貯まる通貨を1つ持つ（仕様(b)）
 // グレード（普通/ゴールド/プラチナ等）は同一ブランド内で還元率が変わるため、
 // 任意フィールドで保持してUI上で区別表示する
-// enabled: undefined または true = 有効（デフォルト。既存 localStorage データとの後方互換）
-//          false = 無効（Calculator の順位付けから除外される）
+// enabled: v7 で判定を反転。**enabled === true のみ有効**（Calculator の順位付けに載る）。
+//          undefined（未記述）/ false = 無効。seed / master は enabled を出荷しない
+//          （全カード OFF 起点。ユーザーが「使う」を ON にして保有カードを選ぶ = R1 規約）。
 // userModifiedAt: ユーザが substantive フィールド (name/grade/defaultRate/defaultCurrencyId)
 //   を編集した日時 (ISO 8601)。セットされていると master であっても「公式」バッジが外れる。
 //   定義は SUBSTANTIVE_CARD_FIELDS (src/state/userModified.ts) を参照。
@@ -84,7 +85,7 @@ export type ConversionEdge = {
   rate: number;
   // この交換ルートを利用するために保有が必要なクレジットカードIDのリスト (任意)。
   // undefined / 空配列 = 制約なし (誰でも利用可能)。
-  // 1件以上 = リスト内のいずれか1枚を「保有 (enabled !== false)」している場合のみ利用可 (OR semantics)。
+  // 1件以上 = リスト内のいずれか1枚を「保有 (v7: enabled === true)」している場合のみ利用可 (OR semantics)。
   // 例: JRE → JAL マイル の交換は JALカードSuica 保有者特典 → requiredCardIds: ["jal-suica"]
   // 参照する id は Card.id (PointCard.id ではない)。
   requiredCardIds?: string[];
@@ -93,8 +94,8 @@ export type ConversionEdge = {
 
 // ポイントカード（クレカ決済とは別軸の、店頭提示で貯まるカード）
 // 例: dポイントカード, 楽天ポイントカード, Pontaカード
-// enabled: undefined または true = 使う（デフォルト。既存 localStorage データとの後方互換）
-//          false = 使わない。v6.0.0 で追加。Card.enabled と同セマンティクス。
+// enabled: v7 で判定反転。**enabled === true のみ「使う」**。undefined（未記述）/ false = 使わない。
+//          seed / master は enabled を出荷しない (Card.enabled と同セマンティクス、R1 規約)。
 //   効果は 2 つ:
 //   (1) loyalty (店頭提示の二重取り) 候補から除外される
 //   (2) このポイントカードの通貨が交換ルート (bestPath) の起点・経由から除外される。
@@ -237,9 +238,9 @@ export type PaymentApp = {
   compatibleCardIds?: string[];
   chargeBased?: boolean;
   paymentMode?: "charge" | "direct" | "physical";
-  // enabled: undefined または true = 有効 (デフォルト。既存 localStorage との後方互換)
-  //          false = 無効 (Calculator の順位付けから除外される)
-  // 「使ってない決済アプリを表示から消す」用途。Card.enabled と同じセマンティクス。
+  // enabled: v7 で判定反転。**enabled === true のみ有効**。undefined（未記述）/ false = 無効。
+  //          seed / master は enabled を出荷しない (Card.enabled と同セマンティクス、R1 規約)。
+  // 「使う決済アプリだけ表示する」用途。
   enabled?: boolean;
   notes?: string;
   // ユーザ編集トラッキング。Card.userModifiedAt と同じセマンティクス。

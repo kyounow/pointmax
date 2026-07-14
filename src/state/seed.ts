@@ -59,7 +59,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 43;
+export const SEED_VERSION = 44;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -75,6 +75,18 @@ export const SEED_CHANGELOG: {
   date: string;
   summary: string;
 }[] = [
+  {
+    version: 44,
+    date: "2026-07-15",
+    summary:
+      "v7.0.0: schema v6/v7 トレイン完了。scope 必須化 (適用範囲の明示、membership 行数推論を廃止)、" +
+      "StoreProgramMembership.id 必須化、Card.familyId + exclusive 排他、BenefitProgram.optIn + 誕生月ゲート、" +
+      "LoyaltyRule の物理削除 (addUserLoyaltyProgram に統合) を経て、enabled デフォルトを反転。" +
+      "v7 は「enabled === true のみ有効」となり、seed / master は enabled を出荷せず全カード・" +
+      "ポイントカード・決済アプリが OFF 起点 (保有選択はユーザーが「使う」で ON にする)。" +
+      "Calculator は保有 0 枚時に 2 ステップのオンボーディング案内を表示。per-user preference キー " +
+      "非出荷規約 (R1) を完成。既存ユーザーは persist v6→7 の transform で有効状態を保存したまま移行。",
+  },
   {
     version: 43,
     date: "2026-07-15",

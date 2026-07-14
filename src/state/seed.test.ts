@@ -269,12 +269,13 @@ describe("SEED_EDGES の通貨参照整合性", () => {
     }
   });
 
-  it("v6.1.0 の gate カード (jmb-jq-sugoca / jq-sugoca-ana) が enabled:false で存在", () => {
+  it("v6.1.0 の gate カード (jmb-jq-sugoca / jq-sugoca-ana) が enabled 非出荷で存在 (v7 全 OFF 起点)", () => {
     const byId = new Map(SEED_CARDS.map((c) => [c.id, c]));
     for (const id of ["jmb-jq-sugoca", "jq-sugoca-ana"]) {
       const c = byId.get(id);
       expect(c, `card ${id} が未登録`).toBeDefined();
-      expect(c?.enabled, `card ${id} は enabled:false 想定`).toBe(false);
+      // v7: seed は enabled を出荷しない (未記述 = OFF)。
+      expect(c?.enabled, `card ${id} は enabled 非出荷想定`).toBeUndefined();
     }
   });
 
@@ -297,10 +298,10 @@ describe("SEED_EDGES の通貨参照整合性", () => {
     expect(e?.requiredCardIds).toEqual(["jal-suica-normal"]);
   });
 
-  it("v6.4.0: gate カード jal-suica-normal が enabled:false で存在", () => {
+  it("v6.4.0: gate カード jal-suica-normal が enabled 非出荷で存在 (v7 全 OFF 起点)", () => {
     const c = SEED_CARDS.find((x) => x.id === "jal-suica-normal");
     expect(c, "card jal-suica-normal が未登録").toBeDefined();
-    expect(c?.enabled).toBe(false);
+    expect(c?.enabled).toBeUndefined(); // v7: seed は enabled を出荷しない
     expect(c?.defaultCurrencyId).toBe("jal-mile");
   });
 });
@@ -338,12 +339,12 @@ describe("M5 回帰: prog-d-pointcard-nojima-10000 の除去", () => {
 // 公式値 (2026-07 確認済み) を CI で固定し、退行 (特に選べるポイントアップの
 // 2025-04 改定値 0.01 を旧 3倍 0.015 に戻す等) を防止する。
 describe("v6.5.0: エポス 3グレード + たまるマーケット", () => {
-  it("epos-gold / epos-platinum が enabled:false で存在し 0.5% / epos 通貨", () => {
+  it("epos-gold / epos-platinum が enabled 非出荷で存在し 0.5% / epos 通貨 (v7 全 OFF 起点)", () => {
     const byId = new Map(SEED_CARDS.map((c) => [c.id, c]));
     for (const id of ["epos-gold", "epos-platinum"]) {
       const c = byId.get(id);
       expect(c, `card ${id} が未登録`).toBeDefined();
-      expect(c?.enabled).toBe(false);
+      expect(c?.enabled).toBeUndefined(); // v7: seed は enabled を出荷しない
       expect(c?.defaultRate).toBe(0.005);
       expect(c?.defaultCurrencyId).toBe("epos");
     }

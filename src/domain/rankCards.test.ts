@@ -6,11 +6,31 @@ import type { BenefitProgram, Card, ConversionEdge, PaymentApp, PointCard, Store
 // v6.0.0: rankCards は RankResult ({ rankings, upgrade }) を返すようになった。
 // 既存テストは rankings 配列を期待するので、薄いラッパで .rankings を取り出す。
 // upgrade を検証する新規テストは rankCards(...) を直接呼ぶ。
+// v7: enabled === true のみ有効になったため、このラッパ経由の「デフォルト ON」前提
+// fixture (enabled 未指定) を一括で保有扱いにする。enabled が明示されている fixture
+// (例: disabled ケースの enabled:false) はその値を尊重する (?? true)。
+function withHeldDefaults(
+  input: Parameters<typeof rankCards>[0],
+): Parameters<typeof rankCards>[0] {
+  return {
+    ...input,
+    cards: input.cards.map((c) => ({ ...c, enabled: c.enabled ?? true })),
+    pointCards: (input.pointCards ?? []).map((p) => ({
+      ...p,
+      enabled: p.enabled ?? true,
+    })),
+    paymentApps: (input.paymentApps ?? []).map((a) => ({
+      ...a,
+      enabled: a.enabled ?? true,
+    })),
+  };
+}
+
 function rankCardsRankings(
   input: Parameters<typeof rankCards>[0],
   options?: Parameters<typeof rankCards>[1],
 ) {
-  return rankCards(input, options).rankings;
+  return rankCards(withHeldDefaults(input), options).rankings;
 }
 
 // v6 PR-1e: 旧 loyaltyRules は BenefitProgram (pointCardId + scope:"member-stores")
@@ -60,11 +80,14 @@ describe("nearlyEqual (RANK_EPS 許容比較)", () => {
   });
 });
 
+// v7: 「保有中 (enabled === true)」を明示。seed 全 OFF 起点になったため、
+// テストで「使う」前提のカードは fixture 側で enabled:true を指定する。
 const rakuten: Card = {
   id: "rakuten",
   name: "楽天カード",
   defaultRate: 0.01,
   defaultCurrencyId: "rakuten-pt",
+  enabled: true,
 };
 
 const jcb: Card = {
@@ -72,6 +95,7 @@ const jcb: Card = {
   name: "JCBカード",
   defaultRate: 0.005,
   defaultCurrencyId: "okidoki",
+  enabled: true,
 };
 
 const edge = (
@@ -908,8 +932,9 @@ describe("rankCards", () => {
 
 // ─── v6.0.0: PointCard.enabled + usedCurrency ゲート + ScopeUpgrade ───
 describe("rankCards v6.0.0: ポイントカード利用選択 + upgrade", () => {
-  const dCard: PointCard = { id: "d-card", name: "dポイントカード", currencyId: "d-pt" };
-  const rCard: PointCard = { id: "r-card", name: "楽天ポイントカード", currencyId: "rakuten-pt" };
+  // v7: 「使う (enabled === true)」を明示。disabled ケースは各テストで {...dCard, enabled:false} と上書き。
+  const dCard: PointCard = { id: "d-card", name: "dポイントカード", currencyId: "d-pt", enabled: true };
+  const rCard: PointCard = { id: "r-card", name: "楽天ポイントカード", currencyId: "rakuten-pt", enabled: true };
 
   it("全ポイントカード ON (disabled 無し) なら upgrade は null", () => {
     const res = rankCards({
@@ -976,14 +1001,15 @@ describe("rankCards v6.0.0: ポイントカード利用選択 + upgrade", () => 
     expect(res.upgrade!.unlockCurrencyIds).toContain("d-pt");
   });
 
-  it("enabled 未設定 (undefined) のポイントカードは使う扱い (後方互換)", () => {
+  it("v7: enabled:true のポイントカードは使う (undefined は使わない)", () => {
+    // dCard は enabled:true。MAIN で loyalty 二重取りに載り、全て ON なので upgrade は null。
     const res = rankCards({
       payment: { storeId: "any", amount: 10000 },
       targetCurrencyId: "d-pt",
       cards: [rakuten],
       stores: baseStores,
       edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
-      pointCards: [dCard], // enabled 未設定
+      pointCards: [dCard], // enabled:true
       ...loyaltyPrograms(
         [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
         [dCard],
@@ -991,6 +1017,23 @@ describe("rankCards v6.0.0: ポイントカード利用選択 + upgrade", () => 
     });
     expect(res.rankings[0].loyalties).toHaveLength(1);
     expect(res.upgrade).toBeNull();
+
+    // 対照: enabled 未設定 (undefined) は v7 で「使わない」→ loyalty に載らず、
+    // 有効化提案 (upgrade) 側に回る。
+    const off = rankCards({
+      payment: { storeId: "any", amount: 10000 },
+      targetCurrencyId: "d-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [edge("rakuten-to-d", "rakuten-pt", "d-pt", 1)],
+      pointCards: [{ id: "d-card", name: "dポイントカード", currencyId: "d-pt" }], // enabled 未設定 = OFF
+      ...loyaltyPrograms(
+        [{ id: "loy", storeId: "any", pointCardId: "d-card", rate: 0.01 }],
+        [dCard],
+      ),
+    });
+    expect(off.rankings[0].loyalties).toHaveLength(0);
+    expect(off.upgrade).not.toBeNull();
   });
 
   it("maxStacks=1 で高レート disabled が enabled を押し出す (入れ替え upgrade)", () => {

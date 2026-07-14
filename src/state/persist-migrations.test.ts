@@ -67,8 +67,8 @@ function runMigrate(
 // -----------------------------------------------------------------------
 
 describe("PERSIST_SCHEMA_VERSION", () => {
-  it("現在のスキーマバージョンは 6 である (v6.0.0 scope 必須化の破壊的刷新、v5 を reset 化)", () => {
-    expect(PERSIST_SCHEMA_VERSION).toBe(6);
+  it("現在のスキーマバージョンは 7 である (v7.0.0 enabled デフォルト反転、v6→7 は transform)", () => {
+    expect(PERSIST_SCHEMA_VERSION).toBe(7);
   });
 });
 
@@ -168,6 +168,62 @@ describe("schema migration: transform strategy", () => {
   });
 });
 
+describe("schema migration: v6→7 transform (enabled 反転の意味保存)", () => {
+  // v6 (enabled !== false = ON) → v7 (enabled === true = ON) の反転前に、
+  // 各行へ現在の有効状態を明示化する (undefined/ON → true、false → false)。
+  const runV6to7 = (state: unknown) => runMigrate(state, 6);
+
+  it("cards: 旧 undefined (v6 で ON) は enabled:true に明示化 (v7 でも ON 維持)", () => {
+    const result = runV6to7({
+      cards: [{ id: "c1", name: "A" }], // enabled 未設定 (v6 では ON)
+    });
+    expect((result.cards as { enabled?: boolean }[])[0].enabled).toBe(true);
+  });
+
+  it("cards: 旧 enabled:true はそのまま true", () => {
+    const result = runV6to7({ cards: [{ id: "c1", name: "A", enabled: true }] });
+    expect((result.cards as { enabled?: boolean }[])[0].enabled).toBe(true);
+  });
+
+  it("cards: 旧 enabled:false は false のまま (OFF 維持)", () => {
+    const result = runV6to7({ cards: [{ id: "c1", name: "A", enabled: false }] });
+    expect((result.cards as { enabled?: boolean }[])[0].enabled).toBe(false);
+  });
+
+  it("pointCards / paymentApps も同様に有効状態を明示化する", () => {
+    const result = runV6to7({
+      pointCards: [{ id: "p1", enabled: false }, { id: "p2" }],
+      paymentApps: [{ id: "a1", enabled: true }, { id: "a2" }],
+    });
+    const pcs = result.pointCards as { enabled?: boolean }[];
+    const apps = result.paymentApps as { enabled?: boolean }[];
+    expect(pcs[0].enabled).toBe(false); // 明示 OFF は維持
+    expect(pcs[1].enabled).toBe(true); // undefined → ON を明示化
+    expect(apps[0].enabled).toBe(true);
+    expect(apps[1].enabled).toBe(true);
+  });
+
+  it("programs: enabled===true (opt-in ON) のみ残し、他は削除する", () => {
+    const result = runV6to7({
+      programs: [
+        { id: "prog-on", optIn: true, enabled: true }, // opt-in ON → 残す
+        { id: "prog-off", optIn: true, enabled: false }, // opt-in OFF → 削除 (既定 OFF に委ねる)
+        { id: "prog-normal", enabled: undefined }, // 通常 → キー無し
+      ],
+    });
+    const progs = result.programs as Record<string, unknown>[];
+    expect(progs[0].enabled).toBe(true);
+    expect("enabled" in progs[1]).toBe(false);
+    expect("enabled" in progs[2]).toBe(false);
+  });
+
+  it("配列以外・非オブジェクト行は壊さずそのまま通す", () => {
+    const result = runV6to7({ cards: "not-an-array", lastSeedVersion: 42 });
+    expect(result.cards).toBe("not-an-array");
+    expect(result.lastSeedVersion).toBe(42);
+  });
+});
+
 describe("SCHEMA_MIGRATIONS マップの整合性", () => {
   it("SCHEMA_MIGRATIONS[1] は type='reset' で reason が文字列", () => {
     const entry = SCHEMA_MIGRATIONS[1];
@@ -178,9 +234,15 @@ describe("SCHEMA_MIGRATIONS マップの整合性", () => {
     }
   });
 
-  it("PERSIST_SCHEMA_VERSION (5) のエントリは存在しない (自己移行は不要)", () => {
+  it("PERSIST_SCHEMA_VERSION (7) のエントリは存在しない (自己移行は不要)", () => {
     // 現バージョン自身に対する migration エントリは不要・無意味
     expect(SCHEMA_MIGRATIONS[PERSIST_SCHEMA_VERSION]).toBeUndefined();
+  });
+
+  it("SCHEMA_MIGRATIONS[6] は type='transform' (v7.0.0 enabled 反転の意味保存)", () => {
+    const entry = SCHEMA_MIGRATIONS[6];
+    expect(entry).toBeDefined();
+    expect(entry.type).toBe("transform");
   });
 
   it("SCHEMA_MIGRATIONS[2] は type='reset' (v5.0.0 で V4 未満を強制アプデ化)", () => {

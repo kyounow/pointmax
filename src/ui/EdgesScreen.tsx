@@ -58,10 +58,10 @@ export function EdgesScreen() {
   );
   const { cardName } = useNameResolvers();
 
-  // 「保有 = state.cards にあり、かつ enabled !== false」(v2 step 1 整合)。
-  // bestPath の availableCardIds と同じ定義。
+  // 「保有 = state.cards にあり、かつ v7: enabled === true」(bestPath の
+  // availableCardIds と同じ定義)。
   const accessibleCardIds = useMemo(
-    () => new Set(cards.filter((c) => c.enabled !== false).map((c) => c.id)),
+    () => new Set(cards.filter((c) => c.enabled === true).map((c) => c.id)),
     [cards],
   );
 

@@ -49,4 +49,22 @@ describe("buildMasterData (R1 出荷契約)", () => {
     expect(optInIds).toContain("prog-olive-vpoint-up-selected-benefit");
     expect(optInIds).toContain("prog-epos-gp-selectable-pointup");
   });
+
+  // R1 完成 (PR-1f): cards / pointCards / paymentApps も enabled を出荷しない
+  // (v7 全 OFF 起点。preservePreferences の「キー不在→ローカル継承」が構造的に成立する)。
+  it("全 card / pointCard / paymentApp が enabled を持たない", () => {
+    for (const c of data.cards) {
+      expect("enabled" in c, `card ${c.id} が enabled を出荷している`).toBe(false);
+    }
+    for (const p of data.pointCards) {
+      expect("enabled" in p, `pointCard ${p.id} が enabled を出荷している`).toBe(
+        false,
+      );
+    }
+    for (const a of data.paymentApps) {
+      expect("enabled" in a, `paymentApp ${a.id} が enabled を出荷している`).toBe(
+        false,
+      );
+    }
+  });
 });
