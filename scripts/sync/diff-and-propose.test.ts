@@ -311,6 +311,7 @@ describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
         {
           id: "prog-rakuten-pointcard-0.5pc",
           name: "楽天ポイントカード提示 0.5%",
+          scope: "member-stores",
           pointCardId: "rakuten-pointcard",
           rate: 0.005,
           currencyId: "rakuten-pt",
@@ -347,6 +348,7 @@ describe("proposeCards / proposeLoyaltyRules / proposePaymentApps", () => {
         {
           id: "prog-rakuten-pointcard-0.5pc",
           name: "x",
+          scope: "member-stores",
           pointCardId: "rakuten-pointcard",
           rate: 0.005,
           currencyId: "rakuten-pt",
@@ -690,6 +692,85 @@ describe("proposePrograms (PR-D1)", () => {
     expect(record.officialUrl).toBe("https://example.com/about");
   });
 
+  // v6: scope の derive-on-missing (extracted に scope が無ければ memberships 有無から導出)。
+  it("scope 欠落 + memberships に programId あり → member-stores を補完", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-derive-member",
+          name: "加盟店キャンペ",
+          cardIds: ["sample-card"],
+          rate: 0.02,
+          currencyId: "jre",
+          bonusType: "primary",
+          evidenceQuote: "対象店で2%",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+      memberships: [
+        {
+          programId: "prog-derive-member",
+          storeId: "s1",
+          evidenceQuote: "s1 が対象",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    const ps = proposePrograms(data, emptySeed);
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.scope).toBe("member-stores");
+  });
+
+  it("scope 欠落 + memberships に programId 無し → all-stores を補完", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-derive-global",
+          name: "全店キャンペ",
+          paymentAppId: "pa-d-pay",
+          rate: 0.01,
+          currencyId: "d-pt",
+          bonusType: "primary",
+          evidenceQuote: "全店で1%",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+      memberships: [], // 当該 programId の membership 無し
+    });
+    const ps = proposePrograms(data, emptySeed);
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.scope).toBe("all-stores");
+  });
+
+  it("scope 明示あり → derive せずそのまま尊重 (membership 有無に依らない)", () => {
+    const data = baseSource({
+      extractor: "campaign",
+      programs: [
+        {
+          programId: "prog-explicit-scope",
+          name: "明示 scope",
+          cardIds: ["sample-card"],
+          scope: "member-stores",
+          rate: 0.02,
+          currencyId: "jre",
+          bonusType: "primary",
+          evidenceQuote: "対象店で2%",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+      memberships: [], // membership 無しでも explicit の member-stores を維持
+    });
+    const ps = proposePrograms(data, emptySeed);
+    const record = (ps[0] as { record: Record<string, unknown> }).record;
+    expect(record.scope).toBe("member-stores");
+  });
+
   it("recurringWeekdays は addRecord の record に伝播する (C-6 曜日キャンペーン)", () => {
     const data = baseSource({
       extractor: "campaign",
@@ -721,6 +802,7 @@ describe("proposePrograms (PR-D1)", () => {
         {
           id: "prog-existing",
           name: "既存",
+          scope: "member-stores",
           pointCardId: "jre-pointcard",
           rate: 0.01,
           currencyId: "jre",
@@ -754,6 +836,7 @@ describe("proposePrograms (PR-D1)", () => {
         {
           id: "prog-camp",
           name: "既存キャンペーン",
+          scope: "member-stores",
           pointCardId: "jre-pointcard",
           rate: 0.03,
           currencyId: "jre",
@@ -1297,6 +1380,7 @@ describe("proposeJalTokuyakuMemberships (PR-D2b)", () => {
       {
         id: "prog-jal-tokuyaku",
         name: "JALカード特約店",
+        scope: "member-stores",
         cardIds: ["jal-suica", "jal-card"],
         rate: 0.02,
         currencyId: "jal-mile",
@@ -1719,6 +1803,7 @@ describe("proposeExpiredCampaignDeletions", () => {
   const baseProgram = {
     id: "prog-test",
     name: "テスト",
+    scope: "member-stores" as const,
     rate: 0.05,
     currencyId: "v-pt",
   };

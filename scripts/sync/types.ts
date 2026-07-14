@@ -237,6 +237,9 @@ export type ExtractedLoyaltyRule = Evidence & {
 export type ExtractedProgram = Evidence & {
   programId: string;        // 提案 BenefitProgram.id (slug)
   name?: string;
+  // 適用範囲 (v6)。optional: 未指定なら propose-helpers の derive-on-missing が
+  // 抽出 memberships の有無から補完する (extractor prompt 総改訂 1f まで欠落を許容)。
+  scope?: "all-stores" | "member-stores";
   cardIds?: string[];       // クレカ保有要件 (OR)
   pointCardId?: string;     // 提示ポイントカード (loyalty 系)
   paymentAppId?: string;    // 特定 paymentApp 経由限定

@@ -106,6 +106,7 @@ const prog = (
 ): BenefitProgram => ({
   id,
   name: id,
+  scope: "member-stores",
   rate: 0.05,
   currencyId: "d-pt",
   validFrom: "2026-06-01",
@@ -174,6 +175,7 @@ describe("mergeSeed — 公式 program の内容更新伝播 (Phase 5)", () => {
       currencyId: "d-pt",
       name: "prog-a",
       id: "prog-a",
+      scope: "member-stores",
       validFrom: "2026-06-01",
     } as BenefitProgram;
     const result = mergeSeed(

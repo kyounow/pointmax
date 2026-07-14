@@ -106,6 +106,7 @@ describe("rankCards", () => {
     const programs: BenefitProgram[] = [
       {
         id: "prog-amzn-rule",
+        scope: "member-stores",
         name: "Amazon 楽天 2%",
         cardIds: ["rakuten"],
         rate: 0.02,
@@ -135,6 +136,7 @@ describe("rankCards", () => {
     const programs: BenefitProgram[] = [
       {
         id: "prog-june-camp",
+        scope: "member-stores",
         name: "6月限定 5%",
         cardIds: ["rakuten"],
         rate: 0.05,
@@ -296,6 +298,7 @@ describe("rankCards", () => {
     const programs: BenefitProgram[] = [
       {
         id: "prog-cat-net",
+        scope: "member-stores",
         name: "ネット通販 楽天 1.5%",
         cardIds: ["rakuten"],
         rate: 0.015,
@@ -470,6 +473,7 @@ describe("rankCards", () => {
     const programs: BenefitProgram[] = [
       {
         id: "prog-rakuten-jre",
+        scope: "member-stores",
         name: "楽天 JRE",
         cardIds: ["rakuten"],
         rate: 0.01,
@@ -555,6 +559,7 @@ describe("rankCards", () => {
     const programs: BenefitProgram[] = [
       {
         id: "prog-test-waon-base",
+        scope: "member-stores",
         name: "WAON e-money base",
         paymentAppId: "pa-test-waon",
         rate: 0.005,
@@ -609,6 +614,7 @@ describe("rankCards", () => {
     const programs: BenefitProgram[] = [
       {
         id: "prog-test-addon",
+        scope: "member-stores",
         name: "Test addOn",
         paymentAppId: "pa-test",
         rate: 0.005,
@@ -693,6 +699,7 @@ describe("rankCards", () => {
     // 異種通貨の 2 addOn (どちらも cardIds=olive、paymentAppId 未指定、非 chargeBased なので適用)
     const oliveVptAddon: BenefitProgram = {
       id: "prog-test-olive-vpt-addon",
+      scope: "all-stores",
       name: "Olive +1% Vポイント",
       cardIds: ["olive"],
       rate: 0.01,
@@ -701,6 +708,7 @@ describe("rankCards", () => {
     };
     const oliveRakutenAddon: BenefitProgram = {
       id: "prog-test-olive-rakuten-addon",
+      scope: "all-stores",
       name: "Olive +0.5% 楽天ポイント (仮想)",
       cardIds: ["olive"],
       rate: 0.005,
@@ -760,6 +768,7 @@ describe("rankCards", () => {
     // 同一 (card, store, paymentApp 直決済) で 2 つの primary が発火
     const jalPrimary: BenefitProgram = {
       id: "prog-jal-mile-primary",
+      scope: "member-stores",
       name: "JAL マイル primary",
       cardIds: ["dual"],
       rate: 0.02,
@@ -768,6 +777,7 @@ describe("rankCards", () => {
     };
     const rakutenPrimary: BenefitProgram = {
       id: "prog-rakuten-primary",
+      scope: "member-stores",
       name: "rakuten primary",
       cardIds: ["dual"],
       rate: 0.01,
@@ -815,6 +825,7 @@ describe("rankCards", () => {
     const stores: Store[] = [eneos];
     const jalPrimary: BenefitProgram = {
       id: "prog-jal-mile-primary",
+      scope: "member-stores",
       name: "JAL マイル primary",
       cardIds: ["dual"],
       rate: 0.02,
@@ -823,6 +834,7 @@ describe("rankCards", () => {
     };
     const rakutenPrimary: BenefitProgram = {
       id: "prog-rakuten-primary",
+      scope: "member-stores",
       name: "rakuten primary",
       cardIds: ["dual"],
       rate: 0.01,
@@ -960,6 +972,7 @@ describe("A1: monthlyCapAmountYen の per-tx クランプ", () => {
   const capStore: Store = { id: "cap-store", name: "上限店" };
   const capProgram: BenefitProgram = {
     id: "prog-cap",
+    scope: "member-stores",
     name: "上限付き高還元",
     cardIds: ["rakuten"],
     rate: 0.05,

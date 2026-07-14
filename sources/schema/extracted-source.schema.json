@@ -276,6 +276,7 @@
         "properties": {
           "programId": { "type": "string", "description": "Proposed BenefitProgram.id (kebab-case slug, e.g. prog-jre-campaign-...)." },
           "name": { "type": "string" },
+          "scope": { "type": "string", "enum": ["all-stores", "member-stores"], "description": "適用範囲 (v6)。all-stores=全店適用 (membership 不可) / member-stores=memberships のある店のみ。省略時は propose 側が抽出 memberships の有無から導出する。" },
           "cardIds": { "type": "array", "items": { "type": "string" }, "description": "クレカ保有要件 (OR)。" },
           "pointCardId": { "type": "string", "description": "提示するポイントカード (loyalty 系)。" },
           "paymentAppId": { "type": "string", "description": "特定 paymentApp 経由限定。" },

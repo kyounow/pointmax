@@ -544,6 +544,8 @@ export const useStore = create<State & Actions>()(
           }
           const text = await res.text();
           const parsed = JSON.parse(text);
+          // 公式 master.json は generate-master が生成し schemaVersion を持たないため
+          // requireSchemaVersion は付けない (import 経路のみガード)。
           const result = validateImportData(parsed);
           if (!result.ok) return { ok: false, error: result.error };
           const data = result.value;
@@ -587,6 +589,9 @@ export const useStore = create<State & Actions>()(
         return JSON.stringify(
           {
             version: 1,
+            // v6: エクスポート JSON に現行 schema バージョンを埋め込む。
+            // importJson が旧バージョン (欠落含む) を明確なメッセージで拒否する。
+            schemaVersion: PERSIST_SCHEMA_VERSION,
             exportedAt: new Date().toISOString(),
             cards: s.cards,
             currencies: s.currencies,
@@ -607,7 +612,12 @@ export const useStore = create<State & Actions>()(
       importJson: (json) => {
         try {
           const parsed = JSON.parse(json);
-          const result = validateImportData(parsed);
+          // import 経路は schemaVersion ガードを有効化 (旧バージョンの
+          // エクスポートファイルを弾く)。syncFromUrl の master.json 経路は
+          // schemaVersion を持たないためガードしない (下記 syncFromUrl 参照)。
+          const result = validateImportData(parsed, {
+            requireSchemaVersion: true,
+          });
           if (!result.ok) return { ok: false, error: result.error };
           const data = result.value;
           set((state) => {
@@ -648,7 +658,7 @@ export const useStore = create<State & Actions>()(
       // v0.8 で世代交代。旧キー "pointmax-store" は無視 (孤児は起動時に削除)
       name: "pointmax-v08-store",
       storage: createJSONStorage(() => localStorage),
-      version: PERSIST_SCHEMA_VERSION,  // 4 → 5 (v5.0.0 で V4 未満を reset 化 + entryUrl 追加)
+      version: PERSIST_SCHEMA_VERSION,  // 5 → 6 (v6.0.0 で scope 必須化の破壊的刷新、v5 を reset 化)
       migrate: (persistedState: unknown, fromVersion: number) => {
         // 新規 install (version フィールドが無い = fromVersion が undefined 扱い)
         // → そのまま通す (既存の empty+seed 初期化フローへ)

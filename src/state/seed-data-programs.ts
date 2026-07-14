@@ -12,6 +12,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // ═══════════════════════════════════════════════════════════════
   {
     id: "prog-jal-tokuyaku",
+    scope: "member-stores",
     name: "JALカード特約店",
     cardIds: ["jal-suica", "jal-card"],
     rate: 0.02,
@@ -32,6 +33,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-1: 楽天カード × 楽天市場 通常 3% (SPU 基本込み)
   {
     id: "prog-rakuten-ichiba-base",
+    scope: "member-stores",
     name: "楽天カード × 楽天市場 通常",
     cardIds: ["rakuten-card"],
     rate: 0.03,
@@ -43,6 +45,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-2: 楽天カード × 楽天市場「5と0のつく日」4% (recurringDays)
   {
     id: "prog-rakuten-ichiba-zero-five-day",
+    scope: "member-stores",
     name: "楽天市場「5と0のつく日」",
     cardIds: ["rakuten-card"],
     rate: 0.04,
@@ -58,6 +61,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-3: SMBC ゴールド(NL) × タッチ決済 7% (22 stores)
   {
     id: "prog-smbc-7p",
+    scope: "member-stores",
     name: "三井住友ゴールド(NL) Visa タッチ決済 7%",
     cardIds: ["smbc-v"],
     paymentAppId: "pa-visa-touch",
@@ -72,6 +76,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-4: Olive × タッチ決済 8% (22 stores)
   {
     id: "prog-olive-8p",
+    scope: "member-stores",
     name: "Oliveフレキシブルペイ スマホタッチ決済 8%",
     cardIds: ["olive"],
     paymentAppId: "pa-visa-touch",
@@ -93,6 +98,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   //   (ユーザー条件 opt-in) 未実装のため今期スコープ外。
   {
     id: "prog-olive-vpoint-up-selected-benefit",
+    scope: "all-stores",
     name: "Olive 選べる特典「Vポイントアッププログラム+1%」",
     cardIds: ["olive"],
     rate: 0.01,
@@ -110,6 +116,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-5: JALカードSuica × Suicaチャージ 1.5% JRE POINT
   {
     id: "prog-jal-suica-charge",
+    scope: "member-stores",
     name: "JALカードSuica × Suicaチャージ",
     cardIds: ["jal-suica"],
     rate: 0.015,
@@ -121,6 +128,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-6: JALカードSuica × えきねっと新幹線 8%
   {
     id: "prog-jal-suica-ekinet-shinkansen",
+    scope: "member-stores",
     name: "JALカードSuica × えきねっと新幹線eチケット",
     cardIds: ["jal-suica"],
     rate: 0.08,
@@ -132,6 +140,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-7: JALカードSuica × えきねっと在来線 5%
   {
     id: "prog-jal-suica-ekinet-zairaisen",
+    scope: "member-stores",
     name: "JALカードSuica × えきねっと在来線特急",
     cardIds: ["jal-suica"],
     rate: 0.05,
@@ -143,6 +152,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-8: ビューカード × Suicaチャージ 1.5%
   {
     id: "prog-viewcard-suica-charge",
+    scope: "member-stores",
     name: "ビューカード × Suicaチャージ",
     cardIds: ["viewcard"],
     rate: 0.015,
@@ -154,6 +164,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-9: メルカード × メルカリ 4% (定常最大)
   {
     id: "prog-mercard-mercari",
+    scope: "member-stores",
     name: "メルカード × メルカリ",
     cardIds: ["mercard"],
     rate: 0.04,
@@ -165,6 +176,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-10: メルカード × メルカリ 毎月8日 8%
   {
     id: "prog-mercard-mercari-day8",
+    scope: "member-stores",
     name: "メルカード × メルカリ 毎月8日",
     cardIds: ["mercard"],
     rate: 0.08,
@@ -177,6 +189,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // A-11: dカード × d払い × ビックカメラ 6% 期間限定 (2026/5/16〜5/31)
   {
     id: "prog-dcard-bic-camera-may2026",
+    scope: "member-stores",
     name: "d払い × dカード × ビックカメラ +5% キャンペーン",
     cardIds: ["dcard"],
     paymentAppId: "pa-d-pay",
@@ -198,6 +211,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-1: 楽天ポイントカード 0.5% (複数店舗)
   {
     id: "prog-rakuten-pointcard-0.5pc",
+    scope: "member-stores",
     name: "楽天ポイントカード提示 0.5%",
     pointCardId: "rakuten-pointcard",
     rate: 0.005,
@@ -209,6 +223,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-2: 楽天ポイントカード 1% (複数店舗)
   {
     id: "prog-rakuten-pointcard-1pc",
+    scope: "member-stores",
     name: "楽天ポイントカード提示 1%",
     pointCardId: "rakuten-pointcard",
     rate: 0.01,
@@ -220,6 +235,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-3: dポイントカード 0.5% (複数店舗)
   {
     id: "prog-d-pointcard-0.5pc",
+    scope: "member-stores",
     name: "dポイントカード提示 0.5%",
     pointCardId: "d-pointcard",
     rate: 0.005,
@@ -231,6 +247,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-4: dポイントカード 1% (複数店舗)
   {
     id: "prog-d-pointcard-1pc",
+    scope: "member-stores",
     name: "dポイントカード提示 1%",
     pointCardId: "d-pointcard",
     rate: 0.01,
@@ -242,6 +259,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-5: Pontaカード 0.5% (複数店舗)
   {
     id: "prog-ponta-card-0.5pc",
+    scope: "member-stores",
     name: "Pontaカード提示 0.5%",
     pointCardId: "ponta-card",
     rate: 0.005,
@@ -253,6 +271,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-6: Pontaカード 1% (複数店舗)
   {
     id: "prog-ponta-card-1pc",
+    scope: "member-stores",
     name: "Pontaカード提示 1%",
     pointCardId: "ponta-card",
     rate: 0.01,
@@ -264,6 +283,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-7: Vポイントカード 0.5% (複数店舗)
   {
     id: "prog-vpoint-card-0.5pc",
+    scope: "member-stores",
     name: "Vポイントカード提示 0.5%",
     pointCardId: "vpoint-card",
     rate: 0.005,
@@ -275,6 +295,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-8: nanacoカード 1% (セブン-イレブン)
   {
     id: "prog-nanaco-card-1pc",
+    scope: "member-stores",
     name: "nanacoカード提示 1%",
     pointCardId: "nanaco-card",
     rate: 0.01,
@@ -286,6 +307,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-9: WAONカード 0.5% (複数店舗)
   {
     id: "prog-waon-card-0.5pc",
+    scope: "member-stores",
     name: "WAONカード提示 0.5%",
     pointCardId: "waon-card",
     rate: 0.005,
@@ -297,6 +319,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // B-10: JRE POINT カード 0.5% (駅ナカ加盟店)
   {
     id: "prog-jre-pointcard-0.5pc",
+    scope: "member-stores",
     name: "JRE POINT カード提示 0.5%",
     pointCardId: "jre-pointcard",
     rate: 0.005,
@@ -312,6 +335,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-1: 楽天Pay ベース還元 1% (全 store、primary)
   {
     id: "prog-rakuten-pay-base",
+    scope: "all-stores",
     name: "楽天Pay ベース還元",
     paymentAppId: "pa-rakuten-pay",
     rate: 0.01,
@@ -323,6 +347,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-2: 楽天Pay × 楽天カード 上乗せ 0.5% (addOn)
   {
     id: "prog-rakuten-pay-rakuten-card-addon",
+    scope: "all-stores",
     name: "楽天Pay × 楽天カード 上乗せ",
     paymentAppId: "pa-rakuten-pay",
     cardIds: ["rakuten-card"],
@@ -335,6 +360,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-3: d払い ベース還元 0.5% (全 store、primary)
   {
     id: "prog-d-pay-base",
+    scope: "all-stores",
     name: "d払い ベース還元",
     paymentAppId: "pa-d-pay",
     rate: 0.005,
@@ -346,6 +372,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-4: d払い × dカード 上乗せ 0.5% (addOn)
   {
     id: "prog-d-pay-dcard-addon",
+    scope: "all-stores",
     name: "d払い × dカード 上乗せ",
     paymentAppId: "pa-d-pay",
     cardIds: ["dcard"],
@@ -358,6 +385,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-5: PayPay ベース還元 0.5% (全 store、primary)
   {
     id: "prog-paypay-base",
+    scope: "all-stores",
     name: "PayPay ベース還元",
     paymentAppId: "pa-paypay",
     rate: 0.005,
@@ -369,6 +397,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-6: PayPay × PayPayカード 上乗せ 0.5% (addOn)
   {
     id: "prog-paypay-card-addon",
+    scope: "all-stores",
     name: "PayPay × PayPayカード 上乗せ",
     paymentAppId: "pa-paypay",
     cardIds: ["paypay-card"],
@@ -381,6 +410,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-7: au PAY ベース還元 0.5% (全 store、primary)
   {
     id: "prog-au-pay-base",
+    scope: "all-stores",
     name: "au PAY ベース還元",
     paymentAppId: "pa-au-pay",
     rate: 0.005,
@@ -392,6 +422,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-8: au PAY × au PAYカード 上乗せ 1% (addOn)
   {
     id: "prog-au-pay-card-addon",
+    scope: "all-stores",
     name: "au PAY × au PAYカード 上乗せ",
     paymentAppId: "pa-au-pay",
     cardIds: ["au-pay-card"],
@@ -411,6 +442,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // ※ メルペイ defaultBonusRate=0 なので primary program は不要
   {
     id: "prog-merpay-mercard-addon",
+    scope: "all-stores",
     name: "メルペイ × メルカード 上乗せ",
     paymentAppId: "pa-merpay",
     cardIds: ["mercard"],
@@ -441,6 +473,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-12: nanaco 電子マネー ベース還元 0.5% (addOn)
   {
     id: "prog-pa-nanaco-base",
+    scope: "member-stores",
     name: "nanaco 電子マネー ベース還元",
     paymentAppId: "pa-nanaco",
     rate: 0.005,
@@ -454,6 +487,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // C-13: WAON 電子マネー ベース還元 0.5% (addOn)
   {
     id: "prog-pa-waon-base",
+    scope: "member-stores",
     name: "WAON 電子マネー ベース還元",
     paymentAppId: "pa-waon",
     rate: 0.005,
@@ -481,6 +515,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // ─── W 系列 (cardIds=["jcb-w"]、基本 1% × 倍率) ───
   {
     id: "prog-jcb-jpoint-2x",
+    scope: "member-stores",
     name: "J-POINT パートナー (2倍) W向け",
     cardIds: ["jcb-w"],
     rate: 0.02,
@@ -493,6 +528,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   },
   {
     id: "prog-jcb-jpoint-3x",
+    scope: "member-stores",
     name: "J-POINT パートナー (3倍) W向け",
     cardIds: ["jcb-w"],
     rate: 0.03,
@@ -509,6 +545,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // prog-jcb-jpoint-gold-4x で表現 (実効 2%、W の 2倍と同等)。
   {
     id: "prog-jcb-jpoint-20x",
+    scope: "member-stores",
     name: "J-POINT パートナー (20倍) W向け",
     cardIds: ["jcb-w"],
     rate: 0.2,
@@ -531,6 +568,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // ─── Gold 系列 (cardIds=["jcb-gold"]、基本 0.5% × 倍率) ───
   {
     id: "prog-jcb-jpoint-gold-2x",
+    scope: "member-stores",
     name: "J-POINT パートナー (2倍) Gold向け",
     cardIds: ["jcb-gold"],
     rate: 0.01,
@@ -543,6 +581,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   },
   {
     id: "prog-jcb-jpoint-gold-3x",
+    scope: "member-stores",
     name: "J-POINT パートナー (3倍) Gold向け",
     cardIds: ["jcb-gold"],
     rate: 0.015,
@@ -555,6 +594,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   },
   {
     id: "prog-jcb-jpoint-gold-4x",
+    scope: "member-stores",
     name: "J-POINT パートナー (4倍 プレミアム) Gold向け",
     cardIds: ["jcb-gold"],
     rate: 0.02,
@@ -570,6 +610,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   },
   {
     id: "prog-jcb-jpoint-gold-20x",
+    scope: "member-stores",
     name: "J-POINT パートナー (20倍) Gold向け",
     cardIds: ["jcb-gold"],
     rate: 0.1,
@@ -608,6 +649,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // (a) エポス ゴールド/プラチナ マルイ優待 (2倍)
   {
     id: "prog-epos-gp-marui",
+    scope: "member-stores",
     name: "エポス ゴールド/プラチナ マルイ優待 (2倍)",
     cardIds: ["epos-gold", "epos-platinum"],
     rate: 0.01,
@@ -625,6 +667,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   //   (seed.test.ts に退行防止 assert あり)。
   {
     id: "prog-epos-gp-selectable-pointup",
+    scope: "member-stores",
     name: "エポス 選べるポイントアップ (2倍)",
     cardIds: ["epos-gold", "epos-platinum"],
     rate: 0.01,
@@ -641,6 +684,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // (c) たまるマーケット 3階層 (jcb-jpoint と同型、倍率=総倍率、rate = 0.005×N)
   {
     id: "prog-epos-tamaru-2x",
+    scope: "member-stores",
     name: "たまるマーケット (2倍)",
     cardIds: ["epos-card", "epos-gold", "epos-platinum"],
     rate: 0.01,
@@ -654,6 +698,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   },
   {
     id: "prog-epos-tamaru-3x",
+    scope: "member-stores",
     name: "たまるマーケット (3倍)",
     cardIds: ["epos-card", "epos-gold", "epos-platinum"],
     rate: 0.015,
@@ -667,6 +712,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   },
   {
     id: "prog-epos-tamaru-4x",
+    scope: "member-stores",
     name: "たまるマーケット (4倍)",
     cardIds: ["epos-card", "epos-gold", "epos-platinum"],
     rate: 0.02,

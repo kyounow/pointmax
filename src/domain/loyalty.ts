@@ -92,18 +92,16 @@ export function bestLoyalties(
       ? membersFor(membershipIndex, storeId)
       : memberships.filter((m) => m.storeId === storeId);
     const memberProgramIds = new Set(storeMembers.map((m) => m.programId));
-    const allMemberProgramIds = membershipIndex
-      ? membershipIndex.programsWithMembership
-      : new Set(memberships.map((m) => m.programId));
 
     for (const p of programs) {
       if (!p.pointCardId) continue;
       if (!isRuleActiveAt(p, now)) continue;
       if (!ownedById.has(p.pointCardId)) continue;
 
-      // store membership チェック
+      // store membership チェック (v6: scope="all-stores" のみ全 store 適用、
+      // それ以外は当該 store の membership がある場合のみ)。
       const hasMembershipForStore = memberProgramIds.has(p.id);
-      const isGlobalProgram = !allMemberProgramIds.has(p.id);
+      const isGlobalProgram = p.scope === "all-stores";
       if (!hasMembershipForStore && !isGlobalProgram) continue;
 
       const membership = storeMembers.find((m) => m.programId === p.id);

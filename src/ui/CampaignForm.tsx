@@ -164,6 +164,8 @@ export function CampaignForm() {
 
     const program: Omit<BenefitProgram, "id"> = {
       name: name.trim(),
+      // 手動キャンペーンは対象店舗を 1 件以上必須 (上の validation) なので member-stores。
+      scope: "member-stores",
       rate,
       currencyId,
       bonusType,

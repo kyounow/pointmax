@@ -55,7 +55,7 @@ describe("computeBlockedCurrencyIds", () => {
 
   it("enabled card の program 通貨は『貯まる』扱いでブロックしない", () => {
     const programs: BenefitProgram[] = [
-      { id: "prog1", name: "p1", cardIds: ["c1"], rate: 0.02, currencyId: "amazon-pt" },
+      { id: "prog1", name: "p1", scope: "all-stores", cardIds: ["c1"], rate: 0.02, currencyId: "amazon-pt" },
     ];
     const blocked = computeBlockedCurrencyIds(
       [card("c1", "rakuten-pt")],

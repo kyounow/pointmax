@@ -53,10 +53,8 @@ export function evaluatePrograms(args: {
     : memberships.filter((m) => m.storeId === store.id);
   const memberProgramIds = new Set(storeMembers.map((m) => m.programId));
 
-  // 2. program 候補: storeId match の membership あり、もしくは membership 無し = 全 store 適用
-  const programIdsWithAnyMembership = membershipIndex
-    ? membershipIndex.programsWithMembership
-    : new Set(memberships.map((m) => m.programId));
+  // 2. program 候補: storeId match の membership あり、もしくは scope="all-stores" = 全 store 適用。
+  //    v6 で「membership 有無からの推論」を廃止し program.scope のみで判定する。
 
   // 2a. chargeBased paymentApp 経由のときは paymentAppId を持たない program を全部除外する。
   //     候補生成時に lift して loop 本体の早期 continue を減らす (A-3 audit-fix)。
@@ -72,9 +70,9 @@ export function evaluatePrograms(args: {
     if (p.pointCardId) return false;
     // chargeBased early-exit: paymentAppId を持たない program は paymentApp 経由で発動しない
     if (filterChargeBased && !p.paymentAppId) return false;
-    // この store に紐づく？ or 全 store 適用 (membership 無し)？
+    // この store に紐づく？ or 全 store 適用 (scope="all-stores")？
     const hasMembershipForStore = memberProgramIds.has(p.id);
-    const isGlobalProgram = !programIdsWithAnyMembership.has(p.id);
+    const isGlobalProgram = p.scope === "all-stores";
     if (!hasMembershipForStore && !isGlobalProgram) return false;
     return true;
   });

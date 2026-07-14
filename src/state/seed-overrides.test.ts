@@ -4,6 +4,7 @@ import type { BenefitProgram } from "../domain/types";
 
 const prog = (over: Partial<BenefitProgram> & { id: string }): BenefitProgram => ({
   name: over.id,
+  scope: "member-stores",
   rate: 0.01,
   currencyId: "d-pt",
   ...over,
