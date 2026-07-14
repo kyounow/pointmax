@@ -265,6 +265,7 @@ export function CampaignForm() {
           還元率 (%)
           <input
             type="number"
+            inputMode="decimal"
             value={ratePct}
             onChange={(e) => setRatePct(e.target.value)}
             min={0}

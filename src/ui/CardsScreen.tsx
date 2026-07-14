@@ -69,6 +69,7 @@ export function CardsScreen() {
       edit: (c, set) => (
         <input
           type="number"
+          inputMode="decimal"
           step="0.001"
           min="0"
           value={c.defaultRate}
@@ -173,6 +174,7 @@ export function CardsScreen() {
         />
         <input
           type="number"
+          inputMode="decimal"
           step="0.001"
           min="0"
           placeholder="0.01 (=1%)"

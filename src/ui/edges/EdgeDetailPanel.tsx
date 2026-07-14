@@ -146,6 +146,7 @@ export function EdgeDetailPanel({
               レート (1単位 → ?単位):
               <input
                 type="number"
+                inputMode="decimal"
                 step="0.0001"
                 min="0"
                 value={edge.rate}
