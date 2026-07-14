@@ -14,17 +14,27 @@ import {
 export function SettingsScreen() {
   // Wave 5 B-1: 5 個別 subscribe → 単一 useShallow に集約。
   // hasData は数値派生なので別 subscribe で OK (primitive 比較で十分)。
-  const { syncUrl, lastSyncAt, setSyncUrl, syncFromUrl, clearAll, stores } =
-    useStore(
-      useShallow((s) => ({
-        syncUrl: s.syncUrl,
-        lastSyncAt: s.lastSyncAt,
-        setSyncUrl: s.setSyncUrl,
-        syncFromUrl: s.syncFromUrl,
-        clearAll: s.clearAll,
-        stores: s.stores,
-      })),
-    );
+  const {
+    syncUrl,
+    lastSyncAt,
+    setSyncUrl,
+    syncFromUrl,
+    clearAll,
+    stores,
+    birthMonth,
+    setBirthMonth,
+  } = useStore(
+    useShallow((s) => ({
+      syncUrl: s.syncUrl,
+      lastSyncAt: s.lastSyncAt,
+      setSyncUrl: s.setSyncUrl,
+      syncFromUrl: s.syncFromUrl,
+      clearAll: s.clearAll,
+      stores: s.stores,
+      birthMonth: s.birthMonth,
+      setBirthMonth: s.setBirthMonth,
+    })),
+  );
   const hasData = useStore(
     (s) =>
       s.cards.length +
@@ -191,6 +201,30 @@ export function SettingsScreen() {
         >
           ローカルデータ初期化
         </button>
+      </div>
+
+      <h3 style={{ marginTop: 8 }}>誕生月</h3>
+      <p className="hint">
+        誕生月限定の特典（誕生月ポイントアップ等）を計算に反映するために使います。
+        <strong>この値は端末内にのみ保存され、送信されません。</strong>
+        未設定の場合、誕生月限定の特典は常に不発になります。
+      </p>
+      <div className="row" style={{ gap: 8, marginBottom: 16 }}>
+        <select
+          aria-label="誕生月"
+          value={birthMonth ?? ""}
+          onChange={(e) => {
+            const v = e.target.value;
+            setBirthMonth(v === "" ? undefined : Number(v));
+          }}
+        >
+          <option value="">未設定</option>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+            <option key={m} value={m}>
+              {m}月
+            </option>
+          ))}
+        </select>
       </div>
 
       <h3 style={{ marginTop: 8 }}>データ保持 (PWA)</h3>
