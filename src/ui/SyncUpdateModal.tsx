@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../state/store";
 import { syncDigest, buildSyncGroups } from "../domain/syncDigest";
 import { useSeedMerge } from "./hooks/useSeedMerge";
+import { useOnline } from "./hooks/useOnline";
 
 // 週次 cron が bundled seed に追加したデータをユーザーに知らせるモーダル。
 // SEED_VERSION とは独立した差分検知 (cron は版数を bump しない)。
@@ -32,6 +33,10 @@ type SyncUpdateModalProps = {
 
 export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
   const applySeedUpdate = useStore((s) => s.applySeedUpdate);
+
+  // PR-0c: オフライン時はこの同期通知モーダルを出さない (弱電波の店頭で出しゃばらない)。
+  // online/offline イベント購読なので、オンライン復帰時は自動で再評価される。
+  const online = useOnline();
 
   const [dismissed, setDismissed] = useState(false);
   const [seen] = useState(readSeen);
@@ -69,7 +74,7 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
   }, [merged, count]);
 
   const visible =
-    !dismissed && count > 0 && digest !== "" && digest !== seen;
+    online && !dismissed && count > 0 && digest !== "" && digest !== seen;
 
   const close = () => {
     writeSeen(digest);

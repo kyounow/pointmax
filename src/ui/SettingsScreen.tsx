@@ -5,6 +5,11 @@ import { useDialog } from "./dialog/useDialog";
 import { DEFAULT_SYNC_URL } from "../state/seed";
 import { byId } from "../domain/entityIndex";
 import { getUsageStats, clearUsageStats } from "../state/usageStats";
+import {
+  getPersistenceStatus,
+  requestPersistentStorage,
+  type PersistenceStatus,
+} from "../state/storagePersistence";
 
 export function SettingsScreen() {
   // Wave 5 B-1: 5 個別 subscribe → 単一 useShallow に集約。
@@ -88,6 +93,39 @@ export function SettingsScreen() {
     ? new Date(lastSyncAt).toLocaleString("ja-JP")
     : "未実施";
 
+  // PR-0c: 永続ストレージ (Storage API persist) の状態表示 / 再要求。
+  // マウント時に現在状態を照会し、未許可なら「要求」ボタンを出す。
+  const [persistStatus, setPersistStatus] = useState<PersistenceStatus | null>(
+    null,
+  );
+  const [persistBusy, setPersistBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    getPersistenceStatus().then((s) => {
+      if (alive) setPersistStatus(s);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const handleRequestPersist = async () => {
+    setPersistBusy(true);
+    const result = await requestPersistentStorage();
+    setPersistStatus(result);
+    setPersistBusy(false);
+  };
+
+  const persistLabel =
+    persistStatus === null
+      ? "確認中…"
+      : persistStatus === "granted"
+        ? "許可済み ✅"
+        : persistStatus === "denied"
+          ? "未許可 ⚠"
+          : "非対応 -";
+
   const handleClearLocal = async () => {
     const ok = await dialog.confirm({
       title: "ローカルデータを初期化しますか？",
@@ -154,6 +192,27 @@ export function SettingsScreen() {
           ローカルデータ初期化
         </button>
       </div>
+
+      <h3 style={{ marginTop: 8 }}>データ保持 (PWA)</h3>
+      <p className="hint">
+        ブラウザ利用 (特に iOS Safari) では長期間アクセスしないとデータが自動削除
+        されることがあります。ホーム画面に追加 (PWA インストール) すると保持が
+        強化されます。重要なデータは定期的にエクスポートしてください。
+      </p>
+      <p className="hint" style={{ marginTop: 0 }}>
+        永続ストレージ: <strong>{persistLabel}</strong>
+      </p>
+      {persistStatus === "denied" && (
+        <div className="row" style={{ gap: 8, marginBottom: 16 }}>
+          <button
+            onClick={handleRequestPersist}
+            disabled={persistBusy}
+            title="ブラウザに永続ストレージ (自動削除の対象外) を要求"
+          >
+            {persistBusy ? "要求中…" : "永続ストレージを要求"}
+          </button>
+        </div>
+      )}
 
       <h3 style={{ marginTop: 8 }}>外部URLからのデータ同期</h3>
       <p className="hint">

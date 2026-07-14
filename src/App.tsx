@@ -23,6 +23,7 @@ import { SchemaUpgradeModal } from "./ui/SchemaUpgradeModal";
 import { SyncUpdateModal } from "./ui/SyncUpdateModal";
 import { useStore } from "./state/store";
 import { recordTabView } from "./state/usageStats";
+import { requestPersistentStorage } from "./state/storagePersistence";
 import { useDialog } from "./ui/dialog/useDialog";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useRoute, navigate, replaceRoute, parseHash } from "./navigation";
@@ -83,6 +84,14 @@ function App() {
     TABS.find((t) => t.id === tab)?.label ?? "PointMax";
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // PR-0c: マウント時に永続ストレージ (Storage API persist) を 1 回要求する。
+  // iOS Safari 等での 7 日非アクセス自動削除 / 容量逼迫 eviction による
+  // localStorage 全損リスクを下げる。結果は投げっぱなしで良い (失敗しても
+  // 本体アプリに一切影響させない — 内部で try/catch 済み)。
+  useEffect(() => {
+    void requestPersistentStorage();
+  }, []);
 
   // 初回マウント時のみ: hash が空 or 未知 tab のとき履歴を汚さず calculator に正規化。
   // replaceRoute は hashchange を発火しないが、parseHash("") も calculator を返すため
