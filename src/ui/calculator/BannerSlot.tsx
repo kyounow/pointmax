@@ -8,6 +8,7 @@
 // 決定ロジックは純関数 selectBannerSlot (bannerSlot.ts) に切り出してテスト可能にしてある。
 // 優先度: onboarding > swUpdate(将来) > update(SEED_VERSION) > autoApply(将来) > today
 
+import type { ReactNode } from "react";
 import { useShallow } from "zustand/shallow";
 import type { BenefitProgram } from "../../domain/types";
 import { useStore } from "../../state/store";
@@ -18,8 +19,14 @@ import { CalcTodayBanner } from "./CalcTodayBanner";
 import { selectBannerSlot } from "./bannerPriority";
 
 type Props = {
-  /** 保有カード 0 枚か (親の hasHeldCards の否定)。 */
+  /**
+   * オンボーディングを最優先枠に出すべきか。PR-3c で判定を
+   * 「(① or ② 未完了) かつ 手動クローズしてない」に更新 (旧: 保有0枚)。
+   * true の間は通知系 (update/today) を抑制し、onboarding ノードを枠に描画する。
+   */
   onboardingActive: boolean;
+  /** onboardingActive 時に枠へ描画するノード (OnboardingChecklist)。未指定なら空枠。 */
+  onboarding?: ReactNode;
   programs: BenefitProgram[];
   /** 評価時刻 (親の useToday())。 */
   now: Date;
@@ -30,6 +37,7 @@ type Props = {
 
 export function BannerSlot({
   onboardingActive,
+  onboarding,
   programs,
   now,
   todayOpen,
@@ -61,6 +69,11 @@ export function BannerSlot({
     todayAvailable: true, // 今日の日付は常時有用な baseline
   });
 
+  if (kind === "onboarding") {
+    // onboarding 枠: 通知系を抑制し、代わりにチェックリスト (onboarding ノード) を出す。
+    // ノード未指定 (旧テスト等) なら従来どおり空枠。
+    return <>{onboarding ?? null}</>;
+  }
   if (kind === "update") return <UpdateBanner />;
   if (kind === "today") {
     return (
@@ -72,6 +85,6 @@ export function BannerSlot({
       />
     );
   }
-  // "onboarding" (= 通知抑制) / null は何も描画しない。
+  // null は何も描画しない。
   return null;
 }

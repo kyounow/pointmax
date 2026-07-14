@@ -14,7 +14,6 @@ import { rankCards, nearlyEqual } from "../domain/rankCards";
 import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { isMasterCard } from "../state/seed";
-import { navigate } from "../navigation";
 import { CardComparisonSection } from "./CardComparisonSection";
 import { useToday } from "./hooks/useToday";
 import { BannerSlot } from "./calculator/BannerSlot";
@@ -23,6 +22,11 @@ import { CalcCurrencyTabs } from "./calculator/CalcCurrencyTabs";
 import { CalcLoyaltyBanner } from "./calculator/CalcLoyaltyBanner";
 import { CalcUpgradeBanner } from "./calculator/CalcUpgradeBanner";
 import { CalcResultCard } from "./calculator/CalcResultCard";
+import { OnboardingChecklist } from "./calculator/OnboardingChecklist";
+import {
+  isOnboardingDismissed,
+  dismissOnboarding,
+} from "../state/onboardingDismissed";
 
 export function CalculatorScreen() {
   // Wave 5 B-1: 10 個別 subscribe → 単一 useShallow に集約。
@@ -152,6 +156,20 @@ export function CalculatorScreen() {
     }
   }, [result, storeId, activeCurrencyId]);
 
+  // UX-7: 対象外カードの CTA「交換ルートを見る →」で EdgesScreen (lazy, ~190KB の
+  // @xyflow chunk) への遷移が増えるため、計算画面マウント後のアイドル時に同 chunk を
+  // 先読みしておく。import 指定子は App.tsx の lazy(() => import("./ui/EdgesScreen")) と
+  // 同一モジュールへ解決されるので (Vite は解決済み module id で dedupe)、実遷移時には
+  // fetch 済みで体感が軽い。requestIdleCallback 非対応 (旧 Safari 等) では何もせず、
+  // 遷移時の通常 lazy fetch に委ねる (プリフェッチは純粋な任意最適化)。
+  useEffect(() => {
+    if (typeof window.requestIdleCallback !== "function") return;
+    const id = window.requestIdleCallback(() => {
+      void import("./EdgesScreen");
+    });
+    return () => window.cancelIdleCallback?.(id);
+  }, []);
+
   // PR-3a (UX-1): 直近店舗チップの id 列。保存済み計算履歴 (getRecentStoreIds) を
   // 新しい順で読み、現在選択中の店舗を先頭に畳み込む (履歴未記録でも即チップ表示・
   // active になり「現選択は active 表示」を満たす)。getRecentStoreIds は localStorage の
@@ -178,11 +196,29 @@ export function CalculatorScreen() {
   const loyalties = result && result.length > 0 ? result[0].loyalties : [];
 
   // v7: 保有カード (enabled === true) が 0 枚か。全 OFF 出荷なので初回起動は 0 枚 →
-  // 暫定オンボーディング導線を出し、非保有 42 枚の比較リスト (CardComparisonSection) は抑制する。
+  // 非保有 42 枚の比較リスト (CardComparisonSection) は抑制し、簡素な空メッセージにする。
   const hasHeldCards = useMemo(
     () => cards.some((c) => c.enabled === true),
     [cards],
   );
+
+  // ONB-1 (PR-3c): 2 ステップ・オンボーディングチェックリストの表示制御。
+  //   ① 保有カードを選ぶ    = enabled カードが 1 枚以上 (= hasHeldCards)
+  //   ② よく貯める通貨を選ぶ = preferredCurrencyIds が非空
+  // 表示条件 = (① or ② 未完了) かつ 手動クローズしていない。両方完了 or ✕ で消える。
+  // 手動クローズは persist 外の独立 localStorage キー (PR-0b/0c パターン) に保存し、
+  // 以後は未完了でも自動再表示しない (キー優先)。初期値はマウント時に 1 回だけ読む。
+  const step1Done = hasHeldCards;
+  const step2Done = preferredCurrencyIds.length > 0;
+  const [onboardingDismissed, setOnboardingDismissed] = useState(
+    isOnboardingDismissed,
+  );
+  const onboardingActive =
+    (!step1Done || !step2Done) && !onboardingDismissed;
+  const closeOnboarding = useCallback(() => {
+    dismissOnboarding();
+    setOnboardingDismissed(true);
+  }, []);
 
   // 同率 rank 表示: totalFinalAmount 同値カードに同じ rank を割り当てる (#1, #1, #3 ...)
   const displayRankMap = useMemo(() => {
@@ -264,11 +300,18 @@ export function CalculatorScreen() {
         店舗・金額・貯めたい通貨を選ぶと、保有カード別の最適ルートと取得量を表示します。
       </p>
 
-      {/* PR-3a (N-1): 通知系バナーは常時 1 枚まで。優先度
+      {/* PR-3a (N-1) + PR-3c (ONB-1): 通知系バナーは常時 1 枚まで。優先度
           onboarding > update(SEED_VERSION) > today を BannerSlot が判定する。
-          onboarding(保有0枚) 時は通知枠を抑制し、下の 2 ステップ box が受け持つ。 */}
+          onboardingActive 時は通知枠を抑制し、枠に 2 ステップチェックリストを描画する。 */}
       <BannerSlot
-        onboardingActive={!hasHeldCards}
+        onboardingActive={onboardingActive}
+        onboarding={
+          <OnboardingChecklist
+            step1Done={step1Done}
+            step2Done={step2Done}
+            onClose={closeOnboarding}
+          />
+        }
         programs={programs}
         now={today}
         todayOpen={todayBreakdownOpen}
@@ -307,27 +350,10 @@ export function CalculatorScreen() {
         />
       )}
 
-      {/* v7 暫定オンボーディング (正式版は Phase 3 / PR-3c)。保有カード 0 枚のとき、
-          結果エリアに 2 ステップ案内を出す。「保有カードが登録されていません」文言の置換。 */}
+      {/* 保有 0 枚時 (ONB-1): 実 CTA は上部のオンボーディングチェックリストが受け持つので、
+          結果エリアは簡素な 1 行の空メッセージに一本化する。 */}
       {!hasHeldCards && (
-        <div className="onboarding-box">
-          <p className="onboarding-title">まずは 2 ステップで準備しましょう</p>
-          <div className="onboarding-step">
-            <span>① 保有しているクレジットカードを選ぶ</span>
-            <button type="button" onClick={() => navigate("wallet")}>
-              ウォレットを開く
-            </button>
-          </div>
-          <div className="onboarding-step">
-            <span>② よく貯める通貨を選ぶ</span>
-            <button type="button" onClick={() => navigate("currencies")}>
-              通貨画面を開く
-            </button>
-          </div>
-          <p className="hint" style={{ margin: "10px 0 0", fontSize: 13 }}>
-            ウォレットで「使う」を ON にしたカードだけが計算対象になります。
-          </p>
-        </div>
+        <p className="empty">カードを登録すると計算できます。</p>
       )}
 
       {hasHeldCards && !result && (
@@ -338,7 +364,7 @@ export function CalculatorScreen() {
         </p>
       )}
 
-      {result && (
+      {hasHeldCards && result && (
         <CalcLoyaltyBanner
           loyalties={loyalties}
           activeCurrencyId={activeCurrencyId}
@@ -348,7 +374,7 @@ export function CalculatorScreen() {
         />
       )}
 
-      {result && upgrade && (
+      {hasHeldCards && result && upgrade && (
         <CalcUpgradeBanner
           upgrade={upgrade}
           activeCurrencyId={activeCurrencyId}
@@ -357,7 +383,7 @@ export function CalculatorScreen() {
         />
       )}
 
-      {result && result.length > 0 && (
+      {hasHeldCards && result && result.length > 0 && (
         <div className="results-toolbar">
           <span className="hint" style={{ margin: 0 }}>
             {result.length}件中 {expandedIds.size}件展開
@@ -368,10 +394,9 @@ export function CalculatorScreen() {
         </div>
       )}
 
-      {result && (
+      {hasHeldCards && result && (
         <div className="results">
-          {/* 保有 0 枚時は上のオンボーディング案内が受け持つので、ここでは出さない */}
-          {result.length === 0 && hasHeldCards && (
+          {result.length === 0 && (
             <p className="empty">保有カードが登録されていません。</p>
           )}
           {result.map((r) => (

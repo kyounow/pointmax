@@ -10,6 +10,7 @@ import type {
 import { bestLoyalties, type LoyaltyResult } from "./loyalty";
 import { buildMembershipIndex } from "./membershipIndex";
 import { makePathCache } from "./pathCache";
+import { bestPath } from "./bestPath";
 import { evaluatePrograms } from "./programEvaluator";
 import { selectPrimaryForTarget } from "./selectPrimary";
 import { computeBlockedCurrencyIds } from "./currencyGating";
@@ -123,6 +124,16 @@ export function detectMinUnitAnnotations(
   return annotations;
 }
 
+// UX-7: カードが「対象外 (reachable=false)」になった理由コード。UI で理由バッジ +
+// 次アクション導線 (CTA) を出し分けるための純粋な戻り値拡張 (schema/persist 影響なし)。
+//   - "no-path":          貯まる通貨から目標通貨への交換ルートが 1 本も存在しない
+//                         (通貨ゲートを外しても到達不能) → CTA「交換ルートを見る」
+//   - "currency-blocked": 交換ルート自体はあるが、ユーザーが「使わない」にした
+//                         ポイント通貨 (currencyGating の blockedCurrencyIds) が経路上に
+//                         あって塞がれている → CTA「ウォレットで確認」
+// reachable=true のカードは null。
+export type UnreachableReason = "no-path" | "currency-blocked";
+
 export type CardRanking = {
   card: Card;
   resolved: ResolvedRate;
@@ -132,6 +143,8 @@ export type CardRanking = {
   pathProduct: number;
   finalAmount: number;
   reachable: boolean;
+  // UX-7: reachable=false の理由コード (reachable=true なら null)。UI 表示専用。
+  unreachableReason: UnreachableReason | null;
   // 採用された支払アプリ (paymentApps が渡されない場合は null)
   paymentApp: PaymentApp | null;
   // 支払アプリのbonus還元結果 (summary fields; backward compat / tie-break ソート用)
@@ -221,6 +234,19 @@ export function rankCards(
     // pathCache: bestPath (Bellman-Ford O(V·E)) の (from,to) 重複呼び出しを memoize
     // (Wave 2 audit-fix A-1)。blockedCurrencyIds ゲート込み。
     const pathCache = makePathCache(edges, availableCardIds, blockedCurrencyIds);
+
+    // UX-7: 対象外 (reachable=false) カードの理由分類。blockedCurrencyIds を外した
+    // 仮定で from→to の路があれば「通貨ゲートで塞がれた」(currency-blocked)、それでも
+    // 無ければ「ルート自体が未登録」(no-path)。blockedCurrencyIds が空 (未使用ポイント
+    // カード無し) の通常ケースは即 no-path (追加 bestPath 呼び出しなし)。unreachable な
+    // カードだけに呼ぶので pathCache には載せない (通常経路の cache を汚さない)。
+    const classifyUnreachable = (from: string, to: string): UnreachableReason => {
+      if (blockedCurrencyIds && blockedCurrencyIds.size > 0) {
+        const unblocked = bestPath(edges, from, to, 1, availableCardIds, undefined);
+        if (unblocked) return "currency-blocked";
+      }
+      return "no-path";
+    };
 
     // ─── Loyalty (ポイントカード提示) 評価 ───
     // programEvaluator ベースの loyalty: pointCardId を持つ programs を評価
@@ -325,6 +351,7 @@ export function rankCards(
         }
       }
 
+      const reachable = path !== null;
       return {
         card,
         resolved,
@@ -333,7 +360,10 @@ export function rankCards(
         pathSteps: path?.steps ?? [],
         pathProduct: path?.product ?? 0,
         finalAmount: baseFinal,
-        reachable: path !== null,
+        reachable,
+        unreachableReason: reachable
+          ? null
+          : classifyUnreachable(cardCurrencyId, targetCurrencyId),
         paymentApp: null,
         appBonusRate,
         appBonusFinalAmount: appBonusTotal,
@@ -384,6 +414,7 @@ export function rankCards(
       );
       const path = pathCache.resolve(cardCurrencyId, targetCurrencyId, earnedAmount);
       const baseFinal = path?.finalAmount ?? 0;
+      const reachable = path !== null;
       return {
         card,
         resolved,
@@ -392,7 +423,10 @@ export function rankCards(
         pathSteps: path?.steps ?? [],
         pathProduct: path?.product ?? 0,
         finalAmount: baseFinal,
-        reachable: path !== null,
+        reachable,
+        unreachableReason: reachable
+          ? null
+          : classifyUnreachable(cardCurrencyId, targetCurrencyId),
         paymentApp: null,
         appBonusRate: 0,
         appBonusFinalAmount: 0,
@@ -545,6 +579,13 @@ export function rankCards(
 
     const best = appEvals[0];
 
+    // reachable: target 通貨で何らかの earn (card primary / addOn / loyalty のいずれか) が
+    // 発生する場合は true。以前は best.cardReachable のみだったため、chargeBased な
+    // paymentApp (例: pa-waon) + 孤立通貨 target (waon-pt) で「addOn 単独で earn する
+    // のに header は 対象外」という矛盾表示が出ていた (v3.6.0 で発覚した bug)。
+    const reachable =
+      best.cardReachable || best.appBonusReachable || loyaltyTotal > 0;
+
     return {
       card,
       resolved: best.resolved,
@@ -555,14 +596,11 @@ export function rankCards(
       pathSteps: best.cardPathSteps,
       pathProduct: best.cardPathProduct,
       finalAmount: best.cardFinal,
-      // reachable: target 通貨で何らかの earn (card primary / addOn / loyalty のいずれか) が
-      // 発生する場合は true。以前は best.cardReachable のみだったため、chargeBased な
-      // paymentApp (例: pa-waon) + 孤立通貨 target (waon-pt) で「addOn 単独で earn する
-      // のに header は 対象外」という矛盾表示が出ていた (v3.6.0 で発覚した bug)。
-      reachable:
-        best.cardReachable ||
-        best.appBonusReachable ||
-        loyaltyTotal > 0,
+      reachable,
+      // UX-7: 対象外理由は header の主結果通貨 (best.cardCurrencyId) → target で分類。
+      unreachableReason: reachable
+        ? null
+        : classifyUnreachable(best.cardCurrencyId, targetCurrencyId),
       paymentApp: best.pa,
       appBonusRate: best.appBonusRate,
       appBonusFinalAmount: best.appBonusFinal,

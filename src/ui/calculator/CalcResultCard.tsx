@@ -2,12 +2,13 @@
 // result.map の 1 article 分。展開状態は親が持ち、props で受け取る。
 // 動作不変リファクタ: 元の JSX をそのまま移植し、resolver / Map を props 化しただけ。
 
-import type { CardRanking } from "../../domain/rankCards";
+import type { CardRanking, UnreachableReason } from "../../domain/rankCards";
 import type { BenefitProgram, Currency } from "../../domain/types";
 import { cardLabel } from "../../domain/cardLabel";
 import { formatNum } from "../../domain/formatNum";
 import { formatRatio } from "../../domain/currencyKind";
 import { buildRateStackSummary } from "../../domain/rateStackSummary";
+import { navigate } from "../../navigation";
 import { NodePill } from "../NodePill";
 import { RuleStatusBadge } from "../RuleStatusBadge";
 import { NoteChips } from "../NoteChips";
@@ -16,6 +17,29 @@ import { NoteChips } from "../NoteChips";
 function fmtPct(rate: number): string {
   return `${formatNum(rate * 100)}%`;
 }
+
+// UX-7: 対象外理由コード → 折り畳みヘッダの短い理由バッジ + 展開ビューの次アクション導線。
+//   badge: ヘッダに出す短ラベル / cta: 展開ビューのボタン文言 / route: navigate 先 /
+//   title: バッジ・ボタンの補足ツールチップ / cls: 理由別スタイルの識別クラス。
+const UNREACHABLE_META = {
+  "no-path": {
+    badge: "ルート未登録",
+    cta: "交換ルートを見る →",
+    route: "edges",
+    title: "貯まる通貨から目標通貨への交換ルートが未登録です",
+    cls: "no-path",
+  },
+  "currency-blocked": {
+    badge: "通貨OFF",
+    cta: "ウォレットで確認 →",
+    route: "wallet/point-cards",
+    title: "経路上のポイント通貨が「使わない」設定のため到達できません",
+    cls: "currency-blocked",
+  },
+} satisfies Record<
+  UnreachableReason,
+  { badge: string; cta: string; route: string; title: string; cls: string }
+>;
 
 type Props = {
   ranking: CardRanking;
@@ -54,6 +78,13 @@ export function CalcResultCard({
   );
   const hasLoyalty = reachableLoyalties.length > 0;
 
+  // UX-7: 対象外カードの理由メタ (reachable なら null)。ヘッダのバッジと展開ビューの
+  // CTA の両方で参照する。r.unreachableReason の narrowing を 1 箇所に閉じる。
+  const unreachableMeta =
+    !r.reachable && r.unreachableReason
+      ? UNREACHABLE_META[r.unreachableReason]
+      : null;
+
   return (
     <article
       className={`result-card ${r.reachable ? "" : "unreachable"} ${displayRank === 1 && r.reachable ? "best" : ""} ${expanded ? "expanded" : "collapsed"}`}
@@ -77,6 +108,15 @@ export function CalcResultCard({
         <span className="rank">
           {r.reachable ? `#${displayRank}` : "対象外"}
         </span>
+        {/* UX-7: 折り畳みでも見える理由バッジ (「ルート未登録」「通貨OFF」)。 */}
+        {unreachableMeta && (
+          <span
+            className={`unreachable-badge unreachable-${unreachableMeta.cls}`}
+            title={unreachableMeta.title}
+          >
+            {unreachableMeta.badge}
+          </span>
+        )}
         {(() => {
           // paymentMode を優先、なければ chargeBased fallback
           const mode =
@@ -284,11 +324,27 @@ export function CalcResultCard({
             )}
             {!r.reachable && (
               <small className="hint">
-                {currencyName(r.earnedCurrencyId)} から{" "}
-                {currencyName(activeCurrencyId)} への交換ルートが未登録です
+                {unreachableMeta?.cls === "currency-blocked"
+                  ? `${currencyName(r.earnedCurrencyId)} から ${currencyName(activeCurrencyId)} への経路上に「使わない」設定のポイント通貨があります`
+                  : `${currencyName(r.earnedCurrencyId)} から ${currencyName(activeCurrencyId)} への交換ルートが未登録です`}
               </small>
             )}
           </div>
+
+          {/* UX-7: 対象外カードの次アクション導線 (展開時のみ)。
+              no-path → 交換ルート画面 / currency-blocked → ウォレット (ポイントカード)。 */}
+          {unreachableMeta && (
+            <div className="unreachable-cta">
+              <button
+                type="button"
+                className="unreachable-cta-btn"
+                title={unreachableMeta.title}
+                onClick={() => navigate(unreachableMeta.route)}
+              >
+                {unreachableMeta.cta}
+              </button>
+            </div>
+          )}
 
           {/* DB-8: 最低交換単位に満たない交換ステップの事後注記 (折り畳みヘッダには出さない)。
               経路選択には影響せず、貯めてから交換すればレート積どおりになる旨を chip で示す。 */}
