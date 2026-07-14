@@ -9,8 +9,14 @@ import {
   type PlanItem,
 } from "../domain/migrations";
 import { useSeedMerge } from "./hooks/useSeedMerge";
+import { useOnline } from "./hooks/useOnline";
 
 export function UpdateBanner() {
+  // PR-0c: オフライン時は同期系 UI を出さない (店頭・弱電波での出しゃばり抑制)。
+  // 元々このバナーは bundled seed とローカル state のローカル比較で出るが、
+  // 「更新に関する UI」はオンライン復帰後にまとめて見せる方が自然。
+  // online/offline イベントで再購読するため、復帰時は自動で再表示される。
+  const online = useOnline();
   // Wave 5 B-1: 3 個別 subscribe → 単一 useShallow
   const { lastSeedVersion, applySeedUpdate, dismissSeedUpdate } = useStore(
     useShallow((s) => ({
@@ -61,6 +67,7 @@ export function UpdateBanner() {
   const totalChanges =
     additionCount + autoApplyCount + seedUpdatedCount + seedRemovedCount;
 
+  if (!online) return null;
   if (!hasData) return null;
   if (lastSeedVersion >= SEED_VERSION) return null;
 
