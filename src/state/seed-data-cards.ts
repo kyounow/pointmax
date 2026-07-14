@@ -12,23 +12,31 @@ import type { Card, PaymentApp, PointCard } from "../domain/types";
 export const SEED_CARDS: Card[] = [
   {
     // ショッピングマイル・プレミアム自動付帯で1.0%。Suicaチャージはビューカードで1.5% JRE
+    // family-jal-suica (exclusive)。普通版 jal-suica-normal と物理的に切替型なので、
+    // このカードを「使う」ON にすると普通版が自動 OFF になる (store の排他 invariant)。
     id: "jal-suica",
     name: "JALカードSuica",
     grade: "CLUB-Aゴールド",
     defaultRate: 0.01,
     defaultCurrencyId: "jal-mile",
+    familyId: "family-jal-suica",
+    gradeLevel: 2,
   },
   {
     // JALカードSuica 普通カード。CLUB-Aゴールド (jal-suica) と違い JRE→マイルは
     // 1500pt→750マイル (0.5)。gate 用途で enabled:false (デフォルトはゴールド側が有効)。
     // 保有者が「使う」を ON にすると edge jre-to-jal-normal が解放される。
-    // 両カード保有時は bestPath が max-product でゴールド (0.6667) を自動優先。
+    // family-jal-suica (exclusive): 従来は「両カード保有時は bestPath がゴールド優先」を
+    // 許容していたが、PR-1c で排他化。この普通版を ON にするとゴールド版 (jal-suica) が
+    // 自動 OFF になる (両方 ON は不可能になった。同一ブランドの切替型のため意図的な挙動変更)。
     id: "jal-suica-normal",
     name: "JALカードSuica（普通）",
     grade: "普通",
     defaultRate: 0.01,
     defaultCurrencyId: "jal-mile",
     enabled: false,
+    familyId: "family-jal-suica",
+    gradeLevel: 1,
   },
   {
     id: "rakuten-card",
@@ -127,12 +135,16 @@ export const SEED_CARDS: Card[] = [
     // JCB CARD W (39 歳以下限定、Web 申込限定、2倍ポイント特典)
     // 200円=2 J-POINT = 1.0% (基本還元、J-POINT 1pt=1円相当)
     // 2026年1月の Oki Doki ポイント → J-POINT リニューアル後の還元体系
+    // family-jcb (exclusive=false): ゴールドとは別カードとして併存保有できるため、
+    // 「使う」ON にしても jcb-gold は自動 OFF にならない (排他しない)。
     id: "jcb-w",
     name: "JCB CARD W",
     grade: "通常 (39歳以下限定)",
     defaultRate: 0.01,
     defaultCurrencyId: "j-point",
     enabled: false,
+    familyId: "family-jcb",
+    gradeLevel: 1,
   },
   {
     // JCB ゴールド (年会費 11,000円、初年度無料)
@@ -140,12 +152,15 @@ export const SEED_CARDS: Card[] = [
     // 公式: 「優待店利用で最大20倍」「ポイント還元率は最大10%」(= 0.5% × 20倍 = スターバックス)
     // 「プレミアムでおトク」対象店 (高島屋 4倍 等) は Gold プレミアム条件で発動
     // V5-2 で J-POINT パートナー Gold 系列 program に対応
+    // family-jcb (exclusive=false): W と併存保有できるため排他対象外。
     id: "jcb-gold",
     name: "JCB ゴールド",
     grade: "ゴールド",
     defaultRate: 0.005,
     defaultCurrencyId: "j-point",
     enabled: false,
+    familyId: "family-jcb",
+    gradeLevel: 2,
   },
   {
     // エポスカード (年会費永年無料)、200円=1エポスポイント = 0.5%
@@ -153,12 +168,16 @@ export const SEED_CARDS: Card[] = [
     // 3グレード体制 (一般 / ゴールド / プラチナ) の一般。グレード差はマルイ2倍・
     // 選べるポイントアップ等の program で表現。ポイントアップサイト「たまるマーケット」
     // 経由の還元 (2/3/4倍) は 3 グレード共通で prog-epos-tamaru-* にモデル化。
+    // family-epos (exclusive): 3 グレードは切替型。上位グレードを「使う」ON にすると
+    // このカードは自動 OFF になる (store の排他 invariant)。
     id: "epos-card",
     name: "エポスカード",
     grade: "一般",
     defaultRate: 0.005,
     defaultCurrencyId: "epos",
     enabled: false,
+    familyId: "family-epos",
+    gradeLevel: 1,
   },
   {
     // エポスゴールド。年会費5,000円 (年間50万円利用 or インビテーション or
@@ -166,24 +185,32 @@ export const SEED_CARDS: Card[] = [
     // グレード差は program で表現 (prog-epos-gp-marui / prog-epos-gp-selectable-pointup)。
     // 年間利用ボーナス (50万→2,500pt / 100万→10,000pt 上限) は利用額連動のため
     // rate 未反映 (JCB/SMBC ゴールドと同方針)。
+    // family-epos (exclusive): このカードを「使う」ON にすると一般 (epos-card) /
+    // プラチナ (epos-platinum) が自動 OFF になる (切替型のため同時保有しない)。
     id: "epos-gold",
     name: "エポスゴールド",
     grade: "ゴールド",
     defaultRate: 0.005,
     defaultCurrencyId: "epos",
     enabled: false,
+    familyId: "family-epos",
+    gradeLevel: 2,
   },
   {
     // エポスプラチナ。年会費30,000円 (インビ or 年間100万円利用で20,000円)。基本 0.5%。
     // 年間ボーナス (100万→20,000pt 〜 1,500万→100,000pt、50万未満0.3%/50-100万3,000pt
     // は2025-04新設) は利用額連動のため rate 未反映。
     // 誕生月ポイント2倍はユーザー固有月のため未モデル化。
+    // family-epos (exclusive): このカードを「使う」ON にすると一般 (epos-card) /
+    // ゴールド (epos-gold) が自動 OFF になる (切替型のため同時保有しない)。
     id: "epos-platinum",
     name: "エポスプラチナ",
     grade: "プラチナ",
     defaultRate: 0.005,
     defaultCurrencyId: "epos",
     enabled: false,
+    familyId: "family-epos",
+    gradeLevel: 3,
   },
   {
     // ANA VISA カード (一般)、通常 200円=1 Vポイント = 0.5%

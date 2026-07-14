@@ -267,6 +267,170 @@ describe("store: exportJson / importJson は programs / memberships を保持す
   });
 });
 
+describe("store: setCardEnabled 排他 invariant (v6 PR-1c)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  // exclusive family (family-epos) のフィクスチャ。gradeLevel は計算に不使用だが seed 準拠で付与。
+  const eposCards = (): Card[] => [
+    {
+      id: "epos-card",
+      name: "エポスカード",
+      defaultRate: 0.005,
+      defaultCurrencyId: "epos",
+      familyId: "family-epos",
+      gradeLevel: 1,
+    },
+    {
+      id: "epos-gold",
+      name: "エポスゴールド",
+      defaultRate: 0.005,
+      defaultCurrencyId: "epos",
+      enabled: false,
+      familyId: "family-epos",
+      gradeLevel: 2,
+    },
+    {
+      id: "epos-platinum",
+      name: "エポスプラチナ",
+      defaultRate: 0.005,
+      defaultCurrencyId: "epos",
+      enabled: false,
+      familyId: "family-epos",
+      gradeLevel: 3,
+    },
+  ];
+
+  const byId = () => new Map(useStore.getState().cards.map((c) => [c.id, c]));
+
+  it("exclusive family のカードを ON にすると兄弟が自動 OFF になり、名前を返す", () => {
+    // 一般 (epos-card) が有効な状態でゴールドを ON にする
+    useStore.setState({ cards: eposCards() });
+    const disabled = useStore.getState().setCardEnabled("epos-gold", true);
+
+    expect(disabled).toEqual(["エポスカード"]);
+    expect(byId().get("epos-gold")?.enabled).not.toBe(false); // 有効化された
+    expect(byId().get("epos-card")?.enabled).toBe(false); // 自動 OFF
+    expect(byId().get("epos-platinum")?.enabled).toBe(false); // 元々 OFF のまま
+  });
+
+  it("既に OFF の兄弟は戻り値に含めない (自動 OFF になったカードのみ報告)", () => {
+    const cards = eposCards();
+    cards[0].enabled = false; // epos-card も最初から OFF
+    useStore.setState({ cards });
+
+    const disabled = useStore.getState().setCardEnabled("epos-gold", true);
+    expect(disabled).toEqual([]);
+    expect(byId().get("epos-gold")?.enabled).not.toBe(false);
+  });
+
+  it("非 exclusive family (JCB) は兄弟を OFF にしない (併存可)", () => {
+    useStore.setState({
+      cards: [
+        {
+          id: "jcb-w",
+          name: "JCB CARD W",
+          defaultRate: 0.01,
+          defaultCurrencyId: "j-point",
+          familyId: "family-jcb",
+          gradeLevel: 1,
+        },
+        {
+          id: "jcb-gold",
+          name: "JCB ゴールド",
+          defaultRate: 0.005,
+          defaultCurrencyId: "j-point",
+          enabled: false,
+          familyId: "family-jcb",
+          gradeLevel: 2,
+        },
+      ],
+    });
+    const disabled = useStore.getState().setCardEnabled("jcb-gold", true);
+
+    expect(disabled).toEqual([]);
+    expect(byId().get("jcb-gold")?.enabled).not.toBe(false);
+    expect(byId().get("jcb-w")?.enabled).not.toBe(false); // W は有効のまま (併存)
+  });
+
+  it("family 無しカードは他カードに影響しない", () => {
+    useStore.setState({
+      cards: [
+        {
+          id: "rakuten-card",
+          name: "楽天カード",
+          defaultRate: 0.01,
+          defaultCurrencyId: "rakuten-pt",
+        },
+        {
+          id: "smbc-v",
+          name: "三井住友カード",
+          defaultRate: 0.005,
+          defaultCurrencyId: "v-pt",
+          enabled: false,
+        },
+      ],
+    });
+    const disabled = useStore.getState().setCardEnabled("smbc-v", true);
+
+    expect(disabled).toEqual([]);
+    expect(byId().get("rakuten-card")?.enabled).not.toBe(false);
+    expect(byId().get("smbc-v")?.enabled).not.toBe(false);
+  });
+
+  it("OFF 操作 (enabled=false) では排他 invariant は発火しない", () => {
+    const cards = eposCards();
+    cards[1].enabled = undefined; // epos-gold も有効な状態から
+    useStore.setState({ cards });
+
+    const disabled = useStore.getState().setCardEnabled("epos-gold", false);
+    expect(disabled).toEqual([]);
+    expect(byId().get("epos-gold")?.enabled).toBe(false); // OFF になった
+    expect(byId().get("epos-card")?.enabled).not.toBe(false); // 兄弟は影響なし
+  });
+
+  it("jal-suica 普通を ON にするとゴールドが自動 OFF (両方 ON 不可の意図的挙動変更)", () => {
+    useStore.setState({
+      cards: [
+        {
+          id: "jal-suica",
+          name: "JALカードSuica",
+          defaultRate: 0.01,
+          defaultCurrencyId: "jal-mile",
+          familyId: "family-jal-suica",
+          gradeLevel: 2,
+        },
+        {
+          id: "jal-suica-normal",
+          name: "JALカードSuica（普通）",
+          defaultRate: 0.01,
+          defaultCurrencyId: "jal-mile",
+          enabled: false,
+          familyId: "family-jal-suica",
+          gradeLevel: 1,
+        },
+      ],
+    });
+    const disabled = useStore.getState().setCardEnabled("jal-suica-normal", true);
+
+    expect(disabled).toEqual(["JALカードSuica"]);
+    expect(byId().get("jal-suica")?.enabled).toBe(false);
+    expect(byId().get("jal-suica-normal")?.enabled).not.toBe(false);
+  });
+
+  it("updateCard 経由 (編集モード保存) でも排他 invariant が担保される", () => {
+    useStore.setState({ cards: eposCards() });
+    // 編集モード保存は updateCard(id, { enabled: undefined }) で有効化する
+    useStore.getState().updateCard("epos-gold", { enabled: undefined });
+
+    expect(byId().get("epos-gold")?.enabled).not.toBe(false);
+    expect(byId().get("epos-card")?.enabled).toBe(false); // 自動 OFF
+    // enabled トグルは substantive ではないので userModifiedAt は付かない
+    expect(byId().get("epos-gold")?.userModifiedAt).toBeUndefined();
+  });
+});
+
 describe("store: importJson 入力バリデーション (A6/D2)", () => {
   beforeEach(() => {
     useStore.getState().clearAll();

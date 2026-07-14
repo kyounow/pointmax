@@ -8,6 +8,7 @@ import {
   getSeedPaymentApp,
 } from "./seed";
 import { SEED_CARDS, SEED_PAYMENT_APPS } from "./seed-data-cards";
+import { CARD_FAMILIES } from "./seed-data-card-families";
 
 describe("MASTER_CARD_IDS / isMasterCard", () => {
   it("SEED_CARDS の全 id が含まれる", () => {
@@ -384,5 +385,64 @@ describe("v6.5.0: エポス 3グレード + たまるマーケット", () => {
     expect(p, "prog-epos-gp-marui が未登録").toBeDefined();
     expect(p?.cardIds).toBeDefined();
     expect(p?.cardIds).not.toContain("epos-card");
+  });
+});
+
+// v6 PR-1c: Card.familyId / gradeLevel の seed 契約。
+//   - familyId が指定されているカードは CARD_FAMILIES に実在する family を指す
+//     (dangling familyId は排他 invariant が引けず死にデータになる)。
+//   - 同一 family 内で gradeLevel が重複しない (並び順の一意性)。
+describe("v6 PR-1c: Card family の seed 契約", () => {
+  it("全カードの familyId が CARD_FAMILIES に実在する", () => {
+    const { cards } = seed();
+    const validIds = new Set(CARD_FAMILIES.map((f) => f.id));
+    const dangling = cards
+      .filter((c) => c.familyId !== undefined && !validIds.has(c.familyId))
+      .map((c) => `${c.id}: familyId=${c.familyId}`);
+    expect(dangling, dangling.join("\n")).toEqual([]);
+  });
+
+  it("family 内で gradeLevel が重複しない", () => {
+    const { cards } = seed();
+    const byFamily = new Map<string, number[]>();
+    for (const c of cards) {
+      if (c.familyId === undefined || c.gradeLevel === undefined) continue;
+      const arr = byFamily.get(c.familyId) ?? [];
+      arr.push(c.gradeLevel);
+      byFamily.set(c.familyId, arr);
+    }
+    const dupes: string[] = [];
+    for (const [familyId, levels] of byFamily) {
+      if (new Set(levels).size !== levels.length) {
+        dupes.push(`${familyId}: gradeLevel=[${levels.join(",")}]`);
+      }
+    }
+    expect(dupes, dupes.join("\n")).toEqual([]);
+  });
+
+  it("設計どおり 3 family に 7 カードが割り当てられている", () => {
+    const { cards } = seed();
+    const idsOf = (familyId: string) =>
+      cards
+        .filter((c) => c.familyId === familyId)
+        .map((c) => c.id)
+        .sort();
+    expect(idsOf("family-epos")).toEqual([
+      "epos-card",
+      "epos-gold",
+      "epos-platinum",
+    ]);
+    expect(idsOf("family-jal-suica")).toEqual([
+      "jal-suica",
+      "jal-suica-normal",
+    ]);
+    expect(idsOf("family-jcb")).toEqual(["jcb-gold", "jcb-w"]);
+  });
+
+  it("family-epos / family-jal-suica は exclusive、family-jcb は非 exclusive", () => {
+    const byId = new Map(CARD_FAMILIES.map((f) => [f.id, f]));
+    expect(byId.get("family-epos")?.exclusive).toBe(true);
+    expect(byId.get("family-jal-suica")?.exclusive).toBe(true);
+    expect(byId.get("family-jcb")?.exclusive).toBe(false);
   });
 });

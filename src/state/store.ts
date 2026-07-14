@@ -31,6 +31,7 @@ import {
 } from "./userModified";
 import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
 import { membershipId } from "./defineMemberships";
+import { CARD_FAMILIES } from "./seed-data-card-families";
 import { REMOVED_PROGRAM_IDS } from "./seed-additions";
 import { preservePreferences } from "./preferenceMerge";
 import {
@@ -61,6 +62,40 @@ const newId = () =>
     ? crypto.randomUUID()
     : `id-${Math.random().toString(36).slice(2)}-${Date.now()}`;
 
+// exclusive family の id 集合 (CardFamily.exclusive=true のみ)。
+// 排他 invariant の判定を O(1) にするため module scope で 1 回だけ構築。
+const EXCLUSIVE_FAMILY_IDS = new Set(
+  CARD_FAMILIES.filter((f) => f.exclusive).map((f) => f.id),
+);
+
+// v6 PR-1c: カードの enabled 排他 invariant。
+// enabledCardId のカードが exclusive family (CardFamily.exclusive=true) に属する場合、
+// 同 family の他の「有効」カードを enabled:false に自動変更し、その名前配列を返す
+// (UI が「◯◯ を OFF にしました」を通知するのに使う)。
+// - family 無し / 非 exclusive family / OFF 操作では何もしない (空配列)。
+// - state.cards は immer draft を想定 (要素の直接 mutate が追跡される)。
+// - jal-suica 系は従来「両方 ON で bestPath がゴールド優先」を許容していたが、
+//   PR-1c で exclusive 化したためこの invariant により両方 ON が不可能になる (意図的)。
+function applyExclusiveFamilyInvariant(
+  cards: Card[],
+  enabledCardId: string,
+): string[] {
+  const target = cards.find((c) => c.id === enabledCardId);
+  if (!target?.familyId || !EXCLUSIVE_FAMILY_IDS.has(target.familyId)) return [];
+  const disabledNames: string[] = [];
+  for (const c of cards) {
+    if (
+      c.id !== target.id &&
+      c.familyId === target.familyId &&
+      c.enabled !== false
+    ) {
+      c.enabled = false;
+      disabledNames.push(c.name);
+    }
+  }
+  return disabledNames;
+}
+
 type State = {
   cards: Card[];
   currencies: Currency[];
@@ -89,6 +124,11 @@ type State = {
 type Actions = {
   addCard: (c: Omit<Card, "id">) => void;
   updateCard: (id: string, patch: Partial<Omit<Card, "id">>) => void;
+  // カードの「使う」トグル専用 action (v6 PR-1c)。enabled を preference として
+  // 設定し、exclusive family なら同 family の他カードを自動 OFF にする。
+  // 戻り値 = 自動 OFF になったカード名の配列 (空なら排他は起きていない)。
+  // UI (CardsScreen) はこの戻り値を使って「◯◯ を OFF にしました (同シリーズは排他)」を通知する。
+  setCardEnabled: (id: string, enabled: boolean) => string[];
   removeCard: (id: string) => void;
   // master 由来カードのデータ部分 (name/grade/defaultRate/defaultCurrencyId) を
   // seed 値に戻し、userModifiedAt をクリアして「公式」バッジを復活させる。
@@ -206,8 +246,27 @@ export const useStore = create<State & Actions>()(
               patch,
               new Date(),
             );
+            // 編集モード保存で enabled を「有効」に変えた場合も排他 invariant を担保
+            // (setCardEnabled を経ない経路。patch.enabled が false 以外 = 有効化)。
+            if ("enabled" in patch && patch.enabled !== false) {
+              applyExclusiveFamilyInvariant(state.cards, id);
+            }
           }
         }),
+      setCardEnabled: (id, enabled) => {
+        let autoDisabled: string[] = [];
+        set((state) => {
+          const idx = state.cards.findIndex((c) => c.id === id);
+          if (idx < 0) return;
+          // enabled 慣習: true → undefined (キー不在で「有効」), false → false。
+          // preference 変更なので userModifiedAt はスタンプしない (直接 draft を mutate)。
+          state.cards[idx].enabled = enabled ? undefined : false;
+          if (enabled) {
+            autoDisabled = applyExclusiveFamilyInvariant(state.cards, id);
+          }
+        });
+        return autoDisabled;
+      },
       removeCard: (id) => {
         // マスター由来カードは削除不可 (mergeFromSeed で復活するため意味がない)。
         // UI 側で削除ボタンも隠すが、ここでも防御する。
