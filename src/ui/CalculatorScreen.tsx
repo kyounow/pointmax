@@ -280,8 +280,8 @@ export function CalculatorScreen() {
           <p className="onboarding-title">まずは 2 ステップで準備しましょう</p>
           <div className="onboarding-step">
             <span>① 保有しているクレジットカードを選ぶ</span>
-            <button type="button" onClick={() => navigate("cards")}>
-              カード画面を開く
+            <button type="button" onClick={() => navigate("wallet")}>
+              ウォレットを開く
             </button>
           </div>
           <div className="onboarding-step">
@@ -291,7 +291,7 @@ export function CalculatorScreen() {
             </button>
           </div>
           <p className="hint" style={{ margin: "10px 0 0", fontSize: 13 }}>
-            カード画面で「使う」を ON にしたカードだけが計算対象になります。
+            ウォレットで「使う」を ON にしたカードだけが計算対象になります。
           </p>
         </div>
       )}

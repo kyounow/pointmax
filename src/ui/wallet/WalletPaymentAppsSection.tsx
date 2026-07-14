@@ -1,16 +1,21 @@
 import { useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
-import { useStore } from "../state/store";
-import { isMasterPaymentApp } from "../state/seed";
-import { isSubstantivePaymentAppPatch } from "../state/userModified";
-import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
-import type { PaymentApp } from "../domain/types";
-import { cardLabel } from "../domain/cardLabel";
-import { sanitizeNoteForDisplay } from "../domain/noteParser";
-import { useDialog } from "./dialog/useDialog";
+import { useStore } from "../../state/store";
+import { isMasterPaymentApp } from "../../state/seed";
+import { isSubstantivePaymentAppPatch } from "../../state/userModified";
+import { ResponsiveTable, type ColumnDef } from "../ResponsiveTable";
+import type { PaymentApp } from "../../domain/types";
+import { cardLabel } from "../../domain/cardLabel";
+import { sanitizeNoteForDisplay } from "../../domain/noteParser";
+import { useDialog } from "../dialog/useDialog";
 
-export function PaymentAppsScreen() {
-  // Wave 5 B-1: 6 個別 subscribe → 単一 useShallow に集約
+type Props = {
+  // ?highlight=<paymentAppId> の対象 id (後続 PR の導線用)。
+  highlightId?: string;
+};
+
+// PaymentAppsScreen (旧 #paymentapps) の内容を移植したウォレットの支払方法セクション。
+export function WalletPaymentAppsSection({ highlightId }: Props) {
   const {
     cards,
     paymentApps,
@@ -54,10 +59,7 @@ export function PaymentAppsScreen() {
             </span>
             {isMasterPaymentApp(p.id) && !p.userModifiedAt ? (
               <span className="card-name-with-badge">
-                <span
-                  className="card-master-badge"
-                  title="公式マスター由来"
-                >
+                <span className="card-master-badge" title="公式マスター由来">
                   公式
                 </span>
                 {p.name}
@@ -85,9 +87,7 @@ export function PaymentAppsScreen() {
             <input
               value={p.iconChar ?? ""}
               placeholder={p.name.charAt(0)}
-              onChange={(e) =>
-                set({ iconChar: e.target.value || undefined })
-              }
+              onChange={(e) => set({ iconChar: e.target.value || undefined })}
               style={{ width: 60 }}
               title="アイコン文字"
               aria-label="アイコン文字"
@@ -119,11 +119,7 @@ export function PaymentAppsScreen() {
           <select
             value={p.paymentMode ?? ""}
             onChange={(e) => {
-              const v = e.target.value as
-                | ""
-                | "charge"
-                | "direct"
-                | "physical";
+              const v = e.target.value as "" | "charge" | "direct" | "physical";
               // paymentMode と chargeBased を整合させる
               if (v === "charge") {
                 set({ paymentMode: "charge", chargeBased: true });
@@ -244,7 +240,7 @@ export function PaymentAppsScreen() {
   );
 
   return (
-    <section>
+    <div>
       <h2>支払方法</h2>
       <p className="hint">
         Visaタッチ・QUICPay・楽天Pay・d払い等の決済方法を登録します。計算画面では各カードについて
@@ -293,6 +289,7 @@ export function PaymentAppsScreen() {
         rows={paymentApps}
         columns={columns}
         onSave={(id, patch) => updatePaymentApp(id, patch)}
+        highlightId={highlightId}
         onBeforeSave={async (id, patch) => {
           const app = paymentApps.find((p) => p.id === id);
           if (!app) return true;
@@ -332,6 +329,6 @@ export function PaymentAppsScreen() {
           ) : null
         }
       />
-    </section>
+    </div>
   );
 }

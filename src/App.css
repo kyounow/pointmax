@@ -1520,6 +1520,47 @@ details summary {
   color: var(--muted);
 }
 
+/* ウォレット統合 (PR-2b1): クレカ family グループ見出し + ?highlight 一時強調 */
+.wallet-card-group {
+  margin: 8px 0 18px;
+}
+.wallet-card-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 4px 0 6px;
+}
+.wallet-card-group-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.wallet-exclusive-note {
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+/* ?highlight= で指定された family グループ / 行を数秒だけ光らせる (簡素な一時背景色)。
+   class 付与時に 1 回だけ再生され、終了後は元の背景へ戻る。 */
+@keyframes wallet-flash {
+  0% {
+    background: rgba(87, 199, 133, 0.28);
+  }
+  100% {
+    background: transparent;
+  }
+}
+.wallet-highlight {
+  animation: wallet-flash 2.4s ease-out;
+  border-radius: 10px;
+}
+.responsive-table tr.row-flash td {
+  animation: wallet-flash 2.4s ease-out;
+}
+
 /* v7 暫定オンボーディング案内 (CalculatorScreen、保有カード 0 枚時) */
 .onboarding-box {
   border: 1px solid var(--border);

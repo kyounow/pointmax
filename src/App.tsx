@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import "./App.css";
-import { CardsScreen } from "./ui/CardsScreen";
 import { CurrenciesScreen } from "./ui/CurrenciesScreen";
 import { StoresScreen } from "./ui/StoresScreen";
 import { ProgramsScreen } from "./ui/ProgramsScreen";
@@ -14,8 +13,7 @@ const EdgesScreen = lazy(() =>
   import("./ui/EdgesScreen").then((m) => ({ default: m.EdgesScreen })),
 );
 import { CalculatorScreen } from "./ui/CalculatorScreen";
-import { PointCardsScreen } from "./ui/PointCardsScreen";
-import { PaymentAppsScreen } from "./ui/PaymentAppsScreen";
+import { WalletScreen } from "./ui/WalletScreen";
 import { SettingsScreen } from "./ui/SettingsScreen";
 import { SyncHistoryScreen } from "./ui/SyncHistoryScreen";
 import { UpdateBanner } from "./ui/UpdateBanner";
@@ -28,12 +26,11 @@ import { requestPersistentStorage } from "./state/storagePersistence";
 import { useDialog } from "./ui/dialog/useDialog";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useRoute, navigate, replaceRoute, parseHash } from "./navigation";
+import { legacyWalletRedirect } from "./ui/wallet/walletRoute";
 
 type Tab =
   | "calculator"
-  | "cards"
-  | "pointcards"
-  | "paymentapps"
+  | "wallet"
   | "currencies"
   | "stores"
   | "programs"
@@ -44,9 +41,8 @@ type Tab =
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "calculator", label: "計算" },
-  { id: "cards", label: "カード" },
-  { id: "pointcards", label: "ポイントカード" },
-  { id: "paymentapps", label: "支払方法" },
+  // PR-2b1: カード / ポイントカード / 支払方法 の 3 タブを「ウォレット」1 タブに統合。
+  { id: "wallet", label: "ウォレット" },
   { id: "currencies", label: "通貨" },
   { id: "stores", label: "店舗" },
   { id: "programs", label: "プログラム" },
@@ -62,7 +58,10 @@ function App() {
   // route.sub / route.params は今回未消費だが、後続 PR (設定サブセクション・
   // ウォレットハイライト等) が useRoute の戻り値として利用できる状態にしてある。
   const route = useRoute();
-  const tab: Tab = TABS.find((t) => t.id === route.tab)?.id ?? "calculator";
+  // PR-2b1: 廃止した旧タブ (#cards / #pointcards / #paymentapps) からの流入は
+  // "wallet" として描画する (URL は下の正規化 effect で #wallet 系へ replaceRoute)。
+  const effectiveTabId = legacyWalletRedirect(route.tab) ? "wallet" : route.tab;
+  const tab: Tab = TABS.find((t) => t.id === effectiveTabId)?.id ?? "calculator";
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Wave 5 B-1: useShallow に集約 (関数 + pendingMigration はまとめて取れる)
   const { exportJson, importJson, pendingMigration } = useStore(
@@ -99,6 +98,13 @@ function App() {
   // useRoute の snapshot と導出 tab は一致したまま (履歴エントリを増やさない)。
   useEffect(() => {
     const initial = parseHash(location.hash);
+    // PR-2b1: 旧タブ id は #wallet 系へ寄せる (replaceRoute は履歴を汚さない)。
+    // 導出 tab 側で既に wallet を描画済みなので、ここでは URL の正規化のみ行う。
+    const legacy = legacyWalletRedirect(initial.tab);
+    if (legacy) {
+      replaceRoute(legacy);
+      return;
+    }
     const known = TABS.some((t) => t.id === initial.tab);
     if (!location.hash || !known) replaceRoute("calculator");
   }, []);
@@ -340,9 +346,7 @@ function App() {
               他画面は静的 import なので fallback は交換ルート読込時のみ出る。 */}
           <Suspense fallback={<p className="empty">読み込み中…</p>}>
             {tab === "calculator" && <CalculatorScreen />}
-            {tab === "cards" && <CardsScreen />}
-            {tab === "pointcards" && <PointCardsScreen />}
-            {tab === "paymentapps" && <PaymentAppsScreen />}
+            {tab === "wallet" && <WalletScreen />}
             {tab === "currencies" && <CurrenciesScreen />}
             {tab === "stores" && <StoresScreen />}
             {tab === "programs" && <ProgramsScreen />}
