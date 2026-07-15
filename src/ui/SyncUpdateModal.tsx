@@ -105,29 +105,34 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
     autoApplySeedUpdate({ digest, count });
   }, [online, merged, count, digest, seen, safe, autoApplySeedUpdate]);
 
-  // Wave 4 B-5 a11y: modal の focus 管理 + ESC で閉じる + 初期 focus を primary に。
-  // 完全な focus trap は外部ライブラリ (focus-trap-react) が必要だが、ここでは最低限の
-  // フォーカス制御と ESC ハンドリングだけ提供 (実用上の改善が大きい)。
+  // Wave 4 B-5 a11y → PR-5b: ネイティブ <dialog> + showModal で focus trap / 背景 inert /
+  // Esc(cancel イベント) をブラウザ標準に委譲。初期 focus を primary ボタンに合わせる。
   //
   // ⚠️ hooks (useRef/useEffect) は早期 return より「前」で必ず呼ぶこと。
   // visible が true→false に変わった再レンダー (「アプリに反映」/「閉じる」押下) で
   // `if (!visible) return null` が hook より先に発火すると hook 数が減り、
   // React が "Rendered fewer hooks than expected" で全画面クラッシュする
   // (Rules of Hooks 違反)。effect 本体は visible で guard 済みなので順序入れ替えで安全。
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     if (!visible) return;
+    const dlg = dialogRef.current;
+    if (!dlg) return;
+    // jsdom 等 showModal 未実装環境は open 属性フォールバックで可視化する。
+    if (typeof dlg.showModal === "function") {
+      if (!dlg.open) dlg.showModal();
+    } else {
+      dlg.setAttribute("open", "");
+    }
     primaryButtonRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        close();
+    return () => {
+      if (typeof dlg.close === "function") {
+        if (dlg.open) dlg.close();
+      } else {
+        dlg.removeAttribute("open");
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // close 参照は state 変更で再生成されるが、effect 内で最新を見るので OK
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   if (!visible) return null;
@@ -138,69 +143,73 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
   };
 
   return (
-    <div
-      className="sync-update-modal-overlay"
-      role="dialog"
+    // <dialog> 要素自身がパネル (width の % がビューポート基準で解決される)。
+    <dialog
+      ref={dialogRef}
+      className="sync-update-modal"
       aria-modal="true"
       aria-labelledby="sync-update-title"
+      // Esc: ネイティブ既定の close を止め、既読記録つきの close() 経由で閉じる。
+      onCancel={(e) => {
+        e.preventDefault();
+        close();
+      }}
     >
-      <div className="sync-update-modal">
-        <h2 id="sync-update-title" className="sync-update-title">最新データが届いています</h2>
-        <p className="sync-update-lead">
-          公式マスタの自動同期で <strong>{count} 件</strong>{" "}
-          の追加・更新があります。「アプリに反映」で取り込めます。
-        </p>
-        {/* PR-4b: このモーダルが出るのは unsafe な週 (削除 / scope 変更 / 版更新を含む)
-            だけ。安全な週は自動反映されるので、ここに来た＝確認が必要な変更である旨を明示。 */}
-        <p className="sync-update-warn">
-          削除や大きな変更を含むため確認をお願いします。
-        </p>
+      <h2 id="sync-update-title" className="sync-update-title">最新データが届いています</h2>
+      <p className="sync-update-lead">
+        公式マスタの自動同期で <strong>{count} 件</strong>{" "}
+        の追加・更新があります。「アプリに反映」で取り込めます。
+      </p>
+      {/* PR-4b: このモーダルが出るのは unsafe な週 (削除 / scope 変更 / 版更新を含む)
+          だけ。安全な週は自動反映されるので、ここに来た＝確認が必要な変更である旨を明示。 */}
+      <p className="sync-update-warn">
+        削除や大きな変更を含むため確認をお願いします。
+      </p>
 
-        <div className="sync-update-body">
-          {groups.map((g) => (
-            <div key={g.label} className="sync-update-group">
-              <h4 className="sync-update-group-title">
-                {g.label}
-                <span className="sync-update-count">{g.items.length}</span>
-              </h4>
-              <ul className="sync-update-list">
-                {g.items.slice(0, 50).map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-                {g.items.length > 50 && (
-                  <li className="hint">他 {g.items.length - 50} 件</li>
-                )}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        {onViewHistory && (
-          <div className="sync-update-history-link-row">
-            <button
-              type="button"
-              className="sync-update-history-link"
-              onClick={() => {
-                onViewHistory();
-                close();
-              }}
-            >
-              過去の更新を見る ↗
-            </button>
+      <div className="sync-update-body">
+        {groups.map((g) => (
+          <div key={g.label} className="sync-update-group">
+            <h4 className="sync-update-group-title">
+              {g.label}
+              <span className="sync-update-count">{g.items.length}</span>
+            </h4>
+            <ul className="sync-update-list">
+              {g.items.slice(0, 50).map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+              {g.items.length > 50 && (
+                <li className="hint">他 {g.items.length - 50} 件</li>
+              )}
+            </ul>
           </div>
-        )}
+        ))}
+      </div>
 
-        <div className="sync-update-actions">
-          <button onClick={close}>閉じる</button>
+      {onViewHistory && (
+        <div className="sync-update-history-link-row">
           <button
-            ref={primaryButtonRef}
-            className="primary sync-update-primary"
-            onClick={handleApply}
+            type="button"
+            className="sync-update-history-link"
+            onClick={() => {
+              onViewHistory();
+              close();
+            }}
           >
-            アプリに反映
+            過去の更新を見る ↗
           </button>
         </div>
+      )}
+
+      <div className="sync-update-actions">
+        <button onClick={close}>閉じる</button>
+        <button
+          ref={primaryButtonRef}
+          className="primary sync-update-primary"
+          onClick={handleApply}
+        >
+          アプリに反映
+        </button>
       </div>
-    </div>
+    </dialog>
   );
 }
