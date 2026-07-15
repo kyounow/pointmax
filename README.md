@@ -31,12 +31,26 @@
   現選択は active、`usageStats.getRecentStoreIds` が `calcEvents` から抽出。履歴が無ければ
   `storeSelections` 上位で fallback）、金額欄に **プリセットチップ**（500 / 1,000 / 3,000 /
   5,000 / 10,000 円）をワンタップで反映。チップ行は 1 行横スクロールで高さを固定する。
-- **通知バナーの積層ガバナンス（PR-3a / N-1）**: 計算画面上部の通知系バナーは **常時 1 枚まで**。
-  優先度 `オンボーディング > 更新通知(SEED_VERSION) > 今日バナー` で最初に表示可能な
-  1 種だけを `BannerSlot` が描画する（オンボーディング枠には下記チェックリストを描画し、
-  他の通知系は抑制する）。ポイントカード併用／未使用カード有効化バナーは "結果付随" として
-  結果リスト直上に別勘定で置き、通知枠とは競合しない。モバイル実機で「店舗・金額・結果 1 位の
-  折り畳みヘッダ」が初期ビューポートに収まることを条件とする。
+- **通知バナーの積層ガバナンス（PR-3a / N-1、PR-4b で 2 枠追加）**: 計算画面上部の通知系
+  バナーは **常時 1 枚まで**。優先度
+  `オンボーディング > アプリ更新(SW) > 更新通知(SEED_VERSION) > 自動反映(Undo) > 今日バナー`
+  で最初に表示可能な 1 種だけを `BannerSlot` が描画する（オンボーディング枠には下記
+  チェックリストを描画し、他の通知系は抑制する）。ポイントカード併用／未使用カード有効化
+  バナーは "結果付随" として結果リスト直上に別勘定で置き、通知枠とは競合しない。モバイル
+  実機で「店舗・金額・結果 1 位の折り畳みヘッダ」が初期ビューポートに収まることを条件とする。
+- **マスタ更新の自動反映＋事後 Undo（PR-4b / UX-5）**: 週次 cron の seed 差分は、**安全な週**
+  （追加・非破壊の内容更新のみ）なら起動時に**自動反映**し、フルスクリーンの `SyncUpdateModal`
+  を出さない。反映後は `BannerSlot` の自動反映枠に「マスタを自動更新しました（N 件）［詳細］
+  ［元に戻す］✕」を出す（`[詳細]`→更新履歴、`[元に戻す]`→PR-4a のスナップショット復元、
+  `✕`→同一 digest を既読化して再表示しない）。**削除・scope 変更・SEED_VERSION の版更新**を
+  含む週だけ従来モーダルにフォールバックし、「削除や大きな変更を含むため確認をお願いします」を
+  添えてユーザー確認を挟む。安全判定は純関数 `isAutoApplySafe`（`src/domain/autoApplySafety.ts`）。
+  自動反映も従来モーダルもオフライン時は抑制する（`useOnline`）。
+- **アプリ更新通知（PR-4b / UX-8(3)）**: `vite-plugin-pwa` の `autoUpdate` 構成では Service
+  Worker が裏で新版に入れ替わる。ビルドごとに変わる識別子 `__BUILD_ID__`（vite `define` 注入）を
+  独立キー `pointmax:build-id:v1` に記録し、**前回起動時と異なれば「更新後の初回起動」**と判定して
+  「アプリを新しいバージョンに更新しました」を通知枠（最優先）に 1 回出す。`✕` で当該ビルドを
+  記録し再表示しない（`src/state/swUpdateNotice.ts`。schema-reset 非依存の独立キー）。
 - **オンボーディングチェックリスト（PR-3c / ONB-1）**: 非ブロッキングな 2 ステップ案内を
   `BannerSlot` の最優先枠に描画する。`① 保有カードを選ぶ`（enabled カードが 1 枚以上）/
   `② よく貯める通貨を選ぶ`（preferredCurrencyIds 非空）に ✓／未の視覚状態を持ち、各未完了
@@ -102,6 +116,7 @@
   persist state を独立キー `pointmax:snapshot:v1` に **1 世代だけ**自動退避する
   (`src/state/stateSnapshot.ts`)。設定「データ管理」の「直前の状態に戻す」から 1 手だけ
   巻き戻せる (`trigger` に応じて「インポート前 / 初期化前 / URL同期前 / マスタ更新前」を表示)。
+  マスタ更新前スナップ (`seed-apply`) は PR-4b の自動反映バナー「元に戻す」の巻き戻し元も兼ねる。
   復元は persist キー (`pointmax-v08-store`) へ `{ state, version }` を直書き→`location.reload()`
   で反映し、成功時にスナップショットを消費する。**スナップショット対象は persist state のみ**で、
   独立キー群 (`usage-stats` / `calc-form` / `onboarding-dismissed`) は含めない (巻き戻しで消さない)。
@@ -165,7 +180,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**747 ケース / 38 ファイル**） |
+| テスト | Vitest（**1061 ケース / 65 ファイル**） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
 
@@ -253,7 +268,7 @@ scripts/sync/
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (747 ケース)
+npm run test         # Vitest (1061 ケース)
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
 npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出

@@ -26,9 +26,17 @@ export type BannerSlotInput = {
   updateAvailable: boolean;
   /** 今日バナー (CalcTodayBanner) を出せる状態か。日付は常時有用なので通常 true。 */
   todayAvailable: boolean;
-  // 将来枠 (優先度は下の PRIORITY を参照):
-  //   swUpdateAvailable?: boolean;   // Service Worker 更新通知 (onboarding の次点)
-  //   autoApplyAvailable?: boolean;  // 自動反映バナー (update の次点)
+  /**
+   * PR-4b: Service Worker 更新通知 (CalcSwUpdateBanner) を出せる状態か。
+   * onboarding の次点・最優先の通知枠 (アプリ自体が新版になった事実は最も上位)。
+   * 省略時 false (既存呼び出し互換)。
+   */
+  swUpdateAvailable?: boolean;
+  /**
+   * PR-4b: 自動反映バナー (CalcAutoApplyBanner) を出せる状態か。
+   * 優先度は update(SEED_VERSION) の下・today の上。省略時 false (既存呼び出し互換)。
+   */
+  autoApplyAvailable?: boolean;
 };
 
 // 表示優先度 (高い順)。最初に available な 1 種だけを描画する。
@@ -48,9 +56,9 @@ export const BANNER_PRIORITY: BannerKind[] = [
 export function selectBannerSlot(input: BannerSlotInput): BannerKind | null {
   const available: Record<BannerKind, boolean> = {
     onboarding: input.onboardingActive,
-    swUpdate: false, // 将来枠 (未実装)
+    swUpdate: input.swUpdateAvailable ?? false,
     update: input.updateAvailable,
-    autoApply: false, // 将来枠 (未実装)
+    autoApply: input.autoApplyAvailable ?? false,
     today: input.todayAvailable,
   };
   for (const kind of BANNER_PRIORITY) {

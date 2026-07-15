@@ -862,4 +862,22 @@ describe("store: 破壊的操作の直前 snapshot 採取 (PR-4a 結線)", () =>
       takeSnapshotMock.mock.calls.some((c) => c[0] === "seed-apply"),
     ).toBe(true);
   });
+
+  it("autoApplySeedUpdate (自動反映) は trigger:'seed-apply' で採取し notice を立てる", () => {
+    useStore.getState().autoApplySeedUpdate({ digest: "d-1", count: 3 });
+    expect(
+      takeSnapshotMock.mock.calls.some((c) => c[0] === "seed-apply"),
+    ).toBe(true);
+    expect(useStore.getState().autoApplyNotice).toEqual({
+      digest: "d-1",
+      count: 3,
+    });
+  });
+
+  it("dismissAutoApplyNotice で notice が null に戻る", () => {
+    useStore.getState().autoApplySeedUpdate({ digest: "d-2", count: 1 });
+    expect(useStore.getState().autoApplyNotice).not.toBeNull();
+    useStore.getState().dismissAutoApplyNotice();
+    expect(useStore.getState().autoApplyNotice).toBeNull();
+  });
 });

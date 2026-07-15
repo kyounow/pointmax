@@ -6,9 +6,18 @@ import { VitePWA } from "vite-plugin-pwa";
 // VITE_BASE 環境変数で上書き可能（ローカル開発時は "/"）。
 const base = process.env.VITE_BASE ?? "/";
 
+// PR-4b (UX-8(3)): ビルドごとに変わる識別子。SW 更新後の初回起動を検知して
+// 「アプリを更新しました」バナーを 1 回出すのに使う (src/state/swUpdateNotice.ts)。
+// vite build (デプロイ) のたびに新しい値になる。CI で固定したい場合は VITE_BUILD_ID で上書き可。
+const buildId = process.env.VITE_BUILD_ID ?? new Date().toISOString();
+
 // https://vite.dev/config/
 export default defineConfig({
   base,
+  define: {
+    // グローバル定数として埋め込む (swUpdateNotice.ts が declare で参照)。
+    __BUILD_ID__: JSON.stringify(buildId),
+  },
   plugins: [
     react(),
     VitePWA({

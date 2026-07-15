@@ -60,6 +60,13 @@ export type MergeResult = SeedShape & {
    * removedMembershipCount (program tombstone の cascade 分) とは別集計。
    */
   removedMembershipIdCount: number;
+  /**
+   * updatedPrograms のうち scope (all-stores ⇄ member-stores) が変わった program の id
+   * (PR-4b)。scope 変更は「適用範囲そのものの再定義」= 大きな変更なので、自動反映の
+   * 安全判定 (isAutoApplySafe) で unsafe 扱い (従来モーダルで確認) にするために別集計する。
+   * rate 改定・期間延長など scope を変えない更新は空配列のまま (= 自動反映の対象)。
+   */
+  scopeChangedUpdateIds: string[];
 };
 
 type Identifiable = { id: string };
@@ -141,10 +148,17 @@ function withProgramPreferencesPreserved(
 function propagateProgramUpdates(
   merged: BenefitProgram[],
   seedPrograms: BenefitProgram[],
-): { programs: BenefitProgram[]; updated: BenefitProgram[] } {
-  if (seedPrograms.length === 0) return { programs: merged, updated: [] };
+): {
+  programs: BenefitProgram[];
+  updated: BenefitProgram[];
+  scopeChangedIds: string[];
+} {
+  if (seedPrograms.length === 0)
+    return { programs: merged, updated: [], scopeChangedIds: [] };
   const seedById = new Map(seedPrograms.map((p) => [p.id, p]));
   const updated: BenefitProgram[] = [];
+  // PR-4b: 更新のうち scope が変わったものの id を集める (自動反映の安全判定用)。
+  const scopeChangedIds: string[] = [];
   const next = merged.map((p) => {
     if (p.userModifiedAt !== undefined) return p;
     const official = seedById.get(p.id);
@@ -152,11 +166,13 @@ function propagateProgramUpdates(
     if (stableStringifyProgramContent(p) === stableStringifyProgramContent(official))
       return p;
     // 公式差分あり: 通知リストには公式値を積み、実体は local の enabled を carry-over。
+    if (p.scope !== official.scope) scopeChangedIds.push(official.id);
     updated.push(official);
     return withProgramPreferencesPreserved(p, official);
   });
-  if (updated.length === 0) return { programs: merged, updated };
-  return { programs: next, updated };
+  if (updated.length === 0)
+    return { programs: merged, updated, scopeChangedIds };
+  return { programs: next, updated, scopeChangedIds };
 }
 
 // tombstone (removedProgramIds) の適用。公式由来かつ未編集の program を除去し、
@@ -241,8 +257,11 @@ export function mergeSeed(
     seed.memberships ?? [],
   );
 
-  const { programs: updatedPropagated, updated: updatedPrograms } =
-    propagateProgramUpdates(programsMerge.merged, seed.programs ?? []);
+  const {
+    programs: updatedPropagated,
+    updated: updatedPrograms,
+    scopeChangedIds: scopeChangedUpdateIds,
+  } = propagateProgramUpdates(programsMerge.merged, seed.programs ?? []);
 
   const removal = applyProgramRemovals(
     updatedPropagated,
@@ -278,6 +297,7 @@ export function mergeSeed(
     removedPrograms: removal.removed,
     removedMembershipCount: removal.removedMembershipCount,
     removedMembershipIdCount: membershipIdRemoval.removedCount,
+    scopeChangedUpdateIds,
   };
 }
 

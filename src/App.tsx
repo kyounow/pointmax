@@ -20,6 +20,7 @@ import { SyncUpdateModal } from "./ui/SyncUpdateModal";
 import { useStore } from "./state/store";
 import { recordTabView } from "./state/usageStats";
 import { requestPersistentStorage } from "./state/storagePersistence";
+import { initBuildIdBaseline } from "./state/swUpdateNotice";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
 import { useRoute, navigate, replaceRoute, parseHash } from "./navigation";
 import { legacyWalletRedirect } from "./ui/wallet/walletRoute";
@@ -64,6 +65,13 @@ function App() {
   // 本体アプリに一切影響させない — 内部で try/catch 済み)。
   useEffect(() => {
     void requestPersistentStorage();
+  }, []);
+
+  // PR-4b (UX-8(3)): 初回インストール時にビルド識別子のベースラインを記録する。
+  // 既に記録があれば no-op。次回以降、SW が新版を適用して __BUILD_ID__ が変われば
+  // BannerSlot の swUpdate 枠に「アプリを更新しました」を 1 回出す (swUpdateNotice.ts)。
+  useEffect(() => {
+    initBuildIdBaseline();
   }, []);
 
   const pendingMigration = useStore((s) => s._pendingSchemaMigration);
