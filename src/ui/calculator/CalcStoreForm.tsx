@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import type { Currency, Store } from "../../domain/types";
 import { groupBy } from "../../domain/groupBy";
 import { recordStoreSelection } from "../../state/usageStats";
+import { YEN_TARGET_ID } from "../../domain/yenValue";
 
 // PR-3a (UX-1): 店頭クイック入力の金額プリセット。ワンタップで amount に流し込む。
 const AMOUNT_PRESETS = [500, 1000, 3000, 5000, 10000] as const;
@@ -232,6 +233,8 @@ export function CalcStoreForm({
             onChange={(e) => setActiveCurrencyId(e.target.value)}
           >
             <option value="">選択</option>
+            {/* PR-5a: 優先通貨タブが無い経路でも円換算 (目安) を選べるようにする。 */}
+            <option value={YEN_TARGET_ID}>円換算 (目安)</option>
             {currenciesByKind.map((g) => (
               <optgroup key={g.key} label={g.key}>
                 {g.items.map((c) => (

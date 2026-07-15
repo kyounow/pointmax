@@ -2,9 +2,55 @@ import { useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { KIND_OPTIONS, styleOf } from "../domain/currencyKind";
+import { formatNum } from "../domain/formatNum";
+import { effectiveYenValue } from "../domain/yenValue";
 import type { Currency, CurrencyKind } from "../domain/types";
 import { CurrencyIcon } from "./CurrencyIcon";
 import { ResponsiveTable, type ColumnDef } from "./ResponsiveTable";
+
+// PR-5a: 円換算目安の上書き編集セル。ローカル入力 state を持ち、確定値を store へ即時反映する
+// (空欄 = 上書き解除で seed 目安値に戻す)。ResponsiveTable の 保存/キャンセル とは独立した
+// user-owned な設定なので、編集モード中でも即反映する (行の他フィールドとは別ライフサイクル)。
+function YenOverrideEditor({
+  seedYen,
+  override,
+  onSet,
+}: {
+  seedYen?: number;
+  override?: number;
+  onSet: (value?: number) => void;
+}) {
+  const [text, setText] = useState(override != null ? String(override) : "");
+  const commit = (raw: string) => {
+    setText(raw);
+    const t = raw.trim();
+    if (t === "") {
+      onSet(undefined); // 空欄 = 上書き解除 (seed 目安値に戻す)
+      return;
+    }
+    const n = Number(t);
+    if (Number.isFinite(n) && n > 0) onSet(n);
+    // 入力途中 (非数値等) は commit しない (テキストは保持)
+  };
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+      ≈{" "}
+      <input
+        type="text"
+        inputMode="decimal"
+        aria-label="円換算の目安値 (自分の値)"
+        value={text}
+        placeholder={seedYen != null ? String(seedYen) : "未設定"}
+        onChange={(e) => commit(e.target.value)}
+        style={{ width: 72 }}
+      />{" "}
+      円
+      <small className="hint" style={{ marginLeft: 4 }}>
+        空欄で目安値に戻す
+      </small>
+    </span>
+  );
+}
 
 export function CurrenciesScreen() {
   // Wave 5 B-1: 8 個別 subscribe → 単一 useShallow に集約
@@ -17,6 +63,8 @@ export function CurrenciesScreen() {
     addPreferredCurrency,
     removePreferredCurrency,
     movePreferredCurrency,
+    yenValueOverrides,
+    setYenValueOverride,
   } = useStore(
     useShallow((s) => ({
       currencies: s.currencies,
@@ -27,6 +75,8 @@ export function CurrenciesScreen() {
       addPreferredCurrency: s.addPreferredCurrency,
       removePreferredCurrency: s.removePreferredCurrency,
       movePreferredCurrency: s.movePreferredCurrency,
+      yenValueOverrides: s.yenValueOverrides,
+      setYenValueOverride: s.setYenValueOverride,
     })),
   );
   const [name, setName] = useState("");
@@ -95,6 +145,39 @@ export function CurrenciesScreen() {
       ),
     },
     {
+      // PR-5a: 円換算目安 (1 単位 ≒ 円)。seed 値 + ユーザー上書き。編集で override を設定/クリア。
+      key: "yenValue",
+      label: "1pt≒円 (目安)",
+      view: (c) => {
+        const ov = yenValueOverrides[c.id];
+        const eff = effectiveYenValue(c.id, currencyById, yenValueOverrides);
+        if (eff === undefined) {
+          return (
+            <span className="hint" title="円換算の目安値が未設定です">
+              —
+            </span>
+          );
+        }
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            ≈ {formatNum(eff)} 円
+            {ov != null && (
+              <small className="hint" title="あなたが設定した円換算値です">
+                (自分の値)
+              </small>
+            )}
+          </span>
+        );
+      },
+      edit: (c) => (
+        <YenOverrideEditor
+          seedYen={c.yenValue}
+          override={yenValueOverrides[c.id]}
+          onSet={(v) => setYenValueOverride(c.id, v)}
+        />
+      ),
+    },
+    {
       key: "iconChar",
       label: "アイコン文字",
       view: (c) => c.iconChar ?? c.name.charAt(0),
@@ -140,6 +223,11 @@ export function CurrenciesScreen() {
       <h2>通貨／ポイント種別</h2>
       <p className="hint">
         貯まるポイントの種類とマイルを登録します。「種別」は色分け用、「アイコン文字／色」はノード表示用です。
+      </p>
+      <p className="hint" style={{ marginTop: 0 }}>
+        「1pt≒円 (目安)」は計算の<strong>円換算タブ</strong>で使う 1 単位あたりの目安価値です。
+        マイル等の価値は使い方で変わります。編集で<strong>自分の換算値</strong>を設定すると
+        円換算タブに反映されます (空欄で目安値に戻ります)。
       </p>
 
       {/* ─── v4.0.0 ②: 優先通貨リスト ───

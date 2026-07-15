@@ -28,7 +28,9 @@ import { CalcCurrencyTabs } from "./calculator/CalcCurrencyTabs";
 import { CalcLoyaltyBanner } from "./calculator/CalcLoyaltyBanner";
 import { CalcUpgradeBanner } from "./calculator/CalcUpgradeBanner";
 import { CalcResultCard } from "./calculator/CalcResultCard";
+import { CalcYenResults } from "./calculator/CalcYenResults";
 import { OnboardingChecklist } from "./calculator/OnboardingChecklist";
+import { isYenTarget, makeYenValueResolver } from "../domain/yenValue";
 import {
   isOnboardingDismissed,
   dismissOnboarding,
@@ -48,6 +50,7 @@ export function CalculatorScreen() {
     memberships,
     preferredCurrencyIds,
     birthMonth,
+    yenValueOverrides,
   } = useStore(
     useShallow((s) => ({
       cards: s.cards,
@@ -60,6 +63,7 @@ export function CalculatorScreen() {
       memberships: s.memberships,
       preferredCurrencyIds: s.preferredCurrencyIds,
       birthMonth: s.birthMonth,
+      yenValueOverrides: s.yenValueOverrides,
     })),
   );
 
@@ -112,6 +116,14 @@ export function CalculatorScreen() {
 
   const currencyById = useMemo(() => byId(currencies), [currencies]);
   const programById = useMemo(() => byId(programs), [programs]);
+
+  // PR-5a: 円換算 (目安) モード。activeCurrencyId が仮想ターゲットのとき、rankCards は
+  // 全カードを path 到達不能で返すので、獲得通貨を yenValue で評価し直して比較表示する。
+  const yenMode = isYenTarget(activeCurrencyId);
+  const yenValueOf = useMemo(
+    () => makeYenValueResolver(currencyById, yenValueOverrides),
+    [currencyById, yenValueOverrides],
+  );
   const currencyName = useCallback(
     (id: string) => currencyById.get(id)?.name ?? id,
     [currencyById],
@@ -174,10 +186,11 @@ export function CalculatorScreen() {
   // 同一 (store, 通貨) ペアの連続記録 (金額変更等の再計算) は usageStats 側の
   // last-pair ガードで抑止されるため、ここでは result 参照の変化を起点にするだけでよい。
   useEffect(() => {
-    if (result && storeId && activeCurrencyId) {
+    // PR-5a: 円換算モードの仮想ターゲット (__yen__) は実通貨ではないので統計に記録しない。
+    if (result && storeId && activeCurrencyId && !yenMode) {
       recordCalcEvent(storeId, activeCurrencyId);
     }
-  }, [result, storeId, activeCurrencyId]);
+  }, [result, storeId, activeCurrencyId, yenMode]);
 
   // PR-3d (UX-6): 同日内復元用に、金額 / 優先通貨タブ / 店舗の変更を独立キーへ書き出す。
   // effect でまとめ書きするので、入力中の連続変更も commit ごとに 1 回に集約される
@@ -400,7 +413,9 @@ export function CalculatorScreen() {
         </p>
       )}
 
-      {hasHeldCards && result && (
+      {/* 通常モード (目標通貨への交換 path 込み) のバナー・結果。円換算モードは path を
+          使わないので loyalty / upgrade / 比較リストは出さず、専用の円換算リストに切替える。 */}
+      {hasHeldCards && result && !yenMode && (
         <CalcLoyaltyBanner
           loyalties={loyalties}
           activeCurrencyId={activeCurrencyId}
@@ -410,7 +425,7 @@ export function CalculatorScreen() {
         />
       )}
 
-      {hasHeldCards && result && upgrade && (
+      {hasHeldCards && result && !yenMode && upgrade && (
         <CalcUpgradeBanner
           upgrade={upgrade}
           activeCurrencyId={activeCurrencyId}
@@ -419,7 +434,7 @@ export function CalculatorScreen() {
         />
       )}
 
-      {hasHeldCards && result && result.length > 0 && (
+      {hasHeldCards && result && !yenMode && result.length > 0 && (
         <div className="results-toolbar">
           <span className="hint" style={{ margin: 0 }}>
             {result.length}件中 {expandedIds.size}件展開
@@ -430,7 +445,7 @@ export function CalculatorScreen() {
         </div>
       )}
 
-      {hasHeldCards && result && (
+      {hasHeldCards && result && !yenMode && (
         <div className="results">
           {result.length === 0 && (
             <p className="empty">保有カードが登録されていません。</p>
@@ -461,6 +476,15 @@ export function CalculatorScreen() {
             />
           )}
         </div>
+      )}
+
+      {/* PR-5a: 円換算 (目安) モードの結果リスト。 */}
+      {hasHeldCards && result && yenMode && (
+        <CalcYenResults
+          rankings={result}
+          currencyName={currencyName}
+          yenValueOf={yenValueOf}
+        />
       )}
     </section>
   );

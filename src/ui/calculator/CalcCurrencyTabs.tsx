@@ -2,6 +2,7 @@
 // 優先通貨が設定されているときだけ表示。動作不変リファクタ。
 
 import type { Currency } from "../../domain/types";
+import { YEN_TARGET_ID } from "../../domain/yenValue";
 
 type Props = {
   preferredCurrencyIds: string[];
@@ -42,6 +43,22 @@ export function CalcCurrencyTabs({
           </button>
         );
       })}
+      {/* PR-5a: 末尾に「円換算 (目安)」タブ。目標通貨への path が無いカードも、獲得通貨を
+          円目安で横並び比較できる fallback ビュー (交換 path は使わない)。 */}
+      {(() => {
+        const active = activeCurrencyId === YEN_TARGET_ID;
+        return (
+          <button
+            type="button"
+            aria-current={active ? "true" : undefined}
+            className={active ? "active" : ""}
+            onClick={() => onSelect(YEN_TARGET_ID)}
+            title="円換算 (目安) で表示"
+          >
+            ¥ 円換算
+          </button>
+        );
+      })()}
     </div>
   );
 }
