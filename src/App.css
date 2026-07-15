@@ -1022,24 +1022,16 @@ details summary {
   button {
     min-height: 36px;
   }
-  /* Dialog full-width margin */
+  /* Dialog full-width margin (縦は margin:auto でセンタリング維持) */
   .dialog {
     width: calc(100% - 24px);
-    margin: 0 12px;
+    margin: auto 12px;
   }
 }
 
-/* ==== Custom Dialog ==== */
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: dialog-fade-in 0.12s ease-out;
-}
+/* ==== Custom Dialog (ネイティブ <dialog> + showModal) ==== */
+/* <dialog> 要素自身がパネル。暗幕は ::backdrop に、センタリングは showModal の
+   既定 (margin:auto + inset:0) に委ねる。z-index は top layer が自動で最前面化。 */
 @keyframes dialog-fade-in {
   from {
     opacity: 0;
@@ -1050,6 +1042,7 @@ details summary {
 }
 .dialog {
   background: var(--panel);
+  color: var(--text);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 18px 20px 16px;
@@ -1058,6 +1051,10 @@ details summary {
   width: calc(100% - 32px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   animation: dialog-slide-up 0.16s ease-out;
+}
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+  animation: dialog-fade-in 0.12s ease-out;
 }
 @keyframes dialog-slide-up {
   from {
@@ -2454,19 +2451,12 @@ details summary {
     display: none;
   }
 }
-/* ==== SchemaUpgradeModal ==== */
-.schema-upgrade-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  animation: dialog-fade-in 0.15s ease-out;
-}
+/* ==== SchemaUpgradeModal (ネイティブ <dialog> + showModal) ==== */
+/* <dialog> 要素自身がパネル。暗幕は ::backdrop に移植。閉じられない仕様 (Esc/背景
+   クリック無効) のため light-dismiss ハンドラは持たない。 */
 .schema-upgrade-modal {
   background: var(--panel);
+  color: var(--text);
   border: 1px solid var(--border);
   border-top: 4px solid var(--accent);
   border-radius: 12px;
@@ -2476,6 +2466,10 @@ details summary {
   width: calc(100% - 32px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
   animation: dialog-slide-up 0.18s ease-out;
+}
+.schema-upgrade-modal::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+  animation: dialog-fade-in 0.15s ease-out;
 }
 .schema-upgrade-title {
   margin: 0 0 14px 0;
@@ -2539,19 +2533,11 @@ details summary {
   }
 }
 
-/* ── 週次 cron 同期通知モーダル ── */
-.sync-update-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  animation: dialog-fade-in 0.15s ease-out;
-}
+/* ── 週次 cron 同期通知モーダル (ネイティブ <dialog> + showModal) ── */
+/* <dialog> 要素自身がパネル。暗幕は ::backdrop に移植。 */
 .sync-update-modal {
   background: var(--panel);
+  color: var(--text);
   border: 1px solid var(--border);
   border-top: 4px solid var(--accent);
   border-radius: 12px;
@@ -2564,6 +2550,10 @@ details summary {
   flex-direction: column;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
   animation: dialog-slide-up 0.18s ease-out;
+}
+.sync-update-modal::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+  animation: dialog-fade-in 0.15s ease-out;
 }
 .sync-update-title {
   margin: 0 0 10px 0;
