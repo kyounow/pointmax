@@ -28,7 +28,10 @@ import {
   resetCardToSeedValues,
   resetPaymentAppToSeedValues,
 } from "./userModified";
-import { mergeSeed as mergeSeedFn } from "../domain/mergeSeed";
+import {
+  mergeSeed as mergeSeedFn,
+  type SeedShape,
+} from "../domain/mergeSeed";
 import { membershipId } from "./defineMemberships";
 import { CARD_FAMILIES } from "./seed-data-card-families";
 import { REMOVED_PROGRAM_IDS } from "./seed-additions";
@@ -46,6 +49,7 @@ import {
   type SchemaMigrationStrategy,
 } from "./persist-versions";
 import { takeSnapshot } from "./stateSnapshot";
+import { writeSyncSeen, type AutoApplyNotice } from "./syncNotice";
 
 // v0.8 リリース時に persist 階層を世代交代した。旧 v0.x キーは一度きりクリーンアップ。
 // （次回 v1.0 以降は migrate / mergeFromSeed で吸収する）
@@ -82,6 +86,60 @@ function readPersistedAppState(): unknown {
   } catch {
     return null;
   }
+}
+
+// PR-4b: seed 反映 (手動「アプリに反映」= applySeedUpdate と 自動反映 = autoApplySeedUpdate)
+// で共有する純粋な計算。add-only マージ + 公式更新伝播 + tombstone 削除 + マイグレーション
+// (自動適用可能 + overrideKeys) を適用した最終 collection 一式を返す。
+// 呼び出し側は結果を immer draft に代入するだけ (副作用・snapshot は呼び出し側の責務)。
+function computeSeedUpdate(
+  current: SeedShape,
+  lastSeedVersion: number,
+  overrideKeys: string[],
+): {
+  cards: Card[];
+  currencies: Currency[];
+  stores: Store[];
+  edges: ConversionEdge[];
+  pointCards: PointCard[];
+  paymentApps: PaymentApp[];
+  programs: BenefitProgram[];
+  memberships: StoreProgramMembership[];
+} {
+  // 1. seed マージ: 追加 (add-only) + 公式由来・未編集 program の内容更新伝播 +
+  //    tombstone (REMOVED_PROGRAM_IDS) 削除 (Phase 5)
+  const merged = mergeSeedFn(current, seed(), {
+    removedProgramIds: REMOVED_PROGRAM_IDS,
+  });
+  // 2. マイグレーション計画 (追加後の state で再計算)
+  const plan = planMigrations(merged, lastSeedVersion, SEED_VERSION, MIGRATIONS);
+  // 3. 自動適用キー + ユーザー上書き選択
+  const keysToApply = new Set<string>([
+    ...autoApplicableKeys(plan),
+    ...overrideKeys,
+  ]);
+  const finalState = applyMigrationsByKey(
+    {
+      cards: merged.cards,
+      currencies: merged.currencies,
+      stores: merged.stores,
+      edges: merged.edges,
+      pointCards: merged.pointCards,
+      paymentApps: merged.paymentApps,
+    },
+    plan,
+    keysToApply,
+  );
+  return {
+    cards: finalState.cards,
+    currencies: finalState.currencies,
+    stores: finalState.stores,
+    edges: finalState.edges,
+    pointCards: finalState.pointCards,
+    paymentApps: finalState.paymentApps,
+    programs: merged.programs ?? [],
+    memberships: merged.memberships ?? [],
+  };
 }
 
 // exclusive family の id 集合 (CardFamily.exclusive=true のみ)。
@@ -140,6 +198,9 @@ type State = {
   // 「今月 === birthMonth」の時のみ発火する判定に使う (rankCards に userBirthMonth として渡す)。
   // undefined = 未設定 (誕生月限定 program は常に不発)。persist 対象 (partialize 無し = 全 state 永続)。
   birthMonth?: number;
+  // PR-4b: 直近に「自動反映」したバッチの Undo バナー情報 (null = バナー無し)。
+  // 永続 state に持ち (reload 越しでバナーを再表示)、✕ dismiss / restore で null に戻す。
+  autoApplyNotice: AutoApplyNotice | null;
   // schema migration 中フラグ。旧 version 検出時に migrate callback がセットし、
   // SchemaUpgradeModal で Apply 後にクリアされる。
   _pendingSchemaMigration?: SchemaMigrationStrategy;
@@ -242,6 +303,10 @@ type Actions = {
   mergeFromSeed: () => void;
   // 追加 + 自動適用可能なマイグレーション + ユーザー選択した衝突上書きをまとめて適用
   applySeedUpdate: (overrideKeys: string[]) => void;
+  // PR-4b: 安全な週の seed 更新を自動反映し、Undo バナー用の通知 (notice) を立てる。
+  autoApplySeedUpdate: (notice: AutoApplyNotice) => void;
+  // PR-4b: 自動反映バナーを閉じる (同一 digest を既読にして再表示を抑止)。
+  dismissAutoApplyNotice: () => void;
   dismissSeedUpdate: () => void;
   exportJson: () => string;
   importJson: (json: string) => { ok: true } | { ok: false; error: string };
@@ -268,6 +333,8 @@ const empty: State = {
   syncUrl: DEFAULT_SYNC_URL,
   lastSyncAt: null,
   preferredCurrencyIds: [],
+  // PR-4b: 自動反映バナーは既定で無し
+  autoApplyNotice: null,
   // birthMonth は undefined で初期化 (誕生月未設定)
   // _pendingSchemaMigration / _legacyPersistedState は undefined で初期化
 };
@@ -596,57 +663,50 @@ export const useStore = create<State & Actions>()(
         // PR-4b の自動反映+Undo の前提。保存失敗しても反映は続行する。
         takeSnapshot("seed-apply", readPersistedAppState());
         set((state) => {
-          const currentShape = {
-            cards: state.cards,
-            currencies: state.currencies,
-            stores: state.stores,
-            edges: state.edges,
-            pointCards: state.pointCards,
-            paymentApps: state.paymentApps,
-            programs: state.programs,
-            memberships: state.memberships,
-          };
-          // 1. seed マージ: 追加 (add-only) + 公式由来・未編集 program の
-          //    内容更新伝播 + tombstone (REMOVED_PROGRAM_IDS) 削除 (Phase 5)
-          const merged = mergeSeedFn(currentShape, seed(), {
-            removedProgramIds: REMOVED_PROGRAM_IDS,
-          });
-
-          // 2. マイグレーション計画 (現在の state + 追加後で再計算)
-          const plan = planMigrations(
-            merged,
+          const next = computeSeedUpdate(
+            state,
             state.lastSeedVersion,
-            SEED_VERSION,
-            MIGRATIONS,
+            overrideKeys,
           );
-
-          // 3. 自動適用キー + ユーザー上書き選択
-          const keysToApply = new Set<string>([
-            ...autoApplicableKeys(plan),
-            ...overrideKeys,
-          ]);
-          const finalState = applyMigrationsByKey(
-            {
-              cards: merged.cards,
-              currencies: merged.currencies,
-              stores: merged.stores,
-              edges: merged.edges,
-              pointCards: merged.pointCards,
-              paymentApps: merged.paymentApps,
-            },
-            plan,
-            keysToApply,
-          );
-
-          state.cards = finalState.cards;
-          state.currencies = finalState.currencies;
-          state.stores = finalState.stores;
-          state.edges = finalState.edges;
-          state.pointCards = finalState.pointCards;
-          state.paymentApps = finalState.paymentApps;
-          state.programs = merged.programs ?? [];
-          state.memberships = merged.memberships ?? [];
+          state.cards = next.cards;
+          state.currencies = next.currencies;
+          state.stores = next.stores;
+          state.edges = next.edges;
+          state.pointCards = next.pointCards;
+          state.paymentApps = next.paymentApps;
+          state.programs = next.programs;
+          state.memberships = next.memberships;
           state.lastSeedVersion = SEED_VERSION;
+        });
+      },
+      // PR-4b: 安全な週の seed 更新を「起動時に自動反映」する。中身は applySeedUpdate([]) と
+      // 同一 (snapshot:"seed-apply" + マージ) だが、加えて Undo バナー用の通知 (autoApplyNotice)
+      // を立てる。安全判定 (isAutoApplySafe) はオーケストレータ側 (SyncUpdateModal) が行い、
+      // 安全なときだけ本 action を呼ぶ。notice.digest は「元に戻す後の再自動反映ループ防止」に使う。
+      autoApplySeedUpdate: (notice) => {
+        takeSnapshot("seed-apply", readPersistedAppState());
+        set((state) => {
+          const next = computeSeedUpdate(state, state.lastSeedVersion, []);
+          state.cards = next.cards;
+          state.currencies = next.currencies;
+          state.stores = next.stores;
+          state.edges = next.edges;
+          state.pointCards = next.pointCards;
+          state.paymentApps = next.paymentApps;
+          state.programs = next.programs;
+          state.memberships = next.memberships;
+          state.lastSeedVersion = SEED_VERSION;
+          // Undo バナー表示情報 (永続 state。reload 越しでバナー再表示)。
+          state.autoApplyNotice = notice;
+        });
+      },
+      // PR-4b: 自動反映バナーの ✕ 押下。同一 digest を既読にして再表示を抑止する
+      // (restore 後に同じ差分が再度自動反映されるループも、この既読記録で断つ)。
+      dismissAutoApplyNotice: () => {
+        const notice = get().autoApplyNotice;
+        if (notice) writeSyncSeen(notice.digest);
+        set((state) => {
+          state.autoApplyNotice = null;
         });
       },
       dismissSeedUpdate: () =>

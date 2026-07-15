@@ -1131,6 +1131,23 @@ details summary {
   border: 1px solid var(--border);
   border-radius: 10px;
 }
+/* PR-4b: 自動反映バナー (追加・更新を反映済み + 元に戻す)。update-banner の緑寄り変種。 */
+.auto-apply-banner {
+  background: linear-gradient(180deg, #16301f, #12261a);
+  border-color: #2a5b3a;
+  border-left-color: #37c46a;
+}
+/* PR-4b: SW 更新バナー。控えめな 1 行 (アプリ自体が新版になった事実の通知)。 */
+.sw-update-banner {
+  background: linear-gradient(180deg, #1c2536, #171f2d);
+  border-color: #33415e;
+  border-left-color: #6f8fd8;
+}
+.update-banner-actions button.dismiss[aria-label] {
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 8px;
+}
 .update-detail-section {
   margin-bottom: 12px;
 }
@@ -2545,6 +2562,17 @@ details summary {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.6;
+}
+/* PR-4b: unsafe な週のみ出る確認モーダルの注意書き (削除/大きな変更を含む旨)。 */
+.sync-update-warn {
+  margin: -6px 0 14px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(224, 168, 0, 0.12);
+  border: 1px solid rgba(224, 168, 0, 0.35);
+  color: var(--warn, #e0a800);
+  font-size: 12px;
+  line-height: 1.5;
 }
 .sync-update-body {
   overflow-y: auto;

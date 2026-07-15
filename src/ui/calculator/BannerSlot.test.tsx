@@ -61,6 +61,52 @@ describe("selectBannerSlot (通知枠の優先度規則)", () => {
     expect(kind).toBe("onboarding");
     expect(kind).not.toBe("today");
   });
+
+  // ─── PR-4b: 新枠 swUpdate / autoApply の優先度 ───
+  it("swUpdate は onboarding の次点で update/autoApply/today より優先", () => {
+    expect(
+      selectBannerSlot({
+        onboardingActive: false,
+        swUpdateAvailable: true,
+        updateAvailable: true,
+        autoApplyAvailable: true,
+        todayAvailable: true,
+      }),
+    ).toBe("swUpdate");
+  });
+
+  it("autoApply は update の下・today の上 (update 無しなら autoApply)", () => {
+    expect(
+      selectBannerSlot({
+        onboardingActive: false,
+        swUpdateAvailable: false,
+        updateAvailable: false,
+        autoApplyAvailable: true,
+        todayAvailable: true,
+      }),
+    ).toBe("autoApply");
+  });
+
+  it("update と autoApply が同時なら update が勝つ", () => {
+    expect(
+      selectBannerSlot({
+        onboardingActive: false,
+        updateAvailable: true,
+        autoApplyAvailable: true,
+        todayAvailable: true,
+      }),
+    ).toBe("update");
+  });
+
+  it("新枠を省略しても既存挙動は不変 (後方互換)", () => {
+    expect(
+      selectBannerSlot({
+        onboardingActive: false,
+        updateAvailable: false,
+        todayAvailable: true,
+      }),
+    ).toBe("today");
+  });
 });
 
 describe("BannerSlot (描画)", () => {
@@ -94,5 +140,28 @@ describe("BannerSlot (描画)", () => {
     );
     expect(container.querySelector(".today-banner")).not.toBeNull();
     expect(screen.getByText(/今日/)).toBeInTheDocument();
+  });
+
+  it("autoApplyNotice が立つと autoApply バナーを描画する (今日より優先)", () => {
+    // clearAll 済 (データ空) → update 無し。notice を立てて autoApply 枠を出す。
+    useStore.setState({ autoApplyNotice: { digest: "d-1", count: 2 } });
+    const { container } = render(
+      <BannerSlot onboardingActive={false} {...baseProps} />,
+    );
+    expect(container.querySelector(".auto-apply-banner")).not.toBeNull();
+    expect(screen.getByText(/マスタを自動更新しました/)).toBeInTheDocument();
+    expect(container.querySelector(".today-banner")).toBeNull();
+  });
+
+  it("SW 更新後の初回起動は swUpdate バナーを描画する (最優先の通知枠)", () => {
+    // ビルド識別子が前回と違う状態を作る → isSwUpdated=true。
+    localStorage.setItem("pointmax:build-id:v1", "OLD-BUILD-ID");
+    const { container } = render(
+      <BannerSlot onboardingActive={false} {...baseProps} />,
+    );
+    expect(container.querySelector(".sw-update-banner")).not.toBeNull();
+    expect(
+      screen.getByText(/アプリを新しいバージョンに更新しました/),
+    ).toBeInTheDocument();
   });
 });
