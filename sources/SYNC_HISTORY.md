@@ -3,6 +3,43 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-07-16 (auto 4 件 / review 469 件)
+
+- 平均 confidence: 0.91 / source 数: 14
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| たまるマーケット (EPOS ポイントアップサイト、公式) | 提携店舗 | 3 |
+| PayPay キャンペーン一覧 (公式) | プログラム | 1 |
+
+### Review queue 内訳 (469 件)
+| 理由 | 件数 |
+|---|---:|
+| storeAdditionsDisabled | 193 |
+| missingStoreBody | 142 |
+| lowConfidence | 38 |
+| idCollision | 37 |
+| excludedCategory | 28 |
+| missingProgramBody | 13 |
+| userBlocked | 8 |
+| unsupportedRateClaim | 5 |
+| pseudoStoreTarget | 4 |
+| selfReportedExclusion | 1 |
+
+<details><summary>追加項目 4 件</summary>
+
+### たまるマーケット (EPOS ポイントアップサイト、公式) / 提携店舗 (3)
+- たまるマーケット (2倍) → マルイ（モディ・マルイウェブチャネル含む）
+- たまるマーケット (3倍) → コジマ
+- たまるマーケット (4倍) → ビックカメラ
+
+### PayPay キャンペーン一覧 (公式) / プログラム (1)
+- PayPay 韓国実店舗 20%還元キャンペーン 20.00% PayPayポイント [2026-07-01〜2026-08-31]
+
+</details>
+
+---
+
 ## 2026-07-15 (auto 0 件 / review 66 件)
 
 - source 数: 15

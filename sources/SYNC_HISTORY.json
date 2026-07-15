@@ -2,6 +2,74 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-07-16",
+      "generatedAt": "2026-07-15T22:02:42.383Z",
+      "totalCount": 4,
+      "avgConfidence": 0.914,
+      "sourcesProcessed": 14,
+      "bySource": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "count": 3,
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "paypay-campaigns",
+          "collection": "programs",
+          "count": 1,
+          "sourceLabel": "PayPay キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (2倍) → マルイ（モディ・マルイウェブチャネル含む）",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (3倍) → コジマ",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (4倍) → ビックカメラ",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "paypay-campaigns",
+          "collection": "programs",
+          "summary": "PayPay 韓国実店舗 20%還元キャンペーン 20.00% PayPayポイント [2026-07-01〜2026-08-31]",
+          "sourceLabel": "PayPay キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "reviewStats": {
+        "total": 469,
+        "byReason": {
+          "unsupportedRateClaim": 5,
+          "idCollision": 37,
+          "missingProgramBody": 13,
+          "missingStoreBody": 142,
+          "pseudoStoreTarget": 4,
+          "lowConfidence": 38,
+          "userBlocked": 8,
+          "storeAdditionsDisabled": 193,
+          "selfReportedExclusion": 1,
+          "excludedCategory": 28
+        }
+      }
+    },
+    {
       "date": "2026-07-15",
       "generatedAt": "2026-07-15T02:48:56.792Z",
       "totalCount": 0,
