@@ -198,6 +198,12 @@ type State = {
   // 「今月 === birthMonth」の時のみ発火する判定に使う (rankCards に userBirthMonth として渡す)。
   // undefined = 未設定 (誕生月限定 program は常に不発)。persist 対象 (partialize 無し = 全 state 永続)。
   birthMonth?: number;
+  // PR-5a (DB-2): 通貨の円換算目安 (Currency.yenValue) に対するユーザー上書き。
+  //   currencyId → 1 単位 ≒ 円。円換算タブの評価で「override ?? seed yenValue」として使う。
+  //   Currency 行本体を編集しないのは、syncFromUrl / importJson が currencies を全置換して
+  //   seed 値ごと消してしまうため。override は user-owned な永続キーとして分離し sync に耐える。
+  //   persist 対象 (partialize 無し = 全 state 永続)。既定は空 {}。
+  yenValueOverrides: Record<string, number>;
   // PR-4b: 直近に「自動反映」したバッチの Undo バナー情報 (null = バナー無し)。
   // 永続 state に持ち (reload 越しでバナーを再表示)、✕ dismiss / restore で null に戻す。
   autoApplyNotice: AutoApplyNotice | null;
@@ -253,6 +259,11 @@ type Actions = {
   // v6 PR-1d: ユーザーの誕生月 (1-12) を設定。undefined でクリア。
   // 範囲外の値は無視 (何もしない)。birthdayMonthOnly program の判定に使う。
   setBirthMonth: (month?: number) => void;
+
+  // PR-5a: 通貨の円換算目安の上書きを設定 / クリア。
+  //   value が正の有限数 → yenValueOverrides[currencyId] にセット。
+  //   value が undefined / 非正 → 該当キーを削除 (= seed 値に戻す)。
+  setYenValueOverride: (currencyId: string, value?: number) => void;
 
   // ユーザーが手動追加する「店舗 × ポイントカード提示還元」を BenefitProgram +
   // membership に変換して atomic に登録する (v6 PR-1e、旧 addLoyaltyRule の後継)。
@@ -333,6 +344,8 @@ const empty: State = {
   syncUrl: DEFAULT_SYNC_URL,
   lastSyncAt: null,
   preferredCurrencyIds: [],
+  // PR-5a: 円換算目安の上書きは既定で空
+  yenValueOverrides: {},
   // PR-4b: 自動反映バナーは既定で無し
   autoApplyNotice: null,
   // birthMonth は undefined で初期化 (誕生月未設定)
@@ -519,6 +532,16 @@ export const useStore = create<State & Actions>()(
           }
           if (!Number.isInteger(month) || month < 1 || month > 12) return;
           state.birthMonth = month;
+        }),
+
+      setYenValueOverride: (currencyId, value) =>
+        set((state) => {
+          // 空 / 非正 / 非有限は「上書き解除」= seed 目安値に戻す (キー削除)。
+          if (value === undefined || !Number.isFinite(value) || value <= 0) {
+            delete state.yenValueOverrides[currencyId];
+            return;
+          }
+          state.yenValueOverrides[currencyId] = value;
         }),
 
       addUserLoyaltyProgram: ({ storeId, pointCardId, rate, currencyId, notes }) => {

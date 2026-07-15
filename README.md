@@ -78,6 +78,24 @@
 - Calculator は **通貨タブ切替** で、選んだ対象通貨ごとの最終取得量を単一表示。
 - 優先通貨が未設定の場合は従来どおり対象通貨 select にフォールバック。
 
+### 円換算（目安）タブ（PR-5a / DB-2）
+- 通貨タブの末尾（優先通貨未設定時は対象通貨 select の選択肢）に **`¥ 円換算`** を追加。
+  目標通貨への交換ルートが無いカードも横並び比較できる **fallback ビュー**。
+- **交換 path は使わない**。各カードで貯まる通貨を、その通貨の円換算目安
+  （`Currency.yenValue` = 1 単位 ≒ 円）で直接評価する（`earnedAmount × yenValue`）。
+  決済アプリの上乗せ（addOn）も同様に円評価して加算。金額に **`≈` プレフィクス**と
+  **`目安` バッジ**（muted）を付け、path 由来の正確値と視覚的に区別する。
+- 貯まる通貨に `yenValue` が無い（マイル/ホテル系など価値が使い方で大きく変わる通貨は
+  **あえて未設定**）カードは「目安値未設定」で対象外表示。
+- **yenValue 規約**: `path`（交換ルート）が存在する通貨間は、edge の
+  `rate × yenValue(to) / yenValue(from)` が概ね 1 付近（`[1/2.5, 2.5]`）に収まる。
+  この契約は `seed.test.ts`（`findYenRatioViolations`）で seed の全 edge をガードする
+  （import 検証には入れない = ユーザー編集 edge は縛らない）。
+- **自分の換算値**: CurrenciesScreen の「1pt≒円 (目安)」列を編集すると上書きできる
+  （空欄で seed 目安値に戻る）。上書きは Currency 行本体ではなく **`store.yenValueOverrides`**
+  （`currencyId → 円`、user-owned な永続キー）に保存するため、`syncFromUrl` / `importJson` の
+  currencies 全置換でも消えずに残る。円換算タブは `override ?? seed yenValue` を使う。
+
 ### キャンペーン（期間限定ルール）
 - 開始日・終了日付きに加え、**毎月の日にち指定**（`recurringDays`、例:「5と0のつく日」=
   [5,10,15,20,25,30]）と**曜日指定**（`recurringWeekdays`、0=日〜6=土。例:「毎週日曜」= [0]）の

@@ -117,6 +117,11 @@ describe("getSeedPaymentApp", () => {
 // ADDED_MEMBERSHIPS や BLOCKED_STORE_IDS フィルタ後の最終 memberships を検査する。
 // cron 同期で誤って二重取り組み合わせを追加した場合も検出できる。
 import { seed } from "./seed";
+import {
+  findYenRatioViolations,
+  type YenRatioViolation,
+} from "../domain/yenValue";
+import type { ConversionEdge } from "../domain/types";
 
 describe("nanaco/WAON の loyalty × e-money 排他制約 (二重取り防止)", () => {
   it.each([
@@ -315,6 +320,70 @@ describe("SEED_EDGES の通貨参照整合性", () => {
     expect(c, "card jal-suica-normal が未登録").toBeDefined();
     expect(c?.enabled).toBeUndefined(); // v7: seed は enabled を出荷しない
     expect(c?.defaultCurrencyId).toBe("jal-mile");
+  });
+});
+
+// PR-5a (DB-2): edge レートが円価値目安 (Currency.yenValue) と乖離していないかの契約。
+//   各 edge について from/to 両方に yenValue がある場合、
+//     ratio = rate × yenValue(to) / yenValue(from)
+//   が [1/2.5, 2.5] の範囲内であることを検証する。範囲外 = レートか yenValue のどちらかが
+//   おかしい可能性が高い (seed のミス検出)。yenValue が片方でも無い edge は対象外。
+//   import 検証には入れない (ユーザー編集 edge は縛らない) = seed 契約テストとしてのみ担保。
+describe("PR-5a: edge レートと円価値目安の整合 (findYenRatioViolations)", () => {
+  const yenValueOf = () => {
+    const { currencies } = seed();
+    const byId = new Map(currencies.map((c) => [c.id, c] as const));
+    return (id: string): number | undefined => byId.get(id)?.yenValue;
+  };
+
+  it("seed の全 edge が [1/2.5, 2.5] の範囲内に収まる", () => {
+    const { edges } = seed();
+    const violations = findYenRatioViolations(edges, yenValueOf());
+    const detail = violations
+      .map(
+        (v: YenRatioViolation) =>
+          `${v.edgeId} (${v.fromCurrencyId}→${v.toCurrencyId}): 係数 ${v.ratio.toFixed(3)}`,
+      )
+      .join("\n");
+    expect(violations, detail).toEqual([]);
+  });
+
+  it("yenValue を持つ edge が 1 本以上検証対象になっている (機構が空振りしていない)", () => {
+    const { edges, currencies } = seed();
+    const byId = new Map(currencies.map((c) => [c.id, c] as const));
+    const checked = edges.filter(
+      (e) =>
+        byId.get(e.fromCurrencyId)?.yenValue !== undefined &&
+        byId.get(e.toCurrencyId)?.yenValue !== undefined,
+    );
+    expect(checked.length).toBeGreaterThan(20);
+  });
+
+  it("人工的に乖離させた edge (rate 過大) は violation として検出される", () => {
+    // rakuten-pt(1円) → d-pt(1円) を rate 10 にすると ratio=10 で上限 2.5 超。
+    const bogus: ConversionEdge[] = [
+      { id: "bogus-hi", fromCurrencyId: "rakuten-pt", toCurrencyId: "d-pt", rate: 10 },
+    ];
+    const violations = findYenRatioViolations(bogus, yenValueOf());
+    expect(violations.map((v) => v.edgeId)).toContain("bogus-hi");
+  });
+
+  it("人工的に乖離させた edge (rate 過小) も検出される", () => {
+    // eikyu(5円) → rakuten-pt(1円) を rate 0.1 にすると ratio=0.1×1/5=0.02 で下限 0.4 未満。
+    const bogus: ConversionEdge[] = [
+      { id: "bogus-lo", fromCurrencyId: "eikyu", toCurrencyId: "rakuten-pt", rate: 0.1 },
+    ];
+    const violations = findYenRatioViolations(bogus, yenValueOf());
+    expect(violations.map((v) => v.edgeId)).toContain("bogus-lo");
+  });
+
+  it("片方でも yenValue が無い edge は検証対象外 (スキップ)", () => {
+    // amex-mr は yenValue 未設定 → from が無いので rate に関わらずスキップ。
+    const skip: ConversionEdge[] = [
+      { id: "skip-amex", fromCurrencyId: "amex-mr", toCurrencyId: "jal-mile", rate: 99 },
+    ];
+    const violations = findYenRatioViolations(skip, yenValueOf());
+    expect(violations).toEqual([]);
   });
 });
 

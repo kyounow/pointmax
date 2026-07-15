@@ -271,6 +271,19 @@ details summary {
   padding: 1px 8px;
   border-radius: 999px;
 }
+/* PR-5a: 円換算 (目安) バッジ。path 由来の正確値と区別するため muted 配色にする。 */
+.badge.yen-est-badge {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  font-weight: 500;
+  margin-left: 6px;
+}
+/* 円換算モードの見出し金額は good 色を使わず (正確値ではないため) 通常テキスト色にする。 */
+.results-yen .final {
+  color: var(--text);
+  font-weight: 700;
+}
 .path {
   margin-top: 10px;
 }

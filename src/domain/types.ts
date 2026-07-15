@@ -9,6 +9,14 @@ export type Currency = {
   iconChar?: string; // 円形アイコンに表示する文字 (例: "R", "JAL")
   iconColor?: string; // アイコン背景色 (例: "#bf0000")
   iconUrl?: string; // 任意の画像URL (指定時は文字より優先)
+  // yenValue: 1 単位 ≒ 円の公式目安値 (DB-2)。円換算タブの仮想ターゲットと、edge レートの
+  //   妥当性 validator (seed 契約) に使う。**目安**であり、path が存在する通貨間は edge の
+  //   rate 積が正 (= rate × yenValue(to) / yenValue(from) が概ね 1 付近、README 規約を参照)。
+  //   根拠が薄い通貨 (価値が使い方で大きく変わるマイル/ホテル系等) は付けず undefined のまま
+  //   にする (= 円換算比較から除外)。
+  //   ユーザー上書きは store.yenValueOverrides に保持する (Currency 行そのものは編集不可 —
+  //   syncFromUrl の全置換で消えるため。override は user-owned な永続キーで sync に耐える)。
+  yenValue?: number;
 };
 
 // クレジットカード。defaultCurrencyId に貯まる通貨を1つ持つ（仕様(b)）
