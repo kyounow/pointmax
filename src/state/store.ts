@@ -41,9 +41,11 @@ import {
 } from "../domain/migrations";
 import {
   PERSIST_SCHEMA_VERSION,
+  PERSIST_STORE_KEY,
   SCHEMA_MIGRATIONS,
   type SchemaMigrationStrategy,
 } from "./persist-versions";
+import { takeSnapshot } from "./stateSnapshot";
 
 // v0.8 リリース時に persist 階層を世代交代した。旧 v0.x キーは一度きりクリーンアップ。
 // （次回 v1.0 以降は migrate / mergeFromSeed で吸収する）
@@ -60,6 +62,27 @@ const newId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `id-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+
+// PR-4a (N-4): 破壊的操作 (import / reset / sync 全上書き / seed 反映) の直前に
+// takeSnapshot へ渡す「変更前の persist app state」を読み出す。
+// zustand persist は { state, version } 形式で PERSIST_STORE_KEY に同期書き込みするため、
+// 直読みが最も確実 (partialize なし = 全 state。将来フィールドが増えても取りこぼさない)。
+// action は set の直前に呼ぶので、この時点の localStorage は「破壊前の確定 state」を保持する。
+// localStorage 不在 (node test 等) / 未永続 / 壊れた形は null を返し、snapshot は作られない。
+function readPersistedAppState(): unknown {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(PERSIST_STORE_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && "state" in parsed) {
+      return (parsed as { state: unknown }).state;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 // exclusive family の id 集合 (CardFamily.exclusive=true のみ)。
 // 排他 invariant の判定を O(1) にするため module scope で 1 回だけ構築。
@@ -535,10 +558,14 @@ export const useStore = create<State & Actions>()(
         });
       },
 
-      clearAll: () =>
+      clearAll: () => {
+        // PR-4a: ローカルデータ初期化の直前にスナップショット (trigger:"reset")。
+        // 保存失敗しても初期化は続行する (戻り値は意図的に無視)。
+        takeSnapshot("reset", readPersistedAppState());
         set((state) => {
           Object.assign(state, empty);
-        }),
+        });
+      },
       mergeFromSeed: () =>
         set((state) => {
           const result = mergeSeedFn(
@@ -564,7 +591,10 @@ export const useStore = create<State & Actions>()(
           state.memberships = result.memberships ?? [];
           state.lastSeedVersion = SEED_VERSION;
         }),
-      applySeedUpdate: (overrideKeys) =>
+      applySeedUpdate: (overrideKeys) => {
+        // PR-4a: マスタ更新の「アプリに反映」直前にスナップショット (trigger:"seed-apply")。
+        // PR-4b の自動反映+Undo の前提。保存失敗しても反映は続行する。
+        takeSnapshot("seed-apply", readPersistedAppState());
         set((state) => {
           const currentShape = {
             cards: state.cards,
@@ -617,7 +647,8 @@ export const useStore = create<State & Actions>()(
           state.programs = merged.programs ?? [];
           state.memberships = merged.memberships ?? [];
           state.lastSeedVersion = SEED_VERSION;
-        }),
+        });
+      },
       dismissSeedUpdate: () =>
         set((state) => {
           state.lastSeedVersion = SEED_VERSION;
@@ -670,6 +701,9 @@ export const useStore = create<State & Actions>()(
           const result = validateImportData(parsed);
           if (!result.ok) return { ok: false, error: result.error };
           const data = result.value;
+          // PR-4a: URL からの全上書き直前にスナップショット (trigger:"sync-overwrite")。
+          // 検証通過後・set 直前に採取 (失敗した fetch/検証では snapshot を作らない)。
+          takeSnapshot("sync-overwrite", readPersistedAppState());
           set((state) => {
             // v6.0.1: 全置換だが「使う/使わない」(enabled) と userModifiedAt は id マッチで
             // ローカル保持 (取込側がキーを持たない＝公式 master のときのみ)。
@@ -745,6 +779,9 @@ export const useStore = create<State & Actions>()(
           });
           if (!result.ok) return { ok: false, error: result.error };
           const data = result.value;
+          // PR-4a: インポートによる上書き直前にスナップショット (trigger:"import")。
+          // 検証通過後・set 直前に採取 (不正 JSON で弾かれた import では snapshot を作らない)。
+          takeSnapshot("import", readPersistedAppState());
           set((state) => {
             // v6.0.1: syncFromUrl と同じく enabled / userModifiedAt を id マッチで保持
             state.cards = preservePreferences(data.cards, state.cards, [
@@ -788,8 +825,9 @@ export const useStore = create<State & Actions>()(
       },
     })),
     {
-      // v0.8 で世代交代。旧キー "pointmax-store" は無視 (孤児は起動時に削除)
-      name: "pointmax-v08-store",
+      // v0.8 で世代交代。旧キー "pointmax-store" は無視 (孤児は起動時に削除)。
+      // キー名は persist-versions.ts の PERSIST_STORE_KEY と共有 (snapshot 直書き用)。
+      name: PERSIST_STORE_KEY,
       storage: createJSONStorage(() => localStorage),
       version: PERSIST_SCHEMA_VERSION,  // 5 → 6 (v6.0.0 で scope 必須化の破壊的刷新、v5 を reset 化)
       migrate: (persistedState: unknown, fromVersion: number) => {
