@@ -97,6 +97,17 @@
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
 - 「サンプル投入」「ローカルデータ初期化」「JSONエクスポート/インポート」は設定画面から。
+- **破壊的操作の直前スナップショット＋「直前の状態に戻す」（PR-4a / N-4）**: インポート・
+  ローカルデータ初期化・URL 同期の全上書き・マスタ更新の反映の**直前**に、その時点の
+  persist state を独立キー `pointmax:snapshot:v1` に **1 世代だけ**自動退避する
+  (`src/state/stateSnapshot.ts`)。設定「データ管理」の「直前の状態に戻す」から 1 手だけ
+  巻き戻せる (`trigger` に応じて「インポート前 / 初期化前 / URL同期前 / マスタ更新前」を表示)。
+  復元は persist キー (`pointmax-v08-store`) へ `{ state, version }` を直書き→`location.reload()`
+  で反映し、成功時にスナップショットを消費する。**スナップショット対象は persist state のみ**で、
+  独立キー群 (`usage-stats` / `calc-form` / `onboarding-dismissed`) は含めない (巻き戻しで消さない)。
+  スナップショットの `schemaVersion` が現行の `PERSIST_SCHEMA_VERSION` と異なる場合は復元を拒否し
+  (ボタン disabled + 理由表示)、不整合 state を作らない。quota 等の保存失敗は握りつぶし、
+  **本体の破壊的操作は止めない** (`usageStats` / `calcFormDraft` と同型の schema-reset 非依存キー)。
 - **マスタ更新履歴** (設定画面内セクション、旧「更新履歴」タブ): 週次 cron で自動マージ
   された変更を時系列で閲覧 (`sources/SYNC_HISTORY.json` を bundle 同梱、最新 104 件、
   GitHub commit/PR への動線あり)。最新 1 件は設定上部に常時プレビュー表示し、全履歴は

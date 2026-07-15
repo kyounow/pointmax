@@ -2,7 +2,12 @@
 // pure helper (userModified.ts / seed.ts のルックアップ) は別ファイルで個別テスト済み。
 // ここでは store action 固有の「ガード条件」「ストア state への反映」のみ検査。
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+// PR-4a: 破壊的操作の snapshot 採取を結線検査するため stateSnapshot をモックする。
+// takeSnapshot を no-op スパイに差し替え、trigger だけを検査する
+// (実際の localStorage 書き込みは stateSnapshot.test.ts で検証済み)。
+vi.mock("./stateSnapshot", () => ({ takeSnapshot: vi.fn() }));
 import { useStore } from "./store";
+import { takeSnapshot } from "./stateSnapshot";
 import { rankCards } from "../domain/rankCards";
 import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
 import type {
@@ -776,5 +781,85 @@ describe("store: addUserLoyaltyProgram", () => {
     // 旧 { storeId: "lawson", pointCardId: "d-pc", rate: 0.01 } と同一: 10000 × 0.01 = 100 d-pt
     expect(top.loyalties[0].finalAmount).toBe(100);
     expect(top.loyalties[0].earnedCurrencyId).toBe("d-pt");
+  });
+});
+
+// PR-4a (N-4): 破壊的操作 4 経路が直前スナップショットを採取するかの結線テスト。
+// takeSnapshot はモック済み (先頭 vi.mock)。ここでは「呼ばれること + trigger」だけを検査する
+// (state 引数は node 環境で localStorage 不在のため null になる = 中身は別テストの領域)。
+describe("store: 破壊的操作の直前 snapshot 採取 (PR-4a 結線)", () => {
+  const takeSnapshotMock = vi.mocked(takeSnapshot);
+
+  beforeEach(() => {
+    // clearAll 自体が snapshot を採る → リセット後に mockClear して各テストを clean に始める。
+    useStore.getState().clearAll();
+    takeSnapshotMock.mockClear();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("clearAll (初期化) は trigger:'reset' で採取する", () => {
+    useStore.getState().clearAll();
+    expect(takeSnapshotMock).toHaveBeenCalledTimes(1);
+    expect(takeSnapshotMock.mock.calls[0][0]).toBe("reset");
+  });
+
+  it("importJson は trigger:'import' で採取する", () => {
+    const json = JSON.stringify({
+      version: 1,
+      schemaVersion: PERSIST_SCHEMA_VERSION,
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [],
+    });
+    const res = useStore.getState().importJson(json);
+    expect(res.ok).toBe(true);
+    expect(
+      takeSnapshotMock.mock.calls.some((c) => c[0] === "import"),
+    ).toBe(true);
+  });
+
+  it("不正 JSON の importJson は snapshot を採らない (弾かれた操作)", () => {
+    const res = useStore.getState().importJson("{ not valid");
+    expect(res.ok).toBe(false);
+    expect(takeSnapshotMock).not.toHaveBeenCalled();
+  });
+
+  it("syncFromUrl (全上書き) は trigger:'sync-overwrite' で採取する", async () => {
+    useStore.setState({ syncUrl: "https://example.test/master.json" });
+    const master = {
+      version: 43,
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [],
+      pointCards: [],
+      paymentApps: [],
+      programs: [],
+      memberships: [],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: async () => JSON.stringify(master),
+      }),
+    );
+    const res = await useStore.getState().syncFromUrl();
+    expect(res.ok).toBe(true);
+    expect(
+      takeSnapshotMock.mock.calls.some((c) => c[0] === "sync-overwrite"),
+    ).toBe(true);
+  });
+
+  it("applySeedUpdate (マスタ反映) は trigger:'seed-apply' で採取する", () => {
+    useStore.getState().applySeedUpdate([]);
+    expect(
+      takeSnapshotMock.mock.calls.some((c) => c[0] === "seed-apply"),
+    ).toBe(true);
   });
 });

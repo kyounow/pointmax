@@ -14,6 +14,20 @@ import {
   requestPersistentStorage,
   type PersistenceStatus,
 } from "../state/storagePersistence";
+import {
+  getSnapshotMeta,
+  restoreSnapshot,
+  type SnapshotTrigger,
+} from "../state/stateSnapshot";
+import { PERSIST_SCHEMA_VERSION } from "../state/persist-versions";
+
+// PR-4a (N-4): スナップショット trigger の日本語ラベル (どの破壊的操作の「前」か)。
+const SNAPSHOT_TRIGGER_LABEL: Record<SnapshotTrigger, string> = {
+  import: "インポート前",
+  reset: "初期化前",
+  "sync-overwrite": "URL同期前",
+  "seed-apply": "マスタ更新前",
+};
 
 export function SettingsScreen() {
   // Wave 5 B-1: 個別 subscribe → 単一 useShallow に集約。
@@ -120,6 +134,10 @@ export function SettingsScreen() {
       });
     } finally {
       e.target.value = "";
+      // PR-4a: import が採取したスナップショットを「直前の状態に戻す」ボタンへ即時反映
+      // (この画面は破壊的操作を実行した後もマウントされ続けるため、mount 時読みの
+      // snapshotMeta を明示的に取り直す)。
+      setSnapshotMeta(getSnapshotMeta());
     }
   };
 
@@ -153,6 +171,8 @@ export function SettingsScreen() {
     setBusy(true);
     const res = await syncFromUrl();
     setBusy(false);
+    // PR-4a: sync-overwrite が採取したスナップショットをボタンへ反映。
+    setSnapshotMeta(getSnapshotMeta());
     if (!res.ok) {
       await dialog.alert({
         title: "同期失敗",
@@ -235,7 +255,57 @@ export function SettingsScreen() {
       okText: "初期化",
       danger: true,
     });
-    if (ok) clearAll();
+    if (ok) {
+      clearAll();
+      // PR-4a: 初期化 (reset) が採取したスナップショットをボタンへ反映。
+      setSnapshotMeta(getSnapshotMeta());
+    }
+  };
+
+  // PR-4a (N-4): 破壊的操作の直前スナップショットからの「直前の状態に戻す」。
+  // 独立キー (pointmax:snapshot:v1) からの読み取りなので state に保持し、
+  // マウント時 + 復元失敗時に再取得する (成功時は location.reload で state ごと作り直す)。
+  const [snapshotMeta, setSnapshotMeta] = useState(() => getSnapshotMeta());
+  // schemaVersion がずれたスナップ (旧世代) は復元不可 → ボタン disabled + 理由表示。
+  const snapshotRestorable =
+    snapshotMeta !== null &&
+    snapshotMeta.schemaVersion === PERSIST_SCHEMA_VERSION;
+  const snapshotDateLabel = snapshotMeta
+    ? new Date(snapshotMeta.takenAt).toLocaleString("ja-JP", {
+        month: "numeric",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+  const snapshotTriggerLabel = snapshotMeta
+    ? SNAPSHOT_TRIGGER_LABEL[snapshotMeta.trigger]
+    : "";
+
+  const handleRestoreSnapshot = async () => {
+    if (!snapshotMeta) return;
+    const ok = await dialog.confirm({
+      title: "直前の状態に戻しますか？",
+      message:
+        `${snapshotTriggerLabel}のスナップショット（${snapshotDateLabel}）に巻き戻します。\n` +
+        "現在のデータは失われ、ページが再読み込みされます。",
+      okText: "元に戻す",
+      danger: true,
+    });
+    if (!ok) return;
+    const res = restoreSnapshot();
+    if (!res.ok) {
+      await dialog.alert({
+        title: "復元できません",
+        message: res.error,
+        level: "error",
+      });
+      // schemaVersion 不一致などで消費されている可能性があるためメタを取り直す。
+      setSnapshotMeta(getSnapshotMeta());
+      return;
+    }
+    // persist キーを書き戻したので reload で新しい state として反映する。
+    window.location.reload();
   };
 
   // PR-0b: ローカル利用統計 (この端末のみ・送信なし)。
@@ -426,6 +496,39 @@ export function SettingsScreen() {
           ローカルデータ初期化
         </button>
       </div>
+
+      {/* 6. 直前の状態に戻す (PR-4a / N-4)。破壊的操作 (インポート/初期化/URL同期/
+          マスタ更新) の直前に自動保存したスナップショットから 1 手だけ undo する。 */}
+      <h4 style={{ margin: "16px 0 4px" }}>直前の状態に戻す</h4>
+      <p className="hint" style={{ marginTop: 0 }}>
+        インポート・初期化・外部URL同期・マスタ更新の直前に自動保存した状態から、
+        1 手だけ元に戻せます（最新の 1 世代のみ・この端末内のみ）。
+      </p>
+      {snapshotMeta ? (
+        <>
+          <div className="row" style={{ gap: 8, marginBottom: 4 }}>
+            <button
+              onClick={handleRestoreSnapshot}
+              disabled={!snapshotRestorable}
+              title={
+                snapshotRestorable
+                  ? "破壊的操作の直前に自動保存した状態へ巻き戻す"
+                  : "データ形式が更新されたため、このスナップショットは復元できません"
+              }
+            >
+              直前の状態に戻す（{snapshotDateLabel}・{snapshotTriggerLabel}）
+            </button>
+          </div>
+          {!snapshotRestorable && (
+            <p className="hint" style={{ marginTop: 0 }}>
+              ⚠ データ形式が更新された（v{snapshotMeta.schemaVersion} →
+              v{PERSIST_SCHEMA_VERSION}）ため、このスナップショットは復元できません。
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="empty">スナップショットはまだありません。</p>
+      )}
 
       <h3 style={{ marginTop: 8 }}>誕生月</h3>
       <p className="hint">

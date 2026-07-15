@@ -22,6 +22,12 @@
 //   (mid-train セマンティクスの保存。SCHEMA_MIGRATIONS[6] 参照))。
 export const PERSIST_SCHEMA_VERSION = 7;
 
+// Zustand persist が localStorage に使うキー名 (store.ts の persist({ name }) と一致)。
+// スナップショット機能 (stateSnapshot.ts) が persist の格納形式 { state, version } を
+// 直接読み書きするために共有する。store.ts に置くと stateSnapshot ← store の循環参照に
+// なるため、依存の無い本ファイルに定数として切り出す。
+export const PERSIST_STORE_KEY = "pointmax-v08-store";
+
 /**
  * schema migration の戦略型。
  *
