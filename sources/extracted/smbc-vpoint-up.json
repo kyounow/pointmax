@@ -1,7 +1,7 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-07-01T22:27:28.077Z",
+  "fetchedAt": "2026-07-15T02:48:43.808Z",
   "promptVersion": "ongoing-program-vUnknown",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",

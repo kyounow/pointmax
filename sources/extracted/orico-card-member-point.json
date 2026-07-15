@@ -1,58 +1,9 @@
 {
   "sourceId": "orico-card-member-point",
   "sourceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-  "fetchedAt": "2026-07-01T22:23:19.697Z",
-  "promptVersion": "card-v1.1",
+  "fetchedAt": "2026-07-15T02:46:21.518Z",
+  "promptVersion": "card-vUnknown",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "「入会後6ヵ月間」の特典期間は個別の入会日に依存するため、validFrom/validToは設定していません。",
-  "cards": [
-    {
-      "cardId": "orico-card-member-point",
-      "defaultRate": 0.01,
-      "defaultCurrencyId": "orico-pt",
-      "evidenceQuote": "還元率は常に1.0％以上！100円で1オリコポイントがたまる！",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-      "explicitness": 1,
-      "ambiguity": 0
-    }
-  ],
-  "storeRules": [],
-  "categoryRules": [
-    {
-      "cardId": "orico-card-member-point",
-      "category": "ネット通販",
-      "rate": 0.02,
-      "currencyId": "orico-pt",
-      "evidenceQuote": "オリコモールを経由しネットショッピングした場合、カードご利用分（1.0％）+オリコモールご利用分（+0.5%以上）+特別加算（0.5％）で2%以上のオリコポイントがたまります。",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-      "explicitness": 0.9,
-      "ambiguity": 0.3,
-      "notes": "オリコモール経由のネットショッピング特典。一部ショップは対象外・加算率が異なります。"
-    },
-    {
-      "cardId": "orico-card-member-point",
-      "category": "all",
-      "rate": 0.02,
-      "currencyId": "orico-pt",
-      "evidenceQuote": "入会後6ヵ月間は還元率が2.0％にアップ！",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-      "explicitness": 0.9,
-      "ambiguity": 0.1,
-      "notes": "入会後6ヵ月間のキャンペーン。期間中のご利用金額50万円（5,000オリコポイント）が上限です。"
-    },
-    {
-      "cardId": "orico-card-member-point",
-      "category": "鉄道・交通",
-      "rate": 0.02,
-      "currencyId": "orico-pt",
-      "evidenceQuote": "ETCのご利用分も入会後6ヵ月は2倍ポイントがたまります。",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-      "explicitness": 0.9,
-      "ambiguity": 0.1,
-      "notes": "ETCカード利用分も入会後6ヵ月間はポイント2倍。"
-    }
-  ],
-  "loyaltyRules": [],
-  "paymentApps": []
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): I have browsed the URL. Now I need to extract the relevant information for the `orico-card-member-point` card. Based on the content: - **Card Name**: Orico Card THE POINT（オリコカード ザ ポイント） - **Default Rate**: 「還元率は常に1.0％以上！100円で1オリコポイントがたまる！」と明記されているため、基本還元率は1.0% (0.01). - **Default Currency**: オリコポイン"
 }

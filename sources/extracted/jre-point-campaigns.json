@@ -1,9 +1,9 @@
 {
   "sourceId": "jre-point-campaigns",
   "sourceUrl": "https://www.jrepoint.jp/campaign/list/",
-  "fetchedAt": "2026-07-01T22:24:02.894Z",
+  "fetchedAt": "2026-07-15T02:47:34.871Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] index=https://www.jrepoint.jp/campaign/list/ 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: HTML parsing library (BeautifulSoup) not available, unable to extract campaign URLs."
+  "notes": "[crawl:index] index=https://www.jrepoint.jp/campaign/list/ 子ページ 5 件 (成功 0 / 失敗 5)\n✗ https://www.jrepoint.jp/campaign/detail/0700003058 (【モバイルＳｕｉｃａ限定】スマホでピピッ♪交通系電子マネー使っトク！？キャンペーン) → empty\n✗ https://www.jrepoint.jp/campaign/detail/0700002996 (水曜日はエキナカSuicaの日) → empty\n✗ https://www.jrepoint.jp/campaign/detail/0700003011 (タッチでエキナカ 入場券ポイントバック！) → empty\n✗ https://www.jrepoint.jp/campaign/detail/0700003062 (書房すみよし２倍デー) → allUrlsFailed\n✗ https://www.jrepoint.jp/campaign/detail/0700003063 (マジックミシン２倍デー) → empty\nindex notes: 抽出対象外のリンクは除外し、最新のキャンペーン10件を抽出しました。"
 }

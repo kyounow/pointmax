@@ -1,9 +1,294 @@
 {
   "sourceId": "smbc-v-gold-7percent",
   "sourceUrl": "https://www.smbc-card.com/mem/cardinfo/cardinfo9001629.jsp",
-  "fetchedAt": "2026-07-01T22:22:17.037Z",
-  "promptVersion": "card-vUnknown",
+  "fetchedAt": "2026-07-15T02:45:30.293Z",
+  "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): The page describes a \"対象のコンビニ・飲食店で最大8％還元！\" (Max 8%還元 at target convenience stores and restaurants) program. The `cardId` provided is `smbc-v-gold-7percent`, which aligns with the 7% or 8% rates mentioned. Here's the breakdown for extraction: **1. Card Details (smbc-v-gold-7percent)** * **Default"
+  "notes": "「対象のコンビニ・飲食店で最大8％還元！」のページであり、カードの通常還元率は明記されていないため、Vポイントアッププログラムの基本還元率0.5%を暫定で採用。",
+  "cards": [
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "defaultRate": 0.005,
+      "defaultCurrencyId": "v-pt",
+      "evidenceQuote": "通常のポイント分 合計200円（税込）につき、0.5％～1％ポイント還元",
+      "explicitness": 0.7,
+      "ambiguity": 0.3
+    }
+  ],
+  "storeRules": [
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "seven-eleven",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "family-mart",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "lawson",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "ministop",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "poplar",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "seicomart",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "mcdonalds",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "mos-burger",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "kfc",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "yoshinoya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "sukiya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "saizeriya",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "gusto",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "bamiyan",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "shabu-yo",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "jonathan",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "yumean",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "skylark-group",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "その他すかいらーくグループ飲食店（※6）",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "hamazushi",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "cocos",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "doutor-coffee",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "excelsior-cafe",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "kappa-sushi",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "上記以外の対象カード 7.0% 7.0%",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "starbucks",
+      "rate": 0.07,
+      "currencyId": "v-pt",
+      "validFrom": "2026-02-01",
+      "evidenceQuote": "（1）2025年9月16日（火）より、一部店舗（※）にてモバイルオーダーがポイント加算の対象取引に追加されました。対象店舗：マクドナルド、モスバーガー、ケンタッキーフライドチキン、吉野家、すき家、スターバックス",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "cardId": "smbc-v-gold-7percent",
+      "storeId": "seven-eleven",
+      "rate": 0.11,
+      "currencyId": "v-pt",
+      "paymentAppId": "pa-visa-touch",
+      "evidenceQuote": "条件達成のうえで、セブン‐イレブンで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、最大11％ポイント還元！",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ]
 }

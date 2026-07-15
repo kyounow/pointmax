@@ -1,11 +1,115 @@
 {
   "sourceId": "ponta-partners",
   "sourceUrl": "https://point.recruit.co.jp/point/?tab=pointUseService",
-  "fetchedAt": "2026-07-01T22:21:21.009Z",
+  "fetchedAt": "2026-07-15T02:45:11.663Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "stores": [],
-  "loyaltyRules": [],
-  "notes": "チェーン店のポイント還元率がページ上で明示されていないため、loyaltyRulesは抽出できませんでした。個店の還元率は記載されているものの、チェーン店抽出スコープの対象外です。"
+  "stores": [
+    {
+      "storeId": "uber-eats",
+      "name": "Uber Eats",
+      "category": "飲食",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: Uber Eats たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "oisix",
+      "name": "Oisix",
+      "category": "ネット通販",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: Oisix（リクルートIDでのログインの場合） たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sunlive",
+      "name": "サンリブ",
+      "category": "スーパー",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: サンリブ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "seijo-ishii",
+      "name": "成城石井",
+      "category": "スーパー",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: 成城石井 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "nishimuta",
+      "name": "ニシムタ",
+      "category": "スーパー",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: ニシムタ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yakuodo",
+      "name": "薬王堂",
+      "category": "ドラッグストア",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: 薬王堂 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jal-mileage-bank",
+      "name": "日本航空(JALマイレージバンク)",
+      "category": "航空",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: 日本航空(JALマイレージバンク) たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "coppe-tajima",
+      "name": "コッペ田島",
+      "category": "飲食",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: コッペ田島 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "douter-coffee-farm",
+      "name": "ドトール珈琲農園・ドトール珈琲店",
+      "category": "飲食",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: ドトール珈琲農園・ドトール珈琲店 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "book-coffee-fukuroshasabo",
+      "name": "本と珈琲 梟書茶房",
+      "category": "飲食",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: 本と珈琲 梟書茶房 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hotpepper-beauty-clinic",
+      "name": "HOT PEPPER Beauty 美容クリニック",
+      "category": "美容",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: HOT PEPPER Beauty 美容クリニック たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "telasa",
+      "name": "TELASA（テラサ）",
+      "category": "動画配信",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: TELASA（テラサ） たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "winticket",
+      "name": "WINTICKET(ウィンチケット)",
+      "category": "ギャンブル",
+      "evidenceQuote": "Pontaポイントがたまる・つかえるサービス、お店: WINTICKET(ウィンチケット) たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    }
+  ],
+  "notes": "金融（SBI証券、GMOあおぞらネット銀行、清水銀行、大和コネクト証券、三菱UFJ eスマート証券、三菱UFJ銀行、ローソン銀行、各種カード・保険）、医療（SOKUYAKU、Dental Ponta）、ギャンブル（WINTICKET）は対象外カテゴリのため抽出していません。地域限定と判断される「サニーマート」「ジハンピ」「カリママプラス」「ONIX」「日本ロードサービス」「アクアクララ」「ウォーターワン」「プレミアムウォーター」「プラリー」「Pontaかんたん保険」「まちエネ」「ミツウロコでんき・都市ガス」「エネワン」「ガスワン」等は対象外としました。明確な還元率の記載がない店舗についてはrateをnullとしています。 [sync] schema 違反で除去したアイテム: loyaltyRules:96。"
 }

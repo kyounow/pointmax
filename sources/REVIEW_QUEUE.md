@@ -1,551 +1,317 @@
 # 📋 週次マスタ同期: 要レビュー項目
 
-(自動生成 2026-05-12。merge 前に項目を確認してください。)
+(自動生成 2026-07-15。merge 前に項目を確認してください。)
 
 ## サマリ
-- 要レビュー: 194 件
-- ソース別: ponta=68, smbc-v-gold-7percent=2, rakuten-point=77, v-point=46, d-point=1
-- 主な理由: lowConfidence=21, selfReportedExclusion=1, userBlocked=23, idCollision=121, excludedCategory=28
+- 要レビュー: 66 件
+- ソース別: v-point=55, ponta=10, jal-card-tokuyaku-list=1
+- 主な理由: idCollision=5, userBlocked=6, storeAdditionsDisabled=42, lowConfidence=10, excludedCategory=3
 
 ## 項目 (理由別)
 
-### 🟡 lowConfidence (21 件)
+### ⏸ storeAdditionsDisabled (store 追加は手動キュレ運用) (42 件)
+理由: 新規 store の追加は cron では行わない方針 (キャンペーン情報の獲得に注力するため)。ここに列挙された店舗は cron が検知した「seed に未追加の店舗候補」で、必要な場合は手動で seed-data-stores.ts に追加 → 次回 cron で関連 membership が自動取り込まれる。全件無視も OK (リストとしての参照のみ)。
+
+<details><summary>展開</summary>
+
+#### `sto-e44d4e4655` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="autobacs-dot-com", name="オートバックス・ドットコム", category="車・バイク"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: オートバックス・ドットコム"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-e44d4e4655`、不要なら無視
+
+#### `sto-85b7796b9b` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="camera-no-kitamura-netshop", name="カメラのキタムラネットショップ", category="ネット通販"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: カメラのキタムラネットショップ（カメラ用品）"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-85b7796b9b`、不要なら無視
+
+#### `sto-4da629603f` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="chargerspot", name="ChargeSPOT", category="生活サービス"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: ChargeSPOT"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-4da629603f`、不要なら無視
+
+#### `sto-4a819a90dc` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="e-best", name="イーベスト", category="ネット通販"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: イーベスト"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-4a819a90dc`、不要なら無視
+
+#### `sto-50a0498a2d` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="ec-current", name="ECカレント", category="ネット通販"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: ECカレント"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-50a0498a2d`、不要なら無視
+
+#### `sto-689eee2002` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="eneos-denki", name="ＥＮＥＯＳでんき", category="電気・ガス"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: ＥＮＥＯＳでんき"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-689eee2002`、不要なら無視
+
+#### `sto-2c49431722` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="eneos-toshigas", name="ＥＮＥＯＳ都市ガス", category="電気・ガス"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: ＥＮＥＯＳ都市ガス"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-2c49431722`、不要なら無視
+
+#### `sto-4b007e460b` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="festa-garden", name="フェスタガーデン", category="飲食"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: フェスタガーデン"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-4b007e460b`、不要なら無視
+
+#### `sto-2dcfca26ce` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="fuku-yakuhin", name="ふく薬品", category="ドラッグストア"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: ふく薬品"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-2dcfca26ce`、不要なら無視
+
+#### `sto-2b7c08f9df` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="granbuffet", name="グランブッフェ", category="飲食"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: グランブッフェ"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-2b7c08f9df`、不要なら無視
+
+#### `sto-ff1cedb307` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="hac-drug", name="ハックドラッグ", category="ドラッグストア"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: ハックドラッグ"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-ff1cedb307`、不要なら無視
+
+#### `sto-377f1f788c` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="happy-drug", name="ハッピー・ドラッグ", category="ドラッグストア"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: ハッピー・ドラッグ"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-377f1f788c`、不要なら無視
+
+#### `sto-0ad374dbb3` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="homecenter-mitsuwa", name="ホームセンターみつわ", category="ホームセンター"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: ホームセンターみつわ"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-0ad374dbb3`、不要なら無視
+
+#### `sto-92460c1b03` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="jomo-shimbun", name="上毛新聞", category="書店"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: 上毛新聞"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-92460c1b03`、不要なら無視
+
+#### `sto-688775e4cf` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="kagu-no-taishodo", name="家具の大正堂", category="家具・インテリア"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: 家具の大正堂"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-688775e4cf`、不要なら無視
+
+#### `sto-508305f8ef` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="kitamura-shashinki-ten", name="北村写真機店", category="カメラ・写真"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: 北村写真機店"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-508305f8ef`、不要なら無視
+
+#### `sto-a45b2bf403` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="kokumin", name="コクミン", category="ドラッグストア"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: コクミン"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-a45b2bf403`、不要なら無視
+
+#### `sto-cc9a702df0` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="konko-yakuhin", name="金光薬品", category="ドラッグストア"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: 金光薬品"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-cc9a702df0`、不要なら無視
+
+#### `sto-f8acb77b0b` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="mainichi-shimbun", name="毎日新聞", category="書店"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: 毎日新聞"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-f8acb77b0b`、不要なら無視
+
+#### `sto-44155f6c75` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="misumi-gas-misumi-denki", name="ミスミガス・ミスミでんき", category="電気・ガス"`
+- confidence: 0.90
+- 評価: `evidenceQuote="お店・サービス一覧: ミスミガス・ミスミでんき"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-44155f6c75`、不要なら無視
+
+_他 22 件は省略 (sources/proposed-migrations.json を参照)_
+
+</details>
+
+### 🟡 lowConfidence (10 件)
 理由: Gemini の評価で confidence < 0.9。エビデンス不明瞭・推測混入の疑い。
 
 <details><summary>展開</summary>
 
-#### `updateField/loyaltyRules` `loy-p-lawson` from `ponta-partners`
-- フィールド: `rate`
-- 変更: `0.500%` → `1.000%`
-- confidence: 0.64
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: ローソン"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+#### `sto-d6e3af6226` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="book-coffee-fukuroshasabo", name="本と珈琲 梟書茶房", category="飲食"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: 本と珈琲 梟書茶房 たまる つかえる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-d6e3af6226`、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-apollostation", storeId="apollostation", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: apollostation / レンタカー・ガソリンスタンド・駐車場: apollostation たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+#### `sto-5d9a12bee5` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="central-park", name="セントラルパーク", category="商業施設"`
+- confidence: 0.81
+- 評価: `evidenceQuote="お店・サービス一覧: セントラルパーク"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-5d9a12bee5`、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-kentucky", storeId="kentucky", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: ケンタッキーフライドチキン / グルメ・飲食: ケンタッキーフライドチキン たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+#### `sto-3ae1f81a24` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="coppe-tajima", name="コッペ田島", category="飲食"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: コッペ田島 たまる つかえる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-3ae1f81a24`、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-geo", storeId="geo", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: ゲオ / 音楽・映像・ゲーム: ゲオ たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+#### `sto-151982c6b9` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="douter-coffee-farm", name="ドトール珈琲農園・ドトール珈琲店", category="飲食"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: ドトール珈琲農園・ドトール珈琲店 たまる つかえる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-151982c6b9`、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-ace-contact", storeId="ace-contact", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="百貨店・コンビニ・スーパー・ドラッグストア: エースコンタクト たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+#### `sto-b421d9f52d` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="fujimaru-park", name="藤丸パーク", category="商業施設"`
+- confidence: 0.81
+- 評価: `evidenceQuote="お店・サービス一覧: 藤丸パーク"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-b421d9f52d`、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-takashimaya", storeId="takashimaya", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="百貨店・コンビニ・スーパー・ドラッグストア: 高島屋 たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+#### `sto-1010b1cd22` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="la-cittadella", name="ラ チッタデッラ", category="商業施設"`
+- confidence: 0.81
+- 評価: `evidenceQuote="お店・サービス一覧: ラ チッタデッラ"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-1010b1cd22`、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-suika", storeId="suika", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="グルメ・飲食: すき家 たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+#### `sto-03cb06ef31` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="nishimuta", name="ニシムタ", category="スーパー"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: ニシムタ たまる つかえる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-03cb06ef31`、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-doutor", storeId="doutor", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="グルメ・飲食: ドトールコーヒーショップ たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+#### `sto-a73445f93d` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="oisix", name="Oisix", category="ネット通販"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: Oisix（リクルートIDでのログインの場合） たまる つかえる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-a73445f93d`、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-best-megane-contact", storeId="best-megane-contact", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="ファッション・美容: ベストメガネコンタクト たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+#### `sto-a1536cfecc` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="palio-city", name="パリオCITY", category="商業施設"`
+- confidence: 0.81
+- 評価: `evidenceQuote="お店・サービス一覧: パリオCITY"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-a1536cfecc`、不要なら無視
 
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-joshin", storeId="joshin", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="音楽・映像・ゲーム: ジョーシン たまる つかえる アプリ / 家電・コンピューター・通信: ジョーシン たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-kojima", storeId="kojima", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="家電・コンピューター・通信: コジマ たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-sofmap", storeId="sofmap", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="家電・コンピューター・通信: ソフマップ たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-bic-camera", storeId="bic-camera", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="家電・コンピューター・通信: ビックカメラ たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-saibu-gas", storeId="saibu-gas", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="電気・ガス: 西部ガス たまる"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-conv-familymart", storeId="conv-familymart", pointCardId="ponta-card", rate=0.005`
-- notes: PontaWebのトップページでFamilyMartのロゴがありPontaがたまる・つかえると記載。一般的なレートを推定。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: ファミリーマート"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-au", storeId="au", pointCardId="ponta-card", rate=0.01`
-- notes: au利用料金での付与レートは別途確認が必要だが、汎用的なレートを設定。
-- confidence: 0.49
-- 評価: `evidenceQuote="PickUpたまる・つかえるサービス、お店: au / 家電・コンピューター・通信: au たまる"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-toku-taku", storeId="toku-taku", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="レジャー・旅行: 得タク たまる / 車・バイク: 得タク たまる"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-hotel-keihan-chain", storeId="hotel-keihan-chain", pointCardId="ponta-card", rate=0.005`
-- notes: Web上ではレート記載なし。通常200円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="レジャー・旅行: ホテル京阪チェーン たまる つかえる アプリ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-sakai-hikkoshi", storeId="sakai-hikkoshi", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="引越し・住まい: サカイ引越センター たまる"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/loyaltyRules` from `ponta-partners`
-- 内容: `id="loy-ponta-card-heart-hikkoshi", storeId="heart-hikkoshi", pointCardId="ponta-card", rate=0.01`
-- notes: Web上ではレート記載なし。通常100円につき1ポイント。
-- confidence: 0.49
-- 評価: `evidenceQuote="引越し・住まい: ハート引越センター たまる"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-_他 1 件は省略 (sources/proposed-migrations.json を参照)_
+#### `sto-8a8a9b6c2b` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="seijo-ishii", name="成城石井", category="スーパー"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: 成城石井 たまる つかえる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-8a8a9b6c2b`、不要なら無視
 
 </details>
 
-### 🟠 idCollision (121 件)
+### 🟠 idCollision (5 件)
 理由: 新規追加だが既存 ID またはストア名と衝突。重複の可能性あり。
 
 <details><summary>展開</summary>
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="2ndstreet", name="セカンドストリート", category="ファッション"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ファッション・美容: セカンドストリート"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="a-pit-autobacs", name="A PIT AUTOBACS", category="車・バイク"`
-- confidence: 0.90
-- 評価: `evidenceQuote="A PIT AUTOBACS：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="ace-contact", name="エースコンタクト", category="コンタクト"`
-- confidence: 0.90
-- 評価: `evidenceQuote="エースコンタクト：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="ace-one", name="エースワン", category="スーパー"`
-- confidence: 0.90
-- 評価: `evidenceQuote="エースワン：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="adam-et-rope", name="ADAM ET ROPÉ", category="ファッション"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ADAM ET ROPÉ：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="aiya", name="藍屋", category="飲食"`
-- confidence: 0.90
-- 評価: `evidenceQuote="藍屋：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="akakabe-group", name="アカカベグループ", category="ドラッグストア"`
-- confidence: 0.90
-- 評価: `evidenceQuote="アカカベグループ：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="albis", name="アルビス", category="スーパー"`
-- confidence: 0.90
-- 評価: `evidenceQuote="百貨店・コンビニ・スーパー・ドラッグストア: アルビス"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
+#### `sto-cfadbd441b` — `addRecord/stores` from `v-point-partners`
 - 内容: `id="alook", name="ALOOK", category="メガネ"`
 - confidence: 0.90
-- 評価: `evidenceQuote="ALOOK: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+- 評価: `evidenceQuote="お店・サービス一覧: ALOOK"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-cfadbd441b`、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="alpen", name="アルペン", category="スポーツ"`
+#### `sto-20ff320bc8` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="epark-relax-and-este", name="EPARKリラク＆エステ", category="美容"`
 - confidence: 0.90
-- 評価: `evidenceQuote="アルペン：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+- 評価: `evidenceQuote="お店・サービス一覧: EPARKリラク＆エステ"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-20ff320bc8`、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="alpen-mountains", name="アルペンマウンテンズ", category="スポーツ"`
+#### `sto-45eb01a592` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="hotpepper-beauty-clinic", name="HOT PEPPER Beauty 美容クリニック", category="美容"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: HOT PEPPER Beauty 美容クリニック たまる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-45eb01a592`、不要なら無視
+
+#### `sto-73713eead8` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="lens-style", name="レンズスタイル", category="コンタクト"`
 - confidence: 0.90
-- 評価: `evidenceQuote="アルペンマウンテンズ：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+- 評価: `evidenceQuote="お店・サービス一覧: レンズスタイル"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-73713eead8`、不要なら無視
 
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="alpen-outdoors", name="アルペンアウトドアーズ", category="スポーツ"`
-- confidence: 0.90
-- 評価: `evidenceQuote="アルペンアウトドアーズ：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="american-drug", name="アメリカンドラッグ", category="ドラッグストア"`
-- confidence: 0.90
-- 評価: `evidenceQuote="アメリカンドラッグ：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="american-holic", name="AMERICAN HOLIC", category="ファッション"`
-- confidence: 0.90
-- 評価: `evidenceQuote="AMERICAN HOLIC：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="angie", name="ANGIE", category="美容"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ANGIE：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="aoki", name="AOKI", category="ファッション"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ファッション・美容: AOKI"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="apollo-station", name="apollostation", category="ガソリンスタンド"`
-- confidence: 0.90
-- 評価: `evidenceQuote="apollostation：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="arc-oasis", name="アークオアシス", category="雑貨"`
-- confidence: 0.90
-- 評価: `evidenceQuote="アークオアシス：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="ari-san-hikkoshi", name="アリさんマークの引越社", category="引越し"`
-- confidence: 0.90
-- 評価: `evidenceQuote="アリさんマークの引越社：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="art-hikkoshi-center", name="アート引越センター", category="引越し"`
-- confidence: 0.90
-- 評価: `evidenceQuote="引越し・住まい: アート引越センター"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-_他 101 件は省略 (sources/proposed-migrations.json を参照)_
+#### `sto-bc3c4190d9` — `addRecord/stores` from `jal-card-tokuyaku-list`
+- 内容: `id="royal-host", name="ロイヤルホスト", category="JAL特約店"`
+- confidence: 0.85
+- 評価: `evidenceQuote="ロイヤルホスト 決済でマイルが 2 倍"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-bc3c4190d9`、不要なら無視
 
 </details>
 
-### 🟠 excludedCategory (28 件)
+### 🟠 excludedCategory (3 件)
 理由: Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)。自動追加しない。
 
 <details><summary>展開</summary>
 
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="aflac", name="アフラック", category="保険"`
+#### `sto-ef8738c380` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="jihampi", name="ジハンピ", category="その他"`
 - confidence: 0.90
-- 評価: `evidenceQuote="アフラック: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+- 評価: `evidenceQuote="お店・サービス一覧: ジハンピ"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-ef8738c380`、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="apamanshop", name="アパマンショップ", category="不動産・住宅"`
+#### `sto-32d7ada76e` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="toshin-hochokicenter", name="トーシン補聴器センター", category="その他"`
 - confidence: 0.90
-- 評価: `evidenceQuote="引越し・住まい: アパマンショップ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+- 評価: `evidenceQuote="お店・サービス一覧: トーシン補聴器センター"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-32d7ada76e`、不要なら無視
 
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="aplus", name="アプラス", category="金融"`
-- confidence: 0.90
-- 評価: `evidenceQuote="アプラス: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="caromama-plus", name="カロママ プラス", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="グルメ・飲食: カロママ プラス"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="chargespot", name="ChargeSPOT", category="サービス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ChargeSPOT: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="epark-kusuri-no-madoguchi", name="EPARK くすりの窓口", category="医療"`
-- confidence: 0.90
-- 評価: `evidenceQuote="EPARK くすりの窓口: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="gaba-english", name="Gabaマンツーマン英会話", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ビジネス・英語・習い事: Gabaマンツーマン英会話"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="jaccs", name="JACCS", category="金融"`
-- confidence: 0.90
-- 評価: `evidenceQuote="JACCS: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="kansai-mirai-bank", name="関西みらい銀行", category="金融"`
-- confidence: 0.90
-- 評価: `evidenceQuote="関西みらい銀行: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="life-net", name="Life Net", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: Life Net"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="lifenet-seimei", name="ライフネット生命", category="保険"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ライフネット生命: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="lixil", name="LIXIL", category="住宅"`
-- confidence: 0.90
-- 評価: `evidenceQuote="LIXIL: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="marso", name="マーソ（人間ドック）", category="サービス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="マーソ（人間ドック）: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="minato-bank", name="みなと銀行", category="金融"`
-- confidence: 0.90
-- 評価: `evidenceQuote="みなと銀行: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="mitsui-sumitomo-bank", name="三井住友銀行", category="金融"`
-- confidence: 0.90
-- 評価: `evidenceQuote="三井住友銀行: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="otocon", name="婚活支援サービス パートナーエージェント（OTOCON）", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: 婚活支援サービス パートナーエージェント（OTOCON）"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="plaly", name="プラリー", category="その他"`
-- confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: プラリー"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="ponta-kantan-hoken", name="Pontaかんたん保険", category="保険"`
-- confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: Pontaかんたん保険"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="sbi-sonpo", name="SBI損保", category="保険"`
-- confidence: 0.90
-- 評価: `evidenceQuote="SBI損保: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="shimauma-print", name="しまうまプリント", category="サービス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="しまうまプリント: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-_他 8 件は省略 (sources/proposed-migrations.json を参照)_
+#### `sto-2f6f0d4b5f` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="winticket", name="WINTICKET(ウィンチケット)", category="ギャンブル"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: WINTICKET(ウィンチケット) たまる つかえる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-2f6f0d4b5f`、不要なら無視
 
 </details>
 
-### ⚫ userBlocked (23 件)
+### ⚫ userBlocked (6 件)
 理由: seed-blocklist.ts でユーザが除外指定済み。意図した除外であれば無視してよい。
 
 <details><summary>展開</summary>
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="17live", name="17LIVE(ワンセブンライブ)", category="エンタメ・チケット"`
-- confidence: 0.90
-- 評価: `evidenceQuote="音楽・映像・ゲーム: 17LIVE(ワンセブンライブ)"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="airbnb", name="Airbnb", category="宿泊"`
-- confidence: 0.90
-- 評価: `evidenceQuote="Airbnb（エアビーアンドビー）: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
+#### `sto-0835d85432` — `addRecord/stores` from `v-point-partners`
 - 内容: `id="ana", name="ANA", category="交通"`
 - confidence: 0.90
-- 評価: `evidenceQuote="ANA: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+- 評価: `evidenceQuote="お店・サービス一覧: ANA"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-0835d85432`、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="aquaclara", name="アクアクララ", category="生活サービス"`
+#### `sto-47a9824577` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="hyundai-mobility-japan", name="Hyundai Mobility Japan", category="車・バイク"`
 - confidence: 0.90
-- 評価: `evidenceQuote="ネットショッピング・通販・宅配: アクアクララ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+- 評価: `evidenceQuote="お店・サービス一覧: Hyundai Mobility Japan"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-47a9824577`、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="au-bookpass", name="auブックパス", category="書店"`
+#### `sto-0e7abd1d4b` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="jal-mileage-bank", name="日本航空(JALマイレージバンク)", category="航空"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: 日本航空(JALマイレージバンク) たまる つかえる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-0e7abd1d4b`、不要なら無視
+
+#### `sto-ec2a8575ea` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="mercedes-benz", name="メルセデス・ベンツ", category="車・バイク"`
 - confidence: 0.90
-- 評価: `evidenceQuote="本・電子書籍・新聞: auブックパス"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
+- 評価: `evidenceQuote="お店・サービス一覧: メルセデス・ベンツ"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-ec2a8575ea`、不要なら無視
 
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="auto-info", name="オート・インフォ", category="車・バイク"`
+#### `sto-0babf3d693` — `addRecord/stores` from `ponta-partners`
+- 内容: `id="telasa", name="TELASA（テラサ）", category="動画配信"`
+- confidence: 0.85
+- 評価: `evidenceQuote="Pontaポイントがたまる・つかえるサービス、お店: TELASA（テラサ） たまる つかえる"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-0babf3d693`、不要なら無視
+
+#### `sto-ded8618d60` — `addRecord/stores` from `v-point-partners`
+- 内容: `id="vip-liner", name="VIPライナー（高速バス）", category="交通"`
 - confidence: 0.90
-- 評価: `evidenceQuote="車・バイク: オート・インフォ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="denki-hikaku-insweb", name="でんきの比較インズウェブ", category="電気・ガス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="生活・暮らし・ペット: でんきの比較インズウェブ"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="enewan", name="エネワン（株式会社サイサン）", category="電気・ガス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="電気・ガス: エネワン（株式会社サイサン）"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="gasone", name="ガスワン（株式会社サイサン）", category="電気・ガス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="電気・ガス: ガスワン（株式会社サイサン）"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="hyundai-mobility-japan", name="Hyundai Mobility Japan", category="自動車"`
-- confidence: 0.90
-- 評価: `evidenceQuote="Hyundai Mobility Japan: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="jal-mileage-bank", name="日本航空(JALマイレージバンク)", category="交通"`
-- confidence: 0.90
-- 評価: `evidenceQuote="日本航空(JALマイレージバンク)"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="kamei", name="カメイ株式会社", category="エネルギー"`
-- confidence: 0.90
-- 評価: `evidenceQuote="カメイ株式会社：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="mercedes-benz", name="メルセデス・ベンツ", category="自動車"`
-- confidence: 0.90
-- 評価: `evidenceQuote="メルセデス・ベンツ: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="oishix", name="Oisix", category="ネット通販"`
-- confidence: 0.90
-- 評価: `evidenceQuote="百貨店・コンビニ・スーパー・ドラッグストア: Oisix"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="premium-water", name="プレミアムウォーター", category="生活サービス"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ネットショッピング・通販・宅配: プレミアムウォーター"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="princess-cruises", name="プリンセスクルーズ", category="旅行"`
-- confidence: 0.90
-- 評価: `evidenceQuote="プリンセスクルーズ：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `rakuten-point-partners`
-- 内容: `id="rakuten-gora", name="楽天GORA", category="ネット通販"`
-- confidence: 0.90
-- 評価: `evidenceQuote="楽天GORA：楽天ポイントカードが使えるお店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="sbinft-market", name="SBINFT Market", category="ネット通販"`
-- confidence: 0.90
-- 評価: `evidenceQuote="ネットショッピング・通販・宅配: SBINFT Market"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `v-point-partners`
-- 内容: `id="shaddy-salada-kan", name="シャディ・サラダ館", category="ギフト"`
-- confidence: 0.90
-- 評価: `evidenceQuote="シャディ・サラダ館: Vポイント加盟店"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-#### `addRecord/stores` from `ponta-partners`
-- 内容: `id="telasa", name="TELASA（テラサ）", category="エンタメ・チケット"`
-- confidence: 0.90
-- 評価: `evidenceQuote="音楽・映像・ゲーム: TELASA（テラサ）"`
-- 対応案: 手動で seed ファイルに反映するか、不要なら無視
-
-_他 3 件は省略 (sources/proposed-migrations.json を参照)_
+- 評価: `evidenceQuote="お店・サービス一覧: VIPライナー（高速バス）"`
+- 対応案: 取り込むなら `npm run sync:approve -- sto-ded8618d60`、不要なら無視
 
 </details>
 
 ## 操作
+- **取り込みたい項目がある場合 (半自動)**: ローカルでこのブランチを checkout し、`npm run sync:approve -- <ID> [<ID> ...]` を実行 (ID は各項目見出しの先頭)。seed-additions.ts への反映・queue からの除去・REVIEW_QUEUE.md の再生成まで自動。`npm run sync:approve -- --list` で一覧表示。実行後 `npm test && npm run build` を確認して commit
 - このまま **merge** すると、要レビュー項目を読み込んだ証拠として記録されるだけ (実体 seed 変更はなし)
 - 手動キュレートしたい場合は、このブランチに追加 commit してから merge
 - 不要なら **close** で次週まで保留
