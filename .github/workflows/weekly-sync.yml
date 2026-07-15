@@ -3,6 +3,7 @@ name: Weekly Master Sync
 on:
   schedule:
     # 週2回。日曜・水曜 21:00 UTC = 月曜・木曜 06:00 JST
+    # 無料枠分割: 月曜 run は mon グループ、木曜 run は thu グループを fetch (下記 Determine fetch group)
     - cron: '0 21 * * 0,3'
   workflow_dispatch:
     inputs:
@@ -10,6 +11,15 @@ on:
         description: 'auto-merge をスキップし、全件 review PR に流す (慣らしテスト用)'
         type: boolean
         default: false
+      group:
+        description: '同期グループ (auto=実行日の JST 曜日で導出 / mon / thu / all=全 enabled ソース)'
+        type: choice
+        default: auto
+        options:
+          - auto
+          - mon
+          - thu
+          - all
 
 permissions:
   contents: write
@@ -37,10 +47,33 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Fetch all enabled sources
+      # 無料枠 (gemini-2.5-flash = 20 req/日) を超えないよう enabled ソースを mon/thu に分割。
+      # schedule 起動 (または workflow_dispatch group=auto) は実行時刻の JST 曜日から導出:
+      #   木曜 (date +%u = 4) → thu、それ以外 (月曜含む) → mon。
+      # workflow_dispatch で group を明示 (mon/thu/all) した場合はそれを優先。
+      - name: Determine fetch group
+        id: group
+        run: |
+          INPUT="${{ github.event.inputs.group }}"
+          if [ -n "$INPUT" ] && [ "$INPUT" != "auto" ]; then
+            GROUP="$INPUT"
+            echo "🗂 group=$GROUP (workflow_dispatch 明示指定)"
+          else
+            DOW=$(TZ=Asia/Tokyo date +%u)  # 1=月 .. 4=木 .. 7=日
+            if [ "$DOW" = "4" ]; then
+              GROUP="thu"
+            else
+              GROUP="mon"
+            fi
+            echo "🗂 group=$GROUP (JST 曜日 %u=$DOW から導出、auto)"
+          fi
+          echo "group=$GROUP" >> $GITHUB_OUTPUT
+
+      - name: Fetch sources for group
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: npm run sync:fetch-all
+          GROUP: ${{ steps.group.outputs.group }}
+        run: npm run sync:fetch-all -- --group "$GROUP"
 
       - name: Propose
         run: npm run sync:propose
@@ -275,6 +308,7 @@ jobs:
         if: always()
         run: |
           echo "## Weekly Sync Result" >> $GITHUB_STEP_SUMMARY
+          echo "- fetchGroup: ${{ steps.group.outputs.group }}" >> $GITHUB_STEP_SUMMARY
           echo "- autoApplicable: ${{ steps.counts.outputs.auto }}" >> $GITHUB_STEP_SUMMARY
           echo "- needsReview: ${{ steps.counts.outputs.review }}" >> $GITHUB_STEP_SUMMARY
           echo "- autoMergeEnabled: ${{ steps.config.outputs.enabled }}" >> $GITHUB_STEP_SUMMARY

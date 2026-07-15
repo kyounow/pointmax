@@ -1,8 +1,11 @@
-// 全 enabled ソースを順次 fetch する weekly cron 用ドライバ。
+// enabled ソースを順次 fetch する weekly cron 用ドライバ。
 // 1 ソースの失敗で全体停止しないよう、各ソースを subprocess で分離して実行。
 //
 // Usage:
-//   npm run sync:fetch-all                  本番 (Gemini 実呼び出し)
+//   npm run sync:fetch-all                  本番 (Gemini 実呼び出し、全 enabled = --group all 相当)
+//   npm run sync:fetch-all -- --group mon   月グループのみ fetch (無料枠分割、weekly-sync 月曜 run)
+//   npm run sync:fetch-all -- --group thu   木グループのみ fetch (weekly-sync 木曜 run)
+//   npm run sync:fetch-all -- --group all   全 enabled (手動フル実行、後方互換)
 //   npm run sync:fetch-all -- --dry-run     各ソースの prompt 解決まで確認 (Gemini 呼び出し無し)
 //   npm run sync:fetch-all -- --parallel=2  並列 fetch (Wave 3 C-4 audit-fix、デフォルト 1)
 //                                            ⚠ Gemini 無料枠 (10 RPM) では parallel=1 推奨。
@@ -13,7 +16,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
 import { load as parseYaml } from "js-yaml";
-import type { RegistryFile } from "./types";
+import type { RegistryFile, RegistrySource } from "./types";
 
 // ───────────────────────────────────────────────────────────────
 // Paths
@@ -55,6 +58,58 @@ function parseParallel(argv: string[]): number {
     }
   }
   return 1;
+}
+
+// ───────────────────────────────────────────────────────────────
+// Group filter (無料枠分割: mon / thu / all)
+// ───────────────────────────────────────────────────────────────
+
+// `--group` フィルタの受理値。all = enabled 全部 (手動フル実行 / 後方互換)。
+export type GroupFilter = "mon" | "thu" | "all";
+
+function normalizeGroup(raw: string): GroupFilter {
+  const v = raw.trim().toLowerCase();
+  if (v === "mon" || v === "thu" || v === "all") return v;
+  console.log(`⚠️  --group の値が不正 (${raw})、all を使用 (mon|thu|all)`);
+  return "all";
+}
+
+// `--group=mon` (= 区切り) と `--group mon` (スペース区切り) の両方を受理。
+// 引数なしは all (手動フル実行の後方互換)。
+function parseGroup(argv: string[]): GroupFilter {
+  for (const a of argv) {
+    if (a.startsWith("--group=")) return normalizeGroup(a.slice("--group=".length));
+  }
+  const i = argv.indexOf("--group");
+  if (i >= 0 && argv[i + 1] !== undefined) return normalizeGroup(argv[i + 1]);
+  return "all";
+}
+
+// enabled だが fetchGroup 未指定のソースを見つけた時のデフォルト警告。
+const warnUnassigned = (s: RegistrySource): void =>
+  console.log(
+    `⚠️  ${s.id}: enabled だが fetchGroup 未指定。取りこぼし防止のため group フィルタに含めます (registry.yaml に fetchGroup: mon|thu を付与してください)`,
+  );
+
+// group フィルタの純関数 (テスト可能に切り出し)。
+//   all       → enabled ソース全部 (手動フル実行 / 後方互換)
+//   mon | thu → enabled かつ fetchGroup が一致するもの。ただし fetchGroup 未指定の
+//               enabled ソースは onUnassigned で通知しつつ含める (新規追加の
+//               取りこぼし防止。契約テストが未指定を弾くので実運用では発生しない想定)。
+export function selectSourcesForGroup(
+  sources: RegistrySource[],
+  group: GroupFilter,
+  onUnassigned: (source: RegistrySource) => void = warnUnassigned,
+): RegistrySource[] {
+  const enabled = sources.filter((s) => s.enabled);
+  if (group === "all") return enabled;
+  return enabled.filter((s) => {
+    if (s.fetchGroup === undefined) {
+      onUnassigned(s);
+      return true;
+    }
+    return s.fetchGroup === group;
+  });
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -108,6 +163,7 @@ async function main(): Promise<void> {
   const argv = process.argv.slice(2);
   const dryRun = parseDryRun(argv);
   const parallel = parseParallel(argv);
+  const group = parseGroup(argv);
 
   if (dryRun) {
     console.log("🔍 --dry-run モード: Gemini 呼び出しなし (prompt 解決まで確認)");
@@ -119,10 +175,11 @@ async function main(): Promise<void> {
   }
 
   const registry = loadRegistry();
-  const enabledSources = registry.sources.filter((s) => s.enabled);
+  const enabledCount = registry.sources.filter((s) => s.enabled).length;
+  const selectedSources = selectSourcesForGroup(registry.sources, group);
 
   console.log(
-    `📋 registry: ${registry.sources.length} ソース中 ${enabledSources.length} 件 enabled`,
+    `📋 registry: ${registry.sources.length} ソース中 ${enabledCount} 件 enabled、group=${group} (${selectedSources.length}/${enabledCount} sources) を fetch`,
   );
 
   type SourceResult = {
@@ -135,9 +192,9 @@ async function main(): Promise<void> {
 
   if (parallel <= 1) {
     // ─── Sequential (デフォルト) ───
-    for (const source of enabledSources) {
+    for (const source of selectedSources) {
       console.log(`\n${"─".repeat(60)}`);
-      console.log(`🚀 [${results.length + 1}/${enabledSources.length}] ${source.id}`);
+      console.log(`🚀 [${results.length + 1}/${selectedSources.length}] ${source.id}`);
 
       const startMs = Date.now();
 
@@ -169,7 +226,7 @@ async function main(): Promise<void> {
       // 1 ソースが内部で 3 attempts まで retry し得るため、ソース間にも
       // 余裕を持たせて RPM 超過を避ける。dry-run でも習慣的に入れる
       // (本番との動作差を最小化、6 ソースで合計 25s 待機程度)。
-      if (results.length < enabledSources.length) {
+      if (results.length < selectedSources.length) {
         await new Promise((r) => setTimeout(r, 5000));
       }
     }
@@ -178,7 +235,7 @@ async function main(): Promise<void> {
     // worker N で消化、ソース間 sleep は省略 (worker 内の subprocess 実行時間で
     // 自然にズレるため、有料枠想定で運用)。
     let completed = 0;
-    await runWithConcurrency(enabledSources, parallel, async (source) => {
+    await runWithConcurrency(selectedSources, parallel, async (source) => {
       const startMs = Date.now();
       const res = await runFetchSource(source.id, dryRun, REPO_ROOT);
       const elapsed = (Date.now() - startMs) / 1000;
@@ -186,7 +243,7 @@ async function main(): Promise<void> {
       results.push({ id: source.id, success, elapsed });
       completed += 1;
       console.log(
-        `${success ? "✓" : "❌"} [${completed}/${enabledSources.length}] ${source.id} (${elapsed.toFixed(1)}s)${success ? "" : ` exit=${res.code ?? "null"}`}`,
+        `${success ? "✓" : "❌"} [${completed}/${selectedSources.length}] ${source.id} (${elapsed.toFixed(1)}s)${success ? "" : ` exit=${res.code ?? "null"}`}`,
       );
       if (!success && res.error) {
         console.log(`   spawn error: ${res.error.message}`);
@@ -216,8 +273,16 @@ async function main(): Promise<void> {
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error("💥 fetch-all unexpected error:", err instanceof Error ? err.message : String(err));
-  // 予期しないエラーも exit 0 で抜ける (propose を走らせる)
-  process.exit(0);
-});
+// エントリポイントとして直接実行された時のみ main() を走らせる
+// (registry-consistency.test.ts が selectSourcesForGroup を import しても
+//  副作用で fetch が走らないようにする)。
+const isMain =
+  process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
+
+if (isMain) {
+  main().catch((err) => {
+    console.error("💥 fetch-all unexpected error:", err instanceof Error ? err.message : String(err));
+    // 予期しないエラーも exit 0 で抜ける (propose を走らせる)
+    process.exit(0);
+  });
+}

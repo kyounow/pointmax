@@ -6,10 +6,33 @@
 #  - 新規追加時は id をユニーク (slug, kebab-case) に
 #  - 一時的に止めたい場合は enabled: false で残す (履歴のため削除しない)
 #  - notes に「なぜこのソースを選んだか」を残すと将来の自分が助かる
+#  - enabled: true にするソースには fetchGroup (mon|thu) を必ず付与する
+#    (無料枠分割。registry-consistency 契約テストで強制。下記 fetchGroup 節参照)
 #
 # extractor の選択肢: card | jal-tokuyaku | point-partner | payment-app
 # produces の選択肢:  cards / storeRules / categoryRules / stores / loyaltyRules / paymentApps
 # extractionScope:    comprehensive | chains-only | existing-only
+#
+# ─── fetchGroup (同期グループ / 無料枠分割) ───
+# gemini-2.5-flash の無料枠 = 20 リクエスト/日。enabled 15 ソースを 1 日で全 fetch
+# すると、重量級 (3 attempts 常連) + crawl:index (索引1+子最大5=最大6req) の消費で
+# 実行順後半のソースが 429 で枯渇する (2026-07-15 手動 run 29384535151 で後半 5
+# ソースが空と実証)。→ 月 (mon) / 木 (thu) の 2 グループに分割し、各実行を無料枠内に収める。
+# weekly-sync.yml が実行時刻の JST 曜日から group を導出 (月→mon / 木→thu)、
+# fetch-all.ts の `--group mon|thu|all` で対象を絞る。手動フル実行は `--group all`。
+#
+# リクエスト消費でバランス (重量級=最大3req / crawl=最大6req/attempt セット):
+#   mon (worst ≈18 req):
+#     rakuten-point-partners (重3) / jre-point-campaigns (crawl6) / d-point-partners /
+#     smbc-v-gold-7percent / jcb-jpoint-partners / d-pay-campaigns / epos-tamaru-market
+#   thu (worst ≈19 req):
+#     v-point-partners (重3) / ponta-partners (重3) / rakuten-pay-campaigns (crawl6) /
+#     jal-card-tokuyaku-list / mufg-card-global-point / orico-card-member-point /
+#     paypay-campaigns / smbc-vpoint-up
+#
+# 分割根拠: 重量級 3 ソース (rakuten/v-point/ponta) と crawl 2 ソース (jre/rakuten-pay)
+# を mon/thu に分散し、両グループの worst-case を 20 req 以内かつほぼ均等 (18/19) にする。
+# enabled:false のソースは fetchGroup 不要 (enabled:true 化する PR で必ず付与すること)。
 
 version: 1
 
@@ -38,6 +61,7 @@ sources:
       - categoryRules
     extractionScope: chains-only
     enabled: true
+    fetchGroup: thu
     notes: |
       ★ 2026-05-12 (3 度目): milenet/group/index.html も Gemini が "navigation hub,
       not the partner list itself" と判定。実際の店舗データを持つ URL に再々切替。
@@ -117,6 +141,7 @@ sources:
       - stores
     extractionScope: chains-only
     enabled: true
+    fetchGroup: mon
     notes: |
       楽天ポイントカード提示で貯まる加盟店一覧。
       加盟店数が膨大 (個店 + 全国チェーン) なので chains-only。
@@ -131,6 +156,7 @@ sources:
       - stores
     extractionScope: chains-only
     enabled: true
+    fetchGroup: mon
     notes: |
       dポイントカード提示で貯まる加盟店一覧。
       加盟店数が膨大なので chains-only。
@@ -144,6 +170,7 @@ sources:
       - stores
     extractionScope: chains-only
     enabled: true
+    fetchGroup: thu
     notes: |
       Vポイントカード (旧Tカード) 提示で貯まる加盟店一覧。
       2024 年に Tポイント が Vポイント に統合。tsite.jp は旧サイトだが現在も提携店リストとして機能している模様。
@@ -157,6 +184,7 @@ sources:
       - stores
     extractionScope: chains-only
     enabled: true
+    fetchGroup: thu
     notes: |
       Pontaカード提示で貯まる加盟店リスト。
       pointCardId は ponta-card を対象。
@@ -171,6 +199,7 @@ sources:
       - categoryRules
     extractionScope: chains-only
     enabled: true
+    fetchGroup: mon
     notes: |
       ★ 2026-05-12 成功: 対象店舗一覧ページ (cardinfo9001629.jsp) で URL Context Tool 取得成功。
       Gemini が 22 storeRules を抽出 (旧 proper_p5.jsp の散文ループ問題を回避)。
@@ -192,6 +221,7 @@ sources:
       - categoryRules
     extractionScope: chains-only
     enabled: true
+    fetchGroup: thu
     notes: |
       ★ 2026-05-16 url をルールページに差し替え。
       旧 overview ページ (/mufgcard/point/global/index.html) は
@@ -216,6 +246,7 @@ sources:
       - categoryRules
     extractionScope: chains-only
     enabled: true
+    fetchGroup: thu
     notes: |
       ★ 2026-05-16 url を THE POINT 専用ページに差し替え + enabled:true 復帰。
       旧汎用会員ページ (/for/member/orico/) は「全体付与率 0.5% (200円1pt)」を
@@ -240,6 +271,7 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: true
+    fetchGroup: mon
     crawl:
       mode: index
       maxChildren: 5
@@ -277,6 +309,7 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: true
+    fetchGroup: thu
     crawl:
       mode: index
       maxChildren: 5
@@ -312,6 +345,7 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: true
+    fetchGroup: mon
     notes: |
       ★ 2026-05-20 V5 Phase 3 で追加、V5-1 (同日) で enabled: true 化。
       V5-2 でカードグレード別に 2 系列分離: W (cardIds=["jcb-w"]、基本 1%) と
@@ -343,6 +377,7 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: true
+    fetchGroup: mon
     notes: |
       ★ 2026-05-17 追加 (#B 決済系キャンペーン)。paymentAppId=pa-d-pay、
       還元通貨 d-pt。扱いは rakuten-pay-campaigns と同じ (campaign-v3.0、
@@ -368,6 +403,7 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: true
+    fetchGroup: thu
     notes: |
       ★ 2026-05-28 追加 (#C キャンペーン獲得拡充 PR #57)。
       paymentAppId=pa-paypay、還元通貨=paypay。campaign-v3.0 extractor が
@@ -393,6 +429,7 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: true
+    fetchGroup: thu
     notes: |
       ★ 2026-05-20 追加 (#B-rem キャンペーン取り込み拡充、ユーザー提供 URL)。
       ★ V5-3 (2026-05-20 夜) で extractor を campaign → ongoing-program に変更、
@@ -516,6 +553,7 @@ sources:
       - memberships
     extractionScope: chains-only
     enabled: true
+    fetchGroup: mon
     notes: |
       ★ 2026-07-15 追加 (EPOS 3グレード対応)。
       トップページは注目ショップ中心のため網羅には 50音別索引

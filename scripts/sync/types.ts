@@ -19,6 +19,13 @@ import type { CollectionName } from "../../src/domain/migrations";
 // Layer 0: Source registry
 // ===========================================================
 
+// 同期グループ。gemini-2.5-flash 無料枠 (20 req/日) を超えないよう
+// enabled ソースを月/木の 2 グループに分割する (fetch-all の --group フィルタと
+// weekly-sync.yml の JST 曜日導出で使用)。
+//   mon = 月曜 run で fetch / thu = 木曜 run で fetch
+// enabled: true のソースは registry.yaml で必須 (registry-consistency 契約テストで強制)。
+export type FetchGroup = "mon" | "thu";
+
 // sources/registry.yaml の各エントリ
 export type RegistrySource = {
   id: string;                       // ユニークなソース ID (slug)
@@ -28,6 +35,7 @@ export type RegistrySource = {
   produces: ProducesKind[];         // このソースから出るエンティティ種別
   extractionScope: ExtractionScope; // 抽出範囲 (店舗数が膨大なソース対策)
   enabled: boolean;                 // 一時的に止めたい時 false
+  fetchGroup?: FetchGroup;          // 同期グループ (mon/thu)。enabled ソースは必須 (無料枠分割)
   crawl?: RegistryCrawl;            // 索引ハブ型ソースの 2 段階クロール (省略時は単発 fetch)
   notes?: string;
 };
