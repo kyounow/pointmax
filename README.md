@@ -267,7 +267,7 @@ src/state/
 ```
 scripts/sync/
   fetch-source.ts      # 1 ソース取得 (Gemini URL Context Tool + pre-fetch fallback + retry)
-  fetch-all.ts         # 週次 cron 用: 全 enabled ソースを順次取得
+  fetch-all.ts         # 週次 cron 用: enabled ソースを順次取得 (--group mon|thu|all で無料枠分割)
   fetch-response.ts    # Gemini レスポンス分類 (success/retryable/error)
   crawl-index.ts       # 索引ハブ型ソースの 2 段階クロール (子 URL 列挙 → 個別抽出 → 統合)
   diff-and-propose.ts  # seed vs extracted の差分 → ProposalReport
@@ -317,6 +317,14 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 ## 自動アップデート (cron)
 
 - 週2回（毎週月曜・木曜 06:00 JST）GitHub Actions が同期パイプラインを実行 (`workflow_dispatch` で手動実行可)
+- **同期ソースの月/木 2グループ分割 (無料枠対策)**: 抽出に使う gemini-2.5-flash は無料枠が
+  20 リクエスト/日のため、enabled 15 ソースを 1 日で全 fetch すると後半ソースが 429 で枯渇する。
+  そこで各ソースに `fetchGroup: mon | thu` を付与し (`sources/registry.yaml`)、**月曜 run は mon
+  グループ / 木曜 run は thu グループ**だけを fetch して各実行を無料枠内に収める。重量級
+  (3 attempts 常連: 楽天/Ponta/Vポイント) と crawl:index 型 (JRE/楽天Pay) を両グループに分散し、
+  worst-case を mon ≈18 req / thu ≈19 req に均衡させている。曜日は weekly-sync.yml が実行時刻の
+  JST 曜日から自動導出。手動 `workflow_dispatch` では `group` 入力 (`auto` / `mon` / `thu` /
+  `all`=全 enabled) でグループを明示指定できる (`all` は無料枠を消費するため手動フル実行専用)
 - 高信頼項目 (autoApplicable) は `auto-sync/YYYY-MM-DD-HHMM` ブランチ + `auto-sync` ラベル付き PR を作成し、
   safety check (件数上限/test/build) 通過後に **squash auto-merge** → main。
   bot のマージ (`GITHUB_TOKEN`) は push トリガーを起動しないため、GitHub Pages 再デプロイは

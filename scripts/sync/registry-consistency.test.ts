@@ -3,7 +3,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { load as parseYaml } from "js-yaml";
 import { SCOPE_DIRECTIVES } from "./types";
-import type { RegistryFile } from "./types";
+import type { RegistryFile, RegistrySource } from "./types";
+import { selectSourcesForGroup } from "./fetch-all";
 
 // registry.yaml の各ソースが「schema の extractor enum」「対応する
 // extractor プロンプトファイル」「有効な extractionScope」と整合することを
@@ -108,5 +109,103 @@ describe("registry.yaml 整合性契約", () => {
       const s = registry.sources.find((x) => x.id === id);
       expect(s?.crawl?.mode, id).toBe("index");
     }
+  });
+});
+
+// ── fetchGroup (無料枠 mon/thu 分割) の契約 ──
+// enabled: true のソースは gemini-2.5-flash 無料枠 (20 req/日) を超えないよう
+// mon / thu いずれかのグループに必ず属する。付け忘れると CI で気付ける。
+describe("fetchGroup 契約 (無料枠 mon/thu 分割)", () => {
+  const enabled = registry.sources.filter((s) => s.enabled);
+
+  it("enabled: true のソースは全て fetchGroup を持つ", () => {
+    const missing = enabled.filter((s) => s.fetchGroup === undefined);
+    expect(missing.map((s) => s.id)).toEqual([]);
+  });
+
+  it("enabled: true のソースの fetchGroup は mon|thu のいずれか", () => {
+    const bad = enabled.filter(
+      (s) => s.fetchGroup !== "mon" && s.fetchGroup !== "thu",
+    );
+    expect(bad.map((s) => `${s.id}:${s.fetchGroup}`)).toEqual([]);
+  });
+
+  it("mon / thu 両グループに 1 件以上あり、enabled を過不足なく尽くす", () => {
+    const mon = enabled.filter((s) => s.fetchGroup === "mon");
+    const thu = enabled.filter((s) => s.fetchGroup === "thu");
+    expect(mon.length).toBeGreaterThan(0);
+    expect(thu.length).toBeGreaterThan(0);
+    expect(mon.length + thu.length).toBe(enabled.length);
+  });
+
+  it("enabled: false のソースは fetchGroup を持たない (有効化 PR で付与)", () => {
+    const disabledWithGroup = registry.sources.filter(
+      (s) => !s.enabled && s.fetchGroup !== undefined,
+    );
+    expect(disabledWithGroup.map((s) => s.id)).toEqual([]);
+  });
+});
+
+// ── selectSourcesForGroup 単体 ──
+describe("selectSourcesForGroup", () => {
+  const mk = (
+    id: string,
+    enabled: boolean,
+    fetchGroup?: "mon" | "thu",
+  ): RegistrySource => ({
+    id,
+    label: id,
+    url: `https://example.com/${id}`,
+    extractor: "card",
+    produces: ["cards"],
+    extractionScope: "chains-only",
+    enabled,
+    ...(fetchGroup ? { fetchGroup } : {}),
+  });
+
+  const sources: RegistrySource[] = [
+    mk("a-mon", true, "mon"),
+    mk("b-thu", true, "thu"),
+    mk("c-mon", true, "mon"),
+    mk("d-disabled", false, "thu"),
+  ];
+
+  it("all は enabled 全部 (disabled は除外)", () => {
+    const r = selectSourcesForGroup(sources, "all");
+    expect(r.map((s) => s.id)).toEqual(["a-mon", "b-thu", "c-mon"]);
+  });
+
+  it("mon は fetchGroup=mon の enabled のみ", () => {
+    const r = selectSourcesForGroup(sources, "mon");
+    expect(r.map((s) => s.id)).toEqual(["a-mon", "c-mon"]);
+  });
+
+  it("thu は fetchGroup=thu の enabled のみ", () => {
+    const r = selectSourcesForGroup(sources, "thu");
+    expect(r.map((s) => s.id)).toEqual(["b-thu"]);
+  });
+
+  it("fetchGroup 未指定の enabled ソースは警告付きで mon/thu 両方に含める", () => {
+    const withUnassigned = [...sources, mk("e-unassigned", true)];
+    const warned: string[] = [];
+    const rMon = selectSourcesForGroup(withUnassigned, "mon", (s) =>
+      warned.push(s.id),
+    );
+    const rThu = selectSourcesForGroup(withUnassigned, "thu", (s) =>
+      warned.push(s.id),
+    );
+    expect(rMon.map((s) => s.id)).toContain("e-unassigned");
+    expect(rThu.map((s) => s.id)).toContain("e-unassigned");
+    expect(warned).toEqual(["e-unassigned", "e-unassigned"]);
+  });
+
+  it("all は未指定でも警告なし (enabled 全部を無条件に含む)", () => {
+    const withUnassigned = [...sources, mk("e-unassigned", true)];
+    const warned: string[] = [];
+    const r = selectSourcesForGroup(withUnassigned, "all", (s) =>
+      warned.push(s.id),
+    );
+    expect(r.map((s) => s.id)).toContain("e-unassigned");
+    expect(warned).toEqual([]);
   });
 });
