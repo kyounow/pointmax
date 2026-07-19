@@ -2,6 +2,64 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-07-20",
+      "generatedAt": "2026-07-19T21:56:35.947Z",
+      "totalCount": 4,
+      "avgConfidence": 0.902,
+      "sourcesProcessed": 15,
+      "bySource": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "count": 4,
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (2倍) → マルイ（モディ・マルイウェブチャネル含む）",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (3倍) → コジマ",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (4倍) → ビックカメラ",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (3倍) → ノジマ",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 317,
+        "byReason": {
+          "idCollision": 23,
+          "missingStoreBody": 179,
+          "missingProgramBody": 8,
+          "lowConfidence": 28,
+          "storeAdditionsDisabled": 76,
+          "excludedCategory": 2,
+          "userBlocked": 1
+        }
+      }
+    },
+    {
       "date": "2026-07-16",
       "generatedAt": "2026-07-15T22:02:42.383Z",
       "totalCount": 4,
