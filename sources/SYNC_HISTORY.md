@@ -3,6 +3,37 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-07-20 (auto 4 件 / review 317 件)
+
+- 平均 confidence: 0.90 / source 数: 15
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| たまるマーケット (EPOS ポイントアップサイト、公式) | 提携店舗 | 4 |
+
+### Review queue 内訳 (317 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 179 |
+| storeAdditionsDisabled | 76 |
+| lowConfidence | 28 |
+| idCollision | 23 |
+| missingProgramBody | 8 |
+| excludedCategory | 2 |
+| userBlocked | 1 |
+
+<details><summary>追加項目 4 件</summary>
+
+### たまるマーケット (EPOS ポイントアップサイト、公式) / 提携店舗 (4)
+- たまるマーケット (2倍) → マルイ（モディ・マルイウェブチャネル含む）
+- たまるマーケット (3倍) → コジマ
+- たまるマーケット (4倍) → ビックカメラ
+- たまるマーケット (3倍) → ノジマ
+
+</details>
+
+---
+
 ## 2026-07-16 (auto 4 件 / review 469 件)
 
 - 平均 confidence: 0.91 / source 数: 14

@@ -1,9 +1,9 @@
 {
   "sourceId": "jre-point-campaigns",
   "sourceUrl": "https://www.jrepoint.jp/campaign/list/",
-  "fetchedAt": "2026-07-01T22:24:02.894Z",
+  "fetchedAt": "2026-07-19T21:52:49.314Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] index=https://www.jrepoint.jp/campaign/list/ 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: HTML parsing library (BeautifulSoup) not available, unable to extract campaign URLs."
+  "notes": "[crawl:index] 索引ページの子 URL 列挙に失敗: urls[] missing。子ページ抽出は未実施。"
 }
