@@ -470,6 +470,69 @@ describe("v6.5.0: エポス 3グレード + たまるマーケット", () => {
   });
 });
 
+// PR-1a: JAL特約店 2倍 の「加入要否」2 分割の seed 契約。
+// CLUB-A系 (jal-suica) は SMP 自動付帯で常時 2倍 (optIn 無し)、
+// 普通カード (jal-card) は SMP 任意加入なので optIn:true で既定 OFF。
+// 旧「両カードに一律 2倍」への退行 (jal-card を optIn 無しに戻す等) を防ぐ。
+describe("PR-1a: JAL特約店 2倍 の加入要否分割", () => {
+  it("prog-jal-tokuyaku (CLUB-A系) は cardIds=[jal-suica]・optIn 無し・2%", () => {
+    const { programs } = seed();
+    const p = programs.find((x) => x.id === "prog-jal-tokuyaku");
+    expect(p, "prog-jal-tokuyaku が未登録").toBeDefined();
+    expect(p?.cardIds).toEqual(["jal-suica"]);
+    expect(p?.optIn).toBeUndefined(); // CLUB-A系は自動付帯なので既定 ON
+    expect(p?.rate).toBe(0.02);
+    expect(p?.currencyId).toBe("jal-mile");
+  });
+
+  it("prog-jal-tokuyaku-normal (普通カード) は cardIds=[jal-card]・optIn:true・2%", () => {
+    const { programs } = seed();
+    const p = programs.find((x) => x.id === "prog-jal-tokuyaku-normal");
+    expect(p, "prog-jal-tokuyaku-normal が未登録").toBeDefined();
+    expect(p?.cardIds).toEqual(["jal-card"]);
+    expect(p?.optIn).toBe(true); // SMP 加入者のみ「使う」ON で発火
+    expect(p?.rate).toBe(0.02);
+  });
+
+  it("両 program が同一店舗集合に加盟している (membership 複製)", () => {
+    const { memberships } = seed();
+    const club = new Set(
+      memberships
+        .filter((m) => m.programId === "prog-jal-tokuyaku")
+        .map((m) => m.storeId),
+    );
+    const normal = new Set(
+      memberships
+        .filter((m) => m.programId === "prog-jal-tokuyaku-normal")
+        .map((m) => m.storeId),
+    );
+    expect(club.size).toBeGreaterThan(0);
+    expect(normal).toEqual(club);
+  });
+});
+
+// PR-1c: 楽天「5と0のつく日」の cap 対応 seed 契約。
+// 旧 rate 0.04 / primary への退行を防ぎ、addOn + cap 10万円を固定する。
+describe("PR-1c: 楽天「5と0のつく日」の addOn + cap 設定", () => {
+  it("prog-rakuten-ichiba-zero-five-day は addOn / rate 0.01 / cap 10万円", () => {
+    const { programs } = seed();
+    const p = programs.find((x) => x.id === "prog-rakuten-ichiba-zero-five-day");
+    expect(p, "prog-rakuten-ichiba-zero-five-day が未登録").toBeDefined();
+    expect(p?.bonusType).toBe("addOn");
+    expect(p?.rate).toBe(0.01);
+    expect(p?.rate).not.toBe(0.04); // 旧 primary 4% への退行防止
+    expect(p?.monthlyCapAmountYen).toBe(100000); // 1,000pt/月 ÷ 0.01
+    expect(p?.recurringDays).toEqual([5, 10, 15, 20, 25, 30]);
+  });
+
+  it("prog-rakuten-ichiba-base は据え置き (primary 3%)", () => {
+    const { programs } = seed();
+    const p = programs.find((x) => x.id === "prog-rakuten-ichiba-base");
+    expect(p?.bonusType).toBe("primary");
+    expect(p?.rate).toBe(0.03);
+  });
+});
+
 // v6 PR-1c: Card.familyId / gradeLevel の seed 契約。
 //   - familyId が指定されているカードは CARD_FAMILIES に実在する family を指す
 //     (dangling familyId は排他 invariant が引けず死にデータになる)。

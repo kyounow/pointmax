@@ -11,19 +11,44 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // ═══════════════════════════════════════════════════════════════
   // PR 1: JAL特約店
   // ═══════════════════════════════════════════════════════════════
+  // PR-1a: JAL特約店 2倍 を「加入要否」で 2 分割する。
+  //   特約店 2倍 (100円=2マイル) は「ショッピングマイル・プレミアム (SMP)」加入が前提。
+  //   - jal-suica (CLUB-Aゴールド系) は SMP が自動付帯なので常時 2倍 → optIn 無し。
+  //   - jal-card (普通カード) は SMP が任意加入 (年会費4,950円)。未加入だと 2倍にならず、
+  //     従来の「両カードに一律 2倍」は SMP 未加入者への過大案内だった → optIn:true で既定 OFF。
+  //   membership は両 program に複製する (JAL_TOKUYAKU_STORE_IDS を両者で共有)。
   {
     id: "prog-jal-tokuyaku",
     scope: "member-stores",
-    name: "JALカード特約店",
-    cardIds: ["jal-suica", "jal-card"],
+    name: "JALカード特約店 (CLUB-A系)",
+    cardIds: ["jal-suica"],
     rate: 0.02,
     currencyId: "jal-mile",
     bonusType: "primary",
     description:
-      "JALカード ショッピングマイル・プレミアム加入時、特約店で 100円=2 マイル (通常の 2 倍)",
+      "JALカード CLUB-A系 (ショッピングマイル・プレミアム自動付帯) は特約店で 100円=2 マイル (通常の 2 倍)",
     conditions:
-      "JALカード ショッピングマイル・プレミアム (年会費 4,950円) 加入要。" +
-      "CLUB-A 系は自動付帯。100円=2 マイル積算。",
+      "CLUB-A 系 (jal-suica 等) はショッピングマイル・プレミアムが自動付帯のため常時 2倍。100円=2 マイル積算。",
+    officialUrl: "https://www.jal.co.jp/jp/ja/jalcard/service/tokuyakuten/",
+  },
+
+  // PR-1a: JAL特約店 2倍 (普通カード = SMP 任意加入者向け、既定 OFF)
+  {
+    id: "prog-jal-tokuyaku-normal",
+    scope: "member-stores",
+    name: "JALカード特約店 (普通カード・SMP加入時)",
+    cardIds: ["jal-card"],
+    rate: 0.02,
+    currencyId: "jal-mile",
+    bonusType: "primary",
+    // 普通カードの 2倍は SMP (年会費4,950円) 加入者のみ → optIn:true で既定 OFF 出荷。
+    // enabled は書かない (ユーザー所有キー)。SMP 加入者が「使う」を ON にした時のみ評価に載る。
+    optIn: true,
+    description:
+      "JALカード普通カードでもショッピングマイル・プレミアム加入時は特約店で 100円=2 マイル (通常の 2 倍)。" +
+      "既定OFF・SMP に加入済みなら「使う」をONに (未加入は 100円=1 マイルのため 2倍にならない)。",
+    conditions:
+      "ショッピングマイル・プレミアム (年会費 4,950円) 加入要。未加入時は特約店でも 100円=1 マイル (2倍にならない)。",
     officialUrl: "https://www.jal.co.jp/jp/ja/jalcard/service/tokuyakuten/",
   },
 
@@ -43,20 +68,29 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description: "楽天カード × 楽天市場 通常 + SPU 基本 = 3%",
   },
 
-  // A-2: 楽天カード × 楽天市場「5と0のつく日」4% (recurringDays)
+  // A-2: 楽天カード × 楽天市場「5と0のつく日」+1% (recurringDays)
+  // PR-1c: 旧実装は rate 0.04 / primary で「5と0の日は 4%」を単一 program で表していたが、
+  //   これだと (1) A-1 base 3% と排他選択になり二重計上を取り違える、(2) この施策の
+  //   本当の獲得上限「1,000pt/月」を primary に付けると SPU 基本分まで巻き添えクランプする
+  //   過小誤差になる、という 2 点が問題だった。
+  //   → 「5と0のつく日」の正味は +1% (カード分) なので、base 3% (A-1 primary) の上に
+  //     addOn +1% として乗せる。獲得上限 1,000pt/月 は addOn 側だけに monthlyCapAmountYen
+  //     (= 1,000pt ÷ 0.01 = 100,000円) で付与し、10万円超では addOn 分のみクランプ、
+  //     base 3% は無傷に保つ。
   {
     id: "prog-rakuten-ichiba-zero-five-day",
     scope: "member-stores",
-    name: "楽天市場「5と0のつく日」",
+    name: "楽天市場「5と0のつく日」+1%",
     cardIds: ["rakuten-card"],
-    rate: 0.04,
+    rate: 0.01,
     currencyId: "rakuten-pt",
-    bonusType: "primary",
+    bonusType: "addOn",
     validFrom: "2020-01-01",
     recurringDays: [5, 10, 15, 20, 25, 30],
-    description: "楽天市場「5と0のつく日」+1% (毎月 5/10/15/20/25/30 日)",
+    monthlyCapAmountYen: 100000, // 獲得上限 1,000pt/月 ÷ 0.01
+    description: "楽天市場「5と0のつく日」の楽天カード +1% (毎月 5/10/15/20/25/30 日、base 3% に上乗せ)",
     notes:
-      "5と0のつく日 (毎月 5/10/15/20/25/30) のみ、要エントリー。SPU 基本 +2% 込みで実質 +4% 還元。",
+      "5と0のつく日 (毎月 5/10/15/20/25/30) のみ、要エントリー。楽天カード分 +1% (base 3% と合算で実質4%)。獲得上限 1,000pt/月 (= 支払 10万円/月まで)。",
   },
 
   // A-3: SMBC ゴールド(NL) × タッチ決済 7% (22 stores)
@@ -72,6 +106,8 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     validFrom: "2023-04-03",
     description:
       "SMBC ゴールド(NL) Visa/Master タッチ決済 + スマホ利用で 7% Vポイント還元",
+    // PR-1b: 7%はスマホ (Apple Pay/Google Pay) のタッチ決済限定。物理カードのタッチは対象外。
+    notes: "スマホのタッチ決済限定 (物理カードのタッチは対象外)",
   },
 
   // A-4: Olive × タッチ決済 8% (22 stores)
@@ -87,6 +123,8 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     validFrom: "2023-04-03",
     description:
       "Oliveフレキシブルペイ スマホタッチ決済で 8% Vポイント還元 (smbc-v 7% + Olive 連携 +1%)",
+    // PR-1b: 8%はスマホ (Apple Pay/Google Pay) のタッチ決済限定。物理カードのタッチは対象外。
+    notes: "スマホのタッチ決済限定 (物理カードのタッチは対象外)",
   },
 
   // V5-3 follow-up: Olive アカウント 選べる特典「Vポイントアッププログラム+1%」
@@ -223,6 +261,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "rakuten-pt",
     bonusType: "primary",
     description: "楽天ポイントカード提示で 200円=1pt (0.5%) 還元",
+    notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
 
   // B-2: 楽天ポイントカード 1% (複数店舗)
@@ -247,6 +286,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "d-pt",
     bonusType: "primary",
     description: "dポイントカード提示で 200円=1pt (0.5%) 還元",
+    notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
 
   // B-4: dポイントカード 1% (複数店舗)
@@ -271,6 +311,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "ponta-pt",
     bonusType: "primary",
     description: "Pontaカード提示で 200円=1pt (0.5%) 還元",
+    notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
 
   // B-6: Pontaカード 1% (複数店舗)
@@ -295,6 +336,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "v-pt",
     bonusType: "primary",
     description: "Vポイントカード(旧Tカード)提示で 200円=1pt (0.5%) 還元",
+    notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
 
   // B-8: nanacoカード 1% (セブン-イレブン)
@@ -319,6 +361,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "waon-pt",
     bonusType: "primary",
     description: "WAONカード提示で 200円=1pt (0.5%) 還元",
+    notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
 
   // B-10: JRE POINT カード 0.5% (駅ナカ加盟店)
@@ -331,6 +374,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "jre",
     bonusType: "primary",
     description: "JRE POINT カード提示で 200円(税抜)=1pt (0.5%) 還元 (駅ナカ加盟店)",
+    notes: "付与は200円(税抜)単位 (端数切り捨て)", // PR-1d
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -372,6 +416,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "d-pt",
     bonusType: "primary",
     description: "d払い利用で 0.5% dポイント還元 (誰でも、200円=1pt)",
+    notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
 
   // C-4: d払い × dカード 上乗せ 0.5% (addOn)
@@ -487,6 +532,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description:
       "nanaco 電子マネー支払いで 200円1pt (0.5%) 還元。" +
       "セブン-イレブン等 loyalty 加盟店は nanaco-card 経路で計上、ここは非 loyalty 店のみ。",
+    notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
 
   // C-13: WAON 電子マネー ベース還元 0.5% (addOn)
@@ -501,6 +547,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description:
       "WAON 電子マネー支払いで 200円1pt (0.5%) 還元。" +
       "イオン系等 loyalty 加盟店は waon-card 経路で計上、ここは非 loyalty 店のみ。",
+    notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -735,27 +782,33 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   },
 ];
 
+// PR-1a: JAL特約店の加盟店リスト。CLUB-A系 (prog-jal-tokuyaku) と
+// 普通カード+SMP (prog-jal-tokuyaku-normal) の両 program で同一店舗に適用するため、
+// store-id 配列を 1 箇所に集約して両 defineMemberships で共有する (list のドリフト防止)。
+const JAL_TOKUYAKU_STORE_IDS = [
+  "eneos",
+  "idemitsu",
+  "welcia",
+  "matsukiyo",
+  "kinokuniya",
+  "aeon",
+  "daimaru-matsuzakaya",
+  "muji",
+  "uniqlo",
+  "royal-host",
+  "tsuruha",
+  "conv-familymart",
+];
+
 // 店舗 × プログラムの加盟関係 (M2M)
-// PR 1: JAL特約店 12 件
+// PR 1: JAL特約店 12 件 (CLUB-A系 / 普通カード の 2 program に複製)
 // PR 2: 上記 Programs の memberships を大幅追加 (合計 200+ 件)
 export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   // ═══════════════════════════════════════════════════════════════
-  // PR 1: JAL特約店 加盟店 12 件
+  // PR 1: JAL特約店 加盟店 12 件 × 2 program (CLUB-A系 / 普通カード+SMP)
   // ═══════════════════════════════════════════════════════════════
-  ...defineMemberships("prog-jal-tokuyaku", [
-    "eneos",
-    "idemitsu",
-    "welcia",
-    "matsukiyo",
-    "kinokuniya",
-    "aeon",
-    "daimaru-matsuzakaya",
-    "muji",
-    "uniqlo",
-    "royal-host",
-    "tsuruha",
-    "conv-familymart",
-  ]),
+  ...defineMemberships("prog-jal-tokuyaku", JAL_TOKUYAKU_STORE_IDS),
+  ...defineMemberships("prog-jal-tokuyaku-normal", JAL_TOKUYAKU_STORE_IDS),
 
   // ═══════════════════════════════════════════════════════════════
   // PR 2 A: StoreRule 系 memberships

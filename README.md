@@ -258,9 +258,18 @@ src/state/
 | ポイントカード (pointCards) | 7 |
 | 決済アプリ (paymentApps) | 11 |
 | 店舗 (stores) | 267（手キュレート + 自動同期分） |
-| BenefitProgram (programs) | 46 |
-| StoreProgramMembership (memberships) | 367 |
+| BenefitProgram (programs) | 47 |
+| StoreProgramMembership (memberships) | 383 |
 | 交換エッジ (edges) | 60 |
+
+#### 還元の「有効化」規約（opt-in vs 都度登録）
+
+BenefitProgram の付与前提は 2 系統で表現する（R1 規約: seed / master は `enabled` などの per-user preference キーを出荷しない）:
+
+- **有料オプション / 事前選択制の特典** = `optIn: true` で出荷（既定 OFF）。ユーザーが「使う」（`enabled: true`）を選んで初めて還元計算に載る。全 `cardIds` 保有者に自動加算すると未加入・未選択者への過大計算になるため。
+  - 例: ショッピングマイル・プレミアム加入前提の JAL カード特約店2倍（普通カード `jal-card`）、Olive「選べる特典」+1%、エポス「選べるポイントアップ」2倍。
+- **無料の都度登録系**（登録すれば誰でも同率）= `conditions` チップ + `entryUrl` で表現し、`optIn` は付けない（計算には常時載せ、UI で「要エントリー / 要登録」を促す）。
+  - 例: JCB J-POINT パートナーの店ごとポイントアップ登録、楽天「5と0のつく日」のエントリー。
 
 ### 自動同期パイプライン
 

@@ -59,7 +59,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 44;
+export const SEED_VERSION = 45;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -75,6 +75,17 @@ export const SEED_CHANGELOG: {
   date: string;
   summary: string;
 }[] = [
+  {
+    version: 45,
+    date: "2026-07-20",
+    summary:
+      "seed 正確性ホットフィックス: (1) JAL特約店2倍を「加入要否」で 2 分割 — CLUB-A系 (jal-suica、SMP自動付帯) は常時2倍、" +
+      "普通カード (jal-card) は optIn:true で既定 OFF (SMP 未加入者への過大案内を修正)。" +
+      "(2) SMBC 7% / Olive 8% の notes に「スマホのタッチ決済限定 (物理カードは対象外)」を明記。" +
+      "(3) 楽天「5と0のつく日」を primary 4% から base 3%(A-1) + addOn +1%(A-2) に再構成し、獲得上限 1,000pt/月 を " +
+      "addOn 側のみに monthlyCapAmountYen:100000 で付与 (10万円超は上乗せ分のみクランプ、base 3% は無傷)。" +
+      "(4) 0.5% 系 program (各ポイントカード提示 / d払いbase / nanaco・WAON e-money) の notes に「付与は200円単位 (端数切り捨て)」を注記。",
+  },
   {
     version: 44,
     date: "2026-07-15",

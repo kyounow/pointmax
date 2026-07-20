@@ -6,6 +6,10 @@ import {
   detectMinUnitAnnotations,
 } from "./rankCards";
 import { membershipId } from "../state/defineMemberships";
+import {
+  SEED_BENEFIT_PROGRAMS,
+  SEED_STORE_PROGRAM_MEMBERSHIPS,
+} from "../state/seed-data-programs";
 import type { BenefitProgram, Card, ConversionEdge, PaymentApp, PointCard, Store, StoreProgramMembership } from "./types";
 
 // v6.0.0: rankCards は RankResult ({ rankings, upgrade }) を返すようになった。
@@ -1112,6 +1116,82 @@ describe("A1: monthlyCapAmountYen の per-tx クランプ", () => {
       memberships: [capMembership],
     });
     expect(res[0].earnedAmount).toBeCloseTo(1500, 6); // 上限未満なので全額対象
+  });
+});
+
+// PR-1c: 楽天市場「5と0のつく日」の cap 対応 (実 seed データでの回帰テスト)。
+// 旧実装 (rate 0.04 / primary の単一 program) では、獲得上限 1,000pt/月 を primary に
+// 付けると SPU 基本 (base 3%) 分まで巻き添えクランプされる過小誤差になっていた。
+// 新実装は base 3% (A-1 primary) + 「5と0」+1% (A-2 addOn、cap 10万円) に分離し、
+// 10万円超では addOn 分のみクランプ・base 3% は無傷、を実 seed で固定する。
+describe("PR-1c: 楽天「5と0のつく日」cap 対応 (seed 実データ回帰)", () => {
+  // rankCards の cardIds マッチのため seed と同じ id を使う (最小 fixture)。
+  const rakutenCard: Card = {
+    id: "rakuten-card",
+    name: "楽天カード",
+    defaultRate: 0.01,
+    defaultCurrencyId: "rakuten-pt",
+    enabled: true,
+  };
+  const rakutenIchiba: Store = { id: "rakuten-ichiba", name: "楽天市場" };
+  const zeroFiveDay = new Date(2026, 6, 5); // 2026-07-05 = 5 の付く日 (recurringDays に該当)
+  const nonZeroFiveDay = new Date(2026, 6, 3); // 2026-07-03 = 対象外日
+
+  function rankIchiba(amount: number, now: Date) {
+    return rankCardsRankings({
+      payment: { storeId: "rakuten-ichiba", amount },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakutenCard],
+      stores: [rakutenIchiba],
+      edges: [], // rakuten-pt → rakuten-pt (同一通貨、product 1)
+      programs: SEED_BENEFIT_PROGRAMS,
+      memberships: SEED_STORE_PROGRAM_MEMBERSHIPS,
+      now,
+    });
+  }
+
+  it("5と0の日・上限内 (5万円): base 3% + addOn 1% = 実質4%、addOn は非クランプ", () => {
+    const [row] = rankIchiba(50000, zeroFiveDay);
+    // primary は base 3% (SPU 基本)。addOn ではなく base が primary に選ばれる。
+    expect(row.resolved.source).toBe("program");
+    expect(
+      row.resolved.source === "program" ? row.resolved.programId : null,
+    ).toBe("prog-rakuten-ichiba-base");
+    expect(row.earnedAmount).toBeCloseTo(50000 * 0.03, 6); // base 3% = 1500
+
+    // addOn に「5と0」+1% が乗る (上限内なので全額対象 = 500pt)。
+    const zeroFive = row.appBonusBreakdown.find(
+      (b) => b.programId === "prog-rakuten-ichiba-zero-five-day",
+    );
+    expect(zeroFive, "5と0 addOn が結果に出ていない").toBeDefined();
+    expect(zeroFive?.rate).toBe(0.01);
+    expect(zeroFive?.finalAmount).toBeCloseTo(50000 * 0.01, 6); // +1% = 500
+    // 合計は実質 4% (base 1500 + addOn 500 = 2000)。
+    expect(row.totalFinalAmount).toBeCloseTo(2000, 6);
+  });
+
+  it("5と0の日・上限超 (20万円): addOn のみ cap クランプ、base 3% は無傷", () => {
+    const [row] = rankIchiba(200000, zeroFiveDay);
+    // base 3% は cap 無し → 全額対象 (6000pt)。巻き添えクランプされないことが本丸。
+    expect(row.earnedAmount).toBeCloseTo(200000 * 0.03, 6); // 6000 (クランプされない)
+
+    // addOn「5と0」は monthlyCapAmountYen 10万円で頭打ち → min(20万,10万)*1% = 1000pt。
+    const zeroFive = row.appBonusBreakdown.find(
+      (b) => b.programId === "prog-rakuten-ichiba-zero-five-day",
+    );
+    expect(zeroFive?.finalAmount).toBeCloseTo(100000 * 0.01, 6); // 1000 = 獲得上限 1,000pt/月
+    // 20万×1% = 2000pt に「なっていない」= cap が効いている負方向の確認。
+    expect(zeroFive?.finalAmount).not.toBeCloseTo(200000 * 0.01, 6);
+  });
+
+  it("対象外日 (5と0でない日): addOn は発火せず base 3% のみ", () => {
+    const [row] = rankIchiba(50000, nonZeroFiveDay);
+    expect(row.earnedAmount).toBeCloseTo(50000 * 0.03, 6); // base 3% は常時
+    const zeroFive = row.appBonusBreakdown.find(
+      (b) => b.programId === "prog-rakuten-ichiba-zero-five-day",
+    );
+    expect(zeroFive, "対象外日なのに 5と0 addOn が出ている").toBeUndefined();
+    expect(row.totalFinalAmount).toBeCloseTo(50000 * 0.03, 6); // 1500 (3% のみ)
   });
 });
 
