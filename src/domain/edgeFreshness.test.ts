@@ -41,8 +41,10 @@ describe("monthsSince", () => {
     expect(monthsSince("2026-13", NOW)).toBeNull();
   });
   it("同一暦月内なら日に依らず経過月数は同じ (月精度)", () => {
-    expect(monthsSince("2026-01", new Date("2026-07-01T00:00:00+09:00"))).toBe(6);
-    expect(monthsSince("2026-01", new Date("2026-07-31T23:59:00+09:00"))).toBe(6);
+    // ローカル成分コンストラクタで生成 (文字列+オフセットだと実行環境の TZ に
+    // よってローカル暦月がずれ、CI (UTC) で 1 ヶ月違いになる)
+    expect(monthsSince("2026-01", new Date(2026, 6, 1, 0, 0))).toBe(6);
+    expect(monthsSince("2026-01", new Date(2026, 6, 31, 23, 59))).toBe(6);
   });
 });
 
