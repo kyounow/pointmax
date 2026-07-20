@@ -383,6 +383,92 @@ export function downgradeOrphanMemberships(
 }
 
 // ───────────────────────────────────────────────────────────────
+// Program/membership atomicity guard (原子性ガード)
+// ───────────────────────────────────────────────────────────────
+// downgradeOrphanMemberships の**後段**に走らせる後処理。
+//
+// 【穴 (2026-07-16 木曜 cron run 29453709908 で実証)】
+// campaign extractor 由来の新規 program (scope: "member-stores") が
+// isCampaignAutoMergeable を通って autoApplicable になった一方、その program を
+// 参照する membership は orphan guard (missingStoreBody: store が
+// storeAdditionsDisabled で降格) で全件 review 降格された。結果、
+// 「program 単独で auto に残る」= member-stores × membership 0 の死にデータが
+// apply され、seed 契約テスト (member-stores は membership ≥1) が apply 後の
+// safety gate (npm test) で fail → auto batch 全体 (無関係の epos 4 件含む) が
+// 巻き添えで review 降格した。safety gate は正しく機能したが、propose 層で
+// 原子性を保証すれば巻き添えを防げる。
+//
+// 【防止策】autoApplicable の新規 program (addRecord/programs) のうち
+// scope === "member-stores" のものについて、
+//   - 同 run の autoApplicable membership に当該 programId 参照が 1 件も無く、
+//   - かつ既存 seed にも当該 programId の membership が無い
+// 場合、program 単独では発火しない死にデータになるため needsReview
+// (orphanedProgram) に降格する。membership 側の承認と同時に approve する運用。
+//
+// 対象外:
+//   - all-stores program: membership 0 でも自身で発火するため対象外
+//   - updateField/override (既存 program): 新規 addRecord のみが対象
+//     (既存 program は seed に membership がある前提。addRecord は本来 seed 未存在)
+//
+// 【逆方向 (membership が auto で program が review) のカバー】
+// この逆パターン (membership だけ auto、program 本体が needsReview) は本ガードでは
+// なく既存の downgradeOrphanMemberships の program-side チェックが担う:
+// membership が参照する programId が既存 seed にも同 run auto program にも無ければ
+// missingProgramBody に降格される (proposePrograms が新規 program に付ける
+// idCollision 等で program が auto に上がらないケースを検出済み)。よって
+// program←→membership の両方向で「片側だけ auto」は propose 層で塞がれている。
+export function demoteChildlessMemberStorePrograms(
+  proposals: Proposal[],
+  existingMembershipProgramIds: ReadonlySet<string>,
+): { proposals: Proposal[]; demoted: number } {
+  // 同 run で auto 通過予定 (reviewReason 無し) の membership が参照する programId 集合。
+  // orphan guard の後段で走るため、missingStoreBody 等で降格済の membership は
+  // reviewReason を持ち、ここでは除外される (= 死んだ membership は加算されない)。
+  const sameRunAutoMembershipProgramIds = new Set<string>();
+  for (const p of proposals) {
+    if (
+      p.type !== "addRecord" ||
+      p.collection !== "memberships" ||
+      p.reviewReason
+    ) {
+      continue;
+    }
+    const programId = (p as AddRecordProposal).record.programId;
+    if (typeof programId === "string") {
+      sameRunAutoMembershipProgramIds.add(programId);
+    }
+  }
+
+  let demoted = 0;
+  const out: Proposal[] = proposals.map((p) => {
+    // 対象は autoApplicable (reviewReason 無し) の新規 program addRecord のみ。
+    if (
+      p.type !== "addRecord" ||
+      p.collection !== "programs" ||
+      p.reviewReason
+    ) {
+      return p;
+    }
+    const rec = (p as AddRecordProposal).record;
+    // all-stores program は membership 0 でも自身で発火するので対象外。
+    if (rec.scope !== "member-stores") return p;
+    const programId = typeof rec.id === "string" ? rec.id : null;
+    if (programId === null) return p;
+    // 同 run auto membership にも既存 seed membership にも当該 program 参照が
+    // 無ければ、member-stores program が発火対象店ゼロの死にデータになる。
+    if (
+      !sameRunAutoMembershipProgramIds.has(programId) &&
+      !existingMembershipProgramIds.has(programId)
+    ) {
+      demoted += 1;
+      return { ...p, reviewReason: "orphanedProgram" } as Proposal;
+    }
+    return p;
+  });
+  return { proposals: out, demoted };
+}
+
+// ───────────────────────────────────────────────────────────────
 // Main
 // ───────────────────────────────────────────────────────────────
 
@@ -396,6 +482,8 @@ export function downgradeOrphanMemberships(
 //              ─ storeAdditionsDisabled を campaign 参照 + チェーン判定で部分解除 (C-9)
 //   Phase C  : Orphan membership guard (downgradeOrphanMemberships)
 //              ─ store / program 本体が auto に無い membership を降格
+//   Phase C2 : Program/membership atomicity guard (demoteChildlessMemberStorePrograms)
+//              ─ Phase C で membership が全て降格した member-stores program 単独を降格
 //   Phase D  : auto / needsReview 振り分け + report 書き出し
 // Phase ラベルは log メッセージにも反映済 (🧯 = guard, 📐 = cap, 🔁 = dedup, 🧹 = expired, 🔓 = chain-promote)。
 
@@ -522,6 +610,23 @@ function main(): void {
     if (orphan.downgradedProgram > 0)
       parts.push(`${orphan.downgradedProgram} 件を missingProgramBody`);
     console.log(`🧯 orphan guard: ${parts.join(" / ")} で降格`);
+  }
+
+  // Phase C2: Program/membership atomicity guard (原子性ガード)
+  //   Phase C の membership 降格の結果、member-stores program が membership 0 の
+  //   死にデータになるケースを検出し program 単独も降格する (木曜 run 巻き添え防止)。
+  const existingMembershipProgramIds = new Set(
+    (current.memberships ?? []).map((m) => m.programId),
+  );
+  const atomicity = demoteChildlessMemberStorePrograms(
+    finalProposals,
+    existingMembershipProgramIds,
+  );
+  finalProposals = atomicity.proposals;
+  if (atomicity.demoted > 0) {
+    console.log(
+      `🧯 atomicity guard: ${atomicity.demoted} 件の member-stores program を orphanedProgram で降格`,
+    );
   }
 
   const autoApplicable: Proposal[] = [];
