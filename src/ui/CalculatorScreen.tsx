@@ -51,6 +51,7 @@ export function CalculatorScreen() {
     preferredCurrencyIds,
     birthMonth,
     yenValueOverrides,
+    excludedStorePayments,
   } = useStore(
     useShallow((s) => ({
       cards: s.cards,
@@ -64,8 +65,12 @@ export function CalculatorScreen() {
       preferredCurrencyIds: s.preferredCurrencyIds,
       birthMonth: s.birthMonth,
       yenValueOverrides: s.yenValueOverrides,
+      excludedStorePayments: s.excludedStorePayments,
     })),
   );
+  // PR-2: 決済ワンタップ除外 / 復帰の action (zustand action は参照安定)。
+  const excludeStorePayment = useStore((s) => s.excludeStorePayment);
+  const restoreStorePayment = useStore((s) => s.restoreStorePayment);
 
   // PR-3d (UX-6): 計算フォームの「同日内」復元。マウント時に独立 localStorage キー
   // (pointmax:calc-form:v1) の下書きを 1 回だけ読み、保存日が今日 (useToday と同じ
@@ -116,6 +121,20 @@ export function CalculatorScreen() {
 
   const currencyById = useMemo(() => byId(currencies), [currencies]);
   const programById = useMemo(() => byId(programs), [programs]);
+  const paymentAppById = useMemo(() => byId(paymentApps), [paymentApps]);
+
+  // PR-2: 現在の店舗で除外中の (店舗 × 決済) レコード。対象外グループの復帰チップに使う。
+  const excludedForStore = useMemo(
+    () => excludedStorePayments.filter((e) => e.storeId === storeId),
+    [excludedStorePayments, storeId],
+  );
+  // PR-2: 除外ボタンを出す条件。汎用ダミー店 (general) / 店舗未選択への除外は無意味なので
+  //   出さない (親が undefined を渡すと CalcResultCard 側でボタン非表示)。
+  const canExcludePayment = storeId !== "" && storeId !== "general";
+  const onExcludePayment = useCallback(
+    (paymentAppId: string) => excludeStorePayment(storeId, paymentAppId),
+    [excludeStorePayment, storeId],
+  );
 
   // PR-5a: 円換算 (目安) モード。activeCurrencyId が仮想ターゲットのとき、rankCards は
   // 全カードを path 到達不能で返すので、獲得通貨を yenValue で評価し直して比較表示する。
@@ -153,6 +172,7 @@ export function CalculatorScreen() {
         memberships,
         now: today,
         userBirthMonth: birthMonth,
+        excludedStorePayments,
       },
       { includeDisabled: true },
     );
@@ -169,6 +189,7 @@ export function CalculatorScreen() {
     programs,
     memberships,
     birthMonth,
+    excludedStorePayments,
   ]);
 
   const allRanked = rankResult?.rankings ?? null;
@@ -464,8 +485,35 @@ export function CalculatorScreen() {
               programById={programById}
               topTotal={topTotal}
               secondBestTotal={secondBestTotal}
+              onExcludePayment={canExcludePayment ? onExcludePayment : undefined}
             />
           ))}
+
+          {/* PR-2: 対象外グループ — この店で除外した決済 (店舗 × 決済ペア)。除外は結果から
+              隠さず可視化し、誤タップの 1 タップ復帰と、店側が対応を始めた時の自己修復を
+              両立する。チップをタップで restoreStorePayment → 候補に戻して即時再計算。 */}
+          {excludedForStore.length > 0 && (
+            <div
+              className="excluded-payments"
+              aria-label="この店で除外した決済手段"
+            >
+              <p className="hint" style={{ margin: "4px 0" }}>
+                この店で「使えない」設定にした決済（タップで戻す）
+              </p>
+              {excludedForStore.map((e) => (
+                <button
+                  key={e.paymentAppId}
+                  type="button"
+                  className="excluded-payment-chip"
+                  title="この決済を再びこの店の候補に戻して再計算します"
+                  onClick={() => restoreStorePayment(storeId, e.paymentAppId)}
+                >
+                  〔{paymentAppById.get(e.paymentAppId)?.name ?? e.paymentAppId}
+                  〕除外済 (この店で使えない設定) — タップで戻す
+                </button>
+              ))}
+            </div>
+          )}
           {/* v7: 保有 0 枚時は非保有 42 枚の比較リストを初回画面に出さない (オンボーディング優先)。
               保有 1 枚以上なら従来どおり「使っていないカードだと？」の比較を表示。 */}
           {hasHeldCards && comparisonItems.length > 0 && (

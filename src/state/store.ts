@@ -6,6 +6,7 @@ import type {
   Card,
   ConversionEdge,
   Currency,
+  ExcludedStorePayment,
   PaymentApp,
   PointCard,
   Store,
@@ -204,6 +205,14 @@ type State = {
   //   seed 値ごと消してしまうため。override は user-owned な永続キーとして分離し sync に耐える。
   //   persist 対象 (partialize 無し = 全 state 永続)。既定は空 {}。
   yenValueOverrides: Record<string, number>;
+  // PR-2: 店舗 × 決済ペアのユーザー除外レコード (user-owned)。「この店ではこの決済が
+  //   使えなかった」の記録。rankCards が対象 store で当該 paymentApp を候補から外す。
+  //   yenValueOverrides / preferredCurrencyIds と同じ per-user 設定系 state として扱い、
+  //   syncFromUrl / importJson の全置換対象コレクション (cards/currencies/stores/…) には
+  //   **含めない** = 置換の set() ブロックで一切触らないことで公式同期・取込に耐える
+  //   (preferenceMerge.ts の per-user 設定保護と同じ動機・経緯に準拠)。
+  //   persist 対象 (partialize 無し = 全 state 永続)。既定は空 []。
+  excludedStorePayments: ExcludedStorePayment[];
   // PR-4b: 直近に「自動反映」したバッチの Undo バナー情報 (null = バナー無し)。
   // 永続 state に持ち (reload 越しでバナーを再表示)、✕ dismiss / restore で null に戻す。
   autoApplyNotice: AutoApplyNotice | null;
@@ -264,6 +273,13 @@ type Actions = {
   //   value が正の有限数 → yenValueOverrides[currencyId] にセット。
   //   value が undefined / 非正 → 該当キーを削除 (= seed 値に戻す)。
   setYenValueOverride: (currencyId: string, value?: number) => void;
+
+  // PR-2: 店舗 × 決済ペアの除外を記録 / 復帰 (user-owned)。
+  //   excludeStorePayment: 同一 (storeId, paymentAppId) が既にあれば no-op (重複防止)、
+  //     無ければ excludedAt=now で追加。calculator の「この決済は使えなかった」から呼ぶ。
+  //   restoreStorePayment: 該当ペアを削除して候補に戻す。「除外済 — タップで戻す」から呼ぶ。
+  excludeStorePayment: (storeId: string, paymentAppId: string) => void;
+  restoreStorePayment: (storeId: string, paymentAppId: string) => void;
 
   // ユーザーが手動追加する「店舗 × ポイントカード提示還元」を BenefitProgram +
   // membership に変換して atomic に登録する (v6 PR-1e、旧 addLoyaltyRule の後継)。
@@ -346,6 +362,8 @@ const empty: State = {
   preferredCurrencyIds: [],
   // PR-5a: 円換算目安の上書きは既定で空
   yenValueOverrides: {},
+  // PR-2: 店舗 × 決済ペアの除外は既定で空
+  excludedStorePayments: [],
   // PR-4b: 自動反映バナーは既定で無し
   autoApplyNotice: null,
   // birthMonth は undefined で初期化 (誕生月未設定)
@@ -542,6 +560,26 @@ export const useStore = create<State & Actions>()(
             return;
           }
           state.yenValueOverrides[currencyId] = value;
+        }),
+
+      excludeStorePayment: (storeId, paymentAppId) =>
+        set((state) => {
+          // 重複防止: 同一 (storeId, paymentAppId) が既にあれば何もしない。
+          const exists = state.excludedStorePayments.some(
+            (e) => e.storeId === storeId && e.paymentAppId === paymentAppId,
+          );
+          if (exists) return;
+          state.excludedStorePayments.push({
+            storeId,
+            paymentAppId,
+            excludedAt: new Date().toISOString(),
+          });
+        }),
+      restoreStorePayment: (storeId, paymentAppId) =>
+        set((state) => {
+          state.excludedStorePayments = state.excludedStorePayments.filter(
+            (e) => !(e.storeId === storeId && e.paymentAppId === paymentAppId),
+          );
         }),
 
       addUserLoyaltyProgram: ({ storeId, pointCardId, rate, currencyId, notes }) => {

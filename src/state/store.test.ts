@@ -670,6 +670,111 @@ describe("store: syncFromUrl の program enabled carry-over (v6 PR-1d)", () => {
   });
 });
 
+// PR-2: 店舗 × 決済ペアのワンタップ除外 (user-owned)。追加/復帰/重複防止 +
+// 全置換取込 (syncFromUrl / importJson) で消えない保護要件を検査する。
+describe("store: excludeStorePayment / restoreStorePayment (PR-2)", () => {
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("除外を追加する (storeId × paymentAppId + excludedAt)", () => {
+    useStore.getState().excludeStorePayment("lawson", "pa-dbarai");
+    const list = useStore.getState().excludedStorePayments;
+    expect(list).toHaveLength(1);
+    expect(list[0].storeId).toBe("lawson");
+    expect(list[0].paymentAppId).toBe("pa-dbarai");
+    expect(list[0].excludedAt).toBeTruthy();
+  });
+
+  it("同一 (店舗 × 決済) の重複追加は無視する (重複防止)", () => {
+    useStore.getState().excludeStorePayment("lawson", "pa-dbarai");
+    useStore.getState().excludeStorePayment("lawson", "pa-dbarai");
+    expect(useStore.getState().excludedStorePayments).toHaveLength(1);
+  });
+
+  it("別店舗 / 別決済は個別レコードとして追加される", () => {
+    useStore.getState().excludeStorePayment("lawson", "pa-dbarai");
+    useStore.getState().excludeStorePayment("lawson", "pa-paypay");
+    useStore.getState().excludeStorePayment("seven", "pa-dbarai");
+    expect(useStore.getState().excludedStorePayments).toHaveLength(3);
+  });
+
+  it("restoreStorePayment は該当ペアのみ削除する", () => {
+    useStore.getState().excludeStorePayment("lawson", "pa-dbarai");
+    useStore.getState().excludeStorePayment("lawson", "pa-paypay");
+    useStore.getState().restoreStorePayment("lawson", "pa-dbarai");
+    const list = useStore.getState().excludedStorePayments;
+    expect(list).toHaveLength(1);
+    expect(list[0].paymentAppId).toBe("pa-paypay");
+  });
+
+  it("restoreStorePayment: 存在しないペアは no-op", () => {
+    useStore.getState().excludeStorePayment("lawson", "pa-dbarai");
+    useStore.getState().restoreStorePayment("seven", "pa-dbarai");
+    expect(useStore.getState().excludedStorePayments).toHaveLength(1);
+  });
+
+  it("syncFromUrl (公式 master 全置換) 後も excludedStorePayments が残る (保護要件)", async () => {
+    const record = {
+      storeId: "lawson",
+      paymentAppId: "pa-dbarai",
+      excludedAt: "2026-07-20T00:00:00.000Z",
+    };
+    useStore.setState({
+      excludedStorePayments: [record],
+      syncUrl: "https://example.test/master.json",
+    });
+    // 公式 master.json (per-user 設定を出荷しない) を全置換取込する
+    const master = {
+      version: 43,
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [],
+      pointCards: [],
+      paymentApps: [],
+      programs: [],
+      memberships: [],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: async () => JSON.stringify(master),
+      }),
+    );
+    const res = await useStore.getState().syncFromUrl();
+    expect(res.ok).toBe(true);
+    // 全置換経路は excludedStorePayments を触らないため除外が生き残る
+    expect(useStore.getState().excludedStorePayments).toEqual([record]);
+  });
+
+  it("importJson (全置換) 後も excludedStorePayments が残る (保護要件)", () => {
+    const record = {
+      storeId: "lawson",
+      paymentAppId: "pa-dbarai",
+      excludedAt: "2026-07-20T00:00:00.000Z",
+    };
+    useStore.setState({ excludedStorePayments: [record] });
+    const json = JSON.stringify({
+      version: 1,
+      schemaVersion: PERSIST_SCHEMA_VERSION,
+      cards: [],
+      currencies: [],
+      stores: [],
+      edges: [],
+    });
+    const res = useStore.getState().importJson(json);
+    expect(res.ok).toBe(true);
+    expect(useStore.getState().excludedStorePayments).toEqual([record]);
+  });
+});
+
 // v6 PR-1e: 旧 addLoyaltyRule の後継。手動の「店舗×ポイントカード提示還元」を
 // BenefitProgram + membership に変換して atomic に追加する。
 describe("store: addUserLoyaltyProgram", () => {

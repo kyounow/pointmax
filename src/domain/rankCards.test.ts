@@ -10,7 +10,7 @@ import {
   SEED_BENEFIT_PROGRAMS,
   SEED_STORE_PROGRAM_MEMBERSHIPS,
 } from "../state/seed-data-programs";
-import type { BenefitProgram, Card, ConversionEdge, PaymentApp, PointCard, Store, StoreProgramMembership } from "./types";
+import type { BenefitProgram, Card, ConversionEdge, ExcludedStorePayment, PaymentApp, PointCard, Store, StoreProgramMembership } from "./types";
 
 // v6.0.0: rankCards は RankResult ({ rankings, upgrade }) を返すようになった。
 // 既存テストは rankings 配列を期待するので、薄いラッパで .rankings を取り出す。
@@ -936,6 +936,114 @@ describe("rankCards", () => {
     }
     expect(r.earnedCurrencyId).toBe("jal-mile");
     expect(r.finalAmount).toBe(200); // 10000 × 0.02 × 1
+  });
+});
+
+// ─── PR-2: 店舗 × 決済ワンタップ除外 (excludedStorePayments) ───
+// 除外ペアの paymentApp をその store で候補から外し、他決済で最良を再計算する
+// (= 当該決済が採用されず次善が 1 位になる)。復帰 (除外を外す) で元に戻る。
+describe("rankCards PR-2: excludedStorePayments (店舗 × 決済除外)", () => {
+  const cardA: Card = {
+    id: "card-a",
+    name: "A",
+    defaultRate: 0.01,
+    defaultCurrencyId: "rakuten-pt",
+    enabled: true,
+  };
+  const cardB: Card = {
+    id: "card-b",
+    name: "B",
+    defaultRate: 0.02,
+    defaultCurrencyId: "rakuten-pt",
+    enabled: true,
+  };
+  const paGood: PaymentApp = { id: "pa-good", name: "良い決済", enabled: true };
+  const paBad: PaymentApp = { id: "pa-bad", name: "普通決済", enabled: true };
+  // pa-good × card-a のときだけ +3% 上乗せ。これで card-a が pa-good で 1 位になる。
+  const addOn: BenefitProgram = {
+    id: "prog-good-addon",
+    name: "pa-good 上乗せ",
+    scope: "member-stores",
+    paymentAppId: "pa-good",
+    cardIds: ["card-a"],
+    rate: 0.03,
+    currencyId: "rakuten-pt",
+    bonusType: "addOn",
+  };
+  const memberships: StoreProgramMembership[] = [
+    { id: "m-prog-good-addon-shop", programId: "prog-good-addon", storeId: "shop" },
+  ];
+  const shopStores: Store[] = [{ id: "shop", name: "Shop" }];
+
+  const inputWith = (excluded?: ExcludedStorePayment[]) => ({
+    payment: { storeId: "shop", amount: 10000 },
+    targetCurrencyId: "rakuten-pt",
+    cards: [cardA, cardB],
+    stores: shopStores,
+    edges: [] as ConversionEdge[],
+    programs: [addOn],
+    memberships,
+    paymentApps: [paGood, paBad],
+    excludedStorePayments: excluded,
+  });
+
+  it("除外なし: card-a が pa-good (+3%) で 1 位、card-b が 2 位", () => {
+    const r = rankCardsRankings(inputWith());
+    expect(r[0].card.id).toBe("card-a");
+    expect(r[0].paymentApp?.id).toBe("pa-good");
+    expect(r[0].totalFinalAmount).toBe(400); // 10000*0.01 + 10000*0.03
+    expect(r[1].card.id).toBe("card-b");
+  });
+
+  it("pa-good を除外: 当該決済が採用されず、次善 card-b が 1 位に繰り上がる", () => {
+    const r = rankCardsRankings(
+      inputWith([
+        {
+          storeId: "shop",
+          paymentAppId: "pa-good",
+          excludedAt: "2026-07-20T00:00:00.000Z",
+        },
+      ]),
+    );
+    // card-b (0.02 → 200) が 1 位
+    expect(r[0].card.id).toBe("card-b");
+    expect(r[0].totalFinalAmount).toBe(200);
+    // card-a は pa-good を使えず pa-bad にフォールバック (上乗せ消滅、0.01 → 100)
+    const a = r.find((x) => x.card.id === "card-a");
+    expect(a?.paymentApp?.id).toBe("pa-bad");
+    expect(a?.totalFinalAmount).toBe(100);
+  });
+
+  it("別店舗の除外は当該店 (shop) の計算に影響しない", () => {
+    const r = rankCardsRankings(
+      inputWith([
+        {
+          storeId: "other-store",
+          paymentAppId: "pa-good",
+          excludedAt: "2026-07-20T00:00:00.000Z",
+        },
+      ]),
+    );
+    expect(r[0].card.id).toBe("card-a");
+    expect(r[0].paymentApp?.id).toBe("pa-good");
+    expect(r[0].totalFinalAmount).toBe(400);
+  });
+
+  it("復帰 (除外を外す) で元の 1 位 (card-a × pa-good) に戻る", () => {
+    const excluded = rankCardsRankings(
+      inputWith([
+        {
+          storeId: "shop",
+          paymentAppId: "pa-good",
+          excludedAt: "2026-07-20T00:00:00.000Z",
+        },
+      ]),
+    );
+    expect(excluded[0].card.id).toBe("card-b"); // 除外中は次善が 1 位
+    const restored = rankCardsRankings(inputWith([])); // 復帰 = 除外なし
+    expect(restored[0].card.id).toBe("card-a");
+    expect(restored[0].paymentApp?.id).toBe("pa-good");
+    expect(restored[0].totalFinalAmount).toBe(400);
   });
 });
 

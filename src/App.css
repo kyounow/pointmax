@@ -1869,6 +1869,45 @@ details summary {
   color: var(--accent);
 }
 
+/* PR-2: 決済ワンタップ除外ボタン (結果カード展開ビュー内) */
+.exclude-payment {
+  margin-top: 6px;
+}
+.exclude-payment-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  color: var(--muted);
+  border-color: var(--border);
+  background: var(--panel-2);
+}
+.exclude-payment-btn:hover {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+/* PR-2: 対象外グループの「除外済 — タップで戻す」チップ群 */
+.excluded-payments {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+.excluded-payment-chip {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  text-align: left;
+}
+.excluded-payment-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* CardsScreen の「公式」マスターカードバッジ */
 .card-name-with-badge {
   display: inline-flex;

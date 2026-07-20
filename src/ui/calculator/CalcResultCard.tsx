@@ -56,6 +56,11 @@ type Props = {
   //   secondBestTotal = 1位と ε 以上離れた次点の totalFinalAmount (存在時のみ、#1 の「2位より」用)。
   topTotal?: number;
   secondBestTotal?: number;
+  // PR-2: 決済ワンタップ除外のハンドラ。渡され、かつこの結果に paymentApp があるとき、
+  //   展開ビューの支払方法表示の近くに「この決済は使えなかった」ボタンを出す。押すと
+  //   親が excludeStorePayment(現在の storeId, 引数の paymentAppId) を呼び即時再計算する。
+  //   店舗未選択 (general) では親が undefined を渡すため、ボタンは出ない。
+  onExcludePayment?: (paymentAppId: string) => void;
 };
 
 export function CalcResultCard({
@@ -70,6 +75,7 @@ export function CalcResultCard({
   programById,
   topTotal,
   secondBestTotal,
+  onExcludePayment,
 }: Props) {
   const reachableLoyalties = r.loyalties.filter((l) => l.reachable);
   const loyaltyTotal = reachableLoyalties.reduce(
@@ -296,6 +302,22 @@ export function CalcResultCard({
               title="チャージ式の支払アプリは、カード単体での還元は 0% (チャージ時には還元されない)。表示は支払アプリのベース還元率。"
             >
               ※ クレカ単体 0%、{r.paymentApp.name} 側で還元
+            </div>
+          )}
+
+          {/* PR-2: 決済ワンタップ除外。この店でこの決済 (paymentApp) が使えなかった時に
+              ワンタップで候補から外し、他決済で再計算する。店舗未選択 (general) では
+              onExcludePayment=undefined でボタン非表示。復帰は対象外グループの「除外済」から。 */}
+          {onExcludePayment && r.paymentApp && (
+            <div className="exclude-payment">
+              <button
+                type="button"
+                className="exclude-payment-btn"
+                title={`この店で「${r.paymentApp.name}」を使えない設定にして他の決済で再計算します（あとで戻せます）`}
+                onClick={() => onExcludePayment(r.paymentApp!.id)}
+              >
+                この決済（{r.paymentApp.name}）は使えなかった
+              </button>
             </div>
           )}
 
