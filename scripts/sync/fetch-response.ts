@@ -97,7 +97,10 @@ export function detectCharset(
 }
 
 const PREFETCH_HEADERS = {
-  // 普通のブラウザを装ってブロック回避
+  // bot として正直に名乗り、連絡先 (リポジトリ URL) を示す User-Agent。
+  // 「PointMax-Sync/1.0」+ リポジトリ URL で「これは何者か・どこへ連絡すればよいか」を
+  // 明示する (ブラウザ偽装ではない)。Mozilla/5.0 プレフィックスは UA を素朴に弾く
+  // フィルタとの互換性のためだけの慣習で、compatible トークン以降が実体。
   "User-Agent":
     "Mozilla/5.0 (compatible; PointMax-Sync/1.0; +https://github.com/kyounow/pointmax)",
   "Accept-Language": "ja,en;q=0.8",

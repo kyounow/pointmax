@@ -486,6 +486,13 @@ export function CalculatorScreen() {
           yenValueOf={yenValueOf}
         />
       )}
+
+      {/* PR-1f: 計算結果フッタの静的免責 (1 行、リスト末尾)。yen/通常 両モード共通。 */}
+      {hasHeldCards && result && result.length > 0 && (
+        <p className="result-disclaimer">
+          表示は公式情報に基づく概算です。付与条件・上限・対象外取引は各社公式サイトでご確認ください。
+        </p>
+      )}
     </section>
   );
 }

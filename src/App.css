@@ -125,6 +125,15 @@ section h2 {
   margin-bottom: 12px;
 }
 
+/* PR-1f: 計算結果リスト末尾の静的免責 (1 行、muted)。初期ビューポートを守るため
+   リスト末尾にのみ置き、結果ヘッダやカードの高さには影響させない。 */
+.result-disclaimer {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  margin: 12px 2px 0;
+}
+
 .row {
   display: flex;
   flex-wrap: wrap;
