@@ -10,9 +10,9 @@ import type {
 } from "./types";
 import { bestLoyalties, type LoyaltyResult } from "./loyalty";
 import { buildMembershipIndex } from "./membershipIndex";
-import { makePathCache } from "./pathCache";
+import { makePathCache, type PathCache } from "./pathCache";
 import { bestPath } from "./bestPath";
-import { evaluatePrograms } from "./programEvaluator";
+import { evaluatePrograms, type ProgramMatch } from "./programEvaluator";
 import { selectPrimaryForTarget } from "./selectPrimary";
 import { computeBlockedCurrencyIds } from "./currencyGating";
 
@@ -97,6 +97,74 @@ export type AddOnBreakdownEntry = {
   finalAmount: number;           // target 通貨換算後の金額 (post-conversion)
   pathSteps: ConversionEdge[];
 };
+
+// addOn program 群を target 通貨換算で合算し、UI 内訳 (breakdown) + summary field を作る共通処理。
+// rankCards 内の 3 分岐 (paymentApp なし / paymentApp あり / 互換 0 件フォールバック) で
+// 同一セマンティクスを保証するために抽出 (v7 全OFF 出荷後、フォールバック分岐が addOn を
+// 丸ごと捨てて「5と0のつく日」等の上乗せを落としていた bug 修正に伴う共通化)。
+//   - 異種通貨は pathCache で target 通貨へ換算してから合算 (appBonusFinalAmount)。
+//   - appBonusEarnedAmount は legacy 互換のため first-currency ぶんのみ pre-conversion で積む。
+//   - path 不到達 (addOnPath === null) の addOn は breakdown にも合算にも含めない。
+type AddOnAggregation = {
+  appBonusBreakdown: AddOnBreakdownEntry[];
+  appBonusFinalAmount: number;       // post-conversion (target 通貨) 合計
+  appBonusEarnedAmount: number;      // pre-conversion (first-currency のみ、legacy)
+  appBonusRate: number;              // 全 addOn の effectiveRate 合計
+  appBonusCurrencyId: string | null; // first-currency
+  appBonusReachable: boolean;        // appBonusFinalAmount > 0
+};
+
+function aggregateAddOns(
+  addOns: ProgramMatch[],
+  amount: number,
+  targetCurrencyId: string,
+  pathCache: PathCache,
+): AddOnAggregation {
+  const appBonusBreakdown: AddOnBreakdownEntry[] = [];
+  let appBonusTotal = 0; // post-conversion (target 通貨)
+  let appBonusEarned = 0; // pre-conversion (addOn の first-currency のみ合算、legacy)
+  let appBonusRate = 0;
+  let appBonusCurrencyId: string | null = null;
+  for (const addOn of addOns) {
+    const addOnEarned = earnWithMonthlyCap(
+      amount,
+      addOn.effectiveRate,
+      addOn.program.monthlyCapAmountYen,
+    );
+    const addOnPath = pathCache.resolve(
+      addOn.effectiveCurrencyId,
+      targetCurrencyId,
+      addOnEarned,
+    );
+    if (addOnPath) {
+      appBonusBreakdown.push({
+        programId: addOn.program.id,
+        programName: addOn.program.name,
+        rate: addOn.effectiveRate,
+        earnedAmount: addOnEarned,
+        earnedCurrencyId: addOn.effectiveCurrencyId,
+        finalAmount: addOnPath.finalAmount,
+        pathSteps: addOnPath.steps,
+      });
+      appBonusTotal += addOnPath.finalAmount;
+      appBonusRate += addOn.effectiveRate;
+      if (appBonusCurrencyId === null) {
+        appBonusCurrencyId = addOn.effectiveCurrencyId;
+      }
+      if (addOn.effectiveCurrencyId === appBonusCurrencyId) {
+        appBonusEarned += addOnEarned;
+      }
+    }
+  }
+  return {
+    appBonusBreakdown,
+    appBonusFinalAmount: appBonusTotal,
+    appBonusEarnedAmount: appBonusEarned,
+    appBonusRate,
+    appBonusCurrencyId,
+    appBonusReachable: appBonusTotal > 0,
+  };
+}
 
 // DB-8: 最低交換単位 (ConversionEdge.minFromUnits) を下回った交換ステップの事後注記。
 // 経路選択には一切影響せず (bestPath/pathCache は minFromUnits を見ない = 線形前提を維持)、
@@ -336,38 +404,12 @@ export function rankCards(
       const baseFinal = path?.finalAmount ?? 0;
 
       // addOn programs の合計 (paymentApp なし時は appBonus として表現)
-      const appBonusBreakdown: AddOnBreakdownEntry[] = [];
-      let appBonusTotal = 0; // post-conversion (target 通貨)
-      let appBonusEarned = 0; // pre-conversion (addOn の first-currency のみ合算、legacy)
-      let appBonusRate = 0;
-      let appBonusCurrencyId: string | null = null;
-      for (const addOn of addOns) {
-        const addOnEarned = earnWithMonthlyCap(
-          payment.amount,
-          addOn.effectiveRate,
-          addOn.program.monthlyCapAmountYen,
-        );
-        const addOnPath = pathCache.resolve(addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned);
-        if (addOnPath) {
-          appBonusBreakdown.push({
-            programId: addOn.program.id,
-            programName: addOn.program.name,
-            rate: addOn.effectiveRate,
-            earnedAmount: addOnEarned,
-            earnedCurrencyId: addOn.effectiveCurrencyId,
-            finalAmount: addOnPath.finalAmount,
-            pathSteps: addOnPath.steps,
-          });
-          appBonusTotal += addOnPath.finalAmount;
-          appBonusRate += addOn.effectiveRate;
-          if (appBonusCurrencyId === null) {
-            appBonusCurrencyId = addOn.effectiveCurrencyId;
-          }
-          if (addOn.effectiveCurrencyId === appBonusCurrencyId) {
-            appBonusEarned += addOnEarned;
-          }
-        }
-      }
+      const addOnAgg = aggregateAddOns(
+        addOns,
+        payment.amount,
+        targetCurrencyId,
+        pathCache,
+      );
 
       const reachable = path !== null;
       return {
@@ -383,14 +425,14 @@ export function rankCards(
           ? null
           : classifyUnreachable(cardCurrencyId, targetCurrencyId),
         paymentApp: null,
-        appBonusRate,
-        appBonusFinalAmount: appBonusTotal,
-        appBonusEarnedAmount: appBonusEarned,
-        appBonusCurrencyId,
-        appBonusReachable: appBonusTotal > 0,
-        appBonusBreakdown,
+        appBonusRate: addOnAgg.appBonusRate,
+        appBonusFinalAmount: addOnAgg.appBonusFinalAmount,
+        appBonusEarnedAmount: addOnAgg.appBonusEarnedAmount,
+        appBonusCurrencyId: addOnAgg.appBonusCurrencyId,
+        appBonusReachable: addOnAgg.appBonusReachable,
+        appBonusBreakdown: addOnAgg.appBonusBreakdown,
         loyalties,
-        totalFinalAmount: baseFinal + appBonusTotal + loyaltyTotal,
+        totalFinalAmount: baseFinal + addOnAgg.appBonusFinalAmount + loyaltyTotal,
         minUnitAnnotations: detectMinUnitAnnotations(earnedAmount, path?.steps ?? []),
       };
     }
@@ -435,6 +477,20 @@ export function rankCards(
       );
       const path = pathCache.resolve(cardCurrencyId, targetCurrencyId, earnedAmount);
       const baseFinal = path?.finalAmount ?? 0;
+
+      // 互換 paymentApp が 0 件でも、DIRECT 評価で該当した addOn (「5と0のつく日」+1% 等の
+      // cardIds/pointCardId 系上乗せ) は通常分岐と同一処理で加算する。以前はここで
+      // appBonus 系を 0 / [] 固定にしていたため、決済アプリを 1 つも有効化していない
+      // ユーザー (v7 全OFF 出荷後) で上乗せが丸ごと落ちていた。
+      // DIRECT 評価では paymentAppId 付き program は evaluatePrograms 内で除外済
+      // (paymentApp.id="__direct__" と不一致) なので、ここに来る addOns は
+      // paymentApp 非依存のみ。追加フィルタは不要。
+      const addOnAgg = aggregateAddOns(
+        programResult.addOns,
+        payment.amount,
+        targetCurrencyId,
+        pathCache,
+      );
       const reachable = path !== null;
       return {
         card,
@@ -449,14 +505,14 @@ export function rankCards(
           ? null
           : classifyUnreachable(cardCurrencyId, targetCurrencyId),
         paymentApp: null,
-        appBonusRate: 0,
-        appBonusFinalAmount: 0,
-        appBonusEarnedAmount: 0,
-        appBonusCurrencyId: null,
-        appBonusReachable: false,
-        appBonusBreakdown: [],
+        appBonusRate: addOnAgg.appBonusRate,
+        appBonusFinalAmount: addOnAgg.appBonusFinalAmount,
+        appBonusEarnedAmount: addOnAgg.appBonusEarnedAmount,
+        appBonusCurrencyId: addOnAgg.appBonusCurrencyId,
+        appBonusReachable: addOnAgg.appBonusReachable,
+        appBonusBreakdown: addOnAgg.appBonusBreakdown,
         loyalties,
-        totalFinalAmount: baseFinal + loyaltyTotal,
+        totalFinalAmount: baseFinal + addOnAgg.appBonusFinalAmount + loyaltyTotal,
         minUnitAnnotations: detectMinUnitAnnotations(earnedAmount, path?.steps ?? []),
       };
     }
@@ -536,39 +592,13 @@ export function rankCards(
       const cardPath = pathCache.resolve(cardCurrencyId, targetCurrencyId, cardEarned);
       const cardFinal = cardPath?.finalAmount ?? 0;
 
-      // addOn programs の合計 + 通貨別 breakdown (v5.1.3)
-      const appBonusBreakdown: AddOnBreakdownEntry[] = [];
-      let appBonusTotal = 0; // post-conversion (target 通貨)
-      let appBonusEarned = 0; // pre-conversion (addOn の first-currency のみ合算、legacy)
-      let appBonusRateTotal = 0;
-      let appBonusCurrencyId: string | null = null;
-      for (const addOn of addOns) {
-        const addOnEarned = earnWithMonthlyCap(
-          payment.amount,
-          addOn.effectiveRate,
-          addOn.program.monthlyCapAmountYen,
-        );
-        const addOnPath = pathCache.resolve(addOn.effectiveCurrencyId, targetCurrencyId, addOnEarned);
-        if (addOnPath) {
-          appBonusBreakdown.push({
-            programId: addOn.program.id,
-            programName: addOn.program.name,
-            rate: addOn.effectiveRate,
-            earnedAmount: addOnEarned,
-            earnedCurrencyId: addOn.effectiveCurrencyId,
-            finalAmount: addOnPath.finalAmount,
-            pathSteps: addOnPath.steps,
-          });
-          appBonusTotal += addOnPath.finalAmount;
-          appBonusRateTotal += addOn.effectiveRate;
-          if (appBonusCurrencyId === null) {
-            appBonusCurrencyId = addOn.effectiveCurrencyId;
-          }
-          if (addOn.effectiveCurrencyId === appBonusCurrencyId) {
-            appBonusEarned += addOnEarned;
-          }
-        }
-      }
+      // addOn programs の合計 + 通貨別 breakdown (v5.1.3)。フォールバック分岐と共通ヘルパ。
+      const addOnAgg = aggregateAddOns(
+        addOns,
+        payment.amount,
+        targetCurrencyId,
+        pathCache,
+      );
 
       return {
         pa,
@@ -580,13 +610,13 @@ export function rankCards(
         cardPathSteps: cardPath?.steps ?? [],
         cardPathProduct: cardPath?.product ?? 0,
         cardReachable: cardPath !== null,
-        appBonusRate: appBonusRateTotal,
-        appBonusFinal: appBonusTotal,
-        appBonusEarned,
-        appBonusCurrencyId,
-        appBonusReachable: appBonusTotal > 0,
-        appBonusBreakdown,
-        total: cardFinal + appBonusTotal,
+        appBonusRate: addOnAgg.appBonusRate,
+        appBonusFinal: addOnAgg.appBonusFinalAmount,
+        appBonusEarned: addOnAgg.appBonusEarnedAmount,
+        appBonusCurrencyId: addOnAgg.appBonusCurrencyId,
+        appBonusReachable: addOnAgg.appBonusReachable,
+        appBonusBreakdown: addOnAgg.appBonusBreakdown,
+        total: cardFinal + addOnAgg.appBonusFinalAmount,
       };
     });
 
