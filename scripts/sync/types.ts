@@ -264,6 +264,7 @@ export type ExtractedProgram = Evidence & {
   description?: string;
   officialUrl?: string;
   entryUrl?: string;        // エントリー/参加サイト URL (公式情報源 URL とは分離)
+  requiresEntry?: boolean;  // v3.5: エントリー/登録が必要なキャンペーン (逐語根拠がある時のみ true)。UI で「⚠ 要エントリー」バッジ
   conditions?: string;
   monthlyCapAmountYen?: number;
   notes?: string;

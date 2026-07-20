@@ -40,7 +40,7 @@ version: 1
 # 新規 extractor 追加 / version bump 時はここを更新。sync:report が SYNC_HISTORY に
 # version matrix を記録するために参照 (省略しても動作影響なし)。
 extractorVersions:
-  campaign: v3.4  # 2026-07-15: schema v7 トレイン最終化 (programs に scope 必須化、enabled/optIn 非出力)
+  campaign: v3.5  # 2026-07-20: programs に任意 requiresEntry (boolean) 追加 (残改善 PR-4、逐語根拠時のみ true)
   campaign-index: v1.0  # crawl: index の 1 段目 (子 URL 列挙専用、ExtractedSource は出力しない)
   card: v1.1
   epos-tamaru: v1.1  # 2026-07-15: scope 出力必須化 (v7)

@@ -9,6 +9,7 @@ import { formatNum } from "../../domain/formatNum";
 import { formatRatio } from "../../domain/currencyKind";
 import { buildRateStackSummary } from "../../domain/rateStackSummary";
 import { staleVerifiedMonth } from "../../domain/edgeFreshness";
+import { isSafeHttpUrl } from "../../domain/urlSafety";
 import { navigate } from "../../navigation";
 import { NodePill } from "../NodePill";
 import { RuleStatusBadge } from "../RuleStatusBadge";
@@ -299,6 +300,50 @@ export function CalcResultCard({
                   </>
                 );
               })()}
+            {/* REM-#5: 要エントリー バッジ。採用された program (primary=resolved /
+                addOn=appBonusBreakdown / loyalty=loyalties) のいずれかに requiresEntry が
+                あるとき「⚠ 要エントリー」を出す。位置は result-meta 内 (上限バッジ / NoteChips
+                の隣) に固定。entryUrl があれば urlSafety.isSafeHttpUrl 検証を通してタップで別タブ
+                起動、無ければバッジのみ (タップ不可)。
+                ── 警告チップの表示予算 (横断規律: 要エントリー > 上限 > stale > 失効 > 端数 の
+                優先順で最大3): 要エントリーは最優先なので条件を満たせば必ず出す。この result-meta
+                には 上限 / 要エントリー が並びうるが、実データ上 要エントリー を持つ program は
+                同一通貨 (楽天5と0) か J-POINT で、前者は cap 併存だが変換路が無く stale/端数 が
+                出ず、後者は cap を持たないため、1 展開ビューで並ぶ警告系は実質 3 種以内に収まる
+                (コメント運用維持の根拠。判断は PR-4 報告参照)。 */}
+            {(() => {
+              const ids = new Set<string>();
+              if (r.resolved.source === "program") ids.add(r.resolved.programId);
+              for (const b of r.appBonusBreakdown) ids.add(b.programId);
+              for (const l of reachableLoyalties) ids.add(l.rule.id);
+              const entryProgs = [...ids]
+                .map((id) => programById.get(id))
+                .filter(
+                  (p): p is BenefitProgram => !!p && p.requiresEntry === true,
+                );
+              if (entryProgs.length === 0) return null;
+              const names = entryProgs.map((p) => p.name).join(" / ");
+              // 採用 program のうち最初の安全な entryUrl を代表タップ先にする。
+              const entryUrl = entryProgs
+                .map((p) => p.entryUrl)
+                .find((u): u is string => !!u && isSafeHttpUrl(u));
+              const title = `エントリー / 登録が必要な特典が含まれます (${names})。${entryUrl ? "タップでエントリーページを開きます。" : ""}未エントリーだと表示の還元が付かない場合があります。`;
+              return entryUrl ? (
+                <a
+                  className="entry-warn entry-warn-link"
+                  href={entryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={title}
+                >
+                  ⚠ 要エントリー
+                </a>
+              ) : (
+                <span className="entry-warn" title={title}>
+                  ⚠ 要エントリー
+                </span>
+              );
+            })()}
           </div>
 
           {r.resolved.source === "charge" && r.paymentApp && (
@@ -378,10 +423,14 @@ export function CalcResultCard({
               「⚠ ルート要確認 (最終確認 YYYY-MM)」を出す (未記入 edge は無視 = 未検証を古い扱い
               しない)。判定は純関数 staleVerifiedMonth。到達不能カードは pathSteps が空なので出ない。
               ── 警告チップの表示予算 (横断規律: 要エントリー > 上限 > stale > 失効 > 端数 の
-              優先順で最大3): この展開ビューに現状出る警告系は 上限 (cap-warn, 上の result-meta) /
-              stale (ここ) / 端数 (minunit, 下) の最大 3 種で予算内。4 種目以降を足すときは
-              優先順ヘルパへの切り出しを検討すること (最も混む楽天5と0の日に #1 展開ビューが
-              警告で埋まるのを防ぐ設計)。 */}
+              優先順で最大3): この展開ビューに出うる警告系は 要エントリー (entry-warn, 上の
+              result-meta、最優先で必ず表示) / 上限 (cap-warn, 同 result-meta) / stale (ここ) /
+              端数 (minunit, 下) の 4 種。名目上は 4 種だが、実データ上 要エントリー を持つ
+              program は 楽天5と0 (同一通貨=変換路なし→stale/端数が出ない) か J-POINT (cap 無し)
+              に限られ、cap と stale/端数 が同時に立つ組合せが存在しないため、1 展開ビューで
+              実際に並ぶ警告は 3 種以内に収まる (REM-#5 はコメント運用を維持。優先順ヘルパへの
+              切り出しは、この排他性が崩れる program (要エントリー かつ cap かつ変換路あり) が
+              追加された時に再検討)。 */}
           {(() => {
             const staleMonth = staleVerifiedMonth(r.pathSteps, now ?? new Date());
             if (!staleMonth) return null;

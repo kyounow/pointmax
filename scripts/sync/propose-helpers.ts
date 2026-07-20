@@ -476,6 +476,9 @@ export function proposePrograms(
           );
         }
       }
+      // REM-#5: requiresEntry は単純な boolean フラグ (エントリー/登録要否の表示メタ)。
+      // URL のような安全検証は不要なので透過でそのまま詰める。
+      if (p.requiresEntry !== undefined) rec.requiresEntry = p.requiresEntry;
       if (p.conditions !== undefined) rec.conditions = p.conditions;
       if (p.monthlyCapAmountYen !== undefined)
         rec.monthlyCapAmountYen = p.monthlyCapAmountYen;

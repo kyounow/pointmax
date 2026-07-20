@@ -104,6 +104,11 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     validFrom: "2020-01-01",
     recurringDays: [5, 10, 15, 20, 25, 30],
     monthlyCapAmountYen: 100000, // 獲得上限 1,000pt/月 ÷ 0.01
+    // REM-#5: 毎回エントリーが必要 (無料・誰でも同率の都度エントリー系) → requiresEntry。
+    //   計算には常時載せつつ「⚠ 要エントリー」バッジで未エントリーの取りこぼしを促す。
+    //   entryUrl は「5と0のつく日」公式キャンペーンページ (エントリーボタンあり)。
+    requiresEntry: true,
+    entryUrl: "https://event.rakuten.co.jp/card/pointday/",
     description: "楽天市場「5と0のつく日」の楽天カード +1% (毎月 5/10/15/20/25/30 日、base 3% に上乗せ)",
     notes:
       "5と0のつく日 (毎月 5/10/15/20/25/30) のみ、要エントリー。楽天カード分 +1% (base 3% と合算で実質4%)。獲得上限 1,000pt/月 (= 支払 10万円/月まで)。",
@@ -257,6 +262,10 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     bonusType: "primary",
     validFrom: "2026-05-16",
     validTo: "2026-05-31",
+    // REM-#5: 要エントリーのキャンペーン → requiresEntry。ただし期間終了済み (validTo 過去)
+    //   のため実際にはランキングに載らず、バッジも出ない (期間フィルタで不発)。構造的な
+    //   真値としてフラグは付与 (entryUrl は無く officialUrl のみ = 有効期でもバッジのみ)。
+    requiresEntry: true,
     description: "d払い+5% ビックカメラ限定キャンペーン (要エントリー、進呈上限 2000pt)",
     officialUrl:
       "https://service.smt.docomo.ne.jp/keitai_payment/campaign/dpay_biccamera_260507_7487/",
@@ -575,7 +584,9 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // - Gold「最大10%還元」= 0.5% × 20倍 (= スタバ) と整合、Gold プレミアム
   //   「最大4倍」= 0.5% × 4倍 = 2% (= 高島屋プレミアム) が W の 2倍と同等。
   // - 「プレミアムでおトク」は Gold が W と同等実効率に追いつく仕組み。
-  // - 全店「ポイントアップ登録 (無料、店ごと)」必須 → 全 program に entryUrl。
+  // - 全店「ポイントアップ登録 (無料、店ごと)」必須 → 全 program に entryUrl + requiresEntry:true
+  //   (REM-#5: 登録制だが無料・恒久なので optIn ではなく requiresEntry。計算には常時載せ、
+  //    UI で「⚠ 要エントリー」バッジ + タップで登録ページ起動)。
   // 出典: https://j-pointpartner.jcb.co.jp/search +
   //       https://www.jcb.co.jp/ordercard/kojin_card/gold2.html (V5-2、2026-05-20)
   // ═══════════════════════════════════════════════════════════════
@@ -592,6 +603,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description: "JCB J-POINT パートナー店で 2倍 (W 基本 1% × 2 = 実効 2%)",
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
+    requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
   {
@@ -605,6 +617,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description: "JCB J-POINT パートナー店で 3倍 (W 基本 1% × 3 = 実効 3%)",
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
+    requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
   // V5-2: prog-jcb-jpoint-4x (W 向け 4倍 rate 0.04) を廃止。
@@ -630,6 +643,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。" +
       "その他対象店舗 (すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・" +
       "ジョナサン等) は店頭決済含め対象。詳細は J-POINT パートナーサイトで確認。",
+    requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
 
@@ -645,6 +659,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description: "JCB J-POINT パートナー店で 2倍 (Gold 基本 0.5% × 2 = 実効 1%)",
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
+    requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
   {
@@ -658,6 +673,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description: "JCB J-POINT パートナー店で 3倍 (Gold 基本 0.5% × 3 = 実効 1.5%)",
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
+    requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
   {
@@ -674,6 +690,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) + " +
       "「プレミアムでおトク」対象店 (高島屋等) で Gold グレード保有時の優遇。",
+    requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
   {
@@ -696,6 +713,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。" +
       "その他対象店舗 (すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・" +
       "ジョナサン等) は店頭決済含め対象。詳細は J-POINT パートナーサイトで確認。",
+    requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
 
@@ -754,6 +772,10 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   },
 
   // (c) たまるマーケット 3階層 (jcb-jpoint と同型、倍率=総倍率、rate = 0.005×N)
+  // REM-#5: requiresEntry は付けない。たまるマーケットは「サイト経由 (経由型)」であって
+  //   「エントリー/登録 (登録型)」ではないため (conditions は「経由して購入」)。requiresEntry の
+  //   語義 (= エントリー/登録が必要) を薄めないよう、経由型はスコープ外とする (将来「要経由」型が
+  //   必要になれば別フラグで表現)。J-POINT (店ごと登録必須) とは条件の質が異なる点に注意。
   {
     id: "prog-epos-tamaru-2x",
     scope: "member-stores",
