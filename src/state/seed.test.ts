@@ -9,6 +9,7 @@ import {
 } from "./seed";
 import { SEED_CARDS, SEED_PAYMENT_APPS } from "./seed-data-cards";
 import { CARD_FAMILIES } from "./seed-data-card-families";
+import { isValidVerifiedMonth } from "../domain/edgeFreshness";
 
 describe("MASTER_CARD_IDS / isMasterCard", () => {
   it("SEED_CARDS の全 id が含まれる", () => {
@@ -229,6 +230,19 @@ describe("SEED_EDGES の通貨参照整合性", () => {
     const bad = withMin
       .filter((e) => !(Number.isFinite(e.minFromUnits) && e.minFromUnits! > 0))
       .map((e) => `${e.id}: minFromUnits=${e.minFromUnits}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
+  // REM-#2: lastVerifiedAt (最終確認月) は optional だが、付与されている場合は "YYYY-MM"
+  // (month 01-12) 形式。stale 判定 (edgeFreshness) はこの形式を前提にするため契約で担保する。
+  it("lastVerifiedAt が付与されている edge はすべて YYYY-MM 形式", () => {
+    const { edges } = seed();
+    const withVerified = edges.filter((e) => e.lastVerifiedAt !== undefined);
+    // 主要 edge に記入されていること (機構が空振りしていない回帰ガード)
+    expect(withVerified.length).toBeGreaterThan(0);
+    const bad = withVerified
+      .filter((e) => !isValidVerifiedMonth(e.lastVerifiedAt!))
+      .map((e) => `${e.id}: lastVerifiedAt=${e.lastVerifiedAt}`);
     expect(bad, bad.join("\n")).toEqual([]);
   });
 

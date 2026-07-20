@@ -10,6 +10,12 @@
 //     最低交換単位は notes に加えて minFromUnits (from 通貨の単位数) にも構造化して持たせ、
 //     少額試算時に「◯◯ を △△ 貯めてから交換」を UI 注記する (DB-8)。経路選択には不使用
 //     (ConversionEdge.minFromUnits の JSDoc 参照 = pathCache の線形前提を壊さない)。
+//   - lastVerifiedAt ("YYYY-MM"、REM-#2): レートを公式ページで最後に人手確認した月。
+//     **bestPath に実際に乗る主要 edge のみ**手記入し (未記入 = 未検証扱いで stale バッジ
+//     非表示)、値は git log / seed コメントから確認月が特定できるものだけ入れる (でっち上げ
+//     禁止)。各記入行に確認根拠を短くコメントする。最終確認が 6ヶ月超になると Calculator の
+//     結果行 / EdgesScreen に「⚠ 要確認」が出る (判定は src/domain/edgeFreshness.ts)。
+//     未記入分の漸進記入・棚卸しは SESSION_LOG「四半期ごと手動確認チェックリスト」で回す。
 import type { ConversionEdge } from "../domain/types";
 
 export const SEED_EDGES: ConversionEdge[] = [
@@ -145,6 +151,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.6667, // 1500pt → 1000マイル (= 1000/1500)。CLUB-Aゴールド 優遇
     requiredCardIds: ["jal-suica"],
     notes: "1500pt → 1000マイル (JALカードSuica CLUB-Aゴールド 会員特典)",
+    lastVerifiedAt: "2026-06", // v6.4.0 (afc74b1, 2026-06-20) で grade 別レートを公式確認
   },
   {
     // 普通カード版。ゴールド (jre-to-jal, 0.6667) より低レート。
@@ -155,6 +162,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.5, // 1500pt → 750マイル。JALカードSuica 普通カード
     requiredCardIds: ["jal-suica-normal"],
     notes: "1500pt → 750マイル (JALカードSuica 普通カード 会員特典)",
+    lastVerifiedAt: "2026-06", // v6.4.0 (afc74b1, 2026-06-20) で普通カード版を新設・公式確認
   },
   {
     id: "jre-to-edy",
@@ -174,6 +182,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "2WAON = 1マイル (50%還元)。イオンカード会員 + JMB 会員の特典 (公式 FAQ)。" +
       "本人名義と JMB お得意様番号の名義が一致している必要あり。",
+    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で公式 FAQ を確認しゲート追加
   },
 
   // ============ JRキューポ ⇔ JAL/ANA マイル (JQ SUGOCA カード保有特典) ============
@@ -188,6 +197,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "1000JRキューポ → 500マイル。JMB JQ SUGOCA 会員特典 " +
       "(JMB×おまとめ登録SUGOCA 紐付け、1日1回)。",
+    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で新設・公式確認
   },
   {
     id: "jal-to-jrkyupo",
@@ -198,6 +208,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "10000マイル → 10000JRキューポ (等価交換)。JMB JQ SUGOCA 会員特典 " +
       "(年度内2回・20000マイルまで)。",
+    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で新設・公式確認
   },
   {
     id: "jrkyupo-to-ana",
@@ -206,6 +217,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.5,
     requiredCardIds: ["jq-sugoca-ana"],
     notes: "1000JRキューポ → 500マイル。JQ SUGOCA ANA 会員特典。",
+    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で新設・公式確認
   },
   {
     id: "ana-to-jrkyupo",
@@ -214,6 +226,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 1,
     requiredCardIds: ["jq-sugoca-ana"],
     notes: "10000マイル → 10000JRキューポ (等価交換)。JQ SUGOCA ANA 会員特典。",
+    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で新設・公式確認
   },
 
   // ============ クレカ・ホテル系プログラム ============
@@ -225,6 +238,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.5,
     minFromUnits: 500, // 500pt単位
     notes: "1,000pt = 500マイル (500pt単位)",
+    lastVerifiedAt: "2026-07", // 本セッション (エポス3グレード化) で公式レートを確認
   },
   {
     id: "epos-to-ana",
@@ -234,6 +248,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "1,000pt = 500マイル。ゴールド/プラチナの優遇 (1pt=0.6マイル) は" +
       "2026-03-31で終了済み — 復活させない",
+    lastVerifiedAt: "2026-07", // 本セッションで優遇終了 (2026-03-31) を含め公式確認
   },
   {
     id: "epos-to-d",
@@ -242,6 +257,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 1,
     minFromUnits: 1000, // 1,000pt以上
     notes: "1pt = 1dポイント (1,000pt以上500pt単位、交換約1〜2か月)",
+    lastVerifiedAt: "2026-07", // 本セッション (エポス→dポイント等価交換) で公式確認
   },
   // エポス→Ponta 1:1 は au/UQ/povo1.0 回線契約者限定のため意図的に未登録
   // (ライフスタイル条件)。マルイ商品券への交換は 2025-09-30 で終了済み。
@@ -380,6 +396,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "jal-mile",
     rate: 0.6,
     notes: "1 J-POINT → 0.6 JAL マイル (JCB 公式レート、5倍換算後 J-POINT 単位)",
+    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式 (2026 リニューアル後) を確認
   },
   {
     id: "j-point-to-ana",
@@ -387,6 +404,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "ana-mile",
     rate: 0.6,
     notes: "1 J-POINT → 0.6 ANA マイル / スカイコイン (JCB 公式)",
+    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
   },
   {
     id: "j-point-to-edy",
@@ -396,6 +414,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "MyJCB Pay で 1 J-POINT=1円 (現金相当として edy に登録)。" +
       "JCB ギフトカード/カード支払い充当 も 1pt=1円 (公式最高レート)",
+    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
   },
   {
     id: "j-point-to-rakuten",
@@ -403,6 +422,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "rakuten-pt",
     rate: 0.7,
     notes: "1 J-POINT → 0.7 楽天ポイント (JCB 公式)",
+    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
   },
   {
     id: "j-point-to-d",
@@ -410,6 +430,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "d-pt",
     rate: 0.7,
     notes: "1 J-POINT → 0.7 dポイント (JCB 公式)",
+    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
   },
   {
     id: "j-point-to-ponta",
@@ -417,6 +438,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "ponta-pt",
     rate: 0.7,
     notes: "1 J-POINT → 0.7 Ponta ポイント (JCB 公式、au Ponta 経路)",
+    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
   },
   {
     id: "j-point-to-nanaco",
@@ -424,6 +446,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "nanaco-pt",
     rate: 0.7,
     notes: "1 J-POINT → 0.7 nanaco ポイント (JCB 公式)",
+    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
   },
 
   // ============ メルカリポイント ============

@@ -7,7 +7,7 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { CalcResultCard } from "./CalcResultCard";
 import type { CardRanking } from "../../domain/rankCards";
-import type { BenefitProgram, Currency } from "../../domain/types";
+import type { BenefitProgram, ConversionEdge, Currency } from "../../domain/types";
 
 afterEach(cleanup);
 
@@ -50,6 +50,8 @@ function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
 }
 
 // expanded は各テストで明示する (aria-expanded / 上限バッジ表示の検証で値が重要)。
+// now は stale 判定 (REM-#2) の基準日。既定 fixture の pathSteps は空 or lastVerifiedAt
+// 未記入なので、この日付では stale チップは出ない (stale テストは pathSteps を明示的に渡す)。
 const baseProps = {
   displayRank: 1,
   onToggle: () => {},
@@ -57,6 +59,7 @@ const baseProps = {
   currencyById: new Map<string, Currency>([["rakuten-pt", rakutenPt]]),
   currencyName: (id: string) => (id === "rakuten-pt" ? "楽天ポイント" : id),
   cardName: (id: string) => id,
+  now: new Date("2026-07-20T09:00:00+09:00"),
 };
 
 describe("CalcResultCard", () => {
@@ -269,6 +272,79 @@ describe("CalcResultCard", () => {
       />,
     );
     expect(screen.queryByText(/貯めてから交換/)).not.toBeInTheDocument();
+  });
+
+  // REM-#2: 交換ルートの鮮度 (stale) 警告チップ。基準日 now は baseProps = 2026-07-20。
+  const edgeStep = (over: Partial<ConversionEdge>): ConversionEdge => ({
+    id: "step",
+    fromCurrencyId: "epos",
+    toCurrencyId: "jal-mile",
+    rate: 0.5,
+    ...over,
+  });
+
+  it("REM-#2: 経由 edge の最終確認が6ヶ月超なら展開ビューに「ルート要確認」を出す", () => {
+    const ranking = makeRanking({
+      // 2025-12 は基準日 2026-07 から 7ヶ月前 = stale
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-12" })],
+    });
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(
+      screen.getByText(/ルート要確認 \(最終確認 2025-12\)/),
+    ).toBeInTheDocument();
+  });
+
+  it("REM-#2: 最終確認がちょうど6ヶ月 (境界) なら警告を出さない", () => {
+    const ranking = makeRanking({
+      // 2026-01 は基準日 2026-07 からちょうど6ヶ月 = stale でない
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2026-01" })],
+    });
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/ルート要確認/)).not.toBeInTheDocument();
+  });
+
+  it("REM-#2: lastVerifiedAt 未記入の edge のみの経路では警告を出さない (未検証は古い扱いしない)", () => {
+    const ranking = makeRanking({
+      pathSteps: [edgeStep({ id: "epos-to-jal" })], // lastVerifiedAt なし
+    });
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/ルート要確認/)).not.toBeInTheDocument();
+  });
+
+  it("REM-#2: 折り畳み (非展開) 時は stale 警告を出さない", () => {
+    const ranking = makeRanking({
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-12" })],
+    });
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/ルート要確認/)).not.toBeInTheDocument();
   });
 
   it("UX-7: no-path の対象外カードは折り畳みで「ルート未登録」バッジを出す", () => {

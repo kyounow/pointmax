@@ -8,6 +8,7 @@ import { cardLabel } from "../../domain/cardLabel";
 import { formatNum } from "../../domain/formatNum";
 import { formatRatio } from "../../domain/currencyKind";
 import { buildRateStackSummary } from "../../domain/rateStackSummary";
+import { staleVerifiedMonth } from "../../domain/edgeFreshness";
 import { navigate } from "../../navigation";
 import { NodePill } from "../NodePill";
 import { RuleStatusBadge } from "../RuleStatusBadge";
@@ -61,6 +62,10 @@ type Props = {
   //   親が excludeStorePayment(現在の storeId, 引数の paymentAppId) を呼び即時再計算する。
   //   店舗未選択 (general) では親が undefined を渡すため、ボタンは出ない。
   onExcludePayment?: (paymentAppId: string) => void;
+  // REM-#2: 鮮度 (stale) 判定の基準日。経由 edge の lastVerifiedAt 最古が 6ヶ月超なら
+  //   展開ビューに「⚠ ルート要確認」を出す。省略時は new Date() (テスト以外は親が
+  //   useToday() の today を渡し、日付跨ぎでも判定が更新される)。
+  now?: Date;
 };
 
 export function CalcResultCard({
@@ -76,6 +81,7 @@ export function CalcResultCard({
   topTotal,
   secondBestTotal,
   onExcludePayment,
+  now,
 }: Props) {
   const reachableLoyalties = r.loyalties.filter((l) => l.reachable);
   const loyaltyTotal = reachableLoyalties.reduce(
@@ -367,6 +373,29 @@ export function CalcResultCard({
               </button>
             </div>
           )}
+
+          {/* REM-#2: 交換ルートの鮮度警告。経由 edge の lastVerifiedAt 最古が 6ヶ月超なら
+              「⚠ ルート要確認 (最終確認 YYYY-MM)」を出す (未記入 edge は無視 = 未検証を古い扱い
+              しない)。判定は純関数 staleVerifiedMonth。到達不能カードは pathSteps が空なので出ない。
+              ── 警告チップの表示予算 (横断規律: 要エントリー > 上限 > stale > 失効 > 端数 の
+              優先順で最大3): この展開ビューに現状出る警告系は 上限 (cap-warn, 上の result-meta) /
+              stale (ここ) / 端数 (minunit, 下) の最大 3 種で予算内。4 種目以降を足すときは
+              優先順ヘルパへの切り出しを検討すること (最も混む楽天5と0の日に #1 展開ビューが
+              警告で埋まるのを防ぐ設計)。 */}
+          {(() => {
+            const staleMonth = staleVerifiedMonth(r.pathSteps, now ?? new Date());
+            if (!staleMonth) return null;
+            return (
+              <div className="route-stale-notes">
+                <span
+                  className="rate-chip route-stale-chip"
+                  title="この交換ルートに含まれるレートは公式ページでの最終確認から6ヶ月以上経過しています。各社公式サイトで最新のレートをご確認ください (計算には現在のレートをそのまま使用しています)。"
+                >
+                  ⚠ ルート要確認 (最終確認 {staleMonth})
+                </span>
+              </div>
+            );
+          })()}
 
           {/* DB-8: 最低交換単位に満たない交換ステップの事後注記 (折り畳みヘッダには出さない)。
               経路選択には影響せず、貯めてから交換すればレート積どおりになる旨を chip で示す。 */}
