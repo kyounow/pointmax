@@ -267,3 +267,16 @@ export type PaymentApp = {
   // iconChar / iconColor / enabled は cosmetic or preference 扱いで対象外。
   userModifiedAt?: string;
 };
+
+// PR-2: 店舗 × 決済手段ペアのユーザー除外レコード (user-owned)。
+// 「この店ではこの決済 (paymentApp) が使えなかった」をレジで踏んだユーザーがワンタップ
+// 記録し、rankCards が該当 store でその paymentApp を候補から外す (= 他決済で最良を再計算)。
+// スコープを (店舗 × 決済) ペアにするのは、グローバル除外だと 1 店の事故でその決済が
+// 全店から消えるため。除外は結果から隠さず「除外済 (タップで戻す)」として可視化し、
+// 誤タップの 1 タップ復帰と、店側が対応を始めた時の自己修復を両立する。
+// excludedAt = 記録時刻 (ISO 8601、将来の棚卸し表示用)。
+export type ExcludedStorePayment = {
+  storeId: string;
+  paymentAppId: string;
+  excludedAt: string;
+};

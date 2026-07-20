@@ -96,6 +96,22 @@
   （`currencyId → 円`、user-owned な永続キー）に保存するため、`syncFromUrl` / `importJson` の
   currencies 全置換でも消えずに残る。円換算タブは `override ?? seed yenValue` を使う。
 
+### レジで使えない決済のワンタップ除外 (PR-2)
+- 「1位提示の決済がこの店では使えなかった」(AMEX 非対応の個人店など) をレジで踏んだとき、
+  結果カード展開ビューの「この決済（◯◯）は使えなかった」ボタンで**その店 × その決済**を
+  ワンタップ除外できる。除外された決済は当該店の候補から外れ、`rankCards` が**他の決済で
+  最良を再計算**する (= 次善の決済/カードが繰り上がる)。
+- スコープは**店舗 × 決済のペア単位** (`store.excludedStorePayments: { storeId, paymentAppId, excludedAt }[]`)。
+  グローバル除外だと 1 店の事故でその決済が全店から消えるため。除外は結果から隠さず、対象外
+  グループに「〔◯◯〕除外済 — タップで戻す」チップで可視化し、誤タップの 1 タップ復帰と、店側が
+  対応を始めた時の自己修復を両立する (`restoreStorePayment`)。汎用ダミー店 (`general`) / 店舗
+  未選択では除外ボタンを出さない (汎用店への除外は無意味)。
+- **保護**: `excludedStorePayments` は `yenValueOverrides` 等と同じ user-owned な永続キーで、
+  `syncFromUrl` / `importJson` の全置換 set() ブロックが一切触らないため、週次の公式同期・
+  インポートで消えない (`preferenceMerge.ts` の per-user 設定保護と同じ動機。store.test に保護テスト)。
+- 有名チェーンの非対応情報を seed に手キュレートするのは**恒久不採用** (腐る deny 情報で「使えるのに
+  出ない」逆事故を起こすため)。除外はユーザー自身の記録に限る。
+
 ### キャンペーン（期間限定ルール）
 - 開始日・終了日付きに加え、**毎月の日にち指定**（`recurringDays`、例:「5と0のつく日」=
   [5,10,15,20,25,30]）と**曜日指定**（`recurringWeekdays`、0=日〜6=土。例:「毎週日曜」= [0]）の
@@ -426,6 +442,14 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **schema v6 トレイン PR-1e (LoyaltyRule 物理削除)** — 旧 `LoyaltyRule` 型と関連 state / action / 評価パス / validators / export・import 欄を全削除。手動の「店舗×ポイントカード提示還元」は `store.addUserLoyaltyProgram` が BenefitProgram (`scope:"member-stores"` / `pointCardId` / `userModifiedAt`) + membership を **同一 action で atomic に**追加する形へ統合 (フォームの見た目・入力項目は不変)。`master.json` も `loyaltyRules` 欄を持たない。SEED_VERSION / PERSIST_SCHEMA 6 据え置き
 - **schema v7 (PERSIST_SCHEMA 6→7、トレイン最終 PR-1f)** — `enabled` デフォルトを反転。**v7 は `enabled === true` のみ有効**（`undefined`/`false` = 無効）。`seed` / `master` は `enabled` を出荷せず、カード・ポイントカード・決済アプリは**全て OFF 起点**で出荷する (`generate-master` が全エンティティから `enabled` を strip、R1 規約の完成)。保有選択はユーザーが「使う」トグルで ON にする (`setCardEnabled` / `addCard` 等は `enabled:true` を明示、`preservePreferences` の carry-over に載る)。**暫定オンボーディング**: Calculator は保有カード 0 枚時に「① 保有カードを選ぶ / ② よく貯める通貨を選ぶ」の 2 ステップ案内を表示し、非保有 42 枚の比較リスト (`CardComparisonSection`) を初回画面で抑制する (正式版は Phase 3)。既存 v6 localStorage は `SCHEMA_MIGRATIONS[6]` の `transform` が有効状態を明示化してから反転するため「使う」設定を失わない。Gemini プロンプト総改訂 (programs を出す `campaign` / `jcb-jpoint` / `epos-tamaru` / `ongoing-program` に `scope` 出力を必須化、`enabled`/`optIn` 非出力を明記、`promptVersion` bump + `registry.yaml` 同期)。SEED_VERSION 43→44 / PERSIST_SCHEMA 6→7
 - **Phase 2 ウォレット統合 (UI)** — カード / ポイントカード / 支払方法の 3 画面を「ウォレット」1 タブに統合 (PR-2b1、hash sub `#wallet[/point-cards|/payment-apps]`、family グループ表示 + `?highlight`)。**PR-2b2**: カード起点の **opt-in 特典 一次導線** を追加 — カードを `cardIds` に含む `optIn` 特典があると「◯◯ の特典 N 件」を `details` で展開し、特典名 / 説明 / 適用条件 + 「使う」トグル (`setProgramEnabled`) を出す (ProgramsScreen 暫定トグルと同じ state を触り挙動一貫、二次導線として ProgramsScreen 側も存置)。カードが OFF のときは「カード自体が OFF」の注記を添える。**誕生月の遅延プロンプト**: `birthdayMonthOnly` 特典を持つカードを ON にした瞬間、`birthMonth` 未設定なら 1〜12 を入力する軽量 dialog (既存 `prompt` 流用) を出す (seed は当該 program 0 件のため機構のみ、テストは fixture)。設定画面に恒久設定として「誕生月」select (未設定 + 1〜12) を追加。ポイントカードの「カスタム還元ルール追加」フォームは `details`「▸ カスタム還元ルールを追加 (上級)」へ降格 (既定は閉じ、自作ルール一覧は常時表示)。SEED_VERSION / PERSIST_SCHEMA 据え置き
+- **残改善 PR-2 (決済ワンタップ除外)** — 「レジでこの決済が使えなかった」を店舗 × 決済ペア単位で
+  ワンタップ除外する user-owned 機能。`store.excludedStorePayments` state (`{ storeId, paymentAppId, excludedAt }[]`)
+  + `excludeStorePayment` / `restoreStorePayment` action (重複防止付き) を追加。`RankInput.excludedStorePayments`
+  を追加し、`rankCards` は `payment.storeId` に一致する除外ペアの `paymentApp` を `compatibleApps` から
+  外す (= 当該決済の評価を止め他決済で最良を再計算)。UI は CalcResultCard 展開ビューに除外ボタン、
+  対象外グループに「除外済 — タップで戻す」チップを追加。`excludedStorePayments` は per-user 設定系 state
+  として `syncFromUrl` / `importJson` の全置換対象に含めず (保護テスト付き)、公式同期で消えない。
+  SEED_VERSION / PERSIST_SCHEMA 据え置き (新フィールドは任意・後方互換不要方針)
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。

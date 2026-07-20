@@ -2,6 +2,7 @@ import type {
   BenefitProgram,
   Card,
   ConversionEdge,
+  ExcludedStorePayment,
   PaymentApp,
   PointCard,
   Store,
@@ -73,6 +74,13 @@ export type RankInput = {
    * 未設定なら birthdayMonthOnly program は常に不発。store.birthMonth から渡す。
    */
   userBirthMonth?: number;
+  /**
+   * PR-2: 店舗 × 決済ペアのユーザー除外レコード。payment.storeId に一致する
+   * paymentAppId は候補 (compatibleApps) から外され、その store でその決済手段の
+   * 評価を止める (= 他決済で最良を再計算する)。他 store 向けの除外は無視される。
+   * 店舗未選択 (general) の除外は UI 側で発生しないため通常は空。store から渡す。
+   */
+  excludedStorePayments?: ExcludedStorePayment[];
 };
 
 // 異種通貨 addOn 分離表示用のエントリ (v5.1.3 audit-fix C)。
@@ -207,12 +215,22 @@ export function rankCards(
     memberships = [],
     now,
     userBirthMonth,
+    excludedStorePayments = [],
   } = input;
   // 単一の評価時刻。MAIN / FULL 両スコープ + loyalty + 全 evaluatePrograms で共有
   const evalNow = now ?? new Date();
 
   const store = stores.find((s) => s.id === payment.storeId);
   const maxStacks = Math.max(0, store?.maxLoyaltyStacks ?? 1);
+
+  // PR-2: この store でユーザーが除外した決済 (paymentApp) の id 集合。compatibleApps の
+  // フィルタで使い、当該決済の評価を止めて他決済で最良を再計算させる。他 store 向けの
+  // 除外レコードは payment.storeId 一致でここに含めないため影響しない。
+  const excludedPaymentAppIds = new Set(
+    excludedStorePayments
+      .filter((e) => e.storeId === payment.storeId)
+      .map((e) => e.paymentAppId),
+  );
 
   // membershipIndex: storeId → memberships の lookup を全 evaluatePrograms / loyalty で共有
   // (Wave 2 audit-fix A-2)。スコープ非依存なので 1 度だけ構築。
@@ -379,7 +397,10 @@ export function rankCards(
 
     // PaymentApp あり: 各 app を試算して最良を選択
     const compatibleApps = paymentApps.filter(
-      (pa) => pa.enabled === true && isPaymentAppCompatible(card, pa), // v7: enabled === true のみ有効
+      (pa) =>
+        pa.enabled === true && // v7: enabled === true のみ有効
+        !excludedPaymentAppIds.has(pa.id) && // PR-2: この店で除外した決済は候補から外す
+        isPaymentAppCompatible(card, pa),
     );
 
     // PaymentApp なし (互換なし) → direct 評価にフォールバック

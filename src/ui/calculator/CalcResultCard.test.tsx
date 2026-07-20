@@ -2,8 +2,8 @@
 //
 // UI コンポーネントテストの初弾 (Phase 5)。jsdom は本ファイル先頭の docblock で
 // ファイル単位指定 → 既存のドメインテスト (31 ファイル) は従来通り node 環境のまま。
-import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { CalcResultCard } from "./CalcResultCard";
 import type { CardRanking } from "../../domain/rankCards";
@@ -343,6 +343,62 @@ describe("CalcResultCard", () => {
     expect(
       screen.queryByRole("button", { name: /交換ルートを見る/ }),
     ).not.toBeInTheDocument();
+  });
+
+  it("PR-2: onExcludePayment + paymentApp があると展開時に除外ボタンを出し、押すと paymentAppId で呼ぶ", () => {
+    const onExclude = vi.fn();
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ paymentApp: { id: "pa-dbarai", name: "d払い" } })}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+        onExcludePayment={onExclude}
+      />,
+    );
+    const btn = screen.getByRole("button", {
+      name: /この決済（d払い）は使えなかった/,
+    });
+    fireEvent.click(btn);
+    expect(onExclude).toHaveBeenCalledWith("pa-dbarai");
+  });
+
+  it("PR-2: onExcludePayment 未指定 (店舗未選択) なら除外ボタンを出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ paymentApp: { id: "pa-dbarai", name: "d払い" } })}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/使えなかった/)).not.toBeInTheDocument();
+  });
+
+  it("PR-2: paymentApp が無い結果では除外ボタンを出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking()} // paymentApp: null
+        programById={new Map()}
+        expanded
+        {...baseProps}
+        onExcludePayment={() => {}}
+      />,
+    );
+    expect(screen.queryByText(/使えなかった/)).not.toBeInTheDocument();
+  });
+
+  it("PR-2: 折り畳み (非展開) 時は除外ボタンを出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ paymentApp: { id: "pa-dbarai", name: "d払い" } })}
+        programById={new Map()}
+        expanded={false}
+        {...baseProps}
+        onExcludePayment={() => {}}
+      />,
+    );
+    expect(screen.queryByText(/使えなかった/)).not.toBeInTheDocument();
   });
 
   it("展開状態を header の aria-expanded に反映する (A11y)", () => {
