@@ -248,8 +248,8 @@ export const SEED_CARDS: Card[] = [
 
   // === v24: 累積モデル対応 — au PAY / ファミペイ の cardSpecific 補完用 ===
   {
-    // au PAY カード、1000円=10 Ponta = 1.0% (利用時)
-    // au PAY 残高にチャージで pa-au-pay の cardSpecific に上乗せ +1.0% 含む
+    // au PAY カード、1000円=10 Ponta = 1.0% (カード利用時の還元。これは存続)
+    // 注: 残高チャージ加算 (+1%) は 2022-12-01 で廃止済 (四半期監査 2026-Q3、pa-au-pay 参照)
     id: "au-pay-card",
     name: "au PAYカード",
     grade: "一般",
@@ -442,9 +442,9 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
       "[v3 PR 2] BenefitProgram で評価: prog-paypay-base + prog-paypay-card-addon",
   },
   // au PAY (チャージ式)、200円=1 Ponta = 0.5% (コード支払い基本還元)
-  // au PAY カード連携で +1% 上乗せ (合計 1.5%)
-  // v3 PR 2 で BenefitProgram に移行:
-  //   prog-au-pay-base (primary, 0.5%) + prog-au-pay-card-addon (addOn, 1%)
+  // 四半期監査 2026-Q3: 一般 au PAYカードの残高チャージ加算 (+1%) は 2022-12-01 利用分で
+  //   廃止 (kddi-fs 告知 0262) → prog-au-pay-card-addon 削除。実質還元は base 0.5% のみ。
+  // v3 PR 2 で BenefitProgram に移行: prog-au-pay-base (primary, 0.5%)
   {
     id: "pa-au-pay",
     name: "au PAY",
@@ -453,12 +453,12 @@ export const SEED_PAYMENT_APPS: PaymentApp[] = [
     chargeBased: true,
     paymentMode: "charge",
     // defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates 削除
-    // → v3 で BenefitProgram (prog-au-pay-base / prog-au-pay-card-addon) で表現
+    // → v3 で BenefitProgram (prog-au-pay-base) で表現
     notes:
-      "au PAY コード支払いで 0.5% Ponta 還元。" +
-      "au PAY カード経由チャージで +1.0% 上乗せ (合計 1.5%)。" +
-      "au PAY ゴールド (年会費 11,000円) なら更に上振れ可能だが seed 未登録。" +
-      "[v3 PR 2] BenefitProgram で評価: prog-au-pay-base + prog-au-pay-card-addon",
+      "au PAY コード支払いで 0.5% Ponta 還元 (実質これのみ)。" +
+      "一般 au PAYカードの残高チャージ加算は 2022-12-01 利用分より廃止 (0%)。" +
+      "au PAY ゴールドカードのみ チャージ 1%・月上限1,000pt が残る (seed 未登録)。" +
+      "[v3 PR 2] BenefitProgram で評価: prog-au-pay-base",
   },
 
   // 【削除済 v4.0.1】pa-famipay (ファミペイ):

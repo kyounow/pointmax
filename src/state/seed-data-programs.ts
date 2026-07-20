@@ -30,6 +30,8 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // PR-1a: JAL特約店 2倍 を「加入要否」で 2 分割する。
   //   特約店 2倍 (100円=2マイル) は「ショッピングマイル・プレミアム (SMP)」加入が前提。
   //   - jal-suica (CLUB-Aゴールド系) は SMP が自動付帯なので常時 2倍 → optIn 無し。
+  //     ⚠ 四半期監査 2026-Q3: SMP 自動入会は CLUB-Aゴールド/プラチナ/ダイナースのみで、
+  //     無印 CLUB-A は対象外。jal-suica は CLUB-Aゴールドなので実挙動は不変。
   //   - jal-card (普通カード) は SMP が任意加入 (年会費4,950円)。未加入だと 2倍にならず、
   //     従来の「両カードに一律 2倍」は SMP 未加入者への過大案内だった → optIn:true で既定 OFF。
   //   membership は両 program に複製する (JAL_TOKUYAKU_STORE_IDS を両者で共有)。
@@ -73,6 +75,8 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // ═══════════════════════════════════════════════════════════════
 
   // A-1: 楽天カード × 楽天市場 通常 3% (SPU 基本込み)
+  // ⚠ 四半期監査 2026-Q3: SPU カード特典分 1% には月間上限 1,000pt (通常カード) があり、
+  //   月10万円超の購入で過大計算になる。cap 付き addOn への分離は要検討 (5と0 と同型化)。
   {
     id: "prog-rakuten-ichiba-base",
     scope: "member-stores",
@@ -142,8 +146,10 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "v-pt",
     bonusType: "primary",
     validFrom: "2023-04-03",
+    // 四半期監査 2026-Q3: rate 0.08 は据え置き。2026-02-01 改定で「基本還元 8%」に構造変更
+    //   (旧 7%+Olive連携1% の内訳記述を現況に更新)。
     description:
-      "Oliveフレキシブルペイ スマホタッチ決済で 8% Vポイント還元 (smbc-v 7% + Olive 連携 +1%)",
+      "2026-02-01 より Olive クレジットモード スマホタッチの基本還元 8% (旧 7%+Olive連携1% の構造から変更)",
     // PR-1b: 8%はスマホ (Apple Pay/Google Pay) のタッチ決済限定。物理カードのタッチは対象外。
     notes: "スマホのタッチ決済限定 (物理カードのタッチは対象外)",
   },
@@ -201,16 +207,19 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description: "ビューカード会員 新幹線eチケット 8% JRE POINT 還元",
   },
 
-  // A-7: JALカードSuica × えきねっと在来線 5%
+  // A-7: JALカードSuica × えきねっと在来線 8% (カード分)
+  // 四半期監査 2026-Q3: 旧 5% はえきねっと側 (カード不問) の付与率だった。カード program の
+  //   正値は VIEWプラス「JRのきっぷ」枠のゴールド 8% (新幹線 program と同率) → 0.08 に修正。
   {
     id: "prog-jal-suica-ekinet-zairaisen",
     scope: "member-stores",
     name: "JALカードSuica × えきねっと在来線特急",
     cardIds: ["jal-suica"],
-    rate: 0.05,
+    rate: 0.08,
     currencyId: "jre",
     bonusType: "primary",
-    description: "ビューカード会員 在来線チケットレス特急券 5% JRE POINT 還元",
+    description:
+      "VIEWプラス カード分 8% (ゴールド)。えきねっと側の 5% は別枠 (合計最大13%)",
   },
 
   // A-8: ビューカード × Suicaチャージ 1.5%
@@ -234,20 +243,29 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.04,
     currencyId: "mercari-pt",
     bonusType: "primary",
+    monthlyCapAmountYen: 125000, // 還元上限 5,000pt/月 ÷ 0.04 (四半期監査 2026-Q3)
     description: "メルカリ内お買い物で最大 4% メルカリポイント還元 (利用額連動、定常最大)",
+    notes: "メルカリ内還元は月P5,000上限",
   },
 
-  // A-10: メルカード × メルカリ 毎月8日 8%
+  // A-10: メルカード × メルカリ 毎月8日 +8% (addOn)
+  // 四半期監査 2026-Q3: 公式 (help 1400) は「その他の還元に加え最大8%」= 通常還元への加算で、
+  //   毎月1〜8日のエントリー必須・還元上限 P300/月。旧 primary 8% は誤り (加算構造 + 要エントリー)。
   {
     id: "prog-mercard-mercari-day8",
     scope: "member-stores",
-    name: "メルカード × メルカリ 毎月8日",
+    name: "メルカード × メルカリ 毎月8日 (+8%)",
     cardIds: ["mercard"],
     rate: 0.08,
     currencyId: "mercari-pt",
-    bonusType: "primary",
+    bonusType: "addOn",
     recurringDays: [8],
-    description: "メルカード毎月8日: メルカリ内お買い物で 8% 還元 (常設)",
+    // エントリーはメルカリアプリ内キャンペーンページのため entryUrl は無し (バッジのみ)。
+    requiresEntry: true,
+    monthlyCapAmountYen: 3750, // 還元上限 300pt/月 ÷ 0.08
+    description: "メルカード毎月8日: メルカリ内お買い物で +8% 還元 (通常還元に加算)",
+    notes:
+      "毎月1〜8日にメルカリアプリ内でエントリー必須。通常還元に加算 (メルカリ内は 最大4%+8%=12%)。上限 P300/月",
   },
 
   // A-11: dカード × d払い × ビックカメラ 6% 期間限定 (2026/5/16〜5/31)
@@ -289,17 +307,10 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
 
-  // B-2: 楽天ポイントカード 1% (複数店舗)
-  {
-    id: "prog-rakuten-pointcard-1pc",
-    scope: "member-stores",
-    name: "楽天ポイントカード提示 1%",
-    pointCardId: "rakuten-pointcard",
-    rate: 0.01,
-    currencyId: "rakuten-pt",
-    bonusType: "primary",
-    description: "楽天ポイントカード提示で 100円=1pt (1%) 還元",
-  },
+  // 【削除済 四半期監査 2026-Q3】B-2 prog-rakuten-pointcard-1pc (+ memberships mcdonalds/doutor):
+  // マクドナルドは 2024-01-14 で楽天ポイントカード取扱終了、ドトールは楽天非加盟 (dポイントのみ)。
+  // 有効な 100円=1pt の楽天ポイント加盟店が無くなったため program ごと削除。
+  // マクドナルドの楽天ポイントは楽天ペイ決済経由のみ。
 
   // B-3: dポイントカード 0.5% (複数店舗)
   {
@@ -418,17 +429,28 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description: "楽天Pay 利用で 1% 楽天ポイント還元 (誰でも)",
   },
 
-  // C-2: 楽天Pay × 楽天カード 上乗せ 0.5% (addOn)
+  // C-2: 楽天Pay 残高払い +0.5% (2025-07 改定後、addOn)
+  // 四半期監査 2026-Q3: 旧「楽天カード経由チャージで +0.5%」は 2025-07 改定で条件が変わり、
+  //   現行は「残高払い かつ カウント期間 (前々月16日〜前月15日) に楽天ポイントカード提示2回以上」。
+  //   楽天カード紐付けか否かは条件でなくなったため cardIds を外し、達成状況は本人しか知らない
+  //   (提示2回) ので optIn:true (= ユーザーが「使う」を選んだ月のみ計算に載せる) で表現する。
   {
     id: "prog-rakuten-pay-rakuten-card-addon",
     scope: "all-stores",
-    name: "楽天Pay × 楽天カード 上乗せ",
+    name: "楽天Pay 残高払い +0.5% (ポイントカード提示2回/期間)",
     paymentAppId: "pa-rakuten-pay",
-    cardIds: ["rakuten-card"],
     rate: 0.005,
     currencyId: "rakuten-pt",
     bonusType: "addOn",
-    description: "楽天カード経由チャージで +0.5% 上乗せ (楽天Pay 1% と合わせて 1.5%)",
+    optIn: true,
+    description:
+      "楽天Pay の残高払いで +0.5% 上乗せ (楽天Pay 1% と合わせて 1.5%)。" +
+      "カウント期間 (前々月16日〜前月15日) に楽天ポイントカードを2回以上提示した月のみ。" +
+      "既定OFF・条件を満たしている月は「使う」をONに (未達時は base 1.0% のみ)。",
+    conditions:
+      "残高払い かつ カウント期間 (前々月16日〜前月15日) に楽天ポイントカード提示2回以上。" +
+      "楽天カード経由チャージは条件ではなくなった (2025-07 改定)。" +
+      "2026-03 予定だった引き下げは見合わせ中 (2026-01 告知)。",
   },
 
   // C-3: d払い ベース還元 0.5% (全 store、primary)
@@ -494,18 +516,11 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     description: "au PAY コード支払いで 0.5% Pontaポイント還元 (誰でも)",
   },
 
-  // C-8: au PAY × au PAYカード 上乗せ 1% (addOn)
-  {
-    id: "prog-au-pay-card-addon",
-    scope: "all-stores",
-    name: "au PAY × au PAYカード 上乗せ",
-    paymentAppId: "pa-au-pay",
-    cardIds: ["au-pay-card"],
-    rate: 0.01,
-    currencyId: "ponta-pt",
-    bonusType: "addOn",
-    description: "au PAYカードからチャージで +1% 上乗せ (au PAY 0.5% と合わせて 1.5%)",
-  },
+  // 【削除済 四半期監査 2026-Q3】C-8 prog-au-pay-card-addon:
+  // 一般 au PAY カードの残高チャージは 2022-12-01 利用分よりポイント加算対象外
+  // (kddi-fs 公式告知 0262)。旧 seed は全 au-pay-card 保有者に +1% を過大計算していた。
+  // au PAY の実質還元は base 0.5% (prog-au-pay-base) のみ。
+  // ゴールドカード (未 seed) のみ チャージ 1%・月上限1,000pt が残る。
 
   // 【削除済 v4.0.1】C-9 prog-famipay-base / C-10 prog-famima-card-addon:
   // ファミペイ廃止に伴い削除。ファミペイのポイント付与は d/楽天/V 選択式で
@@ -579,28 +594,34 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // V5: JCB J-POINT パートナー (旧 Oki Doki ランド系、2026/1〜J-POINT 名称統一)
   // ───────────────────────────────────────────────────────────────
   // V5-2 でカードグレード別に W 用 / Gold 用 2 系列に分離。
-  // - 公式の「○倍」は OkiDoki 倍率 (= 200円1pt 基準) なのでカード基本還元率に
-  //   依存する: W 基本 2倍×1% / Gold 基本 1倍×0.5%。
-  // - Gold「最大10%還元」= 0.5% × 20倍 (= スタバ) と整合、Gold プレミアム
-  //   「最大4倍」= 0.5% × 4倍 = 2% (= 高島屋プレミアム) が W の 2倍と同等。
-  // - 「プレミアムでおトク」は Gold が W と同等実効率に追いつく仕組み。
+  // ── 加算方式 (四半期監査 2026-Q3 で確定、旧「基本還元率 × N倍」の乗算モデルは誤り) ──
+  //   ショップ表記「N倍」は標準 (0.5% = 200円1pt) 基準の合計倍率。実際の付与は
+  //     通常1倍 (0.5%) + カードごとの特典倍率 + ショップ倍率 の「加算」で決まる。
+  //   - W (JCB CARD W) はカード特典 +1倍 が加算される → 実効 (N+1) × 0.5%。
+  //     例: スタバ eGift 10,000円 = 通常50pt(1倍) + Wボーナス50pt(+1倍) + パートナー950pt(19倍)
+  //         = 1,050pt (21倍・10.5%)。ショップ表記「20倍」= 標準20倍で、W は +1倍 で計21倍。
+  //   - Gold はカード特典倍率なし → 実効 N × 0.5% (ショップ表記どおり)。
+  //   旧 seed の「W 基本1% × N倍」乗算モデルは過大 (スタバ 20% 等) だったため加算方式に修正。
   // - 全店「ポイントアップ登録 (無料、店ごと)」必須 → 全 program に entryUrl + requiresEntry:true
   //   (REM-#5: 登録制だが無料・恒久なので optIn ではなく requiresEntry。計算には常時載せ、
   //    UI で「⚠ 要エントリー」バッジ + タップで登録ページ起動)。
-  // 出典: https://j-pointpartner.jcb.co.jp/search +
-  //       https://www.jcb.co.jp/ordercard/kojin_card/gold2.html (V5-2、2026-05-20)
+  // 出典: https://www.jcb.co.jp/ordercard/special/jpoint.html (公式計算例) +
+  //       https://www.jcb.co.jp/ordercard/kojin_card/os_card_w2.html (W 最大21倍・10.5%) +
+  //       https://j-pointpartner.jcb.co.jp/qa (通常1倍にショップ倍率とカード特典が加算) +
+  //       https://j-pointpartner.jcb.co.jp/search (店別倍率)
   // ═══════════════════════════════════════════════════════════════
 
-  // ─── W 系列 (cardIds=["jcb-w"]、基本 1% × 倍率) ───
+  // ─── W 系列 (cardIds=["jcb-w"]、加算方式で実効 (N+1)×0.5%。N はショップ表記倍率) ───
   {
     id: "prog-jcb-jpoint-2x",
     scope: "member-stores",
     name: "J-POINT パートナー (2倍) W向け",
     cardIds: ["jcb-w"],
-    rate: 0.02,
+    rate: 0.015,
     currencyId: "j-point",
     bonusType: "primary",
-    description: "JCB J-POINT パートナー店で 2倍 (W 基本 1% × 2 = 実効 2%)",
+    description:
+      "JCB J-POINT パートナー 2倍店 (W はカード特典+1倍で計3倍 = 実効 1.5%)",
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
     requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
@@ -611,29 +632,31 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     scope: "member-stores",
     name: "J-POINT パートナー (3倍) W向け",
     cardIds: ["jcb-w"],
-    rate: 0.03,
+    rate: 0.02,
     currencyId: "j-point",
     bonusType: "primary",
-    description: "JCB J-POINT パートナー店で 3倍 (W 基本 1% × 3 = 実効 3%)",
+    description:
+      "JCB J-POINT パートナー 3倍店 (W はカード特典+1倍で計4倍 = 実効 2.0%)",
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
     requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
   // V5-2: prog-jcb-jpoint-4x (W 向け 4倍 rate 0.04) を廃止。
-  // 高島屋は W で「2倍 = 2%」が正解 (倍率 4 は Gold プレミアム視点)、
-  // W 用 memberships は prog-jcb-jpoint-2x に移管。Gold プレミアム 4倍は
-  // prog-jcb-jpoint-gold-4x で表現 (実効 2%、W の 2倍と同等)。
+  // 高島屋はショップ表記「2倍」店で、W 用 memberships は prog-jcb-jpoint-2x に移管済み。
+  // 四半期監査 2026-Q3 (加算方式確定後): W 2倍店 = 計3倍 = 1.5%、Gold プレミアム 4倍 (高島屋) は
+  // prog-jcb-jpoint-gold-4x で実効 2%。両者は同率ではない (加算方式では W と Gold で別値)。
   {
     id: "prog-jcb-jpoint-20x",
     scope: "member-stores",
     name: "J-POINT パートナー (20倍) W向け",
     cardIds: ["jcb-w"],
-    rate: 0.2,
+    rate: 0.105,
     currencyId: "j-point",
     bonusType: "primary",
     description:
-      "JCB J-POINT パートナー店で 20倍 (W 基本 1% × 20 = 実効 20%)。" +
+      "JCB J-POINT パートナー 20倍店 (W はカード特典+1倍で計21倍 = 実効 10.5%)。" +
+      "公式計算例: スタバ eGift 10,000円 = 通常50pt + Wボーナス50pt + パートナー950pt = 1,050pt (10.5%)。" +
       "対象店舗により適用条件が異なる (店舗ごとにモバイルオーダー等の限定条件あり)。",
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) が必須。" +
@@ -685,8 +708,8 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     currencyId: "j-point",
     bonusType: "primary",
     description:
-      "JCB J-POINT パートナー店「プレミアムでおトク」枠で 4倍 (Gold 基本 0.5% × 4 = 実効 2%)。" +
-      "W 向けの 2倍店舗と同等の実効率に Gold が追いつく仕組み。",
+      "JCB J-POINT パートナー店「プレミアムでおトク」枠で 4倍 (Gold 実効 4×0.5% = 2%)。" +
+      "Gold は加算方式のカード特典倍率が無いためショップ表記どおり N×0.5%。",
     conditions:
       "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) + " +
       "「プレミアムでおトク」対象店 (高島屋等) で Gold グレード保有時の優遇。",
@@ -1037,8 +1060,8 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
     "nico-pet",
   ]),
 
-  // B-2: 楽天ポイントカード 1% memberships
-  ...defineMemberships("prog-rakuten-pointcard-1pc", ["mcdonalds", "doutor"]),
+  // B-2: 楽天ポイントカード 1% memberships → 四半期監査 2026-Q3 で program ごと削除
+  // (マクドナルド 2024-01-14 取扱終了 / ドトール 楽天非加盟)。program 側の削除コメント参照。
 
   // B-3: dポイントカード 0.5% memberships
   ...defineMemberships("prog-d-pointcard-0.5pc", [

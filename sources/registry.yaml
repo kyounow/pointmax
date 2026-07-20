@@ -45,7 +45,7 @@ extractorVersions:
   card: v1.1
   epos-tamaru: v1.1  # 2026-07-15: scope 出力必須化 (v7)
   jal-tokuyaku: v1.0
-  jcb-jpoint: v1.2  # 2026-07-15: scope 出力必須化 (v7)
+  jcb-jpoint: v1.3  # 2026-07-21: 加算方式確定 (W (N+1)×0.5% / Gold N×0.5%、四半期監査 2026-Q3)
   ongoing-program: v1.2  # 2026-07-15: scope 出力必須化 (all-stores / member-stores)、enabled/optIn 非出力明記
   payment-app: v1.1
   point-partner: v1.2

@@ -320,13 +320,16 @@ describe("SEED_EDGES の通貨参照整合性", () => {
     expect(e?.requiredCardIds).toEqual(["jal-suica"]);
   });
 
-  it("v6.4.0: jre-to-jal-normal (普通カード) は rate 0.5 / requiredCardIds ['jal-suica-normal']", () => {
+  // 四半期監査 2026-Q3: 旧 rate 0.5 (1500→750) は公式に存在しないレートだった。
+  // 正は SMP 未加入の 0.3333 (1500→500) / 加入で 0.6667。既定は保守的に未加入 0.3333。
+  it("Q3監査: jre-to-jal-normal (普通カード) は rate 0.3333 / requiredCardIds ['jal-suica-normal']", () => {
     const { edges } = seed();
     const e = edges.find((x) => x.id === "jre-to-jal-normal");
     expect(e, "edge jre-to-jal-normal が未登録").toBeDefined();
     expect(e?.fromCurrencyId).toBe("jre");
     expect(e?.toCurrencyId).toBe("jal-mile");
-    expect(e?.rate).toBe(0.5);
+    expect(e?.rate).toBe(0.3333);
+    expect(e?.rate).not.toBe(0.5); // 旧 1500→750 (公式に無いレート) への退行防止
     expect(e?.requiredCardIds).toEqual(["jal-suica-normal"]);
   });
 
@@ -667,5 +670,97 @@ describe("v6 PR-1c: Card family の seed 契約", () => {
     expect(byId.get("family-epos")?.exclusive).toBe(true);
     expect(byId.get("family-jal-suica")?.exclusive).toBe(true);
     expect(byId.get("family-jcb")?.exclusive).toBe(false);
+  });
+});
+
+// 四半期監査 (2026-Q3): 消滅したルート / 廃止された優待の tombstone 契約。
+// 削除した edge / program が seed に再混入しないことを保証する
+// (cron auto-sync や手編集での復活を CI で検出)。
+describe("四半期監査 2026-Q3: 消滅ルート / 廃止優待の削除固定", () => {
+  it("edge eikyu-to-edy は存在しない (永久不滅ウォレット終了 2023-10-31)", () => {
+    const { edges } = seed();
+    expect(edges.some((e) => e.id === "eikyu-to-edy")).toBe(false);
+  });
+
+  it("edge eikyu-to-rakuten は存在しない (STOREE SAISON 交換一覧から消滅)", () => {
+    const { edges } = seed();
+    expect(edges.some((e) => e.id === "eikyu-to-rakuten")).toBe(false);
+  });
+
+  it("program prog-au-pay-card-addon は存在しない (残高チャージ加算廃止 2022-12-01)", () => {
+    const { programs, memberships } = seed();
+    expect(programs.some((p) => p.id === "prog-au-pay-card-addon")).toBe(false);
+    expect(
+      (memberships ?? []).some((m) => m.programId === "prog-au-pay-card-addon"),
+    ).toBe(false);
+  });
+
+  it("program prog-rakuten-pointcard-1pc は存在しない (有効加盟店ゼロ、membership も cascade 削除)", () => {
+    const { programs, memberships } = seed();
+    expect(programs.some((p) => p.id === "prog-rakuten-pointcard-1pc")).toBe(
+      false,
+    );
+    const offending = (memberships ?? []).filter(
+      (m) => m.programId === "prog-rakuten-pointcard-1pc",
+    );
+    expect(offending, JSON.stringify(offending)).toEqual([]);
+  });
+
+  // レート修正の退行防止 (公式値を CI で固定)。
+  it("レート修正が反映されている (eikyu-to-d 4.5 / eikyu-to-amazon 4 / 在来線えきねっと 8%)", () => {
+    const { edges, programs } = seed();
+    const byEdge = new Map(edges.map((e) => [e.id, e]));
+    expect(byEdge.get("eikyu-to-d")?.rate).toBe(4.5);
+    expect(byEdge.get("eikyu-to-d")?.minFromUnits).toBe(200);
+    expect(byEdge.get("eikyu-to-amazon")?.rate).toBe(4);
+    expect(byEdge.get("eikyu-to-amazon")?.minFromUnits).toBe(100);
+    const zairaisen = programs.find(
+      (p) => p.id === "prog-jal-suica-ekinet-zairaisen",
+    );
+    expect(zairaisen?.rate).toBe(0.08);
+  });
+
+  // メルカード毎月8日: primary 8% → addOn +8% (要エントリー・上限P300/月) への実態化。
+  it("prog-mercard-mercari-day8 は addOn / requiresEntry / cap 3750 (旧 primary 8% への退行防止)", () => {
+    const { programs } = seed();
+    const p = programs.find((x) => x.id === "prog-mercard-mercari-day8");
+    expect(p, "prog-mercard-mercari-day8 が未登録").toBeDefined();
+    expect(p?.bonusType).toBe("addOn");
+    expect(p?.bonusType).not.toBe("primary"); // 旧 primary 8% への退行防止
+    expect(p?.rate).toBe(0.08);
+    expect(p?.requiresEntry).toBe(true);
+    expect(p?.monthlyCapAmountYen).toBe(3750); // 300pt/月 ÷ 0.08
+  });
+
+  // 楽天Pay 残高払い +0.5%: 2025-07 改定で cardIds 除去 + optIn 化。
+  it("prog-rakuten-pay-rakuten-card-addon は cardIds 無し / optIn:true (2025-07 改定条件)", () => {
+    const { programs } = seed();
+    const p = programs.find(
+      (x) => x.id === "prog-rakuten-pay-rakuten-card-addon",
+    );
+    expect(p, "prog-rakuten-pay-rakuten-card-addon が未登録").toBeDefined();
+    expect(p?.cardIds).toBeUndefined();
+    expect(p?.optIn).toBe(true);
+    expect(p?.rate).toBe(0.005);
+  });
+
+  // JCB W 系列: 加算方式 (W 実効 (N+1)×0.5%) の正値固定。
+  // 旧「W 基本1% × N倍」乗算モデル (2x=0.02 / 3x=0.03 / 20x=0.2) への退行を防止する。
+  // Gold 系列 (特典倍率なし = N×0.5%) は不変。
+  it("JCB W 系列は加算方式の正値 (2x=0.015 / 3x=0.02 / 20x=0.105)、Gold は不変", () => {
+    const { programs } = seed();
+    const byId = new Map(programs.map((p) => [p.id, p]));
+    // W 系列 (加算方式: (N+1)×0.5%)
+    expect(byId.get("prog-jcb-jpoint-2x")?.rate).toBe(0.015);
+    expect(byId.get("prog-jcb-jpoint-2x")?.rate).not.toBe(0.02); // 旧乗算モデルへの退行防止
+    expect(byId.get("prog-jcb-jpoint-3x")?.rate).toBe(0.02);
+    expect(byId.get("prog-jcb-jpoint-3x")?.rate).not.toBe(0.03);
+    expect(byId.get("prog-jcb-jpoint-20x")?.rate).toBe(0.105);
+    expect(byId.get("prog-jcb-jpoint-20x")?.rate).not.toBe(0.2);
+    // Gold 系列 (N×0.5%、加算方式でも同値なので不変)
+    expect(byId.get("prog-jcb-jpoint-gold-2x")?.rate).toBe(0.01);
+    expect(byId.get("prog-jcb-jpoint-gold-3x")?.rate).toBe(0.015);
+    expect(byId.get("prog-jcb-jpoint-gold-4x")?.rate).toBe(0.02);
+    expect(byId.get("prog-jcb-jpoint-gold-20x")?.rate).toBe(0.1);
   });
 });
