@@ -2316,6 +2316,22 @@ details summary {
   white-space: normal;
 }
 
+/* REM-#2: 交換ルートの鮮度警告 chip (最終確認が6ヶ月超)。minunit と同じ警告色系の
+   chip 視覚言語。cap-warn (上限) と 端数 (minunit) の間の優先順で展開ビューに出す。 */
+.route-stale-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+.route-stale-chip {
+  background: rgba(255, 200, 0, 0.15);
+  color: #d4a017;
+  border: 1px solid #d4a017;
+  white-space: normal;
+  cursor: help;
+}
+
 /* PointCardsScreen: 対象加盟店プレビュー */
 .pc-stores-preview {
   display: inline-block;

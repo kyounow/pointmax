@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatRatio } from "../../domain/currencyKind";
+import { isMonthStale } from "../../domain/edgeFreshness";
 import type { Card, ConversionEdge, Currency } from "../../domain/types";
 import { CurrencyIcon } from "../CurrencyIcon";
 
@@ -108,6 +109,25 @@ export function EdgeDetailPanel({
                 <strong>メモ:</strong> {edge.notes}
               </div>
             )}
+            {/* REM-#2: 最終確認月 (メンテ用ビュー)。6ヶ月超は ⚠ で棚卸し対象を示す。
+                未記入は「未確認」表示 (未検証を古いと誤警告しない = ⚠ は出さない)。 */}
+            <div className="ratio-hint" style={{ marginTop: 4 }}>
+              <strong>最終確認:</strong>{" "}
+              {edge.lastVerifiedAt ? (
+                isMonthStale(edge.lastVerifiedAt, new Date()) ? (
+                  <span
+                    style={{ color: "#d4a017" }}
+                    title="最終確認から6ヶ月以上経過。公式ページでレートを再確認し lastVerifiedAt を更新してください (四半期棚卸し対象)。"
+                  >
+                    ⚠ {edge.lastVerifiedAt} (要確認)
+                  </span>
+                ) : (
+                  <span>{edge.lastVerifiedAt}</span>
+                )
+              ) : (
+                <span className="hint-inline">未確認 (未記入)</span>
+              )}
+            </div>
             {(edge.requiredCardIds?.length ?? 0) > 0 && (
               <>
                 <div

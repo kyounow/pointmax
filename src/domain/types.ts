@@ -109,6 +109,14 @@ export type ConversionEdge = {
   //   validators では正の数チェックのみ (optional)。
   minFromUnits?: number;
   notes?: string;
+  // REM-#2: このレートを公式ページで最後に人手確認した月 ("YYYY-MM" 月精度)。
+  //   日次の鮮度は不要なので月精度で十分。**未記入 (undefined) = 未検証扱い**で、
+  //   Calculator / EdgesScreen とも stale バッジは出さない (未検証を「古い」と誤警告しない)。
+  //   bestPath に実際に乗る主要 edge のみ手記入し、残りは四半期棚卸し (SESSION_LOG の
+  //   「四半期ごと手動確認チェックリスト」) で漸進的に埋める。stale 判定 (最終確認が
+  //   6ヶ月超で ⚠) は純関数 src/domain/edgeFreshness.ts に集約。passthrough フィールドの
+  //   ため PERSIST_SCHEMA_VERSION の bump は不要 (未知フィールドはそのまま carry-over)。
+  lastVerifiedAt?: string;
 };
 
 // ポイントカード（クレカ決済とは別軸の、店頭提示で貯まるカード）

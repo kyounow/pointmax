@@ -7,6 +7,22 @@ import { defineMemberships } from "./defineMemberships";
 //   A. StoreRule 系 11 件 (SMBC 7% / Olive 8% / 楽天市場 / JAL Suica / ビューカード / メルカード / d払い×ビックカメラ)
 //   B. LoyaltyRule 系 10 件 (pointCard × rate group で集約)
 //   C. PaymentApp 系 11 件 (defaultBonusRate → primary / cardSpecificBonusRates → addOn)
+//
+// ─── 自動監視対象外 (四半期手動確認) の program 群 (REM-#6) ───
+// 週次 cron 同期 (sources/registry.yaml) は「加盟店リスト」や「期間限定キャンペーン」は
+// 拾うが、下記の**常設 base rate / 優待の率そのもの**を監視するソースは無い (改定を検知
+// できない構造的な穴)。3ヶ月ごとに公式ページで率を突合し、変わっていたら手修正する:
+//   - 楽天市場 SPU / 5と0のつく日 (prog-rakuten-ichiba-base / -zero-five-day)
+//   - SMBC ゴールド7% / Olive 8% タッチ決済 base (prog-smbc-7p / prog-olive-8p)
+//   - メルカード (prog-mercard-mercari / -day8)
+//   - ビューカード / JALカードSuica の Suica チャージ (prog-viewcard-suica-charge /
+//     prog-jal-suica-charge / prog-jal-suica-ekinet-*)
+//   - エポス優待 (prog-epos-gp-marui / prog-epos-gp-selectable-pointup)
+//   - Pay 系 base (prog-rakuten-pay-base / prog-d-pay-base / prog-paypay-base /
+//     prog-au-pay-base / prog-pa-nanaco-base / prog-pa-waon-base)
+//   - 各ポイントカード提示 base (prog-*-pointcard-*pc)
+// 併せて交換 edge の lastVerifiedAt 棚卸し (未記入分の漸進記入) も同じ四半期サイクルで回す。
+// チェックリストの実体は SESSION_LOG「🗓 四半期ごと手動確認チェックリスト」を参照 (次回目安 2026-10)。
 export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // ═══════════════════════════════════════════════════════════════
   // PR 1: JAL特約店

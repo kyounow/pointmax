@@ -486,6 +486,7 @@ export function CalculatorScreen() {
               topTotal={topTotal}
               secondBestTotal={secondBestTotal}
               onExcludePayment={canExcludePayment ? onExcludePayment : undefined}
+              now={today}
             />
           ))}
 
