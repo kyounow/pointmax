@@ -3,6 +3,7 @@ import type { SeedShape } from "../../src/domain/mergeSeed";
 import {
   applyCategoryCap,
   dedupeAcrossProposals,
+  demoteChildlessMemberStorePrograms,
   downgradeOrphanMemberships,
   isFailedExtraction,
   promoteChainStoreAutoMerge,
@@ -1486,6 +1487,127 @@ describe("downgradeOrphanMemberships", () => {
     expect(downgradedStore).toBe(0);
     expect(downgradedProgram).toBe(0);
     expect(proposals[0]).toBe(storeProp);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// demoteChildlessMemberStorePrograms (原子性ガード)
+// ───────────────────────────────────────────────────────────────
+
+describe("demoteChildlessMemberStorePrograms", () => {
+  const ev = { evidenceQuote: "x", explicitness: 1, ambiguity: 0 };
+  // auto (reviewReason 無し) の member-stores program addRecord。
+  const memberStoreProgram = (
+    id: string,
+    reviewReason?: Proposal["reviewReason"],
+  ): Proposal => ({
+    type: "addRecord",
+    collection: "programs",
+    record: { id, name: id, scope: "member-stores", rate: 0.05, currencyId: "v-pt" },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: ev,
+    ...(reviewReason ? { reviewReason } : {}),
+  });
+  const allStoreProgram = (id: string): Proposal => ({
+    type: "addRecord",
+    collection: "programs",
+    record: { id, name: id, scope: "all-stores", rate: 0.05, currencyId: "v-pt" },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: ev,
+  });
+  const membership = (
+    programId: string,
+    storeId: string,
+    reviewReason?: Proposal["reviewReason"],
+  ): Proposal => ({
+    type: "addRecord",
+    collection: "memberships",
+    record: { programId, storeId },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: ev,
+    ...(reviewReason ? { reviewReason } : {}),
+  });
+
+  // 木曜 run 29453709908 の再現: 新規 member-stores program は auto だが、
+  // その membership が全て missingStoreBody で review 降格 → program 単独が死にデータ。
+  it("回帰: membership 全件が review 降格した member-stores program は orphanedProgram に降格", () => {
+    const { proposals, demoted } = demoteChildlessMemberStorePrograms(
+      [
+        memberStoreProgram("prog-paypay-korea-2026-07"),
+        // orphan guard で missingStoreBody 降格済 (store が storeAdditionsDisabled)
+        membership("prog-paypay-korea-2026-07", "store-korea-a", "missingStoreBody"),
+        membership("prog-paypay-korea-2026-07", "store-korea-b", "missingStoreBody"),
+      ],
+      new Set(), // 既存 seed に当該 program の membership 無し
+    );
+    expect(demoted).toBe(1);
+    expect(proposals[0].reviewReason).toBe("orphanedProgram");
+    // membership 側は元の降格理由のまま (触らない)
+    expect(proposals[1].reviewReason).toBe("missingStoreBody");
+    expect(proposals[2].reviewReason).toBe("missingStoreBody");
+  });
+
+  // 正常系: program + membership 両方 auto → 両方そのまま。
+  it("正常系: program も membership も auto なら降格しない", () => {
+    const { proposals, demoted } = demoteChildlessMemberStorePrograms(
+      [
+        memberStoreProgram("prog-new"),
+        membership("prog-new", "store-a"), // auto (reviewReason 無し)
+      ],
+      new Set(),
+    );
+    expect(demoted).toBe(0);
+    expect(proposals[0].reviewReason).toBeUndefined();
+  });
+
+  // 既存 seed に membership がある programId は、同 run auto membership が無くても降格しない
+  // (OR 条件の existing 側をテスト)。
+  it("既存 seed に当該 program の membership があれば降格しない", () => {
+    const { proposals, demoted } = demoteChildlessMemberStorePrograms(
+      [
+        memberStoreProgram("prog-has-seed-membership"),
+        membership("prog-has-seed-membership", "store-a", "missingStoreBody"),
+      ],
+      new Set(["prog-has-seed-membership"]), // 既存 seed に membership あり
+    );
+    expect(demoted).toBe(0);
+    expect(proposals[0].reviewReason).toBeUndefined();
+  });
+
+  // 既存 program (seed に membership あり) への新 membership 降格では program に影響なし。
+  // 既存 program は addRecord proposal として現れないため、そもそも降格対象にならない。
+  it("既存 program への新 membership 降格では program (proposal 非在) に影響なし", () => {
+    const onlyMembership = membership("prog-existing", "store-a", "missingStoreBody");
+    const { proposals, demoted } = demoteChildlessMemberStorePrograms(
+      [onlyMembership],
+      new Set(["prog-existing"]),
+    );
+    expect(demoted).toBe(0);
+    expect(proposals[0]).toBe(onlyMembership);
+  });
+
+  // all-stores program は membership 0 でも自身で発火するので対象外。
+  it("all-stores program は membership 0 でも降格しない", () => {
+    const prog = allStoreProgram("prog-all");
+    const { proposals, demoted } = demoteChildlessMemberStorePrograms(
+      [prog],
+      new Set(),
+    );
+    expect(demoted).toBe(0);
+    expect(proposals[0]).toBe(prog);
+  });
+
+  // 既に他理由 (idCollision 等) で降格済の member-stores program は触らない。
+  it("既に review 済の member-stores program は触らない", () => {
+    const { proposals, demoted } = demoteChildlessMemberStorePrograms(
+      [memberStoreProgram("prog-reviewed", "idCollision")],
+      new Set(),
+    );
+    expect(demoted).toBe(0);
+    expect(proposals[0].reviewReason).toBe("idCollision");
   });
 });
 

@@ -396,6 +396,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   zeroOrInvalidRate: "🔴 zeroOrInvalidRate",
   missingStoreBody: "🟠 missingStoreBody (store 本体なし membership)",
   missingProgramBody: "🟠 missingProgramBody (program 本体なし membership)",
+  orphanedProgram: "🟠 orphanedProgram (対象店 membership 0 の member-stores program)",
   storeAdditionsDisabled: "⏸ storeAdditionsDisabled (store 追加は手動キュレ運用)",
   expiredCampaign: "🟠 expiredCampaign (期限切れだが同 run で期間変更提案あり、人手判断)",
   periodChange: "🟣 periodChange (キャンペーン期間の変更/延長)",
@@ -444,6 +445,10 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "membership 提案だが、参照先 program 本体が seed 未存在 + 同 run の auto 候補にも無い (proposePrograms は新規 program に必ず idCollision を付けるため、" +
     "program 本体は同 run では auto に上がらず needsReview に行く)。そのまま membership だけ auto-merge すると BenefitProgram が無く還元計算できない孤児が seed に残るため降格。" +
     "program 本体側の needsReview を先に承認 → 手動で seed に program 追加 → 次回 cron で membership 側も自動的に通る運用。",
+  orphanedProgram:
+    "新規 member-stores program だが、対象店舗の membership が全て review 降格された (例: store が storeAdditionsDisabled で降格 → membership が missingStoreBody になった)。" +
+    "そのまま program 単独を auto-merge すると、対象店ゼロで一度も発火しない死にデータが seed に残り、member-stores は membership ≥1 の契約テストを apply 後の safety gate で壊す (無関係な auto 変更まで巻き添えで review 降格)。" +
+    "対象店 membership 側の承認と**同時に** `npm run sync:approve` で approve するか、次回 cron で store/membership 側が auto 化されるのを待つこと。",
   storeAdditionsDisabled:
     "新規 store の追加は cron では行わない方針 (キャンペーン情報の獲得に注力するため)。" +
     "ここに列挙された店舗は cron が検知した「seed に未追加の店舗候補」で、必要な場合は手動で seed-data-stores.ts に追加 → 次回 cron で関連 membership が自動取り込まれる。" +
@@ -581,6 +586,7 @@ export function buildReviewQueue(report: ProposalReport): string {
       "pseudoStoreTarget",    // 🔴 擬似エンティティへの誤マッピング疑い、早めに目を通す
       "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
       "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
+      "orphanedProgram",      // 🟠 対象店 membership 0 の member-stores program。membership 側と同時 approve
       "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目
       "expiredCampaign",      // 🟠 validTo+30日経過。クリーンアップ候補
       "storeAdditionsDisabled", // ⏸ store 追加は手動キュレ運用、参照リストとして末尾配置
