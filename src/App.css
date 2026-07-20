@@ -2361,6 +2361,23 @@ details summary {
   cursor: help;
 }
 
+/* REM-#4: ベスト購入日ヒント chip (#1 カード直下)。警告系ではなく「待てば得」の前向きな
+   情報なので accent 系の info 色にし、cap/stale 等の警告 (黄) と視覚的に区別する。 */
+.best-day-hint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0 10px;
+}
+.best-day-chip {
+  background: rgba(78, 161, 255, 0.14);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  white-space: normal;
+  line-height: 1.5;
+  cursor: help;
+}
+
 /* PointCardsScreen: 対象加盟店プレビュー */
 .pc-stores-preview {
   display: inline-block;

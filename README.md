@@ -112,6 +112,22 @@
 - 有名チェーンの非対応情報を seed に手キュレートするのは**恒久不採用** (腐る deny 情報で「使えるのに
   出ない」逆事故を起こすため)。除外はユーザー自身の記録に限る。
 
+### ベスト購入日ヒント (PR-5)
+- 店舗を選ぶと、その店に「日で有効・無効が変わる」特典 (`recurringDays`「5と0のつく日」/
+  `recurringWeekdays` 曜日限定 / 未来 `validFrom` のこれから始まるキャンペーン) の membership が
+  ある場合に限り、**今後 30 日を日替わりで `rankCards` 再評価**して「今日の #1 より得になる最良の日」を
+  探し、**#1 カード直下に 1 行チップ**「📅 25日に買えば +214 楽天ポイント（楽天市場「5と0のつく日」）」を
+  出す (同ゲインが複数日あるときは**最も近い日**)。判定は純関数 `src/domain/bestPurchaseDay.ts`。
+- **無関係な店では即 `null`** — 対象特典の membership が無ければ `rankCards` を 1 度も呼ばず、
+  30 回計算を走らせない (ゲート先行)。今日が既に最良の日 (例: 5と0 の日当日) なら何も出さない。
+- **表示位置**は #1 直下で固定 (結果リスト上部・#1 行より上には置かない = 店頭フローの視線を塞がず、
+  まとめ買い検討時にはスクロールなしで見える)。予定・エントリー要否は変わりうる旨を `title` 注記で添える。
+- **円換算 (目安) モードでは非表示** (交換 path を使わない比較のため)。金額未入力・0 (下書き復元 amount が
+  空文字のケースを含む) では結果自体が出ないため自然に非発火。
+- **パフォーマンス**: `pathCache` は `rankCards` 呼び出しごとに作り直される設計 (呼び出し跨ぎでは
+  再利用されない) ため、`now` だけ変えた 30 回で cache 共有はしない。代わりに UI 側 `useMemo` で
+  店舗/金額/通貨/データ変更時のみ再計算し、上記ゲートと併せて計算頻度を抑える。
+
 ### キャンペーン（期間限定ルール）
 - 開始日・終了日付きに加え、**毎月の日にち指定**（`recurringDays`、例:「5と0のつく日」=
   [5,10,15,20,25,30]）と**曜日指定**（`recurringWeekdays`、0=日〜6=土。例:「毎週日曜」= [0]）の
@@ -451,6 +467,15 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
   対象外グループに「除外済 — タップで戻す」チップを追加。`excludedStorePayments` は per-user 設定系 state
   として `syncFromUrl` / `importJson` の全置換対象に含めず (保護テスト付き)、公式同期で消えない。
   SEED_VERSION / PERSIST_SCHEMA 据え置き (新フィールドは任意・後方互換不要方針)
+- **残改善 PR-5 (ベスト購入日ヒント)** — 店舗確定済みの試算について今後 30 日を日替わりで
+  `rankCards` 再評価し、今日の #1 (最良カードの `totalFinalAmount`) を上回る最良日があれば #1 カード
+  直下に 1 行チップを出す純関数 `src/domain/bestPurchaseDay.ts` (`findBestPurchaseDay`) + 表示
+  component `CalcBestDayHint` を追加。発火は「選択 store の membership がある program に
+  `recurringDays`/`recurringWeekdays`/未来 `validFrom` を持つものが存在する」時のみ (無ければ即 `null`
+  で `rankCards` を呼ばずゲート、無関係な店で 30 回計算しない)。同ゲインが複数日あるときは最も近い日を
+  採用。円換算モード / 金額未入力時は非表示。`CalculatorScreen` は `useMemo` で店舗/金額/通貨/データ
+  変更時のみ再計算 (`pathCache` は `rankCards` 呼び出し単位で作り直される設計を壊さない方針)。
+  SEED_VERSION / PERSIST_SCHEMA 据え置き (計算専用・新フィールドなし)
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。

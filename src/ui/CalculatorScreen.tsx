@@ -6,7 +6,7 @@
 //   - CalcLoyaltyBanner : ポイントカード併用バナー
 //   - CalcResultCard    : 1 カードぶんの結果カード
 //   - CardComparisonSection : 非保有カード比較 (既存)
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { recordCalcEvent, getRecentStoreIds } from "../state/usageStats";
@@ -17,6 +17,7 @@ import {
   localDateKey,
 } from "../state/calcFormDraft";
 import { rankCards, nearlyEqual } from "../domain/rankCards";
+import { findBestPurchaseDay } from "../domain/bestPurchaseDay";
 import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { isMasterCard } from "../state/seed";
@@ -28,6 +29,7 @@ import { CalcCurrencyTabs } from "./calculator/CalcCurrencyTabs";
 import { CalcLoyaltyBanner } from "./calculator/CalcLoyaltyBanner";
 import { CalcUpgradeBanner } from "./calculator/CalcUpgradeBanner";
 import { CalcResultCard } from "./calculator/CalcResultCard";
+import { CalcBestDayHint } from "./calculator/CalcBestDayHint";
 import { CalcYenResults } from "./calculator/CalcYenResults";
 import { OnboardingChecklist } from "./calculator/OnboardingChecklist";
 import { isYenTarget, makeYenValueResolver } from "../domain/yenValue";
@@ -322,6 +324,58 @@ export function CalculatorScreen() {
     return { topTotal: top, secondBestTotal: second };
   }, [result]);
 
+  // REM-#4: ベスト購入日ヒント。店舗確定済みの試算について今後 30 日を日替わりで再評価し、
+  // 今日の #1 を上回る最良日があれば #1 カード直下にチップ表示する。
+  //   - 円換算モード (yenMode) は交換 path 前提の比較のため対象外 (null にして非表示)。
+  //   - 発火条件は判定関数側で担保: 日限定 program (recurringDays/recurringWeekdays/未来
+  //     validFrom) の membership が無い店では即 null になり、rankCards の 30 回計算は走らない。
+  //   - amount が空/0 のとき (下書き復元 amount が空文字の場合を含む) は下の Number ガードで
+  //     null になり、result も出ないためチップは出ない (自然な非発火。実装注意 #3)。
+  //   - pathCache は rankCards 呼び出しごとに作り直される設計 (呼び出し跨ぎでは再利用されない)
+  //     ため、この useMemo で店舗/金額/通貨/データ/today 変更時のみ 30 回スキャンを走らせて
+  //     再計算頻度を絞る (設計書「壊すくらいなら useMemo」方針)。
+  const bestDay = useMemo(() => {
+    if (yenMode) return null;
+    if (!storeId || !activeCurrencyId || !amount) return null;
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) return null;
+    return findBestPurchaseDay({
+      payment: { storeId, amount: amt },
+      targetCurrencyId: activeCurrencyId,
+      cards,
+      stores,
+      edges,
+      pointCards,
+      paymentApps,
+      programs,
+      memberships,
+      now: today,
+      userBirthMonth: birthMonth,
+      excludedStorePayments,
+    });
+  }, [
+    yenMode,
+    storeId,
+    amount,
+    activeCurrencyId,
+    cards,
+    stores,
+    edges,
+    pointCards,
+    paymentApps,
+    programs,
+    memberships,
+    birthMonth,
+    excludedStorePayments,
+    today,
+  ]);
+
+  // REM-#4: チップの挿入位置決め用。#1 (先頭の到達可能) カードの id。この直後に 1 行チップを出す。
+  const topCardId = useMemo(
+    () => result?.find((r) => r.reachable)?.card.id ?? null,
+    [result],
+  );
+
   // 入力が変わるたびに、同率 1 位の reachable カード全部を展開状態にリセット
   // (totalFinalAmount が最上位値と等しい全カード = displayRank 1 の集合)。
   // render 中 guard で実装 (effect 内 setState を避ける React 公認パターン)。
@@ -472,22 +526,36 @@ export function CalculatorScreen() {
             <p className="empty">保有カードが登録されていません。</p>
           )}
           {result.map((r) => (
-            <CalcResultCard
-              key={r.card.id}
-              ranking={r}
-              displayRank={displayRankMap.get(r.card.id) ?? -1}
-              expanded={expandedIds.has(r.card.id)}
-              onToggle={() => toggleExpand(r.card.id)}
-              activeCurrencyId={activeCurrencyId}
-              currencyById={currencyById}
-              currencyName={currencyName}
-              cardName={cardName}
-              programById={programById}
-              topTotal={topTotal}
-              secondBestTotal={secondBestTotal}
-              onExcludePayment={canExcludePayment ? onExcludePayment : undefined}
-              now={today}
-            />
+            <Fragment key={r.card.id}>
+              <CalcResultCard
+                ranking={r}
+                displayRank={displayRankMap.get(r.card.id) ?? -1}
+                expanded={expandedIds.has(r.card.id)}
+                onToggle={() => toggleExpand(r.card.id)}
+                activeCurrencyId={activeCurrencyId}
+                currencyById={currencyById}
+                currencyName={currencyName}
+                cardName={cardName}
+                programById={programById}
+                topTotal={topTotal}
+                secondBestTotal={secondBestTotal}
+                onExcludePayment={
+                  canExcludePayment ? onExcludePayment : undefined
+                }
+                now={today}
+              />
+              {/* REM-#4: ベスト購入日ヒントを #1 カード直下に 1 行チップで出す (結果リスト
+                  上部には置かず、店頭フローの視線を塞がない)。円換算モードは bestDay=null で
+                  非表示。「予定は変わる可能性」注記はチップ内 title 属性で添える。 */}
+              {bestDay && r.card.id === topCardId && (
+                <CalcBestDayHint
+                  bestDay={bestDay}
+                  today={today}
+                  currencyName={currencyName}
+                  activeCurrencyId={activeCurrencyId}
+                />
+              )}
+            </Fragment>
           ))}
 
           {/* PR-2: 対象外グループ — この店で除外した決済 (店舗 × 決済ペア)。除外は結果から
