@@ -10,6 +10,7 @@ import {
 import { SEED_CARDS, SEED_PAYMENT_APPS } from "./seed-data-cards";
 import { CARD_FAMILIES } from "./seed-data-card-families";
 import { isValidVerifiedMonth } from "../domain/edgeFreshness";
+import { isSafeHttpUrl } from "../domain/urlSafety";
 
 describe("MASTER_CARD_IDS / isMasterCard", () => {
   it("SEED_CARDS の全 id が含まれる", () => {
@@ -537,6 +538,9 @@ describe("PR-1c: 楽天「5と0のつく日」の addOn + cap 設定", () => {
     expect(p?.rate).not.toBe(0.04); // 旧 primary 4% への退行防止
     expect(p?.monthlyCapAmountYen).toBe(100000); // 1,000pt/月 ÷ 0.01
     expect(p?.recurringDays).toEqual([5, 10, 15, 20, 25, 30]);
+    // REM-#5: 要エントリー (毎回エントリー必須) → requiresEntry:true + タップ可能な entryUrl。
+    expect(p?.requiresEntry).toBe(true);
+    expect(p?.entryUrl && isSafeHttpUrl(p.entryUrl)).toBe(true);
   });
 
   it("prog-rakuten-ichiba-base は据え置き (primary 3%)", () => {
@@ -544,6 +548,66 @@ describe("PR-1c: 楽天「5と0のつく日」の addOn + cap 設定", () => {
     const p = programs.find((x) => x.id === "prog-rakuten-ichiba-base");
     expect(p?.bonusType).toBe("primary");
     expect(p?.rate).toBe(0.03);
+    // base はエントリー不要 (常時 3%) → requiresEntry は付けない。
+    expect(p?.requiresEntry).toBeUndefined();
+  });
+});
+
+// REM-#5: requiresEntry 構造化の seed 契約。
+//   - J-POINT パートナー系は「登録制だが無料・恒久」→ requiresEntry:true (optIn ではない)。
+//   - たまるマーケットは「経由型」であって「登録型」ではない → requiresEntry を付けない。
+//   - エポス選べるポイントアップは事前選択・ロックのある特典 → optIn:true で表現し
+//     requiresEntry は付けない (2 概念を混同しない契約)。
+describe("REM-#5: requiresEntry の付与契約", () => {
+  const JPOINT_IDS = [
+    "prog-jcb-jpoint-2x",
+    "prog-jcb-jpoint-3x",
+    "prog-jcb-jpoint-20x",
+    "prog-jcb-jpoint-gold-2x",
+    "prog-jcb-jpoint-gold-3x",
+    "prog-jcb-jpoint-gold-4x",
+    "prog-jcb-jpoint-gold-20x",
+  ];
+
+  it("J-POINT パートナー系は全て requiresEntry:true + タップ可能な entryUrl", () => {
+    const { programs } = seed();
+    for (const id of JPOINT_IDS) {
+      const p = programs.find((x) => x.id === id);
+      expect(p, `${id} が未登録`).toBeDefined();
+      expect(p?.requiresEntry, `${id} は requiresEntry:true であるべき`).toBe(
+        true,
+      );
+      expect(
+        p?.entryUrl && isSafeHttpUrl(p.entryUrl),
+        `${id} の entryUrl が安全な http(s) URL であるべき`,
+      ).toBe(true);
+      // 無料・恒久の都度登録系なので optIn ではない (2 概念の使い分け)。
+      expect(p?.optIn, `${id} は optIn ではない`).toBeUndefined();
+    }
+  });
+
+  it("たまるマーケット (経由型) は requiresEntry を付けない", () => {
+    const { programs } = seed();
+    for (const id of [
+      "prog-epos-tamaru-2x",
+      "prog-epos-tamaru-3x",
+      "prog-epos-tamaru-4x",
+    ]) {
+      const p = programs.find((x) => x.id === id);
+      expect(p, `${id} が未登録`).toBeDefined();
+      expect(p?.requiresEntry, `${id} は経由型なので requiresEntry 非付与`).toBe(
+        undefined,
+      );
+    }
+  });
+
+  it("エポス選べるポイントアップは optIn で表現し requiresEntry は付けない", () => {
+    const { programs } = seed();
+    const p = programs.find(
+      (x) => x.id === "prog-epos-gp-selectable-pointup",
+    );
+    expect(p?.optIn).toBe(true);
+    expect(p?.requiresEntry).toBeUndefined();
   });
 });
 

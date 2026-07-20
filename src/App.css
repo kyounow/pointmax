@@ -767,6 +767,35 @@ details summary {
   cursor: help;
 }
 
+/* REM-#5: 「⚠ 要エントリー」バッジ (警告チップ予算で最優先)。cap-warn と同系の inline
+   バッジだが、「行動が必要 (エントリー漏れで還元を取りこぼす)」ことを示すため赤系の警告色で
+   区別する。entry-warn-link は entryUrl をタップで別タブ起動する <a> 版 (見た目はバッジのまま
+   カーソルと hover でリンクと分かる)。 */
+.entry-warn {
+  display: inline-block;
+  font-size: 11px;
+  color: #fca5a5;
+  background: #2a1010;
+  border: 1px solid #5a1a1a;
+  padding: 1px 8px;
+  border-radius: 4px;
+  margin-left: 4px;
+  cursor: help;
+}
+.entry-warn-link {
+  text-decoration: none;
+  cursor: pointer;
+}
+.entry-warn-link:hover {
+  color: #fecaca;
+  border-color: #7a2626;
+  text-decoration: underline;
+}
+.entry-warn-link:focus-visible {
+  outline: 2px solid #fca5a5;
+  outline-offset: 2px;
+}
+
 /* ==== PR-2e: デスクトップ「データ ▾」ドロップダウン (menu button パターン) ==== */
 .data-menu {
   position: relative;

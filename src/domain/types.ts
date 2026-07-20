@@ -206,6 +206,16 @@ export type BenefitProgram = {
   // entryUrl がセットされている program は UI で「エントリー」リンクを露出。
   // 「キャンペーンサイトのトップページ」レベルでも構わない (深いリンクで切れる懸念回避)。
   entryUrl?: string;
+  // requiresEntry: エントリー / 登録が必要なキャンペーン (楽天「5と0のつく日」・
+  //   J-POINT パートナー登録等)。true の program が結果に採用 (primary/addOn/loyalty)
+  //   されたとき、CalcResultCard 展開ビューに「⚠ 要エントリー」バッジを出し、
+  //   entryUrl があればタップで別タブ起動する (無ければバッジのみ)。
+  //   ⚠ optIn とは別軸: optIn は「既定 OFF・ユーザーが『使う』を選ぶまで計算に載らない」
+  //   (事前選択・ロックのある特典)。requiresEntry は「計算には常時載るが、毎回の
+  //   エントリー/登録をユーザーに促す」(無料・誰でも同率の都度エントリー系。
+  //   README の optIn 付与基準参照)。「エントリー済み」トグルは条件付き案件で未実装
+  //   (現状はバッジ表示 + entryUrl 起動のみ)。
+  requiresEntry?: boolean;
   conditions?: string;             // 「ショッピングマイル・プレミアム加入時」等
   monthlyCapAmountYen?: number;
   notes?: string;

@@ -306,6 +306,7 @@
           "description": { "type": "string" },
           "officialUrl": { "type": "string", "format": "uri" },
           "entryUrl": { "type": "string", "format": "uri", "description": "エントリー / 参加サイト URL。officialUrl が制度解説ページ、entryUrl はユーザーが踏む先 (例: キャンペーン参加ページ、提携店検索トップ)。" },
+          "requiresEntry": { "type": "boolean", "description": "v3.5: エントリー / 登録が必要なキャンペーンなら true。事前エントリー・店ごとの登録・キャンペーン参加登録などが必須である旨が evidenceQuote に逐語で示されている時のみ true。UI で「⚠ 要エントリー」バッジ + entryUrl 起動に使う。" },
           "conditions": { "type": "string" },
           "monthlyCapAmountYen": { "type": "integer", "minimum": 0 },
           "notes": { "type": "string" },

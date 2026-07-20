@@ -502,4 +502,196 @@ describe("CalcResultCard", () => {
       screen.getByRole("button", { name: /楽天カード/ }),
     ).toHaveAttribute("aria-expanded", "false");
   });
+
+  // REM-#5: 要エントリー バッジ (採用 program の requiresEntry を展開ビューに表示 +
+  // entryUrl タップ起動)。makeRanking の既定 resolved は source:"program"/programId:"prog-cap"。
+  const RAKUTEN_ENTRY_URL = "https://event.rakuten.co.jp/card/pointday/";
+
+  it("REM-#5: 採用 primary が requiresEntry + entryUrl なら、タップで別タブ起動するリンクバッジを出す", () => {
+    const prog: BenefitProgram = {
+      id: "prog-cap",
+      name: "楽天5と0",
+      scope: "member-stores",
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      requiresEntry: true,
+      entryUrl: RAKUTEN_ENTRY_URL,
+    };
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map([["prog-cap", prog]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    const link = screen.getByRole("link", { name: /要エントリー/ });
+    expect(link).toHaveAttribute("href", RAKUTEN_ENTRY_URL);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+  });
+
+  it("REM-#5: requiresEntry だが entryUrl が無い program はバッジのみ (リンクにしない)", () => {
+    const prog: BenefitProgram = {
+      id: "prog-cap",
+      name: "要エントリー特典",
+      scope: "member-stores",
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      requiresEntry: true,
+    };
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map([["prog-cap", prog]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.getByText(/要エントリー/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /要エントリー/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("REM-#5: entryUrl が危険スキーム (javascript:) の時は起動リンクにしない (urlSafety 経由)", () => {
+    const prog: BenefitProgram = {
+      id: "prog-cap",
+      name: "要エントリー特典",
+      scope: "member-stores",
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      requiresEntry: true,
+      entryUrl: "javascript:alert(1)",
+    };
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map([["prog-cap", prog]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.getByText(/要エントリー/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /要エントリー/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("REM-#5: addOn (appBonusBreakdown) の program が requiresEntry でもバッジを出す", () => {
+    const ranking = makeRanking({
+      resolved: { rate: 0.005, currencyId: "rakuten-pt", source: "default" },
+      appBonusBreakdown: [
+        {
+          programId: "prog-addon",
+          programName: "楽天5と0",
+          rate: 0.01,
+          earnedAmount: 10,
+          earnedCurrencyId: "rakuten-pt",
+          finalAmount: 10,
+          pathSteps: [],
+        },
+      ],
+    });
+    const prog: BenefitProgram = {
+      id: "prog-addon",
+      name: "楽天5と0",
+      scope: "member-stores",
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      requiresEntry: true,
+      entryUrl: RAKUTEN_ENTRY_URL,
+    };
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map([["prog-addon", prog]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(
+      screen.getByRole("link", { name: /要エントリー/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("REM-#5: loyalty (二重取り) の program が requiresEntry でもバッジを出す", () => {
+    const ranking = makeRanking({
+      resolved: { rate: 0.005, currencyId: "rakuten-pt", source: "default" },
+      loyalties: [
+        {
+          pointCard: { id: "pc", name: "提示カード", currencyId: "rakuten-pt" },
+          rule: {
+            id: "prog-loyalty",
+            storeId: "s",
+            pointCardId: "pc",
+            rate: 0.01,
+          },
+          earnedAmount: 10,
+          earnedCurrencyId: "rakuten-pt",
+          pathSteps: [],
+          pathProduct: 1,
+          finalAmount: 10,
+          reachable: true,
+        },
+      ],
+    });
+    const prog: BenefitProgram = {
+      id: "prog-loyalty",
+      name: "要登録の提示特典",
+      scope: "member-stores",
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      requiresEntry: true,
+    };
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map([["prog-loyalty", prog]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.getByText(/要エントリー/)).toBeInTheDocument();
+  });
+
+  it("REM-#5: requiresEntry を持つ採用 program が無ければバッジを出さない", () => {
+    const prog: BenefitProgram = {
+      id: "prog-cap",
+      name: "通常還元",
+      scope: "member-stores",
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+    };
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map([["prog-cap", prog]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/要エントリー/)).not.toBeInTheDocument();
+  });
+
+  it("REM-#5: 折り畳み (非展開) 時はバッジを出さない", () => {
+    const prog: BenefitProgram = {
+      id: "prog-cap",
+      name: "楽天5と0",
+      scope: "member-stores",
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      requiresEntry: true,
+      entryUrl: RAKUTEN_ENTRY_URL,
+    };
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map([["prog-cap", prog]])}
+        expanded={false}
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/要エントリー/)).not.toBeInTheDocument();
+  });
 });
