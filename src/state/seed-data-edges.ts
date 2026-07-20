@@ -25,7 +25,9 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "rakuten-pt",
     toCurrencyId: "ana-mile",
     rate: 0.5,
-    notes: "2pt → 1マイル",
+    minFromUnits: 50, // 50pt以上
+    notes: "2pt → 1マイル (50pt以上、5,000pt/回・月20,000pt 上限)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): 楽天PointClub ANA交換ルールで確認
   },
   {
     id: "rakuten-to-edy",
@@ -41,6 +43,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.5,
     minFromUnits: 50, // 50pt以上
     notes: "2pt → 1マイル (50pt以上、月20,000pt上限)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): 楽天PointClub JAL交換ルールで確認
   },
 
   // ============ Vポイント ============
@@ -49,7 +52,9 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "v-pt",
     toCurrencyId: "ana-mile",
     rate: 0.5,
-    notes: "2pt → 1マイル",
+    minFromUnits: 500, // 500pt以上・500pt単位
+    notes: "2pt → 1マイル (500pt以上、年間累計30,000マイル超過分は別レート)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): Vポイント公式 ANA交換で確認
   },
   {
     id: "v-to-edy",
@@ -65,6 +70,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 1,
     notes:
       "1Vポイント = 1WAON POINT (等価交換)。Vポイント→JALマイルへの実用ルート",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): Vポイント公式 WAON交換 (等価・月30,000pt上限) で確認
   },
   {
     id: "v-to-jrkyupo",
@@ -73,6 +79,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 1,
     minFromUnits: 500, // 500pt単位
     notes: "500Vポイント → 500JRキューポ (双方向, 500pt単位)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JR九州 提携ポイント交換で確認
   },
   {
     id: "jrkyupo-to-v",
@@ -81,6 +88,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 1,
     minFromUnits: 500, // 500pt単位
     notes: "500JRキューポ → 500Vポイント (双方向, 500pt単位)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JR九州 提携ポイント交換で確認
   },
 
   // ============ 永久不滅ポイント (セゾン) ============
@@ -90,6 +98,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "ana-mile",
     rate: 3,
     notes: "200pt → 600マイル",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): STOREE SAISON 公式商品ページで確認
   },
   {
     id: "eikyu-to-jal",
@@ -97,35 +106,30 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "jal-mile",
     rate: 2.5,
     notes: "200pt → 500マイル",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): STOREE SAISON 公式商品ページで確認
   },
   {
     id: "eikyu-to-d",
     fromCurrencyId: "eikyu",
     toCurrencyId: "d-pt",
-    rate: 5,
-    notes: "200pt → 1000dポイント",
-  },
-  {
-    id: "eikyu-to-rakuten",
-    fromCurrencyId: "eikyu",
-    toCurrencyId: "rakuten-pt",
     rate: 4.5,
-    notes: "200pt → 900楽天ポイント",
+    minFromUnits: 200, // 2口=200pt以上
+    notes: "100pt→450dポイント (2口=200pt以上)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): rate 5→4.5 に修正 (STOREE SAISON 公式、100pt→450d)
   },
+  // eikyu-to-rakuten は STOREE SAISON 交換一覧・公式FAQから消滅により削除 (2026-07 監査)。復活確認できたら再追加
   {
     id: "eikyu-to-amazon",
     fromCurrencyId: "eikyu",
     toCurrencyId: "amazon-pt",
-    rate: 5,
-    notes: "200pt → 1000円分Amazonギフト券",
+    rate: 4,
+    minFromUnits: 100, // 最小口 100pt
+    notes:
+      "最小口 100pt→400円分。1,000pt→4,500円 / 5,000pt→25,000円と大口ほど率向上 " +
+      "(段階制、本 edge は保守的に最小口レート)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): rate 5→4 に修正 (段階制の最小口、STOREE SAISON 公式)
   },
-  {
-    id: "eikyu-to-edy",
-    fromCurrencyId: "eikyu",
-    toCurrencyId: "edy",
-    rate: 4.5,
-    notes: "永久不滅ウォレット 100pt=450円相当",
-  },
+  // eikyu-to-edy は永久不滅ウォレット終了 (2023-10-31) により削除 (2026-07 監査)
 
   // ============ dポイント ============
   {
@@ -133,7 +137,9 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "d-pt",
     toCurrencyId: "jal-mile",
     rate: 0.5,
-    notes: "5000pt → 2500マイル",
+    minFromUnits: 1000, // 1,000pt単位
+    notes: "1,000pt→500マイル (1,000pt単位、月40,000pt上限)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JAL公式パートナー/dポイントクラブで確認
   },
   {
     id: "d-to-edy",
@@ -141,6 +147,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "edy",
     rate: 1,
     notes: "d払い・店頭利用で 1pt=1円相当",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): dポイントクラブ FAQ で確認
   },
 
   // ============ JRE POINT ============
@@ -151,7 +158,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.6667, // 1500pt → 1000マイル (= 1000/1500)。CLUB-Aゴールド 優遇
     requiredCardIds: ["jal-suica"],
     notes: "1500pt → 1000マイル (JALカードSuica CLUB-Aゴールド 会員特典)",
-    lastVerifiedAt: "2026-06", // v6.4.0 (afc74b1, 2026-06-20) で grade 別レートを公式確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JRE POINT 公式で grade 別レートを再確認
   },
   {
     // 普通カード版。ゴールド (jre-to-jal, 0.6667) より低レート。
@@ -159,10 +166,12 @@ export const SEED_EDGES: ConversionEdge[] = [
     id: "jre-to-jal-normal",
     fromCurrencyId: "jre",
     toCurrencyId: "jal-mile",
-    rate: 0.5, // 1500pt → 750マイル。JALカードSuica 普通カード
+    rate: 0.3333, // 1500pt → 500マイル (SMP 未加入の普通カード)
     requiredCardIds: ["jal-suica-normal"],
-    notes: "1500pt → 750マイル (JALカードSuica 普通カード 会員特典)",
-    lastVerifiedAt: "2026-06", // v6.4.0 (afc74b1, 2026-06-20) で普通カード版を新設・公式確認
+    notes:
+      "1500pt→500マイル (SMP 未加入の普通カード)。SMP (年会費4,950円) 加入者は 1500→1000 (0.6667) — " +
+      "加入者はゴールド edge と同率になるため edge 手編集 or ゴールド優先で対応",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): 旧 0.5 (1500→750) は公式に無いレート → 0.3333 に修正
   },
   {
     id: "jre-to-edy",
@@ -178,11 +187,12 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "waon-pt",
     toCurrencyId: "jal-mile",
     rate: 0.5,
+    minFromUnits: 1000, // 1,000pt以上・500pt単位
     requiredCardIds: ["aeon-card"],
     notes:
       "2WAON = 1マイル (50%還元)。イオンカード会員 + JMB 会員の特典 (公式 FAQ)。" +
       "本人名義と JMB お得意様番号の名義が一致している必要あり。",
-    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で公式 FAQ を確認しゲート追加
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): イオン公式 FAQ で再確認 (1,000pt以上/500pt単位)
   },
 
   // ============ JRキューポ ⇔ JAL/ANA マイル (JQ SUGOCA カード保有特典) ============
@@ -197,7 +207,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "1000JRキューポ → 500マイル。JMB JQ SUGOCA 会員特典 " +
       "(JMB×おまとめ登録SUGOCA 紐付け、1日1回)。",
-    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で新設・公式確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JR九州 提携交換で再確認
   },
   {
     id: "jal-to-jrkyupo",
@@ -208,7 +218,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "10000マイル → 10000JRキューポ (等価交換)。JMB JQ SUGOCA 会員特典 " +
       "(年度内2回・20000マイルまで)。",
-    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で新設・公式確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JR九州/JAL 公式で再確認
   },
   {
     id: "jrkyupo-to-ana",
@@ -217,7 +227,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.5,
     requiredCardIds: ["jq-sugoca-ana"],
     notes: "1000JRキューポ → 500マイル。JQ SUGOCA ANA 会員特典。",
-    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で新設・公式確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): ANA公式 JRキューポで再確認
   },
   {
     id: "ana-to-jrkyupo",
@@ -225,8 +235,10 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "jrkyupo",
     rate: 1,
     requiredCardIds: ["jq-sugoca-ana"],
-    notes: "10000マイル → 10000JRキューポ (等価交換)。JQ SUGOCA ANA 会員特典。",
-    lastVerifiedAt: "2026-05", // v6.1.0 (381cba4, 2026-05-29) で新設・公式確認
+    notes:
+      "10000マイル → 10000JRキューポ (等価交換)。JQ SUGOCA ANA 会員特典。" +
+      "年度3口目以降は 10,000マイル→5,000pt に半減。",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): ANA公式 JRキューポで再確認 (3口目半減を追記)
   },
 
   // ============ クレカ・ホテル系プログラム ============
@@ -236,7 +248,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "epos",
     toCurrencyId: "jal-mile",
     rate: 0.5,
-    minFromUnits: 500, // 500pt単位
+    minFromUnits: 1000, // 1,000pt以上 (500pt単位)。公式は「1,000pt(500マイル)以上」
     notes: "1,000pt = 500マイル (500pt単位)",
     lastVerifiedAt: "2026-07", // 本セッション (エポス3グレード化) で公式レートを確認
   },
@@ -245,6 +257,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     fromCurrencyId: "epos",
     toCurrencyId: "ana-mile",
     rate: 0.5,
+    minFromUnits: 1000, // 1,000pt以上・500pt単位
     notes:
       "1,000pt = 500マイル。ゴールド/プラチナの優遇 (1pt=0.6マイル) は" +
       "2026-03-31で終了済み — 復活させない",
@@ -350,6 +363,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "jal-mile",
     rate: 0.5,
     notes: "2pt → 1マイル",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): Ponta公式/JAL公式パートナーで確認 (恒常 0.5、期間増量CPは除外)
   },
   // 【削除済 v4.0.0 ①】ponta-to-d / d-to-ponta:
   // dポイント ⇄ Pontaポイント の相互交換は 2020/9 にサービス終了済。
@@ -360,6 +374,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "edy",
     rate: 1,
     notes: "ローソン店頭利用等で 1pt=1円相当",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): au PAY残高チャージ 1pt=1円 (au.com) で確認
   },
 
   // ============ WAONポイント ============
@@ -370,6 +385,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 1,
     notes:
       "WAON電子マネーへのチャージ 1pt=1円分 (Edyと同等の現金相当として登録)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): 電子マネーWAON公式で 1pt=1円分を確認
   },
 
   // ============ nanacoポイント ============
@@ -396,7 +412,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "jal-mile",
     rate: 0.6,
     notes: "1 J-POINT → 0.6 JAL マイル (JCB 公式レート、5倍換算後 J-POINT 単位)",
-    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式 (2026 リニューアル後) を確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JCB 公式ポイントカタログで再確認
   },
   {
     id: "j-point-to-ana",
@@ -404,7 +420,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "ana-mile",
     rate: 0.6,
     notes: "1 J-POINT → 0.6 ANA マイル / スカイコイン (JCB 公式)",
-    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JCB 公式ポイントカタログで再確認
   },
   {
     id: "j-point-to-edy",
@@ -414,7 +430,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "MyJCB Pay で 1 J-POINT=1円 (現金相当として edy に登録)。" +
       "JCB ギフトカード/カード支払い充当 も 1pt=1円 (公式最高レート)",
-    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JCB 公式ポイントカタログで再確認
   },
   {
     id: "j-point-to-rakuten",
@@ -422,7 +438,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "rakuten-pt",
     rate: 0.7,
     notes: "1 J-POINT → 0.7 楽天ポイント (JCB 公式)",
-    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JCB 公式ポイントカタログで再確認
   },
   {
     id: "j-point-to-d",
@@ -430,7 +446,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "d-pt",
     rate: 0.7,
     notes: "1 J-POINT → 0.7 dポイント (JCB 公式)",
-    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JCB 公式ポイントカタログで再確認
   },
   {
     id: "j-point-to-ponta",
@@ -438,7 +454,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "ponta-pt",
     rate: 0.7,
     notes: "1 J-POINT → 0.7 Ponta ポイント (JCB 公式、au Ponta 経路)",
-    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JCB 公式ポイントカタログで再確認
   },
   {
     id: "j-point-to-nanaco",
@@ -446,7 +462,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     toCurrencyId: "nanaco-pt",
     rate: 0.7,
     notes: "1 J-POINT → 0.7 nanaco ポイント (JCB 公式)",
-    lastVerifiedAt: "2026-05", // 3d22ee8 (2026-05-14) で JCB 公式を確認
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): JCB 公式ポイントカタログで再確認
   },
 
   // ============ メルカリポイント ============
@@ -459,6 +475,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     notes:
       "メルカリポイント 1pt=1円相当 (メルカリ内ショッピング / メルペイ残高での街使い等。" +
       "Edy 等の現金相当として登録)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): メルカリ公式ヘルプで 1pt=1円を確認
   },
 
   // ============ オリコポイント (v4.0.0 ①) ============
@@ -472,6 +489,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 1,
     minFromUnits: 1000, // 最低1,000P
     notes: "1,000オリコP → 1,000 WAON POINT (公式ポイント移行、最低1,000P)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): オリコ公式交換一覧で確認
   },
   {
     id: "orico-to-ponta",
@@ -480,6 +498,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.8333,
     minFromUnits: 1200, // 最低1,200P
     notes: "1,200オリコP → 1,000 Pontaポイント (公式、最低1,200P)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): オリコ公式交換一覧で確認
   },
   {
     id: "orico-to-d",
@@ -488,6 +507,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.8333,
     minFromUnits: 1200, // 最低1,200P
     notes: "1,200オリコP → 1,000 dポイント (公式、最低1,200P)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): オリコ公式交換一覧で確認
   },
   {
     id: "orico-to-ana",
@@ -496,6 +516,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.6,
     minFromUnits: 1000, // 最低1,000P
     notes: "1,000オリコP → 600 ANAマイル (公式、最低1,000P)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): オリコ公式交換一覧で確認
   },
   {
     id: "orico-to-jal",
@@ -504,6 +525,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 0.5,
     minFromUnits: 1000, // 最低1,000P
     notes: "1,000オリコP → 500 JALマイル (公式、最低1,000P)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): オリコ公式交換一覧で確認
   },
 
   // ============ 三菱UFJ グローバルポイント (v4.0.0 ①) ============
@@ -517,6 +539,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 4,
     minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 800 Pontaポイント (公式、200P以上100P単位)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): MUFG 公式ポイント移行で確認
   },
   {
     id: "mufg-to-d",
@@ -525,6 +548,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 4,
     minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 800 dポイント (公式、200P以上100P単位)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): MUFG 公式ポイント移行で確認
   },
   {
     id: "mufg-to-rakuten",
@@ -533,6 +557,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 3,
     minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 600 楽天ポイント (公式、200P以上100P単位)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): MUFG 公式ポイント移行で確認
   },
   {
     id: "mufg-to-nanaco",
@@ -541,6 +566,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 3,
     minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 600 nanacoポイント (公式、200P以上100P単位)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): MUFG 公式ポイント移行で確認
   },
   {
     id: "mufg-to-waon",
@@ -549,6 +575,7 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 3,
     minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 600 WAON POINT (公式、200P以上100P単位)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): MUFG 公式ポイント移行で確認
   },
   {
     id: "mufg-to-jal",
@@ -557,5 +584,6 @@ export const SEED_EDGES: ConversionEdge[] = [
     rate: 2,
     minFromUnits: 200, // 200P以上
     notes: "200グローバルP → 400 JALマイル (公式、200P以上100P単位)",
+    lastVerifiedAt: "2026-07", // 四半期監査 (2026-Q3): MUFG 公式ポイント移行で確認
   },
 ];

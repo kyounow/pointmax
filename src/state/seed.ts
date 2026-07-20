@@ -59,7 +59,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 45;
+export const SEED_VERSION = 46;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -75,6 +75,19 @@ export const SEED_CHANGELOG: {
   date: string;
   summary: string;
 }[] = [
+  {
+    version: 46,
+    date: "2026-07-21",
+    summary:
+      "四半期レート監査 (2026-Q3 初回): 消滅ルート2本削除 (eikyu-to-edy 永久不滅ウォレット終了 2023-10-31 / " +
+      "eikyu-to-rakuten STOREE SAISON 交換一覧から消滅)。au PAYカード残高チャージ加算廃止 (2022-12-01) を反映し " +
+      "prog-au-pay-card-addon 削除 (au PAY 実質 base 0.5% のみ)。レート4件修正 (eikyu-to-d 5→4.5 / " +
+      "eikyu-to-amazon 5→4 / jre-to-jal-normal 0.5→0.3333 / えきねっと在来線 5%→8%)。" +
+      "メルカード毎月8日を実態化 (primary 8% → addOn +8%・要エントリー・上限P300/月)、メルカリ本体に月P5,000上限。" +
+      "楽天Pay残高払い+0.5% を 2025-07 改定条件 (ポイントカード提示2回/期間) に合わせ cardIds 除去 + optIn 化。" +
+      "楽天ポイントカード1% (有効加盟店ゼロ) 削除、Olive 8% の内訳記述を現況更新、edge lastVerifiedAt 40本を 2026-07 に整備。" +
+      "JCB W 系列を加算方式の正値に修正 (スタバ 20%→10.5% 等、公式計算例で確定。W 実効 (N+1)×0.5% / Gold N×0.5%)。",
+  },
   {
     version: 45,
     date: "2026-07-20",

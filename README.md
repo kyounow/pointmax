@@ -290,9 +290,9 @@ src/state/
 | ポイントカード (pointCards) | 7 |
 | 決済アプリ (paymentApps) | 11 |
 | 店舗 (stores) | 267（手キュレート + 自動同期分） |
-| BenefitProgram (programs) | 47 |
-| StoreProgramMembership (memberships) | 383 |
-| 交換エッジ (edges) | 60 |
+| BenefitProgram (programs) | 45 |
+| StoreProgramMembership (memberships) | 381 |
+| 交換エッジ (edges) | 58 |
 
 #### 還元の「有効化」規約（opt-in vs 都度登録）
 
