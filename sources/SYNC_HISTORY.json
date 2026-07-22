@@ -2,6 +2,57 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-07-23",
+      "generatedAt": "2026-07-22T22:07:42.738Z",
+      "totalCount": 3,
+      "avgConfidence": 0.902,
+      "sourcesProcessed": 15,
+      "bySource": [
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "programs",
+          "count": 3,
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "programs",
+          "summary": "プログラム prog-jcb-jpoint-20x.rate: 10.50% → 20.00%",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "programs",
+          "summary": "プログラム prog-jcb-jpoint-3x.rate: 2.00% → 3.00%",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "programs",
+          "summary": "プログラム prog-jcb-jpoint-2x.rate: 1.50% → 2.00%",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "reviewStats": {
+        "total": 363,
+        "byReason": {
+          "idCollision": 27,
+          "missingStoreBody": 179,
+          "missingProgramBody": 8,
+          "lowConfidence": 38,
+          "storeAdditionsDisabled": 99,
+          "userBlocked": 1,
+          "excludedCategory": 11
+        }
+      }
+    },
+    {
       "date": "2026-07-20",
       "generatedAt": "2026-07-19T21:56:35.947Z",
       "totalCount": 4,

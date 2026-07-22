@@ -3,6 +3,36 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-07-23 (auto 3 件 / review 363 件)
+
+- 平均 confidence: 0.90 / source 数: 15
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| JCB J-POINT パートナー (旧 Oki Doki ランド、公式) | プログラム | 3 |
+
+### Review queue 内訳 (363 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 179 |
+| storeAdditionsDisabled | 99 |
+| lowConfidence | 38 |
+| idCollision | 27 |
+| excludedCategory | 11 |
+| missingProgramBody | 8 |
+| userBlocked | 1 |
+
+<details><summary>追加項目 3 件</summary>
+
+### JCB J-POINT パートナー (旧 Oki Doki ランド、公式) / プログラム (3)
+- プログラム prog-jcb-jpoint-20x.rate: 10.50% → 20.00%
+- プログラム prog-jcb-jpoint-3x.rate: 2.00% → 3.00%
+- プログラム prog-jcb-jpoint-2x.rate: 1.50% → 2.00%
+
+</details>
+
+---
+
 ## 2026-07-20 (auto 4 件 / review 317 件)
 
 - 平均 confidence: 0.90 / source 数: 15
