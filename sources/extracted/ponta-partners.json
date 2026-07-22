@@ -1,11 +1,11 @@
 {
   "sourceId": "ponta-partners",
   "sourceUrl": "https://point.recruit.co.jp/point/?tab=pointUseService",
-  "fetchedAt": "2026-07-01T22:21:21.009Z",
+  "fetchedAt": "2026-07-22T22:05:00.514Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
   "stores": [],
   "loyaltyRules": [],
-  "notes": "チェーン店のポイント還元率がページ上で明示されていないため、loyaltyRulesは抽出できませんでした。個店の還元率は記載されているものの、チェーン店抽出スコープの対象外です。"
+  "notes": "提示還元率が明記されているチェーン店はリストになく、ページ下部の地域限定・個店のみで提示還元率が記載されていました。全国/広域チェーン店に限定する抽出スコープのため、loyaltyRulesは抽出できませんでした。既存店の一部は加盟店としてリストされています。総数N件中、今回は抽出対象となる全国/広域チェーン店の具体的な還元率の記載がなかったため、loyaltyRulesは空とします。"
 }

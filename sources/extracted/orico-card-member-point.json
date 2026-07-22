@@ -1,11 +1,11 @@
 {
   "sourceId": "orico-card-member-point",
   "sourceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-  "fetchedAt": "2026-07-01T22:23:19.697Z",
+  "fetchedAt": "2026-07-22T22:05:37.885Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "「入会後6ヵ月間」の特典期間は個別の入会日に依存するため、validFrom/validToは設定していません。",
+  "notes": "Orico Card THE POINTの還元率情報を抽出。新規入会者向けキャンペーン期間の開始日と終了日は会員登録日によって変動するため、固定期間は設定せず備考に記載。 [sync] schema 違反で除去したアイテム: categoryRules:1。",
   "cards": [
     {
       "cardId": "orico-card-member-point",
@@ -13,46 +13,21 @@
       "defaultCurrencyId": "orico-pt",
       "evidenceQuote": "還元率は常に1.0％以上！100円で1オリコポイントがたまる！",
       "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-      "explicitness": 1,
+      "explicitness": 0.95,
       "ambiguity": 0
     }
   ],
-  "storeRules": [],
   "categoryRules": [
     {
       "cardId": "orico-card-member-point",
       "category": "ネット通販",
-      "rate": 0.02,
+      "rate": 0.005,
       "currencyId": "orico-pt",
-      "evidenceQuote": "オリコモールを経由しネットショッピングした場合、カードご利用分（1.0％）+オリコモールご利用分（+0.5%以上）+特別加算（0.5％）で2%以上のオリコポイントがたまります。",
+      "notes": "オリコモール経由でネットショッピングした場合の特別加算ポイント。カード利用分1.0%とオリコモール利用分0.5%以上とは別途。",
+      "evidenceQuote": "オリコモールのご利用でさらに0.5％のオリコポイントを特別加算！",
       "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
       "explicitness": 0.9,
-      "ambiguity": 0.3,
-      "notes": "オリコモール経由のネットショッピング特典。一部ショップは対象外・加算率が異なります。"
-    },
-    {
-      "cardId": "orico-card-member-point",
-      "category": "all",
-      "rate": 0.02,
-      "currencyId": "orico-pt",
-      "evidenceQuote": "入会後6ヵ月間は還元率が2.0％にアップ！",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-      "explicitness": 0.9,
-      "ambiguity": 0.1,
-      "notes": "入会後6ヵ月間のキャンペーン。期間中のご利用金額50万円（5,000オリコポイント）が上限です。"
-    },
-    {
-      "cardId": "orico-card-member-point",
-      "category": "鉄道・交通",
-      "rate": 0.02,
-      "currencyId": "orico-pt",
-      "evidenceQuote": "ETCのご利用分も入会後6ヵ月は2倍ポイントがたまります。",
-      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-      "explicitness": 0.9,
-      "ambiguity": 0.1,
-      "notes": "ETCカード利用分も入会後6ヵ月間はポイント2倍。"
+      "ambiguity": 0
     }
-  ],
-  "loyaltyRules": [],
-  "paymentApps": []
+  ]
 }
