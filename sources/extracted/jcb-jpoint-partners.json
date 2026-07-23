@@ -2,10 +2,10 @@
   "sourceId": "jcb-jpoint-partners",
   "sourceUrl": "https://j-pointpartner.jcb.co.jp/search",
   "fetchedAt": "2026-07-19T21:53:56.956Z",
-  "promptVersion": "jcb-jpoint-v1.2",
+  "promptVersion": "jcb-jpoint-v1.3",
   "extractor": "jcb-jpoint",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "総 67 件中 59 件を抽出。一部地域限定店舗および店舗特定不能な項目は対象外とした。既存のPointMax店舗の重複は確認済み。",
+  "notes": "2026-07-23 手修正: v1.2 乗算モデルの rate を加算方式の正値に補正 (公式計算例準拠、#142 参照)。次回 mon fetch (v1.3 prompt) で自然置換される。総 67 件中 59 件を抽出。一部地域限定店舗および店舗特定不能な項目は対象外とした。既存のPointMax店舗の重複は確認済み。",
   "programs": [
     {
       "programId": "prog-jcb-jpoint-20x",
@@ -14,7 +14,7 @@
       "cardIds": [
         "jcb-w"
       ],
-      "rate": 0.2,
+      "rate": 0.105,
       "currencyId": "j-point",
       "bonusType": "primary",
       "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。スターバックスはモバイルオーダー、スターバックス カードへのオンライン入金・オートチャージ、Starbucks eGift限定。",
@@ -46,7 +46,7 @@
       "cardIds": [
         "jcb-w"
       ],
-      "rate": 0.1,
+      "rate": 0.055,
       "currencyId": "j-point",
       "bonusType": "primary",
       "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
@@ -78,7 +78,7 @@
       "cardIds": [
         "jcb-w"
       ],
-      "rate": 0.06,
+      "rate": 0.035,
       "currencyId": "j-point",
       "bonusType": "primary",
       "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
@@ -110,7 +110,7 @@
       "cardIds": [
         "jcb-w"
       ],
-      "rate": 0.05,
+      "rate": 0.03,
       "currencyId": "j-point",
       "bonusType": "primary",
       "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。Google Play, App Store, U-NEXT, コミックシーモア, 国内宿泊オンライン予約, Hulu, JCBトラベルは「プレミアムでおトク」表記がなく、また「登録不要」の記載がないためW系列にも適用されると判断。",
@@ -142,7 +142,7 @@
       "cardIds": [
         "jcb-w"
       ],
-      "rate": 0.04,
+      "rate": 0.025,
       "currencyId": "j-point",
       "bonusType": "primary",
       "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
@@ -174,7 +174,7 @@
       "cardIds": [
         "jcb-w"
       ],
-      "rate": 0.03,
+      "rate": 0.02,
       "currencyId": "j-point",
       "bonusType": "primary",
       "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
@@ -206,7 +206,7 @@
       "cardIds": [
         "jcb-w"
       ],
-      "rate": 0.02,
+      "rate": 0.015,
       "currencyId": "j-point",
       "bonusType": "primary",
       "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",

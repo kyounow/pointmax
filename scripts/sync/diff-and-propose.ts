@@ -18,14 +18,16 @@
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { load as parseYaml } from "js-yaml";
 import { seed, SEED_VERSION } from "../../src/state/seed";
 import type {
   AddRecordProposal,
   ExtractedSource,
   Proposal,
   ProposalReport,
+  RegistryFile,
 } from "./types";
-import { computeProposalId } from "./types";
+import { computeProposalId, isApplicableProposal } from "./types";
 import {
   proposeCards,
   proposeExpiredCampaignDeletions,
@@ -58,6 +60,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
 const EXTRACTED_DIR = resolve(REPO_ROOT, "sources/extracted");
 const OUTPUT_PATH = resolve(REPO_ROOT, "sources/proposed-migrations.json");
+const REGISTRY_PATH = resolve(REPO_ROOT, "sources/registry.yaml");
 
 const DEFAULT_CAP_PER_CATEGORY = 5;
 
@@ -469,6 +472,106 @@ export function demoteChildlessMemberStorePrograms(
 }
 
 // ───────────────────────────────────────────────────────────────
+// Stale extract generation guard (旧世代 extracted 書き戻し防止)
+// ───────────────────────────────────────────────────────────────
+// 【背景 (#142 の実害)】
+// extractor プロンプトを改訂 (例: jcb-jpoint v1.2 乗算モデル → v1.3 加算方式) しても、
+// sources/extracted/<id>.json は旧版プロンプトで fetch されたキャッシュのまま残る。
+// この旧世代キャッシュは seed (新方針で既に修正済) との rate 差分を「変更」として出し、
+// propose が閾値内なら auto-merge 候補に載せてしまう (= 旧値への書き戻し提案)。
+// 実際に 2026-07-23 の cron で jcb W 系列の 0.015→0.02 等が auto=3 で提案され、
+// apply 後の safety gate (seed 契約テスト) が発火して auto batch 全体が review 降格した。
+//
+// 【防止策】当該 source の extracted.promptVersion が registry.yaml の
+// extractorVersions[extractor] から導出される「現行 promptVersion」と不一致なら、
+// PROGRAM_OVERRIDES 行きの updateField (rate/validFrom/validTo) を auto にせず
+// staleExtractGeneration で needsReview に降格する。次回 fetch (新版プロンプト) で
+// promptVersion が一致すれば、この gate は素通りし従来の閾値判定に戻る。
+//
+// 対象/非対象:
+//   - 対象   : updateField かつ isApplicableProposal (= updateField/programs の
+//              rate/validFrom/validTo、PROGRAM_OVERRIDES 経路) かつ現状 auto (reviewReason 無し)
+//   - 非対象 : addRecord (新規追加。元々 idCollision 等で review に落ちる設計、触らない)、
+//              既に reviewReason 付きの提案 (別理由で既に review 行き)
+//   - registry に当該 extractor の版数が未定義なら gate skip (従来どおり)
+//   - promptVersion が extracted に無い古いファイルは「不一致」扱い (安全側)
+
+/** stale と判定した source の版数情報 (ログ用)。 */
+export type StaleSourceInfo = {
+  /** extracted.promptVersion (無ければ "(none)")。 */
+  extractedVersion: string;
+  /** registry から導出した現行 promptVersion (例: "jcb-jpoint-v1.3")。 */
+  currentVersion: string;
+};
+
+/** registry.yaml から extractorVersions を読む (string 正規化)。読めなければ {}。 */
+export function loadExtractorVersions(
+  registryPath: string = REGISTRY_PATH,
+): Partial<Record<string, string>> {
+  try {
+    const text = readFileSync(registryPath, "utf-8");
+    const data = parseYaml(text) as RegistryFile | undefined;
+    const ev = data?.extractorVersions;
+    if (!ev || typeof ev !== "object") return {};
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(ev)) {
+      // YAML が number 化した版数 (例: 3.5) の保険で String 化
+      if (v != null) out[k] = String(v);
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * extracted の promptVersion が registry の現行 extractor 版と不一致 (旧世代キャッシュ)
+ * な source を { extracted 版, 現行版 } 付きで返す。
+ * - registry に当該 extractor の版数が未定義 → gate skip (map に入れない)
+ * - promptVersion 欠落 → "(none)" として不一致扱い (安全側)
+ */
+export function detectStaleExtractSources(
+  extracted: Pick<ExtractedSource, "sourceId" | "extractor" | "promptVersion">[],
+  extractorVersions: Partial<Record<string, string>>,
+): Map<string, StaleSourceInfo> {
+  const stale = new Map<string, StaleSourceInfo>();
+  for (const ex of extracted) {
+    const version = extractorVersions[ex.extractor];
+    if (!version) continue; // 版数未定義の extractor は gate skip
+    const currentVersion = `${ex.extractor}-${version}`;
+    const extractedVersion = ex.promptVersion ?? "(none)";
+    if (extractedVersion !== currentVersion) {
+      stale.set(ex.sourceId, { extractedVersion, currentVersion });
+    }
+  }
+  return stale;
+}
+
+/**
+ * 旧世代 extracted の書き戻し防止ガード。
+ * stale-generation な source 由来の PROGRAM_OVERRIDES 行き updateField
+ * (rate/validFrom/validTo) で、現状 auto (reviewReason 無し) のものを
+ * staleExtractGeneration で needsReview に降格する。
+ * addRecord / 既に review 行き / 非 PROGRAM_OVERRIDES 経路は据え置き。
+ * guardedBySource は source ごとの降格件数 (ログ用)。
+ */
+export function guardStaleExtractGeneration(
+  proposals: Proposal[],
+  staleSourceIds: ReadonlySet<string>,
+): { proposals: Proposal[]; guardedBySource: Map<string, number> } {
+  const guardedBySource = new Map<string, number>();
+  const out: Proposal[] = proposals.map((p) => {
+    if (p.type !== "updateField") return p; // addRecord/delete/referenceChange は対象外
+    if (p.reviewReason) return p; // 既に別理由で review 行き
+    if (!isApplicableProposal(p)) return p; // PROGRAM_OVERRIDES 行き (rate/validFrom/validTo) のみ
+    if (!staleSourceIds.has(p.sourceId)) return p;
+    guardedBySource.set(p.sourceId, (guardedBySource.get(p.sourceId) ?? 0) + 1);
+    return { ...p, reviewReason: "staleExtractGeneration" } as Proposal;
+  });
+  return { proposals: out, guardedBySource };
+}
+
+// ───────────────────────────────────────────────────────────────
 // Main
 // ───────────────────────────────────────────────────────────────
 
@@ -484,6 +587,9 @@ export function demoteChildlessMemberStorePrograms(
 //              ─ store / program 本体が auto に無い membership を降格
 //   Phase C2 : Program/membership atomicity guard (demoteChildlessMemberStorePrograms)
 //              ─ Phase C で membership が全て降格した member-stores program 単独を降格
+//   Phase C3 : Stale extract generation guard (guardStaleExtractGeneration)
+//              ─ 旧世代 extracted (promptVersion 不一致) 由来の PROGRAM_OVERRIDES 行き
+//                updateField を staleExtractGeneration で降格 (書き戻し防止)
 //   Phase D  : auto / needsReview 振り分け + report 書き出し
 // Phase ラベルは log メッセージにも反映済 (🧯 = guard, 📐 = cap, 🔁 = dedup, 🧹 = expired, 🔓 = chain-promote)。
 
@@ -626,6 +732,27 @@ function main(): void {
   if (atomicity.demoted > 0) {
     console.log(
       `🧯 atomicity guard: ${atomicity.demoted} 件の member-stores program を orphanedProgram で降格`,
+    );
+  }
+
+  // Phase C3: Stale extract generation guard (旧世代 extracted 書き戻し防止)
+  //   プロンプト改訂直後、旧版で fetch した extracted キャッシュが seed (修正済) との
+  //   rate 差分を書き戻し提案として出すのを防ぐ。当該 source の promptVersion が
+  //   registry の現行 extractor 版と不一致なら、PROGRAM_OVERRIDES 行きの updateField
+  //   (rate/validFrom/validTo) を auto にせず staleExtractGeneration で review 降格。
+  const staleSources = detectStaleExtractSources(
+    extracted,
+    loadExtractorVersions(),
+  );
+  const staleGuard = guardStaleExtractGeneration(
+    finalProposals,
+    new Set(staleSources.keys()),
+  );
+  finalProposals = staleGuard.proposals;
+  for (const [src, n] of staleGuard.guardedBySource) {
+    const info = staleSources.get(src)!;
+    console.log(
+      `🧯 stale-generation guard: ${n} 件 (source=${src}, extracted=${info.extractedVersion} ≠ 現行 ${info.currentVersion})`,
     );
   }
 

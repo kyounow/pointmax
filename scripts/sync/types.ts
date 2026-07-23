@@ -359,6 +359,9 @@ export type ReviewReason =
   | "storeAdditionsDisabled"  // 新規 store 追加を cron では行わない方針 (キャンペーン情報の獲得に注力)。proposeStores の出力は他の理由が無い場合この理由で needsReview に
   | "expiredCampaign"         // validTo + grace (30日) 経過済の campaign 削除提案。誤削除防止のため必ず人手レビュー
   | "periodChange"            // 既存 program の validFrom/validTo 変更 (キャンペーン延長/期間訂正)。誤期間適用防止のため必ず人手レビュー (sync:approve で承認可)
+  | "staleExtractGeneration" // extracted の promptVersion が registry の現行 extractor 版と不一致。
+                              // プロンプト改訂直後の旧世代キャッシュによる rate/期間の書き戻し提案 (PROGRAM_OVERRIDES 行き
+                              // updateField) を防ぐ。次回 fetch (新版) 後に promptVersion が一致し再判定される
   | "safetyFailed"            // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
   | "autoMergeDisabled"       // auto-merge 候補だが autoMergeEnabled=false / force_review_only=true のため review に降格 (手動テスト等)
   | "pseudoStoreTarget";      // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等) への
