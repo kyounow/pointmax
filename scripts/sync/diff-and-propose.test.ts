@@ -4,7 +4,9 @@ import {
   applyCategoryCap,
   dedupeAcrossProposals,
   demoteChildlessMemberStorePrograms,
+  detectStaleExtractSources,
   downgradeOrphanMemberships,
+  guardStaleExtractGeneration,
   isFailedExtraction,
   promoteChainStoreAutoMerge,
   proposeCards,
@@ -2238,5 +2240,199 @@ describe("M2: isCampaignAutoMergeable 値域ガードパック", () => {
     });
     const ps = proposePrograms(data, richSeed);
     expect(ps[0].reviewReason).toBeUndefined();
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// staleExtractGeneration ガード (旧世代 extracted 書き戻し防止、#142)
+// ───────────────────────────────────────────────────────────────
+
+describe("detectStaleExtractSources", () => {
+  const src = (
+    sourceId: string,
+    extractor: ExtractedSource["extractor"],
+    promptVersion: string | undefined,
+  ) => ({ sourceId, extractor, promptVersion });
+
+  it("promptVersion が現行版と一致 → stale ではない", () => {
+    const stale = detectStaleExtractSources(
+      [src("s", "jcb-jpoint", "jcb-jpoint-v1.3")],
+      { "jcb-jpoint": "v1.3" },
+    );
+    expect(stale.has("s")).toBe(false);
+  });
+
+  it("promptVersion が現行版と不一致 → stale (extracted/現行 promptVersion を記録)", () => {
+    const stale = detectStaleExtractSources(
+      [src("jcb-jpoint-partners", "jcb-jpoint", "jcb-jpoint-v1.2")],
+      { "jcb-jpoint": "v1.3" },
+    );
+    expect(stale.get("jcb-jpoint-partners")).toEqual({
+      extractedVersion: "jcb-jpoint-v1.2",
+      currentVersion: "jcb-jpoint-v1.3",
+    });
+  });
+
+  it("promptVersion 欠落 (古いファイル) → 不一致扱い (安全側、(none))", () => {
+    const stale = detectStaleExtractSources(
+      [src("s", "jcb-jpoint", undefined)],
+      { "jcb-jpoint": "v1.3" },
+    );
+    expect(stale.has("s")).toBe(true);
+    expect(stale.get("s")?.extractedVersion).toBe("(none)");
+  });
+
+  it("registry に版数未定義の extractor は gate skip (stale にしない)", () => {
+    const stale = detectStaleExtractSources(
+      [src("s", "jcb-jpoint", "jcb-jpoint-v1.2")],
+      {}, // extractorVersions 未定義
+    );
+    expect(stale.has("s")).toBe(false);
+  });
+});
+
+describe("guardStaleExtractGeneration", () => {
+  const ev = { evidenceQuote: "x", explicitness: 1, ambiguity: 0 };
+
+  // PROGRAM_OVERRIDES 行きの rate updateField (現状 auto = reviewReason 無し)
+  const rateUpdate = (
+    sourceId: string,
+    reviewReason?: Proposal["reviewReason"],
+    field = "rate",
+  ): Proposal => ({
+    type: "updateField",
+    collection: "programs",
+    id: "prog-jcb-jpoint-2x",
+    field,
+    from: 0.015,
+    to: 0.02,
+    sourceId,
+    confidence: 0.9,
+    evidence: ev,
+    ...(reviewReason ? { reviewReason } : {}),
+  });
+
+  it("(a) stale source の rate updateField (auto) → staleExtractGeneration で降格", () => {
+    const { proposals, guardedBySource } = guardStaleExtractGeneration(
+      [rateUpdate("jcb-jpoint-partners")],
+      new Set(["jcb-jpoint-partners"]),
+    );
+    expect(proposals[0].reviewReason).toBe("staleExtractGeneration");
+    expect(guardedBySource.get("jcb-jpoint-partners")).toBe(1);
+  });
+
+  it("(b) non-stale source の rate updateField → 据え置き (auto のまま)", () => {
+    const { proposals, guardedBySource } = guardStaleExtractGeneration(
+      [rateUpdate("d-point-partners")],
+      new Set(["jcb-jpoint-partners"]), // d-point は stale 対象外
+    );
+    expect(proposals[0].reviewReason).toBeUndefined();
+    expect(guardedBySource.size).toBe(0);
+  });
+
+  it("(c) addRecord は stale source でも対象外 (据え置き)", () => {
+    const addProgram: Proposal = {
+      type: "addRecord",
+      collection: "programs",
+      record: {
+        id: "prog-jcb-jpoint-10x",
+        name: "新tier",
+        scope: "member-stores",
+        rate: 0.055,
+        currencyId: "j-point",
+      },
+      sourceId: "jcb-jpoint-partners",
+      confidence: 0.9,
+      evidence: ev,
+    };
+    const { proposals, guardedBySource } = guardStaleExtractGeneration(
+      [addProgram],
+      new Set(["jcb-jpoint-partners"]),
+    );
+    expect(proposals[0].reviewReason).toBeUndefined();
+    expect(guardedBySource.size).toBe(0);
+  });
+
+  it("既に別理由で review 行きの updateField は触らない (reviewReason 優先)", () => {
+    const { proposals } = guardStaleExtractGeneration(
+      [rateUpdate("jcb-jpoint-partners", "rateDeltaTooLarge")],
+      new Set(["jcb-jpoint-partners"]),
+    );
+    expect(proposals[0].reviewReason).toBe("rateDeltaTooLarge");
+  });
+
+  it("PROGRAM_OVERRIDES 経路でない updateField (cards.defaultRate) は対象外", () => {
+    const cardUpdate: Proposal = {
+      type: "updateField",
+      collection: "cards",
+      id: "some-card",
+      field: "defaultRate",
+      from: 0.01,
+      to: 0.012,
+      sourceId: "jcb-jpoint-partners",
+      confidence: 0.9,
+      evidence: ev,
+    };
+    const { proposals, guardedBySource } = guardStaleExtractGeneration(
+      [cardUpdate],
+      new Set(["jcb-jpoint-partners"]),
+    );
+    expect(proposals[0].reviewReason).toBeUndefined();
+    expect(guardedBySource.size).toBe(0);
+  });
+
+  it("validFrom/validTo updateField も PROGRAM_OVERRIDES 経路として降格対象", () => {
+    const { proposals } = guardStaleExtractGeneration(
+      [rateUpdate("jcb-jpoint-partners", undefined, "validTo")],
+      new Set(["jcb-jpoint-partners"]),
+    );
+    expect(proposals[0].reviewReason).toBe("staleExtractGeneration");
+  });
+
+  // ── 実シナリオ回帰 (#142): v1.2 extracted (乗算 rate 0.02) + seed 0.015 ──
+  it("回帰: v1.2 extracted (rate 0.02) + seed 0.015 は propose では auto だが stale ガードで降格", () => {
+    const jcbSeed: SeedShape = {
+      ...emptySeed,
+      programs: [
+        {
+          id: "prog-jcb-jpoint-2x",
+          name: "J-POINT パートナー (2倍) W向け",
+          scope: "member-stores",
+          cardIds: ["jcb-w"],
+          rate: 0.015, // 加算方式の正値 (seed は #142 で修正済)
+          currencyId: "j-point",
+        },
+      ],
+    };
+    const data = baseSource({
+      sourceId: "jcb-jpoint-partners",
+      extractor: "jcb-jpoint",
+      promptVersion: "jcb-jpoint-v1.2", // 旧世代キャッシュ
+      programs: [
+        {
+          programId: "prog-jcb-jpoint-2x",
+          cardIds: ["jcb-w"],
+          rate: 0.02, // v1.2 乗算モデルの旧値 (2倍 = 2%)
+          currencyId: "j-point",
+          evidenceQuote: "ビックカメラ ポイント 2 倍",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+        },
+      ],
+    });
+    // Phase 1: propose → rate updateField (閾値内で現状 auto)
+    const proposals = proposePrograms(data, jcbSeed);
+    expect(proposals).toHaveLength(1);
+    expect(proposals[0].type).toBe("updateField");
+    expect(proposals[0].reviewReason).toBeUndefined();
+
+    // Phase C3: stale ガード (registry 現行 v1.3 ≠ extracted v1.2) → 降格
+    const stale = detectStaleExtractSources([data], { "jcb-jpoint": "v1.3" });
+    const guarded = guardStaleExtractGeneration(
+      proposals,
+      new Set(stale.keys()),
+    );
+    expect(guarded.proposals[0].reviewReason).toBe("staleExtractGeneration");
+    expect(guarded.guardedBySource.get("jcb-jpoint-partners")).toBe(1);
   });
 });
