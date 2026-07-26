@@ -2,6 +2,129 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-07-27",
+      "generatedAt": "2026-07-26T22:04:06.352Z",
+      "totalCount": 11,
+      "avgConfidence": 0.95,
+      "sourcesProcessed": 15,
+      "bySource": [
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "memberships",
+          "count": 5,
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "programs",
+          "count": 5,
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "stores",
+          "count": 1,
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "programs",
+          "summary": "【モスバーガー】対象商品はdポイント3倍！ 2.00% dポイント [2026-07-15〜2026-08-16]",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "programs",
+          "summary": "【吉野家】最大＋20％還元！ 20.00% dポイント [2026-07-17〜2026-08-16]",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "programs",
+          "summary": "かっぱ寿司の店舗で最大10倍！ 9.00% dポイント [2026-07-01〜2026-08-31]",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "programs",
+          "summary": "【ビックカメラ池袋店舗】もれなく＋5％還元 5.00% dポイント [2026-06-26〜2026-08-02]",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "programs",
+          "summary": "【タワーレコード】全員！dポイント10倍！ 9.00% dポイント [2026-07-21〜2026-07-29]",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "memberships",
+          "summary": "【モスバーガー】対象商品はdポイント3倍！ → モスバーガー",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "memberships",
+          "summary": "【吉野家】最大＋20％還元！ → 吉野家",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "memberships",
+          "summary": "かっぱ寿司の店舗で最大10倍！ → くら寿司",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "memberships",
+          "summary": "【ビックカメラ池袋店舗】もれなく＋5％還元 → ビックカメラ",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "memberships",
+          "summary": "【タワーレコード】全員！dポイント10倍！ → タワーレコード",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "d-pay-campaigns",
+          "collection": "stores",
+          "summary": "タワーレコード (音楽・映像)",
+          "sourceLabel": "d払い キャンペーン一覧 (公式)",
+          "collectionLabel": "店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 367,
+        "byReason": {
+          "unsupportedRateClaim": 1,
+          "orphanedProgram": 1,
+          "missingStoreBody": 143,
+          "idCollision": 84,
+          "lowConfidence": 90,
+          "missingProgramBody": 6,
+          "storeAdditionsDisabled": 35,
+          "userBlocked": 2,
+          "excludedCategory": 5
+        }
+      }
+    },
+    {
       "date": "2026-07-23",
       "generatedAt": "2026-07-22T22:07:42.738Z",
       "totalCount": 3,
