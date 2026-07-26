@@ -1,36 +1,11 @@
 {
   "sourceId": "d-point-partners",
   "sourceUrl": "https://dpoint.docomo.ne.jp/content/feature/point_realstore.html",
-  "fetchedAt": "2026-07-19T21:51:05.625Z",
+  "fetchedAt": "2026-07-26T21:58:55.674Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "stores": [
-    {
-      "storeId": "wendys-first-kitchen",
-      "name": "ウェンディーズ・ファーストキッチン",
-      "category": "飲食",
-      "evidenceQuote": "ウェンディーズ・ファーストキッチン：dポイントがつかえるお店",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "matsuya",
-      "name": "松屋",
-      "category": "飲食",
-      "evidenceQuote": "松屋：dポイントがつかえるお店",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "uobei",
-      "name": "魚べい",
-      "category": "飲食",
-      "evidenceQuote": "魚べい：dポイントがつかえるお店（d払いのみ）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    }
-  ],
+  "stores": [],
   "loyaltyRules": [],
-  "notes": "提示によるポイント還元率の情報がページ上に明示されていないため、loyaltyRulesは抽出されませんでした。一部店舗はd払いのみ利用可能と記載されています。"
+  "notes": "このページはdポイントの「利用（支払い）」に関する情報が中心であり、dポイントカード提示による「ポイント獲得（還元率）」について具体的な記載がないため、loyaltyRulesは抽出できませんでした。多くの店舗で「d払いのみご利用可能」と明記されており、ポイントカード提示での獲得に関する情報が不足しています。"
 }

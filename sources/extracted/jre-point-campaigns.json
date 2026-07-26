@@ -1,9 +1,9 @@
 {
   "sourceId": "jre-point-campaigns",
   "sourceUrl": "https://www.jrepoint.jp/campaign/list/",
-  "fetchedAt": "2026-07-19T21:52:49.314Z",
+  "fetchedAt": "2026-07-26T21:59:35.212Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] 索引ページの子 URL 列挙に失敗: urls[] missing。子ページ抽出は未実施。"
+  "notes": "[crawl:index] index=https://www.jrepoint.jp/campaign/list/ 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: No campaign links found matching criteria on https://www.jrepoint.jp/campaign/list/. Most links found were navigational or to the list page itself."
 }
