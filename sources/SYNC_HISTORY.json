@@ -2,6 +2,45 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-08-06",
+      "generatedAt": "2026-08-05T22:16:53.337Z",
+      "totalCount": 1,
+      "avgConfidence": 1,
+      "sourcesProcessed": 15,
+      "bySource": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "count": 1,
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "summary": "プログラム 削除 prog-d-pointcard-mos-burger-05",
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "reviewStats": {
+        "total": 383,
+        "byReason": {
+          "unsupportedRateClaim": 1,
+          "orphanedProgram": 1,
+          "missingStoreBody": 143,
+          "idCollision": 98,
+          "lowConfidence": 80,
+          "missingProgramBody": 6,
+          "storeAdditionsDisabled": 43,
+          "excludedCategory": 8,
+          "userBlocked": 3
+        }
+      }
+    },
+    {
       "date": "2026-08-03",
       "generatedAt": "2026-08-02T22:01:26.755Z",
       "totalCount": 0,

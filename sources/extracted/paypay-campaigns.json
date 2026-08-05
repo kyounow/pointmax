@@ -1,9 +1,12 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-07-01T22:27:14.714Z",
-  "promptVersion": "campaign-vUnknown",
+  "fetchedAt": "2026-08-05T22:15:38.336Z",
+  "promptVersion": "campaign-v3.5",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): ```json { \"sourceId\": \"paypay-campaigns\", \"sourceUrl\": \"https://paypay.ne.jp/event/\", \"fetchedAt\": \"2026-07-01T22:27:00Z\", \"promptVersion\": \"campaign-v3.3\", \"extractor\": \"gemini-flash-1.5\", \"geminiModel\": \"gemini-flash-1.5\", \"programs\": [], \"memberships\": [], \"stores\": [], \"notes"
+  "programs": [],
+  "memberships": [],
+  "stores": [],
+  "notes": "「chains-only」の抽出スコープにおいて、明確な還元率と期間が提示された全国/広域チェーン店向けのキャンペーンがページに見当たりませんでした。多くは、プラットフォーム全体のプロモーション、特定のSKUプロモーション、抽選ベースのキャンペーン、または店舗非依存の一般的な特典でした。"
 }

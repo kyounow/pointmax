@@ -1,9 +1,124 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-07-01T22:27:28.077Z",
-  "promptVersion": "ongoing-program-vUnknown",
+  "fetchedAt": "2026-08-05T22:16:52.725Z",
+  "promptVersion": "ongoing-program-v1.2",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "Vポイントアッププログラムにおいて、ライフスタイル条件（円預金残高、外貨預金、住宅ローン、SBI証券連携、Vitality、カードローン、SMBC日興証券連携、Vトリップ、Oliveヘルスケア）のプログラムは出力対象外としました。主要な常時還元アッププログラム（店舗でのタッチ決済高還元、家族ポイント、Olive選べる特典）を抽出しています。総件数15件中3件を抽出。",
+  "programs": [
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "name": "SMBC タッチ決済コンビニ・飲食店高還元",
+      "scope": "member-stores",
+      "cardIds": [
+        "smbc-v",
+        "olive"
+      ],
+      "paymentAppId": "pa-visa-touch",
+      "rate": 0.075,
+      "currencyId": "v-pt",
+      "bonusType": "primary",
+      "description": "対象コンビニ・飲食店でのVisa/Mastercardタッチ決済またはモバイルオーダー利用で最大+7.5%還元。",
+      "conditions": "Visa/Mastercardタッチ決済またはモバイルオーダー利用時のみ。一定金額を超えるとタッチ決済とならずポイント加算対象外となる場合があります。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "対象店舗でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-smbc-kazoku-point",
+      "name": "SMBC 家族ポイント",
+      "scope": "all-stores",
+      "cardIds": [
+        "smbc-v",
+        "olive"
+      ],
+      "rate": 0.05,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "家族ポイントに6人以上登録で+5%還元。",
+      "conditions": "家族ポイントに6人以上登録（主会員1人＋従会員5人以上）が条件。登録される家族は対象の三井住友カードに入会した本会員であること。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "家族ポイントに6人以上登録（主会員1人＋従会員5人以上）＝＋5％還元",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-olive-eraberu",
+      "name": "Oliveアカウント 選べる特典",
+      "scope": "all-stores",
+      "cardIds": [
+        "olive"
+      ],
+      "rate": 0.01,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると+1%還元。",
+      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。Olive プラチナプリファード会員は2つ選択で+2%還元。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典 ※ で「Vポイントアッププログラム＋1％」をご選択",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    }
+  ],
+  "memberships": [
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "conv-7eleven",
+      "evidenceQuote": "条件達成でセブン-イレブン最大11%還元",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "conv-lawson",
+      "evidenceQuote": "対象のコンビニ・飲食店：ローソン",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "conv-familymart",
+      "evidenceQuote": "対象のコンビニ・飲食店：ファミリーマート",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "conv-ministop",
+      "evidenceQuote": "対象のコンビニ・飲食店：ミニストップ",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "mcdonalds",
+      "evidenceQuote": "対象のコンビニ・飲食店：マクドナルド",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "sukiya",
+      "evidenceQuote": "対象のコンビニ・飲食店：すき家",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "doutor",
+      "evidenceQuote": "対象のコンビニ・飲食店：ドトールコーヒーショップ",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "saizeriya",
+      "evidenceQuote": "対象のコンビニ・飲食店：サイゼリヤ",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
+    }
+  ],
+  "stores": []
 }
