@@ -3,6 +3,36 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-08-06 (auto 1 件 / review 383 件)
+
+- 平均 confidence: 1.00 / source 数: 15
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| expired-cleanup | プログラム | 1 |
+
+### Review queue 内訳 (383 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 143 |
+| idCollision | 98 |
+| lowConfidence | 80 |
+| storeAdditionsDisabled | 43 |
+| excludedCategory | 8 |
+| missingProgramBody | 6 |
+| userBlocked | 3 |
+| unsupportedRateClaim | 1 |
+| orphanedProgram | 1 |
+
+<details><summary>追加項目 1 件</summary>
+
+### expired-cleanup / プログラム (1)
+- プログラム 削除 prog-d-pointcard-mos-burger-05
+
+</details>
+
+---
+
 ## 2026-08-03 (auto 0 件 / review 307 件)
 
 - source 数: 15

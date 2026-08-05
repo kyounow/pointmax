@@ -1,11 +1,11 @@
 {
   "sourceId": "jal-card-tokuyaku-list",
   "sourceUrl": "https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201",
-  "fetchedAt": "2026-07-01T22:16:25.294Z",
+  "fetchedAt": "2026-08-05T22:10:53.409Z",
   "promptVersion": "jal-tokuyaku-v1.1",
   "extractor": "jal-tokuyaku",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "このURLは「レストラン・予約サイト」カテゴリの検索結果ページであり、多くの個店がリストされています。抽出スコープ「chains-only」に基づき、主要チェーンと判断できる「ロイヤルホスト」のみを追加しました。ページには他にも多くの店舗が掲載されていますが、広域チェーンであるかどうかの判断が難しいため、それらは対象外としました。",
+  "notes": "検索結果ページから、抽出スコープ(chains-only)に合致する「ロイヤルホスト」「四季マート」の2件を抽出しました。その他多数の飲食店は地域限定と判断し抽出対象外としました。このページは検索結果の一部であり、多数のページにわたるため、すべての特約店を網羅することはできません。",
   "categoryRules": [
     {
       "cardId": "jal-suica",
@@ -22,7 +22,15 @@
       "storeId": "royal-host",
       "name": "ロイヤルホスト",
       "category": "JAL特約店",
-      "evidenceQuote": "ロイヤルホスト JAL CARD 決済でマイルが2倍",
+      "evidenceQuote": "ロイヤルホスト 決済でマイルが 2 倍",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shiki-mart",
+      "name": "四季マート",
+      "category": "JAL特約店",
+      "evidenceQuote": "四季マート 決済でマイルが 2 倍",
       "explicitness": 0.9,
       "ambiguity": 0.05
     }
