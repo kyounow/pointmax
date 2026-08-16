@@ -2,6 +2,27 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-08-17",
+      "generatedAt": "2026-08-16T21:23:33.695Z",
+      "totalCount": 0,
+      "avgConfidence": null,
+      "sourcesProcessed": 15,
+      "bySource": [],
+      "items": [],
+      "reviewStats": {
+        "total": 185,
+        "byReason": {
+          "lowConfidence": 18,
+          "idCollision": 41,
+          "missingStoreBody": 62,
+          "missingProgramBody": 2,
+          "storeAdditionsDisabled": 53,
+          "excludedCategory": 7,
+          "userBlocked": 2
+        }
+      }
+    },
+    {
       "date": "2026-08-13",
       "generatedAt": "2026-08-12T21:47:01.681Z",
       "totalCount": 0,
