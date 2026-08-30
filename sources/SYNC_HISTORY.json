@@ -2,6 +2,43 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-08-31",
+      "generatedAt": "2026-08-30T23:18:42.766Z",
+      "totalCount": 1,
+      "avgConfidence": 1,
+      "sourcesProcessed": 15,
+      "bySource": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "count": 1,
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "summary": "プログラム 削除 prog-dpay-tower-records-10x-dpoint-2026-07",
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "reviewStats": {
+        "total": 333,
+        "byReason": {
+          "idCollision": 53,
+          "missingStoreBody": 166,
+          "missingProgramBody": 8,
+          "lowConfidence": 50,
+          "excludedCategory": 9,
+          "storeAdditionsDisabled": 44,
+          "userBlocked": 3
+        }
+      }
+    },
+    {
       "date": "2026-08-27",
       "generatedAt": "2026-08-27T00:29:36.373Z",
       "totalCount": 0,
