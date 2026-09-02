@@ -3,6 +3,43 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-09-03 (auto 3 件 / review 363 件)
+
+- 平均 confidence: 0.97 / source 数: 15
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| expired-cleanup | プログラム | 1 |
+| PayPay キャンペーン一覧 (公式) | 提携店舗 | 1 |
+| PayPay キャンペーン一覧 (公式) | プログラム | 1 |
+
+### Review queue 内訳 (363 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 167 |
+| lowConfidence | 67 |
+| missingProgramBody | 43 |
+| storeAdditionsDisabled | 43 |
+| idCollision | 29 |
+| excludedCategory | 9 |
+| userBlocked | 4 |
+| orphanedProgram | 1 |
+
+<details><summary>追加項目 3 件</summary>
+
+### PayPay キャンペーン一覧 (公式) / プログラム (1)
+- セブン-イレブンでPayPayポイントを利用して対象商品を買うと最大30％戻ってくるキャンペーン 30.00% PayPayポイント [2026-09-01〜2026-09-20]
+
+### PayPay キャンペーン一覧 (公式) / 提携店舗 (1)
+- セブン-イレブンでPayPayポイントを利用して対象商品を買うと最大30％戻ってくるキャンペーン → セブン-イレブン
+
+### expired-cleanup / プログラム (1)
+- プログラム 削除 prog-dpay-bic-camera-ikebukuro-5pc-cashback-2026-06
+
+</details>
+
+---
+
 ## 2026-08-31 (auto 1 件 / review 333 件)
 
 - 平均 confidence: 1.00 / source 数: 15
