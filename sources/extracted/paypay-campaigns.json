@@ -1,7 +1,7 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-09-02T23:02:14.761Z",
+  "fetchedAt": "2026-09-09T23:03:54.079Z",
   "promptVersion": "campaign-v3.5",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
@@ -18,34 +18,18 @@
       "validTo": "2026-09-20",
       "evidenceQuote": "セブン-イレブンでPayPayポイントを利用して対象商品を買うと最大30％戻ってくるキャンペーン 2026/9/1 〜 9/20",
       "explicitness": 1,
-      "ambiguity": 0.05,
-      "notes": "最大30%還元ですが、期間中の常時還元と解釈し抽出しました。対象商品限定です。"
-    },
-    {
-      "programId": "prog-paypay-u18-2-2026-03",
-      "name": "＜12〜18歳の方＞PayPay残高へのチャージ＆お支払いでPayPayポイントが最大2％上乗せでもらえるキャンペーン",
-      "scope": "member-stores",
-      "paymentAppId": "pa-paypay",
-      "rate": 0.02,
-      "currencyId": "paypay",
-      "bonusType": "addOn",
-      "validFrom": "2026-03-03",
-      "validTo": "2026-09-30",
-      "evidenceQuote": "＜12〜18歳の方＞PayPay残高へのチャージ＆お支払いでPayPayポイントが最大2％上乗せでもらえるキャンペーン 2026/3/3 〜 9/30",
-      "explicitness": 1,
-      "ambiguity": 0.05,
-      "notes": "対象者限定キャンペーンですが、対象者が明確であり、特定の店舗での利用が前提となるため抽出しました。"
+      "ambiguity": 0.05
     }
   ],
   "memberships": [
     {
       "programId": "prog-paypay-seven-eleven-30-2026-09",
       "storeId": "conv-7eleven",
-      "evidenceQuote": "セブン-イレブンでPayPayポイントを利用して対象商品を買うと",
+      "evidenceQuote": "セブン-イレブン",
       "explicitness": 1,
       "ambiguity": 0.05
     }
   ],
   "stores": [],
-  "notes": "WINTICKET新規登録キャンペーン、海外スクラッチくじ、きせかえ、対象銀行をはじめてチャージ用口座に登録し、チャージ＆支払いで最大500ポイントもらえるキャンペーン、PayPay×Vポイント ID連携キャンペーン、ペイトク2、2026年もみずほPayPayドームでPayPayがおトク！、PayPay U18応援プロジェクト (詳細不明)、友だち紹介特典、ペイしてトクトクキャンペーン2、つみたて還元プログラム、PayPayステップ、その他きせかえキャンペーンは、率が不明、店舗特定不可、抽選、または全体施策、対象者限定だが店舗紐付けができない、定常特典のため抽出対象外としました。"
+  "notes": "総 20 件中 1 件抽出。きせかえ、対象者限定、率が不明確なキャンペーンは除外しました。"
 }

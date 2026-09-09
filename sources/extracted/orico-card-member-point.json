@@ -1,9 +1,20 @@
 {
   "sourceId": "orico-card-member-point",
   "sourceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/",
-  "fetchedAt": "2026-09-02T23:01:06.170Z",
-  "promptVersion": "card-vUnknown",
+  "fetchedAt": "2026-09-09T23:02:04.808Z",
+  "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini empty response (output cut or model refusal). URL を確認するか、ソースを enabled: false に設定してください。"
+  "notes": "「入会後6ヵ月間は還元率2%」は新規入会者向けの継続的な優遇のため、具体的な終了日は設定していません。オリコモール利用時の還元率は、ショップごとに変動するボーナスポイントが加算されるため、最低保証される0.5%特別加算分のみをcategoryRuleとして抽出しています。 [sync] schema 違反で除去したアイテム: categoryRules:2。",
+  "cards": [
+    {
+      "cardId": "orico-card-member-point",
+      "defaultRate": 0.01,
+      "defaultCurrencyId": "orico-pt",
+      "evidenceQuote": "還元率は常に1.0％以上！100円で1オリコポイントがたまる！",
+      "evidenceUrl": "https://www.orico.co.jp/creditcard/list/thepoint/#point",
+      "explicitness": 1,
+      "ambiguity": 0
+    }
+  ]
 }

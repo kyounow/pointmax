@@ -1,9 +1,9 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-09-02T23:02:01.262Z",
+  "fetchedAt": "2026-09-09T23:03:41.988Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] index=https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: No specific campaign detail URLs found on this index page. Most links lead to other campaign index pages or general service sections."
+  "notes": "[crawl:index] 索引ページの子 URL 列挙に失敗: fetch status=nonJson。子ページ抽出は未実施。"
 }
