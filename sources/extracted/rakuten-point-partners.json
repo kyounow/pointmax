@@ -1,11 +1,748 @@
 {
   "sourceId": "rakuten-point-partners",
   "sourceUrl": "https://pointcard.rakuten.co.jp/partner/",
-  "fetchedAt": "2026-08-30T23:09:45.237Z",
+  "fetchedAt": "2026-09-13T22:51:07.247Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
-  "stores": [],
+  "stores": [
+    {
+      "storeId": "fujiya",
+      "name": "不二家",
+      "category": "飲食",
+      "evidenceQuote": "不二家：創業明治43年。おいしいを通じてしあわせをお手伝い。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "fujiya-restaurant",
+      "name": "不二家レストラン",
+      "category": "飲食",
+      "evidenceQuote": "不二家レストラン：ペコちゃんでお馴染みの洋食レストラン。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jolly-pasta",
+      "name": "ジョリーパスタ",
+      "category": "飲食",
+      "evidenceQuote": "ジョリーパスタ：パスタ専門店 パスタならジョリーパスタ♪",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "zetteria",
+      "name": "ゼッテリア",
+      "category": "飲食",
+      "evidenceQuote": "ゼッテリア：「絶品バーガー」と「フェアトレードコーヒー」",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "big-boy",
+      "name": "ビッグボーイ",
+      "category": "飲食",
+      "evidenceQuote": "ビッグボーイ：アツアツの大俵ハンバーグやジューシーなステーキをどうぞ。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jukusei-yakiniku-ichiban",
+      "name": "熟成焼肉いちばん",
+      "category": "飲食",
+      "evidenceQuote": "熟成焼肉いちばん：熟成肉と土鍋ご飯が特徴。品質の高い牛肉をリーズナブルな価格で楽しめる焼肉レストラン。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "olive-no-oka",
+      "name": "オリーブの丘",
+      "category": "飲食",
+      "evidenceQuote": "オリーブの丘：本場イタリア食材のパスタ・ピッツァがリーズナブルに楽しめる",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "katsuan",
+      "name": "かつ庵",
+      "category": "飲食",
+      "evidenceQuote": "かつ庵：サクッと揚がったこだわりのカツを気軽に！お持ち帰りのご予約も承っております！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "denmaru",
+      "name": "伝丸",
+      "category": "飲食",
+      "evidenceQuote": "伝丸：白味噌、赤味噌、濃厚味噌の3種から選べる味噌らーめんが人気のらーめん専門店です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ikkokudo",
+      "name": "壱鵠堂",
+      "category": "飲食",
+      "evidenceQuote": "壱鵠堂：白味噌、赤味噌、濃厚味噌の4種から選べる味噌らーめんが人気のらーめん専門店です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ifuu",
+      "name": "威風",
+      "category": "飲食",
+      "evidenceQuote": "威風：首都圏を中心に展開中。濃厚味噌らーめん専門店です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tenkai",
+      "name": "天下一",
+      "category": "飲食",
+      "evidenceQuote": "天下一：天下一タンメンをはじめ、各種中華料理をリーズナブルに味わえる町中華です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "musashino-mori-coffee",
+      "name": "むさしの森珈琲",
+      "category": "飲食",
+      "evidenceQuote": "むさしの森珈琲：カフェ＆ダイニング",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tonkara-tei",
+      "name": "とんから亭",
+      "category": "飲食",
+      "evidenceQuote": "とんから亭：とんかつ・からあげ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yumean-shokudo",
+      "name": "ゆめあん食堂",
+      "category": "飲食",
+      "evidenceQuote": "ゆめあん食堂：うどん・天ぷら・定食",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tokusai",
+      "name": "桃菜",
+      "category": "飲食",
+      "evidenceQuote": "桃菜(トウサイ)：點心の食べ放題とアラカルト",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hachiro-soba",
+      "name": "八郎そば",
+      "category": "飲食",
+      "evidenceQuote": "八郎そば：そば・丼・定食",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kura-osakana-ichiba",
+      "name": "くら おさかな市場",
+      "category": "スーパー",
+      "evidenceQuote": "くら おさかな市場：回転寿司チェーンのくら寿司が運営する、天然魚にこだわった漁場直送の市場です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "god-katsu",
+      "name": "ゴッドカツ",
+      "category": "飲食",
+      "evidenceQuote": "ゴッドカツ：ゴッドカツはサクサクの衣と旨味あふれる肉にこだわった、特別なかつをお届けします。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hanamaru-udon",
+      "name": "はなまる",
+      "category": "飲食",
+      "evidenceQuote": "はなまる：お好みのトッピングを選び自分流のうどんを楽しめる本場讃岐で主流のセルフ方式のお店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sanmaruku-cafe",
+      "name": "サンマルクカフェ",
+      "category": "飲食",
+      "evidenceQuote": "サンマルクカフェ：大人気のチョコクロや注文を受けてから1杯ずつ淹れるコーヒーをお楽しみください。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kamakura-pasta",
+      "name": "鎌倉パスタ",
+      "category": "飲食",
+      "evidenceQuote": "鎌倉パスタ：生パスタ専門店。茹でたて熱々もっちもちの生パスタを是非ご賞味あれ。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "gion-tsubaki-an",
+      "name": "ぎをん椿庵",
+      "category": "飲食",
+      "evidenceQuote": "ぎをん椿庵：和空間で味わう、ソースと相性抜群の生麺＆焼き立て和パンの食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "baguette",
+      "name": "バケット",
+      "category": "飲食",
+      "evidenceQuote": "バケット：自慢の料理と13種類の焼き立てパンで皆様をお迎えします。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "bistro309",
+      "name": "BISTRO309",
+      "category": "飲食",
+      "evidenceQuote": "BISTRO309：自慢の料理と13種類の焼き立てパンで皆様をお迎えします。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "pantorier",
+      "name": "パントリエ",
+      "category": "飲食",
+      "evidenceQuote": "パントリエ：自慢の料理と13種類の焼き立てパンで皆様をお迎えします。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "premium-baguette",
+      "name": "プレミアムバケット",
+      "category": "飲食",
+      "evidenceQuote": "プレミアムバケット：自慢の料理と13種類の焼き立てパンで皆様をお迎えします。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kobe-motomachi-doria",
+      "name": "神戸元町ドリア",
+      "category": "飲食",
+      "evidenceQuote": "神戸元町ドリア：トロ～リ絡まるチーズと素材の旨味が見事に調和した窯焼きドリア専門店。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yokohama-motomachi-doria",
+      "name": "横濱元町ドリア",
+      "category": "飲食",
+      "evidenceQuote": "横濱元町ドリア：トロ～リ絡まるチーズと素材の旨味が見事に調和した窯焼きドリア専門店。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "cheese-and-doria-sweets",
+      "name": "チーズ＆ドリア.スイーツ",
+      "category": "飲食",
+      "evidenceQuote": "チーズ＆ドリア.スイーツ：計50種類以上の料理でチーズを五感でお楽しみいただけます！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "grill-kurashiki",
+      "name": "グリル蔵敷",
+      "category": "飲食",
+      "evidenceQuote": "グリル蔵敷：100%牛肉使用ハンバーグをはじめとするこだわりの洋食レストランです。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kyufun-xiaolongbao",
+      "name": "九份小籠包",
+      "category": "飲食",
+      "evidenceQuote": "九份小籠包：吟味した新鮮な食材の力を活かした料理を熱々の石焼鍋でご提供します。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "taiwan-xiaolongbao",
+      "name": "台湾小籠包",
+      "category": "飲食",
+      "evidenceQuote": "台湾小籠包：蒸し立て熱々の小籠包と、食材の力を活かしたお料理をご提供します。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ishiyaki-chaofan",
+      "name": "石焼炒飯店",
+      "category": "飲食",
+      "evidenceQuote": "石焼炒飯店：吟味した新鮮な食材の力を活かした料理を熱々の石焼鍋でご提供します。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kurashiki-coffee-ten",
+      "name": "倉式珈琲店",
+      "category": "飲食",
+      "evidenceQuote": "倉式珈琲店：寛いだ空間の中でサイフォン抽出のコーヒーをお楽しみいただけます。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "grill-and-bakery-the-season",
+      "name": "グリル&ベーカリー THE SEASON",
+      "category": "飲食",
+      "evidenceQuote": "グリル&ベーカリー THE SEASON：熱々の鉄板料理と焼きたてパンをご提供します。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "pronto",
+      "name": "PRONTO",
+      "category": "飲食",
+      "evidenceQuote": "PRONTO：昼はカフェ、夜はサカバ。という二面性をキーワードとした使い勝手の良い空間です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "wine-no-sakaba-di-punto",
+      "name": "ワインの酒場。Di PUNTO",
+      "category": "飲食",
+      "evidenceQuote": "ワインの酒場。Di PUNTO：気軽にワインとお料理を楽しめる、上質な活気あふれる”ワインの酒場”です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "e-pronto",
+      "name": "E PRONTO",
+      "category": "飲食",
+      "evidenceQuote": "E PRONTO：あらゆる人々の心と生活に心地よくフィットする、誰もがとけ込めるカフェです。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "wacafe-tsumugi",
+      "name": "和カフェ Tsumugi",
+      "category": "飲食",
+      "evidenceQuote": "和カフェ Tsumugi：和テイストのドリンクや食事・スイーツを提供する、新しいスタイルの和カフェです。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ebino-spaghetti",
+      "name": "エビノスパゲッティ",
+      "category": "飲食",
+      "evidenceQuote": "エビノスパゲッティ：速さ旨さに秘密あり。お食事だけでも、お酒だけでも楽しめるスパゲッティ屋です。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hokkahokka-tei",
+      "name": "ほっかほっか亭",
+      "category": "飲食",
+      "evidenceQuote": "ほっかほっか亭：わたしの街の台所 ほっかほっか亭",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tomato-and-onion",
+      "name": "トマトアンドオニオン",
+      "category": "飲食",
+      "evidenceQuote": "トマトアンドオニオン：美味しいハンバーグが食べられる洋食レストランです。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jujukaru-bi",
+      "name": "じゅうじゅうカルビ",
+      "category": "飲食",
+      "evidenceQuote": "じゅうじゅうカルビ：「焼肉食べ放題」のお店です。タッチパネルで座ったままご注文できます！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "nagasaki-champon-ringerhut",
+      "name": "長崎ちゃんぽん リンガーハット",
+      "category": "飲食",
+      "evidenceQuote": "長崎ちゃんぽん リンガーハット：長崎で生まれたちゃんぽん専門店。すべて国産野菜を使用し国内に650店舗以上展開しています。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tonkatsu-hamakatsu",
+      "name": "とんかつ濵かつ",
+      "category": "飲食",
+      "evidenceQuote": "とんかつ濵かつ：昭和37年創業、長崎で生まれたとんかつ専門店。厳選食材を揚げたとんかつをどうぞ。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "nagasaki-shippoku-hamakatsu",
+      "name": "長崎卓袱浜勝",
+      "category": "飲食",
+      "evidenceQuote": "長崎卓袱浜勝：長崎で独自に発展した郷土料理、和(日本) 華(中国) 蘭(西洋)文化の融合を朱塗りの円卓で",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "grand-buffet",
+      "name": "グランブッフェ",
+      "category": "飲食",
+      "evidenceQuote": "グランブッフェ：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "the-buffet-new-market",
+      "name": "ザ ブッフェ ニューマーケット",
+      "category": "飲食",
+      "evidenceQuote": "ザ ブッフェ ニューマーケット：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "buffet-restaurant-festa-garden",
+      "name": "ブッフェレストラン フェスタガーデン",
+      "category": "飲食",
+      "evidenceQuote": "ブッフェレストラン フェスタガーデン：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "buffet-style-assort",
+      "name": "ブッフェスタイル アソート",
+      "category": "飲食",
+      "evidenceQuote": "ブッフェスタイル アソート：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "buffet-for-rooms",
+      "name": "ブッフェ フォールームス",
+      "category": "飲食",
+      "evidenceQuote": "ブッフェ フォールームス：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "buffet-and-dessert-delice",
+      "name": "ブッフェ＆デザート デリシュー",
+      "category": "飲食",
+      "evidenceQuote": "ブッフェ＆デザート デリシュー：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hitori-nabe-shabushabu-soup",
+      "name": "一人鍋しゃぶしゃぶ すうぷ",
+      "category": "飲食",
+      "evidenceQuote": "一人鍋しゃぶしゃぶ すうぷ：台湾を体感できる多彩なお料理と、一人鍋しゃぶしゃぶ専門店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "buffet-the-forest",
+      "name": "ブッフェ ザ フォレスト",
+      "category": "飲食",
+      "evidenceQuote": "ブッフェ ザ フォレスト：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "natural-buffet-tetotefarm",
+      "name": "ナチュラルブッフェ てとてファーム",
+      "category": "飲食",
+      "evidenceQuote": "ナチュラルブッフェ てとてファーム：高原のVege & Hacco ナチュラルブッフェ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "the-buffet-diner",
+      "name": "ザ ブッフェ ダイナー",
+      "category": "飲食",
+      "evidenceQuote": "ザ ブッフェ ダイナー：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "the-buffet-garden",
+      "name": "ザ ブッフェ ガーデン",
+      "category": "飲食",
+      "evidenceQuote": "ザ ブッフェ ガーデン：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "buffet-x-blue",
+      "name": "ブッフェ エクスブルー",
+      "category": "飲食",
+      "evidenceQuote": "ブッフェ エクスブルー：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "buffet-restaurant-hassen",
+      "name": "ブッフェレストラン 八献",
+      "category": "飲食",
+      "evidenceQuote": "ブッフェレストラン 八献：天ぷら・寿司・しゃぶしゃぶ モダンジャパニーズブッフェ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kushiage-kushiten-buffet-kushiba",
+      "name": "串揚げ・串天ブッフェ くし葉",
+      "category": "飲食",
+      "evidenceQuote": "串揚げ・串天ブッフェ くし葉：串揚げ・串天ブッフェ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "buffet-restaurant-panpallet",
+      "name": "ブッフェレストラン パンパレット",
+      "category": "飲食",
+      "evidenceQuote": "ブッフェレストラン パンパレット：和洋中60品以上が食べ放題！オプションで飲茶や寿司、ステーキなども食べ放題！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "buffet-and-cafe-la-maree",
+      "name": "ブッフェ アンド カフェ ラ マレーア",
+      "category": "飲食",
+      "evidenceQuote": "ブッフェ アンド カフェ ラ マレーア：三井ガーデンホテル汐留内に併設されたくつろぎのブッフェレストラン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "italian-resort-pertica",
+      "name": "ITALIAN RESORT ペルティカ",
+      "category": "飲食",
+      "evidenceQuote": "ITALIAN RESORT ペルティカ：北イタリアの高原リゾートの様な、ありそうでなかったイタリアンレストラン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tenshin-tenshin",
+      "name": "点心甜心",
+      "category": "飲食",
+      "evidenceQuote": "点心甜心：飲茶＆中華とスイーツ食べ放題のお店",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "fukuro-seimen",
+      "name": "福ろう製麺",
+      "category": "飲食",
+      "evidenceQuote": "福ろう製麺：店内仕込みの自家製麺と天ぷらをお楽しみいただけます。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "la-foret",
+      "name": "ラフォーレ",
+      "category": "飲食",
+      "evidenceQuote": "ラフォーレ：ホテルグリーンタワー幕張のビュッフェフェレストラン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "flo-prestige-paris",
+      "name": "FLO PRESTIGE PARIS",
+      "category": "飲食",
+      "evidenceQuote": "ＦＬＯは、いつでも気軽に味わえる洋菓子／洋惣菜を日本の四季と共に提供します。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "green-bar",
+      "name": "green bar",
+      "category": "飲食",
+      "evidenceQuote": "green bar：メンバーズポイントと楽天ポイントがどちらも使える！貯まる！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "chichukai-ryori-restaurant-cucina-chichukai",
+      "name": "地中海料理レストラン クッチーナ地中海",
+      "category": "飲食",
+      "evidenceQuote": "地中海料理レストラン クッチーナ地中海：与那原マリーナを望む明るいお店。料理を囲んで楽しいひと時を。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sky-lounge-marie",
+      "name": "スカイラウンジ マリーエ",
+      "category": "飲食",
+      "evidenceQuote": "スカイラウンジ マリーエ：金秀本社ビル9階。リーズナブルなランチと気軽なディナーが楽しめる！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "suntory-jihampi",
+      "name": "サントリー ジハンピ",
+      "category": "飲食",
+      "evidenceQuote": "サントリー ジハンピ：自販機キャッシュレスアプリ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sanchome-ryoin-ten",
+      "name": "三丁目料飲店",
+      "category": "飲食",
+      "evidenceQuote": "三丁目料飲店：札幌市／居酒屋・バー",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ushiwakamaru",
+      "name": "牛若丸",
+      "category": "飲食",
+      "evidenceQuote": "牛若丸：北海道内に店舗を展開するHIRグループ独自の焼肉チェーン店です",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yonekyu",
+      "name": "米久",
+      "category": "飲食",
+      "evidenceQuote": "米久：HIRオリジナルブランドの蕎麦、天ぷらを主とした和食レストランです",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "toppi",
+      "name": "とっぴ～",
+      "category": "飲食",
+      "evidenceQuote": "とっぴ～：北海道・東北エリアに展開しているグルメ回転ずしブランドです ※小樽運河通り店は対象外",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "a-puru-gurimu",
+      "name": "あっぷるぐりむ",
+      "category": "飲食",
+      "evidenceQuote": "あっぷるぐりむ：【富山エリア限定】自家製ハンバーグが人気のファミリーレストラン。創業以来変わらぬ味を",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yakiniku-no-barns",
+      "name": "焼肉のバーンズ",
+      "category": "飲食",
+      "evidenceQuote": "焼肉のバーンズ：【富山エリア限定】安心安全。厳選したお肉と品揃え。食べ放題も人気のファミリー焼肉",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sakanaya-oazy",
+      "name": "酒菜家 おあじ",
+      "category": "飲食",
+      "evidenceQuote": "酒菜家 おあじ：富山の新鮮なお刺身など旬の海鮮食材はOAZY",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sakanaya-oazy-hiragana",
+      "name": "サカナヤ オアジ",
+      "category": "飲食",
+      "evidenceQuote": "サカナヤ オアジ：富山の新鮮なお刺身など旬の海鮮食材はOAZY",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "crustum",
+      "name": "CRUSTUM",
+      "category": "飲食",
+      "evidenceQuote": "CRUSTUM：福井県坂井市／ケーキ＆クッキー",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shinanoji",
+      "name": "信濃路",
+      "category": "飲食",
+      "evidenceQuote": "信濃路：和歌山市内を中心に展開するそばうどん信濃路・しなの路でポイントが使える！貯まる！",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yakiniku-matsuzaka-kokudo-ten",
+      "name": "焼肉 松坂 国道店",
+      "category": "飲食",
+      "evidenceQuote": "焼肉 松坂 国道店：創業約４０年の老舗焼肉店！厳選された金ラベルのオリーブ牛も取り扱っております。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "familymart",
+      "name": "ファミリーマート",
+      "category": "コンビニ",
+      "evidenceQuote": "ファミリーマート：「あなたと、コンビに、ファミリーマート」でお馴染みのコンビニエンスストア",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "famima",
+      "name": "ファミマ!!",
+      "category": "コンビニ",
+      "evidenceQuote": "ファミマ!!：“Every Life ,Every Fun”をコンセプトにオフィスビルなどで展開するコンビニ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tomony",
+      "name": "TOMONY",
+      "category": "コンビニ",
+      "evidenceQuote": "TOMONY：ファミリーマートと西武鉄道が共同展開する西武線の駅ナカ・コンビニ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "daily-yamazaki",
+      "name": "デイリーヤマザキ",
+      "category": "コンビニ",
+      "evidenceQuote": "デイリーヤマザキ：パン・和菓子・お弁当・サンドイッチ・麺が魅力のコンビニエンスストア",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "poplar",
+      "name": "ポプラ",
+      "category": "コンビニ",
+      "evidenceQuote": "ポプラ：お店で炊いたごはんをその場でお詰めする「ポプ弁」が特徴のコンビニです",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "seikatsu-saika",
+      "name": "生活彩家",
+      "category": "コンビニ",
+      "evidenceQuote": "生活彩家：都心型の上質でおしゃれな品揃えににこだわったコンビニです",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kurashi-house",
+      "name": "くらしハウス",
+      "category": "コンビニ",
+      "evidenceQuote": "くらしハウスは地域密着型のコンビニです",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "three-eight",
+      "name": "スリーエイト",
+      "category": "コンビニ",
+      "evidenceQuote": "スリーエイトは地域密着型のコンビニです",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sakura-mikura",
+      "name": "さくらみくら",
+      "category": "コンビニ",
+      "evidenceQuote": "さくらみくら：出来たてのおいしさと、暮らしの便利を。",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    }
+  ],
   "loyaltyRules": [],
-  "notes": "このページは楽天ポイントカードの概要とリンク集であり、具体的な加盟店リストや還元率の情報が記載されていませんでした。加盟店情報は「使えるお店一覧」リンク先のページに掲載されているようです。"
+  "notes": "総700件以上のうち、主要な全国/広域チェーン60件を抽出。多くの店舗で還元率が明示されていないため、rate抽出条件を満たすloyaltyRulesはなし。ガソリンスタンドの「給油2L=1P」は円換算ができないため除外。"
 }

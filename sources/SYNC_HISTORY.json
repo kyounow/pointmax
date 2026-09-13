@@ -2,6 +2,72 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-09-14",
+      "generatedAt": "2026-09-13T23:04:04.353Z",
+      "totalCount": 4,
+      "avgConfidence": 0.902,
+      "sourcesProcessed": 15,
+      "bySource": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "count": 3,
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "count": 1,
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (2倍) → 無印良品 (一部店舗)",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (3倍) → タワーレコード",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (3倍) → HMV&BOOKS online",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        },
+        {
+          "sourceId": "jcb-jpoint-partners",
+          "collection": "memberships",
+          "summary": "J-POINT パートナー (2倍) Gold向け → 高島屋",
+          "sourceLabel": "JCB J-POINT パートナー (旧 Oki Doki ランド、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 332,
+        "byReason": {
+          "idCollision": 33,
+          "missingStoreBody": 126,
+          "lowConfidence": 88,
+          "missingProgramBody": 39,
+          "orphanedProgram": 1,
+          "storeAdditionsDisabled": 34,
+          "excludedCategory": 7,
+          "userBlocked": 4
+        }
+      }
+    },
+    {
       "date": "2026-09-10",
       "generatedAt": "2026-09-09T23:07:12.395Z",
       "totalCount": 0,

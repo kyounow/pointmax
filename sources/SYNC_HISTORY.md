@@ -3,6 +3,41 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-09-14 (auto 4 件 / review 332 件)
+
+- 平均 confidence: 0.90 / source 数: 15
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| たまるマーケット (EPOS ポイントアップサイト、公式) | 提携店舗 | 3 |
+| JCB J-POINT パートナー (旧 Oki Doki ランド、公式) | 提携店舗 | 1 |
+
+### Review queue 内訳 (332 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 126 |
+| lowConfidence | 88 |
+| missingProgramBody | 39 |
+| storeAdditionsDisabled | 34 |
+| idCollision | 33 |
+| excludedCategory | 7 |
+| userBlocked | 4 |
+| orphanedProgram | 1 |
+
+<details><summary>追加項目 4 件</summary>
+
+### たまるマーケット (EPOS ポイントアップサイト、公式) / 提携店舗 (3)
+- たまるマーケット (2倍) → 無印良品 (一部店舗)
+- たまるマーケット (3倍) → タワーレコード
+- たまるマーケット (3倍) → HMV&BOOKS online
+
+### JCB J-POINT パートナー (旧 Oki Doki ランド、公式) / 提携店舗 (1)
+- J-POINT パートナー (2倍) Gold向け → 高島屋
+
+</details>
+
+---
+
 ## 2026-09-10 (auto 0 件 / review 326 件)
 
 - source 数: 15
