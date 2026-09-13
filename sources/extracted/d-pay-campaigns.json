@@ -1,9 +1,9 @@
 {
   "sourceId": "d-pay-campaigns",
   "sourceUrl": "https://service.smt.docomo.ne.jp/keitai_payment/campaign/",
-  "fetchedAt": "2026-08-30T23:16:03.591Z",
+  "fetchedAt": "2026-09-13T23:03:13.480Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars):  I will now go through the content and extract the relevant campaigns. Here are the campaigns I've identified that seem to fit the criteria: 1. **マツキヨ・ココカラで花王商品購入がおトク** * 期間: 2026/08/01～2026/08/31 * カテゴリ: dポイントカード * 店舗: マツモトキヨシ, ココカラファイン * レート: 不明だが「おトク」と記載あり。詳細ページ確認が必要。今"
+  "notes": "Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars):  The browsing result contains a list of campaigns. I need to go through them and filter based on the `chains-only` and `campaign-v3.5` rules. Here's a breakdown of what I'm looking for in each campaign entry: - **Campaign Title**: E.g., \"ジョイフル本田ｄ払い５倍キャンペーン\" - **Valid Period**: E.g., \"2026/09/01～20"
 }
