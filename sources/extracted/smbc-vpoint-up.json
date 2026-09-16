@@ -1,15 +1,15 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-09-02T23:03:03.184Z",
+  "fetchedAt": "2026-09-16T23:38:14.338Z",
   "promptVersion": "ongoing-program-v1.2",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "ライフスタイル条件のため出力対象外: 円預金残高条件、外貨預金条件、住宅ローン契約、SBI証券（Vポイント投資、NISA口座）、住友生命Vitality、三井住友カード/モビットカードローン、SMBC日興証券、Vトリップ、Oliveヘルスケア。キャンペーンは対象外のため出力しない。総35件中2件抽出。",
+  "notes": "Vポイントアッププログラムにおいて、ライフスタイル条件（預金残高、住宅ローン、証券口座連携、Vitality、カードローン、旅行予約、ヘルスケア等）に該当するプログラムは出力対象外としました。主要なタッチ決済関連プログラムとOlive選べる特典のみ抽出しています。総計15件程度のプログラムが記載されていますが、抽出スコープの指示に基づき、ライフスタイル条件外のプログラムに限定して3件を抽出しました。",
   "programs": [
     {
-      "programId": "prog-smbc-touch-conveni",
-      "name": "対象コンビニ・飲食店でスマホのタッチ決済",
+      "programId": "prog-smbc-vpoint-up-touch-conveni",
+      "name": "Vポイントアッププログラム 対象コンビニ・飲食店 タッチ決済",
       "scope": "member-stores",
       "cardIds": [
         "smbc-v",
@@ -19,16 +19,35 @@
       "rate": 0.075,
       "currencyId": "v-pt",
       "bonusType": "primary",
-      "description": "対象のコンビニ・飲食店にてOliveでのスマホのタッチ決済が最大+7.5%還元。",
-      "conditions": "Visa/Mastercardのタッチ決済利用時のみ。一部対象外店舗・取引あり。",
+      "description": "対象のコンビニ・飲食店でスマホのVisa/Mastercardタッチ決済を利用するとポイントアップ",
+      "conditions": "スマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用時のみ。一部対象とならない店舗・利用方法あり。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "対象のコンビニ・飲食店でスマホのタッチ決済 最大＋7.5％還元",
+      "evidenceQuote": "対象店舗でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "programId": "prog-smbc-olive-eraberu",
-      "name": "Oliveアカウントの選べる特典",
+      "programId": "prog-smbc-vpoint-up-7eleven-bonus",
+      "name": "Vポイントアッププログラム セブン-イレブン スマホタッチ決済",
+      "scope": "member-stores",
+      "cardIds": [
+        "smbc-v",
+        "olive"
+      ],
+      "paymentAppId": "pa-visa-touch",
+      "rate": 0.03,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "セブン-イレブンでスマホのVisa/Mastercardタッチ決済を利用すると追加でポイントアップ",
+      "conditions": "セブン-イレブンアプリの会員コード提示で付与されるセブンマイル0.5%を含む。カード現物タッチ決済、iD、差し込み、磁気取引は対象外。他サービスとの合算で20%が上限。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "条件達成のうえで、セブン-イレブンで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、最大11％ポイント還元！「3％」のうち0.5％は、お支払い時のセブン-イレブンアプリの会員コード提示によって付与されたセブンマイルです。",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-olive-select-vpoint-up-bonus",
+      "name": "Oliveアカウント 選べる特典 Vポイントアッププログラム",
       "scope": "all-stores",
       "cardIds": [
         "olive"
@@ -36,266 +55,96 @@
       "rate": 0.01,
       "currencyId": "v-pt",
       "bonusType": "addOn",
-      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると、対象店舗で+1%還元。",
-      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択時。Olive プラチナプリファードは2つ選択で+2%還元。",
+      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると適用される特典",
+      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択した場合。Oliveプラチナプリファードは2つ選択で＋2％還元。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典※で「Vポイントアッププログラム＋1％」をご選択",
-      "explicitness": 0.09,
+      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択",
+      "explicitness": 0.9,
       "ambiguity": 0.1
     }
   ],
   "memberships": [
     {
-      "programId": "prog-smbc-touch-conveni",
+      "programId": "prog-smbc-vpoint-up-touch-conveni",
       "storeId": "conv-7eleven",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "seicomart",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "poplar",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "conv-ministop",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
+      "programId": "prog-smbc-vpoint-up-touch-conveni",
       "storeId": "conv-lawson",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-touch-conveni",
+      "programId": "prog-smbc-vpoint-up-touch-conveni",
+      "storeId": "conv-familymart",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-vpoint-up-touch-conveni",
       "storeId": "mcdonalds",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "mos-burger",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
+      "programId": "prog-smbc-vpoint-up-sushiro",
+      "storeId": "sushiro",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "kfc",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "yoshinoya",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "saizeriya",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "gusto",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "bamiyan",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "shabuyo",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "jonathan",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "yumetoan",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "sukiya",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "hamazushi",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "cocos",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "starbucks",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
+      "programId": "prog-smbc-vpoint-up-doutor",
       "storeId": "doutor",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "excelsior-cafe",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
+      "programId": "prog-smbc-vpoint-up-starbucks",
+      "storeId": "starbucks",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "kappa-sushi",
-      "evidenceQuote": "セイコーマート※2、セブン‐イレブン、ポプラ※3、ミニストップ、ローソン※4、マクドナルド、モスバーガー※5、ケンタッキーフライドチキン、フレッシュネスバーガー、吉野家、サイゼリヤ、ガスト、バーミヤン、しゃぶ葉、ジョナサン、夢庵、その他すかいらーくグループ飲食店※6、すき家、はま寿司、ココス、スターバックス※7、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司",
+      "programId": "prog-smbc-vpoint-up-7eleven-bonus",
+      "storeId": "conv-7eleven",
+      "evidenceQuote": "条件達成のうえで、セブン-イレブンで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、最大11％ポイント還元！",
       "explicitness": 0.95,
       "ambiguity": 0.05
+    }
+  ],
+  "stores": [
+    {
+      "storeId": "sushiro",
+      "name": "スシロー",
+      "category": "飲食",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
     },
     {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "steak-gusto",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "storeId": "doutor",
+      "name": "ドトール",
+      "category": "飲食",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
     },
     {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "karaage-karayoshi",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "musashino-mori-coffee",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "aiya",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "grazie-gardens",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "uoya-michi",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "chawan",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "la-ohana",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "tonkara-tei",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "yumean-shokudo",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "monana",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "hachiro-soba",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "sanmarusan",
-      "evidenceQuote": "※6ステーキガスト、から好し、むさしの森珈琲、藍屋、グラッチェガーデンズ、魚屋路、chawan、La Ohana、とんから亭、ゆめあん食堂、桃菜、八郎そば、三〇三も対象です。",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "freshness-burger",
-      "evidenceQuote": "フレッシュネスバーガー",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "storeId": "starbucks",
+      "name": "スターバックス",
+      "category": "飲食",
+      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
     }
   ]
 }

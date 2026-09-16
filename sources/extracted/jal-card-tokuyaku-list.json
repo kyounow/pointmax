@@ -1,11 +1,11 @@
 {
   "sourceId": "jal-card-tokuyaku-list",
   "sourceUrl": "https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201",
-  "fetchedAt": "2026-09-02T22:58:06.758Z",
+  "fetchedAt": "2026-09-16T23:31:57.802Z",
   "promptVersion": "jal-tokuyaku-v1.1",
   "extractor": "jal-tokuyaku",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "ページには多数の個店が掲載されていますが、抽出スコープ「chains-only」に従い、全国チェーンであるロイヤルホストのみを抽出しました。その他は地域密着型店舗と判断し対象外としました。",
+  "notes": "本ページはJALカード特約店の検索結果ページであり、飲食店カテゴリのローカル店舗が多く表示されています。抽出スコープchains-onlyの指示に従い、全国チェーンであるロイヤルホストのみを抽出しました。その他多数のローカル飲食店（例: アンの家、うなぎ 久田、ウニとキンキ 希寿など）は抽出対象外としました。ホテル マホロバマインズ三浦も単一施設のため対象外です。",
   "categoryRules": [
     {
       "cardId": "jal-suica",
@@ -23,7 +23,7 @@
       "name": "ロイヤルホスト",
       "category": "JAL特約店",
       "evidenceQuote": "ロイヤルホスト 決済でマイルが 2 倍",
-      "explicitness": 0.9,
+      "explicitness": 0.95,
       "ambiguity": 0.05
     }
   ]
