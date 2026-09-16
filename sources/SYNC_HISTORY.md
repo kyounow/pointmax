@@ -3,6 +3,35 @@
 > 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-09-17 (auto 2 件 / review 328 件)
+
+- 平均 confidence: 1.00 / source 数: 15
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| expired-cleanup | プログラム | 2 |
+
+### Review queue 内訳 (328 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 125 |
+| lowConfidence | 71 |
+| storeAdditionsDisabled | 49 |
+| idCollision | 38 |
+| excludedCategory | 24 |
+| missingProgramBody | 12 |
+| userBlocked | 9 |
+
+<details><summary>追加項目 2 件</summary>
+
+### expired-cleanup / プログラム (2)
+- プログラム 削除 prog-dpay-mos-burger-dpoint-3x-2026-07
+- プログラム 削除 prog-dpay-yoshinoya-20pc-cashback-2026-07
+
+</details>
+
+---
+
 ## 2026-09-14 (auto 4 件 / review 332 件)
 
 - 平均 confidence: 0.90 / source 数: 15

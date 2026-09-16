@@ -2,6 +2,50 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-09-17",
+      "generatedAt": "2026-09-16T23:38:14.972Z",
+      "totalCount": 2,
+      "avgConfidence": 1,
+      "sourcesProcessed": 15,
+      "bySource": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "count": 2,
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "summary": "プログラム 削除 prog-dpay-mos-burger-dpoint-3x-2026-07",
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        },
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "summary": "プログラム 削除 prog-dpay-yoshinoya-20pc-cashback-2026-07",
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "reviewStats": {
+        "total": 328,
+        "byReason": {
+          "idCollision": 38,
+          "missingStoreBody": 125,
+          "lowConfidence": 71,
+          "missingProgramBody": 12,
+          "userBlocked": 9,
+          "storeAdditionsDisabled": 49,
+          "excludedCategory": 24
+        }
+      }
+    },
+    {
       "date": "2026-09-14",
       "generatedAt": "2026-09-13T23:04:04.353Z",
       "totalCount": 4,

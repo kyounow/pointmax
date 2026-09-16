@@ -1,148 +1,604 @@
 {
   "sourceId": "ponta-partners",
   "sourceUrl": "https://point.recruit.co.jp/point/?tab=pointUseService",
-  "fetchedAt": "2026-09-02T23:00:34.904Z",
+  "fetchedAt": "2026-09-16T23:34:48.543Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
   "stores": [
     {
-      "storeId": "sunlive",
+      "storeId": "uber-eats",
+      "name": "Uber Eats",
+      "category": "ネット通販",
+      "evidenceQuote": "Uber Eats たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "oisix",
+      "name": "Oisix",
+      "category": "ネット通販",
+      "evidenceQuote": "Oisix（リクルートIDでのログインの場合） たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sunnymart",
+      "name": "サニーマート",
+      "category": "スーパー",
+      "evidenceQuote": "サニーマート たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sanlive",
       "name": "サンリブ",
       "category": "スーパー",
-      "evidenceQuote": "サンリブ たまる つかえる アプリ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "サンリブ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "seijo-ishii",
       "name": "成城石井",
       "category": "スーパー",
       "evidenceQuote": "成城石井 たまる つかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "storeId": "yakuodo",
+      "storeId": "nishimuta",
+      "name": "ニシムタ",
+      "category": "スーパー",
+      "evidenceQuote": "ニシムタ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "yakodo",
       "name": "薬王堂",
       "category": "ドラッグストア",
-      "evidenceQuote": "薬王堂 たまる つかえる アプリ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "薬王堂 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "storeId": "ichikoku-do",
+      "storeId": "japan-airlines",
+      "name": "日本航空(JALマイレージバンク)",
+      "category": "交通",
+      "evidenceQuote": "日本航空(JALマイレージバンク) たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ikko-do",
       "name": "壱鵠堂",
       "category": "飲食",
-      "evidenceQuote": "壱鵠堂 たまる つかえる アプリ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "壱鵠堂 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "ifuu",
       "name": "威風",
       "category": "飲食",
-      "evidenceQuote": "威風 たまる つかえる アプリ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "威風 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "storeId": "koppe-tajima",
+      "storeId": "kappe-tajima",
       "name": "コッペ田島",
       "category": "飲食",
-      "evidenceQuote": "コッペ田島 たまる つかえる アプリ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "コッペ田島 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "jihanpi",
+      "name": "ジハンピ",
+      "category": "飲食",
+      "evidenceQuote": "ジハンピ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tabelog",
+      "name": "食べログ",
+      "category": "飲食",
+      "evidenceQuote": "食べログ たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "tenkaippin",
+      "name": "天下一",
+      "category": "飲食",
+      "evidenceQuote": "天下一 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "denmaru",
       "name": "伝丸",
       "category": "飲食",
-      "evidenceQuote": "伝丸 たまる つかえる アプリ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "伝丸 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "storeId": "book-coffee-fukuro-shosabo",
+      "storeId": "doutor-coffee-farm",
+      "name": "ドトール珈琲農園・ドトール珈琲店",
+      "category": "飲食",
+      "evidenceQuote": "ドトール珈琲農園・ドトール珈琲店 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "fukuro-shosabo",
       "name": "本と珈琲 梟書茶房",
       "category": "飲食",
-      "evidenceQuote": "本と珈琲 梟書茶房 たまる つかえる アプリ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "本と珈琲 梟書茶房 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "storeId": "dmm-keirin",
-      "name": "DMM競輪",
-      "category": "ギャンブル",
-      "evidenceQuote": "DMM競輪 たまる つかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "storeId": "geo",
+      "name": "ゲオ",
+      "category": "音楽・映像",
+      "evidenceQuote": "ゲオ たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "telasa",
+      "name": "TELASA",
+      "category": "音楽・映像",
+      "evidenceQuote": "TELASA（テラサ） たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-bitcoin-farm",
+      "name": "Pontaビットコin牧場",
+      "category": "その他",
+      "evidenceQuote": "Pontaビットコin牧場 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-play",
+      "name": "Ponta PLAY",
+      "category": "その他",
+      "evidenceQuote": "Ponta PLAY たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "17live",
+      "name": "17LIVE",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "17LIVE(ワンセブンライブ) たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "auto-info",
+      "name": "オート・インフォ",
+      "category": "車・バイク",
+      "evidenceQuote": "オート・インフォ たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "onix",
       "name": "ONIX",
       "category": "車・バイク",
       "evidenceQuote": "ONIX たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "japan-road-service",
+      "name": "日本ロードサービス（JRS）",
+      "category": "車・バイク",
+      "evidenceQuote": "日本ロードサービス（JRS） たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-gasshukumenkyo",
+      "name": "Ponta合宿免許",
+      "category": "ビジネス・教育",
+      "evidenceQuote": "Ponta合宿免許 たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "au-bookpass",
       "name": "auブックパス",
       "category": "書店",
       "evidenceQuote": "auブックパス たまる つかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "diamond-sha",
+      "name": "ダイヤモンド社",
+      "category": "書店",
+      "evidenceQuote": "ダイヤモンド社 たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "president-sha",
+      "name": "プレジデント社",
+      "category": "書店",
+      "evidenceQuote": "プレジデント社 たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "winticket",
       "name": "WINTICKET",
       "category": "ギャンブル",
       "evidenceQuote": "WINTICKET(ウィンチケット) たまる つかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "dmm-keirin",
+      "name": "DMM競輪",
+      "category": "ギャンブル",
+      "evidenceQuote": "DMM競輪 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "air-card",
+      "name": "Airカード",
+      "category": "金融",
+      "evidenceQuote": "Airカード たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "au-pay-card",
+      "name": "au PAY カード",
+      "category": "金融",
+      "evidenceQuote": "au PAY カード たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "exchangers",
+      "name": "Exchangers",
+      "category": "金融",
+      "evidenceQuote": "Exchangers たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sbi-shoken",
+      "name": "SBI証券",
+      "category": "金融",
+      "evidenceQuote": "SBI証券 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "okane-co-for-ponta",
+      "name": "オカネコ for Ponta",
+      "category": "金融",
+      "evidenceQuote": "オカネコ for Ponta たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "orico-owners-card-for-biz-ponta-course",
+      "name": "Orico Owners Card for Biz Ponta Course",
+      "category": "金融",
+      "evidenceQuote": "Orico Owners Card for Biz Ponta Course たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "shimizu-bank",
+      "name": "清水銀行",
+      "category": "金融",
+      "evidenceQuote": "清水銀行 たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "gmo-aozora-net-bank",
+      "name": "GMOあおぞらネット銀行",
+      "category": "金融",
+      "evidenceQuote": "GMOあおぞらネット銀行 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "stockpoint-for-mufg",
+      "name": "STOCKPOINT for MUFG",
+      "category": "金融",
+      "evidenceQuote": "STOCKPOINT for MUFG たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "stockpoint-for-connect",
+      "name": "StockPoint for CONNECT",
+      "category": "金融",
+      "evidenceQuote": "StockPoint for CONNECT たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "daiwa-connect-shoken",
+      "name": "大和コネクト証券",
+      "category": "金融",
+      "evidenceQuote": "大和コネクト証券 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "hoken-de-ponta",
+      "name": "保険 de Ponta",
+      "category": "保険",
+      "evidenceQuote": "保険 de Ponta たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "mitsubishi-ufj-e-smart-shoken",
+      "name": "三菱UFJ eスマート証券",
+      "category": "金融",
+      "evidenceQuote": "三菱UFJ eスマート証券 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "mitsubishi-ufj-bank",
+      "name": "三菱UFJ銀行",
+      "category": "金融",
+      "evidenceQuote": "三菱UFJ銀行 たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "recruit-card",
+      "name": "リクルートカード",
+      "category": "金融",
+      "evidenceQuote": "リクルートカード たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "lawson-bank",
+      "name": "ローソン銀行（口座開設）",
+      "category": "金融",
+      "evidenceQuote": "ローソン銀行（口座開設） たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "lawson-bank-ponta-atm",
+      "name": "ローソン銀行（ぽんたまATM）",
+      "category": "金融",
+      "evidenceQuote": "ローソン銀行（ぽんたまATM） たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "lawson-ponta-plus",
+      "name": "ローソン銀行（ローソンPontaプラス）",
+      "category": "金融",
+      "evidenceQuote": "ローソン銀行（ローソンPontaプラス） たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "au-seimei-hoken",
+      "name": "auの生命ほけん",
+      "category": "保険",
+      "evidenceQuote": "auの生命ほけん たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "caromama-plus",
+      "name": "カロママ プラス",
+      "category": "生活サービス",
+      "evidenceQuote": "カロママ プラス たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "partner-agent-otocon",
-      "name": "パートナーエージェント（OTOCON）",
+      "name": "婚活支援サービス パートナーエージェント（OTOCON）",
       "category": "生活サービス",
       "evidenceQuote": "婚活支援サービス パートナーエージェント（OTOCON） たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "storeId": "platry",
+      "storeId": "suntory-account",
+      "name": "サントリーアカウント",
+      "category": "生活サービス",
+      "evidenceQuote": "サントリーアカウント たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "denki-hikaku-insweb",
+      "name": "でんきの比較インズウェブ",
+      "category": "電気・ガス",
+      "evidenceQuote": "でんきの比較インズウェブ たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "praly",
       "name": "プラリー",
       "category": "生活サービス",
       "evidenceQuote": "プラリー たまる つかえる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "storeId": "apanmanshop",
+      "storeId": "ponta-kantan-hoken",
+      "name": "Pontaかんたん保険",
+      "category": "保険",
+      "evidenceQuote": "Pontaかんたん保険 たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-question",
+      "name": "Pontaクエスチョン",
+      "category": "その他",
+      "evidenceQuote": "Pontaクエスチョン たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "ponta-denki",
+      "name": "Pontaでんき",
+      "category": "電気・ガス",
+      "evidenceQuote": "Pontaでんき たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "life-net",
+      "name": "Life Net",
+      "category": "保険",
+      "evidenceQuote": "Life Net たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "receipt-de-ponta",
+      "name": "レシート de Ponta",
+      "category": "生活サービス",
+      "evidenceQuote": "レシート de Ponta たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "apaman-shop",
       "name": "アパマンショップ",
-      "category": "引越し・住まい",
+      "category": "不動産・住宅",
       "evidenceQuote": "アパマンショップ たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "storeId": "ur-chintai-jutaku",
       "name": "UR賃貸住宅",
-      "category": "引越し・住まい",
+      "category": "不動産・住宅",
       "evidenceQuote": "UR賃貸住宅 たまる",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "storeId": "studysapuri-english",
+      "storeId": "au",
+      "name": "au",
+      "category": "通信",
+      "evidenceQuote": "au たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "study-sapuri-english",
       "name": "スタディサプリENGLISH",
       "category": "ビジネス・教育",
-      "evidenceQuote": "スタディサプリENGLISH たまる つかえる リクルートID",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "スタディサプリENGLISH たまる つかえる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "riskmonster",
+      "name": "リスクモンスター",
+      "category": "ビジネス・教育",
+      "evidenceQuote": "リスクモンスター たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "aflac",
+      "name": "アフラック",
+      "category": "保険",
+      "evidenceQuote": "アフラック たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "sokuyaku",
+      "name": "SOKUYAKU",
+      "category": "医療",
+      "evidenceQuote": "SOKUYAKU たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "zurich-ponta-jujitsu-hosho-plan",
+      "name": "チューリッヒ/Ponta充実補償プラン",
+      "category": "保険",
+      "evidenceQuote": "チューリッヒ/Ponta充実補償プラン たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "dental-ponta",
+      "name": "Dental Ponta",
+      "category": "医療",
+      "evidenceQuote": "Dental Ponta たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "enewan",
+      "name": "エネワン（株式会社サイサン）",
+      "category": "電気・ガス",
+      "evidenceQuote": "エネワン（株式会社サイサン） たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "gaswan",
+      "name": "ガスワン（株式会社サイサン）",
+      "category": "電気・ガス",
+      "evidenceQuote": "ガスワン（株式会社サイサン） たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "saibu-gas",
+      "name": "西部ガス",
+      "category": "電気・ガス",
+      "evidenceQuote": "西部ガス たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "machi-ene",
+      "name": "まちエネ",
+      "category": "電気・ガス",
+      "evidenceQuote": "まちエネ たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "storeId": "mitsuuroko-denki-toshigas",
+      "name": "ミツウロコでんき・都市ガス",
+      "category": "電気・ガス",
+      "evidenceQuote": "ミツウロコでんき・都市ガス たまる",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     }
   ],
   "loyaltyRules": [],
-  "notes": "ページに各店舗の具体的なポイント還元率（例: 200円につき1ポイント）の記載がないため、loyaltyRulesは抽出していません。全体還元率の記載もありません。"
+  "notes": "Pontaポイントの加盟店情報。個別のポイント還元率が明示されていないため、loyaltyRulesは抽出していません。WINTICKET, DMM競輪(ギャンブル), 各種金融・保険サービス, 不動産関連は抽出対象外カテゴリとしています。"
 }
