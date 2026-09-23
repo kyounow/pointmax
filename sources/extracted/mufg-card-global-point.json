@@ -1,20 +1,31 @@
 {
   "sourceId": "mufg-card-global-point",
   "sourceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
-  "fetchedAt": "2026-09-16T23:35:24.451Z",
+  "fetchedAt": "2026-09-23T23:32:05.702Z",
   "promptVersion": "card-v1.1",
   "extractor": "card",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "このページはグローバルポイント利用規程であり、一般的な還元率とポイントプログラムの詳細を説明しています。個別の店舗やカテゴリでの優遇還元率は記載されていません。",
+  "notes": "MUFGカードのグローバルポイント利用規程から、基本還元率と一部優遇プログラムを抽出しました。グローバルPLUSは月間利用額に応じた優遇制度ですが、特定の店舗・カテゴリへの適用ではないため、ここでは個別のruleとしては扱わず、defaultRate算出のnotesとしています。海外加盟店利用の優遇は、アメリカン・エキスプレスブランドのプラチナ会員カードに限定されるため、categoryRuleとして追加しています。",
   "cards": [
     {
-      "cardId": "mufg-card-global-point",
+      "cardId": "mufg-card",
       "defaultRate": 0.001,
       "defaultCurrencyId": "mufg-pt",
       "evidenceQuote": "1千円につき1ポイントを約定支払日に本会員に付与します。",
-      "evidenceUrl": "https://www.cr.mufg.jp/member/rule/mufgcard/globalpoint.html",
-      "explicitness": 1,
+      "explicitness": 0.95,
       "ambiguity": 0
+    }
+  ],
+  "categoryRules": [
+    {
+      "cardId": "mufg-card",
+      "category": "海外利用",
+      "rate": 0.002,
+      "currencyId": "mufg-pt",
+      "notes": "国際ブランドがアメリカン・エキスプレスブランドのプラチナ会員カードのみ対象。基本ポイント1倍に追加で1倍のポイントを付与（合計2倍）。",
+      "evidenceQuote": "貸与されたカードに係る国際ブランドがアメリカン・エキスプレスブランドであって、会員区分がプラチナ会員である場合の会員の本カードによる海外のアメリカン・エキスプレスの加盟店（以下「海外加盟店」といいます。）でのショッピング利用代金に対し、当該ショッピング利用代金により付与される基本ポイント数に対し、基本ポイントとは別に当該基本ポイント数に1.0を乗じたポイント数を優遇ポイントとして本会員へ付与します。",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     }
   ]
 }

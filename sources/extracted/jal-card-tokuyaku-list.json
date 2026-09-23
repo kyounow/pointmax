@@ -1,11 +1,11 @@
 {
   "sourceId": "jal-card-tokuyaku-list",
   "sourceUrl": "https://partner.jal.co.jp/search_result/?ptn=1&ct=2&scat=1201",
-  "fetchedAt": "2026-09-16T23:31:57.802Z",
+  "fetchedAt": "2026-09-23T23:25:16.264Z",
   "promptVersion": "jal-tokuyaku-v1.1",
   "extractor": "jal-tokuyaku",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "本ページはJALカード特約店の検索結果ページであり、飲食店カテゴリのローカル店舗が多く表示されています。抽出スコープchains-onlyの指示に従い、全国チェーンであるロイヤルホストのみを抽出しました。その他多数のローカル飲食店（例: アンの家、うなぎ 久田、ウニとキンキ 希寿など）は抽出対象外としました。ホテル マホロバマインズ三浦も単一施設のため対象外です。",
+  "notes": "指定されたURLは「レストラン・予約サイト」の検索結果であり、全国/広域チェーン店に該当する店舗が確認できませんでした。表示されている店舗はすべて地域密着型の飲食店や個人店と判断したため、stores[]には抽出していません。",
   "categoryRules": [
     {
       "cardId": "jal-suica",
@@ -13,16 +13,6 @@
       "rate": 0.02,
       "currencyId": "jal-mile",
       "evidenceQuote": "JALカードでの決済でショッピングマイルが2倍たまる（JALカード特約店）",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    }
-  ],
-  "stores": [
-    {
-      "storeId": "royal-host",
-      "name": "ロイヤルホスト",
-      "category": "JAL特約店",
-      "evidenceQuote": "ロイヤルホスト 決済でマイルが 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }

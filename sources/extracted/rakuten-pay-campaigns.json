@@ -1,9 +1,9 @@
 {
   "sourceId": "rakuten-pay-campaigns",
   "sourceUrl": "https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign",
-  "fetchedAt": "2026-09-16T23:36:19.613Z",
+  "fetchedAt": "2026-09-23T23:32:53.455Z",
   "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "[crawl:index] index=https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: HTML parsing library (BeautifulSoup) is not available in this environment, so campaign URLs could not be extracted."
+  "notes": "[crawl:index] index=https://cash.rakuten.co.jp/campaign/?l-id=header_menu_campaign 子ページ 0 件 (成功 0 / 失敗 0)\nindex notes: キャンペーン一覧ページ内に個別キャンペーン詳細ページへの直接リンクが見つかりませんでした。他の楽天サービスへのキャンペーン一覧ページへのリンクが多く存在します。"
 }
