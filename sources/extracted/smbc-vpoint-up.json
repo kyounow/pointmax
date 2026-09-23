@@ -1,15 +1,15 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-09-16T23:38:14.338Z",
+  "fetchedAt": "2026-09-23T23:36:19.109Z",
   "promptVersion": "ongoing-program-v1.2",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Vポイントアッププログラムにおいて、ライフスタイル条件（預金残高、住宅ローン、証券口座連携、Vitality、カードローン、旅行予約、ヘルスケア等）に該当するプログラムは出力対象外としました。主要なタッチ決済関連プログラムとOlive選べる特典のみ抽出しています。総計15件程度のプログラムが記載されていますが、抽出スコープの指示に基づき、ライフスタイル条件外のプログラムに限定して3件を抽出しました。",
+  "notes": "円預金残高、外貨預金、住宅ローン、SBI証券、Vitality、カードローン、SMBC日興証券、Vトリップ、Oliveヘルスケアはライフスタイル条件のため抽出対象外としました。総14件中4件抽出。",
   "programs": [
     {
-      "programId": "prog-smbc-vpoint-up-touch-conveni",
-      "name": "Vポイントアッププログラム 対象コンビニ・飲食店 タッチ決済",
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
+      "name": "SMBC Vポイントアップ 対象コンビニ・飲食店タッチ決済",
       "scope": "member-stores",
       "cardIds": [
         "smbc-v",
@@ -19,16 +19,51 @@
       "rate": 0.075,
       "currencyId": "v-pt",
       "bonusType": "primary",
-      "description": "対象のコンビニ・飲食店でスマホのVisa/Mastercardタッチ決済を利用するとポイントアップ",
-      "conditions": "スマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用時のみ。一部対象とならない店舗・利用方法あり。",
+      "description": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercardタッチ決済またはモバイルオーダーを利用すると+7.5%還元",
+      "conditions": "スマホのVisaのタッチ決済・Mastercardタッチ決済またはモバイルオーダー利用時のみ。一部対象外店舗、および一定金額以上でタッチ決済対象外の場合あり。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
       "evidenceQuote": "対象店舗でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "programId": "prog-smbc-vpoint-up-7eleven-bonus",
-      "name": "Vポイントアッププログラム セブン-イレブン スマホタッチ決済",
+      "programId": "prog-smbc-vpoint-up-family",
+      "name": "SMBC Vポイントアップ 家族ポイント",
+      "scope": "all-stores",
+      "cardIds": [
+        "smbc-v",
+        "olive"
+      ],
+      "rate": 0.05,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "家族ポイントに6人以上登録でVポイント+5%還元",
+      "conditions": "家族ポイントに6人以上（主会員1人＋従会員5人以上）登録していること。家族カードのご利用も対象。本会員のカードで判定。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "家族ポイントに6人以上登録（主会員1人＋従会員5人以上）＝＋5％還元",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-smbc-vpoint-up-olive-choice",
+      "name": "SMBC Vポイントアップ Olive選べる特典",
+      "scope": "all-stores",
+      "cardIds": [
+        "olive"
+      ],
+      "rate": 0.01,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると+1%還元",
+      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。Olive プラチナプリファードのお客さまは2つ選択で+2%還元。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典 ※ で「Vポイントアッププログラム＋1％」をご選択",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-smbc-vpoint-up-7eleven-app-bonus",
+      "name": "SMBC Vポイントアップ セブン-イレブンアプリ連携ボーナス",
       "scope": "member-stores",
       "cardIds": [
         "smbc-v",
@@ -38,113 +73,92 @@
       "rate": 0.03,
       "currencyId": "v-pt",
       "bonusType": "addOn",
-      "description": "セブン-イレブンでスマホのVisa/Mastercardタッチ決済を利用すると追加でポイントアップ",
-      "conditions": "セブン-イレブンアプリの会員コード提示で付与されるセブンマイル0.5%を含む。カード現物タッチ決済、iD、差し込み、磁気取引は対象外。他サービスとの合算で20%が上限。",
+      "description": "セブン-イレブンでスマホのタッチ決済利用かつセブン-イレブンアプリ提示で最大+3%還元（うち0.5%はセブンマイル）",
+      "conditions": "セブン-イレブンでスマホのVisaのタッチ決済・Mastercardタッチ決済で支払い、かつセブン-イレブンアプリの会員コード提示。カード現物のタッチ決済、iD、カードの差し込み、磁気取引は対象外。商業施設内の店舗など一部対象外あり。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "条件達成のうえで、セブン-イレブンで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、最大11％ポイント還元！「3％」のうち0.5％は、お支払い時のセブン-イレブンアプリの会員コード提示によって付与されたセブンマイルです。",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-olive-select-vpoint-up-bonus",
-      "name": "Oliveアカウント 選べる特典 Vポイントアッププログラム",
-      "scope": "all-stores",
-      "cardIds": [
-        "olive"
-      ],
-      "rate": 0.01,
-      "currencyId": "v-pt",
-      "bonusType": "addOn",
-      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると適用される特典",
-      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択した場合。Oliveプラチナプリファードは2つ選択で＋2％還元。",
-      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
+      "evidenceQuote": "セブン-イレブン（※1）で、スマホのVisaのタッチ決済・Mastercardタッチ決済（※2）で支払うと、最大11％（※3）ポイント還元！ 「3％」のうち0.5％は、お支払い時のセブン-イレブンアプリの会員コード提示によって付与されたセブンマイルです。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
     }
   ],
   "memberships": [
     {
-      "programId": "prog-smbc-vpoint-up-touch-conveni",
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
       "storeId": "conv-7eleven",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "programId": "prog-smbc-vpoint-up-touch-conveni",
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
       "storeId": "conv-lawson",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
     },
     {
-      "programId": "prog-smbc-vpoint-up-touch-conveni",
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
       "storeId": "conv-familymart",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
     },
     {
-      "programId": "prog-smbc-vpoint-up-touch-conveni",
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
       "storeId": "mcdonalds",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
     },
     {
-      "programId": "prog-smbc-vpoint-up-sushiro",
-      "storeId": "sushiro",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
+      "storeId": "sukiya",
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
     },
     {
-      "programId": "prog-smbc-vpoint-up-doutor",
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
+      "storeId": "saizeriya",
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
+      "storeId": "gusto",
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
       "storeId": "doutor",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
     },
     {
-      "programId": "prog-smbc-vpoint-up-starbucks",
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
+      "storeId": "sushiro",
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "programId": "prog-smbc-vpoint-up-touch-dining-conveni",
       "storeId": "starbucks",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
     },
     {
-      "programId": "prog-smbc-vpoint-up-7eleven-bonus",
+      "programId": "prog-smbc-vpoint-up-7eleven-app-bonus",
       "storeId": "conv-7eleven",
-      "evidenceQuote": "条件達成のうえで、セブン-イレブンで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、最大11％ポイント還元！",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "セブン-イレブン（※1）で、スマホのVisaのタッチ決済・Mastercardタッチ決済（※2）で支払うと、最大11％（※3）ポイント還元！ 「3％」のうち0.5％は、お支払い時のセブン-イレブンアプリの会員コード提示によって付与されたセブンマイルです。",
+      "explicitness": 0.8,
+      "ambiguity": 0.2
     }
   ],
-  "stores": [
-    {
-      "storeId": "sushiro",
-      "name": "スシロー",
-      "category": "飲食",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
-    },
-    {
-      "storeId": "doutor",
-      "name": "ドトール",
-      "category": "飲食",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
-    },
-    {
-      "storeId": "starbucks",
-      "name": "スターバックス",
-      "category": "飲食",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
-    }
-  ]
+  "stores": []
 }

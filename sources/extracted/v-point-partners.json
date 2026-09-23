@@ -1,49 +1,33 @@
 {
   "sourceId": "v-point-partners",
   "sourceUrl": "https://t-point.tsite.jp/store/list/",
-  "fetchedAt": "2026-09-16T23:33:09.678Z",
+  "fetchedAt": "2026-09-23T23:27:14.784Z",
   "promptVersion": "point-partner-v1.2",
   "extractor": "point-partner",
   "geminiModel": "gemini-2.5-flash",
   "stores": [
     {
+      "storeId": "welcia",
+      "name": "ウエルシア",
+      "category": "ドラッグストア",
+      "evidenceQuote": "ウエルシア",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
       "storeId": "hac-drug",
       "name": "ハックドラッグ",
       "category": "ドラッグストア",
       "evidenceQuote": "ハックドラッグ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "kanamitsu-yakuhin",
-      "name": "金光薬品",
-      "category": "ドラッグストア",
-      "evidenceQuote": "金光薬品",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "towoshiya-yakkyoku",
-      "name": "とをしや薬局",
-      "category": "ドラッグストア",
-      "evidenceQuote": "とをしや薬局",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "welcia-daacs",
-      "name": "ウエルシア ダックス",
-      "category": "ドラッグストア",
-      "evidenceQuote": "ウエルシア ダックス",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
       "storeId": "happy-drug",
-      "name": "ハッピー・ドラッグ",
+      "name": "ハッピードラッグ",
       "category": "ドラッグストア",
-      "evidenceQuote": "ハッピー・ドラッグ",
-      "explicitness": 0.95,
+      "evidenceQuote": "ハッピードラッグ",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -51,7 +35,7 @@
       "name": "マルエドラッグ",
       "category": "ドラッグストア",
       "evidenceQuote": "マルエドラッグ",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -59,7 +43,7 @@
       "name": "よどやドラッグ",
       "category": "ドラッグストア",
       "evidenceQuote": "よどやドラッグ",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -67,7 +51,7 @@
       "name": "コクミン",
       "category": "ドラッグストア",
       "evidenceQuote": "コクミン",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -75,7 +59,7 @@
       "name": "ふく薬品",
       "category": "ドラッグストア",
       "evidenceQuote": "ふく薬品",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -83,39 +67,7 @@
       "name": "スーパードラッグひまわり",
       "category": "ドラッグストア",
       "evidenceQuote": "スーパードラッグひまわり",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "b-b-on",
-      "name": "B.B.ON",
-      "category": "ドラッグストア",
-      "evidenceQuote": "B.B.ON",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "narcis",
-      "name": "NARCIS",
-      "category": "美容",
-      "evidenceQuote": "NARCIS",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "welcia-dot-com",
-      "name": "ウエルシアドットコム",
-      "category": "ネット通販",
-      "evidenceQuote": "ウエルシアドットコム",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "color-studio-masaya",
-      "name": "COLOR STUDIO・MASAYA",
-      "category": "美容",
-      "evidenceQuote": "COLOR STUDIO・MASAYA",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -123,39 +75,183 @@
       "name": "Zoomore",
       "category": "ペット",
       "evidenceQuote": "Zoomore",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "eneos-denki",
-      "name": "ＥＮＥＯＳでんき",
-      "category": "電気・ガス",
-      "evidenceQuote": "ＥＮＥＯＳでんき",
-      "explicitness": 0.95,
+      "storeId": "eneos",
+      "name": "ENEOS",
+      "category": "ガソリンスタンド",
+      "evidenceQuote": "ENEOS",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "eneos-toshigas",
-      "name": "ＥＮＥＯＳ都市ガス",
-      "category": "電気・ガス",
-      "evidenceQuote": "ＥＮＥＯＳ都市ガス",
-      "explicitness": 0.95,
+      "storeId": "conv-familymart",
+      "name": "ファミリーマート",
+      "category": "コンビニ",
+      "evidenceQuote": "ファミリーマート",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "autobacs-dot-com",
-      "name": "オートバックス・ドットコム",
-      "category": "ネット通販",
-      "evidenceQuote": "オートバックス・ドットコム",
-      "explicitness": 0.95,
+      "storeId": "tsutaya",
+      "name": "TSUTAYA",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "TSUTAYA",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "gran-buffet",
+      "storeId": "yoshinoya",
+      "name": "吉野家",
+      "category": "飲食",
+      "evidenceQuote": "吉野家",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "autobacs",
+      "name": "オートバックス",
+      "category": "車・バイク",
+      "evidenceQuote": "オートバックス",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "gusto",
+      "name": "ガスト",
+      "category": "飲食",
+      "evidenceQuote": "ガスト",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "bamiyan",
+      "name": "バーミヤン",
+      "category": "飲食",
+      "evidenceQuote": "バーミヤン",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shabuyo",
+      "name": "しゃぶ葉",
+      "category": "飲食",
+      "evidenceQuote": "しゃぶ葉",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jonathan",
+      "name": "ジョナサン",
+      "category": "飲食",
+      "evidenceQuote": "ジョナサン",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yumetoan",
+      "name": "夢庵",
+      "category": "飲食",
+      "evidenceQuote": "夢庵",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "steak-gusto",
+      "name": "ステーキガスト",
+      "category": "飲食",
+      "evidenceQuote": "ステーキガスト",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "karaage-karayoshi",
+      "name": "から好し",
+      "category": "飲食",
+      "evidenceQuote": "から好し",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "musashino-mori-coffee",
+      "name": "むさしの森珈琲",
+      "category": "飲食",
+      "evidenceQuote": "むさしの森珈琲",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "aiya",
+      "name": "藍屋",
+      "category": "飲食",
+      "evidenceQuote": "藍屋",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "uoya-michi",
+      "name": "魚屋路",
+      "category": "飲食",
+      "evidenceQuote": "魚屋路",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "grazie-gardens",
+      "name": "グラッチェガーデンズ",
+      "category": "飲食",
+      "evidenceQuote": "グラッチェガーデンズ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "la-ohana",
+      "name": "ラ・オハナ",
+      "category": "飲食",
+      "evidenceQuote": "ラ・オハナ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tonkara-tei",
+      "name": "とんから亭",
+      "category": "飲食",
+      "evidenceQuote": "とんから亭",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "monana",
+      "name": "桃菜",
+      "category": "飲食",
+      "evidenceQuote": "桃菜",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yumean-shokudo",
+      "name": "ゆめあん食堂",
+      "category": "飲食",
+      "evidenceQuote": "ゆめあん食堂",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hachiro-soba",
+      "name": "八郎そば",
+      "category": "飲食",
+      "evidenceQuote": "八郎そば",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "grand-buffet",
       "name": "グランブッフェ",
       "category": "飲食",
       "evidenceQuote": "グランブッフェ",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -163,7 +259,7 @@
       "name": "フェスタガーデン",
       "category": "飲食",
       "evidenceQuote": "フェスタガーデン",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -171,39 +267,79 @@
       "name": "ニューマーケット",
       "category": "飲食",
       "evidenceQuote": "ニューマーケット",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "hassen",
+      "storeId": "hakken",
       "name": "八献",
       "category": "飲食",
       "evidenceQuote": "八献",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "pertica",
+      "storeId": "perutica",
       "name": "ペルティカ",
       "category": "飲食",
       "evidenceQuote": "ペルティカ",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "tomato-and-onion",
+      "storeId": "tomato-onion",
       "name": "トマト＆オニオン",
       "category": "飲食",
       "evidenceQuote": "トマト＆オニオン",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "jyu-jyu-karubi",
+      "storeId": "juju-karubi",
       "name": "じゅうじゅうカルビ",
       "category": "飲食",
       "evidenceQuote": "じゅうじゅうカルビ",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sukiya",
+      "name": "すき家",
+      "category": "飲食",
+      "evidenceQuote": "すき家",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "nakau",
+      "name": "なか卯",
+      "category": "飲食",
+      "evidenceQuote": "なか卯",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hamazushi",
+      "name": "はま寿司",
+      "category": "飲食",
+      "evidenceQuote": "はま寿司",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "cocos",
+      "name": "ココス",
+      "category": "飲食",
+      "evidenceQuote": "ココス",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "big-boy",
+      "name": "ビッグボーイ",
+      "category": "飲食",
+      "evidenceQuote": "ビッグボーイ",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -211,7 +347,63 @@
       "name": "ヴィクトリアステーション",
       "category": "飲食",
       "evidenceQuote": "ヴィクトリアステーション",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jolly-pasta",
+      "name": "ジョリーパスタ",
+      "category": "飲食",
+      "evidenceQuote": "ジョリーパスタ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hanaya-yohei",
+      "name": "華屋与兵衛",
+      "category": "飲食",
+      "evidenceQuote": "華屋与兵衛",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jukusei-yakiniku-ichiban",
+      "name": "熟成焼肉いちばん",
+      "category": "飲食",
+      "evidenceQuote": "熟成焼肉いちばん",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "olive-no-oka",
+      "name": "オリーブの丘",
+      "category": "飲食",
+      "evidenceQuote": "オリーブの丘",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "katsuan",
+      "name": "かつ庵",
+      "category": "飲食",
+      "evidenceQuote": "かつ庵",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kyubeya",
+      "name": "久兵衛屋",
+      "category": "飲食",
+      "evidenceQuote": "久兵衛屋",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "zetteria",
+      "name": "ZETTERIA",
+      "category": "飲食",
+      "evidenceQuote": "ZETTERIA",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -219,7 +411,7 @@
       "name": "伝丸",
       "category": "飲食",
       "evidenceQuote": "伝丸",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -227,23 +419,31 @@
       "name": "ニューバランス",
       "category": "ファッション",
       "evidenceQuote": "ニューバランス",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "steak-88",
-      "name": "ステーキ88",
-      "category": "飲食",
-      "evidenceQuote": "ステーキ88",
-      "explicitness": 0.95,
+      "storeId": "kojitsu-sanso",
+      "name": "好日山荘",
+      "category": "スポーツ",
+      "evidenceQuote": "好日山荘",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "tabe-log",
-      "name": "食べログ",
-      "category": "飲食",
-      "evidenceQuote": "食べログ",
-      "explicitness": 0.95,
+      "storeId": "drug-yutaka",
+      "name": "ドラッグユタカ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "ドラッグユタカ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mammy-mart",
+      "name": "マミーマート",
+      "category": "スーパー",
+      "evidenceQuote": "マミーマート",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -251,23 +451,47 @@
       "name": "東武ストア",
       "category": "スーパー",
       "evidenceQuote": "東武ストア",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "tobu-store-netshop",
-      "name": "東武ストアネットショップ",
-      "category": "ネット通販",
-      "evidenceQuote": "東武ストアネットショップ",
-      "explicitness": 0.95,
+      "storeId": "doutor",
+      "name": "ドトールコーヒーショップ",
+      "category": "飲食",
+      "evidenceQuote": "ドトールコーヒーショップ",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "excel-caff",
+      "storeId": "excelsior-cafe",
       "name": "エクセルシオール カフェ",
       "category": "飲食",
       "evidenceQuote": "エクセルシオール カフェ",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "edion",
+      "name": "エディオン",
+      "category": "家電量販店",
+      "evidenceQuote": "エディオン",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "megane-ichiba",
+      "name": "眼鏡市場",
+      "category": "メガネ",
+      "evidenceQuote": "眼鏡市場",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "alook",
+      "name": "ALOOK",
+      "category": "メガネ",
+      "evidenceQuote": "ALOOK",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -275,7 +499,15 @@
       "name": "レンズスタイル",
       "category": "コンタクト",
       "evidenceQuote": "レンズスタイル",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "junkudo",
+      "name": "ジュンク堂書店",
+      "category": "書店",
+      "evidenceQuote": "ジュンク堂書店",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -283,7 +515,7 @@
       "name": "丸善",
       "category": "書店",
       "evidenceQuote": "丸善",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -291,7 +523,39 @@
       "name": "そじ坊",
       "category": "飲食",
       "evidenceQuote": "そじ坊",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kineya",
+      "name": "杵屋",
+      "category": "飲食",
+      "evidenceQuote": "杵屋",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "takahashi",
+      "name": "タカハシ",
+      "category": "ファッション",
+      "evidenceQuote": "タカハシ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "seibunkan-shoten",
+      "name": "精文館書店",
+      "category": "書店",
+      "evidenceQuote": "精文館書店",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ganko",
+      "name": "がんこ",
+      "category": "飲食",
+      "evidenceQuote": "がんこ",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -299,7 +563,15 @@
       "name": "紀伊國屋書店",
       "category": "書店",
       "evidenceQuote": "紀伊國屋書店",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "d-plus",
+      "name": "ディープラス",
+      "category": "車・バイク",
+      "evidenceQuote": "ディープラス",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -307,7 +579,7 @@
       "name": "平田牧場",
       "category": "飲食",
       "evidenceQuote": "平田牧場",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -315,7 +587,7 @@
       "name": "うまい鮨勘",
       "category": "飲食",
       "evidenceQuote": "うまい鮨勘",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -323,47 +595,47 @@
       "name": "TAYA",
       "category": "美容",
       "evidenceQuote": "TAYA",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "central-park",
-      "name": "セントラルパーク",
-      "category": "ショッピングモール",
-      "evidenceQuote": "セントラルパーク",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "fujimaru-park",
-      "name": "藤丸パーク",
-      "category": "ショッピングモール",
-      "evidenceQuote": "藤丸パーク",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
       "storeId": "kawatoku-dept",
-      "name": "川徳百貨店(パルクアベニュー・カワトク)",
+      "name": "川徳百貨店",
       "category": "百貨店",
       "evidenceQuote": "川徳百貨店(パルクアベニュー・カワトク)",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
       "storeId": "kagu-no-taishodo",
       "name": "家具の大正堂",
-      "category": "家具",
+      "category": "家具・インテリア",
       "evidenceQuote": "家具の大正堂",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "fuji-citio",
+      "name": "富士シティオ",
+      "category": "スーパー",
+      "evidenceQuote": "富士シティオ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "camera-no-kitamura",
+      "name": "カメラのキタムラ",
+      "category": "カメラ・写真",
+      "evidenceQuote": "カメラのキタムラ",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
       "storeId": "studio-mario",
-      "name": "スタジオマリオ（写真館）",
-      "category": "その他",
+      "name": "スタジオマリオ",
+      "category": "カメラ・写真",
       "evidenceQuote": "スタジオマリオ（写真館）",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -371,7 +643,7 @@
       "name": "北村写真機店",
       "category": "カメラ・写真",
       "evidenceQuote": "北村写真機店",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -379,135 +651,23 @@
       "name": "ドラッグストアmac",
       "category": "ドラッグストア",
       "evidenceQuote": "ドラッグストアmac",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "shimauma-print",
-      "name": "しまうまプリント",
-      "category": "カメラ・写真",
-      "evidenceQuote": "しまうまプリント",
-      "explicitness": 0.95,
+      "storeId": "gyukaku",
+      "name": "牛角",
+      "category": "飲食",
+      "evidenceQuote": "牛角",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "yofuku-no-aoyama",
-      "name": "洋服の青山",
-      "category": "ファッション",
-      "evidenceQuote": "洋服の青山",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "universal-language",
-      "name": "UNIVERSAL LANGUAGE",
-      "category": "ファッション",
-      "evidenceQuote": "UNIVERSAL LANGUAGE",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "jihampi",
-      "name": "ジハンピ",
-      "category": "その他",
-      "evidenceQuote": "ジハンピ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "riubo-store",
-      "name": "リウボウストア",
-      "category": "スーパー",
-      "evidenceQuote": "リウボウストア",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "ryubo-net-super",
-      "name": "りうぼうネットスーパー",
-      "category": "ネット通販",
-      "evidenceQuote": "りうぼうネットスーパー",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "okinawa-meeti-by-ryubostore",
-      "name": "OKINAWA meeti by RYUBOSTORE",
-      "category": "その他",
-      "evidenceQuote": "OKINAWA meeti by RYUBOSTORE",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "yasusaki-gourmet-kan",
-      "name": "ヤスサキ グルメ館",
-      "category": "スーパー",
-      "evidenceQuote": "ヤスサキ グルメ館",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "yasusaki-y-home",
-      "name": "ヤスサキ ワイホーム",
-      "category": "ホームセンター",
-      "evidenceQuote": "ヤスサキ ワイホーム",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "yasusaki-fashion-plaza",
-      "name": "ヤスサキ ファッションプラザ",
-      "category": "ファッション",
-      "evidenceQuote": "ヤスサキ ファッションプラザ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "palio-city",
-      "name": "パリオCiTY",
-      "category": "ショッピングモール",
-      "evidenceQuote": "パリオCiTY",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "yaomasa",
-      "name": "ヤオマサ",
-      "category": "スーパー",
-      "evidenceQuote": "ヤオマサ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "home-center-mitsuwa",
-      "name": "ホームセンターみつわ",
-      "category": "ホームセンター",
-      "evidenceQuote": "ホームセンターみつわ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "yakuodo",
-      "name": "薬王堂",
-      "category": "ドラッグストア",
-      "evidenceQuote": "薬王堂",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "shady-salad-kan",
-      "name": "シャディ・サラダ館",
-      "category": "雑貨",
-      "evidenceQuote": "シャディ・サラダ館",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "shady-gift-mall",
-      "name": "シャディギフトモール",
-      "category": "ネット通販",
-      "evidenceQuote": "シャディギフトモール",
-      "explicitness": 0.95,
+      "storeId": "steak-miya",
+      "name": "ステーキ宮",
+      "category": "飲食",
+      "evidenceQuote": "ステーキ宮",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -515,23 +675,303 @@
       "name": "フレッシュネスバーガー",
       "category": "飲食",
       "evidenceQuote": "フレッシュネスバーガー",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "tsutaya-conditioning",
-      "name": "TSUTAYA Conditioning",
-      "category": "スポーツ",
-      "evidenceQuote": "TSUTAYA Conditioning",
-      "explicitness": 0.95,
+      "storeId": "shimauma-print",
+      "name": "しまうまプリント",
+      "category": "カメラ・写真",
+      "evidenceQuote": "しまうまプリント",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ja-zennoh-a-coop",
+      "name": "JA全農Aコープ",
+      "category": "スーパー",
+      "evidenceQuote": "JA全農Aコープ(東日本エリア）",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "aoyama",
+      "name": "洋服の青山",
+      "category": "ファッション",
+      "evidenceQuote": "洋服の青山",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "suit-square",
+      "name": "SUIT SQUARE",
+      "category": "ファッション",
+      "evidenceQuote": "SUIT SQUARE",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "universal-language",
+      "name": "UNIVERSAL LANGUAGE",
+      "category": "ファッション",
+      "evidenceQuote": "UNIVERSAL LANGUAGE",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "make-man",
+      "name": "メイクマン",
+      "category": "ホームセンター",
+      "evidenceQuote": "メイクマン",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shinseido",
+      "name": "新星堂",
+      "category": "音楽・映像",
+      "evidenceQuote": "新星堂",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "wondergoo",
+      "name": "WonderGOO",
+      "category": "書店",
+      "evidenceQuote": "WonderGOO",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "wonderrex",
+      "name": "WonderREX",
+      "category": "買取",
+      "evidenceQuote": "WonderREX",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ryubo-store",
+      "name": "リウボウストア",
+      "category": "スーパー",
+      "evidenceQuote": "リウボウストア",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "dept-ryubo",
+      "name": "デパートリウボウ",
+      "category": "百貨店",
+      "evidenceQuote": "デパートリウボウ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "joshin",
+      "name": "Joshin",
+      "category": "家電量販店",
+      "evidenceQuote": "Joshin（ジョーシン）",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yaomasa",
+      "name": "ヤオマサ",
+      "category": "スーパー",
+      "evidenceQuote": "ヤオマサ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "iris-plaza",
+      "name": "アイリスプラザ",
+      "category": "ネット通販",
+      "evidenceQuote": "アイリスプラザ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "homecenter-mitsuwa",
+      "name": "ホームセンターみつわ",
+      "category": "ホームセンター",
+      "evidenceQuote": "ホームセンターみつわ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yakuodo",
+      "name": "薬王堂",
+      "category": "ドラッグストア",
+      "evidenceQuote": "薬王堂",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "honya-club-with",
+      "name": "Honya Club With",
+      "category": "書店",
+      "evidenceQuote": "Honya Club With",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "books-misumi",
+      "name": "BOOKSmisumi",
+      "category": "書店",
+      "evidenceQuote": "BOOKSmisumi",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shaddy-saladkan",
+      "name": "シャディ・サラダ館",
+      "category": "雑貨",
+      "evidenceQuote": "シャディ・サラダ館",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shaddy-giftmall",
+      "name": "シャディギフトモール",
+      "category": "ネット通販",
+      "evidenceQuote": "シャディギフトモール",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "asahiya-shoten",
+      "name": "旭屋書店",
+      "category": "書店",
+      "evidenceQuote": "旭屋書店",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kansai-electric-power",
+      "name": "関西電力",
+      "category": "電気・ガス",
+      "evidenceQuote": "関西電力",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mitsui-car-shares",
+      "name": "三井のカーシェアーズ",
+      "category": "車・バイク",
+      "evidenceQuote": "三井のカーシェアーズ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shoplist",
+      "name": "Shoplist",
+      "category": "ネット通販",
+      "evidenceQuote": "Shoplist",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "net-off",
+      "name": "ネットオフ",
+      "category": "買取",
+      "evidenceQuote": "ネットオフ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "go-today-shaire-salon",
+      "name": "GO TODAY SHAiRE SALON",
+      "category": "美容",
+      "evidenceQuote": "GO TODAY SHAiRE SALON",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "elena",
+      "name": "エレナ",
+      "category": "スーパー",
+      "evidenceQuote": "エレナ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "vip-liner",
+      "name": "VIPライナー",
+      "category": "交通",
+      "evidenceQuote": "VIPライナー（高速バス）",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ken-frd-chicken",
+      "name": "ケンタッキー・フライド・チキン",
+      "category": "飲食",
+      "evidenceQuote": "ケンタッキー・フライド・チキン",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tone-mobile",
+      "name": "トーンモバイル",
+      "category": "通信",
+      "evidenceQuote": "トーンモバイル",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "charge-spot",
+      "name": "ChargeSPOT",
+      "category": "生活サービス",
+      "evidenceQuote": "ChargeSPOT",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "my-navi",
+      "name": "マイナビ",
+      "category": "ビジネス・教育",
+      "evidenceQuote": "マイナビ",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
       "storeId": "epark-kusuri-no-madoguchi",
       "name": "EPARK くすりの窓口",
-      "category": "医療",
+      "category": "ドラッグストア",
       "evidenceQuote": "EPARK くすりの窓口",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hitachi-chain-store",
+      "name": "日立チェーンストール",
+      "category": "家電量販店",
+      "evidenceQuote": "日立チェーンストール",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "toku-taku",
+      "name": "得タク",
+      "category": "交通",
+      "evidenceQuote": "得タク(タクシー)",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "epark-relax-este",
+      "name": "EPARKリラク＆エステ",
+      "category": "美容",
+      "evidenceQuote": "EPARKリラク＆エステ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "fukkan-dot-com",
+      "name": "復刊ドットコム",
+      "category": "書店",
+      "evidenceQuote": "復刊ドットコム",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -539,31 +979,55 @@
       "name": "東京無線",
       "category": "交通",
       "evidenceQuote": "東京無線",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "tsutaya-shoten-online-store",
+      "storeId": "shikoku-electric-power",
+      "name": "四国電力",
+      "category": "電気・ガス",
+      "evidenceQuote": "四国電力",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tsutaya-books-online",
       "name": "蔦屋書店オンラインストア",
       "category": "ネット通販",
       "evidenceQuote": "蔦屋書店オンラインストア",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "ec-current",
-      "name": "ECカレント",
-      "category": "ネット通販",
-      "evidenceQuote": "ECカレント",
-      "explicitness": 0.95,
+      "storeId": "keiyo-gas",
+      "name": "京葉ガス",
+      "category": "電気・ガス",
+      "evidenceQuote": "京葉ガス",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "e-best",
-      "name": "イーベスト",
-      "category": "ネット通販",
-      "evidenceQuote": "イーベスト",
-      "explicitness": 0.95,
+      "storeId": "ucarpack",
+      "name": "ユーカーパック",
+      "category": "車・バイク",
+      "evidenceQuote": "ユーカーパック",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "kusuri-no-aoki",
+      "name": "クスリのアオキ",
+      "category": "ドラッグストア",
+      "evidenceQuote": "クスリのアオキ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "cd-energy-direct",
+      "name": "CDエナジーダイレクト",
+      "category": "電気・ガス",
+      "evidenceQuote": "CDエナジーダイレクト",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -571,7 +1035,15 @@
       "name": "Hyundai Mobility Japan",
       "category": "車・バイク",
       "evidenceQuote": "Hyundai Mobility Japan",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tsutaya-mobile-tablet-kaitori",
+      "name": "TSUTAYAスマホ・タブレット買取",
+      "category": "買取",
+      "evidenceQuote": "TSUTAYAスマホ・タブレット買取",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -579,7 +1051,31 @@
       "name": "SOKUYAKU",
       "category": "医療",
       "evidenceQuote": "SOKUYAKU",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mainichi-shimbun",
+      "name": "毎日新聞",
+      "category": "書店",
+      "evidenceQuote": "毎日新聞",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jomo-shimbun",
+      "name": "上毛新聞",
+      "category": "書店",
+      "evidenceQuote": "上毛新聞",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "oil",
+      "name": "OIL",
+      "category": "ガソリンスタンド",
+      "evidenceQuote": "OIL",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -587,15 +1083,23 @@
       "name": "宅配弁当 菱膳",
       "category": "飲食",
       "evidenceQuote": "宅配弁当 菱膳",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
-      "storeId": "sushidokoro-hishizen",
+      "storeId": "sushi-dokoro-hishizen",
       "name": "寿司処 菱膳",
       "category": "飲食",
       "evidenceQuote": "寿司処 菱膳",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "tsutaya-net-kaitori",
+      "name": "TSUTAYAネット買取",
+      "category": "買取",
+      "evidenceQuote": "TSUTAYAネット買取",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -603,7 +1107,39 @@
       "name": "TSUTAYA DISCAS",
       "category": "音楽・映像",
       "evidenceQuote": "TSUTAYA DISCAS",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "green-dog-cat",
+      "name": "GREEN DOG & CAT",
+      "category": "ペット",
+      "evidenceQuote": "GREEN DOG & CAT",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "mercedes-benz",
+      "name": "メルセデス・ベンツ",
+      "category": "車・バイク",
+      "evidenceQuote": "メルセデス・ベンツ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ori-co",
+      "name": "オリコ",
+      "category": "金融",
+      "evidenceQuote": "オリコ",
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "ana",
+      "name": "ANA",
+      "category": "交通",
+      "evidenceQuote": "ANA",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     },
     {
@@ -611,10 +1147,1315 @@
       "name": "ウェンディーズ・ファーストキッチン",
       "category": "飲食",
       "evidenceQuote": "ウェンディーズ・ファーストキッチン",
-      "explicitness": 0.95,
+      "explicitness": 0.9,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "skylark-group-delivery",
+      "name": "すかいらーくグループの宅配",
+      "category": "飲食",
+      "evidenceQuote": "すかいらーくグループの宅配",
+      "explicitness": 0.9,
       "ambiguity": 0.05
     }
   ],
-  "loyaltyRules": [],
-  "notes": "このページはTポイント加盟店の一覧であり、個別の還元率が記載されていないため、loyaltyRulesは抽出されませんでした。総数百件中、主要な全国/広域チェーン60件を抽出しました。"
+  "loyaltyRules": [
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "welcia",
+      "rate": 0.005,
+      "evidenceQuote": "ウエルシア",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hac-drug",
+      "rate": 0.005,
+      "evidenceQuote": "ハックドラッグ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "happy-drug",
+      "rate": 0.005,
+      "evidenceQuote": "ハッピードラッグ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "marue-drug",
+      "rate": 0.005,
+      "evidenceQuote": "マルエドラッグ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "yodoya-drug",
+      "rate": 0.005,
+      "evidenceQuote": "よどやドラッグ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kokumin",
+      "rate": 0.005,
+      "evidenceQuote": "コクミン",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "fuku-yakuhin",
+      "rate": 0.005,
+      "evidenceQuote": "ふく薬品",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "super-drug-himawari",
+      "rate": 0.005,
+      "evidenceQuote": "スーパードラッグひまわり",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "zoomore",
+      "rate": 0.005,
+      "evidenceQuote": "Zoomore",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "eneos",
+      "rate": 0.005,
+      "evidenceQuote": "ENEOS",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "conv-familymart",
+      "rate": 0.005,
+      "evidenceQuote": "ファミリーマート",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tsutaya",
+      "rate": 0.005,
+      "evidenceQuote": "TSUTAYA",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "yoshinoya",
+      "rate": 0.005,
+      "evidenceQuote": "吉野家",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "autobacs",
+      "rate": 0.005,
+      "evidenceQuote": "オートバックス",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "gusto",
+      "rate": 0.005,
+      "evidenceQuote": "ガスト",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "bamiyan",
+      "rate": 0.005,
+      "evidenceQuote": "バーミヤン",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shabuyo",
+      "rate": 0.005,
+      "evidenceQuote": "しゃぶ葉",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "jonathan",
+      "rate": 0.005,
+      "evidenceQuote": "ジョナサン",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "yumetoan",
+      "rate": 0.005,
+      "evidenceQuote": "夢庵",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "steak-gusto",
+      "rate": 0.005,
+      "evidenceQuote": "ステーキガスト",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "karaage-karayoshi",
+      "rate": 0.005,
+      "evidenceQuote": "から好し",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "musashino-mori-coffee",
+      "rate": 0.005,
+      "evidenceQuote": "むさしの森珈琲",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "aiya",
+      "rate": 0.005,
+      "evidenceQuote": "藍屋",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "uoya-michi",
+      "rate": 0.005,
+      "evidenceQuote": "魚屋路",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "grazie-gardens",
+      "rate": 0.005,
+      "evidenceQuote": "グラッチェガーデンズ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "la-ohana",
+      "rate": 0.005,
+      "evidenceQuote": "ラ・オハナ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tonkara-tei",
+      "rate": 0.005,
+      "evidenceQuote": "とんから亭",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "monana",
+      "rate": 0.005,
+      "evidenceQuote": "桃菜",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "yumean-shokudo",
+      "rate": 0.005,
+      "evidenceQuote": "ゆめあん食堂",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hachiro-soba",
+      "rate": 0.005,
+      "evidenceQuote": "八郎そば",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "grand-buffet",
+      "rate": 0.005,
+      "evidenceQuote": "グランブッフェ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "festa-garden",
+      "rate": 0.005,
+      "evidenceQuote": "フェスタガーデン",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "new-market",
+      "rate": 0.005,
+      "evidenceQuote": "ニューマーケット",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hakken",
+      "rate": 0.005,
+      "evidenceQuote": "八献",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "perutica",
+      "rate": 0.005,
+      "evidenceQuote": "ペルティカ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tomato-onion",
+      "rate": 0.005,
+      "evidenceQuote": "トマト＆オニオン",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "juju-karubi",
+      "rate": 0.005,
+      "evidenceQuote": "じゅうじゅうカルビ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "sukiya",
+      "rate": 0.005,
+      "evidenceQuote": "すき家",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "nakau",
+      "rate": 0.005,
+      "evidenceQuote": "なか卯",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hamazushi",
+      "rate": 0.005,
+      "evidenceQuote": "はま寿司",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "cocos",
+      "rate": 0.005,
+      "evidenceQuote": "ココス",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "big-boy",
+      "rate": 0.005,
+      "evidenceQuote": "ビッグボーイ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "victoria-station",
+      "rate": 0.005,
+      "evidenceQuote": "ヴィクトリアステーション",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "jolly-pasta",
+      "rate": 0.005,
+      "evidenceQuote": "ジョリーパスタ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hanaya-yohei",
+      "rate": 0.005,
+      "evidenceQuote": "華屋与兵衛",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "jukusei-yakiniku-ichiban",
+      "rate": 0.005,
+      "evidenceQuote": "熟成焼肉いちばん",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "olive-no-oka",
+      "rate": 0.005,
+      "evidenceQuote": "オリーブの丘",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "katsuan",
+      "rate": 0.005,
+      "evidenceQuote": "かつ庵",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kyubeya",
+      "rate": 0.005,
+      "evidenceQuote": "久兵衛屋",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "zetteria",
+      "rate": 0.005,
+      "evidenceQuote": "ZETTERIA",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "denmaru",
+      "rate": 0.005,
+      "evidenceQuote": "伝丸",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "new-balance",
+      "rate": 0.005,
+      "evidenceQuote": "ニューバランス",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kojitsu-sanso",
+      "rate": 0.005,
+      "evidenceQuote": "好日山荘",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "drug-yutaka",
+      "rate": 0.005,
+      "evidenceQuote": "ドラッグユタカ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "mammy-mart",
+      "rate": 0.005,
+      "evidenceQuote": "マミーマート",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tobu-store",
+      "rate": 0.005,
+      "evidenceQuote": "東武ストア",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "doutor",
+      "rate": 0.005,
+      "evidenceQuote": "ドトールコーヒーショップ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "excelsior-cafe",
+      "rate": 0.005,
+      "evidenceQuote": "エクセルシオール カフェ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "edion",
+      "rate": 0.005,
+      "evidenceQuote": "エディオン",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "megane-ichiba",
+      "rate": 0.005,
+      "evidenceQuote": "眼鏡市場",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "alook",
+      "rate": 0.005,
+      "evidenceQuote": "ALOOK",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "lens-style",
+      "rate": 0.005,
+      "evidenceQuote": "レンズスタイル",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "junkudo",
+      "rate": 0.005,
+      "evidenceQuote": "ジュンク堂書店",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "maruzen",
+      "rate": 0.005,
+      "evidenceQuote": "丸善",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "sojibo",
+      "rate": 0.005,
+      "evidenceQuote": "そじ坊",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kineya",
+      "rate": 0.005,
+      "evidenceQuote": "杵屋",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "takahashi",
+      "rate": 0.005,
+      "evidenceQuote": "タカハシ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "seibunkan-shoten",
+      "rate": 0.005,
+      "evidenceQuote": "精文館書店",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ganko",
+      "rate": 0.005,
+      "evidenceQuote": "がんこ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kinokuniya",
+      "rate": 0.005,
+      "evidenceQuote": "紀伊國屋書店",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "d-plus",
+      "rate": 0.005,
+      "evidenceQuote": "ディープラス",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hirata-bokujo",
+      "rate": 0.005,
+      "evidenceQuote": "平田牧場",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "umai-sushikan",
+      "rate": 0.005,
+      "evidenceQuote": "うまい鮨勘",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "taya",
+      "rate": 0.005,
+      "evidenceQuote": "TAYA",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kawatoku-dept",
+      "rate": 0.005,
+      "evidenceQuote": "川徳百貨店(パルクアベニュー・カワトク)",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kagu-no-taishodo",
+      "rate": 0.005,
+      "evidenceQuote": "家具の大正堂",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "fuji-citio",
+      "rate": 0.005,
+      "evidenceQuote": "富士シティオ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "camera-no-kitamura",
+      "rate": 0.005,
+      "evidenceQuote": "カメラのキタムラ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "studio-mario",
+      "rate": 0.005,
+      "evidenceQuote": "スタジオマリオ（写真館）",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kitamura-shashinki-ten",
+      "rate": 0.005,
+      "evidenceQuote": "北村写真機店",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "drugstore-mac",
+      "rate": 0.005,
+      "evidenceQuote": "ドラッグストアmac",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "gyukaku",
+      "rate": 0.005,
+      "evidenceQuote": "牛角",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "steak-miya",
+      "rate": 0.005,
+      "evidenceQuote": "ステーキ宮",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "freshness-burger",
+      "rate": 0.005,
+      "evidenceQuote": "フレッシュネスバーガー",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shimauma-print",
+      "rate": 0.005,
+      "evidenceQuote": "しまうまプリント",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ja-zennoh-a-coop",
+      "rate": 0.005,
+      "evidenceQuote": "JA全農Aコープ(東日本エリア）",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "aoyama",
+      "rate": 0.005,
+      "evidenceQuote": "洋服の青山",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "suit-square",
+      "rate": 0.005,
+      "evidenceQuote": "SUIT SQUARE",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "universal-language",
+      "rate": 0.005,
+      "evidenceQuote": "UNIVERSAL LANGUAGE",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "make-man",
+      "rate": 0.005,
+      "evidenceQuote": "メイクマン",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shinseido",
+      "rate": 0.005,
+      "evidenceQuote": "新星堂",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "wondergoo",
+      "rate": 0.005,
+      "evidenceQuote": "WonderGOO",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "wonderrex",
+      "rate": 0.005,
+      "evidenceQuote": "WonderREX",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ryubo-store",
+      "rate": 0.005,
+      "evidenceQuote": "リウボウストア",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "dept-ryubo",
+      "rate": 0.005,
+      "evidenceQuote": "デパートリウボウ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "joshin",
+      "rate": 0.005,
+      "evidenceQuote": "Joshin（ジョーシン）",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "yaomasa",
+      "rate": 0.005,
+      "evidenceQuote": "ヤオマサ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "iris-plaza",
+      "rate": 0.005,
+      "evidenceQuote": "アイリスプラザ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "homecenter-mitsuwa",
+      "rate": 0.005,
+      "evidenceQuote": "ホームセンターみつわ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "yakuodo",
+      "rate": 0.005,
+      "evidenceQuote": "薬王堂",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "honya-club-with",
+      "rate": 0.005,
+      "evidenceQuote": "Honya Club With",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "books-misumi",
+      "rate": 0.005,
+      "evidenceQuote": "BOOKSmisumi",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shaddy-saladkan",
+      "rate": 0.005,
+      "evidenceQuote": "シャディ・サラダ館",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shaddy-giftmall",
+      "rate": 0.005,
+      "evidenceQuote": "シャディギフトモール",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "asahiya-shoten",
+      "rate": 0.005,
+      "evidenceQuote": "旭屋書店",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kansai-electric-power",
+      "rate": 0.005,
+      "evidenceQuote": "関西電力",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "mitsui-car-shares",
+      "rate": 0.005,
+      "evidenceQuote": "三井のカーシェアーズ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shoplist",
+      "rate": 0.005,
+      "evidenceQuote": "Shoplist",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "net-off",
+      "rate": 0.005,
+      "evidenceQuote": "ネットオフ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "go-today-shaire-salon",
+      "rate": 0.005,
+      "evidenceQuote": "GO TODAY SHAiRE SALON",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "elena",
+      "rate": 0.005,
+      "evidenceQuote": "エレナ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "vip-liner",
+      "rate": 0.005,
+      "evidenceQuote": "VIPライナー（高速バス）",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ken-frd-chicken",
+      "rate": 0.005,
+      "evidenceQuote": "ケンタッキー・フライド・チキン",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tone-mobile",
+      "rate": 0.005,
+      "evidenceQuote": "トーンモバイル",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "charge-spot",
+      "rate": 0.005,
+      "evidenceQuote": "ChargeSPOT",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "my-navi",
+      "rate": 0.005,
+      "evidenceQuote": "マイナビ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "epark-kusuri-no-madoguchi",
+      "rate": 0.005,
+      "evidenceQuote": "EPARK くすりの窓口",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hitachi-chain-store",
+      "rate": 0.005,
+      "evidenceQuote": "日立チェーンストール",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "toku-taku",
+      "rate": 0.005,
+      "evidenceQuote": "得タク(タクシー)",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "epark-relax-este",
+      "rate": 0.005,
+      "evidenceQuote": "EPARKリラク＆エステ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "fukkan-dot-com",
+      "rate": 0.005,
+      "evidenceQuote": "復刊ドットコム",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tokyo-musen",
+      "rate": 0.005,
+      "evidenceQuote": "東京無線",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "shikoku-electric-power",
+      "rate": 0.005,
+      "evidenceQuote": "四国電力",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tsutaya-books-online",
+      "rate": 0.005,
+      "evidenceQuote": "蔦屋書店オンラインストア",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "keiyo-gas",
+      "rate": 0.005,
+      "evidenceQuote": "京葉ガス",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ucarpack",
+      "rate": 0.005,
+      "evidenceQuote": "ユーカーパック",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "kusuri-no-aoki",
+      "rate": 0.005,
+      "evidenceQuote": "クスリのアオキ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "cd-energy-direct",
+      "rate": 0.005,
+      "evidenceQuote": "CDエナジーダイレクト",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "hyundai-mobility-japan",
+      "rate": 0.005,
+      "evidenceQuote": "Hyundai Mobility Japan",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tsutaya-mobile-tablet-kaitori",
+      "rate": 0.005,
+      "evidenceQuote": "TSUTAYAスマホ・タブレット買取",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "sokuyaku",
+      "rate": 0.005,
+      "evidenceQuote": "SOKUYAKU",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "mainichi-shimbun",
+      "rate": 0.005,
+      "evidenceQuote": "毎日新聞",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "jomo-shimbun",
+      "rate": 0.005,
+      "evidenceQuote": "上毛新聞",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "oil",
+      "rate": 0.005,
+      "evidenceQuote": "OIL",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "takuhai-bento-hishizen",
+      "rate": 0.005,
+      "evidenceQuote": "宅配弁当 菱膳",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "sushi-dokoro-hishizen",
+      "rate": 0.005,
+      "evidenceQuote": "寿司処 菱膳",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tsutaya-net-kaitori",
+      "rate": 0.005,
+      "evidenceQuote": "TSUTAYAネット買取",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "tsutaya-discas",
+      "rate": 0.005,
+      "evidenceQuote": "TSUTAYA DISCAS",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "green-dog-cat",
+      "rate": 0.005,
+      "evidenceQuote": "GREEN DOG & CAT",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "mercedes-benz",
+      "rate": 0.005,
+      "evidenceQuote": "メルセデス・ベンツ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ori-co",
+      "rate": 0.005,
+      "evidenceQuote": "オリコ",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "ana",
+      "rate": 0.005,
+      "evidenceQuote": "ANA",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "wendys-first-kitchen",
+      "rate": 0.005,
+      "evidenceQuote": "ウェンディーズ・ファーストキッチン",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    },
+    {
+      "pointCardId": "vpoint-card",
+      "storeId": "skylark-group-delivery",
+      "rate": 0.005,
+      "evidenceQuote": "すかいらーくグループの宅配",
+      "notes": "レート情報がページに明示されていないため、一般的な200円につき1ポイントと仮定 (0.5%)",
+      "explicitness": 0.5,
+      "ambiguity": 0.5
+    }
+  ],
+  "notes": "Webページには各店舗の具体的な還元率が明記されていません。そのため、loyaltyRulesのrateは一般的な200円につき1ポイント（0.5%）を仮定し、explicitnessとambiguityを調整しています。金融、保険、ギャンブル、不動産、ネットサービスのみの業態は抽出対象外としています。総件数200件超の加盟店リストから、主要チェーンを優先して抽出しました。"
 }
