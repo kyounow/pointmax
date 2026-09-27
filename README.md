@@ -184,6 +184,9 @@
   注記 (`notes`)・購入チャネル (`channel`)・店舗別の率 (`overrideRate` / `overrideCurrencyId`) の
   公式修正が伝播し、誤配信された提携は単体 tombstone (`REMOVED_MEMBERSHIP_IDS`) で除去される
   (PR-0a-2b。以前は membership を add-only で「構造的に保護」していたため、既存端末に公式修正が届かなかった)。
+  単体 tombstone は `seed()` の memberships からも除外し (自動同期の ADDED 行を含む)、週次同期の propose でも
+  再提案しない (PR-0a-2c。例: 高島屋 × J-POINT Gold 2倍、無印 × たまる 4倍 = 同じ店 × 同じ倍率系列の重複)。
+  削除を含む週なので既存端末では確認モーダル (「提携店舗の削除」) で反映される。
   交換ルート (edge) / カードの公式修正は `src/domain/migrations.ts` の **MIGRATIONS** で配信する
   (現在値が `from` と一致するときだけ自動適用、不一致 = ユーザー編集は衝突として更新バナーで個別確認)。
   例: v47 で v46 監査の edge 修正 3 本・削除 2 本を既存端末へ配信。設定の「サンプル投入」も
@@ -272,7 +275,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1397 ケース / 77 ファイル** (2026-09-27 時点)） |
+| テスト | Vitest（**1444 ケース / 78 ファイル** (2026-09-27 時点)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -322,8 +325,9 @@ src/state/
   seed-data-edges.ts            # 通貨間交換レート
   seed-additions.ts             # 自動同期で追加されたデータ (auto-generated)
   seed-overrides.ts             # 既存 program への部分上書き (PROGRAM_OVERRIDES) の型 + 適用関数
-  seed-blocklist.ts             # 自動同期で除外したい storeId
+  seed-blocklist.ts             # 自動同期で除外したい storeId + membership 単体 tombstone (REMOVED_MEMBERSHIP_IDS、手書き)
   seed-category-aliases.ts      # カテゴリ統合マップ (旧名 → 新名)
+  tierFamily.ts                 # 倍率 tier 系列 (J-POINT W / Gold / たまる) の判定。sync の tierMove と seed の tier 契約用 (アプリは import しない)
 ```
 
 `seed()` が組み立てる現在のマスタ（手キュレート + 自動同期分の合算）:
@@ -336,7 +340,7 @@ src/state/
 | 決済アプリ (paymentApps) | 11 |
 | 店舗 (stores) | 267（手キュレート + 自動同期分） |
 | BenefitProgram (programs) | 45 |
-| StoreProgramMembership (memberships) | 381 |
+| StoreProgramMembership (memberships) | 384 (2026-09-27 実測、tombstone 除外後) |
 | 交換エッジ (edges) | 58 |
 
 #### 還元の「有効化」規約（opt-in vs 都度登録）
@@ -382,7 +386,7 @@ scripts/sync/
 `scripts/**/*.ts` は `tsconfig.scripts.json` で `tsc -b` の型検査対象（lib は ES2023 のみ、DOM 無し）。
 CI の typecheck に加え、`npm run build`（= weekly-sync の safety gate と deploy）でも検査されるため、
 scripts だけの型エラーでも auto 反映は全件 safetyFailed に降格し deploy も止まる。
-scripts が import する `src/`（seed 系・mergeSeed・migrations・types・urlSafety・defineMemberships など）は
+scripts が import する `src/`（seed 系・mergeSeed・migrations・types・urlSafety・defineMemberships・tierFamily など）は
 Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わないこと。
 
 ## ローカル開発
@@ -390,7 +394,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1397 ケース / 77 ファイル (2026-09-27 時点))
+npm run test         # Vitest (1444 ケース / 78 ファイル (2026-09-27 時点))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -464,6 +468,8 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | 対象店 membership が全滅した **新規 member-stores program 単独** | ❌ しない (`orphanedProgram` で needsReview) | **原子性ガード (Phase C2 `demoteChildlessMemberStorePrograms`)**: campaign 由来 program は auto でも、その membership が全て `missingStoreBody` 等で review 降格されると member-stores × membership 0 の死にデータになる。program 単独 auto を防ぎ、`member-stores は membership ≥1` 契約テストが apply 後 safety gate で fail → 無関係な auto 変更まで巻き添え review 降格するのを propose 層で阻止。対象店 membership 側と同時に `npm run sync:approve` する運用 |
 | **旧世代 extracted 由来の rate/期間 書き戻し** | ❌ しない (`staleExtractGeneration` で needsReview) | **stale-generation ガード (Phase C3 `guardStaleExtractGeneration`)**: extractor プロンプト改訂直後、旧版で fetch した `sources/extracted/<id>.json` が seed (新方針で修正済) との差分を書き戻し提案として出すのを防ぐ。当該 source の `promptVersion` が `registry.yaml` の `extractorVersions[extractor]` から導く現行版と不一致なら、`PROGRAM_OVERRIDES` 行きの updateField (rate/validFrom/validTo) を auto にせず review 降格。次回 fetch (新版) で `promptVersion` が一致すれば従来の閾値判定に戻る (`🧯 stale-generation guard` log) |
 | 新規 **cards / paymentApps / 非キャンペーン program** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
+| **membership tombstone** (`REMOVED_MEMBERSHIP_IDS`) の id | ❌ 再提案しない (propose で silent skip) | `src/state/seed-blocklist.ts` の手動 tombstone は `seed()` から除外されるため、抽出に残っている限り「seed に無い新規」として毎 run 再提案されてしまう。`proposeMemberships` / `proposeJalTokuyakuMemberships` が auto にも review にも出さず、`🪦 tombstone-skip: N 件 (source=…)` を 1 行ログに出す。apply / approve も生成物 (`ADDED_MEMBERSHIPS`) から該当行を物理削除し、approve で選ばれたら `⚠ tombstone 済みのため skip` と warn する (PR-0a-2c) |
+| 同じ店 × 同じ倍率系列の**別倍率 membership** (J-POINT W / Gold / たまる) | ❌ しない (`tierMove` で needsReview) | `tierFamilyOf` (`src/state/tierFamily.ts`) で系列を判定し、seed に同じ店 × 同じ系列の別倍率がある、または同じ run で別倍率も提案されたら review (倍率改定・受け皿誤りの疑い。そのまま足すと最大値が勝ち旧 tier が黙って残る)。他の降格理由 (lowConfidence 等) が付いていればそちらを優先。**承認するなら旧 tier を `REMOVED_MEMBERSHIP_IDS` に入れる PR と同時に** (seed の tier 契約 = 店 × 系列 × 有効チャネルごとに membership ≤ 1 が CI で落ちる、fail-closed) |
 | **epos-tamaru 由来の新規 program** の購入チャネル | ― (record に自動付与) | `ONLINE_CHANNEL_EXTRACTORS` (`scripts/sync/types.ts`) の extractor 由来の新規 program には propose 層が決定論で `channel: "online"` を付ける (Gemini 出力・schema に依存しない)。承認・auto の可否は従来の判定のまま。既存 program の rate / 期間 updateField と membership 提案は不変 |
 | **期限切れ campaign の削除** (validTo+30 日経過) | ✅ する (**自動削除**) | 既に非アクティブで還元計算に影響しないためクリーンアップを自動化。tombstone (`REMOVED_PROGRAM_IDS`) 化で program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。編集済みは保護)。**安全弁**: 同 run で期間変更 (`periodChange`) が提案されている program は延長中の可能性を考慮し自動削除せず needsReview (`expiredCampaign`)。件数 cap / apply 後の test・build gate / `autoMergeEnabled` も従来どおり適用 |
 
@@ -546,6 +552,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **改善 PR-6a-1 (起動回帰の修正 + 新規プロファイルの公式データ自動投入)** — 計算画面の起動時に「同日の下書き ?? 優先通貨の先頭」のタブを選び同率 1 位を自動展開する挙動を復旧 (v6.2.0 decb694 で失われた回帰、G19)、新規プロファイル / 初期化後の次回起動で公式 seed を通知なし・カード全 OFF で自動投入 (`seedIfEmpty`、F7)。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-0a-2a (購入チャネル核 + v46 修正の配信)** — `PurchaseChannel` (`in-store` / `online`) と `BenefitProgram.channel?` / `StoreProgramMembership.channel?` を追加し、`evaluatePrograms` に店舗から導出した既定チャネル (店頭、純 EC 店はネット) の gate を入れた。たまるマーケット 3 program と J-POINT 20倍のスタバ / マック membership 4 件を `online` にし、店頭計算での過大表示を修正 (エポス×ビックカメラ店頭 2.0%→0.5%、JCB W×スタバ店頭 10.5%→1%。楽天市場 / Yahoo! / じゃらん / HMV online は従来どおり)。v46 監査の edge 修正 3 本・削除 2 本を MIGRATIONS v47 で、廃止 program 2 件を `REMOVED_PROGRAM_IDS` で既存端末へ配信。設定の「サンプル投入」は `computeSeedUpdate` に委譲 (公式の修正・削除も反映)。sync は epos-tamaru 由来の新規 program に `channel:"online"` を決定論で付与。SEED_VERSION 46→47 / PERSIST_SCHEMA 据え置き
 - **改善 PR-0a-2b (membership 伝播 + 件数/指紋/安全判定 + M3 条件チップ)** — 未編集の公式 membership に notes / channel / override の公式更新を伝播 (`propagateMembershipUpdates`、`userModifiedAt` は保護)、membership 単体 tombstone (`REMOVED_MEMBERSHIP_IDS`) を seed 反映の全経路に配線 (#103 の general 4 件が反映されず自動反映が恒久停止していた F3)。件数 (`changeCount` / 更新バナー) と既読指紋 (`syncDigest`: program 更新は内容ハッシュ、`memU:` / `memD:`) に membership の更新・削除を含め、channel の変化は確認モーダルへ。J-POINT 20倍の店別条件を membership.notes に移し (スタバ / マック / すき家 / すかいらーく 3 店 / サンマルク、2026-09-27 公式確認)、結果カードの条件チップに conditions / membership.notes を合流 (M3、`channel` チップ)。警告チップは `rankWarningChips` で優先順・最大 3 に一本化。更新バナーの「あとで」は版を進めず当日のセッション内だけ非表示。SEED_VERSION / PERSIST_SCHEMA 据え置き
+- **改善 PR-0a-2c (tombstone 配線の残り + propose ミラー + tier 契約)** — 同じ店 × 同じ倍率系列の重複 2 件 (高島屋 × J-POINT Gold 2倍 = SC・レストラン街の受け皿誤り、無印 × たまる 4倍 = 旧値、公式は 2倍) を membership 単体 tombstone にし、`seed()` の memberships からも除外 (ADDED 行が毎回「追加 → 除去」を往復して自動反映が止まるのを防ぐ)。週次同期は tombstone 済み id を再提案せず (`🪦 tombstone-skip`)、同じ店 × 同じ系列の別倍率 membership を `tierMove` で review に回す。apply / approve は生成物から tombstone 行を物理削除。REVIEW_QUEUE の理由の表示順を `REASON_ORDER` に一本化し、全理由を含む網羅テストを追加。seed に tier 契約 (店 × 系列 × 有効チャネルごとに membership ≤ 1) を追加。SEED_VERSION / PERSIST_SCHEMA 据え置き (削除を含むので既存端末では確認モーダルで反映)
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。

@@ -1343,12 +1343,15 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   ]),
 
   // (c) たまるマーケット (2/3/4倍)。倍率は 2026-07 実測
-  // 楽天市場2倍 / Yahoo!2倍 / ユニクロ2倍 / じゃらん3倍 / 無印4倍
+  // 楽天市場2倍 / Yahoo!2倍 / ユニクロ2倍 / じゃらん3倍
+  // PR-0a-2c (A17): 手書きの「無印 4倍」(2026-07 実測) は削除した。9/13 の抽出と 9/26 の公式トップは
+  //   「無印良品ネットストア 2倍」で、tamaru-2x × muji (seed-additions.ts の ADDED 行) が正。
+  //   既存端末の 4倍行は REMOVED_MEMBERSHIP_IDS (seed-blocklist.ts) の tombstone で除去する。
+  //   prog-epos-tamaru-4x は bic-camera (ADDED) の 1 件で存続 (member-stores は membership ≥ 1)。
   ...defineMemberships("prog-epos-tamaru-2x", [
     "rakuten-ichiba",
     "yahoo-shopping",
     "uniqlo",
   ]),
   ...defineMemberships("prog-epos-tamaru-3x", ["jalannet"]),
-  ...defineMemberships("prog-epos-tamaru-4x", ["muji"]),
 ];

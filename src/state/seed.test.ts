@@ -14,6 +14,8 @@ import { isSafeHttpUrl } from "../domain/urlSafety";
 import { PURCHASE_CHANNELS, effectiveChannel } from "../domain/purchaseChannel";
 import { membershipId } from "./defineMemberships";
 import { REMOVED_PROGRAM_IDS } from "./seed-additions";
+import { REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
+import { tierFamilyOf } from "./tierFamily";
 
 describe("MASTER_CARD_IDS / isMasterCard", () => {
   it("SEED_CARDS の全 id が含まれる", () => {
@@ -918,5 +920,87 @@ describe("PR-0a-2b: J-POINT 20倍の条件 (conditions / membership.notes) 契�
     const { memberships } = seed();
     const ids = memberships.map((m) => m.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+// PR-0a-2c: membership 単体 tombstone (REMOVED_MEMBERSHIP_IDS) と倍率 tier の契約。
+// 同じ店 × 同じ tier 系列 (J-POINT W / Gold / たまる) に複数倍率が並ぶと、計算は最大値が勝つため
+// 古い tier が黙って残る。cron が新 tier を足す週は propose の tierMove で review に回り、承認時に
+// 旧 tier を tombstone しないとこの契約が落ちる (fail-closed)。
+describe("PR-0a-2c: membership tombstone と tier 契約", () => {
+  it("seed().memberships と REMOVED_MEMBERSHIP_IDS は交わらない (ADDED 行も除外される)", () => {
+    const { memberships } = seed();
+    const tomb = new Set(REMOVED_MEMBERSHIP_IDS);
+    const offending = memberships.filter((m) => tomb.has(m.id)).map((m) => m.id);
+    expect(offending, offending.join(",")).toEqual([]);
+  });
+
+  it("REMOVED_MEMBERSHIP_IDS は全件 membershipId() 形式 (m-{programId}-{storeId}) で重複なし", () => {
+    expect(new Set(REMOVED_MEMBERSHIP_IDS).size).toBe(REMOVED_MEMBERSHIP_IDS.length);
+    // programId 部分が実在 (seed の program か program tombstone) し、store 部分が空でないこと
+    // (typo の tombstone は何も消さずに素通りするため)。
+    const programIds = [...seed().programs.map((p) => p.id), ...REMOVED_PROGRAM_IDS];
+    for (const id of REMOVED_MEMBERSHIP_IDS) {
+      const programId = programIds.find(
+        (pid) => id.startsWith(`m-${pid}-`) && id.length > `m-${pid}-`.length,
+      );
+      expect(programId, `${id} が既知 program の membershipId() 形式でない`).toBeDefined();
+      if (programId !== undefined) {
+        const storeId = id.slice(`m-${programId}-`.length);
+        expect(membershipId(programId, storeId)).toBe(id);
+      }
+    }
+    // 追加した 2 件は membershipId() で生成したものと一致する
+    expect(REMOVED_MEMBERSHIP_IDS).toContain(
+      membershipId("prog-jcb-jpoint-gold-2x", "takashimaya"),
+    );
+    expect(REMOVED_MEMBERSHIP_IDS).toContain(membershipId("prog-epos-tamaru-4x", "muji"));
+  });
+
+  it("(storeId, tier 系列, 有効チャネル) ごとに membership は 1 件以下", () => {
+    const { programs, memberships } = seed();
+    const progById = new Map(programs.map((p) => [p.id, p]));
+    const groups = new Map<string, string[]>();
+    for (const m of memberships) {
+      const tier = tierFamilyOf(m.programId);
+      if (tier === null) continue;
+      const p = progById.get(m.programId);
+      const channel = (p ? effectiveChannel(p, m) : m.channel) ?? "both";
+      const key = `${m.storeId}|${tier.family}|${channel}`;
+      groups.set(key, [...(groups.get(key) ?? []), m.id]);
+    }
+    expect(groups.size).toBeGreaterThan(0);
+    const dups = [...groups.entries()]
+      .filter(([, ids]) => ids.length > 1)
+      .map(([key, ids]) => `${key}: ${ids.join(",")}`);
+    expect(dups, dups.join(" / ")).toEqual([]);
+  });
+
+  it("回帰: 無印のたまる系は 2倍のみ", () => {
+    const { memberships } = seed();
+    const muji = memberships
+      .filter((m) => m.storeId === "muji" && tierFamilyOf(m.programId)?.family === "epos-tamaru")
+      .map((m) => m.programId);
+    expect(muji).toEqual(["prog-epos-tamaru-2x"]);
+  });
+
+  it("回帰: 高島屋の J-POINT Gold 系は gold-4x のみ", () => {
+    const { memberships } = seed();
+    const gold = memberships
+      .filter(
+        (m) =>
+          m.storeId === "takashimaya" &&
+          tierFamilyOf(m.programId)?.family === "jcb-jpoint-gold",
+      )
+      .map((m) => m.programId);
+    expect(gold).toEqual(["prog-jcb-jpoint-gold-4x"]);
+  });
+
+  it("prog-epos-tamaru-4x は membership を 1 件以上持つ (member-stores の孤立防止)", () => {
+    const { programs, memberships } = seed();
+    expect(programs.some((p) => p.id === "prog-epos-tamaru-4x")).toBe(true);
+    expect(
+      memberships.filter((m) => m.programId === "prog-epos-tamaru-4x").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 });

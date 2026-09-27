@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
+  REASON_EXPLANATIONS,
+  REASON_LABELS,
+  REASON_ORDER,
   appendSyncHistory,
   buildAutoSummary,
   buildLabelResolver,
@@ -169,7 +172,69 @@ describe("buildAutoSummary", () => {
 // REVIEW_QUEUE.md
 // ───────────────────────────────────────────────────────────────
 
+// PR-0a-2c: REVIEW_QUEUE の理由グループの表示順 (REASON_ORDER) の網羅。
+// buildReviewQueue は REASON_ORDER の順にしか描画しないため、ReviewReason を足して
+// REASON_ORDER に入れ忘れるとその理由の項目が REVIEW_QUEUE から黙って消える。
+// 以後の PR (0b-3 / 3a / 4a / 4b / 5c ...) で reason を足すときもこのテストに乗る。
+describe("REASON_ORDER (理由グループの表示順) の網羅", () => {
+  it("REASON_LABELS / REASON_EXPLANATIONS の全キーを含み、重複が無く、余分なキーも無い", () => {
+    const order = [...REASON_ORDER];
+    expect(new Set(order).size, "REASON_ORDER に重複がある").toBe(order.length);
+    const labelKeys = Object.keys(REASON_LABELS).sort();
+    const explanationKeys = Object.keys(REASON_EXPLANATIONS).sort();
+    expect(explanationKeys).toEqual(labelKeys);
+    expect([...order].sort()).toEqual(labelKeys);
+  });
+
+  it("tierMove は periodChange の直前に並ぶ", () => {
+    const i = REASON_ORDER.indexOf("tierMove");
+    expect(i).toBeGreaterThanOrEqual(0);
+    expect(REASON_ORDER[i + 1]).toBe("periodChange");
+  });
+});
+
 describe("buildReviewQueue", () => {
+  it("tierMove の項目はラベルと説明 (旧 tier の tombstone と同時に承認) 付きで periodChange より前に出る", () => {
+    const tier: Proposal = {
+      type: "addRecord",
+      collection: "memberships",
+      record: { programId: "prog-jcb-jpoint-gold-2x", storeId: "takashimaya" },
+      sourceId: "jcb-jpoint-partners",
+      confidence: 0.9025,
+      evidence: { evidenceQuote: "高島屋 ポイント 2 倍", explicitness: 0.95, ambiguity: 0.05 },
+      reviewReason: "tierMove",
+    };
+    const period: Proposal = {
+      type: "updateField",
+      collection: "programs",
+      id: "prog-x",
+      field: "validTo",
+      from: "2026-09-30",
+      to: "2026-10-31",
+      sourceId: "d-pay-campaigns",
+      confidence: 0.95,
+      evidence: { evidenceQuote: "10月31日まで", explicitness: 0.95, ambiguity: 0.05 },
+      reviewReason: "periodChange",
+    };
+    const md = buildReviewQueue(
+      baseReport({
+        needsReview: [period, tier],
+        summary: {
+          autoApplicableCount: 0,
+          needsReviewCount: 2,
+          sourcesProcessed: 2,
+          sourcesFailed: 0,
+        },
+      }),
+    );
+    expect(md).toContain(`### ${REASON_LABELS.tierMove} (1 件)`);
+    expect(md).toContain("REMOVED_MEMBERSHIP_IDS");
+    expect(md).toContain("tierMove=1");
+    expect(md.indexOf(REASON_LABELS.tierMove)).toBeLessThan(
+      md.indexOf(REASON_LABELS.periodChange),
+    );
+  });
+
   it("needsReview が空でも markdown が生成できる", () => {
     const md = buildReviewQueue(baseReport({}));
     expect(md).toBeTruthy();
