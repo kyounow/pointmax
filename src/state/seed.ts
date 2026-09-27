@@ -548,22 +548,40 @@ export const MASTER_PROGRAM_IDS = new Set<string>(
 export const isMasterProgram = (id: string): boolean =>
   MASTER_PROGRAM_IDS.has(id);
 
-// 「公式値に戻す」機能用の seed lookup ヘルパー。
+// ─── 同梱 seed の id lookup (lazy) ───
+// PR-5a: program / edge / card の lookup は **必ず seed() の最終形から作る**
+// (PROGRAM_OVERRIDES 適用後・REMOVED_PROGRAM_IDS / REMOVED_MEMBERSHIP_IDS 除外後)。
+// SEED_* を手で組み立てると、override 後の rate を持つ端末で鮮度の解決
+// (edgeFreshness.resolveVerifiedMonth の rate 一致判定) が常に「不一致」になり、
+// tombstone 済みの手書き定義 (prog-dcard-bic-camera-may2026 等) も引けてしまう。
+// seed() は初回呼び出しで 1 回だけ評価してキャッシュする (seed-data-*.ts / seed-additions.ts は
+// import 時に static なので safe)。scripts もこのファイルを import するので DOM API は使わない。
+let _seedSnapshot: SeedReturn | null = null;
+const seedSnapshot = (): SeedReturn => (_seedSnapshot ??= seed());
+
+// id → 行の Map。同 id が複数あれば先勝ち (seed() の「手書きが勝つ」と同じ)。
+function indexById<T extends { id: string }>(rows: readonly T[]): Map<string, T> {
+  const m = new Map<string, T>();
+  for (const r of rows) if (!m.has(r.id)) m.set(r.id, r);
+  return m;
+}
+
+// 「公式値に戻す」機能と鮮度の解決 (カード基本還元の確認月) 用の seed lookup ヘルパー。
 // 編集前の master 値を返す。userModifiedAt クリアと合わせて使う (src/state/userModified.ts)。
-// 初回呼び出しで lazy にキャッシュ (seed-data-cards.ts / seed-additions.ts は
-// import 時に static なので safe)。
 let _seedCardLookup: Map<string, Card> | null = null;
-export const getSeedCard = (id: string): Card | undefined => {
-  if (!_seedCardLookup) {
-    _seedCardLookup = new Map();
-    for (const c of SEED_CARDS) _seedCardLookup.set(c.id, c);
-    for (const c of ADDED_CARDS) {
-      // 手書きが優先 (seed() と同じセマンティクス)
-      if (!_seedCardLookup.has(c.id)) _seedCardLookup.set(c.id, c);
-    }
-  }
-  return _seedCardLookup.get(id);
-};
+export const getSeedCard = (id: string): Card | undefined =>
+  (_seedCardLookup ??= indexById(seedSnapshot().cards)).get(id);
+
+// PR-5a: 公式 program の同梱 seed 値 (確認月 lastVerifiedAt・officialUrl の表示解決用)。
+// ユーザー作成 (UUID) や tombstone 済みの id は undefined。
+let _seedProgramLookup: Map<string, BenefitProgram> | null = null;
+export const getSeedProgram = (id: string): BenefitProgram | undefined =>
+  (_seedProgramLookup ??= indexById(seedSnapshot().programs)).get(id);
+
+// PR-5a: 公式 edge の同梱 seed 値 (確認月 lastVerifiedAt の表示解決用)。
+let _seedEdgeLookup: Map<string, ConversionEdge> | null = null;
+export const getSeedEdge = (id: string): ConversionEdge | undefined =>
+  (_seedEdgeLookup ??= indexById(seedSnapshot().edges)).get(id);
 
 let _seedPaymentAppLookup: Map<string, PaymentApp> | null = null;
 export const getSeedPaymentApp = (id: string): PaymentApp | undefined => {

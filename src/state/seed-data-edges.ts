@@ -13,8 +13,9 @@
 //   - lastVerifiedAt ("YYYY-MM"、REM-#2): レートを公式ページで最後に人手確認した月。
 //     **bestPath に実際に乗る主要 edge のみ**手記入し (未記入 = 未検証扱いで stale バッジ
 //     非表示)、値は git log / seed コメントから確認月が特定できるものだけ入れる (でっち上げ
-//     禁止)。各記入行に確認根拠を短くコメントする。最終確認が 6ヶ月超になると Calculator の
-//     結果行 / EdgesScreen に「⚠ 要確認」が出る (判定は src/domain/edgeFreshness.ts)。
+//     禁止)。各記入行に確認根拠を短くコメントする。最終確認が 12ヶ月超になると (PR-5a で 6→12)
+//     Calculator の展開ビューに「⚠ 古い情報かも」、交換ルート画面に「⚠ (要確認)」が出る
+//     (判定は src/domain/edgeFreshness.ts。表示時は同梱 seed の月を参照する = META キー)。
 //     未記入分の漸進記入・棚卸しは SESSION_LOG「四半期ごと手動確認チェックリスト」で回す。
 import type { ConversionEdge } from "../domain/types";
 

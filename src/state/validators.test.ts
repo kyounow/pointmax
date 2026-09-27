@@ -257,6 +257,38 @@ describe("validateImportData: PR-0a-2a channel 検証", () => {
   });
 });
 
+// PR-5a (B11): Card.lastVerifiedAt (基本還元率の確認月) は任意の文字列 (OPT_STR で型だけ検証)。
+describe("validateImportData: PR-5a Card.lastVerifiedAt 検証 (OPT_STR)", () => {
+  it("cards / edges / programs の lastVerifiedAt が文字列・未指定なら受理", () => {
+    const r = validateImportData({
+      ...valid,
+      cards: [{ ...valid.cards[0], lastVerifiedAt: "2026-07" }],
+      edges: [{ ...valid.edges[0], lastVerifiedAt: "2026-07" }],
+      programs: [
+        {
+          id: "prog-1",
+          name: "P",
+          scope: "all-stores",
+          rate: 0.01,
+          currencyId: "cur1",
+          lastVerifiedAt: "2026-07",
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    expect(validateImportData(valid).ok).toBe(true);
+  });
+
+  it("cards[0].lastVerifiedAt が文字列でなければ拒否", () => {
+    const r = validateImportData({
+      ...valid,
+      cards: [{ ...valid.cards[0], lastVerifiedAt: 202607 }],
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("cards[0].lastVerifiedAt");
+  });
+});
+
 describe("validateImportData: v6 PR-1c card.familyId 検証", () => {
   it("familyId 未指定のカードは受理 (任意フィールド)", () => {
     expect(validateImportData(valid).ok).toBe(true);

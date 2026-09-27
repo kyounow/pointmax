@@ -121,16 +121,43 @@ const PROGRAM_PREFERENCE_KEYS = ["enabled"] as const satisfies ReadonlyArray<
   keyof BenefitProgram
 >;
 
-// preference キー (enabled) を除いた正規形で stableStringify する。
-// enabled はローカル所有キーなので「公式差分あり」の判定に含めない
-// (ユーザーが opt-in を ON にしただけで公式更新と誤検知しないため)。
+// PR-5a: META キー = 公式が出荷するが「内容 (還元の条件・率) ではない」管理用の値。
+// 確認月 (lastVerifiedAt) や情報源 URL (officialUrl) だけが変わった seed 更新を「内容更新」と
+// 数えると、四半期チェックで確認月を一斉に更新しただけで全端末に『内容更新 N 件』の通知が出る。
+// そのため公式差分の比較 (propagate) と既読指紋 (syncDigest の progU) の正規形から除外する。
+// 表示側は同梱 seed を直接参照して解決する (edgeFreshness.resolveVerifiedMonth / 特典画面の URL)。
+// 内容に実際の差分がある週は従来どおり official を丸ごと採るので、その時に meta も一緒に届く。
+// ⚠ この除外は seed に meta を書き込むコミットより必ず先に入れる (後だと書き込みが通知になる)。
+export const PROGRAM_META_KEYS = [
+  "lastVerifiedAt",
+  "officialUrl",
+] as const satisfies ReadonlyArray<keyof BenefitProgram>;
+
+// PR-5a: edge の META キー。edge は現状 add-only (公式修正は MIGRATIONS の updateField で配信し、
+// 内容比較をしない) なので、この定数を参照する比較はまだ無い。将来 propagateEdgeUpdates を足すとき、
+// および PR-5b の MIGRATIONS 設計 (確認月だけの更新を updateField にしない) がこの定数に従う。
+export const EDGE_META_KEYS = [
+  "lastVerifiedAt",
+] as const satisfies ReadonlyArray<keyof ConversionEdge>;
+
+// PR-5a (B11): card の META キー (Card.lastVerifiedAt = 基本還元率の確認月)。cards も add-only で
+// 比較しないため参照先はまだ無い。将来の propagateCardUpdates と 5b の MIGRATIONS 設計が参照する。
+export const CARD_META_KEYS = [
+  "lastVerifiedAt",
+] as const satisfies ReadonlyArray<keyof Card>;
+
+// preference キー (enabled) と META キー (lastVerifiedAt / officialUrl) を除いた正規形で
+// stableStringify する。enabled はローカル所有キーなので「公式差分あり」の判定に含めない
+// (ユーザーが opt-in を ON にしただけで公式更新と誤検知しないため)。META キーは上記の理由。
 // userModifiedAt は propagate 前段で早期 return 済のためここでは考慮不要だが、
 // 念のため正規形からも外す (公式は出荷しないキー)。
 // PR-0a-2b: syncDigest の progU 指紋 (内容ハッシュ) も同じ正規形を使うため export する
-// (rate / 期間だけでなく channel / conditions / notes だけの公式更新も別 digest になる)。
+// (rate / 期間だけでなく channel / conditions / notes だけの公式更新も別 digest になる。
+// 逆に META キーだけの差は同じ digest = 通知も自動反映も起きない)。
 export function stableStringifyProgramContent(p: BenefitProgram): string {
   const rec = { ...p } as Record<string, unknown>;
   for (const k of PROGRAM_PREFERENCE_KEYS) delete rec[k];
+  for (const k of PROGRAM_META_KEYS) delete rec[k];
   delete rec.userModifiedAt;
   return stableStringify(rec);
 }

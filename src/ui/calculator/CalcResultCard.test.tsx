@@ -6,7 +6,10 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { CalcResultCard } from "./CalcResultCard";
-import type { CardRanking } from "../../domain/rankCards";
+import {
+  collectAdoptedProgramIds,
+  type CardRanking,
+} from "../../domain/rankCards";
 import type {
   BenefitProgram,
   ConversionEdge,
@@ -14,6 +17,8 @@ import type {
   PurchaseChannel,
 } from "../../domain/types";
 import { seed } from "../../state/seed";
+import { seedFreshness } from "../../state/seedFreshness";
+import { LOCAL_FRESHNESS } from "../../domain/edgeFreshness";
 import { membershipId } from "../../state/defineMemberships";
 import { evaluatePrograms } from "../../domain/programEvaluator";
 
@@ -22,8 +27,10 @@ afterEach(cleanup);
 const rakutenPt: Currency = { id: "rakuten-pt", name: "楽天ポイント" };
 
 // CardRanking は必須フィールドが多いので、テスト用の最小妥当オブジェクトを生成する。
+// PR-5a: adoptedProgramIds は明示が無ければ rankCards と同じ collectAdoptedProgramIds で導出する
+// (resolved / appBonusBreakdown / loyalties を上書きしたテストでも整合する)。
 function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
-  return {
+  const base: Omit<CardRanking, "adoptedProgramIds"> = {
     card: {
       id: "rakuten",
       name: "楽天カード",
@@ -55,6 +62,10 @@ function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
     minUnitAnnotations: [],
     ...over,
   };
+  return {
+    ...base,
+    adoptedProgramIds: over.adoptedProgramIds ?? collectAdoptedProgramIds(base),
+  };
 }
 
 // expanded は各テストで明示する (aria-expanded / 上限バッジ表示の検証で値が重要)。
@@ -68,6 +79,9 @@ const baseProps = {
   currencyName: (id: string) => (id === "rakuten-pt" ? "楽天ポイント" : id),
   cardName: (id: string) => id,
   now: new Date("2026-07-20T09:00:00+09:00"),
+  // PR-5a: 確認月はローカル値そのまま (アプリ既定の seedFreshness は同梱 seed を参照するため、
+  // fixture の月を直接試す既存テストでは差し替える。seed 参照は個別のテストで検証)。
+  freshness: LOCAL_FRESHNESS,
 };
 
 describe("CalcResultCard", () => {
@@ -282,7 +296,8 @@ describe("CalcResultCard", () => {
     expect(screen.queryByText(/貯めてから交換/)).not.toBeInTheDocument();
   });
 
-  // REM-#2: 交換ルートの鮮度 (stale) 警告チップ。基準日 now は baseProps = 2026-07-20。
+  // REM-#2 / PR-5a: 公式情報の鮮度 (stale) 警告チップ『古い情報かも』。基準日 now は
+  // baseProps = 2026-07-20、閾値 12ヶ月 (2025-06 = 13ヶ月前 = stale、2025-07 = ちょうど = 非 stale)。
   const edgeStep = (over: Partial<ConversionEdge>): ConversionEdge => ({
     id: "step",
     fromCurrencyId: "epos",
@@ -291,10 +306,10 @@ describe("CalcResultCard", () => {
     ...over,
   });
 
-  it("REM-#2: 経由 edge の最終確認が6ヶ月超なら展開ビューに「ルート要確認」を出す", () => {
+  it("REM-#2: 経由 edge の最終確認が12ヶ月超なら展開ビューに「古い情報かも」を出す", () => {
     const ranking = makeRanking({
-      // 2025-12 は基準日 2026-07 から 7ヶ月前 = stale
-      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-12" })],
+      // 2025-06 は基準日 2026-07 から 13ヶ月前 = stale (PR-5a で閾値 6→12ヶ月)
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-06" })],
     });
     render(
       <CalcResultCard
@@ -302,17 +317,25 @@ describe("CalcResultCard", () => {
         programById={new Map()}
         expanded
         {...baseProps}
+        currencyName={(id: string) =>
+          id === "epos" ? "エポスポイント" : id === "jal-mile" ? "JALマイル" : id
+        }
       />,
     );
-    expect(
-      screen.getByText(/ルート要確認 \(最終確認 2025-12\)/),
-    ).toBeInTheDocument();
+    const chip = screen.getByText(/古い情報かも \(最終確認 2025-06\)/);
+    expect(chip).toBeInTheDocument();
+    // title に内訳 (交換ルート名と月)
+    expect(chip.getAttribute("title")).toContain(
+      "・ルート エポスポイント→JALマイル (2025-06)",
+    );
+    // 旧文言『ルート要確認』は出さない (1 チップに置き換え)
+    expect(screen.queryByText(/ルート要確認 \(/)).toBeNull();
   });
 
-  it("REM-#2: 最終確認がちょうど6ヶ月 (境界) なら警告を出さない", () => {
+  it("REM-#2: 最終確認がちょうど12ヶ月 (境界) なら警告を出さない", () => {
     const ranking = makeRanking({
-      // 2026-01 は基準日 2026-07 からちょうど6ヶ月 = stale でない
-      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2026-01" })],
+      // 2025-07 は基準日 2026-07 からちょうど12ヶ月 = stale でない
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-07" })],
     });
     render(
       <CalcResultCard
@@ -322,7 +345,7 @@ describe("CalcResultCard", () => {
         {...baseProps}
       />,
     );
-    expect(screen.queryByText(/ルート要確認/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
   });
 
   it("REM-#2: lastVerifiedAt 未記入の edge のみの経路では警告を出さない (未検証は古い扱いしない)", () => {
@@ -337,12 +360,12 @@ describe("CalcResultCard", () => {
         {...baseProps}
       />,
     );
-    expect(screen.queryByText(/ルート要確認/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
   });
 
   it("REM-#2: 折り畳み (非展開) 時は stale 警告を出さない", () => {
     const ranking = makeRanking({
-      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-12" })],
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-06" })],
     });
     render(
       <CalcResultCard
@@ -352,7 +375,310 @@ describe("CalcResultCard", () => {
         {...baseProps}
       />,
     );
-    expect(screen.queryByText(/ルート要確認/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
+  });
+
+  // ─── PR-5a: 還元率 (採用 program) の鮮度と 1 チップへの統合 ───
+  const staleProg = (over: Partial<BenefitProgram> = {}): BenefitProgram => ({
+    id: "prog-cap",
+    name: "店舗特典",
+    scope: "member-stores",
+    rate: 0.05,
+    currencyId: "rakuten-pt",
+    ...over,
+  });
+  const staleChips = (container: HTMLElement) =>
+    container.querySelectorAll(".route-stale-chip");
+
+  it("PR-5a: 採用 program (primary) だけが古い → 1 チップ『古い情報かも』(title に還元率の内訳)", () => {
+    const { container } = render(
+      <CalcResultCard
+        ranking={makeRanking()} // primary = prog-cap、pathSteps 空
+        programById={new Map([["prog-cap", staleProg({ lastVerifiedAt: "2025-06" })]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    const chip = screen.getByText("⚠ 古い情報かも (最終確認 2025-06)");
+    expect(chip.getAttribute("title")).toContain("・還元率 店舗特典 (2025-06)");
+    expect(chip.getAttribute("title")).toContain("最終確認から12ヶ月超");
+    expect(staleChips(container)).toHaveLength(1);
+  });
+
+  it("PR-5a: ルートと program が両方古い → チップは 1 つで最古の月を出し、title に両方", () => {
+    const { container } = render(
+      <CalcResultCard
+        ranking={makeRanking({
+          pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-06" })],
+        })}
+        programById={new Map([["prog-cap", staleProg({ lastVerifiedAt: "2025-03" })]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(staleChips(container)).toHaveLength(1);
+    const chip = screen.getByText(/古い情報かも \(最終確認 2025-03\)/);
+    const title = chip.getAttribute("title") ?? "";
+    expect(title).toContain("・ルート epos→jal-mile (2025-06)");
+    expect(title).toContain("・還元率 店舗特典 (2025-03)");
+  });
+
+  it("PR-5a: freshness を注入して seed 側が新しい月を返せば、ローカルが古くてもチップを出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-01" })],
+        })}
+        programById={new Map([["prog-cap", staleProg({ lastVerifiedAt: "2025-01" })]])}
+        expanded
+        {...baseProps}
+        freshness={{
+          programMonth: () => "2026-07",
+          edgeMonth: () => "2026-07",
+          cardMonth: () => "2026-07",
+        }}
+      />,
+    );
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
+  });
+
+  it("PR-5a: freshness が未記入 (undefined) を返せば、ローカルに古い月があってもチップを出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map([["prog-cap", staleProg({ lastVerifiedAt: "2025-01" })]])}
+        expanded
+        {...baseProps}
+        freshness={{
+          programMonth: () => undefined,
+          edgeMonth: () => undefined,
+          cardMonth: () => undefined,
+        }}
+      />,
+    );
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
+  });
+
+  it("PR-5a: 既定 (freshness 省略) は同梱 seed を参照する — rate が seed と一致すればローカルの古い月は使わない", () => {
+    const seedProg = seed().programs.find((p) => p.id === "prog-rakuten-ichiba-base")!;
+    const ranking = makeRanking({
+      resolved: {
+        rate: seedProg.rate,
+        currencyId: "rakuten-pt",
+        source: "program",
+        programId: seedProg.id,
+      },
+    });
+    const local = { ...seedProg, lastVerifiedAt: "2020-01" }; // 端末に古い月が残っている
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map([[seedProg.id, local]])}
+        expanded
+        {...baseProps}
+        freshness={undefined}
+      />,
+    );
+    // seed の月 (2026-07 以降) は基準日 2026-07-20 で stale ではない
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
+    cleanup();
+
+    // rate が seed と違う (旧 rate のまま) ならローカルの月で判定する
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={new Map([[seedProg.id, { ...local, rate: seedProg.rate + 0.01 }]])}
+        expanded
+        {...baseProps}
+        freshness={undefined}
+      />,
+    );
+    expect(screen.getByText(/古い情報かも \(最終確認 2020-01\)/)).toBeInTheDocument();
+  });
+
+  it("PR-5a: charge 結果の base program (Pay base) が古ければチップを出す", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          resolved: {
+            rate: 0.005,
+            currencyId: "rakuten-pt",
+            source: "charge",
+            programId: "prog-pay-base",
+          },
+          paymentApp: { id: "pa-x", name: "Xペイ", chargeBased: true },
+        })}
+        programById={
+          new Map([
+            ["prog-pay-base", staleProg({ id: "prog-pay-base", name: "Xペイ ベース還元", lastVerifiedAt: "2025-05" })],
+          ])
+        }
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(
+      screen.getByText(/古い情報かも \(最終確認 2025-05\)/).getAttribute("title"),
+    ).toContain("・還元率 Xペイ ベース還元 (2025-05)");
+  });
+
+  it("PR-5a: addOn と loyalty の経路の edge も対象 (primary 経路が新しくても出す)", () => {
+    const addOnRanking = makeRanking({
+      resolved: { rate: 0.01, currencyId: "rakuten-pt", source: "default" },
+      appBonusBreakdown: [
+        {
+          programId: "prog-addon",
+          programName: "上乗せ",
+          rate: 0.01,
+          earnedAmount: 10,
+          earnedCurrencyId: "epos",
+          finalAmount: 5,
+          pathSteps: [edgeStep({ id: "addon-edge", lastVerifiedAt: "2025-04" })],
+        },
+      ],
+    });
+    render(
+      <CalcResultCard
+        ranking={addOnRanking}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.getByText(/古い情報かも \(最終確認 2025-04\)/)).toBeInTheDocument();
+    cleanup();
+
+    const loyaltyRanking = makeRanking({
+      resolved: { rate: 0.01, currencyId: "rakuten-pt", source: "default" },
+      loyalties: [
+        {
+          pointCard: { id: "pc", name: "提示カード", currencyId: "epos" },
+          rule: { id: "prog-loyalty", storeId: "s", pointCardId: "pc", rate: 0.01 },
+          earnedAmount: 10,
+          earnedCurrencyId: "epos",
+          pathSteps: [edgeStep({ id: "loyalty-edge", lastVerifiedAt: "2025-02" })],
+          pathProduct: 0.5,
+          finalAmount: 5,
+          reachable: true,
+        },
+      ],
+    });
+    render(
+      <CalcResultCard
+        ranking={loyaltyRanking}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.getByText(/古い情報かも \(最終確認 2025-02\)/)).toBeInTheDocument();
+  });
+
+  it("PR-5a: 同じ edge が複数経路に出ても title の内訳は 1 行", () => {
+    const shared = edgeStep({ id: "shared-edge", lastVerifiedAt: "2025-04" });
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          pathSteps: [shared],
+          appBonusBreakdown: [
+            {
+              programId: "prog-addon",
+              programName: "上乗せ",
+              rate: 0.01,
+              earnedAmount: 10,
+              earnedCurrencyId: "epos",
+              finalAmount: 5,
+              pathSteps: [shared],
+            },
+          ],
+        })}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    const title =
+      screen.getByText(/古い情報かも/).getAttribute("title") ?? "";
+    expect(title.match(/・ルート/g)).toHaveLength(1);
+  });
+
+  // B11: Card.lastVerifiedAt (カードの基本還元の確認月)。source:'default' の結果だけが対象。
+  it("PR-5a (B11): source default のカードの基本還元の確認月が 12ヶ月超ならチップを出す", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          card: {
+            id: "rakuten",
+            name: "楽天カード",
+            defaultRate: 0.01,
+            defaultCurrencyId: "rakuten-pt",
+            lastVerifiedAt: "2025-05",
+          },
+          resolved: { rate: 0.01, currencyId: "rakuten-pt", source: "default" },
+        })}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(
+      screen.getByText(/古い情報かも \(最終確認 2025-05\)/).getAttribute("title"),
+    ).toContain("・還元率 楽天カード の基本還元 (2025-05)");
+  });
+
+  it("PR-5a (B11): program を採用した結果 (source program) ではカードの確認月を見ない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          card: {
+            id: "rakuten",
+            name: "楽天カード",
+            defaultRate: 0.01,
+            defaultCurrencyId: "rakuten-pt",
+            lastVerifiedAt: "2025-05",
+          },
+        })}
+        programById={new Map([["prog-cap", staleProg()]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
+  });
+
+  it("PR-5a (B11): seedFreshness では編集済み (userModifiedAt) のカードに確認月を出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          card: {
+            id: "rakuten-card",
+            name: "楽天カード",
+            defaultRate: 0.03,
+            defaultCurrencyId: "rakuten-pt",
+            lastVerifiedAt: "2020-01",
+            userModifiedAt: "2026-08-01T00:00:00.000Z",
+          },
+          resolved: { rate: 0.03, currencyId: "rakuten-pt", source: "default" },
+        })}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+        freshness={seedFreshness}
+      />,
+    );
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
+  });
+
+  it("PR-5a: 対象外 (reachable=false) のカードには program が古くてもチップを出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({ reachable: false, unreachableReason: "no-path" })}
+        programById={new Map([["prog-cap", staleProg({ lastVerifiedAt: "2025-01" })]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
   });
 
   it("UX-7: no-path の対象外カードは折り畳みで「ルート未登録」バッジを出す", () => {
@@ -790,7 +1116,7 @@ describe("CalcResultCard", () => {
 
   it("警告予算 (rankWarningChips): 要エントリー + 上限 + 条件チップ 2 種 + stale が立っても上位 3 件だけ出す", () => {
     const ranking = makeRanking({
-      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-12" })],
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-06" })],
     });
     render(
       <CalcResultCard
@@ -817,7 +1143,36 @@ describe("CalcResultCard", () => {
     expect(screen.getByText(/上限.*円\/月/)).toBeInTheDocument();
     expect(screen.getByText("対象外あり")).toBeInTheDocument();
     expect(screen.queryByText("限定条件")).not.toBeInTheDocument();
-    expect(screen.queryByText(/ルート要確認/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
+  });
+
+  it("警告予算 (PR-5a): 要エントリー + 上限 + stale (ルート・還元率が両方古い) は 1 チップにまとまり 3 件とも出る", () => {
+    const { container } = render(
+      <CalcResultCard
+        ranking={makeRanking({
+          pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-06" })],
+        })}
+        programById={
+          new Map([
+            [
+              "prog-cap",
+              {
+                ...plainProg,
+                requiresEntry: true,
+                monthlyCapAmountYen: 40000,
+                lastVerifiedAt: "2025-01",
+              },
+            ],
+          ])
+        }
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(container.querySelectorAll(".entry-warn")).toHaveLength(1);
+    expect(container.querySelectorAll(".cap-warn")).toHaveLength(1);
+    expect(container.querySelectorAll(".route-stale-chip")).toHaveLength(1);
+    expect(screen.getByText(/古い情報かも \(最終確認 2025-01\)/)).toBeInTheDocument();
   });
 
   it("警告予算: notes の『要エントリー』『上限』は専用バッジと二重に出さない", () => {

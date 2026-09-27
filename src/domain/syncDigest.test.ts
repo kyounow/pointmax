@@ -164,6 +164,24 @@ describe("syncDigest extras (Phase 5)", () => {
     expect(d1).not.toBe(d2);
   });
 
+  // PR-5a: META キー (lastVerifiedAt / officialUrl) は内容ハッシュの正規形から外れる。
+  // 実際の内容更新がある週に meta が一緒に変わっても digest は内容だけで決まり、
+  // meta だけの差 (確認月の一斉更新) で既読 digest が変わって再通知されることはない。
+  it("META キー (lastVerifiedAt / officialUrl) だけが違う更新は同じ digest", () => {
+    const d1 = syncDigest(emptyDiff(), { updatedPrograms: [updated] });
+    const d2 = syncDigest(emptyDiff(), {
+      updatedPrograms: [
+        {
+          ...updated,
+          lastVerifiedAt: "2026-07",
+          officialUrl: "https://example.com/official",
+        },
+      ],
+    });
+    expect(d2).not.toBe("");
+    expect(d2).toBe(d1);
+  });
+
   it("同内容の更新はキー順序が違っても同じ digest (正規形のハッシュ)", () => {
     const reordered = {
       validTo: "2026-07-31",

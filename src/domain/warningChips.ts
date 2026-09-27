@@ -2,7 +2,8 @@
 //
 // 【背景】
 //   展開ビューには 要エントリー / 上限 / 条件チップ (notes・conditions・membership.notes 由来の
-//   限定・対象外・経由型) / 交換ルートの鮮度 (stale) / 最低交換単位 (端数) が並びうる。
+//   限定・対象外・経由型) / 公式情報の鮮度 (stale。PR-5a で交換ルート・還元率を『古い情報かも』
+//   1 チップに統合) / 最低交換単位 (端数) が並びうる。
 //   以前は「優先順で最大 3」をコメント運用で守っていたが、M3 (条件チップの合流) で同時に立つ
 //   組み合わせが増えたため、優先順と件数予算を 1 関数に集約する。
 //   6b (円換算モードへの移植)・5a (stale)・4e (要経由) もこの関数を使う (二重実装しない)。
@@ -19,7 +20,7 @@ import type { NoteChipKind } from "./noteParser";
 export type WarningChipKind =
   | NoteChipKind // entry / channel / cap / exclusion / limited (noteParser の条件チップ)
   | "via" // 要経由 (PR-4e のネットモードで使用。要エントリーと同順位)
-  | "stale" // ⚠ ルート要確認 (交換ルートの最終確認が 6 ヶ月超)
+  | "stale" // 公式情報の最終確認が 12 ヶ月超 (edgeFreshness.FRESHNESS_STALE_MONTHS)
   | "minUnit"; // 最低交換単位 (端数) の注記
 
 /** 1 展開ビューに出す警告チップの上限件数。 */

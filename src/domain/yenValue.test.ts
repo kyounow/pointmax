@@ -75,6 +75,7 @@ function mkRanking(over: Partial<CardRanking>): CardRanking {
     loyalties: [],
     totalFinalAmount: 0,
     minUnitAnnotations: [],
+    adoptedProgramIds: [],
     ...over,
   } as CardRanking;
 }

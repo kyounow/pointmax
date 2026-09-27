@@ -41,9 +41,12 @@ function earnWithMonthlyCap(
 }
 
 // ResolvedRate は programEvaluator ベース。後方互換のため source フィールドを維持。
+// PR-5a: charge 変種にも採用した base program の id (programId) を持たせる (チャージ式 Pay の
+//   base 還元 = 四半期チェック対象の Pay base 6 件を、鮮度チップ / 監視対象判定の対象にするため)。
+//   primary が無い chargeBased (base program 不在) は programId を持たない。
 export type ResolvedRate =
   | { rate: number; currencyId: string; source: "default" }
-  | { rate: number; currencyId: string; source: "charge" }
+  | { rate: number; currencyId: string; source: "charge"; programId?: string }
   | {
       rate: number;
       currencyId: string;
@@ -239,7 +242,29 @@ export type CardRanking = {
   // DB-8: primary path が最低交換単位に満たない交換ステップの事後注記 (UI 注記専用)。
   // 空配列 = 該当なし。addOn / loyalty 経路は対象外 (header の主結果 path のみ)。
   minUnitAnnotations: MinUnitAnnotation[];
+  // PR-5a: この結果で採用された program の id (primary / charge の base / addOn / reachable な
+  // loyalty)。重複なし・この順で安定。鮮度チップ (『古い情報かも』) と要エントリー判定、
+  // 率カナリア (PR-5c-1) の監視対象判定が使う。collectAdoptedProgramIds で導出する。
+  adoptedProgramIds: string[];
 };
+
+// PR-5a: 採用 program id の集合 (CardRanking.adoptedProgramIds の導出)。
+// 集める順: primary (source "program") または charge の base → addOn (appBonusBreakdown)
+// → reachable な loyalty (rule.id = program.id)。unreachable な loyalty は採用されていないので含めない。
+export function collectAdoptedProgramIds(
+  r: Pick<CardRanking, "resolved" | "appBonusBreakdown" | "loyalties">,
+): string[] {
+  const ids = new Set<string>();
+  // source "default" は programId を持たない (program / charge だけが持つ)。
+  const primaryId = (r.resolved as { programId?: string }).programId;
+  if (primaryId) ids.add(primaryId);
+  for (const b of r.appBonusBreakdown) ids.add(b.programId);
+  for (const l of r.loyalties) if (l.reachable) ids.add(l.rule.id);
+  return [...ids];
+}
+
+// rankCards 内部: adoptedProgramIds を付ける前のランキング (各分岐はこの形で組み、最後に 1 回で導出)。
+type RankingBase = Omit<CardRanking, "adoptedProgramIds">;
 
 // v6.0.0: 「未使用のポイントカードを有効化すればこれだけお得になる」提案。
 // MAIN (使う資産) と FULL (全ポイントカード ON) の差分から算出。
@@ -357,7 +382,8 @@ export function rankCards(
       0,
     );
 
-    const ranked: CardRanking[] = targetCards.map((card) => {
+    // PR-5a: 各分岐は RankingBase を返し、最後の map で adoptedProgramIds を 1 回だけ導出する。
+    const ranked: CardRanking[] = targetCards.map((card): RankingBase => {
     // PaymentApp なし: programEvaluator のみ
     if (paymentApps.length === 0 || !store) {
       const storeObj = store ?? null;
@@ -574,7 +600,13 @@ export function rankCards(
         // resolved.rate は「実際に earnedAmount を生んだレート」= cardRate に揃える。
         // 以前は 0 をハードコードしていたため UI で「クレカ還元率 0.00% で 100 楽天pt」
         // のような矛盾表示が出ていた。source=charge で UI 側が paymentApp 由来と判別する。
-        resolved = { rate: baseRate, currencyId: baseCurrency, source: "charge" };
+        // PR-5a: 採用した base program の id も持たせる (鮮度チップ / 監視対象判定用)。
+        resolved = {
+          rate: baseRate,
+          currencyId: baseCurrency,
+          source: "charge",
+          ...(primary ? { programId: primary.program.id } : {}),
+        };
       } else {
         // 通常: primary program rate (card × store) or defaultRate
         cardRate = primary?.effectiveRate ?? card.defaultRate;
@@ -669,7 +701,7 @@ export function rankCards(
         best.cardPathSteps,
       ),
     };
-  });
+  }).map((r) => ({ ...r, adoptedProgramIds: collectAdoptedProgramIds(r) }));
 
   ranked.sort((a, b) => {
     // 0次: reachable を優先

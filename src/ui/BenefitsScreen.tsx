@@ -15,7 +15,7 @@
 import { Fragment, useMemo, useState } from "react";
 import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
-import { isMasterProgram } from "../state/seed";
+import { getSeedProgram, isMasterProgram } from "../state/seed";
 import {
   isRuleActiveAt,
   formatRulePeriod,
@@ -279,7 +279,13 @@ export function BenefitsScreen() {
                         ) : null;
                       })()}
                       {(() => {
-                        const url = p.entryUrl ?? p.officialUrl;
+                        // PR-5a: officialUrl は META キー (更新通知・伝播の対象外) なので、未編集の
+                        // 公式 program は同梱 seed の値を優先し、seed に無ければ出さない (ローカルに
+                        // 残った古い URL が勝ち続けないため)。編集済み (userModifiedAt) と
+                        // ユーザー作成 (seed に無い id) はローカルの URL。
+                        const official = p.userModifiedAt ? undefined : getSeedProgram(p.id);
+                        const officialUrl = official ? official.officialUrl : p.officialUrl;
+                        const url = p.entryUrl ?? officialUrl;
                         if (!url || !isSafeHttpUrl(url)) return null;
                         const label = p.entryUrl ? "エントリー" : "公式";
                         return (

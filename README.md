@@ -49,6 +49,8 @@
   membership の単体 tombstone 削除はモーダル。件数 (`changeCount` / 更新バナーの「N件適用」) と
   既読判定の指紋 (`syncDigest`) は membership の更新 (`memU:`)・削除 (`memD:`) も数え、program の
   更新は内容全体のハッシュで指紋化する (条件・注記・チャネルだけの公式更新も別バッチとして届く、PR-0a-2b)。
+  ただし確認月 (`lastVerifiedAt`)・公式 URL (`officialUrl`) は **META キー** として比較と指紋から外す
+  (これらだけの seed 変更は通知も自動反映も起きない、PR-5a。下の「マスタデータ管理」)。
   自動反映も従来モーダルもオフライン時は抑制する（`useOnline`）。
   **期限切れ campaign の整理（PR-6a-2 / U1）**: cron が validTo を過ぎた campaign を tombstone 化した
   削除と、その cascade membership の削除**だけ**の週は、確認モーダルもバナーも出さずに反映し、digest を
@@ -98,7 +100,7 @@
   スタバ / マックの 20倍は `channel:"online"` のため店頭の結果には出ず、ネット評価では
   『モバイルオーダー限定』+『対象外あり』が付く。
 - **警告チップの表示予算（PR-0a-2b）**: 展開ビューの警告系（要エントリー / 条件チップ / 上限 /
-  ルート要確認 (stale) / 最低交換単位 (端数)）は純関数 `rankWarningChips`
+  古い情報かも (stale、PR-5a) / 最低交換単位 (端数)）は純関数 `rankWarningChips`
   （`src/domain/warningChips.ts`）で **要エントリー = 要経由 > 経由型 (channel) > 上限 > 限定・対象外 >
   stale > 端数** の優先順に並べ、**最大 3 件**だけ出す。同じ種類は 1 件（専用バッジ『⚠ 要エントリー』
   『⚠ 上限』が notes 由来の同種チップより優先）。円換算モード・要経由バッジ・stale 等の後続も
@@ -236,6 +238,14 @@
   このセッションの間だけバナーを隠す (`src/state/seedUpdateDismiss.ts`、`sessionStorage`)。
   以前は版を進めるだけで、その版の MIGRATIONS が永久にスキップされていた。反映するまでは
   次に開いたとき (または翌日) に再表示され、確認モーダルの安全判定も「版更新あり」のまま (PR-0a-2b)。
+- **META キー（PR-5a）**: program の `lastVerifiedAt` / `officialUrl` は内容ではなく管理用の値なので、
+  公式差分の比較 (`propagateProgramUpdates`) と既読指紋 (`syncDigest` の `progU`) の正規形から除外する
+  (`mergeSeed.PROGRAM_META_KEYS`)。四半期チェックで確認月を一斉に更新しても既存端末に『内容更新 N 件』は
+  出ない (SEED_VERSION も上げない)。代わりに表示時に**同梱 seed を id で引いて**解決する
+  (`getSeedProgram` / `getSeedEdge` / `getSeedCard` は `seed()` の最終形 = override 適用後・tombstone
+  除外後から作る lookup)。内容に実差分がある週は従来どおり公式値を丸ごと採るので、その時に meta も届く。
+  edge / card の `lastVerifiedAt` も同じ扱い (`EDGE_META_KEYS` / `CARD_META_KEYS`。どちらも add-only で
+  比較しないが、将来の更新伝播と MIGRATIONS の設計が参照する)。
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
 - **新規プロファイルの公式データ自動投入（PR-6a-1 / F7）**: `localStorage` が空の初回起動では公式マスタ
@@ -346,7 +356,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1532 ケース / 86 ファイル** (2026-09-27 時点)） |
+| テスト | Vitest（**1606 ケース / 88 ファイル** (2026-09-27 時点)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -465,7 +475,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1532 ケース / 86 ファイル (2026-09-27 時点))
+npm run test         # Vitest (1606 ケース / 88 ファイル (2026-09-27 時点))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -627,6 +637,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **改善 PR-6d (U6 復旧網)** — 保存データの読み込み失敗を検知して生データを `pointmax:crash-backup:v1` に退避し、App を描画せず復旧パネルを出す (`Root.tsx` / `hydrationGuard.ts`)。画面境界を `key={tab}` に、同期モーダル / 更新バナー / 計算タブの通知枠は例外で非表示に縮退、`onUncaughtError` の静的 fallback。復旧パネル (再読み込み / 書き出し / コピー / 直前の状態に戻す / 公式データで初期化 = スナップショットを取らない `resetToSeed`)。設定の「直前の状態に戻す」がマスタ更新前へ戻したときに自動反映で打ち消される既存バグを修正。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-0a-3b (docs)** — README のマスタ件数表を `seed()` の実測値 (stores 268 / programs 46 / memberships 384) に更新し、「計算に反映していない条件（既知の近似）」節を新設 (制度レベルの近似だけを列挙し、program 固有の条件は seed の conditions / notes を正とする)。seed のコメント (J-POINT の件数・W 高島屋の実効率・cron の書き込み範囲) と tsconfig.scripts.json のヘッダを現行実装に合わせた。コメントと docs のみで、SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-6a-2 (U1 期限切れ整理のサイレント反映 + PR-6d follow-up)** — 期限切れ campaign (validTo を過ぎた tombstone) とその cascade membership の削除だけの週は、確認モーダルもバナーも出さずに反映して digest を既読化し、他の追加・更新と同じ週はバナーに「（期限切れ M 件を整理）」を併記 (`planAutoApply` / `isExpiredRemoval`、validTo 当日は従来どおりモーダル)。新規プロファイルの seed 投入を Root で App の描画前に行い空画面の 1 フレームを解消、復旧パネルの小修正 (localStorage 例外の握りつぶし・初期化の予備経路で案内を見せてから再読み込み)。SEED_VERSION / PERSIST_SCHEMA 据え置き
+- **改善 PR-5a (V1 鮮度 = 同梱 seed 参照方式)** — 確認月 `lastVerifiedAt` を還元プログラムとカードの基本還元にも持たせ (`BenefitProgram` / `Card`)、計算結果の展開ビューで採用したルート・還元率の最終確認の最古が 12 ヶ月超なら『⚠ 古い情報かも (最終確認 YYYY-MM)』を 1 チップ出す (旧『⚠ ルート要確認』を置き換え、edge の 6 ヶ月判定も 12 ヶ月に統一)。確認月と `officialUrl` は META キーとして公式差分の比較・指紋から外し (通知しない)、表示時に同梱 seed を参照する (`resolveVerifiedMonth` / `getSeedProgram` / `getSeedEdge`)。`ResolvedRate` の charge 変種に `programId`、`CardRanking.adoptedProgramIds` を追加。四半期チェック対象 30 program に 2026-07 を記入 (週次監視 tier と ADDED は空欄)。SEED_VERSION 47 / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
@@ -649,13 +660,28 @@ sync インフラ修正系の PR (#19-#26、#33-#35、#37、#39 等) は tag な
   代わりに、計算結果を展開したとき、その取引で貯まる量が最低交換単位に満たない交換ステップがあれば
   「◯◯ を △△ 貯めてから交換 (最低交換単位)」と事後注記します。**貯めてから (単位を満たしてから)
   交換すれば、表示のレート積どおりに交換できます**。
-- 交換レートの**鮮度管理** (`ConversionEdge.lastVerifiedAt`、`"YYYY-MM"` 月精度): 公式ページで
-  最後に人手確認した月を主要 edge に記録し、**最終確認から6ヶ月を超えた**交換ルートには、
-  計算結果を展開したとき「⚠ ルート要確認 (最終確認 YYYY-MM)」を表示します (経由 edge の最古で判定、
-  判定は純関数 `src/domain/edgeFreshness.ts`)。**未記入の edge は未検証扱いで警告を出しません**
-  (未検証を「古い」と誤警告しないため)。交換ルート画面 (メンテ用) では各 edge の最終確認月を表示し、
-  6ヶ月超は ⚠ を付けます。未記入 edge の漸進記入と記入済み edge の棚卸しは、`SESSION_LOG` の
-  「🗓 四半期ごと手動確認チェックリスト」で四半期ごとに回します (四半期×2回 = 6ヶ月閾値と整合)。
+- 公式情報の**鮮度管理** (`lastVerifiedAt`、`"YYYY-MM"` 月精度。PR-5a で交換 edge から
+  還元プログラム・カードの基本還元に拡大): 公式ページで最後に人手確認した月を、交換 edge
+  (`ConversionEdge`)・還元プログラム (`BenefitProgram`)・カードの基本還元率 (`Card`) に記録します。
+  計算結果を展開したとき、**採用した交換ルート (primary / 上乗せ / ポイントカード提示の経路) と
+  還元率 (採用 program、program を採用しない結果はカードの基本還元) の最終確認のうち最古が
+  12ヶ月を超えていれば**、「⚠ 古い情報かも (最終確認 YYYY-MM)」を **1 チップだけ**表示します
+  (内訳はチップの title。計算は現在の値のまま。判定は純関数 `src/domain/edgeFreshness.ts` の
+  `collectStaleItems`、閾値 `FRESHNESS_STALE_MONTHS = 12` は edge / program / card で共通。
+  以前の edge 専用 6 ヶ月判定もこの値に揃えた)。**未記入は未検証扱いで警告を出しません**
+  (未検証を「古い」と誤警告しないため)。
+  確認月は META キーで既存端末に伝播しないため、**表示時に同梱 seed を参照**します
+  (`resolveVerifiedMonth`: 端末のコピーが編集済み (`userModifiedAt`) なら出さない / 率が seed と
+  一致すれば seed の月 (seed が未記入なら未記入扱い) / 率が違えば端末の月)。交換ルート画面 (メンテ用) の
+  各 edge の最終確認月も同じ解決で、12ヶ月超は ⚠ を付けます。特典画面の「🔗 公式」も、未編集の公式
+  program は seed の `officialUrl` を優先し、seed に無ければ出しません。
+  記入するのは `SESSION_LOG` の「🗓 四半期ごと手動確認チェックリスト」の対象 (四半期ごとに**当月へ更新**。
+  2026-07 の初回監査 #142 の 27 件 + 監査記録のある 3 件、edge 44 本)。**週次 cron が監視する倍率 tier
+  (J-POINT パートナー / たまるマーケット) と cron の追加分 (`ADDED_PROGRAMS`) は空欄**にします
+  (cron は率の一致を確認しても日付を更新しないため。seed.test の契約で固定)。カード 24 枚の記入は PR-5b。
+  12 ヶ月閾値は、四半期チェックが 1 回遅れただけで保有カードの結果に一斉に ⚠ が出るのを避けるため
+  (2026-07 記入分が最初に対象になるのは 2027-08。四半期チェックは 2026-10 (PR-5b) の後、
+  **次回 2027-01** の周期で回し、そのたびに確認月を更新する)。
   警告チップは展開ビュー内で `rankWarningChips` の優先順 (要エントリー = 要経由 > 経由型 > 上限 >
   限定・対象外 > stale > 端数) で最大 3 件を表示します (PR-0a-2b)。
 - 「ポイントカード」画面で「使う」を OFF にすると、**交換ルート画面**ではそのポイント通貨を
