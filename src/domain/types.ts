@@ -289,9 +289,9 @@ export type StoreProgramMembership = {
 //   "physical": 物理カード or タッチ決済 (default)
 //   省略時は chargeBased から導出
 //
-// @deprecated v3 PR 3: defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates は
-// BenefitProgram (prog-*-base / prog-*-addon) に移行済み。
-// 後方互換のためフィールドは残すが、programEvaluator が評価源。
+// v3 PR 3: defaultBonusRate / defaultBonusCurrencyId / cardSpecificBonusRates は
+// BenefitProgram (prog-*-base / prog-*-addon) に移行し、本型からは削除済み。
+// 還元の評価源は programEvaluator。
 export type PaymentApp = {
   id: string;
   name: string;

@@ -76,7 +76,10 @@
 ### 優先通貨（v4.0.0）
 - 「普段ためたい通貨」を **順序付きリスト** で登録（CurrenciesScreen で ↑↓× 管理）。
 - Calculator は **通貨タブ切替** で、選んだ対象通貨ごとの最終取得量を単一表示。
-- 優先通貨が未設定の場合は従来どおり対象通貨 select にフォールバック。
+- **起動時の既定タブ（PR-6a-1 / G19）**: 計算画面のマウント時は「同日の下書き（上記 PR-3d）?? 優先通貨の
+  先頭」のタブで開き、結果の**同率 1 位を自動展開**する（`resolveInitialCurrencyId` + 展開ガードの初期値
+  `null`）。v6.2.0 の lint 対応（effect → render 中 guard 置換）で失われていた挙動の復旧。
+- 優先通貨が未設定の場合は従来どおり対象通貨 select にフォールバック（未選択で起動し、円換算を既定にはしない）。
 
 ### 円換算（目安）タブ（PR-5a / DB-2）
 - 通貨タブの末尾（優先通貨未設定時は対象通貨 select の選択肢）に **`¥ 円換算`** を追加。
@@ -164,7 +167,14 @@
   「アプリに反映」と同じ経路 (`computeSeedUpdate`) で、公式の修正・削除まで反映する (PR-0a-2a)。
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
+- **新規プロファイルの公式データ自動投入（PR-6a-1 / F7）**: `localStorage` が空の初回起動では公式マスタ
+  （`seed()`）を自動で投入する（`store.seedIfEmpty`、App マウント時 + persist の hydration 完了時）。
+  投入するのは **hydration 完了後に 8 collection が全て空かつ `lastSeedVersion === 0`** のときだけで、
+  hydration 失敗時・schema 移行待ち・1 件でもデータがある state では何もしない（壊れた生データを上書き
+  しない）。投入後の state は seed と一致するため同期モーダル／更新バナー／自動反映バナーは出ず、
+  カードは R1 どおり全 OFF で入る（オンボーディングから保有カードを選ぶ）。
 - 「サンプル投入」「ローカルデータ初期化」「JSONエクスポート/インポート」は設定画面から。
+  ローカルデータ初期化で空になった場合も、**次回起動時に同じ規則で公式マスタが再投入**される。
 - **破壊的操作の直前スナップショット＋「直前の状態に戻す」（PR-4a / N-4）**: インポート・
   ローカルデータ初期化・URL 同期の全上書き・マスタ更新の反映の**直前**に、その時点の
   persist state を独立キー `pointmax:snapshot:v1` に **1 世代だけ**自動退避する
@@ -178,7 +188,7 @@
   (ボタン disabled + 理由表示)、不整合 state を作らない。quota 等の保存失敗は握りつぶし、
   **本体の破壊的操作は止めない** (`usageStats` / `calcFormDraft` と同型の schema-reset 非依存キー)。
 - **マスタ更新履歴** (設定画面内セクション、旧「更新履歴」タブ): 週次 cron で自動マージ
-  された変更を時系列で閲覧 (`sources/SYNC_HISTORY.json` を bundle 同梱、最新 104 件、
+  された変更を時系列で閲覧 (`sources/SYNC_HISTORY.json` を bundle 同梱、直近 52 件 (約半年)、
   GitHub commit/PR への動線あり)。最新 1 件は設定上部に常時プレビュー表示し、全履歴は
   折りたたみで展開する。`#settings/history` で直接開ける (旧 `#sync-history` からも自動
   リダイレクト)。自動マージが 0 件で要レビューのみの週も、件数と理由内訳 (`reviewStats`)
@@ -192,6 +202,7 @@
   1 段目 (`campaign-index` prompt) で詳細ページ URL を列挙 → 2 段目で各子ページを
   campaign extractor で抽出 → 1 つの extracted JSON に統合 (後段 propose は従来同形)。
   子 URL は同一ドメインの http(s) のみ・最大 10 件にガード。
+  2026-09 時点で enabled な crawl:index ソースは無い (jre / 楽天Pay は停止中、設定は再開用に保持)。
 - `npm run sync:propose` で現在 seed と diff、`autoApplicable`/`needsReview` に分類:
   - confidence ≥ 0.9 / rate 変動 ±10pp 以内 / 倍率 0.5x〜2x / 既存と衝突なし → auto
   - それ以外 (excludedCategory / lowConfidence / referenceChange / unsupportedDateClaim 等) → review
@@ -234,8 +245,9 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1061 ケース / 65 ファイル**） |
+| テスト | Vitest（**1198 ケース / 72 ファイル** (2026-09-27 時点)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
+| バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
 
 ### ドメインの構造
@@ -339,12 +351,19 @@ scripts/sync/
   types.ts             # 共通型 + 閾値定数 + scope ディレクティブ
 ```
 
+`scripts/**/*.ts` は `tsconfig.scripts.json` で `tsc -b` の型検査対象（lib は ES2023 のみ、DOM 無し）。
+CI の typecheck に加え、`npm run build`（= weekly-sync の safety gate と deploy）でも検査されるため、
+scripts だけの型エラーでも auto 反映は全件 safetyFailed に降格し deploy も止まる。
+scripts が import する `src/`（seed 系・mergeSeed・migrations・types・urlSafety・defineMemberships など）は
+Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わないこと。
+
 ## ローカル開発
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1061 ケース)
+npm run test         # Vitest (1198 ケース / 72 ファイル (2026-09-27 時点))
+npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
 npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出
@@ -376,15 +395,17 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 
 - 週2回（毎週月曜・木曜 06:00 JST）GitHub Actions が同期パイプラインを実行 (`workflow_dispatch` で手動実行可)
 - **同期ソースの月/木 2グループ分割 (無料枠対策)**: 抽出に使う gemini-2.5-flash は無料枠が
-  20 リクエスト/日のため、enabled 15 ソースを 1 日で全 fetch すると後半ソースが 429 で枯渇する。
+  20 リクエスト/日のため、enabled ソースを 1 日で全 fetch すると後半ソースが 429 で枯渇する。
   そこで各ソースに `fetchGroup: mon | thu` を付与し (`sources/registry.yaml`)、**月曜 run は mon
-  グループ / 木曜 run は thu グループ**だけを fetch して各実行を無料枠内に収める。重量級
-  (3 attempts 常連: 楽天/Ponta/Vポイント) と crawl:index 型 (JRE/楽天Pay) を両グループに分散し、
-  worst-case を mon ≈18 req / thu ≈19 req に均衡させている。曜日は weekly-sync.yml が実行時刻の
+  グループ / 木曜 run は thu グループ**だけを fetch して各実行を無料枠内に収める。
+  2026-09-27 に収穫ゼロのソースを停止 (Z4) し、保有カード系だけを残した: enabled は 3 ソース
+  (mon: J-POINT パートナー / たまるマーケット、thu: SMBC Vポイントアップ) で、worst-case は
+  単発 3 attempts × 本数 = mon 6 req / thu 3 req (d払い / PayPay を再有効化すると mon 9 / thu 6)。
+  停止中のソースの理由と再開条件は registry の各 notes に記載。曜日は weekly-sync.yml が実行時刻の
   JST 曜日から自動導出。手動 `workflow_dispatch` では `group` 入力 (`auto` / `mon` / `thu` /
   `all`=全 enabled) でグループを明示指定できる (`all` は無料枠を消費するため手動フル実行専用)
 - 高信頼項目 (autoApplicable) は `auto-sync/YYYY-MM-DD-HHMM` ブランチ + `auto-sync` ラベル付き PR を作成し、
-  safety check (件数上限/test/build) 通過後に **squash auto-merge** → main。
+  safety check (件数上限/test/build/main chunk 300 KiB) 通過後に **squash auto-merge** → main。
   bot のマージ (`GITHUB_TOKEN`) は push トリガーを起動しないため、GitHub Pages 再デプロイは
   `deploy.yml` の **`workflow_run`** (Weekly Master Sync 完了で発火) が担う
 - 要レビュー項目は `chore/sync-review-queue` ブランチの長寿命 PR (`needs-review` ラベル) に集約。
@@ -395,7 +416,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   updateField/programs の rate・validFrom・validTo / delete/programs)
 - `sync.config.json` の `autoMergeEnabled` で auto-merge の ON/OFF、`maxAutoChangesPerRun` が安全弁
   （超過時は全件 review 降格）
-- 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (最大 104 件、newest first)。
+- 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (直近 52 件 (約半年)、newest first)。
   auto-merge 週は auto-sync PR が、要レビューのみの週は weekly-sync の「Publish SYNC_HISTORY to main」step が
   履歴を main へ直 push し、いずれも `workflow_run` deploy でアプリの設定内「マスタ更新履歴」に反映される。
   GitHub の PR タブ (`auto-sync` ラベル絞り込み) + 履歴ファイルの両方で同じ情報を参照可
@@ -407,7 +428,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 
 | 対象 | auto-merge | 備考 |
 |---|---|---|
-| 既存 store/program 参照の **memberships** | ✅ する | rakuten/Ponta/JAL 等の提携店追加 |
+| 既存 store/program 参照の **memberships** | ✅ する | J-POINT パートナー / たまるマーケット等 |
 | 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview。反映は `seed-additions.ts` の `PROGRAM_OVERRIDES` (部分上書き) 経由で、手書き seed ファイルは書き換えない |
 | 既存 program の **期間変更** (validFrom/validTo) | ❌ しない (`periodChange` で needsReview) | キャンペーン延長/期間訂正の検知。承認は `npm run sync:approve -- <ID>` → `PROGRAM_OVERRIDES` 経由で反映 |
 | 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge |
@@ -494,6 +515,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
   採用。円換算モード / 金額未入力時は非表示。`CalculatorScreen` は `useMemo` で店舗/金額/通貨/データ
   変更時のみ再計算 (`pathCache` は `rankCards` 呼び出し単位で作り直される設計を壊さない方針)。
   SEED_VERSION / PERSIST_SCHEMA 据え置き (計算専用・新フィールドなし)
+- **改善 PR-6a-1 (起動回帰の修正 + 新規プロファイルの公式データ自動投入)** — 計算画面の起動時に「同日の下書き ?? 優先通貨の先頭」のタブを選び同率 1 位を自動展開する挙動を復旧 (v6.2.0 decb694 で失われた回帰、G19)、新規プロファイル / 初期化後の次回起動で公式 seed を通知なし・カード全 OFF で自動投入 (`seedIfEmpty`、F7)。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-0a-2a (購入チャネル核 + v46 修正の配信)** — `PurchaseChannel` (`in-store` / `online`) と `BenefitProgram.channel?` / `StoreProgramMembership.channel?` を追加し、`evaluatePrograms` に店舗から導出した既定チャネル (店頭、純 EC 店はネット) の gate を入れた。たまるマーケット 3 program と J-POINT 20倍のスタバ / マック membership 4 件を `online` にし、店頭計算での過大表示を修正 (エポス×ビックカメラ店頭 2.0%→0.5%、JCB W×スタバ店頭 10.5%→1%。楽天市場 / Yahoo! / じゃらん / HMV online は従来どおり)。v46 監査の edge 修正 3 本・削除 2 本を MIGRATIONS v47 で、廃止 program 2 件を `REMOVED_PROGRAM_IDS` で既存端末へ配信。設定の「サンプル投入」は `computeSeedUpdate` に委譲 (公式の修正・削除も反映)。sync は epos-tamaru 由来の新規 program に `channel:"online"` を決定論で付与。SEED_VERSION 46→47 / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 

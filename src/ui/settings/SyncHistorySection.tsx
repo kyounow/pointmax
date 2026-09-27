@@ -17,8 +17,10 @@ import {
 //
 // 表示方針:
 //   - 最新 1 件のプレビュー (日付 + 件数) は常時表示する (今後の自動反映の事後確認窓口)。
-//   - 全履歴 (最大 104 件) は details「過去の更新をすべて表示」で展開する
+//   - 全履歴は details「過去の更新をすべて表示」で展開する
 //     (常時全表示は重いので折りたたむ)。
+//   - 保持上限は scripts/sync/types.ts の SYNC_HISTORY_MAX_ENTRIES。src からは import
+//     できないので、UI 文言には件数を書かない (定数変更時の drift 防止)。
 //   - expanded=true (#settings/history 直リンク) のとき details を自動展開し
 //     セクション先頭へ scrollIntoView する。
 
@@ -44,7 +46,8 @@ export function SyncHistorySection({ expanded }: { expanded?: boolean }) {
     <div ref={sectionRef} data-section="sync-history">
       <h3 style={{ marginTop: 8 }}>マスタ更新履歴</h3>
       <p className="hint">
-        週次自動同期で公式マスタに反映された変更の履歴です (最新が上、最大 104 件)。
+        週次自動同期で公式マスタに反映された変更の履歴です
+        (最新が上。古い履歴は上限を超えると自動で削除されます)。
         各エントリーは GitHub の auto-sync PR からも確認できます。
       </p>
 
@@ -77,7 +80,7 @@ export function SyncHistorySection({ expanded }: { expanded?: boolean }) {
             )}
           </div>
 
-          {/* 全履歴 (最大 104 件) は折りたたみ。#settings/history では effect が自動展開。 */}
+          {/* 全履歴は折りたたみ。#settings/history では effect が自動展開。 */}
           <details ref={detailsRef} className="sync-history-more">
             <summary>過去の更新をすべて表示 ({history.entries.length} 件)</summary>
             <ul className="sync-history-list">

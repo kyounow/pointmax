@@ -135,3 +135,17 @@ export function resolveCalcFormRestore(
     draft.storeId && ctx.storeExists(draft.storeId) ? draft.storeId : null;
   return { amount: draft.amount, activeCurrencyId, storeId };
 }
+
+/**
+ * PR-6a-1 (G19): 計算画面マウント時の既定通貨タブ。
+ *   同日の下書き (resolveCalcFormRestore で優先通貨外は null 化済み) → 優先通貨の先頭 → ""。
+ *   "" は「未選択」= 優先通貨が未設定の人は従来どおり目標通貨 select で選ぶ。
+ *   v6.2.0 (decb694) で preferred[0] への既定が失われた回帰の復旧。
+ *   末尾を ¥ 円換算 (YEN_TARGET_ID) に広げるのは 6b の担当 (要エントリー表示の移植と同時)。
+ */
+export function resolveInitialCurrencyId(
+  restoredId: string | null,
+  preferredCurrencyIds: readonly string[],
+): string {
+  return restoredId ?? preferredCurrencyIds[0] ?? "";
+}

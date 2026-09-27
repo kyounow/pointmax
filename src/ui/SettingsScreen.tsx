@@ -252,7 +252,7 @@ export function SettingsScreen() {
       title: "ローカルデータを初期化しますか？",
       message:
         "ブラウザに保存されているこのアプリのデータ（カード／ポイント／店舗／ルール／交換ルート／支払方法）を全て削除します。\n" +
-        "公式マスタは「外部URLからのデータ同期」または「サンプル投入」から再取得できます。\n" +
+        "公式マスタは次回起動時に自動で再投入されます (すぐ戻すなら「サンプル投入」)。\n" +
         "エクスポート済み JSON からインポートで復元できます。",
       okText: "初期化",
       danger: true,
@@ -487,7 +487,7 @@ export function SettingsScreen() {
       <h4 style={{ margin: "16px 0 4px" }}>ローカルデータ初期化</h4>
       <p className="hint" style={{ marginTop: 0 }}>
         ブラウザに保存されたこのアプリのデータを全削除します。
-        公式マスタはアプリ起動時の更新バナー（または上の URL 同期・サンプル投入）から再取得できます。
+        空になった状態で次にアプリを起動すると公式マスタが自動で再投入されます（すぐ戻すなら上のサンプル投入・URL 同期）。
       </p>
       <div className="row" style={{ gap: 8, marginBottom: 16 }}>
         <button

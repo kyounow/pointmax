@@ -127,7 +127,7 @@ function runPipeline(extracted: ExtractedSource[], current: SeedShape) {
 
   // Phase C: orphan guard
   const existingStoreIds = new Set(current.stores.map((s) => s.id));
-  const existingProgramIds = new Set(current.programs.map((p) => p.id));
+  const existingProgramIds = new Set((current.programs ?? []).map((p) => p.id));
   const orphan = downgradeOrphanMemberships(
     chainPromote.proposals,
     existingStoreIds,

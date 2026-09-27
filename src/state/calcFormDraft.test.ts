@@ -7,6 +7,7 @@ import {
   readCalcFormDraft,
   clearCalcFormDraft,
   resolveCalcFormRestore,
+  resolveInitialCurrencyId,
   localDateKey,
   type CalcFormDraft,
 } from "./calcFormDraft";
@@ -162,5 +163,57 @@ describe("resolveCalcFormRestore (同日ガード + 通貨/店舗ガード)", ()
       activeCurrencyId: null,
       storeId: null,
     });
+  });
+});
+
+// PR-6a-1 (G19): マウント時の既定通貨タブ = 同日の下書き ?? 優先通貨の先頭 ?? ""。
+describe("resolveInitialCurrencyId (起動時の既定通貨タブ)", () => {
+  it("復元 id があれば優先通貨の先頭より優先する", () => {
+    expect(resolveInitialCurrencyId("ana-mile", ["rakuten-pt", "ana-mile"])).toBe(
+      "ana-mile",
+    );
+  });
+
+  it("復元 id が無ければ優先通貨の先頭", () => {
+    expect(resolveInitialCurrencyId(null, ["rakuten-pt", "ana-mile"])).toBe(
+      "rakuten-pt",
+    );
+  });
+
+  it("復元 id も優先通貨も無ければ \"\" (未選択。¥ 円換算を既定にしない = 6b の担当)", () => {
+    expect(resolveInitialCurrencyId(null, [])).toBe("");
+  });
+
+  it("優先通貨から外れた下書き通貨 (resolveCalcFormRestore で null 化) は優先通貨の先頭になる", () => {
+    const now = new Date(2026, 6, 15, 12, 0);
+    const preferred = ["rakuten-pt", "ana-mile"];
+    const restored = resolveCalcFormRestore(
+      {
+        date: localDateKey(now),
+        amount: "3000",
+        activeCurrencyId: "removed-cur",
+      },
+      { now, preferredCurrencyIds: preferred, storeExists: () => true },
+    );
+    expect(restored.activeCurrencyId).toBeNull();
+    expect(resolveInitialCurrencyId(restored.activeCurrencyId, preferred)).toBe(
+      "rakuten-pt",
+    );
+  });
+
+  it("前日の下書きは無視され、優先通貨の先頭になる (毎日の初回起動)", () => {
+    const now = new Date(2026, 6, 15, 12, 0);
+    const preferred = ["rakuten-pt", "ana-mile"];
+    const restored = resolveCalcFormRestore(
+      {
+        date: dateKeyOffset(now, -1),
+        amount: "3000",
+        activeCurrencyId: "ana-mile",
+      },
+      { now, preferredCurrencyIds: preferred, storeExists: () => true },
+    );
+    expect(resolveInitialCurrencyId(restored.activeCurrencyId, preferred)).toBe(
+      "rakuten-pt",
+    );
   });
 });

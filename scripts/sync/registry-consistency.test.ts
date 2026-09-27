@@ -104,11 +104,20 @@ describe("registry.yaml 整合性契約", () => {
     ).toBe(true);
   });
 
-  it("索引ハブ既知の 2 source (jre/rakuten-pay) が crawl: index 化されている", () => {
+  it("索引ハブ既知の 2 source は停止中でも crawl:index 設定を保持する (再開の前提)", () => {
     for (const id of ["jre-point-campaigns", "rakuten-pay-campaigns"]) {
       const s = registry.sources.find((x) => x.id === id);
       expect(s?.crawl?.mode, id).toBe("index");
     }
+  });
+
+  // crawl:index は 1 ソースで索引 2〜3 + 子 maxChildren×3 ≈ 17〜18 req を使い得る。
+  // 429 で後続ソースを打ち切る回路遮断 (Z5-4) が入るまでは有効化しない、というガード。
+  it("enabled な crawl:index ソースは 0 本", () => {
+    const enabledCrawl = registry.sources.filter(
+      (s) => s.enabled && s.crawl?.mode === "index",
+    );
+    expect(enabledCrawl.map((s) => s.id)).toEqual([]);
   });
 });
 
@@ -143,6 +152,49 @@ describe("fetchGroup 契約 (無料枠 mon/thu 分割)", () => {
       (s) => !s.enabled && s.fetchGroup !== undefined,
     );
     expect(disabledWithGroup.map((s) => s.id)).toEqual([]);
+  });
+});
+
+// ── Z4 停止ソース (2026-09-27、収穫ゼロのソース停止) の契約 ──
+// 停止したソースが fetchGroup 付きで enabled:true に戻る (= 無料枠を再び消費する)
+// のを防ぐ。再開する PR は notes の再開条件を満たしたうえで、この一覧から id を外す。
+const Z4_STOPPED = [
+  // 索引ハブ / 単一カテゴリ (commit 1)
+  "jre-point-campaigns",
+  "rakuten-pay-campaigns",
+  "jal-card-tokuyaku-list",
+  // point-partner: stores のみ出力で auto 経路が無い (commit 2)
+  "rakuten-point-partners",
+  "d-point-partners",
+  "v-point-partners",
+  "ponta-partners",
+  // card extractor: cards の updateField に apply / approve 経路が無い (commit 3)
+  "mufg-card-global-point",
+  "orico-card-member-point",
+  "smbc-v-gold-7percent",
+  // campaign 決済系: 0b-3 (auto ガード + autoMerge:false + target) で再有効化する一時停止 (commit 4)
+  "d-pay-campaigns",
+  "paypay-campaigns",
+];
+
+describe("Z4 停止ソース (収穫ゼロのソース停止)", () => {
+  it.each(Z4_STOPPED)(
+    "Z4 停止ソースは enabled:false で fetchGroup を持たない: %s",
+    (id) => {
+      const s = registry.sources.find((x) => x.id === id);
+      expect(s, id).toBeDefined();
+      expect(s?.enabled, id).toBe(false);
+      expect(s?.fetchGroup, id).toBeUndefined();
+    },
+  );
+
+  // propose (readExtractedSources) は registry を見ずに extracted/*.json を全部読む。
+  // 停止ソースの残骸が review queue に残り続けないよう、停止時に git rm する。
+  it.each(Z4_STOPPED)("Z4 停止ソースの extracted は削除済み: %s", (id) => {
+    expect(
+      existsSync(resolve(REPO_ROOT, `sources/extracted/${id}.json`)),
+      id,
+    ).toBe(false);
   });
 });
 

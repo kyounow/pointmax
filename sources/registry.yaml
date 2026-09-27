@@ -1,6 +1,7 @@
 # PointMax master sync: source registry
 # 各クレカ・ポイントカード・決済アプリの「マスタとなる公式ページ」を列挙する。
-# 週次 GitHub Actions cron がこのファイルを読み、各 enabled: true なソースを Gemini CLI に渡す。
+# 週次 GitHub Actions cron がこのファイルを読み、各 enabled: true なソースを Gemini API (@google/genai) で抽出する。
+# auto-merge の範囲はルート README「cron が auto-merge する/しない範囲」表が正 (notes にはソース別の可否を書かない)。
 #
 # 編集ルール:
 #  - 新規追加時は id をユニーク (slug, kebab-case) に
@@ -8,30 +9,36 @@
 #  - notes に「なぜこのソースを選んだか」を残すと将来の自分が助かる
 #  - enabled: true にするソースには fetchGroup (mon|thu) を必ず付与する
 #    (無料枠分割。registry-consistency 契約テストで強制。下記 fetchGroup 節参照)
+#  - enabled:false にするときは sources/extracted/<id>.json を git rm する
+#    (propose は registry を見ずに extracted/*.json を全部読むため、残骸が review queue に残る)
 #
-# extractor の選択肢: card | jal-tokuyaku | point-partner | payment-app
-# produces の選択肢:  cards / storeRules / categoryRules / stores / loyaltyRules / paymentApps
+# extractor の選択肢: card | jal-tokuyaku | point-partner | payment-app | campaign | jcb-jpoint |
+#                     epos-tamaru | ongoing-program (ExtractorKind の 8 種。crawl: index の 1 段目は
+#                     crawl 専用の campaign-index を自動で使うので extractor には書かない)
+# produces の選択肢:  cards / categoryRules / stores / paymentApps / programs / memberships (ProducesKind)
+#                     (jal-card-tokuyaku-list / smbc-v-gold-7percent に残る storeRules は旧値。
+#                      produces は fetch 時のログ表示にしか使われない)
 # extractionScope:    comprehensive | chains-only | existing-only
 #
 # ─── fetchGroup (同期グループ / 無料枠分割) ───
-# gemini-2.5-flash の無料枠 = 20 リクエスト/日。enabled 15 ソースを 1 日で全 fetch
-# すると、重量級 (3 attempts 常連) + crawl:index (索引1+子最大5=最大6req) の消費で
+# gemini-2.5-flash の無料枠 = 20 リクエスト/日。enabled ソースを 1 日で全 fetch すると
 # 実行順後半のソースが 429 で枯渇する (2026-07-15 手動 run 29384535151 で後半 5
 # ソースが空と実証)。→ 月 (mon) / 木 (thu) の 2 グループに分割し、各実行を無料枠内に収める。
 # weekly-sync.yml が実行時刻の JST 曜日から group を導出 (月→mon / 木→thu)、
 # fetch-all.ts の `--group mon|thu|all` で対象を絞る。手動フル実行は `--group all`。
+# 記載順 = 実行順 (fetch-all は selectSourcesForGroup で registry の記載順どおりに逐次実行)。
 #
-# リクエスト消費でバランス (重量級=最大3req / crawl=最大6req/attempt セット):
-#   mon (worst ≈18 req):
-#     rakuten-point-partners (重3) / jre-point-campaigns (crawl6) / d-point-partners /
-#     smbc-v-gold-7percent / jcb-jpoint-partners / d-pay-campaigns / epos-tamaru-market
-#   thu (worst ≈19 req):
-#     v-point-partners (重3) / ponta-partners (重3) / rakuten-pay-campaigns (crawl6) /
-#     jal-card-tokuyaku-list / mufg-card-global-point / orico-card-member-point /
-#     paypay-campaigns / smbc-vpoint-up
+# リクエスト消費の見積り (1 req = Gemini 呼び出し 1 回):
+#   単発ソース      = 最大 3 req (3 attempts)
+#   crawl:index     = 索引 2〜3 + 子 maxChildren×3 ≈ 17〜18 req/ソース (maxChildren 5 の場合)
+#   (旧ヘッダの「索引1+子最大5=最大6req」は誤り。停止前 15 本の worst は mon 36 / thu 39)
+#   現在 enabled な crawl:index ソースは 0 本。
 #
-# 分割根拠: 重量級 3 ソース (rakuten/v-point/ponta) と crawl 2 ソース (jre/rakuten-pay)
-# を mon/thu に分散し、両グループの worst-case を 20 req 以内かつほぼ均等 (18/19) にする。
+# 現在の構成 (2026-09-27、収穫ゼロのソースを停止 (Z4) した後。enabled 3 本、worst = 3 × 本数):
+#   mon (worst 6 req): jcb-jpoint-partners / epos-tamaru-market
+#   thu (worst 3 req): smbc-vpoint-up
+#   0b-3 で d-pay-campaigns (mon) / paypay-campaigns (thu) を再有効化すると mon 9 / thu 6。
+#   停止したソースの理由と再開条件は各 notes 先頭の「★ 2026-09-27 停止 (Z4)」を参照。
 # enabled:false のソースは fetchGroup 不要 (enabled:true 化する PR で必ず付与すること)。
 
 version: 1
@@ -60,9 +67,16 @@ sources:
       - storeRules
       - categoryRules
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: 単一カテゴリ (scat=1201) の検索結果ページで、直近の抽出は stores 1 件。
+      proposeJalTokuyakuMemberships の唯一の供給源だが、収穫はほぼゼロ。
+      再開条件: scat を分割した URL 設計 (カテゴリごとに source を分ける等)。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- jal-card-tokuyaku-list --allow-disabled`。
+      停止に合わせて sources/extracted/jal-card-tokuyaku-list.json を git rm 済み
+      (propose は registry を見ずに extracted/*.json を全部読むため、残骸を残さない)。
+      ---
       ★ 2026-05-12 (3 度目): milenet/group/index.html も Gemini が "navigation hub,
       not the partner list itself" と判定。実際の店舗データを持つ URL に再々切替。
       partner.jal.co.jp/search_result/ は条件指定型の検索結果ページで、
@@ -140,9 +154,18 @@ sources:
     produces:
       - stores
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: point-partner v1.2 は stores しか出力せず、loyaltyRules は v6 PR-1e 以降
+      propose が無視している。全件が storeAdditionsDisabled か idCollision で review に
+      溜まり、auto になる経路が無い (構造的に収穫ゼロ)。しかも mon の先頭で保有カード系の
+      ソースより先に無料枠を使っていた。
+      再開条件: point-partner prompt の改訂 (programs + memberships を直接出力する形) と、
+      その契約テストが入ったとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- rakuten-point-partners --allow-disabled`。
+      停止に合わせて sources/extracted/rakuten-point-partners.json を git rm 済み。
+      ---
       楽天ポイントカード提示で貯まる加盟店一覧。
       加盟店数が膨大 (個店 + 全国チェーン) なので chains-only。
       pointCardId は rakuten-pointcard を対象。
@@ -155,9 +178,17 @@ sources:
     produces:
       - stores
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: point-partner v1.2 は stores しか出力せず、loyaltyRules は v6 PR-1e 以降
+      propose が無視している。全件が storeAdditionsDisabled か idCollision で review に
+      溜まり、auto になる経路が無い (構造的に収穫ゼロ)。
+      再開条件: point-partner prompt の改訂 (programs + memberships を直接出力する形) と、
+      その契約テストが入ったとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- d-point-partners --allow-disabled`。
+      停止に合わせて sources/extracted/d-point-partners.json を git rm 済み。
+      ---
       dポイントカード提示で貯まる加盟店一覧。
       加盟店数が膨大なので chains-only。
       pointCardId は d-pointcard を対象。
@@ -169,9 +200,17 @@ sources:
     produces:
       - stores
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: point-partner v1.2 は stores しか出力せず、loyaltyRules は v6 PR-1e 以降
+      propose が無視している。全件が storeAdditionsDisabled か idCollision で review に
+      溜まり、auto になる経路が無い (構造的に収穫ゼロ)。
+      再開条件: point-partner prompt の改訂 (programs + memberships を直接出力する形) と、
+      その契約テストが入ったとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- v-point-partners --allow-disabled`。
+      停止に合わせて sources/extracted/v-point-partners.json を git rm 済み。
+      ---
       Vポイントカード (旧Tカード) 提示で貯まる加盟店一覧。
       2024 年に Tポイント が Vポイント に統合。tsite.jp は旧サイトだが現在も提携店リストとして機能している模様。
       pointCardId は vpoint-card を対象。
@@ -183,9 +222,17 @@ sources:
     produces:
       - stores
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: point-partner v1.2 は stores しか出力せず、loyaltyRules は v6 PR-1e 以降
+      propose が無視している。全件が storeAdditionsDisabled か idCollision で review に
+      溜まり、auto になる経路が無い (構造的に収穫ゼロ)。
+      再開条件: point-partner prompt の改訂 (programs + memberships を直接出力する形) と、
+      その契約テストが入ったとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- ponta-partners --allow-disabled`。
+      停止に合わせて sources/extracted/ponta-partners.json を git rm 済み。
+      ---
       Pontaカード提示で貯まる加盟店リスト。
       pointCardId は ponta-card を対象。
       ※ 昨夜 (2026-05-11 夜) は Gemini が混雑 + 思考散文応答で取得失敗、リトライ予定。
@@ -198,9 +245,20 @@ sources:
       - storeRules
       - categoryRules
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、検知しかできない card extractor)。enabled:false + fetchGroup 削除。
+      停止理由: card extractor の出力を反映する経路が無い。cards の defaultRate 差分は
+      updateField/cards になるが、isApplicableProposal (scripts/sync/types.ts:550-557) が
+      false のため apply-proposals (L137-140) では skipped、approve-proposals (L140-143) では
+      unsupported になり、auto でも承認でも seed に書かれない。storeRules は propose が
+      消費しない (使うのは jal-tokuyaku 経路だけ)。SYNC_HISTORY 全 38 entry に mufg /
+      orico / smbc-v-gold 由来の反映は 0 件。直近 (9/13) は nonJson fallback で 0 件。
+      再開条件: cards の更新経路 (MIGRATIONS 自動生成等) ができたとき、または 0 req の
+      canary (rate-watch) で基本還元率を監視するとき。aliases.json の cardIds 対応
+      (smbc-v-gold-7percent → smbc-v) は再開用に残す。
+      停止に合わせて sources/extracted/smbc-v-gold-7percent.json を git rm 済み。
+      ---
       ★ 2026-05-12 成功: 対象店舗一覧ページ (cardinfo9001629.jsp) で URL Context Tool 取得成功。
       Gemini が 22 storeRules を抽出 (旧 proper_p5.jsp の散文ループ問題を回避)。
       ただし cardId: "smbc-v-gold" (架空) や storeId 命名差 (seven-eleven vs conv-7eleven 等)
@@ -220,9 +278,20 @@ sources:
       - cards
       - categoryRules
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、検知しかできない card extractor)。enabled:false + fetchGroup 削除。
+      停止理由: card extractor の出力を反映する経路が無い。cards の defaultRate 差分は
+      updateField/cards になるが、isApplicableProposal (scripts/sync/types.ts:550-557) が
+      false のため apply-proposals (L137-140) では skipped、approve-proposals (L140-143) では
+      unsupported になり、auto でも承認でも seed に書かれない (auto と判定されても履歴に
+      幻の auto が残るだけ)。SYNC_HISTORY 全 38 entry に mufg / orico / smbc-v-gold 由来の
+      反映は 0 件。直近 (9/16) の抽出 defaultRate 0.001 は seed の mufg-card と一致。
+      再開条件: cards の更新経路 (MIGRATIONS 自動生成等) ができたとき、または 0 req の
+      canary (rate-watch) で基本還元率を監視するとき。aliases.json の cardIds 対応
+      (mufg-card-global-point → mufg-card) は再開用に残す。
+      停止に合わせて sources/extracted/mufg-card-global-point.json を git rm 済み。
+      ---
       ★ 2026-05-16 url をルールページに差し替え。
       旧 overview ページ (/mufgcard/point/global/index.html) は
       「1ポイント5円相当」表記から Gemini が defaultRate 0.005 と誤読し、
@@ -245,9 +314,19 @@ sources:
       - cards
       - categoryRules
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、検知しかできない card extractor)。enabled:false + fetchGroup 削除。
+      停止理由: card extractor の出力を反映する経路が無い。cards の defaultRate 差分は
+      updateField/cards になるが、isApplicableProposal (scripts/sync/types.ts:550-557) が
+      false のため apply-proposals (L137-140) では skipped、approve-proposals (L140-143) では
+      unsupported になり、auto でも承認でも seed に書かれない。SYNC_HISTORY 全 38 entry に
+      mufg / orico / smbc-v-gold 由来の反映は 0 件。直近 (9/16) は nonJson fallback で 0 件。
+      再開条件: cards の更新経路 (MIGRATIONS 自動生成等) ができたとき、または 0 req の
+      canary (rate-watch) で基本還元率を監視するとき。aliases.json の cardIds 対応
+      (orico-card-member-point → orico-card) は再開用に残す。
+      停止に合わせて sources/extracted/orico-card-member-point.json を git rm 済み。
+      ---
       ★ 2026-05-16 url を THE POINT 専用ページに差し替え + enabled:true 復帰。
       旧汎用会員ページ (/for/member/orico/) は「全体付与率 0.5% (200円1pt)」を
       返し THE POINT 固有の 1% を誤 downgrade する問題があったため、
@@ -270,12 +349,22 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     crawl:
       mode: index
       maxChildren: 5
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      crawl:index 設定は再開の前提として保持する。
+      停止理由: GitHub Actions の egress からは索引・子ページの prefetch が 403 (IP 起因。
+      自宅 IP では 200)。一覧は window.LIST のインライン JSON で描画されアンカーが 0 件。
+      URL Context での子 URL 列挙は実在しない URL を返した (9/14・9/21 ともに 404)。
+      mon run ごとに 11〜12 req を消費し、5 月の追加以来 0 件。
+      再開条件: inline-JSON 索引アダプタを実装し、GH egress で 200 が返ることを
+      workflow_dispatch で確認できたとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- jre-point-campaigns --allow-disabled`。
+      停止に合わせて sources/extracted/jre-point-campaigns.json を git rm 済み。
+      ---
       ★ 2026-06-10 (A-1 索引ハブ対策): crawl: index を設定。1 段目 (campaign-index)
       で当一覧ページから個別キャンペーン詳細 URL を列挙 → 2 段目で各詳細ページを
       campaign extractor で抽出 → 1 つの extracted JSON に統合。これまで恒常 0 件
@@ -287,8 +376,8 @@ sources:
       を対象 (通貨 jre)。期間限定の店舗 × JRE POINT 上振れ還元を
       1 キャンペーン=1 program (validFrom/validTo) + 対象店舗ごとの
       membership として抽出。日付明記が無い／店舗非依存は出力しない方針。
-      新規 program は base "idCollision" で必ず needsReview に回り
-      (ライブ還元計算に直接効くため)、無確認での本番 auto-merge はされない。
+      新規 program の auto 可否はルート README「cron が auto-merge する/しない範囲」表を参照
+      (PR #60 以降、campaign extractor 由来は isCampaignAutoMergeable を満たせば auto) (2026-09 訂正)。
       決済アプリ系キャンペーン (楽天Pay/d払い) は今後検討 (要 proposePrograms
       新設、SESSION_LOG「決済系キャンペーン deferral」参照)。
       ---
@@ -308,12 +397,21 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     crawl:
       mode: index
       maxChildren: 5
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      crawl:index 設定は再開の前提として保持する。
+      停止理由: 一覧は meta refresh の 2 段転送 → JS 描画で、索引からアンカーを取れない。
+      導入以来 0 件。元データは公開 JSON `/ptcms/campaign-medias/common-campaign-list.json`
+      (2026-09 の調査で pay 向け非抽選 26 件、要再確認)。
+      再開条件: JSON 索引アダプタを実装し、PR-1 の fetch outcome で無料枠に余地があることを
+      確認できたとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- rakuten-pay-campaigns --allow-disabled`。
+      停止に合わせて sources/extracted/rakuten-pay-campaigns.json を git rm 済み。
+      ---
       ★ 2026-06-10 (A-1 索引ハブ対策): crawl: index を設定。1 段目 (campaign-index)
       で当一覧ページから個別キャンペーン詳細 URL を列挙 → 2 段目で各詳細ページを
       campaign extractor で抽出 → 1 つの extracted JSON に統合。一覧自体は抽選・
@@ -325,8 +423,9 @@ sources:
       campaign-v3.0 extractor が「対象店舗 × 楽天Pay 期間限定上振れ」を
       1 キャンペーン=1 program (paymentAppId+validFrom/validTo) + 対象
       店舗 membership として抽出。店舗非依存の全体施策・日付なしは出力
-      しない方針。新規 program は base "idCollision" で必ず needsReview
-      (ライブ還元計算に効くため無確認 auto-merge されない)。
+      しない方針。新規 program の auto 可否はルート README「cron が auto-merge する/しない範囲」
+      表を参照 (PR #60 以降、campaign extractor 由来は isCampaignAutoMergeable を満たせば auto)
+      (2026-09 訂正)。
       ★ 実 fetch 検証 (2026-05-17、独立 2 回とも clean success):
       抽出 0 件。当一覧 URL は抽選・「最大」・店舗指定なしの全体施策
       中心で「固定還元率+対象店舗+期間」が揃うキャンペーンを含まない
@@ -355,8 +454,10 @@ sources:
       https://j-pointpartner.jcb.co.jp/search を付与 (店ごとのポイントアップ登録
       が必要、無料、期限なし)。
       手動 seed 投入済 (V5-2 時点): W 系列 9 + Gold 系列 9 = 18 memberships。
-      cron は未網羅の提携店を追加する位置付け、auto-merge は全件 needsReview
-      なので安全網あり。
+      cron は未網羅の提携店を追加する位置付け。programs は extractor≠campaign のため
+      needsReview (idCollision)、memberships は既存 store / program 参照かつ confidence≥0.9
+      なら auto (2026-09-14 #149 実績: prog-jcb-jpoint-gold-2x → takashimaya)。範囲の正は
+      ルート README「cron が auto-merge する/しない範囲」表 (2026-09 訂正)。
       ★ enabled: true 化判断 (V5-1, 2026-05-20):
         手動 fetch 試行は Flash 503 (Google 側混雑) / Pro 429 (free tier クォータ 0)
         で全 3 attempt 失敗。実証検証できなかったが、現行 cron の他 source
@@ -376,12 +477,20 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、一時停止)。enabled:false + fetchGroup 削除。
+      0b-3 (Z3 ガード + autoMerge:false + target) で再有効化する一時停止。
+      9/28・10/1 の cron で campaign auto 経路が無防備に走るのを避けるため
+      (campaign auto ゲートは「最大」語・対象キー無し・上限なし 30% を通す穴がある)。
+      直近 (9/13) の extracted は nonJson fallback で 0 件のため、停止による損失はほぼ無い。
+      再開時: 0b-3 で enabled:true + fetchGroup: mon に戻し、Z4_STOPPED から外す。
+      停止に合わせて sources/extracted/d-pay-campaigns.json を git rm 済み。
+      ---
       ★ 2026-05-17 追加 (#B 決済系キャンペーン)。paymentAppId=pa-d-pay、
       還元通貨 d-pt。扱いは rakuten-pay-campaigns と同じ (campaign-v3.0、
-      店舗特定+期間明記のみ、新規 program は needsReview)。
+      店舗特定+期間明記のみ)。新規 program の auto 可否はルート README
+      「cron が auto-merge する/しない範囲」表を参照 (2026-09 訂正)。
       ★ 実 fetch 検証: 当ページは抽出可能な実データ豊富 (索引ハブでない)。
       gemini-2.5-flash が時折 thinking-leak で nonJson を返す非決定的
       失敗があるが、成功時は bic-camera +5% / toysrus 3倍 /
@@ -390,8 +499,9 @@ sources:
       週次 cron は 3-attempt retry で吸収。信頼性重視なら campaign 系を
       GEMINI_MODEL=gemini-2.5-pro 等にする選択肢あり。
       注: Gemini が稀に pointCardId/paymentAppId 双方未設定の program を
-      出すが (prompt XOR は schema 強制でない)、idCollision→needsReview
-      で人手 catch されるため auto-merge 安全網は機能。
+      出す (prompt XOR は schema 強制でない)。現行の isCampaignAutoMergeable は
+      target キー (cardIds / pointCardId / paymentAppId) が無い program を拒否しない
+      (未ガード。PR-0b-3 の untargetedProgram で対処予定) (2026-09 訂正)。
 
   - id: paypay-campaigns
     label: PayPay キャンペーン一覧 (公式)
@@ -402,21 +512,29 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、一時停止)。enabled:false + fetchGroup 削除。
+      0b-3 (Z3 ガード + autoMerge:false + target) で再有効化する一時停止。
+      9/28・10/1 の cron で campaign auto 経路が無防備に走るのを避けるため
+      (campaign auto ゲートは「最大」語・対象キー無し・上限なし 30% を通す穴がある)。
+      直近 (9/16) の extracted は nonJson fallback で 0 件のため、停止による損失はほぼ無い。
+      再開時: 0b-3 で enabled:true + fetchGroup: thu に戻し、Z4_STOPPED から外す。
+      停止に合わせて sources/extracted/paypay-campaigns.json を git rm 済み。
+      ---
       ★ 2026-05-28 追加 (#C キャンペーン獲得拡充 PR #57)。
       paymentAppId=pa-paypay、還元通貨=paypay。campaign-v3.0 extractor が
       「対象店舗 × PayPay 期間限定上振れ」を 1 キャンペーン=1 program
       (paymentAppId+validFrom/validTo) + 対象店舗 membership として抽出。
-      新規 program は base "idCollision" で必ず needsReview (ライブ還元計算に
-      効くため auto-merge されない)。
+      新規 program の auto 可否はルート README「cron が auto-merge する/しない範囲」表を参照
+      (PR #60 以降、campaign extractor 由来は isCampaignAutoMergeable を満たせば auto)
+      (2026-09 訂正)。
       ★ 2026-05-28 手動 fetch 検証 (2 attempts、success): 1 program + 1 membership
       抽出。例: prog-paypay-7eleven-onigiri-sushi-2026-06 (セブンイレブン
       対象おにぎり・寿司 最大20%、validFrom 2026-06-01 / validTo 2026-06-30、
       bonusType=addOn)。同 program に conv-7eleven membership。
       → 有効な campaign source として enabled:true で運用開始。次回 cron で
-      自動抽出 (proposePrograms の idCollision で needsReview 経由)。
+      自動抽出 (auto / review の振り分けはルート README の表を参照) (2026-09 訂正)。
       失敗時は別 URL 候補: https://paypay.ne.jp/event/list/, https://paypay.ne.jp/promotion/
 
   - id: smbc-vpoint-up

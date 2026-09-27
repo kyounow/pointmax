@@ -471,8 +471,8 @@ export type SyncHistoryFile = {
   entries: SyncHistoryEntry[]; // newest first
 };
 
-/** 保持する履歴件数 (週 2 回 × 52 週 = 104。実質 1 年分) */
-export const SYNC_HISTORY_MAX_ENTRIES = 104;
+/** 保持する履歴件数 (週 2 回 × 26 週 ≈ 半年。sync-data chunk の上限を抑える) */
+export const SYNC_HISTORY_MAX_ENTRIES = 52;
 
 // ===========================================================
 // Helpers / thresholds

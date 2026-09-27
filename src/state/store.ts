@@ -328,6 +328,9 @@ type Actions = {
   resetPaymentAppToSeed: (id: string) => void;
 
   clearAll: () => void;
+  // PR-6a-1 (F7): 新規プロファイル / 初期化後の次回起動で公式 seed を自動投入する。
+  // 投入したら true、条件外 (データあり・投入済み・hydration 未完了/失敗・schema 移行待ち) は false。
+  seedIfEmpty: () => boolean;
   mergeFromSeed: () => void;
   // 追加 + 自動適用可能なマイグレーション + ユーザー選択した衝突上書きをまとめて適用
   applySeedUpdate: (overrideKeys: string[]) => void;
@@ -371,12 +374,24 @@ const empty: State = {
   // _pendingSchemaMigration / _legacyPersistedState は undefined で初期化
 };
 
+// PR-6a-1: seedIfEmpty が「空」とみなす対象 (seed() が返す 8 collection)。
+const SEED_COLLECTION_KEYS = [
+  "cards",
+  "currencies",
+  "stores",
+  "edges",
+  "pointCards",
+  "paymentApps",
+  "programs",
+  "memberships",
+] as const;
+
 // Wave 5 A-4 audit-fix: zustand/immer middleware で構造共有を有効化。
 // 1 件更新時に他要素の object reference を保持 → useShallow(B-1) と組み合わせ
 // 再 render 範囲を局所化。set 関数の callback は draft をミューテートする (return しない)。
 export const useStore = create<State & Actions>()(
   persist(
-    immer((set, get) => ({
+    immer((set, get, api) => ({
       ...empty,
 
       addCard: (c) =>
@@ -694,6 +709,35 @@ export const useStore = create<State & Actions>()(
         set((state) => {
           Object.assign(state, empty);
         });
+      },
+      // PR-6a-1 (F7): 新規プロファイル (localStorage 空) は初期値 empty のままカード 0 / 店舗 0 で
+      // 起動し、useSeedMerge も hasData=false で null を返すため更新バナー・同期モーダルも出なかった。
+      // App のマウント時 (と persist の hydration 完了時) に呼び、次の全てを満たすときだけ seed() を投入する:
+      //   - persist の hydration 完了済み。失敗時 zustand は hasHydrated=false のままなので no-op
+      //     (壊れた生データを seed で上書きしない)。localStorage の無い環境 (node テスト等) は
+      //     persist 自体が無いので判定を飛ばす。
+      //   - schema 移行待ちでない (同意モーダルの Apply が seed を入れる)。
+      //   - lastSeedVersion === 0 (seed を一度も入れていない) かつ 8 collection が全て空。
+      //     clearAll (設定 > 初期化) は empty に戻すので、次回起動で同じ規則により再投入される。
+      // 投入後の state は seed() そのもの (カードは R1 どおり enabled 非出荷 = 全 OFF) なので
+      // useSeedMerge の差分は 0 件になり、SyncUpdateModal / UpdateBanner / 自動反映バナーは出ない。
+      // 失うデータが無いので autoApplyNotice もスナップショットも作らない。
+      // 2 回目以降はデータありで no-op (冪等) なので、StrictMode の effect 二重実行でも 1 回だけ入る。
+      seedIfEmpty: () => {
+        const s = get();
+        if (
+          api.persist?.hasHydrated() === false ||
+          s._pendingSchemaMigration ||
+          s.lastSeedVersion !== 0 ||
+          SEED_COLLECTION_KEYS.some((k) => s[k].length > 0)
+        ) {
+          return false;
+        }
+        set((state) => {
+          Object.assign(state, seed());
+          state.lastSeedVersion = SEED_VERSION;
+        });
+        return true;
       },
       mergeFromSeed: () =>
         // 設定 > サンプル投入。PR-0a-2a で「アプリに反映」(applySeedUpdate([])) と同一経路に委譲:

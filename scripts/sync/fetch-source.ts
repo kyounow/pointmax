@@ -420,7 +420,10 @@ export function salvageBySchema(
   addFormats(ajv);
   const fullValidate = ajv.compile(schema);
 
-  if (fullValidate(data)) {
+  // `as unknown` で渡す: Ajv ValidateFunction の型述語 (data is unknown) により
+  // false 分岐で data が never に狭まり、下の `{ ...data }` が TS2698 になるのを避ける
+  // (実行時の挙動は同じ)。
+  if (fullValidate(data as unknown)) {
     return { ok: true, data, droppedByKey: {} };
   }
 

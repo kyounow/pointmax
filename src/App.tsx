@@ -74,6 +74,16 @@ function App() {
     initBuildIdBaseline();
   }, []);
 
+  // PR-6a-1 (F7): 新規プロファイル (localStorage 空) / 初期化後の次回起動で公式データを
+  // 自動投入する。条件判定と冪等性は store.seedIfEmpty 側 (データあり・投入済み・hydration
+  // 未完了/失敗は no-op)。localStorage は同期ストレージなので通常はマウント時点で hydration
+  // 済みだが、未完了なら完了時にもう一度呼ぶ (persist が無い環境では購読しない)。
+  useEffect(() => {
+    const seedIfEmpty = () => useStore.getState().seedIfEmpty();
+    seedIfEmpty();
+    return useStore.persist?.onFinishHydration(seedIfEmpty);
+  }, []);
+
   const pendingMigration = useStore((s) => s._pendingSchemaMigration);
 
   // 初回マウント時のみ: hash が空 or 未知 tab のとき履歴を汚さず calculator に正規化。

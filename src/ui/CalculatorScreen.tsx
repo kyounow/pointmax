@@ -14,6 +14,7 @@ import {
   readCalcFormDraft,
   saveCalcFormDraft,
   resolveCalcFormRestore,
+  resolveInitialCurrencyId,
   localDateKey,
 } from "../state/calcFormDraft";
 import { rankCards, nearlyEqual } from "../domain/rankCards";
@@ -95,10 +96,11 @@ export function CalculatorScreen() {
   const [storeCategory, setStoreCategory] = useState(""); // "" = 全カテゴリ
   const [amount, setAmount] = useState(restored.amount ?? "10000");
   // activeCurrencyId = 現在表示中の対象通貨 (= 通貨タブの選択中タブ)。
-  // preferred があれば既定で先頭、無ければ fallback select で都度選択。
-  // PR-3d: 同日の下書きに優先通貨として現存する id があれば復元 (無ければ既定 "")。
-  const [activeCurrencyId, setActiveCurrencyId] = useState(
-    restored.activeCurrencyId ?? "",
+  // マウント時は「同日の下書き (PR-3d、優先通貨に現存する id のみ) ?? 優先通貨の先頭 ?? ""」
+  // (PR-6a-1 / G19: v6.2.0 で失われた先頭タブ既定の復旧)。"" = 優先通貨未設定で select から選ぶ。
+  // 以後の preferred 変化への追従は下の prevPreferred ガードが担う。
+  const [activeCurrencyId, setActiveCurrencyId] = useState(() =>
+    resolveInitialCurrencyId(restored.activeCurrencyId, preferredCurrencyIds),
   );
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   // today-banner: 内訳の展開状態 (初期は折り畳み)
@@ -109,7 +111,8 @@ export function CalculatorScreen() {
   // - preferred 非空 かつ activeCurrencyId が preferred に無い → 先頭にリセット
   // - preferred から現在のタブ通貨が消えた場合も先頭に戻る
   // (preferred 非空時、activeCurrencyId は preferred タブ経由でのみ変わるため
-  //  preferred の変化だけを起点にすれば従来 effect と等価)
+  //  preferred の変化だけを起点にすれば従来 effect と等価。旧 effect がマウント時に
+  //  行っていた「先頭を既定にする」整合は、PR-6a-1 から上の初期値 resolveInitialCurrencyId が担う)
   const [prevPreferred, setPrevPreferred] = useState(preferredCurrencyIds);
   if (prevPreferred !== preferredCurrencyIds) {
     setPrevPreferred(preferredCurrencyIds);
@@ -376,13 +379,16 @@ export function CalculatorScreen() {
     [result],
   );
 
-  // 入力が変わるたびに、同率 1 位の reachable カード全部を展開状態にリセット
+  // マウント時と入力が変わるたびに、同率 1 位の reachable カード全部を展開状態にリセット
   // (totalFinalAmount が最上位値と等しい全カード = displayRank 1 の集合)。
   // render 中 guard で実装 (effect 内 setState を避ける React 公認パターン)。
   // result は useMemo 済で入力 (storeId/activeCurrencyId/amount/データ) が変わった時のみ
   // 参照が変わるため、result 参照の変化を起点にすれば従来 effect と等価。
   // 手動 toggle (toggleExpand/expandAll/collapseAll) は次の入力変化まで保持される。
-  const [prevResult, setPrevResult] = useState(result);
+  // PR-6a-1 (G19): 初期値は null。マウント直後から result が非 null (先頭タブ既定 / 同日復元)
+  // でもガードが発火し、マウント時にも同率 1 位が展開される (初期値を result にすると
+  // prevResult === result で素通りし、#1 が畳まれたまま起動していた)。
+  const [prevResult, setPrevResult] = useState<typeof result>(null);
   if (prevResult !== result) {
     setPrevResult(result);
     if (!result) {

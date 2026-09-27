@@ -22,6 +22,7 @@
 // (dedupeAcrossProposals) や category cap は diff-and-propose.ts 側で実施。
 
 import type { SeedShape } from "../../src/domain/mergeSeed";
+import type { PaymentApp } from "../../src/domain/types";
 import { isSafeHttpUrl } from "../../src/domain/urlSafety";
 import {
   BLOCKED_STORE_IDS,
@@ -292,7 +293,8 @@ export function proposeCards(
 // ───────────────────────────────────────────────────────────────
 
 // ───────────────────────────────────────────────────────────────
-// paymentApps: 新規 paymentAppId は idCollision、既存は bonusRate/chargeBased 更新
+// paymentApps: 新規 paymentAppId は idCollision、既存は chargeBased 変更のみ
+// (bonus 率は v3 で BenefitProgram へ移行済み)
 // ───────────────────────────────────────────────────────────────
 
 export function proposePaymentApps(
@@ -305,29 +307,16 @@ export function proposePaymentApps(
     const { evidence, confidence } = evidenceAndConfidence(a);
     const existing = current.paymentApps.find((x) => x.id === a.paymentAppId);
     if (!existing) {
-      const newAppRecord: Record<string, unknown> = {
+      // PaymentApp 型に無いフィールド (v3 PR 3 で BenefitProgram へ移行し型から削除した
+      // bonus 率系。ExtractedPaymentApp には残っている) は載せない。載せると
+      // ADDED_PAYMENT_APPS: PaymentApp[] の codegen が excess property で型エラーになり
+      // safety gate が落ちる。satisfies で再混入を型で止める。
+      const newAppRecord = {
         id: a.paymentAppId,
         name: a.name ?? a.paymentAppId,
         chargeBased: a.chargeBased,
-        defaultBonusRate: a.defaultBonusRate,
-        defaultBonusCurrencyId: a.defaultBonusCurrencyId,
         compatibleCardIds: a.compatibleCardIds,
-      };
-      if (a.cardSpecificBonusRates !== undefined) {
-        newAppRecord.cardSpecificBonusRates = a.cardSpecificBonusRates;
-      }
-      // cardSpecificBonusRates に日付主張があるのに evidenceQuote に根拠がない場合は降格
-      const hasDateBearingBonus = a.cardSpecificBonusRates?.some(
-        (b) => b.validFrom || b.validTo,
-      );
-      // base "idCollision" を unsupportedDateClaim が条件付き上書き (現行と同一)
-      const newAppReviewReason = resolveReviewReason("idCollision", [
-        () =>
-          hasDateBearingBonus &&
-          detectUnsupportedDateClaim({ validFrom: "x" }, evidence.evidenceQuote)
-            ? "unsupportedDateClaim"
-            : undefined,
-      ]);
+      } satisfies PaymentApp;
       result.push({
         type: "addRecord",
         collection: "paymentApps",
@@ -335,33 +324,14 @@ export function proposePaymentApps(
         sourceId: data.sourceId,
         confidence,
         evidence,
-        reviewReason: newAppReviewReason,
+        // 新規 paymentApp は常に要レビュー (bonus 率は BenefitProgram 側で扱う)
+        reviewReason: "idCollision",
       });
       continue;
     }
     // H3: pa-default 等の擬似決済アプリへの updateField は auto-merge させない。
     // Calculator の最頻モードで誤発火するリスクがあるため必ず人手判断へ。
     const isPseudoPaymentApp = PSEUDO_PAYMENT_APP_IDS.has(existing.id);
-    if (
-      a.defaultBonusRate != null &&
-      existing.defaultBonusRate !== a.defaultBonusRate
-    ) {
-      const rateUpdate = buildRateUpdate(
-        existing.id,
-        "paymentApps",
-        existing.defaultBonusRate ?? 0,
-        a.defaultBonusRate,
-        data.sourceId,
-        confidence,
-        evidence,
-        "defaultBonusRate",
-      );
-      result.push(
-        isPseudoPaymentApp
-          ? { ...rateUpdate, reviewReason: "pseudoStoreTarget" }
-          : rateUpdate,
-      );
-    }
     if (a.chargeBased != null && existing.chargeBased !== a.chargeBased) {
       // boolean 変更は構造変更扱い → reviewReason
       result.push({

@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { SeedShape } from "../../src/domain/mergeSeed";
+// membership id は本体 (propose-helpers) と同じ生成源から導出する (文字列を直書きしない)
+import { membershipId } from "../../src/state/defineMemberships";
 import {
   applyCategoryCap,
   dedupeAcrossProposals,
@@ -20,7 +22,7 @@ import {
   deriveLoyaltyProgramId,
   rateToProgramSlug,
 } from "./propose-helpers";
-import type { ExtractedSource, Proposal } from "./types";
+import type { AddRecordProposal, ExtractedSource, Proposal } from "./types";
 
 // テスト用の最小 SeedShape
 const emptySeed: SeedShape = {
@@ -216,7 +218,7 @@ describe("proposeStores", () => {
       });
       const ps = proposeStores(data, emptySeed);
       expect(
-        (ps[0] as { record: { category: string } }).record.category,
+        (ps[0] as AddRecordProposal).record.category,
         oldCat,
       ).toBe(newCat);
     }
@@ -321,7 +323,7 @@ describe("applyCategoryCap", () => {
     const { kept, deferred } = applyCategoryCap(props, 2);
     expect(kept).toHaveLength(4); // 飲食 2 + ファッション 2
     expect(deferred).toHaveLength(2); // 飲食 の foo-3, foo-4
-    expect(deferred.every((d) => (d as { record: { category: string } }).record.category === "飲食")).toBe(true);
+    expect(deferred.every((d) => (d as AddRecordProposal).record.category === "飲食")).toBe(true);
   });
 
   it("cap より少ない時は全件 kept", () => {
@@ -366,7 +368,7 @@ describe("applyCategoryCap", () => {
     ];
     const { kept } = applyCategoryCap(props, 2);
     const ids = kept.map((p) =>
-      String((p as { record: { id: string } }).record.id),
+      String((p as AddRecordProposal).record.id),
     );
     expect(ids).toContain("a-first");
     expect(ids).toContain("m-mid");
@@ -480,7 +482,7 @@ describe("proposePrograms (PR-D1)", () => {
     expect(ps[0].collection).toBe("programs");
     expect(ps[0].reviewReason).toBe("idCollision");
     expect(
-      (ps[0] as { record: { validTo: string } }).record.validTo,
+      (ps[0] as AddRecordProposal).record.validTo,
     ).toBe("2026-06-30");
   });
 
@@ -1182,7 +1184,13 @@ describe("proposeMemberships (PR-D1)", () => {
   it("既存 (programId+storeId 一致) membership は提案しない", () => {
     const seed: SeedShape = {
       ...emptySeed,
-      memberships: [{ programId: "prog-a", storeId: "store-a" }],
+      memberships: [
+        {
+          id: membershipId("prog-a", "store-a"),
+          programId: "prog-a",
+          storeId: "store-a",
+        },
+      ],
     };
     const data = baseSource({
       extractor: "campaign",
@@ -1328,7 +1336,7 @@ describe("proposeJalTokuyakuMemberships (PR-D2b)", () => {
     expect(ps.every((p) => p.collection === "memberships")).toBe(true);
     expect(
       ps.map(
-        (p) => (p as { record: { programId: string } }).record.programId,
+        (p) => (p as AddRecordProposal).record.programId,
       ),
     ).toEqual(["prog-jal-tokuyaku", "prog-jal-tokuyaku"]);
     expect(ps.every((p) => p.reviewReason === undefined)).toBe(true);
@@ -1380,7 +1388,7 @@ describe("proposeJalTokuyakuMemberships (PR-D2b)", () => {
     const ps = proposeJalTokuyakuMemberships(data, jalSeed);
     expect(ps).toHaveLength(1);
     expect(
-      (ps[0] as { record: { storeId: string } }).record.storeId,
+      (ps[0] as AddRecordProposal).record.storeId,
     ).toBe("royal-host");
   });
 
@@ -1388,7 +1396,11 @@ describe("proposeJalTokuyakuMemberships (PR-D2b)", () => {
     const seed: SeedShape = {
       ...jalSeed,
       memberships: [
-        { programId: "prog-jal-tokuyaku", storeId: "royal-host" },
+        {
+          id: membershipId("prog-jal-tokuyaku", "royal-host"),
+          programId: "prog-jal-tokuyaku",
+          storeId: "royal-host",
+        },
       ],
     };
     const data = baseSource({
@@ -1875,13 +1887,13 @@ describe("proposeExpiredCampaignDeletions", () => {
     const s = makeSeed(
       [{ ...baseProgram, validTo: "2026-04-01" }],
       [
-        { programId: "prog-test", storeId: "store-1" },
-        { programId: "prog-test", storeId: "store-2" },
-        { programId: "prog-test", storeId: "store-3" },
-        { programId: "prog-test", storeId: "store-4" },
-        { programId: "prog-test", storeId: "store-5" },
-        { programId: "prog-test", storeId: "store-6" },
-        { programId: "prog-test", storeId: "store-7" },
+        { id: membershipId("prog-test", "store-1"), programId: "prog-test", storeId: "store-1" },
+        { id: membershipId("prog-test", "store-2"), programId: "prog-test", storeId: "store-2" },
+        { id: membershipId("prog-test", "store-3"), programId: "prog-test", storeId: "store-3" },
+        { id: membershipId("prog-test", "store-4"), programId: "prog-test", storeId: "store-4" },
+        { id: membershipId("prog-test", "store-5"), programId: "prog-test", storeId: "store-5" },
+        { id: membershipId("prog-test", "store-6"), programId: "prog-test", storeId: "store-6" },
+        { id: membershipId("prog-test", "store-7"), programId: "prog-test", storeId: "store-7" },
       ],
     );
     const ps = proposeExpiredCampaignDeletions(s, now);
@@ -2133,18 +2145,18 @@ describe("H3: pa-default (通常クレカ決済) の受け皿ガード", () => {
     expect(ps[0].reviewReason).toBe("pseudoStoreTarget");
   });
 
-  it("既存 paymentApp=pa-default への defaultBonusRate 更新は pseudoStoreTarget に降格", () => {
+  it("既存 paymentApp=pa-default への chargeBased 変更は pseudoStoreTarget に降格", () => {
     const seed: SeedShape = {
       ...emptySeed,
-      paymentApps: [{ id: "pa-default", name: "通常クレカ決済", defaultBonusRate: 0.01 }],
+      paymentApps: [{ id: "pa-default", name: "通常クレカ決済", chargeBased: false }],
     };
     const data = baseSource({
       extractor: "payment-app",
       paymentApps: [
         {
           paymentAppId: "pa-default",
-          defaultBonusRate: 0.02,
-          evidenceQuote: "通常クレカ決済は2%還元に改定",
+          chargeBased: true,
+          evidenceQuote: "通常クレカ決済はチャージ式に変更",
           explicitness: 0.95,
           ambiguity: 0.05,
         },
