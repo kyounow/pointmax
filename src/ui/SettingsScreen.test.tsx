@@ -24,6 +24,12 @@ import { loadSyncHistory } from "../domain/syncHistory";
 import { takeSnapshot, getSnapshotMeta } from "../state/stateSnapshot";
 import { PERSIST_SCHEMA_VERSION } from "../state/persist-versions";
 import { readSyncSeen } from "../state/syncNotice";
+import { CRASH_BACKUP_KEY, readCrashBackup } from "../state/hydrationGuard";
+import { formatTakenAt } from "../state/recovery";
+import { downloadJsonFile } from "../state/exportFile";
+
+// jsdom は URL.createObjectURL 未実装なので、ファイル書き出しはモックして引数だけ検査する。
+vi.mock("../state/exportFile", () => ({ downloadJsonFile: vi.fn() }));
 
 beforeEach(() => {
   localStorage.clear();
@@ -256,6 +262,49 @@ describe("SettingsScreen 直前の状態に戻す (PR-4a / N-4)", () => {
     const btn = screen.getByRole("button", { name: /直前の状態に戻す/ });
     expect(btn).toBeDisabled();
     expect(screen.getByText(/データ形式が更新された/)).toBeInTheDocument();
+  });
+});
+
+describe("SettingsScreen 読み込み失敗時の退避データ (PR-6d)", () => {
+  const takenAt = "2026-09-20T03:04:00.000Z";
+  const putBackup = () =>
+    localStorage.setItem(
+      CRASH_BACKUP_KEY,
+      JSON.stringify({ takenAt, cause: "hydrate", raw: "{broken" }),
+    );
+
+  it("退避データが無ければ行を出さない", () => {
+    renderSettings();
+    expect(screen.queryByText(/読み込み失敗時の退避データ/)).toBeNull();
+  });
+
+  it("あれば日時付きの 1 行を出し、[書き出す] で退避データを書き出す", () => {
+    putBackup();
+    vi.mocked(downloadJsonFile).mockClear();
+    renderSettings();
+    const row = screen.getByText(/読み込み失敗時の退避データ/);
+    expect(row).toHaveTextContent(`(${formatTakenAt(takenAt)})`);
+    fireEvent.click(within(row).getByRole("button", { name: "書き出す" }));
+    const [json, prefix] = vi.mocked(downloadJsonFile).mock.calls[0];
+    expect(prefix).toBe("pointmax-crash-backup");
+    expect(JSON.parse(json)).toMatchObject({ raw: "{broken", cause: "hydrate" });
+  });
+
+  it("[削除] は確認ダイアログの後に消し、行も消える (キャンセルでは消さない)", async () => {
+    putBackup();
+    renderSettings();
+    const row = screen.getByText(/読み込み失敗時の退避データ/);
+    fireEvent.click(within(row).getByRole("button", { name: "削除" }));
+    fireEvent.click(await screen.findByRole("button", { name: "キャンセル" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(readCrashBackup()).not.toBeNull();
+
+    fireEvent.click(within(row).getByRole("button", { name: "削除" }));
+    fireEvent.click(await screen.findByRole("button", { name: "OK" }));
+    await waitFor(() =>
+      expect(screen.queryByText(/読み込み失敗時の退避データ/)).toBeNull(),
+    );
+    expect(readCrashBackup()).toBeNull();
   });
 });
 

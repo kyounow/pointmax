@@ -24,6 +24,7 @@ import {
   formatTakenAt,
   restoreSnapshotForRecovery,
 } from "../state/recovery";
+import { readCrashBackup, clearCrashBackup } from "../state/hydrationGuard";
 import { PERSIST_SCHEMA_VERSION } from "../state/persist-versions";
 
 export function SettingsScreen() {
@@ -304,6 +305,17 @@ export function SettingsScreen() {
     window.location.reload();
   };
 
+  // PR-6d (U6): 読み込み失敗時 / 復旧パネルの初期化時に退避した生データ
+  // (pointmax:crash-backup:v1、1 世代)。存在するときだけ 1 行出し、書き出し・削除できるようにする
+  // (無いと、初期化の後に回収する手段が devtools だけになる)。
+  const [crashBackup, setCrashBackup] = useState(readCrashBackup);
+  const handleDeleteCrashBackup = async () => {
+    if (await dialog.confirm({ title: "退避データを削除しますか？", danger: true })) {
+      clearCrashBackup();
+      setCrashBackup(null);
+    }
+  };
+
   // PR-0b: ローカル利用統計 (この端末のみ・送信なし)。
   // 独立キーからの読み取りなので state に保持し、クリア時のみ再取得する。
   const [usage, setUsage] = useState(() => getUsageStats());
@@ -525,6 +537,19 @@ export function SettingsScreen() {
         </>
       ) : (
         <p className="empty">スナップショットはまだありません。</p>
+      )}
+      {crashBackup && (
+        <p className="hint">
+          読み込み失敗時の退避データ ({formatTakenAt(crashBackup.takenAt)}){" "}
+          <button
+            onClick={() =>
+              downloadJsonFile(JSON.stringify(crashBackup), "pointmax-crash-backup")
+            }
+          >
+            書き出す
+          </button>{" "}
+          <button onClick={handleDeleteCrashBackup}>削除</button>
+        </p>
       )}
 
       <h3 style={{ marginTop: 8 }}>誕生月</h3>
