@@ -17,6 +17,7 @@ import type {
   PurchaseChannel,
 } from "../../domain/types";
 import { seed } from "../../state/seed";
+import { seedFreshness } from "../../state/seedFreshness";
 import { LOCAL_FRESHNESS } from "../../domain/edgeFreshness";
 import { membershipId } from "../../state/defineMemberships";
 import { evaluatePrograms } from "../../domain/programEvaluator";
@@ -431,7 +432,11 @@ describe("CalcResultCard", () => {
         programById={new Map([["prog-cap", staleProg({ lastVerifiedAt: "2025-01" })]])}
         expanded
         {...baseProps}
-        freshness={{ programMonth: () => "2026-07", edgeMonth: () => "2026-07" }}
+        freshness={{
+          programMonth: () => "2026-07",
+          edgeMonth: () => "2026-07",
+          cardMonth: () => "2026-07",
+        }}
       />,
     );
     expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
@@ -444,7 +449,11 @@ describe("CalcResultCard", () => {
         programById={new Map([["prog-cap", staleProg({ lastVerifiedAt: "2025-01" })]])}
         expanded
         {...baseProps}
-        freshness={{ programMonth: () => undefined, edgeMonth: () => undefined }}
+        freshness={{
+          programMonth: () => undefined,
+          edgeMonth: () => undefined,
+          cardMonth: () => undefined,
+        }}
       />,
     );
     expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
@@ -470,7 +479,7 @@ describe("CalcResultCard", () => {
         freshness={undefined}
       />,
     );
-    // seed の月 (未記入 or 2026-07 以降) は基準日 2026-07-20 で stale ではない
+    // seed の月 (2026-07 以降) は基準日 2026-07-20 で stale ではない
     expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
     cleanup();
 
@@ -591,6 +600,73 @@ describe("CalcResultCard", () => {
     const title =
       screen.getByText(/古い情報かも/).getAttribute("title") ?? "";
     expect(title.match(/・ルート/g)).toHaveLength(1);
+  });
+
+  // B11: Card.lastVerifiedAt (カードの基本還元の確認月)。source:'default' の結果だけが対象。
+  it("PR-5a (B11): source default のカードの基本還元の確認月が 12ヶ月超ならチップを出す", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          card: {
+            id: "rakuten",
+            name: "楽天カード",
+            defaultRate: 0.01,
+            defaultCurrencyId: "rakuten-pt",
+            lastVerifiedAt: "2025-05",
+          },
+          resolved: { rate: 0.01, currencyId: "rakuten-pt", source: "default" },
+        })}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(
+      screen.getByText(/古い情報かも \(最終確認 2025-05\)/).getAttribute("title"),
+    ).toContain("・還元率 楽天カード の基本還元 (2025-05)");
+  });
+
+  it("PR-5a (B11): program を採用した結果 (source program) ではカードの確認月を見ない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          card: {
+            id: "rakuten",
+            name: "楽天カード",
+            defaultRate: 0.01,
+            defaultCurrencyId: "rakuten-pt",
+            lastVerifiedAt: "2025-05",
+          },
+        })}
+        programById={new Map([["prog-cap", staleProg()]])}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
+  });
+
+  it("PR-5a (B11): seedFreshness では編集済み (userModifiedAt) のカードに確認月を出さない", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking({
+          card: {
+            id: "rakuten-card",
+            name: "楽天カード",
+            defaultRate: 0.03,
+            defaultCurrencyId: "rakuten-pt",
+            lastVerifiedAt: "2020-01",
+            userModifiedAt: "2026-08-01T00:00:00.000Z",
+          },
+          resolved: { rate: 0.03, currencyId: "rakuten-pt", source: "default" },
+        })}
+        programById={new Map()}
+        expanded
+        {...baseProps}
+        freshness={seedFreshness}
+      />,
+    );
+    expect(screen.queryByText(/古い情報かも/)).not.toBeInTheDocument();
   });
 
   it("PR-5a: 対象外 (reachable=false) のカードには program が古くてもチップを出さない", () => {

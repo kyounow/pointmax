@@ -166,7 +166,8 @@ export function CalcResultCard({
     : undefined;
 
   // REM-#2 / PR-5a: 公式情報の鮮度。採用した交換ルート (primary / addOn / loyalty の経路 edge) と
-  // 還元率 (採用 program) の確認月を集め、12ヶ月超のものがあれば 1 チップ『古い情報かも』に
+  // 還元率 (採用 program / source:'default' ならカードの基本還元) の確認月を集め、12ヶ月超のものが
+  // あれば 1 チップ『古い情報かも』に
   // まとめる (最古の月を本文、内訳を title)。確認月は freshness (アプリは同梱 seed 参照) で解決する。
   // 未記入は無視 (未検証を古い扱いしない)。対象外 (reachable=false) のカードには出さない。
   const staleSummary = (() => {
@@ -189,6 +190,14 @@ export function CalcResultCard({
     for (const l of reachableLoyalties) addRoute(l.pathSteps);
     for (const p of adoptedPrograms) {
       items.push({ kind: "rate", label: p.name, month: freshness.programMonth(p) });
+    }
+    // B11: program を採用せずカードの基本還元 (defaultRate) で計算した結果は、その確認月も対象。
+    if (r.resolved.source === "default") {
+      items.push({
+        kind: "rate",
+        label: `${cardLabel(r.card)} の基本還元`,
+        month: freshness.cardMonth(r.card),
+      });
     }
     return collectStaleItems(items, now ?? new Date());
   })();

@@ -16,7 +16,7 @@
 //
 // ⚠ scripts/ (tsx / Node) から seed 系経由で import されうるので、DOM API を使わないこと。
 
-import type { BenefitProgram, ConversionEdge } from "./types";
+import type { BenefitProgram, Card, ConversionEdge } from "./types";
 
 // stale 閾値 (ヶ月)。四半期チェック (SESSION_LOG の四半期表) で全対象を当月に更新する運用で、
 // 1 回滞っただけで保有カードの結果に一斉に ⚠ が出る (警告の壁紙化) のを避けるため 12 ヶ月
@@ -102,12 +102,15 @@ export function resolveVerifiedMonth(
 export type FreshnessResolver = {
   programMonth: (p: BenefitProgram) => string | undefined;
   edgeMonth: (e: ConversionEdge) => string | undefined;
+  /** カードの基本還元 (defaultRate) の確認月 (Card.lastVerifiedAt、B11)。 */
+  cardMonth: (c: Card) => string | undefined;
 };
 
 /** 端末のローカルコピーの lastVerifiedAt をそのまま使う resolver (seed を参照しない)。 */
 export const LOCAL_FRESHNESS: FreshnessResolver = {
   programMonth: (p) => p.lastVerifiedAt,
   edgeMonth: (e) => e.lastVerifiedAt,
+  cardMonth: (c) => c.lastVerifiedAt,
 };
 
 /** 鮮度チップの 1 項目。route = 交換ルートの edge、rate = 還元率 (program / カード基本還元)。 */

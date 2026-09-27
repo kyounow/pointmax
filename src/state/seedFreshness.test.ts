@@ -58,6 +58,41 @@ describe("seedFreshness (同梱 seed 参照の確認月)", () => {
     ).toBeUndefined();
   });
 
+  // B11: カードは defaultRate を率として比較する。
+  it("card: defaultRate が seed と一致すれば seed の値 (seed 未記入なら local の古い月は使わない)", () => {
+    const official = S.cards[0];
+    expect(
+      seedFreshness.cardMonth({ ...official, lastVerifiedAt: "2024-01" }),
+    ).toBe(official.lastVerifiedAt);
+  });
+
+  it("card: defaultRate が seed と違えば local の月 / 編集済みは出さない / seed に無い id は local", () => {
+    const official = S.cards[0];
+    expect(
+      seedFreshness.cardMonth({
+        ...official,
+        defaultRate: official.defaultRate + 0.01,
+        lastVerifiedAt: "2024-01",
+      }),
+    ).toBe("2024-01");
+    expect(
+      seedFreshness.cardMonth({
+        ...official,
+        lastVerifiedAt: "2026-07",
+        userModifiedAt: "2026-08-01T00:00:00.000Z",
+      }),
+    ).toBeUndefined();
+    expect(
+      seedFreshness.cardMonth({
+        id: "user-card-uuid",
+        name: "自作カード",
+        defaultRate: 0.01,
+        defaultCurrencyId: "x",
+        lastVerifiedAt: "2024-01",
+      }),
+    ).toBe("2024-01");
+  });
+
   it("program: ユーザー作成 (seed に無い id) はローカルの月", () => {
     expect(
       seedFreshness.programMonth({

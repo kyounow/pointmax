@@ -84,6 +84,15 @@ const OPT_ENUM = (key: string, allowed: readonly string[]): FieldCheck => ({
   check: (v) => v === undefined || (typeof v === "string" && allowed.includes(v)),
   kind: `${allowed.join(" / ")} のいずれか (または未指定)`,
 });
+// 任意の文字列フィールド (undefined は許容。存在する場合のみ文字列を要求)。
+// PR-5a (B11): Card.lastVerifiedAt (基本還元率の確認月 "YYYY-MM") の型検証に使う。形式 (月の妥当性) は
+// 表示側 (edgeFreshness) が不正値を無視するので、取込では型だけを見る。edge / program の確認月は
+// 従来どおり検証しない (同じく表示側が不正値を無視する)。
+const OPT_STR = (key: string): FieldCheck => ({
+  key,
+  check: (v) => v === undefined || typeof v === "string",
+  kind: "文字列",
+});
 const PROGRAM_SCOPES = ["all-stores", "member-stores"] as const;
 
 function checkItem(
@@ -144,7 +153,13 @@ export function validateImportData(
     checkArray(
       data.cards,
       "cards",
-      [STR("id"), STR("name"), RATE("defaultRate"), STR("defaultCurrencyId")],
+      [
+        STR("id"),
+        STR("name"),
+        RATE("defaultRate"),
+        STR("defaultCurrencyId"),
+        OPT_STR("lastVerifiedAt"), // PR-5a (B11): 基本還元率の確認月
+      ],
       true,
     ),
     checkArray(data.currencies, "currencies", [STR("id"), STR("name")], true),

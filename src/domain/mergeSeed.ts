@@ -140,6 +140,12 @@ export const EDGE_META_KEYS = [
   "lastVerifiedAt",
 ] as const satisfies ReadonlyArray<keyof ConversionEdge>;
 
+// PR-5a (B11): card の META キー (Card.lastVerifiedAt = 基本還元率の確認月)。cards も add-only で
+// 比較しないため参照先はまだ無い。将来の propagateCardUpdates と 5b の MIGRATIONS 設計が参照する。
+export const CARD_META_KEYS = [
+  "lastVerifiedAt",
+] as const satisfies ReadonlyArray<keyof Card>;
+
 // preference キー (enabled) と META キー (lastVerifiedAt / officialUrl) を除いた正規形で
 // stableStringify する。enabled はローカル所有キーなので「公式差分あり」の判定に含めない
 // (ユーザーが opt-in を ON にしただけで公式更新と誤検知しないため)。META キーは上記の理由。

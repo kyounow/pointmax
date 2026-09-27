@@ -49,6 +49,13 @@ export type Card = {
   //   **計算には一切使用しない** (還元率やゲートに影響しない、純粋に表示順のヒント)。
   //   family 内で重複しないこと (seed.test.ts で担保)。undefined = 単独カード。
   gradeLevel?: number;
+  // 基本還元率の最終確認月 YYYY-MM (PR-5a / B11)。defaultRate (source:'default' の結果 = 例 JCB W の 1%)
+  //   を公式ページで最後に人手確認した月。BenefitProgram.lastVerifiedAt と同じ形式・同じ判定
+  //   (src/domain/edgeFreshness.ts)・同じ META 扱い (mergeSeed.CARD_META_KEYS。cards は add-only で
+  //   比較しないが、将来の propagateCardUpdates と MIGRATIONS 設計が参照する)。表示時は同梱 seed を
+  //   参照し、defaultRate が seed と一致すれば seed の月を使う。未記入 = 未検証扱い (チップを出さない)。
+  //   seed 24 枚への記入は PR-5b (2026-Q4 四半期データ) で行う。
+  lastVerifiedAt?: string;
 };
 
 // カードの family (同一ブランドのグレード系列)。Card.familyId が参照する静的マスタ。

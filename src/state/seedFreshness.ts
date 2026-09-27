@@ -12,9 +12,17 @@ import {
   resolveVerifiedMonth,
   type FreshnessResolver,
 } from "../domain/edgeFreshness";
-import { getSeedEdge, getSeedProgram } from "./seed";
+import { getSeedCard, getSeedEdge, getSeedProgram } from "./seed";
 
 export const seedFreshness: FreshnessResolver = {
   programMonth: (p) => resolveVerifiedMonth(p, getSeedProgram(p.id)),
   edgeMonth: (e) => resolveVerifiedMonth(e, getSeedEdge(e.id)),
+  // カードは defaultRate を「率」として比較する (B11: 基本還元率の確認月)。
+  cardMonth: (c) => {
+    const o = getSeedCard(c.id);
+    return resolveVerifiedMonth(
+      { ...c, rate: c.defaultRate },
+      o && { ...o, rate: o.defaultRate },
+    );
+  },
 };

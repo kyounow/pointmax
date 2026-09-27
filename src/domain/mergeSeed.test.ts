@@ -5,6 +5,7 @@ import {
   changeCount,
   PROGRAM_META_KEYS,
   EDGE_META_KEYS,
+  CARD_META_KEYS,
 } from "./mergeSeed";
 import { syncDigest } from "./syncDigest";
 import { membershipId } from "../state/defineMemberships";
@@ -287,9 +288,21 @@ describe("mergeSeed — program preference (enabled) の保護 (PR-1d)", () => {
 
 // ─── PR-5a: META キー (lastVerifiedAt / officialUrl) は公式差分の比較・通知の対象外 ───
 describe("mergeSeed — META キー (lastVerifiedAt / officialUrl) の除外 (PR-5a)", () => {
-  it("PROGRAM_META_KEYS / EDGE_META_KEYS の中身を固定する", () => {
+  it("PROGRAM_META_KEYS / EDGE_META_KEYS / CARD_META_KEYS の中身を固定する", () => {
     expect([...PROGRAM_META_KEYS]).toEqual(["lastVerifiedAt", "officialUrl"]);
     expect([...EDGE_META_KEYS]).toEqual(["lastVerifiedAt"]);
+    expect([...CARD_META_KEYS]).toEqual(["lastVerifiedAt"]);
+  });
+
+  it("card の lastVerifiedAt だけが異なっても (defaultRate 同じ) 更新扱いにならない", () => {
+    const cards: Card[] = [{ ...card("a", "A"), lastVerifiedAt: "2026-04" }];
+    const result = mergeSeed(
+      { ...empty, cards },
+      { ...empty, cards: [{ ...card("a", "A"), lastVerifiedAt: "2026-10" }] },
+    );
+    expect(result.cards).toBe(cards);
+    expect(result.cards[0].lastVerifiedAt).toBe("2026-04");
+    expect(changeCount(result)).toBe(0);
   });
 
   it("meta だけが異なる program: 更新扱いせず、配列参照も changeCount も syncDigest も変わらない", () => {
