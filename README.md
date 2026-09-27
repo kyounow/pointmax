@@ -76,6 +76,21 @@
   **優先通貨リストに現存する**場合のみ／`storeId` は**実在する**場合のみ採用する（外れていれば既定挙動）。
   `sessionStorage` は Android PWA の kill で消えるため不採用。`usageStats` / `onboardingDismissed` と
   同型の schema-reset 非依存キーで、read/write 失敗は try/catch で握りつぶす（送信は一切しない）。
+- **結果カードの条件チップ（PR-0a-2b / M3）**: 展開ビューの採用 program（primary 行）の条件チップは、
+  program の `notes` に加えて `conditions` と **この店の membership の `notes`**（店別の条件）を
+  `joinNoteTexts` で合流して抽出する（`src/domain/noteParser.ts`）。チップは 要エントリー / **経由型**
+  （`channel`: モバイルオーダー / オンライン入金 / オートチャージ / eGift / ネット限定 / オンライン限定 /
+  経由 → 『{語}限定』。出たら同じ文の汎用『限定条件』は出さない）/ 上限 / 対象外 / 限定条件。
+  `conditions` / membership 由来のぶんは**チップが 1 件以上のときだけ**描画し『詳細』ボタンは出さない
+  （`notes` 単独の従来挙動は不変）。例: JCB W × すき家 = 『⚠ 要エントリー』+『対象外あり』（QUICPay 除外）、
+  × 吉野家 = 『⚠ 要エントリー』のみ。スタバ / マックの 20倍は `channel:"online"` のため店頭の結果には
+  出ず、ネット評価では『モバイルオーダー限定』+『対象外あり』が付く。
+- **警告チップの表示予算（PR-0a-2b）**: 展開ビューの警告系（要エントリー / 条件チップ / 上限 /
+  ルート要確認 (stale) / 最低交換単位 (端数)）は純関数 `rankWarningChips`
+  （`src/domain/warningChips.ts`）で **要エントリー = 要経由 > 経由型 (channel) > 上限 > 限定・対象外 >
+  stale > 端数** の優先順に並べ、**最大 3 件**だけ出す。同じ種類は 1 件（専用バッジ『⚠ 要エントリー』
+  『⚠ 上限』が notes 由来の同種チップより優先）。円換算モード・要経由バッジ・stale 等の後続も
+  この関数を使う（二重実装しない）。
 
 ### 優先通貨（v4.0.0）
 - 「普段ためたい通貨」を **順序付きリスト** で登録（CurrenciesScreen で ↑↓× 管理）。
@@ -273,7 +288,8 @@ src/domain/
   mergeSeed.ts        # add-only マージ + 公式 program / membership の更新伝播・tombstone（ユーザー編集保護）
   migrations.ts       # 既存レコードへの宣言型マイグレーション基盤
   ruleActiveAt.ts     # キャンペーン期間 (validFrom/validTo/recurringDays) のアクティブ判定
-  noteParser.ts       # notes から条件チップ (入会/上限/除外/期間) を抽出
+  noteParser.ts       # notes / conditions / membership.notes から条件チップ (要エントリー/経由型/上限/対象外/限定) を抽出
+  warningChips.ts     # 結果カードの警告チップの優先順と表示予算 (rankWarningChips、最大 3)
   cardLabel.ts        # カード名 + グレード表示整形
   currencyKind.ts     # 通貨種別 (point/mile/cashlike) のスタイル
   formatNum.ts        # 数値フォーマッタ
@@ -554,7 +570,8 @@ sync インフラ修正系の PR (#19-#26、#33-#35、#37、#39 等) は tag な
   (未検証を「古い」と誤警告しないため)。交換ルート画面 (メンテ用) では各 edge の最終確認月を表示し、
   6ヶ月超は ⚠ を付けます。未記入 edge の漸進記入と記入済み edge の棚卸しは、`SESSION_LOG` の
   「🗓 四半期ごと手動確認チェックリスト」で四半期ごとに回します (四半期×2回 = 6ヶ月閾値と整合)。
-  警告チップは展開ビュー内で優先順 (要エントリー > 上限 > stale > 失効 > 端数) の予算で表示します。
+  警告チップは展開ビュー内で `rankWarningChips` の優先順 (要エントリー = 要経由 > 経由型 > 上限 >
+  限定・対象外 > stale > 端数) で最大 3 件を表示します (PR-0a-2b)。
 - 「ポイントカード」画面で「使う」を OFF にすると、**交換ルート画面**ではそのポイント通貨を
   起点・経由から強く除外します (有効なクレジットカードが同じ通貨を貯めていても除外。グラフ上は
   灰色・点線で表示)。一方 **計算画面**は保有資産で実際に取得できる通貨を最適化するため、

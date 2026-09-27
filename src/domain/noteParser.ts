@@ -4,15 +4,39 @@
  *
  * パターン辞書 (拡張容易):
  *   - "要エントリー" → entry チップ (赤)
+ *   - 経由型・チャネル限定の語 (モバイルオーダー / オンライン入金 / オートチャージ / eGift /
+ *     ネット限定 / オンライン限定 / 経由) → channel チップ (青、ラベル『{語}限定』、PR-0a-2b)
  *   - "上限\s*N\s*(pt|円|ポイント)" → cap チップ (黄、額付き)
  *   - "上限あり" / "上限\s*\d+" → cap チップ (黄)
  *   - "対象外" → exclusion チップ (灰)
- *   - "限定" → limited チップ (青) ※他で取れた場合は重複排除
+ *   - "限定" → limited チップ (青) ※channel チップが出たら抑止 (同じ「限定」の言い直しのため)
  *
- * 同じ kind は 1 件まで (deduplicate)。
+ * 同じ kind は 1 件まで (deduplicate)。表示の優先順と件数予算は
+ * src/domain/warningChips.ts の rankWarningChips が決める (CalcResultCard)。
  */
 
-export type NoteChipKind = "entry" | "cap" | "exclusion" | "limited";
+export type NoteChipKind = "entry" | "channel" | "cap" | "exclusion" | "limited";
+
+// PR-0a-2b (M3): 経由型・チャネル限定の語。最初に現れた語をラベル『{語}限定』にする。
+// 「ネット」「オンライン」は直後が「限定」のときだけ (「オンラインストアは対象外」等を拾わない)。
+// 「オンライン入金」は「オンライン(?=限定)」より前に置いて優先させる。
+const CHANNEL_WORD_RE =
+  /モバイルオーダー|オンライン入金|オートチャージ|eGift|ネット(?=限定)|オンライン(?=限定)|経由/;
+
+/**
+ * 複数の条件文 (program.notes / program.conditions / membership.notes 等) を 1 本にまとめる
+ * (PR-0a-2b)。undefined・空白だけの文と重複を除き、" / " で連結する。全て空なら undefined。
+ */
+export function joinNoteTexts(
+  ...parts: ReadonlyArray<string | undefined>
+): string | undefined {
+  const out: string[] = [];
+  for (const p of parts) {
+    const t = p?.trim();
+    if (t && !out.includes(t)) out.push(t);
+  }
+  return out.length > 0 ? out.join(" / ") : undefined;
+}
 
 export type NoteChip = {
   kind: NoteChipKind;
@@ -66,6 +90,11 @@ export function extractNoteChips(notes: string | undefined): NoteChip[] {
     push("entry", "要エントリー");
   }
 
+  const channelMatch = notes.match(CHANNEL_WORD_RE);
+  if (channelMatch) {
+    push("channel", `${channelMatch[0]}限定`);
+  }
+
   // 上限の額がパターンに含まれてれば付加、なければ「上限あり」
   const capMatch = notes.match(/上限\s*(\d+(?:,\d{3})*)\s*(pt|ポイント|円)/);
   if (capMatch) {
@@ -79,7 +108,8 @@ export function extractNoteChips(notes: string | undefined): NoteChip[] {
   }
 
   // 「○○限定」「○○のみ」は限定チップ。「対象外」既に取れた場合はスキップしない (異種扱い)
-  if (/限定|のみ(?!の|に)/.test(notes)) {
+  // PR-0a-2b: channel チップ (『モバイルオーダー限定』等) が出たら汎用の『限定条件』は出さない。
+  if (!channelMatch && /限定|のみ(?!の|に)/.test(notes)) {
     push("limited", "限定条件");
   }
 
