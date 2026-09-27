@@ -4,8 +4,10 @@ import {
   nearlyEqual,
   RANK_EPS,
   detectMinUnitAnnotations,
+  collectAdoptedProgramIds,
 } from "./rankCards";
 import { membershipId } from "../state/defineMemberships";
+import { seed } from "../state/seed";
 import {
   SEED_BENEFIT_PROGRAMS,
   SEED_STORE_PROGRAM_MEMBERSHIPS,
@@ -1653,5 +1655,172 @@ describe("detectMinUnitAnnotations", () => {
 
   it("空ステップ (変換不要) は常に空", () => {
     expect(detectMinUnitAnnotations(1, [])).toEqual([]);
+  });
+});
+
+// PR-5a: charge 変種の programId と採用 program 集合 (adoptedProgramIds)。
+// 鮮度チップ (『古い情報かも』) と率カナリア (PR-5c-1) の監視対象判定が使う。
+describe("PR-5a: charge の programId / adoptedProgramIds", () => {
+  const chargePay: PaymentApp = {
+    id: "pa-test-charge",
+    name: "Test Pay",
+    chargeBased: true,
+    paymentMode: "charge",
+  };
+  const basePrimary: BenefitProgram = {
+    id: "prog-test-pay-base",
+    scope: "all-stores",
+    name: "Test Pay base",
+    paymentAppId: "pa-test-charge",
+    rate: 0.01,
+    currencyId: "rakuten-pt",
+    bonusType: "primary",
+  };
+  const payAddOn: BenefitProgram = {
+    id: "prog-test-pay-addon",
+    scope: "all-stores",
+    name: "Test Pay addOn",
+    paymentAppId: "pa-test-charge",
+    rate: 0.005,
+    currencyId: "rakuten-pt",
+    bonusType: "addOn",
+  };
+  const pc: PointCard = { id: "pc-r", name: "提示カード", currencyId: "rakuten-pt" };
+  const loyalty = loyaltyPrograms(
+    [{ id: "prog-test-pc", storeId: "any", pointCardId: "pc-r", rate: 0.01 }],
+    [pc],
+  );
+
+  it("chargeBased の base program は resolved.programId に入り、adopted は base → addOn → loyalty の順", () => {
+    const [r] = rankCardsRankings({
+      payment: { storeId: "any", amount: 1000 },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [],
+      pointCards: [pc],
+      programs: [basePrimary, payAddOn, ...loyalty.programs],
+      memberships: loyalty.memberships,
+      paymentApps: [chargePay],
+    });
+    expect(r.resolved).toEqual({
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      source: "charge",
+      programId: "prog-test-pay-base",
+    });
+    expect(r.adoptedProgramIds).toEqual([
+      "prog-test-pay-base",
+      "prog-test-pay-addon",
+      "prog-test-pc",
+    ]);
+  });
+
+  it("primary の無い chargeBased は programId を持たない (adopted は addOn だけ)", () => {
+    const [r] = rankCardsRankings({
+      payment: { storeId: "any", amount: 1000 },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [],
+      programs: [payAddOn],
+      paymentApps: [chargePay],
+    });
+    expect(r.resolved).toEqual({ rate: 0, currencyId: "rakuten-pt", source: "charge" });
+    expect(r.adoptedProgramIds).toEqual(["prog-test-pay-addon"]);
+  });
+
+  it("source default (program 不採用) は adopted が空、program 採用なら primary の id", () => {
+    const [plain] = rankCardsRankings({
+      payment: { storeId: "any", amount: 1000 },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [],
+    });
+    expect(plain.resolved.source).toBe("default");
+    expect(plain.adoptedProgramIds).toEqual([]);
+
+    const storePrimary: BenefitProgram = {
+      id: "prog-test-store",
+      scope: "all-stores",
+      name: "店舗特典",
+      cardIds: ["rakuten"],
+      rate: 0.03,
+      currencyId: "rakuten-pt",
+      bonusType: "primary",
+    };
+    const [withProg] = rankCardsRankings({
+      payment: { storeId: "any", amount: 1000 },
+      targetCurrencyId: "rakuten-pt",
+      cards: [rakuten],
+      stores: baseStores,
+      edges: [],
+      programs: [storePrimary],
+    });
+    expect(withProg.resolved.source).toBe("program");
+    expect(withProg.adoptedProgramIds).toEqual(["prog-test-store"]);
+  });
+
+  it("collectAdoptedProgramIds: 重複を除き、unreachable な loyalty は含めない", () => {
+    const loyaltyOf = (id: string, reachable: boolean) => ({
+      pointCard: pc,
+      rule: { id, storeId: "any", pointCardId: "pc-r", rate: 0.01 },
+      earnedAmount: 10,
+      earnedCurrencyId: "rakuten-pt",
+      pathSteps: [],
+      pathProduct: reachable ? 1 : 0,
+      finalAmount: reachable ? 10 : 0,
+      reachable,
+    });
+    const ids = collectAdoptedProgramIds({
+      resolved: { rate: 0.01, currencyId: "rakuten-pt", source: "program", programId: "p-1" },
+      appBonusBreakdown: [
+        {
+          programId: "p-2",
+          programName: "p-2",
+          rate: 0.01,
+          earnedAmount: 10,
+          earnedCurrencyId: "rakuten-pt",
+          finalAmount: 10,
+          pathSteps: [],
+        },
+        {
+          programId: "p-1", // primary と重複 (除外される)
+          programName: "p-1",
+          rate: 0.01,
+          earnedAmount: 10,
+          earnedCurrencyId: "rakuten-pt",
+          finalAmount: 10,
+          pathSteps: [],
+        },
+      ],
+      loyalties: [loyaltyOf("p-3", true), loyaltyOf("p-unreachable", false)],
+    });
+    expect(ids).toEqual(["p-1", "p-2", "p-3"]);
+  });
+
+  it("seed 実データ: dカード × d払い (チャージ式) は charge で programId = prog-d-pay-base", () => {
+    const S = seed();
+    const dcard = S.cards.find((c) => c.id === "dcard");
+    const dpay = S.paymentApps.find((p) => p.id === "pa-d-pay");
+    if (!dcard || !dpay) throw new Error("dcard / pa-d-pay が seed に無い");
+    const [r] = rankCards({
+      payment: { storeId: "general", amount: 10000 },
+      targetCurrencyId: "d-pt",
+      cards: [{ ...dcard, enabled: true }],
+      stores: S.stores,
+      edges: S.edges,
+      programs: S.programs,
+      memberships: S.memberships,
+      paymentApps: [{ ...dpay, enabled: true }],
+      now: new Date(2026, 8, 28),
+    }).rankings;
+    expect(r.resolved.source).toBe("charge");
+    expect(r.resolved.source === "charge" && r.resolved.programId).toBe(
+      "prog-d-pay-base",
+    );
+    expect(r.adoptedProgramIds).toContain("prog-d-pay-base");
+    expect(r.adoptedProgramIds).toContain("prog-d-pay-dcard-addon");
   });
 });

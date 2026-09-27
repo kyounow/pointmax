@@ -6,7 +6,10 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { CalcResultCard } from "./CalcResultCard";
-import type { CardRanking } from "../../domain/rankCards";
+import {
+  collectAdoptedProgramIds,
+  type CardRanking,
+} from "../../domain/rankCards";
 import type {
   BenefitProgram,
   ConversionEdge,
@@ -22,8 +25,10 @@ afterEach(cleanup);
 const rakutenPt: Currency = { id: "rakuten-pt", name: "楽天ポイント" };
 
 // CardRanking は必須フィールドが多いので、テスト用の最小妥当オブジェクトを生成する。
+// PR-5a: adoptedProgramIds は明示が無ければ rankCards と同じ collectAdoptedProgramIds で導出する
+// (resolved / appBonusBreakdown / loyalties を上書きしたテストでも整合する)。
 function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
-  return {
+  const base: Omit<CardRanking, "adoptedProgramIds"> = {
     card: {
       id: "rakuten",
       name: "楽天カード",
@@ -54,6 +59,10 @@ function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
     totalFinalAmount: 2000,
     minUnitAnnotations: [],
     ...over,
+  };
+  return {
+    ...base,
+    adoptedProgramIds: over.adoptedProgramIds ?? collectAdoptedProgramIds(base),
   };
 }
 
