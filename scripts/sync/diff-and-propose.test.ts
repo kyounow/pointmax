@@ -2068,18 +2068,18 @@ describe("H3: pa-default (通常クレカ決済) の受け皿ガード", () => {
     expect(ps[0].reviewReason).toBe("pseudoStoreTarget");
   });
 
-  it("既存 paymentApp=pa-default への defaultBonusRate 更新は pseudoStoreTarget に降格", () => {
+  it("既存 paymentApp=pa-default への chargeBased 変更は pseudoStoreTarget に降格", () => {
     const seed: SeedShape = {
       ...emptySeed,
-      paymentApps: [{ id: "pa-default", name: "通常クレカ決済", defaultBonusRate: 0.01 }],
+      paymentApps: [{ id: "pa-default", name: "通常クレカ決済", chargeBased: false }],
     };
     const data = baseSource({
       extractor: "payment-app",
       paymentApps: [
         {
           paymentAppId: "pa-default",
-          defaultBonusRate: 0.02,
-          evidenceQuote: "通常クレカ決済は2%還元に改定",
+          chargeBased: true,
+          evidenceQuote: "通常クレカ決済はチャージ式に変更",
           explicitness: 0.95,
           ambiguity: 0.05,
         },

@@ -190,8 +190,7 @@ export function formatAutoItemLocalized(
         rec.overrideRate != null ? ` (率上書き ${pct(rec.overrideRate)})` : "";
       return `${programName} → ${storeName}${override}`;
     }
-    case "programs":
-    case "campaigns": {
+    case "programs": {
       const currencyName = rec.currencyId
         ? resolver.currency(String(rec.currencyId))
         : "";
@@ -265,7 +264,6 @@ function formatAutoItem(p: Proposal): string {
     case "memberships":
       return `${rec.programId} → ${rec.storeId}${rec.overrideRate != null ? ` (率上書き ${pct(rec.overrideRate)})` : ""}`;
     case "programs":
-    case "campaigns":
       return `${rec.id} — ${rec.name} ${pct(rec.rate)} ${rec.currencyId ?? ""}${period}`.trim();
     default:
       return `${rec.id ?? JSON.stringify(rec)}`;
