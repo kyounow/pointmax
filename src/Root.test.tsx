@@ -6,7 +6,7 @@
 //   - App の描画例外: root モードの復旧パネル (もう一度試す は出さない)。
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { StrictMode, createElement } from "react";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, act } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 // App をモジュール変数フラグで throw させる (フラグが false なら本物の App を描画する)。
@@ -74,6 +74,27 @@ describe("Root: 読み込み (hydrate) 失敗時", () => {
     expect(persistWrites(setItem)).toBe(0);
     expect(localStorage.getItem(PERSIST_STORE_KEY)).toBe("{broken");
     expect(readCrashBackup()?.raw).toBe("{broken");
+  });
+
+  it("陽性コントロール: 検知を無視して App を描画し store action を呼ぶと persist キーが上書きされる", async () => {
+    // 上のケースの「書き込み 0 回」が spy の取りこぼしでないことを確かめる: 同じ壊れた persist で
+    // failure を消す (= Root が App を描画する) と、最初の set() が生データを上書きする。
+    localStorage.setItem(PERSIST_STORE_KEY, "{broken");
+    await useStore.persist.rehydrate();
+    expect(getHydrationFailure()).not.toBeNull();
+    clearHydrationFailure();
+
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+    const { container } = render(
+      <StrictMode>
+        <Root />
+      </StrictMode>,
+    );
+    expect(container.querySelector(".appbar")).not.toBeNull();
+    act(() => useStore.getState().setSyncUrl("https://example.test/master.json"));
+
+    expect(persistWrites(setItem)).toBeGreaterThan(0);
+    expect(localStorage.getItem(PERSIST_STORE_KEY)).not.toBe("{broken");
   });
 
   it("markHydrationFailure 済みなら (App が throw する設定でも) App を呼ばずにパネルを出す", () => {

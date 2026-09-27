@@ -117,6 +117,25 @@ describe("restorableSnapshotMeta / restoreSnapshotForRecovery", () => {
     expect(restorableSnapshotMeta()).toBeNull();
   });
 
+  it("localStorage へのアクセス自体が throw する (サイトデータ拒否) 環境でも例外を出さない", () => {
+    takeSnapshot("seed-apply", healthyState());
+    const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get() {
+        throw new DOMException("denied", "SecurityError");
+      },
+    });
+    try {
+      // 前提: stateSnapshot 側は typeof localStorage が try の外にあり throw する
+      expect(() => getSnapshotMeta()).toThrow();
+      expect(restorableSnapshotMeta()).toBeNull();
+    } finally {
+      if (original) Object.defineProperty(globalThis, "localStorage", original);
+    }
+    expect(restorableSnapshotMeta()?.trigger).toBe("seed-apply");
+  });
+
   it("seed-apply: persist の autoApplyNotice.digest を既読にしてから persist をスナップショットに置き換える", () => {
     const before = { ...healthyState(), lastSeedVersion: 11 };
     takeSnapshot("seed-apply", before);

@@ -1019,7 +1019,7 @@ export const useStore = create<State & Actions>()(
         backupRawPersisted("hydrate");
         markHydrationFailure(error);
       },
-      migrate:(persistedState: unknown, fromVersion: number) => {
+      migrate: (persistedState: unknown, fromVersion: number) => {
         // 新規 install (version フィールドが無い = fromVersion が undefined 扱い)
         // → そのまま通す (既存の empty+seed 初期化フローへ)
         if (fromVersion === PERSIST_SCHEMA_VERSION) {

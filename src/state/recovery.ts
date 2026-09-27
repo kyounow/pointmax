@@ -113,11 +113,17 @@ export function buildRecoveryExportJson(
 
 /**
  * 現行 schema で復元できるスナップショットのメタ (無い / 旧 schema / 読めないなら null)。
- * 例外は投げない (getSnapshotMeta は localStorage 不在・parse 失敗を内部で try/catch 済み)。
+ * 例外は投げない。getSnapshotMeta の parse 失敗は内部で握りつぶされるが、その手前の
+ * `typeof localStorage` はサイトデータを拒否したブラウザでは getter が SecurityError を投げ、
+ * try の外にある。RecoveryPanel は render 中にこれを呼ぶので、ここで包む。
  */
 export function restorableSnapshotMeta(): SnapshotMeta | null {
-  const meta = getSnapshotMeta();
-  return meta?.schemaVersion === PERSIST_SCHEMA_VERSION ? meta : null;
+  try {
+    const meta = getSnapshotMeta();
+    return meta?.schemaVersion === PERSIST_SCHEMA_VERSION ? meta : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
