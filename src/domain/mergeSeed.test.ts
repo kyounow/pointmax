@@ -388,6 +388,10 @@ describe("mergeSeed — removedMembershipIds (#103 対応)", () => {
       mem("prog-jcb-jpoint-20x", "starbucks"),
     ]);
     expect(result.removedMembershipIdCount).toBe(1);
+    // PR-0a-2b: 除去した行そのもの (digest / 削除グループ表示用)
+    expect(result.removedMemberships).toEqual([
+      mem("prog-jcb-jpoint-20x", "general"),
+    ]);
   });
 
   it("id 不一致の membership は残る", () => {
@@ -399,6 +403,132 @@ describe("mergeSeed — removedMembershipIds (#103 対応)", () => {
     );
     expect(result.memberships).toBe(memberships);
     expect(result.removedMembershipIdCount).toBe(0);
+    expect(result.removedMemberships).toEqual([]);
+  });
+});
+
+// PR-0a-2b: 公式 membership の内容更新伝播 (propagateMembershipUpdates)。
+describe("mergeSeed — 公式 membership の内容更新伝播 (PR-0a-2b)", () => {
+  it("公式の notes 差分が未編集の既存 membership に伝播する", () => {
+    const result = mergeSeed(
+      { ...empty, memberships: [mem("prog-a", "s1")] },
+      {
+        ...empty,
+        memberships: [mem("prog-a", "s1", { notes: "QUICPay は対象外" })],
+      },
+    );
+    expect(result.memberships?.[0].notes).toBe("QUICPay は対象外");
+    expect(result.updatedMemberships.map((m) => m.id)).toEqual([
+      membershipId("prog-a", "s1"),
+    ]);
+    expect(result.diff.memberships).toHaveLength(0); // 追加ではなく更新
+    expect(result.channelChangedUpdateIds).toEqual([]); // notes だけの更新
+  });
+
+  it("公式の channel / overrideRate の差分も伝播し、channel の変化は channelChangedUpdateIds に入る", () => {
+    const result = mergeSeed(
+      {
+        ...empty,
+        memberships: [mem("prog-a", "s1"), mem("prog-a", "s2")],
+      },
+      {
+        ...empty,
+        memberships: [
+          mem("prog-a", "s1", { channel: "online" }),
+          mem("prog-a", "s2", { overrideRate: 0.03 }),
+        ],
+      },
+    );
+    const byId = new Map(result.memberships?.map((m) => [m.id, m]));
+    expect(byId.get(membershipId("prog-a", "s1"))?.channel).toBe("online");
+    expect(byId.get(membershipId("prog-a", "s2"))?.overrideRate).toBe(0.03);
+    expect(result.updatedMemberships).toHaveLength(2);
+    expect(result.channelChangedUpdateIds).toEqual([membershipId("prog-a", "s1")]);
+  });
+
+  it("program の channel 変更も channelChangedUpdateIds に入る (program と membership の両方)", () => {
+    const result = mergeSeed(
+      {
+        ...empty,
+        programs: [prog("prog-a"), prog("prog-b")],
+        memberships: [mem("prog-b", "s1")],
+      },
+      {
+        ...empty,
+        programs: [prog("prog-a", { channel: "online" }), prog("prog-b", { rate: 0.07 })],
+        memberships: [mem("prog-b", "s1", { channel: "in-store" })],
+      },
+    );
+    expect(result.updatedPrograms.map((p) => p.id).sort()).toEqual([
+      "prog-a",
+      "prog-b",
+    ]);
+    // rate だけ変わった prog-b は入らない (順序は program → membership)
+    expect(result.channelChangedUpdateIds).toEqual([
+      "prog-a",
+      membershipId("prog-b", "s1"),
+    ]);
+  });
+
+  it("ユーザー編集済み (userModifiedAt あり) の membership は保護される", () => {
+    const edited = mem("prog-a", "s1", {
+      notes: "自分用メモ",
+      userModifiedAt: "2026-06-01T00:00:00.000Z",
+    });
+    const result = mergeSeed(
+      { ...empty, memberships: [edited] },
+      { ...empty, memberships: [mem("prog-a", "s1", { notes: "公式の注記" })] },
+    );
+    expect(result.memberships?.[0]).toBe(edited);
+    expect(result.updatedMemberships).toEqual([]);
+  });
+
+  it("差分ゼロなら入力の参照をそのまま返す (キー順序違い・userModifiedAt 以外は同内容)", () => {
+    const memberships = [
+      { storeId: "s1", notes: "n", programId: "prog-a", id: membershipId("prog-a", "s1") },
+    ] as StoreProgramMembership[];
+    const result = mergeSeed(
+      { ...empty, memberships },
+      { ...empty, memberships: [mem("prog-a", "s1", { notes: "n" })] },
+    );
+    expect(result.memberships).toBe(memberships);
+    expect(result.updatedMemberships).toEqual([]);
+    expect(changeCount(result)).toBe(0);
+  });
+
+  it("UUID program (ユーザー作成) の membership は seed と id が衝突しないので不変", () => {
+    const userMem = mem("3f2a-uuid-user-prog", "s1", { overrideRate: 0.02 });
+    const result = mergeSeed(
+      { ...empty, memberships: [userMem] },
+      { ...empty, memberships: [mem("prog-a", "s1", { notes: "公式" })] },
+    );
+    expect(result.memberships?.find((m) => m.id === userMem.id)).toBe(userMem);
+    expect(result.updatedMemberships).toEqual([]);
+  });
+
+  it("tombstone 対象は伝播の後で除去され、更新には数えない (削除として数える)", () => {
+    const result = mergeSeed(
+      { ...empty, memberships: [mem("prog-a", "s1"), mem("prog-a", "s2")] },
+      {
+        ...empty,
+        memberships: [
+          mem("prog-a", "s1", { notes: "更新あり" }),
+          mem("prog-a", "s2", { notes: "更新あり", channel: "online" }),
+        ],
+      },
+      { removedMembershipIds: [membershipId("prog-a", "s2")] },
+    );
+    expect(result.memberships?.map((m) => m.id)).toEqual([
+      membershipId("prog-a", "s1"),
+    ]);
+    expect(result.updatedMemberships.map((m) => m.id)).toEqual([
+      membershipId("prog-a", "s1"),
+    ]);
+    expect(result.removedMemberships.map((m) => m.id)).toEqual([
+      membershipId("prog-a", "s2"),
+    ]);
+    expect(result.channelChangedUpdateIds).toEqual([]);
+    expect(changeCount(result)).toBe(2); // 更新 1 + 削除 1
   });
 });
 
@@ -420,6 +550,21 @@ describe("changeCount", () => {
     expect(result.updatedPrograms).toHaveLength(1);
     expect(result.removedPrograms).toHaveLength(1);
     expect(changeCount(result)).toBe(3);
+  });
+
+  it("PR-0a-2b: membership の内容更新と単体 tombstone 削除も数える", () => {
+    const result = mergeSeed(
+      {
+        ...empty,
+        memberships: [mem("prog-a", "s1"), mem("prog-jcb-jpoint-20x", "general")],
+      },
+      { ...empty, memberships: [mem("prog-a", "s1", { notes: "公式の注記" })] },
+      { removedMembershipIds: [membershipId("prog-jcb-jpoint-20x", "general")] },
+    );
+    expect(diffCount(result.diff)).toBe(0);
+    expect(result.updatedMemberships).toHaveLength(1);
+    expect(result.removedMemberships).toHaveLength(1);
+    expect(changeCount(result)).toBe(2);
   });
 });
 

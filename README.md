@@ -161,6 +161,10 @@
   **add-only マージ**。プログラム (特典・キャンペーン) は加えて、**未編集の公式由来コピー**に限り
   内容更新 (還元率改定・期間延長) と終了キャンペーンの削除 (tombstone) も伝播する
   (ユーザーが編集したものは従来どおり保護され、更新も削除もされない)。
+  店舗×プログラムの提携 (membership) も同じ規約で、**未編集 (`userModifiedAt` なし) の公式行**には
+  注記 (`notes`)・購入チャネル (`channel`)・店舗別の率 (`overrideRate` / `overrideCurrencyId`) の
+  公式修正が伝播し、誤配信された提携は単体 tombstone (`REMOVED_MEMBERSHIP_IDS`) で除去される
+  (PR-0a-2b。以前は membership を add-only で「構造的に保護」していたため、既存端末に公式修正が届かなかった)。
   交換ルート (edge) / カードの公式修正は `src/domain/migrations.ts` の **MIGRATIONS** で配信する
   (現在値が `from` と一致するときだけ自動適用、不一致 = ユーザー編集は衝突として更新バナーで個別確認)。
   例: v47 で v46 監査の edge 修正 3 本・削除 2 本を既存端末へ配信。設定の「サンプル投入」も
@@ -262,7 +266,7 @@ src/domain/
   loyalty.ts          # ポイントカード提示分（重取り）の最良を返す
   paymentApp.ts       # PaymentApp 評価アダプタ (programEvaluator へ委譲)
   bestPath.ts         # 通貨間の最大積交換ルートを探索
-  mergeSeed.ts        # add-only マージ（ユーザー編集保護）
+  mergeSeed.ts        # add-only マージ + 公式 program / membership の更新伝播・tombstone（ユーザー編集保護）
   migrations.ts       # 既存レコードへの宣言型マイグレーション基盤
   ruleActiveAt.ts     # キャンペーン期間 (validFrom/validTo/recurringDays) のアクティブ判定
   noteParser.ts       # notes から条件チップ (入会/上限/除外/期間) を抽出
@@ -330,7 +334,7 @@ BenefitProgram の付与前提は 2 系統で表現する（R1 規約: seed / ma
 - **評価は店頭が既定**。`evaluatePrograms` は店舗から既定チャネルを導出し（`defaultChannelForStore`）、一致しない program を不発にする。**純 EC 店**（カテゴリ「ネット通販」＋ `ONLINE_ONLY_STORE_IDS` = `jalannet` / `hmv-books-online`）は `online` で評価するので、楽天市場 / Yahoo!ショッピング / じゃらん / HMV&BOOKS online の たまる倍率は従来どおり採用される。このリストに無い EC 専用店に online 限定 program の membership が付くと、切替 UI が入るまで計算に出ない。
 - 物理店 id への たまる membership（ビックカメラ・ユニクロ等）は「その店のネット通販で買う」場合の正しいデータなので削除しない。
 - 店頭 / ネットの**切替 UI（ネット購入モード）は 11 月予定**（`rankCards` / UI は現状、店舗由来の既定だけを使う）。
-- membership は現状 add-only merge のため、既存端末の同 id 行への `channel` 付与（スタバ / マック）は membership 更新伝播の追加後に届く（新規端末・URL 同期は即時）。
+- 既存端末の同 id 行への `channel` 付与（スタバ / マック）は membership 更新伝播（PR-0a-2b）で届く。`channel` が変わる公式更新は自動反映せず、確認モーダル（`SyncUpdateModal`）で反映する（店頭計算に載る・載らないが変わるため）。
 
 ### 自動同期パイプライン
 
