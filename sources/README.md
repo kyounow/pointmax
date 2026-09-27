@@ -83,6 +83,9 @@ confidence = evidenceQuote ? explicitness * (1 - ambiguity) : 0.3
 - ローカルで `sync:report` / `sync:approve` を実行すると `REVIEW_QUEUE.md` / `AUTO_SUMMARY.md` が untracked で
   再生成される。**commit しない** (`git add -A` や `git add sources/` で化石が main に戻る)。
   `proposed-migrations.json` と `SYNC_HISTORY.json`・`.md` も書き換わるので `git checkout` で戻す。
+- PR-0b-3 以降の `appendSyncHistory` は同じ generatedAt の entry を同位置で置換 (upsert) する。ローカルの `sync:report` は
+  `proposed-migrations.json` と同じ generatedAt の過去 entry を上書きする (needsReview の減少やラベルの再解決が入る) ので、
+  変わった `SYNC_HISTORY.json`・`.md` も commit せず `git checkout` で戻す。
 
 ## セキュリティと保護
 
