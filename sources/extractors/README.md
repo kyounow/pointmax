@@ -5,12 +5,23 @@ Gemini に渡す抽出プロンプト集。
 
 ## 種類一覧
 
-| ファイル | 対象 | 主な出力 |
-|---|---|---|
-| `card.prompt.md` | クレジットカード公式ページ | `cards[]`, `storeRules[]`, `categoryRules[]` |
-| `jal-tokuyaku.prompt.md` | JAL特約店リストページ | `categoryRules[]`, `stores[]`, `storeRules[]` |
-| `point-partner.prompt.md` | ポイントカード加盟店一覧 | `stores[]`, `loyaltyRules[]` |
-| `payment-app.prompt.md` | 決済アプリの公式ガイド | `paymentApps[]` |
+9 ファイル = `ExtractorKind` (`scripts/sync/types.ts`) の 8 種 + crawl 専用の `campaign-index`。
+「出力」は registry の `produces` に書く値 (`ProducesKind`: cards / categoryRules / stores /
+paymentApps / programs / memberships)。
+
+| ファイル | 対象 | 出力 (ProducesKind) | 備考 |
+|---|---|---|---|
+| `campaign.prompt.md` | 期間限定キャンペーン (一覧 or crawl の子ページ) | programs, memberships, stores | 新規 program が auto になり得る唯一の extractor (条件はルート README の表) |
+| `campaign-index.prompt.md` | 索引ハブ (registry の `crawl: { mode: index }`) | なし (子 URL の列挙のみ) | `ExtractorKind` ではない。1 段目で `urls[]` を返し、2 段目を campaign で抽出 |
+| `jcb-jpoint.prompt.md` | JCB J-POINT パートナー | programs, memberships, stores | 倍率階層別 program (W / Gold の 2 系列) |
+| `epos-tamaru.prompt.md` | たまるマーケット (EPOS) | programs, memberships, stores | 倍率階層別 program |
+| `ongoing-program.prompt.md` | 常設の還元アップ施策一覧 | programs, memberships, stores | validFrom/validTo を付けず conditions に常時条件 |
+| `card.prompt.md` | クレジットカード公式ページ | cards, categoryRules | prompt は storeRules も出す。categoryRules / storeRules を propose が使うのは jal-tokuyaku 経路だけで、既存カードの更新 (updateField/cards) は seed に書く経路が無い |
+| `jal-tokuyaku.prompt.md` | JAL特約店リスト | stores, categoryRules | categoryRules (基本レート確認) と storeRules (例外店の除外) を JAL 特約店 membership の propose に使う |
+| `point-partner.prompt.md` | ポイントカード加盟店一覧 | stores | loyaltyRules は v6 PR-1e 以降 propose が無視する |
+| `payment-app.prompt.md` | 決済アプリの公式ガイド | paymentApps | |
+
+使っているソースの有無 (enabled / 停止中) は `sources/registry.yaml` を参照。
 
 ## 各プロンプトの構成
 
@@ -84,7 +95,9 @@ Gemini 呼び出し直前に現在の seed から最新一覧を注入します�
 - どの抽出がどのプロンプトで作られたかを後追いするため
 - プロンプト変更によって抽出傾向が変わった場合の遡及調査に必要
 
-`promptVersion` は出力 JSON にも記録され、`scripts/sync/diff-and-propose.ts` がレビュー判定に使うこともある（将来）。
+`promptVersion` は出力 JSON にも記録される。上げたら `sources/registry.yaml` の `extractorVersions` も
+同じ値に更新する。`scripts/sync/diff-and-propose.ts` の stale-generation ガードが両者の不一致を見て、
+旧版 prompt で取った extracted からの rate / 期間の書き戻しを review に降格する。
 
 ## 追加時の規約
 
@@ -93,7 +106,7 @@ Gemini 呼び出し直前に現在の seed から最新一覧を注入します�
 1. 既存ファイルを参考に `<name>.prompt.md` を作成
 2. `scripts/sync/types.ts` の `ExtractorKind` に enum 値を追加
 3. `sources/schema/extracted-source.schema.json` の `extractor.enum` にも追加
-4. `sources/registry.yaml` に対応する `extractor: <name>` を指定したエントリを追加
+4. `sources/registry.yaml` に対応する `extractor: <name>` を指定したエントリを追加し、`extractorVersions` にも登録
 5. このファイルの「種類一覧」テーブルを更新
 
 ## デバッグ手順

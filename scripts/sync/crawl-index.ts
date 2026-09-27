@@ -2,7 +2,8 @@
 //
 // 背景: jre-point-campaigns / rakuten-pay-campaigns 等のキャンペーン「一覧」URL は
 // 索引ハブ (実データは個別キャンペーン詳細の子ページ) であり、単発 fetch では
-// 恒常的に抽出 0 件だった (registry.yaml の各 notes 参照)。本モジュールは
+// 恒常的に抽出 0 件だった (registry.yaml の各 notes 参照。両ソースは 2026-09-27 に停止し
+// sources/extracted/<id>.json は git rm 済みなので、当時の抽出結果は git 履歴を参照)。本モジュールは
 //
 //   1 段目: campaign-index extractor が索引ページから子 URL を列挙
 //   2 段目: 各子 URL を source 本来の extractor (campaign) で抽出
