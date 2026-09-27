@@ -2240,7 +2240,9 @@ details summary {
   color: var(--muted);
   border: 1px solid var(--border);
 }
-.note-chip-limited {
+/* PR-0a-2b (M3): channel = 経由型・チャネル限定 (『モバイルオーダー限定』等)。limited の具体形なので同色。 */
+.note-chip-limited,
+.note-chip-channel {
   background: rgba(78, 161, 255, 0.15);
   color: var(--accent);
   border: 1px solid var(--accent);

@@ -36,6 +36,8 @@ import {
 import { membershipId } from "./defineMemberships";
 import { CARD_FAMILIES } from "./seed-data-card-families";
 import { REMOVED_PROGRAM_IDS } from "./seed-additions";
+// 手書きファイル側 (seed-additions.ts は cron の codegen が全再生成するため置けない)。
+import { REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
 import { preservePreferences } from "./preferenceMerge";
 import {
   MIGRATIONS,
@@ -108,10 +110,14 @@ function computeSeedUpdate(
   programs: BenefitProgram[];
   memberships: StoreProgramMembership[];
 } {
-  // 1. seed マージ: 追加 (add-only) + 公式由来・未編集 program の内容更新伝播 +
-  //    tombstone (REMOVED_PROGRAM_IDS) 削除 (Phase 5)
+  // 1. seed マージ: 追加 (add-only) + 公式由来・未編集 program / membership の内容更新伝播 +
+  //    tombstone (REMOVED_PROGRAM_IDS) 削除 (Phase 5) + membership 単体 tombstone
+  //    (REMOVED_MEMBERSHIP_IDS)。PR-0a-2b: 以前は membership tombstone を preview
+  //    (useSeedMerge) にだけ渡していたため、反映しても消えず isAutoApplySafe が恒久 false だった (F3)。
+  //    preview と同じ opts にそろえる (設定 > サンプル投入 = mergeFromSeed も本関数経由で乗る)。
   const merged = mergeSeedFn(current, seed(), {
     removedProgramIds: REMOVED_PROGRAM_IDS,
+    removedMembershipIds: REMOVED_MEMBERSHIP_IDS,
   });
   // 2. マイグレーション計画 (追加後の state で再計算)
   const plan = planMigrations(merged, lastSeedVersion, SEED_VERSION, MIGRATIONS);
@@ -338,7 +344,8 @@ type Actions = {
   autoApplySeedUpdate: (notice: AutoApplyNotice) => void;
   // PR-4b: 自動反映バナーを閉じる (同一 digest を既読にして再表示を抑止)。
   dismissAutoApplyNotice: () => void;
-  dismissSeedUpdate: () => void;
+  // (PR-0a-2b: 更新バナーの「あとで」用 action (lastSeedVersion を進めていた) は廃止。
+  //  「あとで」は src/state/seedUpdateDismiss.ts が当日のセッション内だけ非表示にし、版は進めない)
   exportJson: () => string;
   importJson: (json: string) => { ok: true } | { ok: false; error: string };
   setSyncUrl: (url: string) => void;
@@ -798,10 +805,6 @@ export const useStore = create<State & Actions>()(
           state.autoApplyNotice = null;
         });
       },
-      dismissSeedUpdate: () =>
-        set((state) => {
-          state.lastSeedVersion = SEED_VERSION;
-        }),
 
       applySchemaMigration: () =>
         set((state) => {

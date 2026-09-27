@@ -22,6 +22,7 @@ import { findBestPurchaseDay } from "../domain/bestPurchaseDay";
 import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { isMasterCard } from "../state/seed";
+import { membershipId } from "../state/defineMemberships";
 import { CardComparisonSection } from "./CardComparisonSection";
 import { useToday } from "./hooks/useToday";
 import { BannerSlot } from "./calculator/BannerSlot";
@@ -127,6 +128,14 @@ export function CalculatorScreen() {
   const currencyById = useMemo(() => byId(currencies), [currencies]);
   const programById = useMemo(() => byId(programs), [programs]);
   const paymentAppById = useMemo(() => byId(paymentApps), [paymentApps]);
+  // PR-0a-2b (M3): 結果カードの条件チップに店別の membership.notes を合流させるための lookup
+  // (id 規約 m-{programId}-{storeId} で現在の店舗の membership を引く)。
+  const membershipById = useMemo(() => byId(memberships), [memberships]);
+  const membershipOf = useCallback(
+    (programId: string) =>
+      membershipById.get(membershipId(programId, storeId)),
+    [membershipById, storeId],
+  );
 
   // PR-2: 現在の店舗で除外中の (店舗 × 決済) レコード。対象外グループの復帰チップに使う。
   const excludedForStore = useMemo(
@@ -549,6 +558,7 @@ export function CalculatorScreen() {
                   canExcludePayment ? onExcludePayment : undefined
                 }
                 now={today}
+                membershipOf={membershipOf}
               />
               {/* REM-#4: ベスト購入日ヒントを #1 カード直下に 1 行チップで出す (結果リスト
                   上部には置かず、店頭フローの視線を塞がない)。円換算モードは bestDay=null で

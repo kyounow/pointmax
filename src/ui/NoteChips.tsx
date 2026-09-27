@@ -2,10 +2,24 @@ import { useState } from "react";
 import {
   extractNoteChips,
   sanitizeNoteForDisplay,
+  type NoteChipKind,
 } from "../domain/noteParser";
 
 type Props = {
+  /** 詳細ボタンで全文を展開できる notes (program.notes 等)。 */
   notes?: string;
+  /**
+   * PR-0a-2b (M3): チップの抽出元 (省略時は notes)。CalcResultCard の primary 行は
+   * joinNoteTexts(prog.notes, prog.conditions, membership.notes) を渡す。
+   * notes 以外 (conditions / membership.notes) 由来の部分は、チップが 1 件以上のときだけ描画し、
+   * 詳細ボタン・全文展開の対象にはしない (最頻出の結果カードに新要素を増やさないため)。
+   */
+  chipNotes?: string;
+  /**
+   * PR-0a-2b: 描画してよいチップの kind (rankWarningChips で警告予算内に残ったもの)。
+   * 省略時は抽出した全チップを描画する (CalcLoyaltyBanner 等の従来呼び出し)。
+   */
+  visibleKinds?: ReadonlySet<NoteChipKind>;
 };
 
 /**
@@ -24,28 +38,42 @@ type Props = {
  */
 const NOTE_DETAIL_THRESHOLD = 40;
 
-export function NoteChips({ notes }: Props) {
+export function NoteChips({ notes, chipNotes, visibleKinds }: Props) {
   const [expanded, setExpanded] = useState(false);
   const cleaned = sanitizeNoteForDisplay(notes);
-  if (!cleaned) return null;
-  const chips = extractNoteChips(cleaned);
+  const chipSource =
+    chipNotes === undefined ? cleaned : sanitizeNoteForDisplay(chipNotes);
+  const extracted = extractNoteChips(chipSource);
+  const chips = visibleKinds
+    ? extracted.filter((c) => visibleKinds.has(c.kind))
+    : extracted;
+  const chipNodes = chips.map((c) => (
+    <span
+      key={c.kind}
+      className={`note-chip note-chip-${c.kind}`}
+      title={chipSource}
+    >
+      {c.label}
+    </span>
+  ));
+  if (!cleaned) {
+    // notes 無し: conditions / membership.notes 由来のチップだけ (1 件以上のときのみ、詳細なし)
+    return chipNodes.length > 0 ? (
+      <span className="note-chips">{chipNodes}</span>
+    ) : null;
+  }
   // chip も詳細もない (= 取り立てて表示する内容がない) ときは何も出さない
   if (chips.length === 0 && cleaned.length < 4) return null;
   // chips で十分カバーできている短い notes ではボタンを出さない。
-  // chips が無いときはボタンが notes 全文を見る唯一の手段なので残す。
+  // notes 自身から取れたチップが 1 件も描画されないときは、ボタンが notes 全文を見る
+  // 唯一の手段なので残す (chipNotes / visibleKinds 未指定なら従来の chips.length === 0 と同じ)。
+  const ownKinds = new Set(extractNoteChips(cleaned).map((c) => c.kind));
   const showDetailButton =
-    chips.length === 0 || cleaned.length > NOTE_DETAIL_THRESHOLD;
+    !chips.some((c) => ownKinds.has(c.kind)) ||
+    cleaned.length > NOTE_DETAIL_THRESHOLD;
   return (
     <span className="note-chips">
-      {chips.map((c) => (
-        <span
-          key={c.kind}
-          className={`note-chip note-chip-${c.kind}`}
-          title={cleaned}
-        >
-          {c.label}
-        </span>
-      ))}
+      {chipNodes}
       {showDetailButton && (
         <button
           type="button"

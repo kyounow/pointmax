@@ -253,15 +253,16 @@ export type BenefitProgram = {
 //   v6 以前の (programId, storeId) 複合キー運用 (mergeSeed の `:` / `|` 区切り
 //   キー) は廃止し、他エンティティと同じ id ベースの merge / tombstone に統一。
 // userModifiedAt: ユーザが overrideRate/overrideCurrencyId/notes を編集した日時
-//   (ISO 8601)。Card.userModifiedAt と同セマンティクス。id ベースの add-only
-//   merge では既存 id は上書きされないため、編集済み membership は構造的に保護
-//   される (公式 override 更新は既存 id には伝播しない = 現行挙動維持)。
+//   (ISO 8601)。Card.userModifiedAt と同セマンティクス。
+//   PR-0a-2b: 未編集の公式 membership は、同 id の公式行の内容更新 (notes / channel /
+//   overrideRate / overrideCurrencyId) が mergeSeed で伝播する (program の更新伝播と同じ規約)。
+//   userModifiedAt がある行は保護され、公式更新で上書きされない。
 // channel: この店舗での program の購入チャネル (PR-0a-2a)。program.channel より優先する
 //   (effectiveChannel = membership.channel ?? program.channel)。undefined = program に従う。
 //   例: J-POINT 20倍 (program は店頭対象) のうちスターバックス / マクドナルドだけは
 //   モバイルオーダー・オンライン入金など経由型なので membership 単位で "online"。
-//   ⚠ membership は現状 add-only merge のため、既存端末の同 id 行への channel 付与は
-//   membership 更新伝播 (PR-0a-2b) まで届かない (新規端末・URL 同期では即時反映)。
+//   既存端末の同 id 行への channel 付与は membership 更新伝播 (PR-0a-2b) で届く
+//   (channel の変化は自動反映せず、確認モーダルで反映する)。
 export type StoreProgramMembership = {
   id: string;
   programId: string;

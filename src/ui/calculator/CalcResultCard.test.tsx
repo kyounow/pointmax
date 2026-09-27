@@ -7,7 +7,15 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { CalcResultCard } from "./CalcResultCard";
 import type { CardRanking } from "../../domain/rankCards";
-import type { BenefitProgram, ConversionEdge, Currency } from "../../domain/types";
+import type {
+  BenefitProgram,
+  ConversionEdge,
+  Currency,
+  PurchaseChannel,
+} from "../../domain/types";
+import { seed } from "../../state/seed";
+import { membershipId } from "../../state/defineMemberships";
+import { evaluatePrograms } from "../../domain/programEvaluator";
 
 afterEach(cleanup);
 
@@ -693,5 +701,226 @@ describe("CalcResultCard", () => {
       />,
     );
     expect(screen.queryByText(/要エントリー/)).not.toBeInTheDocument();
+  });
+
+  // ─── PR-0a-2b (M3): 条件チップの合流 (notes + conditions + membership.notes) と警告予算 ───
+
+  const plainProg: BenefitProgram = {
+    id: "prog-cap",
+    name: "提携店特典",
+    scope: "member-stores",
+    rate: 0.05,
+    currencyId: "rakuten-pt",
+  };
+
+  it("M3: membershipOf の notes『…限定 (…対象外)』が『限定条件』『対象外あり』チップになり、詳細ボタンは出さない", () => {
+    const membershipOf = vi.fn((pid: string) =>
+      pid === "prog-cap"
+        ? {
+            id: "m-prog-cap-s",
+            programId: "prog-cap",
+            storeId: "s",
+            notes: "加盟店限定 (一部店舗は対象外)",
+          }
+        : undefined,
+    );
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={new Map([["prog-cap", plainProg]])}
+        membershipOf={membershipOf}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(membershipOf).toHaveBeenCalledWith("prog-cap");
+    expect(screen.getByText("限定条件")).toBeInTheDocument();
+    expect(screen.getByText("対象外あり")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "詳細" })).not.toBeInTheDocument();
+  });
+
+  it("M3: membershipOf 未指定・conditions なしなら従来どおり (notes のチップ / チップが無い notes は詳細ボタン)", () => {
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={
+          new Map([["prog-cap", { ...plainProg, notes: "ファミマは対象外" }]])
+        }
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.getByText("対象外あり")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "詳細" })).not.toBeInTheDocument();
+    cleanup();
+
+    render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={
+          new Map([
+            ["prog-cap", { ...plainProg, notes: "Visaタッチ決済時、200円ごとに1pt" }],
+          ])
+        }
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(screen.queryByText("対象外あり")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "詳細" })).toBeInTheDocument();
+  });
+
+  it("M3: conditions からチップが取れない program は何も足さない (詳細ボタンも出さない)", () => {
+    const { container } = render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={
+          new Map([
+            ["prog-cap", { ...plainProg, conditions: "店ごとのポイントアップ登録 (無料) が必須。" }],
+          ])
+        }
+        membershipOf={() => undefined}
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(container.querySelectorAll(".note-chip")).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "詳細" })).not.toBeInTheDocument();
+  });
+
+  it("警告予算 (rankWarningChips): 要エントリー + 上限 + 条件チップ 2 種 + stale が立っても上位 3 件だけ出す", () => {
+    const ranking = makeRanking({
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-12" })],
+    });
+    render(
+      <CalcResultCard
+        ranking={ranking}
+        programById={
+          new Map([
+            [
+              "prog-cap",
+              {
+                ...plainProg,
+                requiresEntry: true,
+                monthlyCapAmountYen: 40000,
+                conditions: "一部店舗は対象外。加盟店限定。",
+              },
+            ],
+          ])
+        }
+        expanded
+        {...baseProps}
+      />,
+    );
+    // entry (最優先) > cap > 対象外 (限定と同順位で抽出順が先)。限定条件・stale は予算外。
+    expect(screen.getByText(/要エントリー/)).toBeInTheDocument();
+    expect(screen.getByText(/上限.*円\/月/)).toBeInTheDocument();
+    expect(screen.getByText("対象外あり")).toBeInTheDocument();
+    expect(screen.queryByText("限定条件")).not.toBeInTheDocument();
+    expect(screen.queryByText(/ルート要確認/)).not.toBeInTheDocument();
+  });
+
+  it("警告予算: notes の『要エントリー』『上限』は専用バッジと二重に出さない", () => {
+    const { container } = render(
+      <CalcResultCard
+        ranking={makeRanking()}
+        programById={
+          new Map([
+            [
+              "prog-cap",
+              {
+                ...plainProg,
+                requiresEntry: true,
+                monthlyCapAmountYen: 40000,
+                notes: "要エントリー、進呈上限 2000pt",
+              },
+            ],
+          ])
+        }
+        expanded
+        {...baseProps}
+      />,
+    );
+    expect(container.querySelectorAll(".entry-warn")).toHaveLength(1);
+    expect(container.querySelectorAll(".cap-warn")).toHaveLength(1);
+    expect(container.querySelector(".note-chip-entry")).toBeNull();
+    expect(container.querySelector(".note-chip-cap")).toBeNull();
+  });
+});
+
+// PR-0a-2b (M3): seed 実データの J-POINT 20倍 × 店舗の条件チップ。
+// ⚠ cron の Safety check でも走るので「その店の候補に 20倍が入る / 入らない」は包含形・否定形で書き、
+// 採用率の厳密値は assert しない (channelRegression.test と同じ規約)。結果カードは
+// primary = prog-jcb-jpoint-20x を採用した ranking を組み、seed の program / membership で描画する。
+describe("CalcResultCard — seed 実データの J-POINT 20倍 条件チップ (PR-0a-2b)", () => {
+  const S = seed();
+  const NOW = new Date("2026-09-28T12:00:00+09:00");
+  const TWENTY_X = "prog-jcb-jpoint-20x";
+  const seedProgramById = new Map(S.programs.map((p) => [p.id, p]));
+  const seedMembershipById = new Map(S.memberships.map((m) => [m.id, m]));
+  const jcbW = S.cards.find((c) => c.id === "jcb-w");
+
+  const candidateIds = (storeId: string, channel?: PurchaseChannel) => {
+    const store = S.stores.find((s) => s.id === storeId);
+    if (!jcbW || !store) throw new Error(`jcb-w / ${storeId} が seed に無い`);
+    return evaluatePrograms({
+      card: jcbW,
+      store,
+      paymentApp: { id: "__direct__", name: "直接決済" },
+      programs: S.programs,
+      memberships: S.memberships,
+      now: NOW,
+      channel,
+    }).primaryCandidates.map((c) => c.program.id);
+  };
+
+  const renderTwentyX = (storeId: string) => {
+    if (!jcbW) throw new Error("jcb-w が seed に無い");
+    return render(
+      <CalcResultCard
+        ranking={makeRanking({
+          card: { ...jcbW, enabled: true },
+          resolved: {
+            rate: 0.105,
+            currencyId: "j-point",
+            source: "program",
+            programId: TWENTY_X,
+          },
+        })}
+        programById={seedProgramById}
+        membershipOf={(pid) => seedMembershipById.get(membershipId(pid, storeId))}
+        expanded
+        {...baseProps}
+      />,
+    );
+  };
+
+  it("jcb-w × すき家 (店頭): 要エントリー + QUICPay の『対象外あり』。『限定条件』は出ない", () => {
+    expect(candidateIds("sukiya")).toContain(TWENTY_X);
+    const { container } = renderTwentyX("sukiya");
+    expect(screen.getByText("⚠ 要エントリー")).toBeInTheDocument();
+    expect(screen.getByText("対象外あり")).toBeInTheDocument();
+    expect(screen.queryByText("限定条件")).not.toBeInTheDocument();
+    expect(container.querySelector(".note-chip-channel")).toBeNull();
+    expect(screen.queryByRole("button", { name: "詳細" })).not.toBeInTheDocument();
+  });
+
+  it("jcb-w × 吉野家 (店頭): 要エントリー のみ (条件チップなし)", () => {
+    expect(candidateIds("yoshinoya")).toContain(TWENTY_X);
+    const { container } = renderTwentyX("yoshinoya");
+    expect(screen.getByText("⚠ 要エントリー")).toBeInTheDocument();
+    expect(container.querySelectorAll(".note-chip")).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "詳細" })).not.toBeInTheDocument();
+  });
+
+  it("jcb-w × スターバックス: 店頭では 20倍が候補に無く、channel:'online' で評価すると 要エントリー + 『モバイルオーダー限定』+ 『対象外あり』", () => {
+    // A16: 店頭モードでは 20倍 自体が不採用 = 店頭の結果カードにはこのチップが出ない
+    expect(candidateIds("starbucks")).not.toContain(TWENTY_X);
+    expect(candidateIds("starbucks", "online")).toContain(TWENTY_X);
+    renderTwentyX("starbucks");
+    expect(screen.getByText("⚠ 要エントリー")).toBeInTheDocument();
+    expect(screen.getByText("モバイルオーダー限定")).toBeInTheDocument();
+    expect(screen.getByText("対象外あり")).toBeInTheDocument();
+    expect(screen.queryByText("限定条件")).not.toBeInTheDocument();
   });
 });

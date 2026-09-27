@@ -42,9 +42,13 @@
   （追加・非破壊の内容更新のみ）なら起動時に**自動反映**し、フルスクリーンの `SyncUpdateModal`
   を出さない。反映後は `BannerSlot` の自動反映枠に「マスタを自動更新しました（N 件）［詳細］
   ［元に戻す］✕」を出す（`[詳細]`→更新履歴、`[元に戻す]`→PR-4a のスナップショット復元、
-  `✕`→同一 digest を既読化して再表示しない）。**削除・scope 変更・SEED_VERSION の版更新**を
-  含む週だけ従来モーダルにフォールバックし、「削除や大きな変更を含むため確認をお願いします」を
-  添えてユーザー確認を挟む。安全判定は純関数 `isAutoApplySafe`（`src/domain/autoApplySafety.ts`）。
+  `✕`→同一 digest を既読化して再表示しない）。**削除・scope 変更・購入チャネル (`channel`) の変更・
+  SEED_VERSION の版更新**を含む週だけ従来モーダルにフォールバックし、「削除や大きな変更を含むため
+  確認をお願いします」を添えてユーザー確認を挟む。安全判定は純関数 `isAutoApplySafe`
+  （`src/domain/autoApplySafety.ts`）。提携店舗 (membership) の注記だけの更新は安全側 (自動反映)、
+  membership の単体 tombstone 削除はモーダル。件数 (`changeCount` / 更新バナーの「N件適用」) と
+  既読判定の指紋 (`syncDigest`) は membership の更新 (`memU:`)・削除 (`memD:`) も数え、program の
+  更新は内容全体のハッシュで指紋化する (条件・注記・チャネルだけの公式更新も別バッチとして届く、PR-0a-2b)。
   自動反映も従来モーダルもオフライン時は抑制する（`useOnline`）。
 - **アプリ更新通知（PR-4b / UX-8(3)）**: `vite-plugin-pwa` の `autoUpdate` 構成では Service
   Worker が裏で新版に入れ替わる。ビルドごとに変わる識別子 `__BUILD_ID__`（vite `define` 注入）を
@@ -72,6 +76,21 @@
   **優先通貨リストに現存する**場合のみ／`storeId` は**実在する**場合のみ採用する（外れていれば既定挙動）。
   `sessionStorage` は Android PWA の kill で消えるため不採用。`usageStats` / `onboardingDismissed` と
   同型の schema-reset 非依存キーで、read/write 失敗は try/catch で握りつぶす（送信は一切しない）。
+- **結果カードの条件チップ（PR-0a-2b / M3）**: 展開ビューの採用 program（primary 行）の条件チップは、
+  program の `notes` に加えて `conditions` と **この店の membership の `notes`**（店別の条件）を
+  `joinNoteTexts` で合流して抽出する（`src/domain/noteParser.ts`）。チップは 要エントリー / **経由型**
+  （`channel`: モバイルオーダー / オンライン入金 / オートチャージ / eGift / ネット限定 / オンライン限定 /
+  経由 → 『{語}限定』。出たら同じ文の汎用『限定条件』は出さない）/ 上限 / 対象外 / 限定条件。
+  `conditions` / membership 由来のぶんは**チップが 1 件以上のときだけ**描画し『詳細』ボタンは出さない
+  （`notes` 単独の従来挙動は不変）。例: JCB W × すき家 = 『⚠ 要エントリー』+『対象外あり』（QUICPay 除外）、
+  × 吉野家 = 『⚠ 要エントリー』のみ。スタバ / マックの 20倍は `channel:"online"` のため店頭の結果には
+  出ず、ネット評価では『モバイルオーダー限定』+『対象外あり』が付く。
+- **警告チップの表示予算（PR-0a-2b）**: 展開ビューの警告系（要エントリー / 条件チップ / 上限 /
+  ルート要確認 (stale) / 最低交換単位 (端数)）は純関数 `rankWarningChips`
+  （`src/domain/warningChips.ts`）で **要エントリー = 要経由 > 経由型 (channel) > 上限 > 限定・対象外 >
+  stale > 端数** の優先順に並べ、**最大 3 件**だけ出す。同じ種類は 1 件（専用バッジ『⚠ 要エントリー』
+  『⚠ 上限』が notes 由来の同種チップより優先）。円換算モード・要経由バッジ・stale 等の後続も
+  この関数を使う（二重実装しない）。
 
 ### 優先通貨（v4.0.0）
 - 「普段ためたい通貨」を **順序付きリスト** で登録（CurrenciesScreen で ↑↓× 管理）。
@@ -161,10 +180,18 @@
   **add-only マージ**。プログラム (特典・キャンペーン) は加えて、**未編集の公式由来コピー**に限り
   内容更新 (還元率改定・期間延長) と終了キャンペーンの削除 (tombstone) も伝播する
   (ユーザーが編集したものは従来どおり保護され、更新も削除もされない)。
+  店舗×プログラムの提携 (membership) も同じ規約で、**未編集 (`userModifiedAt` なし) の公式行**には
+  注記 (`notes`)・購入チャネル (`channel`)・店舗別の率 (`overrideRate` / `overrideCurrencyId`) の
+  公式修正が伝播し、誤配信された提携は単体 tombstone (`REMOVED_MEMBERSHIP_IDS`) で除去される
+  (PR-0a-2b。以前は membership を add-only で「構造的に保護」していたため、既存端末に公式修正が届かなかった)。
   交換ルート (edge) / カードの公式修正は `src/domain/migrations.ts` の **MIGRATIONS** で配信する
   (現在値が `from` と一致するときだけ自動適用、不一致 = ユーザー編集は衝突として更新バナーで個別確認)。
   例: v47 で v46 監査の edge 修正 3 本・削除 2 本を既存端末へ配信。設定の「サンプル投入」も
   「アプリに反映」と同じ経路 (`computeSeedUpdate`) で、公式の修正・削除まで反映する (PR-0a-2a)。
+  更新バナー (SEED_VERSION のリリース通知) の「あとで」は **`lastSeedVersion` を進めず**、当日の
+  このセッションの間だけバナーを隠す (`src/state/seedUpdateDismiss.ts`、`sessionStorage`)。
+  以前は版を進めるだけで、その版の MIGRATIONS が永久にスキップされていた。反映するまでは
+  次に開いたとき (または翌日) に再表示され、確認モーダルの安全判定も「版更新あり」のまま (PR-0a-2b)。
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
 - **新規プロファイルの公式データ自動投入（PR-6a-1 / F7）**: `localStorage` が空の初回起動では公式マスタ
@@ -245,7 +272,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1328 ケース / 75 ファイル** (2026-09-27 時点)） |
+| テスト | Vitest（**1397 ケース / 77 ファイル** (2026-09-27 時点)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -262,10 +289,11 @@ src/domain/
   loyalty.ts          # ポイントカード提示分（重取り）の最良を返す
   paymentApp.ts       # PaymentApp 評価アダプタ (programEvaluator へ委譲)
   bestPath.ts         # 通貨間の最大積交換ルートを探索
-  mergeSeed.ts        # add-only マージ（ユーザー編集保護）
+  mergeSeed.ts        # add-only マージ + 公式 program / membership の更新伝播・tombstone（ユーザー編集保護）
   migrations.ts       # 既存レコードへの宣言型マイグレーション基盤
   ruleActiveAt.ts     # キャンペーン期間 (validFrom/validTo/recurringDays) のアクティブ判定
-  noteParser.ts       # notes から条件チップ (入会/上限/除外/期間) を抽出
+  noteParser.ts       # notes / conditions / membership.notes から条件チップ (要エントリー/経由型/上限/対象外/限定) を抽出
+  warningChips.ts     # 結果カードの警告チップの優先順と表示予算 (rankWarningChips、最大 3)
   cardLabel.ts        # カード名 + グレード表示整形
   currencyKind.ts     # 通貨種別 (point/mile/cashlike) のスタイル
   formatNum.ts        # 数値フォーマッタ
@@ -330,7 +358,7 @@ BenefitProgram の付与前提は 2 系統で表現する（R1 規約: seed / ma
 - **評価は店頭が既定**。`evaluatePrograms` は店舗から既定チャネルを導出し（`defaultChannelForStore`）、一致しない program を不発にする。**純 EC 店**（カテゴリ「ネット通販」＋ `ONLINE_ONLY_STORE_IDS` = `jalannet` / `hmv-books-online`）は `online` で評価するので、楽天市場 / Yahoo!ショッピング / じゃらん / HMV&BOOKS online の たまる倍率は従来どおり採用される。このリストに無い EC 専用店に online 限定 program の membership が付くと、切替 UI が入るまで計算に出ない。
 - 物理店 id への たまる membership（ビックカメラ・ユニクロ等）は「その店のネット通販で買う」場合の正しいデータなので削除しない。
 - 店頭 / ネットの**切替 UI（ネット購入モード）は 11 月予定**（`rankCards` / UI は現状、店舗由来の既定だけを使う）。
-- membership は現状 add-only merge のため、既存端末の同 id 行への `channel` 付与（スタバ / マック）は membership 更新伝播の追加後に届く（新規端末・URL 同期は即時）。
+- 既存端末の同 id 行への `channel` 付与（スタバ / マック）は membership 更新伝播（PR-0a-2b）で届く。`channel` が変わる公式更新は自動反映せず、確認モーダル（`SyncUpdateModal`）で反映する（店頭計算に載る・載らないが変わるため）。
 
 ### 自動同期パイプライン
 
@@ -362,7 +390,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1328 ケース / 75 ファイル (2026-09-27 時点))
+npm run test         # Vitest (1397 ケース / 77 ファイル (2026-09-27 時点))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -517,6 +545,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
   SEED_VERSION / PERSIST_SCHEMA 据え置き (計算専用・新フィールドなし)
 - **改善 PR-6a-1 (起動回帰の修正 + 新規プロファイルの公式データ自動投入)** — 計算画面の起動時に「同日の下書き ?? 優先通貨の先頭」のタブを選び同率 1 位を自動展開する挙動を復旧 (v6.2.0 decb694 で失われた回帰、G19)、新規プロファイル / 初期化後の次回起動で公式 seed を通知なし・カード全 OFF で自動投入 (`seedIfEmpty`、F7)。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-0a-2a (購入チャネル核 + v46 修正の配信)** — `PurchaseChannel` (`in-store` / `online`) と `BenefitProgram.channel?` / `StoreProgramMembership.channel?` を追加し、`evaluatePrograms` に店舗から導出した既定チャネル (店頭、純 EC 店はネット) の gate を入れた。たまるマーケット 3 program と J-POINT 20倍のスタバ / マック membership 4 件を `online` にし、店頭計算での過大表示を修正 (エポス×ビックカメラ店頭 2.0%→0.5%、JCB W×スタバ店頭 10.5%→1%。楽天市場 / Yahoo! / じゃらん / HMV online は従来どおり)。v46 監査の edge 修正 3 本・削除 2 本を MIGRATIONS v47 で、廃止 program 2 件を `REMOVED_PROGRAM_IDS` で既存端末へ配信。設定の「サンプル投入」は `computeSeedUpdate` に委譲 (公式の修正・削除も反映)。sync は epos-tamaru 由来の新規 program に `channel:"online"` を決定論で付与。SEED_VERSION 46→47 / PERSIST_SCHEMA 据え置き
+- **改善 PR-0a-2b (membership 伝播 + 件数/指紋/安全判定 + M3 条件チップ)** — 未編集の公式 membership に notes / channel / override の公式更新を伝播 (`propagateMembershipUpdates`、`userModifiedAt` は保護)、membership 単体 tombstone (`REMOVED_MEMBERSHIP_IDS`) を seed 反映の全経路に配線 (#103 の general 4 件が反映されず自動反映が恒久停止していた F3)。件数 (`changeCount` / 更新バナー) と既読指紋 (`syncDigest`: program 更新は内容ハッシュ、`memU:` / `memD:`) に membership の更新・削除を含め、channel の変化は確認モーダルへ。J-POINT 20倍の店別条件を membership.notes に移し (スタバ / マック / すき家 / すかいらーく 3 店 / サンマルク、2026-09-27 公式確認)、結果カードの条件チップに conditions / membership.notes を合流 (M3、`channel` チップ)。警告チップは `rankWarningChips` で優先順・最大 3 に一本化。更新バナーの「あとで」は版を進めず当日のセッション内だけ非表示。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
@@ -546,7 +575,8 @@ sync インフラ修正系の PR (#19-#26、#33-#35、#37、#39 等) は tag な
   (未検証を「古い」と誤警告しないため)。交換ルート画面 (メンテ用) では各 edge の最終確認月を表示し、
   6ヶ月超は ⚠ を付けます。未記入 edge の漸進記入と記入済み edge の棚卸しは、`SESSION_LOG` の
   「🗓 四半期ごと手動確認チェックリスト」で四半期ごとに回します (四半期×2回 = 6ヶ月閾値と整合)。
-  警告チップは展開ビュー内で優先順 (要エントリー > 上限 > stale > 失効 > 端数) の予算で表示します。
+  警告チップは展開ビュー内で `rankWarningChips` の優先順 (要エントリー = 要経由 > 経由型 > 上限 >
+  限定・対象外 > stale > 端数) で最大 3 件を表示します (PR-0a-2b)。
 - 「ポイントカード」画面で「使う」を OFF にすると、**交換ルート画面**ではそのポイント通貨を
   起点・経由から強く除外します (有効なクレジットカードが同じ通貨を貯めていても除外。グラフ上は
   灰色・点線で表示)。一方 **計算画面**は保有資産で実際に取得できる通貨を最適化するため、
