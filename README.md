@@ -158,6 +158,10 @@
   **add-only マージ**。プログラム (特典・キャンペーン) は加えて、**未編集の公式由来コピー**に限り
   内容更新 (還元率改定・期間延長) と終了キャンペーンの削除 (tombstone) も伝播する
   (ユーザーが編集したものは従来どおり保護され、更新も削除もされない)。
+  交換ルート (edge) / カードの公式修正は `src/domain/migrations.ts` の **MIGRATIONS** で配信する
+  (現在値が `from` と一致するときだけ自動適用、不一致 = ユーザー編集は衝突として更新バナーで個別確認)。
+  例: v47 で v46 監査の edge 修正 3 本・削除 2 本を既存端末へ配信。設定の「サンプル投入」も
+  「アプリに反映」と同じ経路 (`computeSeedUpdate`) で、公式の修正・削除まで反映する (PR-0a-2a)。
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
 - 「サンプル投入」「ローカルデータ初期化」「JSONエクスポート/インポート」は設定画面から。
@@ -241,6 +245,7 @@ src/domain/
   types.ts            # 全エンティティの型 (Card, Currency, Store, BenefitProgram,
                        #   StoreProgramMembership, ConversionEdge, PointCard, PaymentApp ...)
   programEvaluator.ts # ★ 還元評価の中核。BenefitProgram を評価し primary/addOns を返す
+  purchaseChannel.ts  # 購入チャネル (店頭/ネット) の既定導出 (店舗から) と program × membership の gate 判定
   rankCards.ts        # loyalty + paymentApp 評価を統合しカード別ランキング生成
   loyalty.ts          # ポイントカード提示分（重取り）の最良を返す
   paymentApp.ts       # PaymentApp 評価アダプタ (programEvaluator へ委譲)
@@ -302,7 +307,18 @@ BenefitProgram の付与前提は 2 系統で表現する（R1 規約: seed / ma
   - 例: ショッピングマイル・プレミアム加入前提の JAL カード特約店2倍（普通カード `jal-card`）、Olive「選べる特典」+1%、エポス「選べるポイントアップ」2倍。
 - **無料の都度登録系**（登録すれば誰でも同率）= `requiresEntry: true`（+ 任意 `entryUrl` / `conditions` チップ）で表現し、`optIn` は付けない（計算には常時載せ、Calculator の結果カード展開ビューに「⚠ 要エントリー」バッジを出し、`entryUrl` があればタップで登録／エントリーページを別タブ起動して取りこぼしを促す）。
   - 例: JCB J-POINT パートナーの店ごとポイントアップ登録、楽天「5と0のつく日」のエントリー。
-  - ⚠ 「サイト経由型」（たまるマーケット等の経由で貯まるが登録は不要なもの）は `requiresEntry` の対象外（語義を「エントリー／登録が必要」に限定）。
+  - ⚠ 「サイト経由型」（たまるマーケット等の経由で貯まるが登録は不要なもの）は `requiresEntry` の対象外（語義を「エントリー／登録が必要」に限定）。経由型であることは下の購入チャネル (`channel: "online"`) で表す。
+
+#### 購入チャネル（店頭 / ネット・アプリ経由、PR-0a-2a）
+
+`BenefitProgram.channel?` / `StoreProgramMembership.channel?` (`"in-store" | "online"`) で、還元が発動する購入チャネルを表す（`src/domain/purchaseChannel.ts`）。
+
+- **`undefined` = 両チャネルで有効**（既定）。有効チャネルは `membership.channel ?? program.channel`（membership が優先）。preference ではなく還元条件そのものなので seed / master が出荷する。
+- `online` を持つもの: たまるマーケット `prog-epos-tamaru-{N}x`（サイト経由のネット購入限定）と、J-POINT 20倍のうち **スターバックス / マクドナルドの membership**（W・Gold の 4 件。モバイルオーダー・オンライン入金など経由型で、レジでのカード直接払いは対象外）。すき家・吉野家等の 20倍は店頭カード払いが対象なので両チャネルのまま。
+- **評価は店頭が既定**。`evaluatePrograms` は店舗から既定チャネルを導出し（`defaultChannelForStore`）、一致しない program を不発にする。**純 EC 店**（カテゴリ「ネット通販」＋ `ONLINE_ONLY_STORE_IDS` = `jalannet` / `hmv-books-online`）は `online` で評価するので、楽天市場 / Yahoo!ショッピング / じゃらん / HMV&BOOKS online の たまる倍率は従来どおり採用される。このリストに無い EC 専用店に online 限定 program の membership が付くと、切替 UI が入るまで計算に出ない。
+- 物理店 id への たまる membership（ビックカメラ・ユニクロ等）は「その店のネット通販で買う」場合の正しいデータなので削除しない。
+- 店頭 / ネットの**切替 UI（ネット購入モード）は 11 月予定**（`rankCards` / UI は現状、店舗由来の既定だけを使う）。
+- membership は現状 add-only merge のため、既存端末の同 id 行への `channel` 付与（スタバ / マック）は membership 更新伝播の追加後に届く（新規端末・URL 同期は即時）。
 
 ### 自動同期パイプライン
 
@@ -399,6 +415,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | 対象店 membership が全滅した **新規 member-stores program 単独** | ❌ しない (`orphanedProgram` で needsReview) | **原子性ガード (Phase C2 `demoteChildlessMemberStorePrograms`)**: campaign 由来 program は auto でも、その membership が全て `missingStoreBody` 等で review 降格されると member-stores × membership 0 の死にデータになる。program 単独 auto を防ぎ、`member-stores は membership ≥1` 契約テストが apply 後 safety gate で fail → 無関係な auto 変更まで巻き添え review 降格するのを propose 層で阻止。対象店 membership 側と同時に `npm run sync:approve` する運用 |
 | **旧世代 extracted 由来の rate/期間 書き戻し** | ❌ しない (`staleExtractGeneration` で needsReview) | **stale-generation ガード (Phase C3 `guardStaleExtractGeneration`)**: extractor プロンプト改訂直後、旧版で fetch した `sources/extracted/<id>.json` が seed (新方針で修正済) との差分を書き戻し提案として出すのを防ぐ。当該 source の `promptVersion` が `registry.yaml` の `extractorVersions[extractor]` から導く現行版と不一致なら、`PROGRAM_OVERRIDES` 行きの updateField (rate/validFrom/validTo) を auto にせず review 降格。次回 fetch (新版) で `promptVersion` が一致すれば従来の閾値判定に戻る (`🧯 stale-generation guard` log) |
 | 新規 **cards / paymentApps / 非キャンペーン program** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
+| **epos-tamaru 由来の新規 program** の購入チャネル | ― (record に自動付与) | `ONLINE_CHANNEL_EXTRACTORS` (`scripts/sync/types.ts`) の extractor 由来の新規 program には propose 層が決定論で `channel: "online"` を付ける (Gemini 出力・schema に依存しない)。承認・auto の可否は従来の判定のまま。既存 program の rate / 期間 updateField と membership 提案は不変 |
 | **期限切れ campaign の削除** (validTo+30 日経過) | ✅ する (**自動削除**) | 既に非アクティブで還元計算に影響しないためクリーンアップを自動化。tombstone (`REMOVED_PROGRAM_IDS`) 化で program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。編集済みは保護)。**安全弁**: 同 run で期間変更 (`periodChange`) が提案されている program は延長中の可能性を考慮し自動削除せず needsReview (`expiredCampaign`)。件数 cap / apply 後の test・build gate / `autoMergeEnabled` も従来どおり適用 |
 
 ---
@@ -409,7 +426,7 @@ PointMax は 2 つの version を独立管理:
 
 | 種類 | 用途 | 現在値 |
 |---|---|---|
-| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **44** |
+| `SEED_VERSION` (seed.ts) | データ版。rate 修正・データ追加の通知 (UpdateBanner) や SyncUpdateModal の差分検知に使用 | **47** |
 | `PERSIST_SCHEMA_VERSION` (persist-versions.ts) | localStorage の形の版。型レベル schema 変更時に bump | **7** |
 
 schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATIONS` で declarative に定義:
@@ -477,6 +494,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
   採用。円換算モード / 金額未入力時は非表示。`CalculatorScreen` は `useMemo` で店舗/金額/通貨/データ
   変更時のみ再計算 (`pathCache` は `rankCards` 呼び出し単位で作り直される設計を壊さない方針)。
   SEED_VERSION / PERSIST_SCHEMA 据え置き (計算専用・新フィールドなし)
+- **改善 PR-0a-2a (購入チャネル核 + v46 修正の配信)** — `PurchaseChannel` (`in-store` / `online`) と `BenefitProgram.channel?` / `StoreProgramMembership.channel?` を追加し、`evaluatePrograms` に店舗から導出した既定チャネル (店頭、純 EC 店はネット) の gate を入れた。たまるマーケット 3 program と J-POINT 20倍のスタバ / マック membership 4 件を `online` にし、店頭計算での過大表示を修正 (エポス×ビックカメラ店頭 2.0%→0.5%、JCB W×スタバ店頭 10.5%→1%。楽天市場 / Yahoo! / じゃらん / HMV online は従来どおり)。v46 監査の edge 修正 3 本・削除 2 本を MIGRATIONS v47 で、廃止 program 2 件を `REMOVED_PROGRAM_IDS` で既存端末へ配信。設定の「サンプル投入」は `computeSeedUpdate` に委譲 (公式の修正・削除も反映)。sync は epos-tamaru 由来の新規 program に `channel:"online"` を決定論で付与。SEED_VERSION 46→47 / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
