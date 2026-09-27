@@ -30,20 +30,39 @@ import { load as parseYaml } from "js-yaml";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 import { GoogleGenAI } from "@google/genai";
+import type {
+  GenerateContentParameters,
+  GenerateContentResponse,
+} from "@google/genai";
 import { injectExistingEntities } from "./inject-prompt";
-import { SCOPE_DIRECTIVES } from "./types";
+import { EXTRACTED_ARRAY_KEYS, SCOPE_DIRECTIVES } from "./types";
 import type {
   ExtractedSource,
   RegistryFile,
   RegistrySource,
 } from "./types";
 import {
+  addUsage,
+  classifyGeminiError,
   classifyResponse,
+  DEFAULT_GEMINI_MODEL,
+  DEFAULT_THINKING_BUDGET,
+  extractUsage,
+  formatDiagLine,
+  formatFetchError,
+  formatUsage,
+  headAndTail,
   prefetchAsPlainText,
   prefetchRawHtml,
   probeUrl,
+  resolveGeminiModel,
+  resolveThinkingBudget,
+  summarizeGeminiDiag,
+  type AttemptKind,
+  type GeminiDiag,
   type ResponseStatus,
 } from "./fetch-response";
+import { createFetchStats } from "./fetch-outcome";
 import {
   CHILD_FETCH_SLEEP_MS,
   extractAnchors,
@@ -217,22 +236,82 @@ function loadIndexPrompt(): string {
 // 制約: responseSchema は URL Context と併用不可な場合があるため、
 // MIME type のみ application/json に固定し、ajv 側で厳格検証する。
 
-// デフォルトは Flash (無料枠が緩く JSON 抽出に十分)。
-// 高精度が必要なら GEMINI_MODEL=gemini-2.5-pro で上書き可能 (要 Pro クォータ)。
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+/**
+ * Gemini クライアントを作る (main で 1 回だけ作り、各呼び出しに渡す)。
+ *
+ * httpOptions.retryOptions も timeout も渡さないこと。
+ * - retryOptions: @google/genai 2.0.1 の ApiClient.apiCall は retryOptions があると p-retry 経由の
+ *   runFetch に入り、429/5xx を本文なしの Error('Retryable HTTP Error: …')、400/404 を
+ *   Error('Non-retryable exception … sending request') として投げる。status も JSON 本文
+ *   (QuotaFailure.quotaId / ErrorInfo.reason) も失われ、classifyGeminiError の
+ *   quotaDaily / billing / config 判定 (= 429 での run 打ち切り) が効かなくなる。
+ *   渡さなければ ApiError{status, message=本文 JSON} が投げられ、fetch は 1 回だけ (1 呼び出し = 1 req)。
+ * - timeout: 2.0.1 では undici のグローバル dispatcher の headers/body timeout を書き換え、
+ *   abort 時の例外の形も変わる。1 呼び出しの上限は undici 既定と weekly-sync の step timeout に任せる。
+ * 2.24 系でもこの形は保たれるが依存はせず、fetch-source.test.ts の SDK 契約テスト
+ * (fetch スタブの 429 → ApiError status 429 / fetch 1 回) で SDK の版ごとに検証する。
+ */
+export function createGenAI(apiKey: string): GoogleGenAI {
+  return new GoogleGenAI({ apiKey });
+}
+
+// 実行時設定。main() の冒頭で環境変数 GEMINI_MODEL / GEMINI_THINKING_BUDGET から解決する
+// (import 時に throw すると main().catch を通らずテストの import も壊れるため、module 定数にしない)。
+// 既定は gemini-2.5-flash (無料枠で JSON 抽出に十分) / thinking 1024。
+// weekly-sync は repo の vars と workflow_dispatch 入力で切り替える (未設定は空文字 → 既定値)。
+const runtime = {
+  model: DEFAULT_GEMINI_MODEL,
+  thinkingBudget: DEFAULT_THINKING_BUDGET,
+};
+
+// Gemini 呼び出しの統計 (outcome と 📈 usage ログ用)。generateWithStats が呼び出しの境界で加算する。
+const stats = createFetchStats();
+
+// generateContent の薄いラッパ: 呼ぶ前に calls を +1 (例外でも 1 call)、応答があれば token を加算、
+// 例外は分類して errorKinds / quotaErrors に積んでから投げ直す (制御は呼び出し側)。
+async function generateWithStats(
+  ai: GoogleGenAI,
+  params: GenerateContentParameters,
+): Promise<{ response: GenerateContentResponse; text: string; diag: GeminiDiag }> {
+  stats.usage = { ...stats.usage, calls: stats.usage.calls + 1 };
+  let response: GenerateContentResponse;
+  try {
+    response = await ai.models.generateContent(params);
+  } catch (e) {
+    const c = classifyGeminiError(e);
+    stats.errorKinds.push(c.kind);
+    if (c.httpStatus === 429) stats.quotaErrors += 1;
+    throw e;
+  }
+  stats.usage = addUsage(stats.usage, { ...extractUsage(response), calls: 0 });
+  // 空応答も上位の graceful fallback で扱うため、ここでは投げない
+  const text = response.text ?? "";
+  return { response, text, diag: summarizeGeminiDiag(response, text) };
+}
 
 type GeminiResult = {
   text: string;
   retrievedUrls: string[]; // URL Context が実際に取得した URL
 };
 
-async function callGemini(args: {
-  apiKey: string;
-  systemInstruction: string;
-  url: string;
-  sourceId: string;
-}): Promise<GeminiResult> {
-  const ai = new GoogleGenAI({ apiKey: args.apiKey });
+export type GeminiCallResult = GeminiResult & { diag: GeminiDiag };
+
+// success 以外の応答は先頭と末尾を 300 字ずつ出す (Q1b の salvage が要るかの判断材料)
+function logNonSuccessBody(text: string): void {
+  if (text.trim().length === 0) return;
+  const { head, tail } = headAndTail(text, 300);
+  console.log(`     head: ${head}`);
+  if (tail !== undefined) console.log(`     tail: ${tail}`);
+}
+
+async function callGemini(
+  ai: GoogleGenAI,
+  args: {
+    systemInstruction: string;
+    url: string;
+    sourceId: string;
+  },
+): Promise<GeminiCallResult> {
   const userPrompt =
     `以下の URL を読み、systemInstruction の指示に従って ExtractedSource JSON を返してください。\n\n` +
     `URL: ${args.url}\n` +
@@ -251,18 +330,16 @@ async function callGemini(args: {
   //  - gemini-2.5-flash は思考前提モデル。thinkingBudget=0 にすると空応答に
   //    なるので、適度な思考枠 (1024) を残しつつプロンプトで JSON 出力を強制。
   //  - maxOutputTokens は flash 上限の 8192 (デフォルト)。
-  const response = await ai.models.generateContent({
-    model: GEMINI_MODEL,
+  //  - thinkingBudget は GEMINI_THINKING_BUDGET (既定 1024) で A/B できる (Q1a)。
+  const { response, text, diag } = await generateWithStats(ai, {
+    model: runtime.model,
     contents: userPrompt,
     config: {
       systemInstruction: args.systemInstruction,
       tools: [{ urlContext: {} }],
-      thinkingConfig: { thinkingBudget: 1024 },
+      thinkingConfig: { thinkingBudget: runtime.thinkingBudget },
     },
   });
-
-  // 空応答も上位の graceful fallback で扱うため、ここでは投げない
-  const text = response.text ?? "";
 
   // URL Context が実際にどの URL を取りに行ったかを (可能なら) 抽出
   const retrievedUrls: string[] = [];
@@ -281,7 +358,7 @@ async function callGemini(args: {
     }
   }
 
-  return { text, retrievedUrls };
+  return { text, retrievedUrls, diag };
 }
 
 // callGemini を 3 段階で試す:
@@ -290,23 +367,26 @@ async function callGemini(args: {
 //   attempt 3: pre-fetch → plain text を user prompt に注入 + 15s 待機
 // それぞれ classifyResponse で評価し、success なら即返却。
 // すべて失敗したら最後の (text, retrievedUrls, lastStatus) を返す。
-async function callGeminiWithRetry(args: {
-  apiKey: string;
-  systemInstruction: string;
-  url: string;
-  sourceId: string;
-}): Promise<GeminiResult & { attempts: number; finalStatus: ResponseStatus }> {
+async function callGeminiWithRetry(
+  ai: GoogleGenAI,
+  args: {
+    systemInstruction: string;
+    url: string;
+    sourceId: string;
+  },
+): Promise<GeminiResult & { attempts: number; finalStatus: ResponseStatus }> {
   let last: GeminiResult = { text: "", retrievedUrls: [] };
   let lastStatus: ResponseStatus = "empty";
 
   for (let attempt = 1; attempt <= 3; attempt++) {
+    const mode: AttemptKind = attempt === 3 ? "prefetch" : "urlContext";
     try {
+      let r: GeminiCallResult;
       if (attempt === 3) {
         // pre-fetch fallback strategy
         console.log(`   🌐 attempt ${attempt}/3: pre-fetch HTML → plain text 渡し`);
         const text = await prefetchAsPlainText(args.url);
-        last = await callGeminiWithText({
-          apiKey: args.apiKey,
+        r = await callGeminiWithText(ai, {
           systemInstruction: args.systemInstruction,
           sourceId: args.sourceId,
           url: args.url,
@@ -315,18 +395,21 @@ async function callGeminiWithRetry(args: {
       } else {
         if (attempt > 1) {
           console.log(`   ⏳ attempt ${attempt}/3 (URL Context, 待機 ${RETRY_DELAYS_MS[attempt - 2] / 1000}s)`);
-          await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt - 2]));
+          await new Promise((res) => setTimeout(res, RETRY_DELAYS_MS[attempt - 2]));
         }
-        last = await callGemini(args);
+        r = await callGemini(ai, args);
       }
+      console.log(formatDiagLine(attempt, mode, r.diag));
+      last = { text: r.text, retrievedUrls: r.retrievedUrls };
 
       lastStatus = classifyResponse(last);
       if (lastStatus === "success") {
         return { ...last, attempts: attempt, finalStatus: "success" };
       }
       console.log(`   ⚠️ attempt ${attempt}/3 status: ${lastStatus}`);
+      logNonSuccessBody(last.text);
     } catch (e) {
-      console.log(`   ⚠️ attempt ${attempt}/3 error: ${e instanceof Error ? e.message : String(e)}`);
+      console.log(`   ⚠️ attempt ${attempt}/3 error: ${formatFetchError(e)}`);
       // 429 は特に retry 価値が高いが、他のエラーも次の attempt に進む
     }
   }
@@ -335,14 +418,15 @@ async function callGeminiWithRetry(args: {
 }
 
 // pre-fetch 用: URL Context Tool を使わず、plain text を user message に注入
-async function callGeminiWithText(args: {
-  apiKey: string;
-  systemInstruction: string;
-  sourceId: string;
-  url: string;
-  plainText: string;
-}): Promise<GeminiResult> {
-  const ai = new GoogleGenAI({ apiKey: args.apiKey });
+async function callGeminiWithText(
+  ai: GoogleGenAI,
+  args: {
+    systemInstruction: string;
+    sourceId: string;
+    url: string;
+    plainText: string;
+  },
+): Promise<GeminiCallResult> {
   // URL Context Tool を使わない代わりに、テキストを直接渡す
   const userPrompt =
     `以下は ${args.url} のページ本文 (pre-fetch 済 plain text) です。\n` +
@@ -356,20 +440,21 @@ async function callGeminiWithText(args: {
     `必須フィールド: sourceId, sourceUrl, fetchedAt (ISO8601), promptVersion, extractor, geminiModel\n\n` +
     `=== ページ本文 ===\n${args.plainText}`;
 
-  const response = await ai.models.generateContent({
-    model: GEMINI_MODEL,
+  const { text, diag } = await generateWithStats(ai, {
+    model: runtime.model,
     contents: userPrompt,
     config: {
       systemInstruction: args.systemInstruction,
       // pre-fetch モードでは responseMimeType を application/json に固定 (URL Context 非使用なので OK)
       responseMimeType: "application/json",
-      thinkingConfig: { thinkingBudget: 1024 },
+      thinkingConfig: { thinkingBudget: runtime.thinkingBudget },
     },
   });
 
   return {
-    text: response.text ?? "",
+    text,
     retrievedUrls: [`${args.url} [pre-fetch]`],
+    diag,
   };
 }
 
@@ -491,7 +576,7 @@ function stampMeta(
   parsed.sourceUrl = sourceUrl;
   parsed.fetchedAt = new Date().toISOString();
   parsed.extractor = source.extractor;
-  parsed.geminiModel = GEMINI_MODEL;
+  parsed.geminiModel = runtime.model;
   // promptVersion だけは Gemini が読み取る値を尊重 (extractor のバージョン管理)
   parsed.promptVersion = parsed.promptVersion || `${source.extractor}-vUnknown`;
 }
@@ -514,7 +599,7 @@ function writeFallback(args: {
     fetchedAt: new Date().toISOString(),
     promptVersion: args.promptVersion,
     extractor: args.source.extractor,
-    geminiModel: GEMINI_MODEL,
+    geminiModel: runtime.model,
     notes: args.notes,
   };
   mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -538,14 +623,15 @@ function writeFallback(args: {
 // URL Context 不使用なので responseMimeType を JSON に固定できる。
 // 2026-06-10 の実 fetch で URL Context 直読みの Gemini が URL を捏造する事象を
 // 確認したための設計 (crawl-index.ts の extractAnchors docblock 参照)。
-async function callGeminiIndexSelection(args: {
-  apiKey: string;
-  indexPrompt: string;
-  sourceId: string;
-  indexUrl: string;
-  candidates: IndexUrlEntry[];
-}): Promise<ParsedIndexResponse> {
-  const ai = new GoogleGenAI({ apiKey: args.apiKey });
+async function callGeminiIndexSelection(
+  ai: GoogleGenAI,
+  args: {
+    indexPrompt: string;
+    sourceId: string;
+    indexUrl: string;
+    candidates: IndexUrlEntry[];
+  },
+): Promise<ParsedIndexResponse> {
   const list = args.candidates
     .map((c) => `- ${c.url}${c.title ? ` | ${c.title}` : ""}`)
     .join("\n");
@@ -564,34 +650,37 @@ async function callGeminiIndexSelection(args: {
       await new Promise((r) => setTimeout(r, 5000));
     }
     try {
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+      const { text, diag } = await generateWithStats(ai, {
+        model: runtime.model,
         contents: userPrompt,
         config: {
           systemInstruction: args.indexPrompt,
           responseMimeType: "application/json",
-          thinkingConfig: { thinkingBudget: 1024 },
+          thinkingConfig: { thinkingBudget: runtime.thinkingBudget },
         },
       });
-      const parsed = parseIndexResponse(response.text ?? "");
+      console.log(formatDiagLine(attempt, "indexSelect", diag));
+      const parsed = parseIndexResponse(text);
       if (parsed.ok) return parsed;
       lastError = parsed.error;
       console.log(`   ⚠️ index 選択 attempt ${attempt}/2 parse 失敗: ${parsed.error}`);
     } catch (e) {
-      lastError = e instanceof Error ? e.message : String(e);
+      lastError = formatFetchError(e);
       console.log(`   ⚠️ index 選択 attempt ${attempt}/2 error: ${lastError}`);
     }
   }
   return { ok: false, error: lastError };
 }
 
-async function runIndexCrawl(args: {
-  apiKey: string;
-  source: RegistrySource;
-  childPrompt: string; // source.extractor の解決済み prompt (scope directive 込み)
-  indexPrompt: string; // campaign-index prompt
-}): Promise<void> {
-  const { apiKey, source, childPrompt, indexPrompt } = args;
+async function runIndexCrawl(
+  ai: GoogleGenAI,
+  args: {
+    source: RegistrySource;
+    childPrompt: string; // source.extractor の解決済み prompt (scope directive 込み)
+    indexPrompt: string; // campaign-index prompt
+  },
+): Promise<void> {
+  const { source, childPrompt, indexPrompt } = args;
   const maxChildren = resolveMaxChildren(source.crawl?.maxChildren);
 
   // ── 1 段目: 索引ページから子 URL を列挙 ──
@@ -618,16 +707,14 @@ async function runIndexCrawl(args: {
 
   let parsedIndex: ParsedIndexResponse;
   if (candidates !== undefined) {
-    parsedIndex = await callGeminiIndexSelection({
-      apiKey,
+    parsedIndex = await callGeminiIndexSelection(ai, {
       indexPrompt,
       sourceId: source.id,
       indexUrl: source.url,
       candidates,
     });
   } else {
-    const idx = await callGeminiWithRetry({
-      apiKey,
+    const idx = await callGeminiWithRetry(ai, {
       systemInstruction: indexPrompt,
       url: source.url,
       sourceId: source.id,
@@ -685,8 +772,7 @@ async function runIndexCrawl(args: {
       });
       continue;
     }
-    const res = await callGeminiWithRetry({
-      apiKey,
+    const res = await callGeminiWithRetry(ai, {
       systemInstruction: childPrompt,
       url: child.url,
       sourceId: source.id,
@@ -723,7 +809,7 @@ async function runIndexCrawl(args: {
   // ── 統合して書き出し ──
   const merged = mergeChildExtractions({
     source: { id: source.id, url: source.url, extractor: source.extractor },
-    geminiModel: GEMINI_MODEL,
+    geminiModel: runtime.model,
     fetchedAt: new Date().toISOString(),
     children,
     indexNotes: parsedIndex.notes,
@@ -764,6 +850,9 @@ async function runIndexCrawl(args: {
 async function main(): Promise<void> {
   loadDotEnvLocal();
   const args = parseArgs(process.argv.slice(2));
+  // モデル名 / thinking 予算は Gemini を呼ぶ前に解決する。不正なら throw → main().catch (exit 1、ファイルは書かない)
+  runtime.model = resolveGeminiModel(process.env.GEMINI_MODEL);
+  runtime.thinkingBudget = resolveThinkingBudget(process.env.GEMINI_THINKING_BUDGET);
   const registry = loadRegistry();
   const source = findSource(registry, args.sourceId);
 
@@ -795,12 +884,24 @@ async function main(): Promise<void> {
   }
 
   // --dry-run でなければ API キーが必要
-  const apiKey = getApiKey();
+  const ai = createGenAI(getApiKey());
 
-  if (isIndexCrawl && indexPrompt !== undefined) {
-    console.log(`🤖 Gemini ${GEMINI_MODEL} 呼び出し中 (index crawl、各段 3 attempts)...`);
-    await runIndexCrawl({
-      apiKey,
+  try {
+    await runFetch(ai, source, systemInstruction, indexPrompt);
+  } finally {
+    console.log(`📈 usage total ${formatUsage(stats.usage)}`);
+  }
+}
+
+async function runFetch(
+  ai: GoogleGenAI,
+  source: RegistrySource,
+  systemInstruction: string,
+  indexPrompt: string | undefined,
+): Promise<void> {
+  if (indexPrompt !== undefined) {
+    console.log(`🤖 Gemini ${runtime.model} 呼び出し中 (index crawl、各段 3 attempts, thinking ${runtime.thinkingBudget})...`);
+    await runIndexCrawl(ai, {
       source,
       childPrompt: systemInstruction,
       indexPrompt,
@@ -808,9 +909,8 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log(`🤖 Gemini ${GEMINI_MODEL} 呼び出し中 (最大 3 attempts, retry/pre-fetch 込み)...`);
-  const { text: rawJson, retrievedUrls, attempts, finalStatus } = await callGeminiWithRetry({
-    apiKey,
+  console.log(`🤖 Gemini ${runtime.model} 呼び出し中 (最大 3 attempts, retry/pre-fetch 込み, thinking ${runtime.thinkingBudget})...`);
+  const { text: rawJson, retrievedUrls, attempts, finalStatus } = await callGeminiWithRetry(ai, {
     systemInstruction,
     url: source.url,
     sourceId: source.id,
@@ -902,15 +1002,10 @@ async function main(): Promise<void> {
   writeFileSync(outPath, JSON.stringify(finalData, null, 2));
   console.log(`✓ wrote ${outPath}`);
 
-  // 抽出件数のサマリ
-  const summary = {
-    cards: finalData.cards?.length ?? 0,
-    storeRules: finalData.storeRules?.length ?? 0,
-    categoryRules: finalData.categoryRules?.length ?? 0,
-    stores: finalData.stores?.length ?? 0,
-    loyaltyRules: finalData.loyaltyRules?.length ?? 0,
-    paymentApps: finalData.paymentApps?.length ?? 0,
-  };
+  // 抽出件数のサマリ (programs / memberships を含む全配列キー)
+  const summary = Object.fromEntries(
+    EXTRACTED_ARRAY_KEYS.map((k) => [k, finalData[k]?.length ?? 0]),
+  );
   console.log("📊 summary:", JSON.stringify(summary));
 }
 

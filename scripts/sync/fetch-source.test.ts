@@ -1,8 +1,61 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { salvageBySchema } from "./fetch-source";
+import { createGenAI, salvageBySchema } from "./fetch-source";
 import type { ExtractedSource } from "./types";
+import { classifyGeminiError } from "./fetch-response";
+import {
+  QUOTA_DAILY_429_BODY,
+  jsonErrorResponse,
+} from "./fixtures/gemini-errors";
+
+// ───────────────────────────────────────────────────────────────
+// SDK 契約 (@google/genai): createGenAI に retryOptions を渡していないこと、
+// 429 が ApiError{status, message=本文 JSON} のまま届き 1 呼び出し = 1 req であることを固定する。
+// SDK の版上げ (0c-2 の 2.24 等) で形が変わったらここで落ちる。
+// ───────────────────────────────────────────────────────────────
+describe("SDK 契約: createGenAI の generateContent エラー形", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("429 (9/20 実ログ本文) → ApiError status 429 / message に PerDay / fetch は 1 回 / quotaDaily に分類", async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonErrorResponse(429, "Too Many Requests", QUOTA_DAILY_429_BODY),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const ai = createGenAI("test-key");
+    const err = await ai.models
+      .generateContent({ model: "gemini-2.5-flash", contents: "hi" })
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(err).toMatchObject({ status: 429 });
+    expect((err as Error).message).toContain("PerDay");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(classifyGeminiError(err).kind).toBe("quotaDaily");
+  });
+
+  it("404 → ApiError status 404 (config) / fetch は 1 回", async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonErrorResponse(404, "Not Found", {
+        error: { code: 404, message: "models/gemini-x is not found", status: "NOT_FOUND" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const ai = createGenAI("test-key");
+    const err = await ai.models
+      .generateContent({ model: "gemini-x", contents: "hi" })
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(err).toMatchObject({ status: 404 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(classifyGeminiError(err).kind).toBe("config");
+  });
+});
 
 const schema = JSON.parse(
   readFileSync(
