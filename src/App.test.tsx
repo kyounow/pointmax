@@ -13,13 +13,18 @@ import { DialogProvider } from "./ui/dialog/DialogProvider";
 import { useStore } from "./state/store";
 import { seed, SEED_VERSION } from "./state/seed";
 import { PERSIST_STORE_KEY } from "./state/persist-versions";
+import { clearHydrationFailure } from "./state/hydrationGuard";
 
 beforeEach(() => {
   localStorage.clear();
   useStore.getState().clearAll();
   window.location.hash = "";
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // PR-6d: 壊れた JSON の hydrate テストが立てる hydrate 失敗のモジュール状態を漏らさない
+  clearHydrationFailure();
+});
 
 const renderApp = () =>
   render(

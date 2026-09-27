@@ -26,6 +26,7 @@ import { membershipId } from "../state/defineMemberships";
 import { CardComparisonSection } from "./CardComparisonSection";
 import { useToday } from "./hooks/useToday";
 import { BannerSlot } from "./calculator/BannerSlot";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { CalcStoreForm } from "./calculator/CalcStoreForm";
 import { CalcCurrencyTabs } from "./calculator/CalcCurrencyTabs";
 import { CalcLoyaltyBanner } from "./calculator/CalcLoyaltyBanner";
@@ -441,21 +442,25 @@ export function CalculatorScreen() {
 
       {/* PR-3a (N-1) + PR-3c (ONB-1): 通知系バナーは常時 1 枚まで。優先度
           onboarding > update(SEED_VERSION) > today を BannerSlot が判定する。
-          onboardingActive 時は通知枠を抑制し、枠に 2 ステップチェックリストを描画する。 */}
-      <BannerSlot
-        onboardingActive={onboardingActive}
-        onboarding={
-          <OnboardingChecklist
-            step1Done={step1Done}
-            step2Done={step2Done}
-            onClose={closeOnboarding}
-          />
-        }
-        programs={programs}
-        now={today}
-        todayOpen={todayBreakdownOpen}
-        onToggleToday={() => setTodayBreakdownOpen((v) => !v)}
-      />
+          onboardingActive 時は通知枠を抑制し、枠に 2 ステップチェックリストを描画する。
+          PR-6d (U6): 通知枠は任意 UI。更新バナー / 自動反映バナー / オンボーディング枠の例外で
+          計算画面ごと落とさないよう、非表示に縮退する境界で包む。 */}
+      <ErrorBoundary scopeName="BannerSlot" fallback={() => null}>
+        <BannerSlot
+          onboardingActive={onboardingActive}
+          onboarding={
+            <OnboardingChecklist
+              step1Done={step1Done}
+              step2Done={step2Done}
+              onClose={closeOnboarding}
+            />
+          }
+          programs={programs}
+          now={today}
+          todayOpen={todayBreakdownOpen}
+          onToggleToday={() => setTodayBreakdownOpen((v) => !v)}
+        />
+      </ErrorBoundary>
 
       <CalcStoreForm
         stores={stores}

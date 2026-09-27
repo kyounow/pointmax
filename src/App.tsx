@@ -128,9 +128,15 @@ function App() {
 
   return (
     <div className="app">
+      {/* PR-6d (U6): SchemaUpgradeModal は境界で包まない。null に縮退すると
+          _pendingSchemaMigration が残ったまま空の state で先に進めなくなるため、
+          例外は Root の境界 (root モードの復旧パネル) に任せる。 */}
       {pendingMigration && <SchemaUpgradeModal strategy={pendingMigration} />}
+      {/* PR-6d (U6): 同期モーダルは任意 UI。例外は非表示に縮退させる (console.error のみ)。 */}
       {!pendingMigration && (
-        <SyncUpdateModal onViewHistory={() => navigate("settings/history")} />
+        <ErrorBoundary scopeName="SyncUpdateModal" fallback={() => null}>
+          <SyncUpdateModal onViewHistory={() => navigate("settings/history")} />
+        </ErrorBoundary>
       )}
       <header className="appbar">
         <button
@@ -176,11 +182,19 @@ function App() {
         {/* PR-3a (N-1): 計算画面では UpdateBanner を BannerSlot 経由の通知枠に一本化
             (onboarding/today との優先度調停のため)。計算画面以外では従来どおり
             main 上部に出す (挙動維持)。 */}
-        {tab !== "calculator" && <UpdateBanner />}
+        {/* PR-6d (U6): 更新バナーも任意 UI なので例外は非表示に縮退 (計算タブ側は BannerSlot ごと
+            CalculatorScreen 内で同様に包む)。 */}
+        {tab !== "calculator" && (
+          <ErrorBoundary scopeName="UpdateBanner" fallback={() => null}>
+            <UpdateBanner />
+          </ErrorBoundary>
+        )}
         {/* Wave 4 B-6 audit-fix: 各 Screen を ErrorBoundary で wrap。
             画面単位で隔離して、1 画面のエラーがアプリ全体を停止させないようにする。
-            scopeName で console.error に画面名が残るので運用調査の起点になる。 */}
-        <ErrorBoundary scopeName={activeTabLabel}>
+            scopeName で console.error に画面名が残るので運用調査の起点になる。
+            PR-6d (U6): key={tab} でタブを移ると境界ごと作り直す (落ちた画面から別タブへ
+            移れば自動で復帰する)。既定 fallback は screen モードの復旧パネル。 */}
+        <ErrorBoundary key={tab} scopeName={activeTabLabel}>
           {/* Wave 6 B-4: EdgesScreen は lazy なので Suspense で囲む。
               他画面は静的 import なので fallback は交換ルート読込時のみ出る。 */}
           <Suspense fallback={<p className="empty">読み込み中…</p>}>

@@ -1,8 +1,8 @@
 // JSON エクスポートの blob ダウンロード util。
 //
-// App.tsx の handleExport (通常データ) と SchemaUpgradeModal の
-// レガシーバックアップの両方が同じ DOM ダウンロード処理を重複実装していたため、
-// 唯一の実装としてここに抽出した。呼び出し側は「どの JSON を」「どの接頭辞で」
+// SettingsScreen の handleExport (通常データ・退避データ) / RecoveryPanel (復旧用の書き出し) /
+// SchemaUpgradeModal のレガシーバックアップが共用する DOM ダウンロード処理
+// (重複実装を避けるため唯一の実装としてここに置く)。呼び出し側は「どの JSON を」「どの接頭辞で」
 // だけ渡す。ファイル名は `${prefix}-YYYY-MM-DD.json`。
 export function downloadJsonFile(json: string, filenamePrefix: string): void {
   const blob = new Blob([json], { type: "application/json" });

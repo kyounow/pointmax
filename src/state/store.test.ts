@@ -1418,3 +1418,90 @@ describe("store: seedIfEmpty (新規プロファイルの seed 自動投入、PR
     expect(useStore.getState().cards.every((c) => c.enabled !== true)).toBe(true);
   });
 });
+
+// PR-6d (U6): 復旧パネルの「公式データで初期化」(resetToSeed) と、それに委譲した
+// schema reset の Apply (applySchemaMigration)。投入内容は seedIfEmpty と共通 (applySeedState)。
+describe("store: resetToSeed / applySchemaMigration (PR-6d)", () => {
+  const COLLECTIONS = [
+    "cards",
+    "currencies",
+    "stores",
+    "edges",
+    "pointCards",
+    "paymentApps",
+    "programs",
+    "memberships",
+  ] as const;
+  const takeSnapshotMock = vi.mocked(takeSnapshot);
+
+  // ユーザーが使い込んだ state (per-user 設定・通知・編集済みデータ入り)。
+  const dirtyState = () => {
+    useStore.getState().clearAll();
+    useStore.getState().seedIfEmpty();
+    const s = useStore.getState();
+    s.setCardEnabled(s.cards[0].id, true);
+    s.addPreferredCurrency(s.currencies[0].id);
+    s.setBirthMonth(7);
+    s.setYenValueOverride(s.currencies[0].id, 1.5);
+    s.excludeStorePayment(s.stores[0].id, s.paymentApps[0].id);
+    s.addCard({
+      name: "ユーザ追加",
+      defaultRate: 0.01,
+      defaultCurrencyId: s.currencies[0].id,
+    });
+    useStore.setState({
+      autoApplyNotice: { digest: "d-1", count: 1 },
+      lastSeedVersion: 1,
+    });
+    takeSnapshotMock.mockClear();
+  };
+
+  const expectSeedState = () => {
+    const s = useStore.getState();
+    const expected = seed();
+    for (const k of COLLECTIONS) {
+      expect(s[k]).toEqual(expected[k]);
+    }
+    expect(s.lastSeedVersion).toBe(SEED_VERSION);
+    expect(s.autoApplyNotice).toBeNull();
+    // per-user 設定は引き継がない (open 項目の決定)
+    expect(s.preferredCurrencyIds).toEqual([]);
+    expect(s.birthMonth).toBeUndefined();
+    expect(s.yenValueOverrides).toEqual({});
+    expect(s.excludedStorePayments).toEqual([]);
+    expect(s.cards.every((c) => c.enabled !== true)).toBe(true);
+    expect(s._pendingSchemaMigration).toBeUndefined();
+    expect(s._legacyPersistedState).toBeUndefined();
+  };
+
+  it("resetToSeed は seed と一致する state にし、スナップショットを取らない", () => {
+    dirtyState();
+    useStore.getState().resetToSeed();
+    expectSeedState();
+    expect(takeSnapshotMock).not.toHaveBeenCalled();
+  });
+
+  it("applySchemaMigration も同じ結果で、_pending / _legacy を消す (スナップショット無し)", () => {
+    dirtyState();
+    useStore.setState({
+      _pendingSchemaMigration: { type: "reset", reason: "test" },
+      _legacyPersistedState: { cards: "legacy" },
+    });
+    useStore.getState().applySchemaMigration();
+    expectSeedState();
+    expect(takeSnapshotMock).not.toHaveBeenCalled();
+  });
+
+  it("seedIfEmpty と resetToSeed の投入内容は一致する", () => {
+    useStore.getState().clearAll();
+    useStore.getState().seedIfEmpty();
+    const bySeedIfEmpty = useStore.getState();
+    dirtyState();
+    useStore.getState().resetToSeed();
+    const byReset = useStore.getState();
+    for (const k of COLLECTIONS) {
+      expect(byReset[k]).toEqual(bySeedIfEmpty[k]);
+    }
+    expect(byReset.lastSeedVersion).toBe(bySeedIfEmpty.lastSeedVersion);
+  });
+});
