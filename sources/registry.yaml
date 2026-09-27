@@ -1,6 +1,7 @@
 # PointMax master sync: source registry
 # 各クレカ・ポイントカード・決済アプリの「マスタとなる公式ページ」を列挙する。
-# 週次 GitHub Actions cron がこのファイルを読み、各 enabled: true なソースを Gemini CLI に渡す。
+# 週次 GitHub Actions cron がこのファイルを読み、各 enabled: true なソースを Gemini API (@google/genai) で抽出する。
+# auto-merge の範囲はルート README「cron が auto-merge する/しない範囲」表が正 (notes にはソース別の可否を書かない)。
 #
 # 編集ルール:
 #  - 新規追加時は id をユニーク (slug, kebab-case) に
@@ -11,8 +12,12 @@
 #  - enabled:false にするときは sources/extracted/<id>.json を git rm する
 #    (propose は registry を見ずに extracted/*.json を全部読むため、残骸が review queue に残る)
 #
-# extractor の選択肢: card | jal-tokuyaku | point-partner | payment-app
-# produces の選択肢:  cards / storeRules / categoryRules / stores / loyaltyRules / paymentApps
+# extractor の選択肢: card | jal-tokuyaku | point-partner | payment-app | campaign | jcb-jpoint |
+#                     epos-tamaru | ongoing-program (ExtractorKind の 8 種。crawl: index の 1 段目は
+#                     crawl 専用の campaign-index を自動で使うので extractor には書かない)
+# produces の選択肢:  cards / categoryRules / stores / paymentApps / programs / memberships (ProducesKind)
+#                     (jal-card-tokuyaku-list / smbc-v-gold-7percent に残る storeRules は旧値。
+#                      produces は fetch 時のログ表示にしか使われない)
 # extractionScope:    comprehensive | chains-only | existing-only
 #
 # ─── fetchGroup (同期グループ / 無料枠分割) ───
@@ -371,8 +376,8 @@ sources:
       を対象 (通貨 jre)。期間限定の店舗 × JRE POINT 上振れ還元を
       1 キャンペーン=1 program (validFrom/validTo) + 対象店舗ごとの
       membership として抽出。日付明記が無い／店舗非依存は出力しない方針。
-      新規 program は base "idCollision" で必ず needsReview に回り
-      (ライブ還元計算に直接効くため)、無確認での本番 auto-merge はされない。
+      新規 program の auto 可否はルート README「cron が auto-merge する/しない範囲」表を参照
+      (PR #60 以降、campaign extractor 由来は isCampaignAutoMergeable を満たせば auto) (2026-09 訂正)。
       決済アプリ系キャンペーン (楽天Pay/d払い) は今後検討 (要 proposePrograms
       新設、SESSION_LOG「決済系キャンペーン deferral」参照)。
       ---
@@ -418,8 +423,9 @@ sources:
       campaign-v3.0 extractor が「対象店舗 × 楽天Pay 期間限定上振れ」を
       1 キャンペーン=1 program (paymentAppId+validFrom/validTo) + 対象
       店舗 membership として抽出。店舗非依存の全体施策・日付なしは出力
-      しない方針。新規 program は base "idCollision" で必ず needsReview
-      (ライブ還元計算に効くため無確認 auto-merge されない)。
+      しない方針。新規 program の auto 可否はルート README「cron が auto-merge する/しない範囲」
+      表を参照 (PR #60 以降、campaign extractor 由来は isCampaignAutoMergeable を満たせば auto)
+      (2026-09 訂正)。
       ★ 実 fetch 検証 (2026-05-17、独立 2 回とも clean success):
       抽出 0 件。当一覧 URL は抽選・「最大」・店舗指定なしの全体施策
       中心で「固定還元率+対象店舗+期間」が揃うキャンペーンを含まない
@@ -448,8 +454,10 @@ sources:
       https://j-pointpartner.jcb.co.jp/search を付与 (店ごとのポイントアップ登録
       が必要、無料、期限なし)。
       手動 seed 投入済 (V5-2 時点): W 系列 9 + Gold 系列 9 = 18 memberships。
-      cron は未網羅の提携店を追加する位置付け、auto-merge は全件 needsReview
-      なので安全網あり。
+      cron は未網羅の提携店を追加する位置付け。programs は extractor≠campaign のため
+      needsReview (idCollision)、memberships は既存 store / program 参照かつ confidence≥0.9
+      なら auto (2026-09-14 #149 実績: prog-jcb-jpoint-gold-2x → takashimaya)。範囲の正は
+      ルート README「cron が auto-merge する/しない範囲」表 (2026-09 訂正)。
       ★ enabled: true 化判断 (V5-1, 2026-05-20):
         手動 fetch 試行は Flash 503 (Google 側混雑) / Pro 429 (free tier クォータ 0)
         で全 3 attempt 失敗。実証検証できなかったが、現行 cron の他 source
@@ -481,7 +489,8 @@ sources:
       ---
       ★ 2026-05-17 追加 (#B 決済系キャンペーン)。paymentAppId=pa-d-pay、
       還元通貨 d-pt。扱いは rakuten-pay-campaigns と同じ (campaign-v3.0、
-      店舗特定+期間明記のみ、新規 program は needsReview)。
+      店舗特定+期間明記のみ)。新規 program の auto 可否はルート README
+      「cron が auto-merge する/しない範囲」表を参照 (2026-09 訂正)。
       ★ 実 fetch 検証: 当ページは抽出可能な実データ豊富 (索引ハブでない)。
       gemini-2.5-flash が時折 thinking-leak で nonJson を返す非決定的
       失敗があるが、成功時は bic-camera +5% / toysrus 3倍 /
@@ -490,8 +499,9 @@ sources:
       週次 cron は 3-attempt retry で吸収。信頼性重視なら campaign 系を
       GEMINI_MODEL=gemini-2.5-pro 等にする選択肢あり。
       注: Gemini が稀に pointCardId/paymentAppId 双方未設定の program を
-      出すが (prompt XOR は schema 強制でない)、idCollision→needsReview
-      で人手 catch されるため auto-merge 安全網は機能。
+      出す (prompt XOR は schema 強制でない)。現行の isCampaignAutoMergeable は
+      target キー (cardIds / pointCardId / paymentAppId) が無い program を拒否しない
+      (未ガード。PR-0b-3 の untargetedProgram で対処予定) (2026-09 訂正)。
 
   - id: paypay-campaigns
     label: PayPay キャンペーン一覧 (公式)
@@ -516,14 +526,15 @@ sources:
       paymentAppId=pa-paypay、還元通貨=paypay。campaign-v3.0 extractor が
       「対象店舗 × PayPay 期間限定上振れ」を 1 キャンペーン=1 program
       (paymentAppId+validFrom/validTo) + 対象店舗 membership として抽出。
-      新規 program は base "idCollision" で必ず needsReview (ライブ還元計算に
-      効くため auto-merge されない)。
+      新規 program の auto 可否はルート README「cron が auto-merge する/しない範囲」表を参照
+      (PR #60 以降、campaign extractor 由来は isCampaignAutoMergeable を満たせば auto)
+      (2026-09 訂正)。
       ★ 2026-05-28 手動 fetch 検証 (2 attempts、success): 1 program + 1 membership
       抽出。例: prog-paypay-7eleven-onigiri-sushi-2026-06 (セブンイレブン
       対象おにぎり・寿司 最大20%、validFrom 2026-06-01 / validTo 2026-06-30、
       bonusType=addOn)。同 program に conv-7eleven membership。
       → 有効な campaign source として enabled:true で運用開始。次回 cron で
-      自動抽出 (proposePrograms の idCollision で needsReview 経由)。
+      自動抽出 (auto / review の振り分けはルート README の表を参照) (2026-09 訂正)。
       失敗時は別 URL 候補: https://paypay.ne.jp/event/list/, https://paypay.ne.jp/promotion/
 
   - id: smbc-vpoint-up
