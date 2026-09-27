@@ -34,6 +34,7 @@ import { membershipId } from "../../src/state/defineMemberships";
 import {
   CONFIDENCE_AUTO_THRESHOLD,
   EXCLUDED_CATEGORIES,
+  ONLINE_CHANNEL_EXTRACTORS,
   computeConfidence,
   judgeRateChange,
 } from "./types";
@@ -449,6 +450,12 @@ export function proposePrograms(
       if (p.pointCardId !== undefined) rec.pointCardId = p.pointCardId;
       if (p.paymentAppId !== undefined) rec.paymentAppId = p.paymentAppId;
       if (p.bonusType !== undefined) rec.bonusType = p.bonusType;
+      // PR-0a-2a: 経由型 extractor (たまるマーケット) 由来の新規 program は決定論で
+      // channel:"online" (ネット・アプリ経由の購入限定)。物理店 id への membership が
+      // 店頭計算に載るのを防ぐ。record 全体が proposalId の hash 対象なので、該当 program の
+      // proposalId はこの付与で変わる (review queue 本文は毎 run 再生成されるため実害は
+      // 控えておいた承認コマンドが無効になる程度)。
+      if (ONLINE_CHANNEL_EXTRACTORS.has(data.extractor)) rec.channel = "online";
       if (p.validFrom !== undefined) rec.validFrom = p.validFrom;
       if (p.validTo !== undefined) rec.validTo = p.validTo;
       if (p.recurringDays !== undefined) rec.recurringDays = p.recurringDays;

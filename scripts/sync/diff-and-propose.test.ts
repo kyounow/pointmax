@@ -664,6 +664,71 @@ describe("proposePrograms (PR-D1)", () => {
     expect(ps[0].reviewReason).toBeUndefined();
   });
 
+  // ─── PR-0a-2a: 経由型 extractor (epos-tamaru) 由来の新規 program に channel:"online" ───
+  describe("channel の決定論付与 (ONLINE_CHANNEL_EXTRACTORS)", () => {
+    const tamaruProgram = {
+      programId: "prog-epos-tamaru-5x",
+      name: "たまるマーケット (5倍)",
+      cardIds: ["epos-card", "epos-gold", "epos-platinum"],
+      scope: "member-stores" as const,
+      rate: 0.025,
+      currencyId: "epos",
+      bonusType: "primary" as const,
+      evidenceQuote: "たまるマーケット経由で ポイント5倍",
+      explicitness: 0.95,
+      ambiguity: 0.05,
+    };
+
+    it("extractor=epos-tamaru の新規 program 提案は record.channel==='online'", () => {
+      const data = baseSource({ extractor: "epos-tamaru", programs: [tamaruProgram] });
+      const ps = proposePrograms(data, emptySeed);
+      expect(ps).toHaveLength(1);
+      expect(ps[0].type).toBe("addRecord");
+      const record = (ps[0] as { record: Record<string, unknown> }).record;
+      expect(record.channel).toBe("online");
+    });
+
+    it.each(["campaign", "jcb-jpoint", "ongoing-program"] as const)(
+      "extractor=%s の新規 program には channel を付けない",
+      (extractor) => {
+        const data = baseSource({
+          extractor,
+          programs: [{ ...tamaruProgram, programId: `prog-${extractor}-new` }],
+        });
+        const ps = proposePrograms(data, emptySeed);
+        expect(ps).toHaveLength(1);
+        const record = (ps[0] as { record: Record<string, unknown> }).record;
+        expect("channel" in record).toBe(false);
+      },
+    );
+
+    it("既存 program (epos-tamaru) の rate 変動提案は updateField のまま (channel 付与の影響なし)", () => {
+      const seed: SeedShape = {
+        ...emptySeed,
+        programs: [
+          {
+            id: "prog-epos-tamaru-5x",
+            name: "たまるマーケット (5倍)",
+            scope: "member-stores",
+            cardIds: ["epos-card"],
+            rate: 0.025,
+            currencyId: "epos",
+            channel: "online",
+          },
+        ],
+      };
+      const data = baseSource({
+        extractor: "epos-tamaru",
+        programs: [{ ...tamaruProgram, rate: 0.03 }],
+      });
+      const ps = proposePrograms(data, seed);
+      expect(ps).toHaveLength(1);
+      expect(ps[0].type).toBe("updateField");
+      expect((ps[0] as { field?: string }).field).toBe("rate");
+      expect("record" in ps[0]).toBe(false);
+    });
+  });
+
   // ─── Phase 4 (B-2): 既存 program の期間変更検知 ───
   describe("期間変更 (periodChange)", () => {
     const seedWithCampaign: SeedShape = {

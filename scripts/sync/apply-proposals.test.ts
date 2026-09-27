@@ -168,6 +168,32 @@ describe("buildSeedAdditionsContent", () => {
       'export const REMOVED_PROGRAM_IDS: string[] = [\n  "prog-old-campaign",\n];',
     );
   });
+
+  // PR-0a-2a: propose が epos-tamaru 由来の新規 program に付けた channel は、
+  // codegen (emitObjectLiteral) で落とされず ADDED_PROGRAMS に出力される。
+  it("channel 付きの program record は channel: \"online\" として出力される", () => {
+    const out = buildSeedAdditionsContent({
+      stores: [],
+      cards: [],
+      paymentApps: [],
+      programs: [
+        {
+          id: "prog-epos-tamaru-5x",
+          name: "たまるマーケット (5倍)",
+          scope: "member-stores",
+          rate: 0.025,
+          currencyId: "epos",
+          channel: "online",
+        },
+      ],
+      memberships: [],
+      programOverrides: [],
+      removedProgramIds: [],
+    });
+    expect(out).toContain(
+      'export const ADDED_PROGRAMS: BenefitProgram[] = [\n  { id: "prog-epos-tamaru-5x", name: "たまるマーケット (5倍)", scope: "member-stores", rate: 0.025, currencyId: "epos", channel: "online" },\n];',
+    );
+  });
 });
 
 // ─── Phase 4 (B-1): updateField/programs → PROGRAM_OVERRIDES 経路 ───

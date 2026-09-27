@@ -73,6 +73,16 @@ export type ExtractorKind =
   | "epos-tamaru"     // たまるマーケット (EPOS ポイントアップサイト) 倍率一覧
   | "ongoing-program";// 常設優遇プログラム (validFrom/validTo を付けず、conditions に常時条件記述。jcb-jpoint の汎用版、銀行/カード会社の常設還元アップ等を抽出)
 
+// PR-0a-2a: 新規 program に channel:"online" (ネット・アプリ経由の購入限定) を決定論で付ける
+// extractor。Gemini の出力には依存せず、schema の変更も不要 (propose 層で付与する)。
+//   - epos-tamaru: たまるマーケットは「サイト経由の EC 購入」が付与条件なので、新しい倍率 tier の
+//     program も必ず online。付けないと物理店 id への membership が店頭計算に載って過大表示になる。
+// 既存 program の経路 (rate / 期間の updateField) と proposeMemberships は変えない。
+// ⚠ seed-additions.ts (codegen) には置かない (codegen が emit しない定数は次回 cron で消える)。
+export const ONLINE_CHANNEL_EXTRACTORS: ReadonlySet<ExtractorKind> = new Set<ExtractorKind>([
+  "epos-tamaru",
+]);
+
 export type ProducesKind =
   | "cards"
   | "categoryRules"
