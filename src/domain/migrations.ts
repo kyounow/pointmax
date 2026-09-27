@@ -280,4 +280,66 @@ export const MIGRATIONS: VersionMigration[] = [
       },
     ],
   },
+  // PR-0a-2a: v46 (四半期レート監査 2026-Q3、PR #142) の edge 修正を既存端末へ配信する。
+  // v46 は seed の値を直しただけで MIGRATIONS を足さなかったため、SEED 44/45 で初期化した端末
+  // (2026-07-15〜07-21 の窓) には edge の rate 修正と削除が届いていなかった (edges は add-only)。
+  // updateField は現在値が from と一致するときだけ自動適用し、手編集済み (不一致) は衝突として
+  // UpdateBanner で個別確認になる (黙って上書きしない)。minFromUnits / lastVerifiedAt / notes は
+  // 注記専用なので載せない。program の削除 2 件 (prog-au-pay-card-addon /
+  // prog-rakuten-pointcard-1pc) は REMOVED_PROGRAM_IDS (seed-additions.ts) の tombstone で配る
+  // (computeSeedUpdate は programs / memberships の migration 結果を使わないため)。
+  {
+    toVersion: 47,
+    date: "2026-09-27",
+    changes: [
+      {
+        type: "updateField",
+        collection: "edges",
+        id: "eikyu-to-d",
+        field: "rate",
+        from: 5,
+        to: 4.5,
+        notes:
+          "永久不滅ポイント→dポイントは 100pt→450dポイント (4.5) が正 (STOREE SAISON 公式、" +
+          "2026-07 四半期監査 #142)。",
+      },
+      {
+        type: "updateField",
+        collection: "edges",
+        id: "eikyu-to-amazon",
+        field: "rate",
+        from: 5,
+        to: 4,
+        notes:
+          "永久不滅ポイント→Amazonギフト券は段階制で最小口 100pt→400円 (4) を保守的に採用 " +
+          "(STOREE SAISON 公式、2026-07 四半期監査 #142)。",
+      },
+      {
+        type: "updateField",
+        collection: "edges",
+        id: "jre-to-jal-normal",
+        field: "rate",
+        from: 0.5,
+        to: 0.3333,
+        notes:
+          "JALカードSuica 普通カード (SMP 未加入) の JRE POINT→JAL マイルは 1500pt→500マイル " +
+          "(0.3333) が正 (2026-07 四半期監査 #142)。v42 で新設した 0.5 から修正。",
+      },
+      {
+        type: "delete",
+        collection: "edges",
+        id: "eikyu-to-edy",
+        notes:
+          "永久不滅ウォレット終了 (2023-10-31) により交換ルート消滅 (2026-07 四半期監査 #142)。",
+      },
+      {
+        type: "delete",
+        collection: "edges",
+        id: "eikyu-to-rakuten",
+        notes:
+          "STOREE SAISON の交換一覧・公式 FAQ から楽天ポイントへの交換が消滅 " +
+          "(2026-07 四半期監査 #142)。復活を確認できたら seed に再追加する。",
+      },
+    ],
+  },
 ];

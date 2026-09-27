@@ -13,6 +13,7 @@ import { isValidVerifiedMonth } from "../domain/edgeFreshness";
 import { isSafeHttpUrl } from "../domain/urlSafety";
 import { PURCHASE_CHANNELS, effectiveChannel } from "../domain/purchaseChannel";
 import { membershipId } from "./defineMemberships";
+import { REMOVED_PROGRAM_IDS } from "./seed-additions";
 
 describe("MASTER_CARD_IDS / isMasterCard", () => {
   it("SEED_CARDS の全 id が含まれる", () => {
@@ -695,6 +696,17 @@ describe("四半期監査 2026-Q3: 消滅ルート / 廃止優待の削除固定
     expect(
       (memberships ?? []).some((m) => m.programId === "prog-au-pay-card-addon"),
     ).toBe(false);
+  });
+
+  // PR-0a-2a: v46 で手書き seed から物理削除しただけだった 2 program を tombstone
+  // (REMOVED_PROGRAM_IDS) にも登録し、既存端末の localStorage からも除去する (M5 形式)。
+  // seed-additions.ts は codegen だが mergeRemovals が union で再出力するので cron で消えない。
+  it("REMOVED_PROGRAM_IDS に prog-au-pay-card-addon / prog-rakuten-pointcard-1pc が含まれ、seed() に無い", () => {
+    const { programs } = seed();
+    for (const id of ["prog-au-pay-card-addon", "prog-rakuten-pointcard-1pc"]) {
+      expect(REMOVED_PROGRAM_IDS, id).toContain(id);
+      expect(programs.some((p) => p.id === id), id).toBe(false);
+    }
   });
 
   it("program prog-rakuten-pointcard-1pc は存在しない (有効加盟店ゼロ、membership も cascade 削除)", () => {

@@ -10,9 +10,12 @@ import { useStore } from "./store";
 import { takeSnapshot } from "./stateSnapshot";
 import { rankCards } from "../domain/rankCards";
 import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
+import { seed, SEED_VERSION } from "./seed";
+import { MIGRATIONS, conflictItems, planMigrations } from "../domain/migrations";
 import type {
   BenefitProgram,
   Card,
+  ConversionEdge,
   PaymentApp,
   StoreProgramMembership,
 } from "../domain/types";
@@ -889,6 +892,156 @@ describe("store: addUserLoyaltyProgram", () => {
   });
 });
 
+// PR-0a-2a: v46 監査の修正 (edge 3 本の rate 修正・2 本の削除・廃止 program 2 件) と
+// たまるの channel を、SEED 46 以前で初期化した既存端末へ届ける配信経路の結線テスト。
+// 旧端末 state = seed() に v46 以前の値を混ぜたもの (lastSeedVersion=46)。
+// 「アプリに反映」(applySeedUpdate([])) / 自動反映 (autoApplySeedUpdate) /
+// サンプル投入 (mergeFromSeed) の 3 経路とも同じ結果になる (mergeFromSeed は computeSeedUpdate に委譲)。
+describe("store: seed 反映の既存端末配信 (PR-0a-2a / MIGRATIONS v47 + tombstone)", () => {
+  const OLD_REMOVED_PROGRAMS: BenefitProgram[] = [
+    {
+      id: "prog-au-pay-card-addon",
+      scope: "all-stores",
+      name: "au PAY × au PAYカード 上乗せ",
+      paymentAppId: "pa-au-pay",
+      cardIds: ["au-pay-card"],
+      rate: 0.01,
+      currencyId: "ponta-pt",
+      bonusType: "addOn",
+      description: "au PAYカードからチャージで +1% 上乗せ (au PAY 0.5% と合わせて 1.5%)",
+    },
+    {
+      id: "prog-rakuten-pointcard-1pc",
+      scope: "member-stores",
+      name: "楽天ポイントカード提示 1%",
+      pointCardId: "rakuten-pointcard",
+      rate: 0.01,
+      currencyId: "rakuten-pt",
+      bonusType: "primary",
+      description: "楽天ポイントカード提示で 100円=1pt (1%) 還元",
+    },
+  ];
+  const OLD_REMOVED_MEMBERSHIPS: StoreProgramMembership[] = ["mcdonalds", "doutor"].map(
+    (storeId) => ({
+      id: `m-prog-rakuten-pointcard-1pc-${storeId}`,
+      programId: "prog-rakuten-pointcard-1pc",
+      storeId,
+    }),
+  );
+  const OLD_EDGE_RATES: Record<string, number> = {
+    "eikyu-to-d": 5,
+    "eikyu-to-amazon": 5,
+    "jre-to-jal-normal": 0.5,
+  };
+  const OLD_REMOVED_EDGES: ConversionEdge[] = [
+    { id: "eikyu-to-edy", fromCurrencyId: "eikyu", toCurrencyId: "edy", rate: 4.5 },
+    { id: "eikyu-to-rakuten", fromCurrencyId: "eikyu", toCurrencyId: "rakuten-pt", rate: 4.5 },
+  ];
+
+  // v46 以前の端末 state を組み立てる。edgeOverrides で手編集 edge を再現できる。
+  const setOldState = (edgeOverrides: Record<string, number> = {}) => {
+    const s = seed();
+    const withoutChannel = <T extends { channel?: unknown }>(x: T): T => {
+      const next = { ...x };
+      delete next.channel;
+      return next;
+    };
+    useStore.setState({
+      cards: s.cards,
+      currencies: s.currencies,
+      stores: s.stores,
+      edges: [
+        ...s.edges.map((e) =>
+          e.id in edgeOverrides
+            ? { ...e, rate: edgeOverrides[e.id] }
+            : e.id in OLD_EDGE_RATES
+              ? { ...e, rate: OLD_EDGE_RATES[e.id] }
+              : e,
+        ),
+        ...OLD_REMOVED_EDGES,
+      ],
+      pointCards: s.pointCards,
+      paymentApps: s.paymentApps,
+      programs: [...s.programs.map(withoutChannel), ...OLD_REMOVED_PROGRAMS],
+      memberships: [...s.memberships.map(withoutChannel), ...OLD_REMOVED_MEMBERSHIPS],
+      lastSeedVersion: 46,
+    });
+  };
+
+  const expectDelivered = () => {
+    const st = useStore.getState();
+    // たまる 3 program は channel:"online" (program の公式更新伝播で届く)
+    for (const n of [2, 3, 4]) {
+      const p = st.programs.find((x) => x.id === `prog-epos-tamaru-${n}x`);
+      expect(p?.channel, `prog-epos-tamaru-${n}x`).toBe("online");
+    }
+    // edge 3 本の rate 修正 (MIGRATIONS v47 の updateField)
+    const edgeRate = (id: string) => st.edges.find((e) => e.id === id)?.rate;
+    expect(edgeRate("eikyu-to-d")).toBe(4.5);
+    expect(edgeRate("eikyu-to-amazon")).toBe(4);
+    expect(edgeRate("jre-to-jal-normal")).toBe(0.3333);
+    // edge 2 本の削除 (MIGRATIONS v47 の delete)
+    expect(st.edges.some((e) => e.id === "eikyu-to-edy")).toBe(false);
+    expect(st.edges.some((e) => e.id === "eikyu-to-rakuten")).toBe(false);
+    // 廃止 program 2 件 + cascade membership (REMOVED_PROGRAM_IDS)
+    for (const id of ["prog-au-pay-card-addon", "prog-rakuten-pointcard-1pc"]) {
+      expect(st.programs.some((p) => p.id === id), id).toBe(false);
+      expect(st.memberships.some((m) => m.programId === id), id).toBe(false);
+    }
+    expect(st.lastSeedVersion).toBe(SEED_VERSION);
+    expect(SEED_VERSION).toBeGreaterThanOrEqual(47);
+  };
+
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("applySeedUpdate([]) (アプリに反映) で配信される", () => {
+    setOldState();
+    useStore.getState().applySeedUpdate([]);
+    expectDelivered();
+  });
+
+  it("autoApplySeedUpdate (自動反映) でも同じく配信される", () => {
+    setOldState();
+    useStore.getState().autoApplySeedUpdate({ digest: "d-v47", count: 1 });
+    expectDelivered();
+  });
+
+  it("mergeFromSeed (設定 > サンプル投入) でも同じく配信される (computeSeedUpdate に委譲)", () => {
+    setOldState();
+    useStore.getState().mergeFromSeed();
+    expectDelivered();
+  });
+
+  it("手編集した edge (eikyu-to-d=6) は conflict として保護され、overrideKeys 無しでは 6 のまま", () => {
+    setOldState({ "eikyu-to-d": 6 });
+    useStore.getState().applySeedUpdate([]);
+    const st = useStore.getState();
+    expect(st.edges.find((e) => e.id === "eikyu-to-d")?.rate).toBe(6);
+    // 衝突しない他の修正は届く
+    expect(st.edges.find((e) => e.id === "eikyu-to-amazon")?.rate).toBe(4);
+    expect(st.edges.some((e) => e.id === "eikyu-to-edy")).toBe(false);
+  });
+
+  it("手編集 edge の conflict キーを overrideKeys に指定すると公式値 4.5 で上書きされる", () => {
+    setOldState({ "eikyu-to-d": 6 });
+    const before = useStore.getState();
+    const plan = planMigrations(before, before.lastSeedVersion, SEED_VERSION, MIGRATIONS);
+    const conflict = conflictItems(plan).find((p) => p.migration.id === "eikyu-to-d");
+    expect(conflict, "eikyu-to-d が conflict として検出されない").toBeDefined();
+    expect(conflict?.currentValue).toBe(6);
+    useStore.getState().applySeedUpdate(conflict ? [conflict.key] : []);
+    expect(useStore.getState().edges.find((e) => e.id === "eikyu-to-d")?.rate).toBe(4.5);
+  });
+
+  it("mergeFromSeed でも手編集 edge は上書きしない (conflict は未適用のまま)", () => {
+    setOldState({ "eikyu-to-d": 6 });
+    useStore.getState().mergeFromSeed();
+    expect(useStore.getState().edges.find((e) => e.id === "eikyu-to-d")?.rate).toBe(6);
+  });
+});
+
 // PR-4a (N-4): 破壊的操作 4 経路が直前スナップショットを採取するかの結線テスト。
 // takeSnapshot はモック済み (先頭 vi.mock)。ここでは「呼ばれること + trigger」だけを検査する
 // (state 引数は node 環境で localStorage 不在のため null になる = 中身は別テストの領域)。
@@ -977,6 +1130,13 @@ describe("store: 破壊的操作の直前 snapshot 採取 (PR-4a 結線)", () =>
       digest: "d-1",
       count: 3,
     });
+  });
+
+  it("mergeFromSeed (サンプル投入) も trigger:'seed-apply' で採取する (PR-0a-2a: 公式の修正・削除も反映するため)", () => {
+    useStore.getState().mergeFromSeed();
+    expect(
+      takeSnapshotMock.mock.calls.some((c) => c[0] === "seed-apply"),
+    ).toBe(true);
   });
 
   it("dismissAutoApplyNotice で notice が null に戻る", () => {

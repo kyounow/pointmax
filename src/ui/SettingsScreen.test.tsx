@@ -87,6 +87,10 @@ describe("SettingsScreen データ管理 (IA-6 / PR-2e)", () => {
     renderSettings();
     expect(useStore.getState().currencies.length).toBe(0);
     fireEvent.click(screen.getByRole("button", { name: "サンプル投入" }));
+    // PR-0a-2a: サンプル投入は公式反映と同経路 (修正・削除も反映) であることを確認文言で明示。
+    expect(
+      await screen.findByText(/公式の修正・削除も反映されます/),
+    ).toBeInTheDocument();
     // 確認ダイアログの「投入」を押す。
     fireEvent.click(await screen.findByRole("button", { name: "投入" }));
     // seed が取り込まれ通貨などが 0 件から増える (非同期ハンドラ完了待ち)。

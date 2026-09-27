@@ -90,7 +90,8 @@ function readPersistedAppState(): unknown {
 }
 
 // PR-4b: seed 反映 (手動「アプリに反映」= applySeedUpdate と 自動反映 = autoApplySeedUpdate)
-// で共有する純粋な計算。add-only マージ + 公式更新伝播 + tombstone 削除 + マイグレーション
+// で共有する純粋な計算 (PR-0a-2a 以降は設定 > サンプル投入 = mergeFromSeed も applySeedUpdate
+// 経由でここを通る)。add-only マージ + 公式更新伝播 + tombstone 削除 + マイグレーション
 // (自動適用可能 + overrideKeys) を適用した最終 collection 一式を返す。
 // 呼び出し側は結果を immer draft に代入するだけ (副作用・snapshot は呼び出し側の責務)。
 function computeSeedUpdate(
@@ -695,30 +696,13 @@ export const useStore = create<State & Actions>()(
         });
       },
       mergeFromSeed: () =>
-        set((state) => {
-          const result = mergeSeedFn(
-            {
-              cards: state.cards,
-              currencies: state.currencies,
-              stores: state.stores,
-              edges: state.edges,
-              pointCards: state.pointCards,
-              paymentApps: state.paymentApps,
-              programs: state.programs,
-              memberships: state.memberships,
-            },
-            seed(),
-          );
-          state.cards = result.cards;
-          state.currencies = result.currencies;
-          state.stores = result.stores;
-          state.edges = result.edges;
-          state.pointCards = result.pointCards;
-          state.paymentApps = result.paymentApps;
-          state.programs = result.programs ?? [];
-          state.memberships = result.memberships ?? [];
-          state.lastSeedVersion = SEED_VERSION;
-        }),
+        // 設定 > サンプル投入。PR-0a-2a で「アプリに反映」(applySeedUpdate([])) と同一経路に委譲:
+        // 直前 snapshot (trigger:"seed-apply") + computeSeedUpdate (add-only + 公式 program 更新伝播
+        // + tombstone + 自動適用可能な MIGRATIONS)。従来は mergeSeed を opts なしで呼んで
+        // lastSeedVersion だけ SEED_VERSION に進めていたため、tombstone も MIGRATIONS も
+        // 適用されないまま版が進み、以後その版の edge 修正 (v47 等) が永久に届かなくなる穴があった。
+        // ユーザー編集は従来どおり保護される (手編集 edge は MIGRATIONS の conflict = 未適用のまま)。
+        get().applySeedUpdate([]),
       applySeedUpdate: (overrideKeys) => {
         // PR-4a: マスタ更新の「アプリに反映」直前にスナップショット (trigger:"seed-apply")。
         // PR-4b の自動反映+Undo の前提。保存失敗しても反映は続行する。
