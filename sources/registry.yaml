@@ -45,10 +45,12 @@
 #   (旧ヘッダの「索引1+子最大5=最大6req」は誤り。停止前 15 本の worst は mon 36 / thu 39)
 #   現在 enabled な crawl:index ソースは 0 本。
 #
-# 現在の構成 (2026-09-27、収穫ゼロのソースを停止 (Z4) した後。enabled 3 本、worst = 3 × 本数):
-#   mon (worst 6 req): jcb-jpoint-partners / epos-tamaru-market
-#   thu (worst 3 req): smbc-vpoint-up
-#   0b-3 で d-pay-campaigns (mon) / paypay-campaigns (thu) を再有効化すると mon 9 / thu 6。
+# 現在の構成 (PR-0b-3 で d-pay / paypay を autoMerge:false 付きで再有効化した後。enabled 5 本、
+# worst = 3 × 本数):
+#   mon (worst 9 req): jcb-jpoint-partners → epos-tamaru-market → d-pay-campaigns
+#   thu (worst 6 req): smbc-vpoint-up → paypay-campaigns
+#   d-pay / paypay は各グループの末尾に置く (取得が不安定な campaign ソースが先頭で無料枠を使い切り、
+#   収穫のある jcb / たまる / smbc を巻き添えにしないため。registry-consistency で順序を固定)。
 #   停止したソースの理由と再開条件は各 notes 先頭の「★ 2026-09-27 停止 (Z4)」を参照。
 # enabled:false のソースは fetchGroup 不要 (enabled:true 化する PR で必ず付与すること)。
 
@@ -483,83 +485,6 @@ sources:
         - https://j-pointpartner.jcb.co.jp/partner/list?genre=01 (ジャンル別)
         - https://j-pointpartner.jcb.co.jp/genre/ (ジャンル目次)
 
-  - id: d-pay-campaigns
-    label: d払い キャンペーン一覧 (公式)
-    url: https://service.smt.docomo.ne.jp/keitai_payment/campaign/
-    extractor: campaign
-    produces:
-      - stores
-      - programs
-      - memberships
-    extractionScope: chains-only
-    enabled: false
-    # d払いのキャンペーン一覧には「dポイントカード」タブ (提示型) が同居するので候補は 2 つ
-    target:
-      - paymentAppId: pa-d-pay
-      - pointCardId: d-pointcard
-    autoMerge: false
-    notes: |
-      ★ 2026-09-27 停止 (Z4、一時停止)。enabled:false + fetchGroup 削除。
-      0b-3 (Z3 ガード + autoMerge:false + target) で再有効化する一時停止。
-      9/28・10/1 の cron で campaign auto 経路が無防備に走るのを避けるため
-      (campaign auto ゲートは「最大」語・対象キー無し・上限なし 30% を通す穴がある)。
-      直近 (9/13) の extracted は nonJson fallback で 0 件のため、停止による損失はほぼ無い。
-      再開時: 0b-3 で enabled:true + fetchGroup: mon に戻し、Z4_STOPPED から外す。
-      停止に合わせて sources/extracted/d-pay-campaigns.json を git rm 済み。
-      ---
-      ★ 2026-05-17 追加 (#B 決済系キャンペーン)。paymentAppId=pa-d-pay、
-      還元通貨 d-pt。扱いは rakuten-pay-campaigns と同じ (campaign-v3.0、
-      店舗特定+期間明記のみ)。新規 program の auto 可否はルート README
-      「cron が auto-merge する/しない範囲」表を参照 (2026-09 訂正)。
-      ★ 実 fetch 検証: 当ページは抽出可能な実データ豊富 (索引ハブでない)。
-      gemini-2.5-flash が時折 thinking-leak で nonJson を返す非決定的
-      失敗があるが、成功時は bic-camera +5% / toysrus 3倍 /
-      有賀園ゴルフ 10% 等を期間付き paymentAppId program +
-      membership + 新規 store として正しく抽出 (全 needsReview、迷子0)。
-      週次 cron は 3-attempt retry で吸収。信頼性重視なら campaign 系を
-      GEMINI_MODEL=gemini-2.5-pro 等にする選択肢あり。
-      注: Gemini が稀に pointCardId/paymentAppId 双方未設定の program を
-      出す (prompt XOR は schema 強制でない)。現行の isCampaignAutoMergeable は
-      target キー (cardIds / pointCardId / paymentAppId) が無い program を拒否しない
-      (未ガード。PR-0b-3 の untargetedProgram で対処予定) (2026-09 訂正)。
-
-  - id: paypay-campaigns
-    label: PayPay キャンペーン一覧 (公式)
-    url: https://paypay.ne.jp/event/
-    extractor: campaign
-    produces:
-      - stores
-      - programs
-      - memberships
-    extractionScope: chains-only
-    enabled: false
-    target:
-      paymentAppId: pa-paypay
-    autoMerge: false
-    notes: |
-      ★ 2026-09-27 停止 (Z4、一時停止)。enabled:false + fetchGroup 削除。
-      0b-3 (Z3 ガード + autoMerge:false + target) で再有効化する一時停止。
-      9/28・10/1 の cron で campaign auto 経路が無防備に走るのを避けるため
-      (campaign auto ゲートは「最大」語・対象キー無し・上限なし 30% を通す穴がある)。
-      直近 (9/16) の extracted は nonJson fallback で 0 件のため、停止による損失はほぼ無い。
-      再開時: 0b-3 で enabled:true + fetchGroup: thu に戻し、Z4_STOPPED から外す。
-      停止に合わせて sources/extracted/paypay-campaigns.json を git rm 済み。
-      ---
-      ★ 2026-05-28 追加 (#C キャンペーン獲得拡充 PR #57)。
-      paymentAppId=pa-paypay、還元通貨=paypay。campaign-v3.0 extractor が
-      「対象店舗 × PayPay 期間限定上振れ」を 1 キャンペーン=1 program
-      (paymentAppId+validFrom/validTo) + 対象店舗 membership として抽出。
-      新規 program の auto 可否はルート README「cron が auto-merge する/しない範囲」表を参照
-      (PR #60 以降、campaign extractor 由来は isCampaignAutoMergeable を満たせば auto)
-      (2026-09 訂正)。
-      ★ 2026-05-28 手動 fetch 検証 (2 attempts、success): 1 program + 1 membership
-      抽出。例: prog-paypay-7eleven-onigiri-sushi-2026-06 (セブンイレブン
-      対象おにぎり・寿司 最大20%、validFrom 2026-06-01 / validTo 2026-06-30、
-      bonusType=addOn)。同 program に conv-7eleven membership。
-      → 有効な campaign source として enabled:true で運用開始。次回 cron で
-      自動抽出 (auto / review の振り分けはルート README の表を参照) (2026-09 訂正)。
-      失敗時は別 URL 候補: https://paypay.ne.jp/event/list/, https://paypay.ne.jp/promotion/
-
   - id: smbc-vpoint-up
     label: SMBC Vポイント アップ施策一覧 (公式)
     url: https://www.smbc.co.jp/kojin/vpoint-up/
@@ -709,6 +634,96 @@ sources:
       定額付与型 (ZOZOTOWN) 除外・G/P 個別上乗せ (Adidas 9倍) の conditions 記録も
       プロンプト指示どおり動作。schema 違反 memberships 14 件は graceful 除去 (許容)。
       新規 store は storeAdditionsDisabled / chain-promote の既存ガードに従う。
+
+  # ↓ campaign 決済系 2 本は各 fetchGroup の末尾に置く (取得が不安定な campaign ソースが先に無料枠を
+  #   使い切り、jcb / たまる / smbc を巻き添えにしないため。registry-consistency で順序を固定)。
+  - id: d-pay-campaigns
+    label: d払い キャンペーン一覧 (公式)
+    url: https://service.smt.docomo.ne.jp/keitai_payment/campaign/
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: true
+    fetchGroup: mon
+    # d払いのキャンペーン一覧には「dポイントカード」タブ (提示型) が同居するので候補は 2 つ
+    target:
+      - paymentAppId: pa-d-pay
+      - pointCardId: d-pointcard
+    autoMerge: false
+    notes: |
+      ★ 2026-09-27 PR-0b-3 で再有効化 (enabled:true + fetchGroup: mon、mon グループの末尾)。
+      autoMerge:false: このソース由来の提案 (stores / programs / memberships / updateField) は、
+      Z3 ガード (rate 10% 未満・5% 超は月上限必須・条件文言・対象キー必須・target 照合・
+      membership の店名照合) を通過しても auto にせず sourceAutoMergeDisabled で review に回す。
+      人手で確認して `npm run sync:approve` で取り込む。
+      target: paymentAppId=pa-d-pay と pointCardId=d-pointcard の 2 候補 (一覧に dポイントカード提示型の
+      キャンペーンが同居するため)。どちらにも一致しない新規 program は targetMismatch。
+      解除条件: PR-1 H4 の事後レビュー表で 4 週連続して誤りが無いことを確認してから、別 PR で
+      autoMerge:false を外す (registry-consistency の期待値も同じ PR で更新する)。
+      一時停止 (2026-09-27 Z4 / PR-0b-1) の経緯: 旧 campaign auto ゲートは「最大」語・対象キー無し・
+      上限なし 30% を通す穴があり、9/28・10/1 の cron で無防備に走るのを避けるため停止した
+      (直近 9/13 の extracted は nonJson fallback で 0 件のため損失なし。extracted は git rm 済みで、
+      次の mon の fetch が作る)。
+      ---
+      ★ 2026-05-17 追加 (#B 決済系キャンペーン)。paymentAppId=pa-d-pay、
+      還元通貨 d-pt。扱いは rakuten-pay-campaigns と同じ (campaign-v3.0、
+      店舗特定+期間明記のみ)。新規 program の扱いはルート README
+      「cron が auto-merge する/しない範囲」表を参照 (PR-0b-3 以降は Z3 ガード + autoMerge:false で review 固定)。
+      ★ 実 fetch 検証: 当ページは抽出可能な実データ豊富 (索引ハブでない)。
+      gemini-2.5-flash が時折 thinking-leak で nonJson を返す非決定的
+      失敗があるが、成功時は bic-camera +5% / toysrus 3倍 /
+      有賀園ゴルフ 10% 等を期間付き paymentAppId program +
+      membership + 新規 store として正しく抽出 (当時は全 needsReview、迷子0)。
+      週次 cron は 3-attempt retry で吸収。信頼性重視なら campaign 系を
+      GEMINI_MODEL=gemini-2.5-pro 等にする選択肢あり。
+      注: Gemini が稀に pointCardId/paymentAppId 双方未設定の program を
+      出す (prompt XOR は schema 強制でない)。PR-0b-3 以降、対象キー (cardIds / pointCardId /
+      paymentAppId) の無い program は untargetedProgram で review 固定 (import 検証と seed 契約も拒否)。
+
+  - id: paypay-campaigns
+    label: PayPay キャンペーン一覧 (公式)
+    url: https://paypay.ne.jp/event/
+    extractor: campaign
+    produces:
+      - stores
+      - programs
+      - memberships
+    extractionScope: chains-only
+    enabled: true
+    fetchGroup: thu
+    target:
+      paymentAppId: pa-paypay
+    autoMerge: false
+    notes: |
+      ★ 2026-09-27 PR-0b-3 で再有効化 (enabled:true + fetchGroup: thu、thu グループの末尾)。
+      autoMerge:false: このソース由来の提案 (stores / programs / memberships / updateField) は、
+      Z3 ガード (rate 10% 未満・5% 超は月上限必須・条件文言・対象キー必須・target 照合・
+      membership の店名照合) を通過しても auto にせず sourceAutoMergeDisabled で review に回す。
+      人手で確認して `npm run sync:approve` で取り込む。
+      target: paymentAppId=pa-paypay (PayPay カードでの絞り込み = cardIds 併用は可)。
+      解除条件: PR-1 H4 の事後レビュー表で 4 週連続して誤りが無いことを確認してから、別 PR で
+      autoMerge:false を外す (registry-consistency の期待値も同じ PR で更新する)。
+      一時停止 (2026-09-27 Z4 / PR-0b-1) の経緯: 旧 campaign auto ゲートの穴 (9/03 に「最大 30%・
+      対象商品限定」のセブン-イレブン キャンペーンが auto で配信された) を 0b-3 まで塞ぐため停止した
+      (直近 9/16 の extracted は nonJson fallback で 0 件のため損失なし。extracted は git rm 済みで、
+      次の thu の fetch が作る)。
+      ---
+      ★ 2026-05-28 追加 (#C キャンペーン獲得拡充 PR #57)。
+      paymentAppId=pa-paypay、還元通貨=paypay。campaign-v3.0 extractor が
+      「対象店舗 × PayPay 期間限定上振れ」を 1 キャンペーン=1 program
+      (paymentAppId+validFrom/validTo) + 対象店舗 membership として抽出。
+      新規 program の扱いはルート README「cron が auto-merge する/しない範囲」表を参照
+      (PR-0b-3 以降は Z3 ガード + autoMerge:false で review 固定)。
+      ★ 2026-05-28 手動 fetch 検証 (2 attempts、success): 1 program + 1 membership
+      抽出。例: prog-paypay-7eleven-onigiri-sushi-2026-06 (セブンイレブン
+      対象おにぎり・寿司 最大20%、validFrom 2026-06-01 / validTo 2026-06-30、
+      bonusType=addOn)。同 program に conv-7eleven membership。
+      (このような「最大」「対象○○」付きキャンペーンは PR-0b-3 以降 campaignConditional /
+      campaignRateCeiling で review になる)。
+      失敗時は別 URL 候補: https://paypay.ne.jp/event/list/, https://paypay.ne.jp/promotion/
 
   - id: epos-news-campaigns
     label: エポスカード お知らせ/キャンペーン (公式)

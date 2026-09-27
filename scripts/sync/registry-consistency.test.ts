@@ -154,6 +154,21 @@ describe("fetchGroup 契約 (無料枠 mon/thu 分割)", () => {
     );
     expect(disabledWithGroup.map((s) => s.id)).toEqual([]);
   });
+
+  // PR-0b-3: 記載順 = 実行順 (selectSourcesForGroup)。取得が不安定な campaign 決済系 (d-pay / paypay) は
+  // 各グループの末尾に置き、先頭で無料枠を使い切って収穫のあるソースを巻き添えにしないようにする。
+  // ソースを足す / 止める PR はこの期待値も同時に更新する。
+  it("enabled ソースのグループ内の並び (mon: jcb → たまる → d払い / thu: smbc → PayPay)", () => {
+    expect(selectSourcesForGroup(registry.sources, "mon").map((s) => s.id)).toEqual([
+      "jcb-jpoint-partners",
+      "epos-tamaru-market",
+      "d-pay-campaigns",
+    ]);
+    expect(selectSourcesForGroup(registry.sources, "thu").map((s) => s.id)).toEqual([
+      "smbc-vpoint-up",
+      "paypay-campaigns",
+    ]);
+  });
 });
 
 // ── Z4 停止ソース (2026-09-27、収穫ゼロのソース停止) の契約 ──
@@ -173,9 +188,8 @@ const Z4_STOPPED = [
   "mufg-card-global-point",
   "orico-card-member-point",
   "smbc-v-gold-7percent",
-  // campaign 決済系: 0b-3 (auto ガード + autoMerge:false + target) で再有効化する一時停止 (commit 4)
-  "d-pay-campaigns",
-  "paypay-campaigns",
+  // campaign 決済系 (d-pay-campaigns / paypay-campaigns) の一時停止 (0b-1 commit 4) は
+  // PR-0b-3 で autoMerge:false + target 付きで解除した (下の「enabled ソースの並び」で固定)。
 ];
 
 describe("Z4 停止ソース (収穫ゼロのソース停止)", () => {
