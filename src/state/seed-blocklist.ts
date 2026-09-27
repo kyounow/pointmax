@@ -4,8 +4,8 @@ import { membershipId } from "./defineMemberships";
 // 最終 seed には含めない storeId のリスト。
 //
 // 動作:
-//   - src/state/seed.ts: ADDED_STORES / ADDED_LOYALTY_RULES / ADDED_RULES から
-//     ここに列挙された storeId を持つ records を filter
+//   - src/state/seed.ts: ADDED_STORES (自動同期分の store) から
+//     ここに列挙された storeId を filter
 //   - scripts/sync/diff-and-propose.ts: 新規 store の addRecord 提案を
 //     reviewReason="userBlocked" に格下げ (再追加されないように)
 //
@@ -63,8 +63,8 @@ export const BLOCKED_STORE_IDS = new Set<string>([
 //
 // 例: "general" (src/state/seed-data-stores.ts) = 「一般店舗 (規定還元)」。
 // Calculator のデフォルト選択店で、店舗未選択時の規定還元率を表示するための
-// プレースホルダ。実在店舗ではないため、ここに実 program の membership /
-// loyaltyRule が紐づくと「一般店舗を選んだのに特定キャンペーンの倍率が乗る」
+// プレースホルダ。実在店舗ではないため、ここに実 program の membership
+// が紐づくと「一般店舗を選んだのに特定キャンペーンの倍率が乗る」
 // という誤表示になる。
 //
 // 背景 (#103 incident): jcb-jpoint extractor が「クレカ乗車 ポイント20倍」
@@ -75,7 +75,7 @@ export const BLOCKED_STORE_IDS = new Set<string>([
 // REMOVED_MEMBERSHIP_IDS で除去済み)。
 //
 // 再発防止として:
-//   - scripts/sync/propose-helpers.ts: memberships / loyaltyRules の storeId が
+//   - scripts/sync/propose-helpers.ts: memberships の storeId が
 //     ここに含まれる場合、reviewReason="pseudoStoreTarget" で必ず needsReview に降格
 //   - scripts/sync/inject-prompt.ts: このリストの store を INJECT 一覧から除外
 //     (Gemini がそもそも受け皿候補として見れないようにする)
@@ -133,7 +133,7 @@ export const REMOVED_MEMBERSHIP_IDS: string[] = [
   // ポイント20倍」「海外でのお買い物 ポイント2倍」) をダミー store "general"
   // への membership として混入させた 4 件。confidence 0.9025 ≥ 0.9 で
   // autoApplicable を通過し、7/02 に本番配信済み。既存ユーザーの localStorage
-  // にも mergeSeed (add-only) で入っているため tombstone で除去する。
+  // にも mergeSeed の追加で入っているため tombstone で除去する。
   membershipId("prog-jcb-jpoint-20x", "general"),
   membershipId("prog-jcb-jpoint-gold-20x", "general"),
   membershipId("prog-jcb-jpoint-2x", "general"),

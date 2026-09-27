@@ -3,13 +3,15 @@
 // データ本体は src/state/seed-data-*.ts に分割:
 //   seed-data-currencies.ts : 通貨マスタ (Currency[])
 //   seed-data-cards.ts      : クレカ / ポイントカード / 決済アプリ
-//   seed-data-stores.ts     : 店舗 / クレカ還元ルール / ポイントカード提示ルール
+//   seed-data-stores.ts     : 店舗 (提示還元は BenefitProgram に統合済み)
+//   seed-data-programs.ts   : BenefitProgram / StoreProgramMembership
 //   seed-data-edges.ts      : 通貨間の交換レート
 //
 // この seed.ts は:
 //   - SEED_VERSION / SEED_CHANGELOG / DEFAULT_SYNC_URL の運用メタを保持
-//   - seed() 関数で 4 つのデータ + 自動同期 (seed-additions) を合成して返す
-//   - BLOCKED_STORE_IDS や CATEGORY_ALIASES の最終 filter / remap を適用
+//   - seed() 関数で手書きデータ + 自動同期 (seed-additions) を合成して返す
+//   - BLOCKED_STORE_IDS や CATEGORY_ALIASES の最終 filter / remap、PROGRAM_OVERRIDES の部分上書き、
+//     tombstone (REMOVED_PROGRAM_IDS / REMOVED_MEMBERSHIP_IDS) の除外を適用
 //
 // 自動同期 (scripts/sync/apply-proposals.ts) は seed-additions.ts に書き込む。
 // この seed.ts や seed-data-*.ts を直接書き換えるのは「手書きで永続化する」時のみ。
@@ -58,9 +60,9 @@ import {
 
 // シードデータの版数。**手動リリース粒度**でのみ bump する
 // (型構造変更や大きなデータ追加を伴うリリース時に人手で +1)。
-// 週次 cron auto-sync は seed-additions.ts への add-only のみで
-// この値には触れない。既存ユーザーへの cron 追加分の通知は
-// SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
+// 週次 cron auto-sync は seed-additions.ts (ADDED_* / PROGRAM_OVERRIDES / REMOVED_PROGRAM_IDS)
+// だけを書き換え、この値には触れない。既存ユーザーへの cron 追加分の通知は
+// 自動反映 (安全な週) / SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
 export const SEED_VERSION = 47;
@@ -594,7 +596,7 @@ type SeedReturn = {
  * 合成ルール:
  *  - 手書きが常に前、追加分が後 (UI の並びはこの順)
  *  - id が重複した場合は手書きが勝つ (filter で排除)
- *  - BLOCKED_STORE_IDS に含まれる store と、それを参照する rules は除外
+ *  - 自動同期分の store のうち BLOCKED_STORE_IDS に含まれるものは除外
  *  - 追加 store の category は CATEGORY_ALIASES で正規化 (旧名 → 新名)
  *  - tombstone: REMOVED_PROGRAM_IDS の program (+ cascade membership) と
  *    REMOVED_MEMBERSHIP_IDS の membership 単体を除外

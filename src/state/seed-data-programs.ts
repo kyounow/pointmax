@@ -1260,7 +1260,9 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   ]),
 
   // V5: JCB J-POINT パートナー memberships
-  // V5-2 で W 系列 / Gold 系列の 2 系列に分離 (10 件 = W6 + Gold9、高島屋は Gold のみプレミアム)
+  // V5-2 で W 系列 / Gold 系列の 2 系列に分離。ここ (手書き) は 30 件 = W 15 (2倍 6 + 3倍 2 + 20倍 7) +
+  //   Gold 15 (2倍 5 + 3倍 2 + 4倍 1 + 20倍 7) (2026-09-27 時点)。20倍の吉野家や自動同期で増えた店は
+  //   seed-additions.ts (ADDED) 側。高島屋は W = 2倍店 / Gold = 4倍 (プレミアム) で系列ごとに 1 件。
   // 倍率は j-pointpartner.jcb.co.jp/search で WebFetch 検証済 (mos-burger のみ未検証、subagent 一般知識)
   // W (jcb-w): 2倍 / 3倍 / 20倍 (4倍は廃止、高島屋を 2倍へ移管)
   // Gold (jcb-gold): 2倍 / 3倍 / 4倍 (高島屋プレミアム) / 20倍
@@ -1286,7 +1288,9 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
     "apollo-station",
     "bic-camera",
     "mos-burger",
-    // V5-2: 高島屋を W では 2倍 (実効 2%) に移管 (Gold プレミアム 4倍 = 2% と同等)
+    // V5-2: 高島屋を W では 2倍店として登録 (加算方式で計 3 倍 = 実効 1.5%。Gold プレミアム 4倍 =
+    //   実効 2.0% とは別値)。※ 抽出では百貨店本体が「最大 4 倍」— W の倍率は V3 四半期チェック
+    //   項目 1 で要確認 (値はここでは断定しない)。
     "takashimaya",
   ]),
   ...defineMemberships("prog-jcb-jpoint-3x", ["amazon", "conv-7eleven"]),
