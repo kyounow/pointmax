@@ -1,8 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
+  LIFESTYLE_KEYWORDS,
+  detectConditionalWording,
+  detectLifestyleWording,
   detectSelfReportedExclusion,
   detectUnsupportedDateClaim,
   detectUnsupportedRateClaim,
+  normalizeForMatch,
 } from "./evidence-check";
 
 describe("detectSelfReportedExclusion", () => {
@@ -78,5 +82,98 @@ describe("detectUnsupportedRateClaim", () => {
   it("evidenceQuote 無し → true", () => {
     expect(detectUnsupportedRateClaim(0.03, undefined)).toBe(true);
     expect(detectUnsupportedRateClaim(0.03, "")).toBe(true);
+  });
+});
+
+// ─── PR-0b-3 (Z3): 条件文言・ライフスタイル語 ───
+
+describe("normalizeForMatch", () => {
+  it("NFKC で全角英数・記号を半角にする", () => {
+    expect(normalizeForMatch("最大＋２０％ ＭＡＸ")).toBe("最大+20% MAX");
+  });
+});
+
+describe("detectConditionalWording (陽性ベクタ: 実事故の name / evidence / notes)", () => {
+  it.each([
+    ["【吉野家】最大＋20％還元！", "最大"],
+    ["かっぱ寿司の店舗で最大10倍！", "最大"],
+    ["【ビックカメラ池袋店舗】もれなく＋5％還元", "店舗限定"],
+    ["【モスバーガー】対象商品はdポイント3倍！", "対象限定"],
+    ["dポイントカード モスバーガー 対象商品はdポイント5倍", "対象限定"],
+    ["PayPayポイントを利用して対象商品を買うと最大30％", "最大"],
+    ["＜12〜18歳の方＞PayPayで最大2%", "最大"],
+    ["＜12〜18歳の方＞PayPayで2%", "ユーザー状態"],
+    ["セブンイレブン 対象おにぎり・寿司 +20%", "対象限定"],
+    ["新規入会でポイント2倍", "ユーザー状態"],
+    ["学生限定 3%還元", "ユーザー状態"],
+    ["抽選で10名様に", "抽選"],
+    ["モバイルオーダーで3%", "EC経由"],
+    ["一部店舗を除く", "店舗限定"],
+    ["一部の商品を除く", "一部商品"],
+    ["クーポン利用で5%OFF", "割引"],
+    ["PayPayポイントで支払うと", "ポイント利用"],
+  ])("「%s」は %s で一致する", (text, label) => {
+    const hit = detectConditionalWording({ evidenceQuote: text }, true);
+    expect(hit).not.toBeNull();
+    expect(hit!.startsWith(`${label}:`)).toBe(true);
+    expect(hit!.endsWith("@evidenceQuote")).toBe(true);
+  });
+
+  it("notes だけにある「対象商品限定です」も拾う (@notes)", () => {
+    expect(
+      detectConditionalWording({ name: "モスバーガー 3%", notes: "対象商品限定です" }, true),
+    ).toBe("対象限定:「対象商品限定です」@notes");
+  });
+
+  it("フィールドは name → description → conditions → notes → evidenceQuote の順に走査する", () => {
+    expect(
+      detectConditionalWording(
+        { name: "最大3%", evidenceQuote: "対象商品で3%" },
+        true,
+      ),
+    ).toBe("最大:「最大」@name");
+  });
+});
+
+describe("detectConditionalWording (陰性ベクタ: 過剰ブロックしない)", () => {
+  it.each([
+    "対象店舗で3%還元",
+    "JRE POINT NewDays 3%還元キャンペーン",
+    "キャンペーン期間：2026年6月1日〜2099年12月31日、NewDaysでJRE POINT提示で3%",
+    "【タワーレコード】全員！dポイント10倍！",
+    "d払いで5%、期間 2099/12/31 まで",
+    "d払いアプリでのお支払い",
+    "税抜換算",
+    "SECOM でのお支払い",
+    "対象期間中、対象カードで3%",
+  ])("「%s」は null", (text) => {
+    expect(detectConditionalWording({ name: text, evidenceQuote: text }, false)).toBeNull();
+  });
+
+  it("「進呈上限1,000pt」は hasCap=true なら null、false (上限が record に無い) なら一致", () => {
+    expect(detectConditionalWording({ evidenceQuote: "進呈上限1,000pt" }, true)).toBeNull();
+    expect(detectConditionalWording({ evidenceQuote: "進呈上限1,000pt" }, false)).toBe(
+      "上限:「進呈上限」@evidenceQuote",
+    );
+  });
+});
+
+describe("detectLifestyleWording", () => {
+  it("conditions の「家族ポイント 6人以上」を検出する", () => {
+    expect(detectLifestyleWording({ conditions: "家族ポイント 6人以上" })).toBe("lifestyle:「家族ポイント」");
+  });
+  it("evidence の「給与振込で3%」を検出する (5 フィールドを連結して走査)", () => {
+    expect(detectLifestyleWording({ name: "3%還元", evidenceQuote: "給与振込で3%" })).toBe("lifestyle:「給与」");
+  });
+  it("「人以上」を検出する", () => {
+    expect(detectLifestyleWording({ notes: "3人以上で登録" })).toBe("lifestyle:「人以上」");
+  });
+  it("通常のキャンペーン文言は null", () => {
+    expect(detectLifestyleWording({ name: "d払い 3%還元", evidenceQuote: "d払いで3%" })).toBeNull();
+  });
+  it("LIFESTYLE_KEYWORDS は旧 propose-helpers の語 + 家族ポイント / 人以上", () => {
+    expect(LIFESTYLE_KEYWORDS).toContain("給与");
+    expect(LIFESTYLE_KEYWORDS).toContain("家族ポイント");
+    expect(LIFESTYLE_KEYWORDS).toContain("人以上");
   });
 });

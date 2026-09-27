@@ -992,7 +992,8 @@ describe("proposePrograms (PR-D1)", () => {
       expect(ps[0].reviewReason).toBe("idCollision");
     });
 
-    it("rate > CAMPAIGN_AUTO_RATE_MAX (30%) なら auto 不可", () => {
+    // PR-0b-3: 上限は 30% → 10% (境界含む) になり、理由は idCollision → campaignRateCeiling
+    it("rate ≥ CAMPAIGN_AUTO_RATE_MAX (10%) なら auto 不可 (campaignRateCeiling)", () => {
       const data = baseSource({
         extractor: "campaign",
         programs: [
@@ -1009,7 +1010,7 @@ describe("proposePrograms (PR-D1)", () => {
         ],
       });
       const ps = proposePrograms(data, richSeed);
-      expect(ps[0].reviewReason).toBe("idCollision");
+      expect(ps[0].reviewReason).toBe("campaignRateCeiling");
     });
 
     it("confidence ≥ 0.90 (逐語根拠の健全 campaign) は auto 可 (閾値 0.95→0.90 緩和)", () => {
@@ -1091,7 +1092,9 @@ describe("proposePrograms (PR-D1)", () => {
         ],
       });
       const ps = proposePrograms(data, richSeed);
-      expect(ps[0].reviewReason).toBe("idCollision");
+      // PR-0b-3: 理由は idCollision → campaignConditional (判定詳細に一致語)
+      expect(ps[0].reviewReason).toBe("campaignConditional");
+      expect(ps[0].reviewDetail).toBe("lifestyle:「給与」");
     });
 
     it("integrity issue (selfReportedExclusion) は auto より優先", () => {
@@ -2197,9 +2200,11 @@ describe("proposeExpiredCampaignDeletions", () => {
 
 describe("H1: entryUrl/officialUrl の URL スキーム検証", () => {
   it("entryUrl=javascript:... の campaign は rec から entryUrl が drop されるが program 自体は auto 可", () => {
+    // PR-0b-3: 対象キー必須 (untargetedProgram) のため pointCardId と seed の pointCards を足す
     const richSeed: SeedShape = {
       ...emptySeed,
       currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+      pointCards: [{ id: "jre-pointcard", name: "JRE POINTカード", currencyId: "jre" }],
     };
     const data = baseSource({
       extractor: "campaign",
@@ -2207,6 +2212,7 @@ describe("H1: entryUrl/officialUrl の URL スキーム検証", () => {
         {
           programId: "prog-xss-entry",
           name: "怪しいキャンペーン",
+          pointCardId: "jre-pointcard",
           rate: 0.03,
           currencyId: "jre",
           validTo: "2099-12-31",
@@ -2500,11 +2506,14 @@ describe("M1: rate の逐語根拠検証 (unsupportedRateClaim)", () => {
 });
 
 describe("M2: isCampaignAutoMergeable 値域ガードパック", () => {
+  // PR-0b-3: 対象キー必須 (untargetedProgram) のため pointCardId と seed の pointCards を足す
   const richSeed: SeedShape = {
     ...emptySeed,
     currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+    pointCards: [{ id: "jre-pointcard", name: "JRE POINTカード", currencyId: "jre" }],
   };
   const baseProgramFields = {
+    pointCardId: "jre-pointcard",
     rate: 0.03,
     currencyId: "jre",
     validTo: "2099-12-31",
@@ -2787,5 +2796,254 @@ describe("guardStaleExtractGeneration", () => {
     );
     expect(guarded.proposals[0].reviewReason).toBe("staleExtractGeneration");
     expect(guarded.guardedBySource.get("jcb-jpoint-partners")).toBe(1);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// PR-0b-3 (Z3): campaign の auto ガード (rate 上限・対象キー・target 照合・条件文言)
+// ───────────────────────────────────────────────────────────────
+
+describe("PR-0b-3: campaign の auto ガード (proposePrograms)", () => {
+  const z3Seed: SeedShape = {
+    ...emptySeed,
+    cards: [
+      { id: "paypay-card", name: "PayPayカード", defaultRate: 0.01, defaultCurrencyId: "paypay" },
+      { id: "dcard", name: "dカード", defaultRate: 0.01, defaultCurrencyId: "d-pt" },
+    ],
+    pointCards: [
+      { id: "d-pointcard", name: "dポイントカード", currencyId: "d-pt" },
+      { id: "jre-pointcard", name: "JRE POINTカード", currencyId: "jre" },
+    ],
+    paymentApps: [
+      { id: "pa-d-pay", name: "d払い" },
+      { id: "pa-paypay", name: "PayPay" },
+    ],
+    currencies: [
+      { id: "d-pt", name: "dポイント", kind: "point" },
+      { id: "paypay", name: "PayPayポイント", kind: "point" },
+      { id: "jre", name: "JRE POINT", kind: "point" },
+    ],
+  };
+  // 全ガードを通る d払い キャンペーン (これを基に 1 項目ずつ崩す)
+  const healthy = {
+    programId: "prog-dpay-z3",
+    name: "d払い 3%還元",
+    paymentAppId: "pa-d-pay",
+    rate: 0.03,
+    currencyId: "d-pt",
+    validTo: "2099-12-31",
+    evidenceQuote: "d払いで3%還元、期間 2099年12月31日まで",
+    explicitness: 1.0,
+    ambiguity: 0.0,
+  };
+  const run = (
+    prog: Partial<typeof healthy> & Record<string, unknown>,
+    opts: Parameters<typeof proposePrograms>[2] = {},
+    extractor: ExtractedSource["extractor"] = "campaign",
+  ) =>
+    proposePrograms(
+      baseSource({ extractor, programs: [{ ...healthy, ...prog } as never] }),
+      z3Seed,
+      opts,
+    )[0];
+  const dpayPolicy = {
+    sourceId: "d-pay-campaigns",
+    extractor: "campaign" as const,
+    autoMerge: false,
+    targets: [{ paymentAppId: "pa-d-pay" }, { pointCardId: "d-pointcard" }],
+  };
+
+  it("対照: 全ガードを通る 3% キャンペーンは auto", () => {
+    expect(run({}).reviewReason).toBeUndefined();
+  });
+
+  describe("rate 上限 (境界値)", () => {
+    it("0.1 ちょうどは campaignRateCeiling (境界含む)", () => {
+      const p = run({ rate: 0.1, evidenceQuote: "d払いで10%還元、期間 2099年12月31日まで", monthlyCapAmountYen: 1000 });
+      expect(p.reviewReason).toBe("campaignRateCeiling");
+      expect(p.reviewDetail).toContain("≥ 10%");
+    });
+    it("0.0999 で cap あり は auto", () => {
+      expect(run({ rate: 0.0999, evidenceQuote: "d払いで9.99%還元、期間 2099年12月31日まで", monthlyCapAmountYen: 1000 }).reviewReason).toBeUndefined();
+    });
+    it("0.06 で cap 無しは campaignRateCeiling (5% 超は上限必須)", () => {
+      const p = run({ rate: 0.06, evidenceQuote: "d払いで6%還元、期間 2099年12月31日まで" });
+      expect(p.reviewReason).toBe("campaignRateCeiling");
+      expect(p.reviewDetail).toContain("上限");
+    });
+    it("0.05 で cap 無しは auto (境界 5% ちょうどは上限不要)", () => {
+      expect(run({ rate: 0.05, evidenceQuote: "d払いで5%還元、期間 2099年12月31日まで" }).reviewReason).toBeUndefined();
+    });
+    it("0.0500001 で cap 無しは campaignRateCeiling", () => {
+      expect(run({ rate: 0.0500001, evidenceQuote: "d払いで5%還元、期間 2099年12月31日まで" }).reviewReason).toBe("campaignRateCeiling");
+    });
+    it("値域 (cap=-100) は条件文言 (「月上限あり」) より前に判定されて idCollision", () => {
+      const p = run({ monthlyCapAmountYen: -100, evidenceQuote: "月上限あり、d払いで3%、期間 2099年12月31日まで" });
+      expect(p.reviewReason).toBe("idCollision");
+      expect(p.reviewDetail).toContain("monthlyCapAmountYen");
+    });
+  });
+
+  describe("対象キー (untargetedProgram)", () => {
+    it("キーが 1 つも無い program は untargetedProgram", () => {
+      const p = run({ paymentAppId: undefined });
+      expect(p.reviewReason).toBe("untargetedProgram");
+      expect(p.reviewDetail).toContain("対象キー");
+    });
+    it("cardIds:[] で他のキーが無い program も untargetedProgram (空配列は死にデータ)", () => {
+      const p = run({ paymentAppId: undefined, cardIds: [] });
+      expect(p.reviewReason).toBe("untargetedProgram");
+      expect("cardIds" in (p as AddRecordProposal).record).toBe(false);
+    });
+    it("ongoing-program 由来でも untargetedProgram", () => {
+      expect(run({ paymentAppId: undefined }, {}, "ongoing-program").reviewReason).toBe("untargetedProgram");
+    });
+    it("untargetedProgram はラダーの最弱: unsupportedRateClaim が後勝ち", () => {
+      expect(
+        run({ paymentAppId: undefined, evidenceQuote: "最大10,000ポイントプレゼント、期間 2099年12月31日まで" }).reviewReason,
+      ).toBe("unsupportedRateClaim");
+    });
+    it("cardIds:[] と paymentAppId を併せ持つ program は record から cardIds が消え、paymentAppId で targeted", () => {
+      const p = run({ cardIds: [] });
+      expect("cardIds" in (p as AddRecordProposal).record).toBe(false);
+      expect((p as AddRecordProposal).record.paymentAppId).toBe("pa-d-pay");
+      expect(p.reviewReason).toBeUndefined();
+    });
+  });
+
+  describe("registry の target 照合 (targetMismatch)", () => {
+    it("d-pay の 2 候補: pa-d-pay は通過", () => {
+      expect(run({}, { policy: dpayPolicy }).reviewReason).toBeUndefined();
+    });
+    it("d-pay の 2 候補: d-pointcard (提示型) は通過", () => {
+      expect(
+        run({ paymentAppId: undefined, pointCardId: "d-pointcard" }, { policy: dpayPolicy }).reviewReason,
+      ).toBeUndefined();
+    });
+    it("d-pay の 2 候補: pa-paypay は targetMismatch (判定詳細に宣言と実際)", () => {
+      const p = run({ paymentAppId: "pa-paypay", currencyId: "paypay" }, { policy: dpayPolicy });
+      expect(p.reviewReason).toBe("targetMismatch");
+      expect(p.reviewDetail).toBe(
+        "target 宣言 [paymentAppId=pa-d-pay | pointCardId=d-pointcard] に対し program は paymentAppId=pa-paypay",
+      );
+    });
+    it("d-pay の 2 候補: pointCardId と paymentAppId の混在は targetMismatch", () => {
+      expect(run({ pointCardId: "d-pointcard" }, { policy: dpayPolicy }).reviewReason).toBe("targetMismatch");
+    });
+    it("paypay の宣言に対して cardIds[paypay-card] + pa-paypay (カード絞り込み) は通過", () => {
+      const paypayPolicy = { ...dpayPolicy, sourceId: "paypay-campaigns", targets: [{ paymentAppId: "pa-paypay" }] };
+      expect(
+        run({ paymentAppId: "pa-paypay", currencyId: "paypay", cardIds: ["paypay-card"] }, { policy: paypayPolicy }).reviewReason,
+      ).toBeUndefined();
+    });
+    it("cardIds の候補: 部分集合なら通過、候補外のカードが混ざれば不一致", () => {
+      const cardPolicy = { ...dpayPolicy, targets: [{ cardIds: ["dcard", "paypay-card"] }] };
+      expect(run({ paymentAppId: undefined, cardIds: ["dcard"] }, { policy: cardPolicy }).reviewReason).toBeUndefined();
+      expect(
+        run({ paymentAppId: undefined, cardIds: ["dcard", "jcb-w"] }, { policy: cardPolicy }).reviewReason,
+      ).toBe("targetMismatch");
+    });
+    it("policy に target が無ければ判定しない (pa-paypay でも targetMismatch にならない)", () => {
+      expect(
+        run({ paymentAppId: "pa-paypay", currencyId: "paypay" }, { policy: { ...dpayPolicy, targets: [] } }).reviewReason,
+      ).toBeUndefined();
+    });
+    it("review 行きの program (validTo 無し → 本来 idCollision) にも targetMismatch が付く (Phase 1 評価)", () => {
+      expect(
+        run({ paymentAppId: "pa-paypay", currencyId: "paypay", validTo: undefined, evidenceQuote: "PayPayで3%還元" }, { policy: dpayPolicy }).reviewReason,
+      ).toBe("targetMismatch");
+    });
+  });
+
+  describe("条件文言・lifestyle (campaignConditional)", () => {
+    it("name の「最大」は campaignConditional で、判定詳細は『label:「語」@field』", () => {
+      const p = run({ name: "【吉野家】最大＋3％還元！" });
+      expect(p.reviewReason).toBe("campaignConditional");
+      expect(p.reviewDetail).toBe("最大:「最大」@name");
+    });
+    it("notes だけにある「対象商品限定です」も拾う", () => {
+      const p = run({ notes: "対象商品限定です" });
+      expect(p.reviewReason).toBe("campaignConditional");
+      expect(p.reviewDetail).toBe("対象限定:「対象商品限定です」@notes");
+    });
+    it("conditions の「家族ポイント 6人以上」は lifestyle", () => {
+      const p = run({ conditions: "家族ポイント 6人以上" });
+      expect(p.reviewReason).toBe("campaignConditional");
+      expect(p.reviewDetail).toBe("lifestyle:「家族ポイント」");
+    });
+    it("rate 上限は条件文言より強い (最大 + 20% は campaignRateCeiling)", () => {
+      expect(run({ name: "最大20%", rate: 0.2, evidenceQuote: "最大20%還元、期間 2099年12月31日まで" }).reviewReason).toBe("campaignRateCeiling");
+    });
+  });
+
+  it("now を注入すると、その時点で未来の validTo は期限切れ扱いにならない", () => {
+    const opts = { now: new Date("2026-07-27T06:00:00+09:00") };
+    expect(run({ validTo: "2026-08-31", evidenceQuote: "d払いで3%還元、期間 2026年8月31日まで" }, opts).reviewReason).toBeUndefined();
+    // (validTo はローカル日付の終端で判定するので、runner の TZ に依らないよう 2 日前にする)
+    expect(
+      run({ validTo: "2026-07-25", evidenceQuote: "d払いで3%還元、期間 2026年7月25日まで" }, opts).reviewReason,
+    ).toBe("idCollision");
+  });
+
+  describe("既存 campaign の率改定", () => {
+    const withExisting = (program: NonNullable<SeedShape["programs"]>[number]): SeedShape => ({
+      ...z3Seed,
+      programs: [program],
+    });
+    it("validTo あり・cap 無し・0.09 → 0.095 の更新は campaignRateCeiling", () => {
+      const seed = withExisting({
+        id: "prog-camp-9", name: "既存", scope: "all-stores", paymentAppId: "pa-d-pay",
+        rate: 0.09, currencyId: "d-pt", validTo: "2099-12-31",
+      });
+      const ps = proposePrograms(
+        baseSource({ extractor: "campaign", programs: [{ ...healthy, programId: "prog-camp-9", rate: 0.095 }] }),
+        seed,
+      );
+      expect(ps[0].type).toBe("updateField");
+      expect(ps[0].reviewReason).toBe("campaignRateCeiling");
+    });
+    it("validTo の無い program (J-POINT 20 倍系) の 0.1 → 0.105 は従来どおり auto", () => {
+      const seed = withExisting({
+        id: "prog-jcb-jpoint-20x", name: "J-POINT 20倍", scope: "member-stores", cardIds: ["dcard"],
+        rate: 0.1, currencyId: "d-pt",
+      });
+      const ps = proposePrograms(
+        baseSource({ extractor: "jcb-jpoint", programs: [{ ...healthy, programId: "prog-jcb-jpoint-20x", paymentAppId: undefined, cardIds: ["dcard"], rate: 0.105 }] }),
+        seed,
+      );
+      expect(ps[0].type).toBe("updateField");
+      expect(ps[0].reviewReason).toBeUndefined();
+    });
+  });
+});
+
+describe("PR-0b-3: membership の overrideRate (campaign 由来は 5% 超を review)", () => {
+  const seedWithCurrency: SeedShape = {
+    ...emptySeed,
+    currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+  };
+  const mem = (overrideRate: number, extractor: ExtractedSource["extractor"] = "campaign") =>
+    proposeMemberships(
+      baseSource({
+        extractor,
+        memberships: [
+          { programId: "prog-a", storeId: "store-a", overrideRate, evidenceQuote: "20%", explicitness: 0.95, ambiguity: 0.05 },
+        ],
+      }),
+      seedWithCurrency,
+    )[0];
+
+  it("campaign 由来で 0.2 は campaignRateCeiling (判定詳細付き)", () => {
+    expect(mem(0.2).reviewReason).toBe("campaignRateCeiling");
+    expect(mem(0.2).reviewDetail).toContain("overrideRate 20%");
+  });
+  it("campaign 由来で 0.5 は zeroOrInvalidRate (値域外が後勝ち)", () => {
+    expect(mem(0.5).reviewReason).toBe("zeroOrInvalidRate");
+  });
+  it("campaign 由来で 0.02 は auto", () => {
+    expect(mem(0.02).reviewReason).toBeUndefined();
+  });
+  it("ongoing-program 由来で 0.2 は従来どおり auto", () => {
+    expect(mem(0.2, "ongoing-program").reviewReason).toBeUndefined();
   });
 });

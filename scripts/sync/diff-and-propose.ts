@@ -620,6 +620,8 @@ function main(): void {
   // registry のソース別ポリシー (target / autoMerge)。fail-closed: 読めなければ throw → exit 1
   // (黙って空にすると autoMerge:false のソースが auto に戻るため)。
   const registry = loadRegistryPolicy();
+  // campaign の期限判定と期限切れ整理の基準時刻を 1 回だけ作る (PR-0b-3)
+  const now = new Date();
 
   const current = seed();
   const allProposals: Proposal[] = [];
@@ -640,7 +642,13 @@ function main(): void {
     allProposals.push(...proposeCards(data, current));
     // v6 PR-1e: 抽出 loyaltyRules は propose では無視 (LoyaltyRule 廃止)。
     allProposals.push(...proposePaymentApps(data, current));
-    allProposals.push(...proposePrograms(data, current));
+    // PR-0b-3: registry の target 宣言があれば targetMismatch を判定する
+    allProposals.push(
+      ...proposePrograms(data, current, {
+        now,
+        policy: registry.policies.get(data.sourceId),
+      }),
+    );
     allProposals.push(...proposeMemberships(data, current));
     allProposals.push(...proposeJalTokuyakuMemberships(data, current));
   }
@@ -661,7 +669,7 @@ function main(): void {
   }
   const expiredProposals = proposeExpiredCampaignDeletions(
     current,
-    undefined,
+    now,
     undefined,
     extendedProgramIds,
   );
