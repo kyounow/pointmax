@@ -471,13 +471,14 @@ export function SettingsScreen() {
       {/* 4. サンプル投入 (ユーザー編集は保持。PR-0a-2a 以降は公式反映と同経路で修正・削除も反映) */}
       <h4 style={{ margin: "16px 0 4px" }}>サンプル投入</h4>
       <p className="hint" style={{ marginTop: 0 }}>
-        bundle 同梱の公式マスタ（サンプルデータ）を現在のデータに追加します。
-        あなたが編集・追加した項目は保持され、不足している公式項目だけを取り込みます。
+        bundle 同梱の公式マスタ（サンプルデータ）を現在のデータに取り込みます。
+        あなたが編集・追加した項目は保持され、不足している公式項目を追加します。
+        公式の修正・削除も反映されます。
       </p>
       <div className="row" style={{ gap: 8, marginBottom: 12 }}>
         <button
           onClick={handleLoadSample}
-          title="bundle 同梱の公式サンプルデータを追加取り込み"
+          title="bundle 同梱の公式サンプルデータを取り込み (公式の修正・削除も反映)"
         >
           サンプル投入
         </button>
