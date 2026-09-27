@@ -61,8 +61,14 @@ export function UpdateBanner() {
   ).length;
   const conflicts = conflictItems(plan);
   // Phase 5: 公式 program の内容更新伝播 / tombstone 削除も適用件数に含める
-  const seedUpdatedCount = merged?.updatedPrograms.length ?? 0;
-  const seedRemovedCount = merged?.removedPrograms.length ?? 0;
+  // PR-0a-2b: membership の内容更新 (提携条件) / 単体 tombstone 削除 (提携店舗) も含める
+  // (以前は数えず、membership の変更だけの版で「0件適用」と表示されていた)。
+  const membershipUpdatedCount = merged?.updatedMemberships.length ?? 0;
+  const membershipRemovedCount = merged?.removedMemberships.length ?? 0;
+  const seedUpdatedCount =
+    (merged?.updatedPrograms.length ?? 0) + membershipUpdatedCount;
+  const seedRemovedCount =
+    (merged?.removedPrograms.length ?? 0) + membershipRemovedCount;
   const totalChanges =
     additionCount + autoApplyCount + seedUpdatedCount + seedRemovedCount;
 
@@ -183,8 +189,8 @@ export function UpdateBanner() {
           {merged && (seedUpdatedCount > 0 || seedRemovedCount > 0) && (
             <div className="update-detail-section">
               <h4>
-                特典・キャンペーンの内容更新
-                {seedRemovedCount > 0 && "・終了削除"}（
+                特典・キャンペーン・提携店舗の内容更新
+                {seedRemovedCount > 0 && "・削除"}（
                 {seedUpdatedCount + seedRemovedCount} 件）
               </h4>
               <ul className="diff-counts">
@@ -194,6 +200,12 @@ export function UpdateBanner() {
                 {merged.removedPrograms.map((p) => (
                   <li key={`d-${p.id}`}>削除: {p.name}</li>
                 ))}
+                {membershipUpdatedCount > 0 && (
+                  <li>提携条件の更新: {membershipUpdatedCount}件</li>
+                )}
+                {membershipRemovedCount > 0 && (
+                  <li>提携店舗の削除: {membershipRemovedCount}件</li>
+                )}
               </ul>
             </div>
           )}

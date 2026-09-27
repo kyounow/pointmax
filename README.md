@@ -42,9 +42,13 @@
   （追加・非破壊の内容更新のみ）なら起動時に**自動反映**し、フルスクリーンの `SyncUpdateModal`
   を出さない。反映後は `BannerSlot` の自動反映枠に「マスタを自動更新しました（N 件）［詳細］
   ［元に戻す］✕」を出す（`[詳細]`→更新履歴、`[元に戻す]`→PR-4a のスナップショット復元、
-  `✕`→同一 digest を既読化して再表示しない）。**削除・scope 変更・SEED_VERSION の版更新**を
-  含む週だけ従来モーダルにフォールバックし、「削除や大きな変更を含むため確認をお願いします」を
-  添えてユーザー確認を挟む。安全判定は純関数 `isAutoApplySafe`（`src/domain/autoApplySafety.ts`）。
+  `✕`→同一 digest を既読化して再表示しない）。**削除・scope 変更・購入チャネル (`channel`) の変更・
+  SEED_VERSION の版更新**を含む週だけ従来モーダルにフォールバックし、「削除や大きな変更を含むため
+  確認をお願いします」を添えてユーザー確認を挟む。安全判定は純関数 `isAutoApplySafe`
+  （`src/domain/autoApplySafety.ts`）。提携店舗 (membership) の注記だけの更新は安全側 (自動反映)、
+  membership の単体 tombstone 削除はモーダル。件数 (`changeCount` / 更新バナーの「N件適用」) と
+  既読判定の指紋 (`syncDigest`) は membership の更新 (`memU:`)・削除 (`memD:`) も数え、program の
+  更新は内容全体のハッシュで指紋化する (条件・注記・チャネルだけの公式更新も別バッチとして届く、PR-0a-2b)。
   自動反映も従来モーダルもオフライン時は抑制する（`useOnline`）。
 - **アプリ更新通知（PR-4b / UX-8(3)）**: `vite-plugin-pwa` の `autoUpdate` 構成では Service
   Worker が裏で新版に入れ替わる。ビルドごとに変わる識別子 `__BUILD_ID__`（vite `define` 注入）を

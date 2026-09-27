@@ -7,14 +7,18 @@
 //
 // 【安全 (自動反映してよい) の定義】
 //   追加 (diff.* = 新しい card/store/program/membership 等) と、公式内容更新
-//   (updatedPrograms = rate 改定・期間延長など既存 program の非破壊な値更新) のみ。
+//   (updatedPrograms = rate 改定・期間延長など既存 program の非破壊な値更新 /
+//   updatedMemberships = 提携店舗の注記 (notes) など channel を変えない更新、PR-0a-2b) のみ。
 //
 // 【unsafe (従来モーダルで確認) の定義】= 以下のいずれかを含む週
 //   1. 削除: removedPrograms (tombstone) / cascade membership / 単体 membership tombstone。
 //      削除は「使えるはずの還元が消える」体験なので必ず確認を挟む。
 //   2. scope 変更を含む更新: updatedPrograms の中に all-stores ⇄ member-stores の
 //      付け替えがあるもの (mergeSeed.scopeChangedUpdateIds)。適用範囲の再定義は大きい。
-//   3. SEED_VERSION の bump (lastSeedVersion < SEED_VERSION): リリース級のデータ刷新。
+//   3. channel 変更を含む更新 (PR-0a-2b): program / membership の購入チャネル (店頭 ⇄ ネット) が
+//      変わるもの (mergeSeed.channelChangedUpdateIds)。店頭計算に載る・載らないが変わり、
+//      見かけの還元が大きく動くので確認を挟む。
+//   4. SEED_VERSION の bump (lastSeedVersion < SEED_VERSION): リリース級のデータ刷新。
 //      これは UpdateBanner が担当する通知経路なので、自動反映では触らない。
 //
 // React 非依存の純関数として切り出し、node/jsdom どちらでも網羅テストできるようにする。
@@ -28,6 +32,7 @@ export type AutoApplySafetyDiff = Pick<
   | "removedMembershipCount"
   | "removedMembershipIdCount"
   | "scopeChangedUpdateIds"
+  | "channelChangedUpdateIds"
 >;
 
 export type AutoApplySafetyOptions = {
@@ -54,6 +59,8 @@ export function isAutoApplySafe(
   if (diff.removedMembershipIdCount > 0) return false;
   // 3. scope 変更を含む更新は unsafe。
   if (diff.scopeChangedUpdateIds.length > 0) return false;
-  // 追加 + scope 非変更の内容更新のみ = 安全。
+  // 4. channel (購入チャネル) 変更を含む更新は unsafe (PR-0a-2b)。
+  if (diff.channelChangedUpdateIds.length > 0) return false;
+  // 追加 + scope / channel 非変更の内容更新 (membership の notes 更新を含む) のみ = 安全。
   return true;
 }

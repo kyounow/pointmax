@@ -11,8 +11,8 @@ import { useOnline } from "./hooks/useOnline";
 // 週次 cron が bundled seed に追加/更新/削除したデータの取り込み経路 (PR-4b で二分化):
 //   - 安全な週 (追加・非破壊更新のみ) は起動時に「自動反映」し、事後 Undo バナーに委譲
 //     (本コンポーネントはモーダルを出さず、autoApplySeedUpdate を呼ぶだけ)。
-//   - 削除 / scope 変更 / SEED_VERSION bump を含む週だけ、従来どおりこのモーダルを出して
-//     ユーザーに確認してもらう。
+//   - 削除 / scope 変更 / channel (購入チャネル) 変更 / SEED_VERSION bump を含む週だけ、
+//     従来どおりこのモーダルを出してユーザーに確認してもらう。
 // SEED_VERSION とは独立した差分検知 (cron は版数を bump しない)。既読は共有 digest
 // (syncNotice) で管理し、同じバッチでは再表示しない。次回 cron で差分集合が変わると
 // digest が変わり再通知される。
@@ -41,11 +41,15 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
 
   // Wave 4 B-7: 共有 hook 経由で mergeSeed (UpdateBanner と同じ計算ロジック)
   // Phase 5: 追加だけでなく program の内容更新 / 終了削除も通知対象に含める
+  // PR-0a-2b: membership の内容更新 (提携条件) / 単体 tombstone 削除も含める
+  // (count = changeCount も membership 分を数える)。
   const { merged, totalChangeCount: count } = useSeedMerge();
   const digest = merged
     ? syncDigest(merged.diff, {
         updatedPrograms: merged.updatedPrograms,
         removedPrograms: merged.removedPrograms,
+        updatedMemberships: merged.updatedMemberships,
+        removedMemberships: merged.removedMemberships,
       })
     : "";
 
@@ -58,7 +62,7 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
     if (!merged || count === 0) return [];
     const storeName = new Map(merged.stores.map((s) => [s.id, s.name]));
     // 削除された program の名前は merged.programs に居ないため
-    // removedPrograms 自身から解決する
+    // removedPrograms 自身から解決する (削除された membership の programId もこの Map で解決)
     const programName = new Map([
       ...(merged.programs ?? []).map((p) => [p.id, p.name] as const),
       ...merged.removedPrograms.map((p) => [p.id, p.name] as const),
@@ -72,6 +76,8 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
       {
         updatedPrograms: merged.updatedPrograms,
         removedPrograms: merged.removedPrograms,
+        updatedMemberships: merged.updatedMemberships,
+        removedMemberships: merged.removedMemberships,
       },
     );
   }, [merged, count]);

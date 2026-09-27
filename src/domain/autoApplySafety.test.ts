@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { isAutoApplySafe, type AutoApplySafetyDiff } from "./autoApplySafety";
 import { mergeSeed } from "./mergeSeed";
-import type { BenefitProgram, Store } from "./types";
+import type { BenefitProgram, Store, StoreProgramMembership } from "./types";
 
 // 追加/更新のみで削除も scope 変更も無い基本形 (= 安全)。
 const safeDiff: AutoApplySafetyDiff = {
@@ -9,6 +9,7 @@ const safeDiff: AutoApplySafetyDiff = {
   removedMembershipCount: 0,
   removedMembershipIdCount: 0,
   scopeChangedUpdateIds: [],
+  channelChangedUpdateIds: [],
 };
 
 describe("isAutoApplySafe", () => {
@@ -51,6 +52,15 @@ describe("isAutoApplySafe", () => {
     expect(
       isAutoApplySafe(
         { ...safeDiff, scopeChangedUpdateIds: ["prog-scope"] },
+        { seedVersionBumped: false },
+      ),
+    ).toBe(false);
+  });
+
+  it("PR-0a-2b: channel 変更を含む更新の週 → unsafe", () => {
+    expect(
+      isAutoApplySafe(
+        { ...safeDiff, channelChangedUpdateIds: ["m-prog-a-s1"] },
         { seedVersionBumped: false },
       ),
     ).toBe(false);
@@ -117,6 +127,55 @@ describe("isAutoApplySafe × mergeSeed 結合", () => {
       { removedProgramIds: ["prog-old"] },
     );
     expect(merged.removedPrograms).toHaveLength(1);
+    expect(isAutoApplySafe(merged, { seedVersionBumped: false })).toBe(false);
+  });
+
+  // ─── PR-0a-2b: membership の更新・削除 ───
+  const mem = (
+    storeId: string,
+    over: Partial<StoreProgramMembership> = {},
+  ): StoreProgramMembership => ({
+    id: `m-prog-a-${storeId}`,
+    programId: "prog-a",
+    storeId,
+    ...over,
+  });
+
+  it("membership の notes だけの更新は安全 (自動反映)", () => {
+    const merged = mergeSeed(
+      { ...empty, memberships: [mem("s1")] },
+      { ...empty, memberships: [mem("s1", { notes: "QUICPay は対象外" })] },
+    );
+    expect(merged.updatedMemberships).toHaveLength(1);
+    expect(merged.channelChangedUpdateIds).toEqual([]);
+    expect(isAutoApplySafe(merged, { seedVersionBumped: false })).toBe(true);
+  });
+
+  it("membership の channel 変更は unsafe (モーダルで確認)", () => {
+    const merged = mergeSeed(
+      { ...empty, memberships: [mem("s1")] },
+      { ...empty, memberships: [mem("s1", { channel: "online" })] },
+    );
+    expect(merged.channelChangedUpdateIds).toEqual(["m-prog-a-s1"]);
+    expect(isAutoApplySafe(merged, { seedVersionBumped: false })).toBe(false);
+  });
+
+  it("program の channel 変更も unsafe", () => {
+    const merged = mergeSeed(
+      { ...empty, programs: [prog("prog-a")] },
+      { ...empty, programs: [prog("prog-a", { channel: "online" })] },
+    );
+    expect(merged.channelChangedUpdateIds).toEqual(["prog-a"]);
+    expect(isAutoApplySafe(merged, { seedVersionBumped: false })).toBe(false);
+  });
+
+  it("membership 単体 tombstone は unsafe (現行どおり)", () => {
+    const merged = mergeSeed(
+      { ...empty, memberships: [mem("general")] },
+      { ...empty },
+      { removedMembershipIds: ["m-prog-a-general"] },
+    );
+    expect(merged.removedMemberships).toHaveLength(1);
     expect(isAutoApplySafe(merged, { seedVersionBumped: false })).toBe(false);
   });
 });
