@@ -9,7 +9,11 @@ vi.mock("./stateSnapshot", () => ({ takeSnapshot: vi.fn() }));
 import { useStore } from "./store";
 import { takeSnapshot } from "./stateSnapshot";
 import { rankCards } from "../domain/rankCards";
+import { mergeSeed, changeCount } from "../domain/mergeSeed";
 import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
+import { seed, SEED_VERSION } from "./seed";
+import { REMOVED_PROGRAM_IDS } from "./seed-additions";
+import { REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
 import type {
   BenefitProgram,
   Card,
@@ -984,5 +988,115 @@ describe("store: 破壊的操作の直前 snapshot 採取 (PR-4a 結線)", () =>
     expect(useStore.getState().autoApplyNotice).not.toBeNull();
     useStore.getState().dismissAutoApplyNotice();
     expect(useStore.getState().autoApplyNotice).toBeNull();
+  });
+});
+
+// PR-6a-1 (F7): 新規プロファイル / 初期化後の次回起動で公式 seed を自動投入する。
+// (node 環境 = persist が無いので hydration 判定は飛ぶ。hydration 失敗時の no-op は App.test (jsdom))
+describe("store: seedIfEmpty (新規プロファイルの seed 自動投入、PR-6a-1)", () => {
+  const COLLECTIONS = [
+    "cards",
+    "currencies",
+    "stores",
+    "edges",
+    "pointCards",
+    "paymentApps",
+    "programs",
+    "memberships",
+  ] as const;
+  const takeSnapshotMock = vi.mocked(takeSnapshot);
+
+  beforeEach(() => {
+    // clearAll = 設定 > 初期化 と同じ empty (lastSeedVersion 0) に戻す
+    useStore.getState().clearAll();
+    takeSnapshotMock.mockClear();
+  });
+
+  it("空 state では 8 collection が seed() と一致し、lastSeedVersion = SEED_VERSION、通知・スナップショット無し", () => {
+    expect(useStore.getState().seedIfEmpty()).toBe(true);
+
+    const s = useStore.getState();
+    const expected = seed();
+    for (const k of COLLECTIONS) {
+      expect(s[k]).toEqual(expected[k]);
+    }
+    expect(s.stores.length).toBeGreaterThan(0);
+    expect(s.lastSeedVersion).toBe(SEED_VERSION);
+    expect(s.autoApplyNotice).toBeNull();
+    expect(takeSnapshotMock).not.toHaveBeenCalled();
+    // per-user 設定は初期値のまま (seed は preference を出荷しない)
+    expect(s.preferredCurrencyIds).toEqual([]);
+  });
+
+  it("カードは R1 どおり全 OFF (enabled を出荷しない) で入る", () => {
+    useStore.getState().seedIfEmpty();
+    const cards = useStore.getState().cards;
+    expect(cards.length).toBeGreaterThan(0);
+    expect(cards.every((c) => c.enabled !== true)).toBe(true);
+  });
+
+  it("投入後は bundled seed との差分が 0 件 (SyncUpdateModal / UpdateBanner が出ない前提)", () => {
+    useStore.getState().seedIfEmpty();
+    const s = useStore.getState();
+    // useSeedMerge と同じ tombstone オプションで差分を取る
+    const merged = mergeSeed(s, seed(), {
+      removedProgramIds: REMOVED_PROGRAM_IDS,
+      removedMembershipIds: REMOVED_MEMBERSHIP_IDS,
+    });
+    expect(changeCount(merged)).toBe(0);
+    // UpdateBanner は lastSeedVersion < SEED_VERSION のときだけ出る
+    expect(s.lastSeedVersion).toBeGreaterThanOrEqual(SEED_VERSION);
+  });
+
+  it("2 回目は no-op (冪等。StrictMode の effect 二重実行でも 1 回だけ入る)", () => {
+    expect(useStore.getState().seedIfEmpty()).toBe(true);
+    const first = useStore.getState();
+    expect(useStore.getState().seedIfEmpty()).toBe(false);
+    expect(useStore.getState()).toBe(first);
+  });
+
+  it.each(COLLECTIONS)(
+    "%s に 1 件でもデータがある state では no-op",
+    (key) => {
+      const one = seed()[key].slice(0, 1);
+      expect(one).toHaveLength(1);
+      useStore.setState({ [key]: one });
+
+      expect(useStore.getState().seedIfEmpty()).toBe(false);
+      const s = useStore.getState();
+      expect(s[key]).toEqual(one);
+      for (const k of COLLECTIONS) {
+        if (k !== key) expect(s[k]).toEqual([]);
+      }
+      expect(s.lastSeedVersion).toBe(0);
+    },
+  );
+
+  it("lastSeedVersion が 0 でなければ (空でも) no-op", () => {
+    useStore.setState({ lastSeedVersion: SEED_VERSION });
+    expect(useStore.getState().seedIfEmpty()).toBe(false);
+    expect(useStore.getState().stores).toEqual([]);
+    expect(useStore.getState().cards).toEqual([]);
+  });
+
+  it("schema 移行待ち (_pendingSchemaMigration) の間は no-op (同意モーダルの Apply に任せる)", () => {
+    useStore.setState({
+      _pendingSchemaMigration: { type: "reset", reason: "test" },
+    });
+    expect(useStore.getState().seedIfEmpty()).toBe(false);
+    expect(useStore.getState().stores).toEqual([]);
+    useStore.setState({ _pendingSchemaMigration: undefined });
+  });
+
+  it("clearAll (設定 > 初期化) の後は同じ規則で再投入される", () => {
+    useStore.getState().seedIfEmpty();
+    useStore.getState().setCardEnabled(useStore.getState().cards[0].id, true);
+    useStore.getState().clearAll();
+    expect(useStore.getState().cards).toEqual([]);
+    expect(useStore.getState().lastSeedVersion).toBe(0);
+
+    expect(useStore.getState().seedIfEmpty()).toBe(true);
+    expect(useStore.getState().stores).toEqual(seed().stores);
+    expect(useStore.getState().cards.every((c) => c.enabled !== true)).toBe(true);
   });
 });

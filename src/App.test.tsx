@@ -3,12 +3,16 @@
 // PR-2e / UX-8(1): App のナビゲーション ARIA 検証。
 //   - tablist/tab/tabpanel の ARIA ロールを一切使わない (orphan ARIA 防止)。
 //   - 現在タブ (デスクトップナビ) に aria-current="page" が付く。
+// PR-6a-1 (F7): 新規プロファイル / 初期化後の次回起動で公式 seed が自動投入される。
 import { describe, it, expect, afterEach, beforeEach } from "vitest";
-import { render, cleanup, within } from "@testing-library/react";
+import { StrictMode } from "react";
+import { render, cleanup, within, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import App from "./App";
 import { DialogProvider } from "./ui/dialog/DialogProvider";
 import { useStore } from "./state/store";
+import { seed, SEED_VERSION } from "./state/seed";
+import { PERSIST_STORE_KEY } from "./state/persist-versions";
 
 beforeEach(() => {
   localStorage.clear();
@@ -53,5 +57,88 @@ describe("App ナビゲーション ARIA (UX-8(1))", () => {
       current: "page",
     });
     expect(current.textContent).toContain("データ");
+  });
+});
+
+describe("App 起動時の公式データ自動投入 (PR-6a-1 / F7)", () => {
+  // 計算画面の店舗カテゴリ select に seed の店舗総数が出る = seed の店舗が入っている。
+  const expectSeedStoresOnCalculator = () => {
+    const stores = seed().stores;
+    expect(
+      screen.getByRole("option", { name: `全カテゴリ (${stores.length})` }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("option", { name: stores[0].name }).length,
+    ).toBeGreaterThan(0);
+  };
+  const expectNoSyncUi = (container: HTMLElement) => {
+    // SyncUpdateModal (<dialog>) も UpdateBanner / 自動反映バナーも出ない (差分 0 件)
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(container.querySelector(".update-banner")).toBeNull();
+    expect(container.querySelector(".auto-apply-banner")).toBeNull();
+    expect(useStore.getState().autoApplyNotice).toBeNull();
+  };
+
+  it("localStorage 空 (新規プロファイル) でマウントすると seed が入り、計算画面に店舗が出る", async () => {
+    // persist キーも無い状態で hydration をやり直す (= 新規プロファイルの起動)
+    localStorage.clear();
+    await useStore.persist.rehydrate();
+    expect(localStorage.getItem(PERSIST_STORE_KEY)).toBeNull();
+
+    // main.tsx と同じ StrictMode (effect 二重実行) でも 1 回だけ投入される
+    const { container } = render(
+      <StrictMode>
+        <DialogProvider>
+          <App />
+        </DialogProvider>
+      </StrictMode>,
+    );
+
+    expectSeedStoresOnCalculator();
+    expectNoSyncUi(container);
+    const s = useStore.getState();
+    expect(s.lastSeedVersion).toBe(SEED_VERSION);
+    expect(s.cards).toEqual(seed().cards);
+    // カードは全 OFF で入るのでオンボーディングが出る
+    expect(s.cards.every((c) => c.enabled !== true)).toBe(true);
+    // 投入結果は persist に書かれる (次回起動はデータありで no-op)
+    expect(localStorage.getItem(PERSIST_STORE_KEY)).toContain(
+      `"lastSeedVersion":${SEED_VERSION}`,
+    );
+  });
+
+  it("初期化 (clearAll) 済みの state で次回起動しても同じ規則で再投入される", () => {
+    // beforeEach の clearAll で empty + lastSeedVersion 0 が persist 済み
+    const { container } = renderApp();
+    expectSeedStoresOnCalculator();
+    expectNoSyncUi(container);
+    expect(useStore.getState().lastSeedVersion).toBe(SEED_VERSION);
+  });
+
+  it("データがある state では何も投入しない (no-op)", () => {
+    const one = seed().stores.slice(0, 1);
+    useStore.setState({ stores: one });
+    renderApp();
+    expect(useStore.getState().stores).toEqual(one);
+    expect(useStore.getState().cards).toEqual([]);
+    expect(useStore.getState().lastSeedVersion).toBe(0);
+  });
+
+  it("persist の hydration に失敗した (壊れた JSON) ときは投入せず、生データを上書きしない", async () => {
+    localStorage.setItem(PERSIST_STORE_KEY, "{broken");
+    try {
+      await useStore.persist.rehydrate();
+      expect(useStore.persist.hasHydrated()).toBe(false);
+
+      renderApp();
+
+      expect(useStore.getState().stores).toEqual([]);
+      expect(useStore.getState().lastSeedVersion).toBe(0);
+      expect(localStorage.getItem(PERSIST_STORE_KEY)).toBe("{broken");
+    } finally {
+      // 後続テストのために正常な hydration 状態へ戻す
+      localStorage.clear();
+      await useStore.persist.rehydrate();
+    }
   });
 });
