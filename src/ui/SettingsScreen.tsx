@@ -14,20 +14,18 @@ import {
   requestPersistentStorage,
   type PersistenceStatus,
 } from "../state/storagePersistence";
+// PR-4a (N-4): スナップショット trigger の日本語ラベル (どの破壊的操作の「前」か)。
+// PR-6d: ラベルは復旧パネルと共有するため stateSnapshot.ts へ移設。
 import {
   getSnapshotMeta,
-  restoreSnapshot,
-  type SnapshotTrigger,
+  SNAPSHOT_TRIGGER_LABEL,
 } from "../state/stateSnapshot";
+import {
+  formatTakenAt,
+  restoreSnapshotForRecovery,
+} from "../state/recovery";
+import { readCrashBackup, clearCrashBackup } from "../state/hydrationGuard";
 import { PERSIST_SCHEMA_VERSION } from "../state/persist-versions";
-
-// PR-4a (N-4): スナップショット trigger の日本語ラベル (どの破壊的操作の「前」か)。
-const SNAPSHOT_TRIGGER_LABEL: Record<SnapshotTrigger, string> = {
-  import: "インポート前",
-  reset: "初期化前",
-  "sync-overwrite": "URL同期前",
-  "seed-apply": "マスタ更新前",
-};
 
 export function SettingsScreen() {
   // Wave 5 B-1: 個別 subscribe → 単一 useShallow に集約。
@@ -273,12 +271,7 @@ export function SettingsScreen() {
     snapshotMeta !== null &&
     snapshotMeta.schemaVersion === PERSIST_SCHEMA_VERSION;
   const snapshotDateLabel = snapshotMeta
-    ? new Date(snapshotMeta.takenAt).toLocaleString("ja-JP", {
-        month: "numeric",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+    ? formatTakenAt(snapshotMeta.takenAt)
     : "";
   const snapshotTriggerLabel = snapshotMeta
     ? SNAPSHOT_TRIGGER_LABEL[snapshotMeta.trigger]
@@ -295,7 +288,9 @@ export function SettingsScreen() {
       danger: true,
     });
     if (!ok) return;
-    const res = restoreSnapshot();
+    // PR-6d: マスタ更新前 (seed-apply) へ戻すときは、自動反映の digest を既読にしてから戻す
+    // (既読にしないと reload 直後に同じ差分がまた自動反映され、巻き戻しが打ち消されていた)。
+    const res = restoreSnapshotForRecovery();
     if (!res.ok) {
       await dialog.alert({
         title: "復元できません",
@@ -308,6 +303,17 @@ export function SettingsScreen() {
     }
     // persist キーを書き戻したので reload で新しい state として反映する。
     window.location.reload();
+  };
+
+  // PR-6d (U6): 読み込み失敗時 / 復旧パネルの初期化時に退避した生データ
+  // (pointmax:crash-backup:v1、1 世代)。存在するときだけ 1 行出し、書き出し・削除できるようにする
+  // (無いと、初期化の後に回収する手段が devtools だけになる)。
+  const [crashBackup, setCrashBackup] = useState(readCrashBackup);
+  const handleDeleteCrashBackup = async () => {
+    if (await dialog.confirm({ title: "退避データを削除しますか？", danger: true })) {
+      clearCrashBackup();
+      setCrashBackup(null);
+    }
   };
 
   // PR-0b: ローカル利用統計 (この端末のみ・送信なし)。
@@ -531,6 +537,19 @@ export function SettingsScreen() {
         </>
       ) : (
         <p className="empty">スナップショットはまだありません。</p>
+      )}
+      {crashBackup && (
+        <p className="hint">
+          読み込み失敗時の退避データ ({formatTakenAt(crashBackup.takenAt)}){" "}
+          <button
+            onClick={() =>
+              downloadJsonFile(JSON.stringify(crashBackup), "pointmax-crash-backup")
+            }
+          >
+            書き出す
+          </button>{" "}
+          <button onClick={handleDeleteCrashBackup}>削除</button>
+        </p>
       )}
 
       <h3 style={{ marginTop: 8 }}>誕生月</h3>
