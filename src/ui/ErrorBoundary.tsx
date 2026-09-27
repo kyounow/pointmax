@@ -8,6 +8,9 @@
 // 対応:
 //   class ErrorBoundary で componentDidCatch / getDerivedStateFromError をフック、
 //   fallback UI を出して「再読み込み」CTA を提供。console.error にもログ。
+//   PR-6d (U6): 既定 fallback は復旧パネル (RecoveryPanel の screen モード。ページ再読み込み /
+//   もう一度試す / データの書き出し・コピー・直前の状態に戻す・公式データで初期化)。
+//   任意 UI (同期モーダル / 更新バナー / BannerSlot) は fallback={() => null} で非表示に縮退させる。
 //
 // 使い方:
 //   <ErrorBoundary scopeName="Calculator">
@@ -18,6 +21,7 @@
 // Suspense と組合せ可能だが本実装は同期エラー専用。
 
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { RecoveryPanel } from "./recovery/RecoveryPanel";
 
 type Props = {
   /** デバッグ用の scope 名。fallback UI と console.error に表示される。 */
@@ -58,43 +62,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.props.fallback) return this.props.fallback(error, this.reset);
 
     return (
-      <div
-        role="alert"
-        style={{
-          padding: 16,
-          margin: 12,
-          border: "1px solid var(--danger, #ef4444)",
-          borderRadius: 8,
-          background: "rgba(239, 68, 68, 0.08)",
-        }}
-      >
-        <h3 style={{ margin: "0 0 8px 0", fontSize: 16 }}>
-          画面エラーが発生しました
-          {this.props.scopeName && (
-            <span style={{ fontWeight: 400, marginLeft: 6, color: "#9ca3af" }}>
-              ({this.props.scopeName})
-            </span>
-          )}
-        </h3>
-        <p style={{ margin: "0 0 8px 0", fontSize: 13, color: "#9ca3af" }}>
-          {error.message || "詳細不明のエラーです"}
-        </p>
-        <button
-          type="button"
-          onClick={this.reset}
-          style={{
-            padding: "6px 12px",
-            fontSize: 13,
-            background: "var(--accent-2, #2b7ad6)",
-            color: "white",
-            border: "none",
-            borderRadius: 4,
-            cursor: "pointer",
-          }}
-        >
-          再読み込み
-        </button>
-      </div>
+      <RecoveryPanel
+        mode="screen"
+        error={error}
+        scopeName={this.props.scopeName}
+        cause="render"
+        onRetry={this.reset}
+      />
     );
   }
 }
