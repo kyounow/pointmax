@@ -207,28 +207,38 @@ describe("RecoveryPanel 公式データで初期化 (2 段確認)", () => {
     expect(reset).toHaveBeenCalledTimes(1);
   });
 
-  it("resetToSeed が throw したら persist キーだけ消して (退避済み) 案内を出し、reload する", () => {
-    useStore.setState({
-      resetToSeed: () => {
-        throw new DOMException("quota", "QuotaExceededError");
-      },
-    });
-    localStorage.setItem(PERSIST_STORE_KEY, "{broken");
-    localStorage.setItem("pointmax-sync-seen-digest", "d");
-    render(<RecoveryPanel mode="root" cause="hydrate" error={new Error("x")} />);
-    openRecovery();
-    fireEvent.click(screen.getByRole("button", { name: "公式データで初期化…" }));
-    fireEvent.click(screen.getByRole("button", { name: "初期化する" }));
+  it("resetToSeed が throw したら persist キーだけ消して (退避済み) 案内を出し、読める時間を置いて reload する", () => {
+    vi.useFakeTimers();
+    try {
+      useStore.setState({
+        resetToSeed: () => {
+          throw new DOMException("quota", "QuotaExceededError");
+        },
+      });
+      localStorage.setItem(PERSIST_STORE_KEY, "{broken");
+      localStorage.setItem("pointmax-sync-seen-digest", "d");
+      render(<RecoveryPanel mode="root" cause="hydrate" error={new Error("x")} />);
+      openRecovery();
+      fireEvent.click(screen.getByRole("button", { name: "公式データで初期化…" }));
+      fireEvent.click(screen.getByRole("button", { name: "初期化する" }));
 
-    // removePersistedForRecovery: persist キーだけ消え、生データは crash-backup に残る
-    expect(localStorage.getItem(PERSIST_STORE_KEY)).toBeNull();
-    expect(localStorage.getItem("pointmax-sync-seen-digest")).toBe("d");
-    expect(readCrashBackup()?.raw).toBe("{broken");
-    expect(
-      within(screen.getByRole("status")).getByText(
-        /再読み込み後は公式データで起動します \(カードの「使う」設定はやり直し\)/,
-      ),
-    ).toBeInTheDocument();
-    expect(reloadMock).toHaveBeenCalledTimes(1);
+      // removePersistedForRecovery: persist キーだけ消え、生データは crash-backup に残る
+      expect(localStorage.getItem(PERSIST_STORE_KEY)).toBeNull();
+      expect(localStorage.getItem("pointmax-sync-seen-digest")).toBe("d");
+      expect(readCrashBackup()?.raw).toBe("{broken");
+      expect(
+        within(screen.getByRole("status")).getByText(
+          /再読み込み後は公式データで起動します \(カードの「使う」設定はやり直し\)/,
+        ),
+      ).toBeInTheDocument();
+      // 案内が描画された時点ではまだ reload しない (即 reload だと文言が見えない)
+      expect(reloadMock).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1499);
+      expect(reloadMock).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(reloadMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

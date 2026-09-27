@@ -97,6 +97,9 @@ export function RecoveryPanel({
       setMessage(
         "再読み込み後は公式データで起動します (カードの「使う」設定はやり直し)",
       );
+      // 即 reload すると案内が描画される前にページが消えるので、読める時間 (1.5 秒) だけ待つ
+      setTimeout(reload, 1500);
+      return;
     }
     reload();
   };

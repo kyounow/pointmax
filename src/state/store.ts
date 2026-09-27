@@ -351,7 +351,8 @@ type Actions = {
   // 追加 + 自動適用可能なマイグレーション + ユーザー選択した衝突上書きをまとめて適用
   applySeedUpdate: (overrideKeys: string[]) => void;
   // PR-4b: 安全な週の seed 更新を自動反映し、Undo バナー用の通知 (notice) を立てる。
-  autoApplySeedUpdate: (notice: AutoApplyNotice) => void;
+  // PR-6a-2: null = 期限切れ整理だけの週のサイレント反映 (前の notice も消す)。
+  autoApplySeedUpdate: (notice: AutoApplyNotice | null) => void;
   // PR-4b: 自動反映バナーを閉じる (同一 digest を既読にして再表示を抑止)。
   dismissAutoApplyNotice: () => void;
   // (PR-0a-2b: 更新バナーの「あとで」用 action (lastSeedVersion を進めていた) は廃止。
@@ -800,8 +801,11 @@ export const useStore = create<State & Actions>()(
       },
       // PR-4b: 安全な週の seed 更新を「起動時に自動反映」する。中身は applySeedUpdate([]) と
       // 同一 (snapshot:"seed-apply" + マージ) だが、加えて Undo バナー用の通知 (autoApplyNotice)
-      // を立てる。安全判定 (isAutoApplySafe) はオーケストレータ側 (SyncUpdateModal) が行い、
-      // 安全なときだけ本 action を呼ぶ。notice.digest は「元に戻す後の再自動反映ループ防止」に使う。
+      // を立てる。安全判定 (isAutoApplySafe / planAutoApply) はオーケストレータ側 (SyncUpdateModal) が
+      // 行い、安全なときだけ本 action を呼ぶ。notice.digest は「元に戻す後の再自動反映ループ防止」に使う。
+      // PR-6a-2: 期限切れ整理だけの週は notice=null (バナーを出さない)。その場合の digest の既読化は
+      // オーケストレータが writeSyncSeen で行う。スナップショットはサイレントでも取る
+      // (設定 > 直前の状態に戻す (マスタ更新前) がサイレント削除を戻す唯一の手段)。
       autoApplySeedUpdate: (notice) => {
         takeSnapshot("seed-apply", readPersistedAppState());
         set((state) => {
@@ -816,6 +820,9 @@ export const useStore = create<State & Actions>()(
           state.memberships = next.memberships;
           state.lastSeedVersion = SEED_VERSION;
           // Undo バナー表示情報 (永続 state。reload 越しでバナー再表示)。
+          // PR-6a-2: null (サイレント反映) のときも上書きして前の notice を消す。前の週の閉じられて
+          // いない Undo バナーが残っていても、seed-apply スナップショットは今回の反映の直前に
+          // 取り直されたので、そのバナーの「元に戻す」は別の状態へ戻る意味に変わってしまうため。
           state.autoApplyNotice = notice;
         });
       },
@@ -1012,7 +1019,7 @@ export const useStore = create<State & Actions>()(
         backupRawPersisted("hydrate");
         markHydrationFailure(error);
       },
-      migrate:(persistedState: unknown, fromVersion: number) => {
+      migrate: (persistedState: unknown, fromVersion: number) => {
         // 新規 install (version フィールドが無い = fromVersion が undefined 扱い)
         // → そのまま通す (既存の empty+seed 初期化フローへ)
         if (fromVersion === PERSIST_SCHEMA_VERSION) {

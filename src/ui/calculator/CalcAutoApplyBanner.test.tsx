@@ -51,6 +51,15 @@ describe("CalcAutoApplyBanner", () => {
     expect(screen.getByText(/マスタを自動更新しました/)).toBeInTheDocument();
     expect(screen.getByText(/3 件/)).toBeInTheDocument();
     expect(screen.getByText("元に戻す")).toBeInTheDocument();
+    // 期限切れ整理の件数が無ければ併記しない
+    expect(screen.queryByText(/期限切れ/)).toBeNull();
+  });
+
+  it("PR-6a-2: expiredRemovedCount があれば『（期限切れ M 件を整理）』を併記する", () => {
+    render(<CalcAutoApplyBanner notice={{ ...notice, count: 1, expiredRemovedCount: 2 }} />);
+    expect(
+      screen.getByText("追加・更新 1 件を反映しました（期限切れ 2 件を整理）。"),
+    ).toBeInTheDocument();
   });
 
   it("[元に戻す] は digest を既読化 → restoreSnapshot → reload の順で結線", () => {

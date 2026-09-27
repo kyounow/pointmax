@@ -42,7 +42,7 @@
   （追加・非破壊の内容更新のみ）なら起動時に**自動反映**し、フルスクリーンの `SyncUpdateModal`
   を出さない。反映後は `BannerSlot` の自動反映枠に「マスタを自動更新しました（N 件）［詳細］
   ［元に戻す］✕」を出す（`[詳細]`→更新履歴、`[元に戻す]`→PR-4a のスナップショット復元、
-  `✕`→同一 digest を既読化して再表示しない）。**削除・scope 変更・購入チャネル (`channel`) の変更・
+  `✕`→同一 digest を既読化して再表示しない）。**削除 (下記の期限切れ整理を除く)・scope 変更・購入チャネル (`channel`) の変更・
   SEED_VERSION の版更新**を含む週だけ従来モーダルにフォールバックし、「削除や大きな変更を含むため
   確認をお願いします」を添えてユーザー確認を挟む。安全判定は純関数 `isAutoApplySafe`
   （`src/domain/autoApplySafety.ts`）。提携店舗 (membership) の注記だけの更新は安全側 (自動反映)、
@@ -52,6 +52,16 @@
   ただし確認月 (`lastVerifiedAt`)・公式 URL (`officialUrl`) は **META キー** として比較と指紋から外す
   (これらだけの seed 変更は通知も自動反映も起きない、PR-5a。下の「マスタデータ管理」)。
   自動反映も従来モーダルもオフライン時は抑制する（`useOnline`）。
+  **期限切れ campaign の整理（PR-6a-2 / U1）**: cron が validTo を過ぎた campaign を tombstone 化した
+  削除と、その cascade membership の削除**だけ**の週は、確認モーダルもバナーも出さずに反映し、digest を
+  既読化する (既に計算に効いていない還元が消えるだけなので)。他の追加・更新と同じ週はバナーに
+  「追加・更新 N 件を反映しました（期限切れ M 件を整理）」と併記する (N は期限切れ整理を除く件数)。
+  戻したい場合は設定 > 直前の状態に戻す (マスタ更新前)、内容は設定 > マスタ更新履歴で確認できる
+  (サイレント反映でもマスタ更新前のスナップショットを取るので、それ以前のインポート前 / 初期化前の
+  スナップショットは上書きされる。前の週の閉じていない自動反映バナーも消える)。
+  期限切れの判定は端末の今日基準で **validTo の翌日以降** (validTo 当日・validTo 無し・日付不正の
+  削除は従来どおりモーダル)。判定は純関数 `planAutoApply` / `isExpiredRemoval`（同ファイル）で、
+  silent の判定は `changeCount` が全変更種を数えていることを前提にする (結合テストで固定)。
 - **アプリ更新通知（PR-4b / UX-8(3)）**: `vite-plugin-pwa` の `autoUpdate` 構成では Service
   Worker が裏で新版に入れ替わる。ビルドごとに変わる識別子 `__BUILD_ID__`（vite `define` 注入）を
   独立キー `pointmax:build-id:v1` に記録し、**前回起動時と異なれば「更新後の初回起動」**と判定して
@@ -239,7 +249,8 @@
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
 - **新規プロファイルの公式データ自動投入（PR-6a-1 / F7）**: `localStorage` が空の初回起動では公式マスタ
-  （`seed()`）を自動で投入する（`store.seedIfEmpty`、App マウント時 + persist の hydration 完了時）。
+  （`seed()`）を自動で投入する（`store.seedIfEmpty`。`Root` が App を描画する前に同期で 1 回呼ぶので
+  空の画面は出ない。App マウント時 + persist の hydration 完了時にも冪等に呼ぶ）。
   投入するのは **hydration 完了後に 8 collection が全て空かつ `lastSeedVersion === 0`** のときだけで、
   hydration 失敗時・schema 移行待ち・1 件でもデータがある state では何もしない（壊れた生データを上書き
   しない）。投入後の state は seed と一致するため同期モーダル／更新バナー／自動反映バナーは出ず、
@@ -283,7 +294,8 @@
   - **公式データで初期化** (`store.resetToSeed`) は直前に生データを crash-backup へ退避し、
     **スナップショットは取らない** (1 世代しかない健全なスナップショットを壊れた state で上書きしない)。
     per-user 設定は引き継がない。書き込みにも失敗した場合は persist キーだけを消し、
-    次回起動で `seedIfEmpty` が公式データを投入する (カードの「使う」設定はやり直し)。
+    次回起動で `seedIfEmpty` が公式データを投入する (カードの「使う」設定はやり直し。この経路は
+    案内を読めるよう 1.5 秒置いてから再読み込みする)。
   - 退避データがあるときは、設定「直前の状態に戻す」の下に「読み込み失敗時の退避データ (M/D HH:mm)
     [書き出す] [削除]」を 1 行出す (自動では消さない)。
 - **マスタ更新履歴** (設定画面内セクション、旧「更新履歴」タブ): 週次 cron で自動マージ
@@ -344,7 +356,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1578 ケース / 88 ファイル** (2026-09-27 時点)） |
+| テスト | Vitest（**1606 ケース / 88 ファイル** (2026-09-27 時点)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -463,7 +475,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1504 ケース / 86 ファイル (2026-09-27 時点))
+npm run test         # Vitest (1606 ケース / 88 ファイル (2026-09-27 時点))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -540,7 +552,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | **membership tombstone** (`REMOVED_MEMBERSHIP_IDS`) の id | ❌ 再提案しない (propose で silent skip) | `src/state/seed-blocklist.ts` の手動 tombstone は `seed()` から除外されるため、抽出に残っている限り「seed に無い新規」として毎 run 再提案されてしまう。`proposeMemberships` / `proposeJalTokuyakuMemberships` が auto にも review にも出さず、`🪦 tombstone-skip: N 件 (source=…)` を 1 行ログに出す。apply / approve も生成物 (`ADDED_MEMBERSHIPS`) から該当行を物理削除し、approve で選ばれたら `⚠ tombstone 済みのため skip` と warn する (PR-0a-2c) |
 | 同じ店 × 同じ倍率系列の**別倍率 membership** (J-POINT W / Gold / たまる) | ❌ しない (`tierMove` で needsReview) | `tierFamilyOf` (`src/state/tierFamily.ts`) で系列を判定し、seed に同じ店 × 同じ系列の別倍率がある、または同じ run で別倍率も提案されたら review (倍率改定・受け皿誤りの疑い。そのまま足すと最大値が勝ち旧 tier が黙って残る)。他の降格理由 (lowConfidence 等) が付いていればそちらを優先。**承認するなら旧 tier を `REMOVED_MEMBERSHIP_IDS` に入れる PR と同時に** (seed の tier 契約 = 店 × 系列 × 有効チャネルごとに membership ≤ 1 が CI で落ちる、fail-closed) |
 | **epos-tamaru 由来の新規 program** の購入チャネル | ― (record に自動付与) | `ONLINE_CHANNEL_EXTRACTORS` (`scripts/sync/types.ts`) の extractor 由来の新規 program には propose 層が決定論で `channel: "online"` を付ける (Gemini 出力・schema に依存しない)。承認・auto の可否は従来の判定のまま。既存 program の rate / 期間 updateField と membership 提案は不変 |
-| **期限切れ campaign の削除** (validTo+30 日経過) | ✅ する (**自動削除**) | 既に非アクティブで還元計算に影響しないためクリーンアップを自動化。tombstone (`REMOVED_PROGRAM_IDS`) 化で program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。編集済みは保護)。**安全弁**: 同 run で期間変更 (`periodChange`) が提案されている program は延長中の可能性を考慮し自動削除せず needsReview (`expiredCampaign`)。件数 cap / apply 後の test・build gate / `autoMergeEnabled` も従来どおり適用 |
+| **期限切れ campaign の削除** (validTo+30 日経過) | ✅ する (**自動削除**) | 既に非アクティブで還元計算に影響しないためクリーンアップを自動化。tombstone (`REMOVED_PROGRAM_IDS`) 化で program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。編集済みは保護。端末では確認なしで静かに整理 = 期限切れ整理だけの週はモーダルもバナーも出さない、PR-6a-2)。**安全弁**: 同 run で期間変更 (`periodChange`) が提案されている program は延長中の可能性を考慮し自動削除せず needsReview (`expiredCampaign`)。件数 cap / apply 後の test・build gate / `autoMergeEnabled` も従来どおり適用 |
 
 ---
 
@@ -624,6 +636,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **改善 PR-0a-2c (tombstone 配線の残り + propose ミラー + tier 契約)** — 同じ店 × 同じ倍率系列の重複 2 件 (高島屋 × J-POINT Gold 2倍 = SC・レストラン街の受け皿誤り、無印 × たまる 4倍 = 旧値、公式は 2倍) を membership 単体 tombstone にし、`seed()` の memberships からも除外 (ADDED 行が毎回「追加 → 除去」を往復して自動反映が止まるのを防ぐ)。週次同期は tombstone 済み id を再提案せず (`🪦 tombstone-skip`)、同じ店 × 同じ系列の別倍率 membership を `tierMove` で review に回す。apply / approve は生成物から tombstone 行を物理削除。REVIEW_QUEUE の理由の表示順を `REASON_ORDER` に一本化し、全理由を含む網羅テストを追加。seed に tier 契約 (店 × 系列 × 有効チャネルごとに membership ≤ 1) を追加。SEED_VERSION / PERSIST_SCHEMA 据え置き (削除を含むので既存端末では確認モーダルで反映)
 - **改善 PR-6d (U6 復旧網)** — 保存データの読み込み失敗を検知して生データを `pointmax:crash-backup:v1` に退避し、App を描画せず復旧パネルを出す (`Root.tsx` / `hydrationGuard.ts`)。画面境界を `key={tab}` に、同期モーダル / 更新バナー / 計算タブの通知枠は例外で非表示に縮退、`onUncaughtError` の静的 fallback。復旧パネル (再読み込み / 書き出し / コピー / 直前の状態に戻す / 公式データで初期化 = スナップショットを取らない `resetToSeed`)。設定の「直前の状態に戻す」がマスタ更新前へ戻したときに自動反映で打ち消される既存バグを修正。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-0a-3b (docs)** — README のマスタ件数表を `seed()` の実測値 (stores 268 / programs 46 / memberships 384) に更新し、「計算に反映していない条件（既知の近似）」節を新設 (制度レベルの近似だけを列挙し、program 固有の条件は seed の conditions / notes を正とする)。seed のコメント (J-POINT の件数・W 高島屋の実効率・cron の書き込み範囲) と tsconfig.scripts.json のヘッダを現行実装に合わせた。コメントと docs のみで、SEED_VERSION / PERSIST_SCHEMA 据え置き
+- **改善 PR-6a-2 (U1 期限切れ整理のサイレント反映 + PR-6d follow-up)** — 期限切れ campaign (validTo を過ぎた tombstone) とその cascade membership の削除だけの週は、確認モーダルもバナーも出さずに反映して digest を既読化し、他の追加・更新と同じ週はバナーに「（期限切れ M 件を整理）」を併記 (`planAutoApply` / `isExpiredRemoval`、validTo 当日は従来どおりモーダル)。新規プロファイルの seed 投入を Root で App の描画前に行い空画面の 1 フレームを解消、復旧パネルの小修正 (localStorage 例外の握りつぶし・初期化の予備経路で案内を見せてから再読み込み)。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-5a (V1 鮮度 = 同梱 seed 参照方式)** — 確認月 `lastVerifiedAt` を還元プログラムとカードの基本還元にも持たせ (`BenefitProgram` / `Card`)、計算結果の展開ビューで採用したルート・還元率の最終確認の最古が 12 ヶ月超なら『⚠ 古い情報かも (最終確認 YYYY-MM)』を 1 チップ出す (旧『⚠ ルート要確認』を置き換え、edge の 6 ヶ月判定も 12 ヶ月に統一)。確認月と `officialUrl` は META キーとして公式差分の比較・指紋から外し (通知しない)、表示時に同梱 seed を参照する (`resolveVerifiedMonth` / `getSeedProgram` / `getSeedEdge`)。`ResolvedRate` の charge 変種に `programId`、`CardRanking.adoptedProgramIds` を追加。四半期チェック対象 30 program に 2026-07 を記入 (週次監視 tier と ADDED は空欄)。SEED_VERSION 47 / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
