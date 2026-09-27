@@ -188,6 +188,21 @@ export type ExtractedSource = {
   memberships?: ExtractedMembership[]; // program ↔ store の M2M join
 };
 
+// ExtractedSource の抽出配列キー (件数の集計・ログ・fetch outcome の itemCounts で共用)。
+// crawl-index.ts の ArrayKey (子ページ merge の dedupe キー) と同じ集合。
+export const EXTRACTED_ARRAY_KEYS = [
+  "cards",
+  "storeRules",
+  "categoryRules",
+  "stores",
+  "loyaltyRules",
+  "paymentApps",
+  "programs",
+  "memberships",
+] as const satisfies readonly (keyof ExtractedSource)[];
+
+export type ExtractedArrayKey = (typeof EXTRACTED_ARRAY_KEYS)[number];
+
 // 各抽出項目に必ず付くエビデンス・自己評価。
 // confidence は computeConfidence() で機械的に算出する。
 export type Evidence = {
