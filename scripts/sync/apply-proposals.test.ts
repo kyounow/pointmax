@@ -383,6 +383,14 @@ describe("pruneRemovedFromBuckets", () => {
       expect(pruned.programs.map((p) => p.id)).toEqual(["prog-keep"]);
     });
 
+    it("既定は seed-blocklist の REMOVED_MEMBERSHIP_IDS: ADDED の m-prog-jcb-jpoint-gold-2x-takashimaya は prune 後に消える", () => {
+      vi.spyOn(console, "log").mockImplementation(() => {});
+      const pruned = pruneRemovedFromBuckets(withAdded);
+      expect(pruned.memberships.map((m) => `${m.programId}|${m.storeId}`)).toEqual([
+        "prog-jcb-jpoint-gold-4x|takashimaya",
+      ]);
+    });
+
     it("生成物 (seed-additions.ts の内容) に tombstone 済み membership id が出ない", () => {
       vi.spyOn(console, "log").mockImplementation(() => {});
       const content = buildSeedAdditionsContent(pruneRemovedFromBuckets(withAdded, tomb));

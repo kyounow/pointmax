@@ -37,7 +37,11 @@ import { applyProgramOverrides } from "./seed-overrides";
 // tombstone (削除済み program id) の Set。seed() の programs/memberships
 // フィルタと、mergeSeed のユーザー localStorage からの除去の両方で参照する。
 const REMOVED_PROGRAM_ID_SET = new Set(REMOVED_PROGRAM_IDS);
-import { BLOCKED_STORE_IDS } from "./seed-blocklist";
+import { BLOCKED_STORE_IDS, REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
+// membership 単体 tombstone (seed-blocklist の手動 tombstone) の Set。seed() の memberships から
+// 除外する (PR-0a-2c)。これが無いと ADDED 行 (seed-additions.ts) が seed() に残り、mergeSeed が
+// 毎回「追加 → tombstone 除去」を往復して自動反映の安全判定 (isAutoApplySafe) が恒久 false になる。
+const REMOVED_MEMBERSHIP_ID_SET = new Set(REMOVED_MEMBERSHIP_IDS);
 import { resolveCategory } from "./seed-category-aliases";
 import { SEED_CURRENCIES } from "./seed-data-currencies";
 import {
@@ -592,6 +596,8 @@ type SeedReturn = {
  *  - id が重複した場合は手書きが勝つ (filter で排除)
  *  - BLOCKED_STORE_IDS に含まれる store と、それを参照する rules は除外
  *  - 追加 store の category は CATEGORY_ALIASES で正規化 (旧名 → 新名)
+ *  - tombstone: REMOVED_PROGRAM_IDS の program (+ cascade membership) と
+ *    REMOVED_MEMBERSHIP_IDS の membership 単体を除外
  */
 export const seed = (): SeedReturn => {
   const currencies = SEED_CURRENCIES;
@@ -644,6 +650,8 @@ export const seed = (): SeedReturn => {
       ],
       PROGRAM_OVERRIDES,
     ).filter((p) => !REMOVED_PROGRAM_ID_SET.has(p.id)),
+    // membership は program tombstone の cascade に加え、単体 tombstone
+    // (REMOVED_MEMBERSHIP_IDS、手書き・ADDED の両方) も除外する (PR-0a-2c)。
     memberships: [
       ...SEED_STORE_PROGRAM_MEMBERSHIPS,
       // v6: 手書きと自動同期分の重複排除は membership.id で行う
@@ -651,6 +659,8 @@ export const seed = (): SeedReturn => {
       ...ADDED_MEMBERSHIPS.filter(
         (m) => !SEED_STORE_PROGRAM_MEMBERSHIPS.some((sm) => sm.id === m.id),
       ),
-    ].filter((m) => !REMOVED_PROGRAM_ID_SET.has(m.programId)),
+    ]
+      .filter((m) => !REMOVED_PROGRAM_ID_SET.has(m.programId))
+      .filter((m) => !REMOVED_MEMBERSHIP_ID_SET.has(m.id)),
   };
 };

@@ -15,6 +15,8 @@ import { seed, SEED_VERSION } from "./seed";
 import { MIGRATIONS, conflictItems, planMigrations } from "../domain/migrations";
 import { REMOVED_PROGRAM_IDS } from "./seed-additions";
 import { REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
+import { membershipId } from "./defineMemberships";
+import { isAutoApplySafe } from "../domain/autoApplySafety";
 import type {
   BenefitProgram,
   Card,
@@ -1112,6 +1114,93 @@ describe("store: seed 反映の membership tombstone 配線 (PR-0a-2b)", () => {
     setStateWith103();
     useStore.getState().mergeFromSeed();
     expectTombstoned();
+  });
+});
+
+// PR-0a-2c: tier 重複 2 件 (高島屋 × Gold 2倍 = ADDED、無印 × たまる 4倍 = 旧手書き) の membership
+// tombstone を seed() 実データ (ADDED 行込み) で検証する。seed() 側のフィルタが無いと ADDED 行が
+// 毎回「追加 → tombstone 除去」を往復し、isAutoApplySafe が恒久 false になる。
+// (ADDED 行は次の cron apply が物理削除するので、ここでは ADDED の有無に依存せず行を組み立てる)
+describe("store: tier 重複の membership tombstone (PR-0a-2c)", () => {
+  const OLD_TIER_ROWS: StoreProgramMembership[] = [
+    ["prog-jcb-jpoint-gold-2x", "takashimaya"],
+    ["prog-epos-tamaru-4x", "muji"],
+  ].map(([programId, storeId]) => ({
+    id: membershipId(programId, storeId),
+    programId,
+    storeId,
+  }));
+  const MERGE_OPTS = {
+    removedProgramIds: REMOVED_PROGRAM_IDS,
+    removedMembershipIds: REMOVED_MEMBERSHIP_IDS,
+  };
+
+  // 2c 以前の端末: seed() (ADDED 行込み) に加えて、tombstone 対象の 2 行を持っている。
+  const setOldDevice = () => {
+    const s = seed();
+    useStore.setState({
+      ...s,
+      memberships: [...s.memberships, ...OLD_TIER_ROWS],
+      lastSeedVersion: SEED_VERSION,
+    });
+  };
+
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("前提: 2 行とも REMOVED_MEMBERSHIP_IDS に入っており、seed() には無い", () => {
+    const ids = new Set(seed().memberships.map((m) => m.id));
+    for (const m of OLD_TIER_ROWS) {
+      expect(REMOVED_MEMBERSHIP_IDS).toContain(m.id);
+      expect(ids.has(m.id), m.id).toBe(false);
+    }
+  });
+
+  it("反映前は membership 削除 2 件で isAutoApplySafe が false (確認モーダルで届く)", () => {
+    setOldDevice();
+    const merged = mergeSeed(useStore.getState(), seed(), MERGE_OPTS);
+    expect(merged.removedMemberships.map((m) => m.id).sort()).toEqual(
+      OLD_TIER_ROWS.map((m) => m.id).sort(),
+    );
+    expect(isAutoApplySafe(merged, { seedVersionBumped: false })).toBe(false);
+  });
+
+  it("applySeedUpdate([]) の後は 2 行が state から消え、差分 0 で isAutoApplySafe が true に戻る", () => {
+    setOldDevice();
+    useStore.getState().applySeedUpdate([]);
+    const st = useStore.getState();
+    for (const m of OLD_TIER_ROWS) {
+      expect(st.memberships.some((x) => x.id === m.id), m.id).toBe(false);
+    }
+    // 正しい tier は残る
+    expect(
+      st.memberships.some(
+        (x) => x.id === membershipId("prog-jcb-jpoint-gold-4x", "takashimaya"),
+      ),
+    ).toBe(true);
+    expect(
+      st.memberships.some((x) => x.id === membershipId("prog-epos-tamaru-2x", "muji")),
+    ).toBe(true);
+    const merged = mergeSeed(st, seed(), MERGE_OPTS);
+    expect(changeCount(merged)).toBe(0);
+    expect(
+      isAutoApplySafe(merged, {
+        seedVersionBumped: st.lastSeedVersion < SEED_VERSION,
+      }),
+    ).toBe(true);
+  });
+
+  it("フィルタ後の seed() を mergeSeed に 2 回通しても diff.memberships が空 (追加 → 除去の往復が無い)", () => {
+    const s = seed();
+    const first = mergeSeed(s, seed(), MERGE_OPTS);
+    expect(first.diff.memberships).toEqual([]);
+    expect(first.removedMemberships).toEqual([]);
+    const second = mergeSeed(first, seed(), MERGE_OPTS);
+    expect(second.diff.memberships).toEqual([]);
+    expect(second.removedMemberships).toEqual([]);
+    expect(changeCount(second)).toBe(0);
+    expect(isAutoApplySafe(second, { seedVersionBumped: false })).toBe(true);
   });
 });
 
