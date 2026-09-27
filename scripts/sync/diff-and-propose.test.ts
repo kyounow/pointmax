@@ -7,9 +7,14 @@ import {
   dedupeAcrossProposals,
   demoteChildlessMemberStorePrograms,
   detectStaleExtractSources,
+  detectStaleFetchedAt,
   downgradeOrphanMemberships,
+  EXTRACT_MAX_AGE_DAYS,
+  filterExtractedByRegistry,
   guardStaleExtractGeneration,
   isFailedExtraction,
+  loadRegistrySources,
+  parseIncludeSources,
   promoteChainStoreAutoMerge,
   proposeCards,
   proposeJalTokuyakuMemberships,
@@ -23,6 +28,7 @@ import {
   rateToProgramSlug,
 } from "./propose-helpers";
 import type { AddRecordProposal, ExtractedSource, Proposal } from "./types";
+import { FETCH_FAILURE_NOTE_KINDS, formatFailureNote } from "./fetch-response";
 
 // テスト用の最小 SeedShape
 const emptySeed: SeedShape = {
@@ -66,6 +72,187 @@ describe("isFailedExtraction", () => {
     expect(
       isFailedExtraction(baseSource({ notes: "ページが取得できませんでした" })),
     ).toBe(true);
+  });
+
+  // ── PR-0b-2 (Z6): prefix / vUnknown / 件数条件 ──
+  const oneStore = {
+    stores: [
+      {
+        storeId: "s",
+        name: "S",
+        evidenceQuote: "q",
+        explicitness: 1,
+        ambiguity: 0,
+      },
+    ],
+  };
+
+  it.each(FETCH_FAILURE_NOTE_KINDS)(
+    "writeFallback の notes (%s) は promptVersion が実版数でも失敗扱い",
+    (kind) => {
+      expect(
+        isFailedExtraction(
+          baseSource({
+            promptVersion: "campaign-v3.5",
+            notes: formatFailureNote(kind, "detail"),
+          }),
+        ),
+      ).toBe(true);
+    },
+  );
+
+  it("promptVersion が -vUnknown で 0 件 → 失敗 / items があれば失敗ではない", () => {
+    expect(isFailedExtraction(baseSource({ promptVersion: "campaign-vUnknown" }))).toBe(true);
+    expect(
+      isFailedExtraction(baseSource({ promptVersion: "campaign-vUnknown", ...oneStore })),
+    ).toBe(false);
+  });
+
+  it("旧正規表現に一致しても items があれば失敗ではない (notes の語句だけで丸ごと skip しない)", () => {
+    expect(
+      isFailedExtraction(
+        baseSource({ notes: "一部の店舗は取得できませんでした", ...oneStore }),
+      ),
+    ).toBe(false);
+  });
+
+  it("実版数で 0 件 (paypay の該当なし等) は失敗ではない", () => {
+    expect(
+      isFailedExtraction(
+        baseSource({ promptVersion: "campaign-v3.5", notes: "対象期間のキャンペーンは掲載されていません" }),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("registry enabled フィルタ (Z6)", () => {
+  const ex = (sourceId: string) => ({ sourceId });
+  const sources = [
+    { id: "on", enabled: true },
+    { id: "off", enabled: false },
+  ];
+
+  it("未登録は unregistered、disabled は disabled で skip、enabled は kept", () => {
+    const r = filterExtractedByRegistry([ex("on"), ex("off"), ex("gone")], sources, new Set());
+    expect(r.kept.map((x) => x.sourceId)).toEqual(["on"]);
+    expect(r.skipped).toEqual([
+      { sourceId: "off", reason: "disabled" },
+      { sourceId: "gone", reason: "unregistered" },
+    ]);
+  });
+
+  it("SYNC_INCLUDE_SOURCES に入っていれば disabled でも kept (未登録は含めない)", () => {
+    const r = filterExtractedByRegistry(
+      [ex("on"), ex("off"), ex("gone")],
+      sources,
+      parseIncludeSources(" off , gone ,"),
+    );
+    expect(r.kept.map((x) => x.sourceId)).toEqual(["on", "off"]);
+    expect(r.skipped).toEqual([{ sourceId: "gone", reason: "unregistered" }]);
+  });
+
+  it("parseIncludeSources: 空 / undefined は空集合", () => {
+    expect(parseIncludeSources(undefined).size).toBe(0);
+    expect(parseIncludeSources("").size).toBe(0);
+    expect([...parseIncludeSources("a,b")]).toEqual(["a", "b"]);
+  });
+
+  it("loadRegistrySources: 実 registry を読める / 読めなければ throw (全件素通りにしない)", () => {
+    const all = loadRegistrySources();
+    expect(all.some((s) => s.id === "jcb-jpoint-partners" && s.enabled)).toBe(true);
+    expect(() => loadRegistrySources("/nonexistent/registry.yaml")).toThrow();
+  });
+});
+
+describe("fetchedAt 鮮度ガード (Z6)", () => {
+  const now = new Date("2026-09-28T00:00:00.000Z");
+  const DAY = 24 * 60 * 60 * 1000;
+  const at = (ms: number) => new Date(now.getTime() - ms).toISOString();
+
+  it("14 日ちょうどは stale でない / 14 日 + 1ms は stale", () => {
+    const stale = detectStaleFetchedAt(
+      [
+        { sourceId: "exact", fetchedAt: at(EXTRACT_MAX_AGE_DAYS * DAY) },
+        { sourceId: "over", fetchedAt: at(EXTRACT_MAX_AGE_DAYS * DAY + 1) },
+        { sourceId: "fresh", fetchedAt: at(DAY) },
+      ],
+      now,
+    );
+    expect(stale.has("exact")).toBe(false);
+    expect(stale.has("fresh")).toBe(false);
+    expect(stale.get("over")?.ageDays).toBeGreaterThan(14);
+  });
+
+  it("不正な文字列と欠落は stale (安全側)", () => {
+    const stale = detectStaleFetchedAt(
+      [{ sourceId: "bad", fetchedAt: "not-a-date" }, { sourceId: "none" }],
+      now,
+    );
+    expect(stale.get("bad")).toEqual({ fetchedAt: "not-a-date", ageDays: null });
+    expect(stale.get("none")).toEqual({ fetchedAt: "(none)", ageDays: null });
+  });
+
+  it("stale fetchedAt のソースの updateField/programs.rate は staleExtractGeneration、addRecord と既存 reason は不変", () => {
+    const ev = { evidenceQuote: "x", explicitness: 1, ambiguity: 0 };
+    const proposals: Proposal[] = [
+      {
+        type: "updateField",
+        collection: "programs",
+        id: "prog-epos-tamaru-2x",
+        field: "rate",
+        from: 0.01,
+        to: 0.015,
+        sourceId: "epos-tamaru-market",
+        confidence: 0.95,
+        evidence: ev,
+      },
+      {
+        type: "addRecord",
+        collection: "memberships",
+        record: { programId: "prog-epos-tamaru-2x", storeId: "uniqlo" },
+        sourceId: "epos-tamaru-market",
+        confidence: 0.95,
+        evidence: ev,
+      },
+      {
+        type: "updateField",
+        collection: "programs",
+        id: "prog-epos-tamaru-3x",
+        field: "rate",
+        from: 0.01,
+        to: 0.5,
+        sourceId: "epos-tamaru-market",
+        confidence: 0.95,
+        evidence: ev,
+        reviewReason: "rateDeltaTooLarge",
+      },
+      {
+        type: "updateField",
+        collection: "programs",
+        id: "prog-jcb-jpoint-2x",
+        field: "rate",
+        from: 0.015,
+        to: 0.02,
+        sourceId: "jcb-jpoint-partners",
+        confidence: 0.95,
+        evidence: ev,
+      },
+    ];
+    const staleFetched = detectStaleFetchedAt(
+      [
+        { sourceId: "epos-tamaru-market", fetchedAt: at(20 * DAY) },
+        { sourceId: "jcb-jpoint-partners", fetchedAt: at(3 * DAY) },
+      ],
+      now,
+    );
+    const guarded = guardStaleExtractGeneration(proposals, new Set(staleFetched.keys()));
+    expect(guarded.proposals.map((p) => p.reviewReason)).toEqual([
+      "staleExtractGeneration",
+      undefined,
+      "rateDeltaTooLarge",
+      undefined,
+    ]);
+    expect(guarded.guardedBySource.get("epos-tamaru-market")).toBe(1);
   });
 });
 
