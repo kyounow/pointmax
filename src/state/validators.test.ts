@@ -91,6 +91,7 @@ describe("validateImportData: v6 scope 検証", () => {
     id: "prog-1",
     name: "P",
     scope: "member-stores",
+    cardIds: ["c1"], // PR-0b-3: 対象キー必須
     rate: 0.05,
     currencyId: "cur1",
     ...over,
@@ -150,6 +151,7 @@ describe("validateImportData: v6 membership id 検証", () => {
     id: "prog-1",
     name: "P",
     scope: "member-stores",
+    cardIds: ["c1"], // PR-0b-3: 対象キー必須
     rate: 0.05,
     currencyId: "cur1",
   };
@@ -205,6 +207,7 @@ describe("validateImportData: PR-0a-2a channel 検証", () => {
     id: "prog-1",
     name: "P",
     scope: "member-stores",
+    cardIds: ["c1"], // PR-0b-3: 対象キー必須
     rate: 0.05,
     currencyId: "cur1",
     ...over,
@@ -271,6 +274,7 @@ describe("validateImportData: PR-5a Card.lastVerifiedAt 検証 (OPT_STR)", () =>
           scope: "all-stores",
           rate: 0.01,
           currencyId: "cur1",
+          cardIds: ["c1"],
           lastVerifiedAt: "2026-07",
         },
       ],
@@ -286,6 +290,43 @@ describe("validateImportData: PR-5a Card.lastVerifiedAt 検証 (OPT_STR)", () =>
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toContain("cards[0].lastVerifiedAt");
+  });
+});
+
+// PR-0b-3: program は対象キー (cardIds / pointCardId / paymentAppId) 必須。cardIds は非空。
+describe("validateImportData: PR-0b-3 program の対象キー", () => {
+  const base = { id: "prog-t", name: "P", scope: "all-stores", rate: 0.05, currencyId: "cur1" };
+
+  it("対象キーが 1 つも無い program を id と位置付きで拒否", () => {
+    const r = validateImportData({ ...valid, programs: [base] });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.error).toContain("programs[0] (prog-t)");
+      expect(r.error).toContain("対象");
+    }
+  });
+
+  it("cardIds: [] の program を拒否 (どのカードでも発火しない死にデータ)", () => {
+    const r = validateImportData({ ...valid, programs: [{ ...base, cardIds: [] }] });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("cardIds が空");
+  });
+
+  it("cardIds に文字列以外が混ざる program を拒否", () => {
+    const r = validateImportData({ ...valid, programs: [{ ...base, cardIds: ["c1", 3] }] });
+    expect(r.ok).toBe(false);
+  });
+
+  it("cardIds / pointCardId / paymentAppId のどれか 1 つで受理、cardIds + paymentAppId の併用も受理", () => {
+    for (const target of [
+      { cardIds: ["c1"] },
+      { pointCardId: "pc1" },
+      { paymentAppId: "pa1" },
+      { cardIds: ["c1"], paymentAppId: "pa1" },
+    ]) {
+      const r = validateImportData({ ...valid, programs: [{ ...base, ...target }] });
+      expect(r.ok, JSON.stringify(target)).toBe(true);
+    }
   });
 });
 

@@ -225,6 +225,10 @@ export function validateImportData(
   const cardFamilyError = checkCardFamilyIds(data);
   if (cardFamilyError !== null) return { ok: false, error: cardFamilyError };
 
+  // PR-0b-3: program は対象キー (cardIds / pointCardId / paymentAppId) を 1 つ以上持ち、cardIds は非空。
+  const targetError = checkProgramTargets(data);
+  if (targetError !== null) return { ok: false, error: targetError };
+
   // v6: scope 整合性のクロスチェック。
   //   「all-stores なのに membership を持つ」program は矛盾 (全店適用 program は
   //   membership を持ってはいけない) → import ではエラーにする。
@@ -269,6 +273,29 @@ function checkCardFamilyIds(data: Record<string, unknown>): string | null {
     if (c.familyId === undefined) continue;
     if (!isStr(c.familyId) || !VALID_CARD_FAMILY_IDS.has(c.familyId)) {
       return `cards[${i}].familyId "${String(c.familyId)}" が CARD_FAMILIES に存在しません`;
+    }
+  }
+  return null;
+}
+
+// PR-0b-3: program の対象キー。対象の無い program (cardIds / pointCardId / paymentAppId がどれも無い、
+// または cardIds が空配列) はどのカードでも発火しない死にデータ (programEvaluator は cardIds:[] を
+// 「どのカードにも一致しない」と扱う)。UI から作る program は必ず対象を持つ (CampaignForm は targetId 必須、
+// addUserLoyaltyProgram は pointCardId) ので、ここに来るのは手編集の JSON か壊れた master だけ。
+function checkProgramTargets(data: Record<string, unknown>): string | null {
+  if (!Array.isArray(data.programs)) return null;
+  for (let i = 0; i < data.programs.length; i++) {
+    const p = data.programs[i];
+    if (!isObject(p)) continue; // checkArray 側で既に弾かれている想定
+    const label = `programs[${i}] (${String(p.id)})`;
+    if (p.cardIds !== undefined) {
+      if (!Array.isArray(p.cardIds) || p.cardIds.length === 0 || !p.cardIds.every(isStr)) {
+        return `${label} の cardIds が空、または文字列の配列ではありません`;
+      }
+    }
+    const hasCards = Array.isArray(p.cardIds) && p.cardIds.length > 0;
+    if (!hasCards && !isStr(p.pointCardId) && !isStr(p.paymentAppId)) {
+      return `${label} に対象 (cardIds / pointCardId / paymentAppId) がありません`;
     }
   }
   return null;

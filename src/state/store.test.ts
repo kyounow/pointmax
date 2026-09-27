@@ -240,6 +240,7 @@ describe("store: exportJson / importJson は programs / memberships を保持す
     id: "prog-a4-test",
     name: "A4 テストプログラム",
     scope: "member-stores",
+    pointCardId: "rakuten-pointcard", // PR-0b-3: import 検証は対象キー必須
     rate: 0.05,
     currencyId: "rakuten-pt",
   };
@@ -588,6 +589,7 @@ describe("store: importJson の program enabled carry-over (v6 PR-1d)", () => {
     id: "prog-optin",
     name: "opt-in 特典",
     scope: "all-stores",
+    cardIds: ["smbc-v"], // PR-0b-3: import 検証は対象キー必須
     rate: 0.01,
     currencyId: "v-pt",
     optIn: true,
@@ -637,6 +639,7 @@ describe("store: syncFromUrl の program enabled carry-over (v6 PR-1d)", () => {
     id: "prog-optin",
     name: "opt-in 特典",
     scope: "all-stores",
+    cardIds: ["smbc-v"], // PR-0b-3: master 検証は対象キー必須
     rate: 0.01,
     currencyId: "v-pt",
     optIn: true,
