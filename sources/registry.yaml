@@ -10,7 +10,8 @@
 #  - enabled: true にするソースには fetchGroup (mon|thu) を必ず付与する
 #    (無料枠分割。registry-consistency 契約テストで強制。下記 fetchGroup 節参照)
 #  - enabled:false にするときは sources/extracted/<id>.json を git rm する
-#    (propose は registry を見ずに extracted/*.json を全部読むため、残骸が review queue に残る)
+#    (PR-0b-2 以降 propose は registry の enabled で絞るが、残骸は SYNC_INCLUDE_SOURCES 指定時や
+#     手動確認で紛れる。registry-consistency の「enabled:false は extracted を持たない」契約で強制)
 #
 # extractor の選択肢: card | jal-tokuyaku | point-partner | payment-app | campaign | jcb-jpoint |
 #                     epos-tamaru | ongoing-program (ExtractorKind の 8 種。crawl: index の 1 段目は

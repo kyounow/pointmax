@@ -197,6 +197,8 @@
 ### マスタ自動アップデート
 - `sources/registry.yaml` に各カード・ポイント・決済アプリの公式 URL を登録。
 - `npm run sync:fetch -- <id>` で Gemini に渡し、構造化 JSON を `sources/extracted/<id>.json` に出力。
+  `enabled: false` のソースは拒否する。停止ソースの再開検証だけ `--allow-disabled` で実行できる
+  (cron / fetch-all は使わない)。
 - キャンペーン一覧が**索引ハブ** (実データが個別詳細の子ページ) のソースは
   registry に `crawl: { mode: index, maxChildren: N }` を設定すると 2 段階クロール:
   1 段目 (`campaign-index` prompt) で詳細ページ URL を列挙 → 2 段目で各子ページを
@@ -206,6 +208,12 @@
 - `npm run sync:propose` で現在 seed と diff、`autoApplicable`/`needsReview` に分類:
   - confidence ≥ 0.9 / rate 変動 ±10pp 以内 / 倍率 0.5x〜2x / 既存と衝突なし → auto
   - それ以外 (excludedCategory / lowConfidence / referenceChange / unsupportedDateClaim 等) → review
+  - 入力は registry で `enabled: true` のソースの extracted だけ (停止・未登録ソースの残骸は
+    `🗂 registry filter` で skip)。再開検証では `SYNC_INCLUDE_SOURCES=<id>[,<id>]` で disabled も含められる。
+  - fetch 失敗 (`[fetch-failed:<kind>]` notes、または promptVersion `-vUnknown` / 旧形式の失敗 notes で
+    抽出 0 件) のファイルは skip して `sources_failed` に数える。
+  - `fetchedAt` が 14 日を超えた extracted (keep-last-good や取得停止で古いまま) 由来の rate・期間の
+    updateField は auto にせず `staleExtractGeneration` で review に回す (`🧯 fetchedAt 鮮度ガード` ログ)。
 - `npm run sync:apply` で autoApplicable を `src/state/seed-additions.ts` に書き出し。
 - Gemini が schema 外プロパティを混ぜた場合も、違反アイテムのみ除去して残りを救済
   （ソース全体のクラッシュを防ぐ段階的降格）。
@@ -245,7 +253,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1328 ケース / 75 ファイル** (2026-09-27 時点)） |
+| テスト | Vitest（**1441 ケース / 77 ファイル** (2026-09-27 時点)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -336,9 +344,10 @@ BenefitProgram の付与前提は 2 系統で表現する（R1 規約: seed / ma
 
 ```
 scripts/sync/
-  fetch-source.ts      # 1 ソース取得 (Gemini URL Context Tool + pre-fetch fallback + retry)
-  fetch-all.ts         # 週次 cron 用: enabled ソースを順次取得 (--group mon|thu|all で無料枠分割)
-  fetch-response.ts    # Gemini レスポンス分類 (success/retryable/error)
+  fetch-source.ts      # 1 ソース取得 (Gemini URL Context Tool + pre-fetch fallback + retry、keep-last-good)
+  fetch-all.ts         # 週次 cron 用: enabled ソースを順次取得 (--group mon|thu|all で無料枠分割、打ち切り)
+  fetch-response.ts    # Gemini レスポンス / API エラー分類、attempt 計画、usage・診断、モデル名解決
+  fetch-outcome.ts     # source ごとの fetch outcome (ok/empty/failed/quotaExhausted/skipped/crashed) と Step Summary
   crawl-index.ts       # 索引ハブ型ソースの 2 段階クロール (子 URL 列挙 → 個別抽出 → 統合)
   diff-and-propose.ts  # seed vs extracted の差分 → ProposalReport
   propose-helpers.ts   # propose<Entity> 個別関数群
@@ -362,12 +371,17 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1328 ケース / 75 ファイル (2026-09-27 時点))
+npm run test         # Vitest (1441 ケース / 77 ファイル (2026-09-27 時点))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
-npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出
-npm run sync:propose               # 全 extracted vs seed の差分提案
+npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出 (--dry-run で prompt 解決まで、0 req)
+npm run sync:fetch -- jre-point-campaigns --allow-disabled --dry-run
+                                    # 停止中 (enabled:false) ソースの再開検証 (結果の extracted は commit しない)
+npm run sync:propose               # enabled ソースの extracted vs seed の差分提案
+SYNC_INCLUDE_SOURCES=jre-point-campaigns npm run sync:propose
+                                    # 停止中ソースの extracted も入力に含める (再開検証。終わったら
+                                    #  git checkout sources/proposed-migrations.json)
 npm run sync:apply                 # autoApplicable を seed-additions.ts へ
 npm run sync:approve -- --list     # needsReview 一覧 (ID 付き) を表示
 npm run sync:approve -- <ID> ...   # 指定 needsReview 項目を seed-additions.ts へ承認適用
@@ -404,6 +418,25 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   停止中のソースの理由と再開条件は registry の各 notes に記載。曜日は weekly-sync.yml が実行時刻の
   JST 曜日から自動導出。手動 `workflow_dispatch` では `group` 入力 (`auto` / `mon` / `thu` /
   `all`=全 enabled) でグループを明示指定できる (`all` は無料枠を消費するため手動フル実行専用)
+- **fetch の打ち切りと keep-last-good (PR-0b-2)**:
+  - 429 の日次枠 (quotaId に `PerDay`) / 402 (billing) / API キー・モデル名・権限の不正 (401・403・404、
+    `API_KEY_INVALID` の 400) を検知したら、そのソースの残りの attempt と**後続のソースを打ち切る**
+    (後続は `skipped`)。503・ネットワーク等は従来どおり次の attempt へ。
+  - API が原因の失敗 (上記の打ち切り、または 1 度も応答が無い) では **extracted を上書きしない**
+    (keep-last-good。残るのは checkout 時点の main 版 = 直前 run が publish した版)。
+    環境・設定エラーで落ちた (crash) 場合も書かない。
+  - 内容が原因の失敗 (応答はあったが URL 全取得失敗 / 空 / 非 JSON / schema 違反) では
+    `[fetch-failed:<kind>]` notes 付きの空ファイルを書き、propose が失敗として数える。
+  - URL Context が `allUrlsFailed` (または 400 badRequest) の後は URL Context を再試行せず pre-fetch に進む。
+    1 ソース最大 3 attempts (= 3 req) は不変。
+  - timeout: pre-fetch 20 秒 / Fetch step 30 分 (`continue-on-error`) / job 45 分。
+  - Actions の Step Summary に source ごとの outcome (ok / empty / failed / quotaExhausted / skipped /
+    crashed)・calls・tokens (in / tool / out / thoughts)・kept を表で出し、不調は `::warning` /
+    `::error` (billing・config) の annotation にする。各 attempt のログに `🔎 diag` (finishReason・
+    トークン)、ソースごとに `📈 usage total` 行。
+  - モデルと thinking 予算は repo の Actions variables `GEMINI_MODEL` / `GEMINI_THINKING_BUDGET`
+    (未設定なら gemini-2.5-flash / 1024) と、`workflow_dispatch` の `thinking_budget` 入力 (A/B 用、
+    vars より優先) で切り替えられる。不正値は Gemini を呼ぶ前に全ソース skipped (0 req)。
 - 高信頼項目 (autoApplicable) は `auto-sync/YYYY-MM-DD-HHMM` ブランチ + `auto-sync` ラベル付き PR を作成し、
   safety check (件数上限/test/build/main chunk 300 KiB) 通過後に **squash auto-merge** → main。
   bot のマージ (`GITHUB_TOKEN`) は push トリガーを起動しないため、GitHub Pages 再デプロイは
@@ -419,6 +452,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 - 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (直近 52 件 (約半年)、newest first)。
   auto-merge 週は auto-sync PR が、要レビューのみの週は weekly-sync の「Publish SYNC_HISTORY to main」step が
   履歴を main へ直 push し、いずれも `workflow_run` deploy でアプリの設定内「マスタ更新履歴」に反映される。
+  `sources/extracted/` も同じく毎 run main に入る (要レビューのみの週は同 step が同じ commit で push)。
   GitHub の PR タブ (`auto-sync` ラベル絞り込み) + 履歴ファイルの両方で同じ情報を参照可
 - inject-prompt は実行時に `seed()` をライブ参照するため、seed に追加した新カード/通貨は
   自動でプロンプトへ反映される（回帰契約テストで保証）
@@ -434,7 +468,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge |
 | 新規 **campaign program** (campaign extractor 由来) | ✅ する (安全条件を全て満たせば) | `isCampaignAutoMergeable` の全ゲート通過時のみ auto: 期間明示 (validTo 未来) / rate≤30% / 既存参照整合 / lifestyle 無し / confidence ≥ **0.90**。1 つでも外れたら needsReview (`idCollision`)。confidence は逐語根拠つきキャンペーンが ≥0.90 に乗るよう campaign プロンプトを校正 (v3.3、`explicitness=1.0`)。閾値は旧 0.95 → 0.90 (構造ゲートが既に強力なため) |
 | 対象店 membership が全滅した **新規 member-stores program 単独** | ❌ しない (`orphanedProgram` で needsReview) | **原子性ガード (Phase C2 `demoteChildlessMemberStorePrograms`)**: campaign 由来 program は auto でも、その membership が全て `missingStoreBody` 等で review 降格されると member-stores × membership 0 の死にデータになる。program 単独 auto を防ぎ、`member-stores は membership ≥1` 契約テストが apply 後 safety gate で fail → 無関係な auto 変更まで巻き添え review 降格するのを propose 層で阻止。対象店 membership 側と同時に `npm run sync:approve` する運用 |
-| **旧世代 extracted 由来の rate/期間 書き戻し** | ❌ しない (`staleExtractGeneration` で needsReview) | **stale-generation ガード (Phase C3 `guardStaleExtractGeneration`)**: extractor プロンプト改訂直後、旧版で fetch した `sources/extracted/<id>.json` が seed (新方針で修正済) との差分を書き戻し提案として出すのを防ぐ。当該 source の `promptVersion` が `registry.yaml` の `extractorVersions[extractor]` から導く現行版と不一致なら、`PROGRAM_OVERRIDES` 行きの updateField (rate/validFrom/validTo) を auto にせず review 降格。次回 fetch (新版) で `promptVersion` が一致すれば従来の閾値判定に戻る (`🧯 stale-generation guard` log) |
+| **旧世代 extracted 由来の rate/期間 書き戻し** | ❌ しない (`staleExtractGeneration` で needsReview) | **stale-generation ガード (Phase C3 `guardStaleExtractGeneration`)**: extractor プロンプト改訂直後、旧版で fetch した `sources/extracted/<id>.json` が seed (新方針で修正済) との差分を書き戻し提案として出すのを防ぐ。当該 source の `promptVersion` が `registry.yaml` の `extractorVersions[extractor]` から導く現行版と不一致なら、`PROGRAM_OVERRIDES` 行きの updateField (rate/validFrom/validTo) を auto にせず review 降格。次回 fetch (新版) で `promptVersion` が一致すれば従来の閾値判定に戻る (`🧯 stale-generation guard` log)。**fetchedAt 鮮度ガード (PR-0b-2)**: extracted の `fetchedAt` が 14 日を超えている (keep-last-good や取得停止で古い抽出が残っている) ソースも同じ reason で降格する (ReviewReason は増やさない。`🧯 fetchedAt 鮮度ガード` log のみで annotation は出さない)。addRecord は対象外 |
 | 新規 **cards / paymentApps / 非キャンペーン program** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
 | **epos-tamaru 由来の新規 program** の購入チャネル | ― (record に自動付与) | `ONLINE_CHANNEL_EXTRACTORS` (`scripts/sync/types.ts`) の extractor 由来の新規 program には propose 層が決定論で `channel: "online"` を付ける (Gemini 出力・schema に依存しない)。承認・auto の可否は従来の判定のまま。既存 program の rate / 期間 updateField と membership 提案は不変 |
 | **期限切れ campaign の削除** (validTo+30 日経過) | ✅ する (**自動削除**) | 既に非アクティブで還元計算に影響しないためクリーンアップを自動化。tombstone (`REMOVED_PROGRAM_IDS`) 化で program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。編集済みは保護)。**安全弁**: 同 run で期間変更 (`periodChange`) が提案されている program は延長中の可能性を考慮し自動削除せず needsReview (`expiredCampaign`)。件数 cap / apply 後の test・build gate / `autoMergeEnabled` も従来どおり適用 |
