@@ -60,9 +60,16 @@ sources:
       - storeRules
       - categoryRules
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: 単一カテゴリ (scat=1201) の検索結果ページで、直近の抽出は stores 1 件。
+      proposeJalTokuyakuMemberships の唯一の供給源だが、収穫はほぼゼロ。
+      再開条件: scat を分割した URL 設計 (カテゴリごとに source を分ける等)。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- jal-card-tokuyaku-list --allow-disabled`。
+      停止に合わせて sources/extracted/jal-card-tokuyaku-list.json を git rm 済み
+      (propose は registry を見ずに extracted/*.json を全部読むため、残骸を残さない)。
+      ---
       ★ 2026-05-12 (3 度目): milenet/group/index.html も Gemini が "navigation hub,
       not the partner list itself" と判定。実際の店舗データを持つ URL に再々切替。
       partner.jal.co.jp/search_result/ は条件指定型の検索結果ページで、
@@ -270,12 +277,22 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     crawl:
       mode: index
       maxChildren: 5
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      crawl:index 設定は再開の前提として保持する。
+      停止理由: GitHub Actions の egress からは索引・子ページの prefetch が 403 (IP 起因。
+      自宅 IP では 200)。一覧は window.LIST のインライン JSON で描画されアンカーが 0 件。
+      URL Context での子 URL 列挙は実在しない URL を返した (9/14・9/21 ともに 404)。
+      mon run ごとに 11〜12 req を消費し、5 月の追加以来 0 件。
+      再開条件: inline-JSON 索引アダプタを実装し、GH egress で 200 が返ることを
+      workflow_dispatch で確認できたとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- jre-point-campaigns --allow-disabled`。
+      停止に合わせて sources/extracted/jre-point-campaigns.json を git rm 済み。
+      ---
       ★ 2026-06-10 (A-1 索引ハブ対策): crawl: index を設定。1 段目 (campaign-index)
       で当一覧ページから個別キャンペーン詳細 URL を列挙 → 2 段目で各詳細ページを
       campaign extractor で抽出 → 1 つの extracted JSON に統合。これまで恒常 0 件
@@ -308,12 +325,21 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     crawl:
       mode: index
       maxChildren: 5
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      crawl:index 設定は再開の前提として保持する。
+      停止理由: 一覧は meta refresh の 2 段転送 → JS 描画で、索引からアンカーを取れない。
+      導入以来 0 件。元データは公開 JSON `/ptcms/campaign-medias/common-campaign-list.json`
+      (2026-09 の調査で pay 向け非抽選 26 件、要再確認)。
+      再開条件: JSON 索引アダプタを実装し、PR-1 の fetch outcome で無料枠に余地があることを
+      確認できたとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- rakuten-pay-campaigns --allow-disabled`。
+      停止に合わせて sources/extracted/rakuten-pay-campaigns.json を git rm 済み。
+      ---
       ★ 2026-06-10 (A-1 索引ハブ対策): crawl: index を設定。1 段目 (campaign-index)
       で当一覧ページから個別キャンペーン詳細 URL を列挙 → 2 段目で各詳細ページを
       campaign extractor で抽出 → 1 つの extracted JSON に統合。一覧自体は抽選・
