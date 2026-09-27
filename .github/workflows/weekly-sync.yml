@@ -112,7 +112,14 @@ jobs:
         if: steps.counts.outputs.auto > 0
         run: npm run sync:apply
 
-      - name: Safety check (count + test + build)
+      # main chunk 300 KiB assert (exit 3 = サイズ超過。exit 2 = 件数超過と区別するが、
+      # 降格理由はどちらも safetyFailed に畳まれる):
+      # auto-sync PR 上の bundle-size / ci は即時マージ + branch 削除で 0 jobs failure になり
+      # 実質走らないため、これが cron 変更に対する唯一の事前サイズ検査。ただし auto>0 && enabled
+      # の週しか走らない。cron が書くファイル (seed-additions.ts → seed-data chunk、
+      # SYNC_HISTORY.json → sync-data chunk) は main chunk に入らないので、実質は
+      # vite manualChunks 退行への保険 (chunk が無ければ ls が失敗して fail-safe で落ちる)。
+      - name: Safety check (count + test + build + main chunk size)
         if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true'
         id: safety
         continue-on-error: true
@@ -123,6 +130,12 @@ jobs:
           fi
           npm test
           npm run build
+          MAIN=$(ls dist/assets/index-*.js | head -1)
+          KIB=$(( $(wc -c < "$MAIN") / 1024 ))
+          echo "main chunk: $KIB KiB"
+          echo "- main chunk: $KIB KiB" >> $GITHUB_STEP_SUMMARY
+          if [ "$KIB" -gt 300 ]; then echo "❌ main chunk exceeds 300 KiB (got $KIB KiB)"; exit 3; fi
+          ls dist/assets/sync-data-*.js dist/assets/seed-data-*.js > /dev/null
 
       - name: Create auto-sync PR + enable auto-merge
         if: steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome == 'success'
@@ -192,7 +205,7 @@ jobs:
 
       # ===== auto を review に降格 (auto-sync PR を作らなかった run) =====
       # auto-sync PR が作られないのは次の 2 ケース:
-      #   (1) safety check 失敗 (件数超過 / test / build 失敗) … enabled=true
+      #   (1) safety check 失敗 (件数超過 / test / build 失敗 / main chunk サイズ超過) … enabled=true
       #   (2) auto-merge 無効 (autoMergeEnabled=false / force_review_only=true)
       # どちらも autoApplicable が proposed-migrations.json に残ると REVIEW_QUEUE.md
       # にも SYNC_HISTORY (auto 件数) にも不整合が出る。全 autoApplicable を needsReview

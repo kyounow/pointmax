@@ -232,7 +232,7 @@
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
 | テスト | Vitest（**1061 ケース / 65 ファイル**） |
 | PWA | vite-plugin-pwa（precache + service worker） |
-| バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も `bundle-size.yml` で検査) |
+| バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
 
 ### ドメインの構造
@@ -369,7 +369,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   JST 曜日から自動導出。手動 `workflow_dispatch` では `group` 入力 (`auto` / `mon` / `thu` /
   `all`=全 enabled) でグループを明示指定できる (`all` は無料枠を消費するため手動フル実行専用)
 - 高信頼項目 (autoApplicable) は `auto-sync/YYYY-MM-DD-HHMM` ブランチ + `auto-sync` ラベル付き PR を作成し、
-  safety check (件数上限/test/build) 通過後に **squash auto-merge** → main。
+  safety check (件数上限/test/build/main chunk 300 KiB) 通過後に **squash auto-merge** → main。
   bot のマージ (`GITHUB_TOKEN`) は push トリガーを起動しないため、GitHub Pages 再デプロイは
   `deploy.yml` の **`workflow_run`** (Weekly Master Sync 完了で発火) が担う
 - 要レビュー項目は `chore/sync-review-queue` ブランチの長寿命 PR (`needs-review` ラベル) に集約。
