@@ -10,6 +10,8 @@ import {
 } from "../domain/migrations";
 import { useSeedMerge } from "./hooks/useSeedMerge";
 import { useOnline } from "./hooks/useOnline";
+import { useSeedUpdateDismissed } from "./hooks/useSeedUpdateDismissed";
+import { dismissSeedUpdate } from "../state/seedUpdateDismiss";
 
 export function UpdateBanner() {
   // PR-0c: オフライン時は同期系 UI を出さない (店頭・弱電波での出しゃばり抑制)。
@@ -18,13 +20,15 @@ export function UpdateBanner() {
   // online/offline イベントで再購読するため、復帰時は自動で再表示される。
   const online = useOnline();
   // Wave 5 B-1: 3 個別 subscribe → 単一 useShallow
-  const { lastSeedVersion, applySeedUpdate, dismissSeedUpdate } = useStore(
+  const { lastSeedVersion, applySeedUpdate } = useStore(
     useShallow((s) => ({
       lastSeedVersion: s.lastSeedVersion,
       applySeedUpdate: s.applySeedUpdate,
-      dismissSeedUpdate: s.dismissSeedUpdate,
     })),
   );
+  // PR-0a-2b: 「あとで」は lastSeedVersion を進めず、当日のこのセッションだけ隠す
+  // (以前は版を進めてその版の MIGRATIONS を永久にスキップしていた)。
+  const dismissed = useSeedUpdateDismissed();
   const [showDetail, setShowDetail] = useState(false);
   const [overrideKeys, setOverrideKeys] = useState<Set<string>>(new Set());
 
@@ -75,6 +79,7 @@ export function UpdateBanner() {
   if (!online) return null;
   if (!hasData) return null;
   if (lastSeedVersion >= SEED_VERSION) return null;
+  if (dismissed) return null;
 
   const relevantChangelog = SEED_CHANGELOG.filter(
     (c) => c.version > lastSeedVersion && c.version <= SEED_VERSION,
@@ -142,7 +147,11 @@ export function UpdateBanner() {
               ? `${totalChanges + overrideKeys.size}件適用`
               : `${totalChanges}件適用`}
           </button>
-          <button onClick={dismissSeedUpdate} className="dismiss">
+          <button
+            onClick={() => dismissSeedUpdate(SEED_VERSION)}
+            className="dismiss"
+            title="今日はこの画面を開いている間だけ隠します。公式の修正は「適用」するまで保留され、次に開いたときに再表示します。"
+          >
             あとで
           </button>
         </div>

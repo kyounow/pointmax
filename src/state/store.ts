@@ -344,7 +344,8 @@ type Actions = {
   autoApplySeedUpdate: (notice: AutoApplyNotice) => void;
   // PR-4b: 自動反映バナーを閉じる (同一 digest を既読にして再表示を抑止)。
   dismissAutoApplyNotice: () => void;
-  dismissSeedUpdate: () => void;
+  // (PR-0a-2b: 更新バナーの「あとで」用 action (lastSeedVersion を進めていた) は廃止。
+  //  「あとで」は src/state/seedUpdateDismiss.ts が当日のセッション内だけ非表示にし、版は進めない)
   exportJson: () => string;
   importJson: (json: string) => { ok: true } | { ok: false; error: string };
   setSyncUrl: (url: string) => void;
@@ -804,10 +805,6 @@ export const useStore = create<State & Actions>()(
           state.autoApplyNotice = null;
         });
       },
-      dismissSeedUpdate: () =>
-        set((state) => {
-          state.lastSeedVersion = SEED_VERSION;
-        }),
 
       applySchemaMigration: () =>
         set((state) => {

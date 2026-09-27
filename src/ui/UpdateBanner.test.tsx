@@ -10,10 +10,16 @@ import { UpdateBanner } from "./UpdateBanner";
 import { useStore } from "../state/store";
 import { seed, SEED_VERSION } from "../state/seed";
 import { REMOVED_MEMBERSHIP_IDS } from "../state/seed-blocklist";
+import {
+  clearSeedUpdateDismiss,
+  dismissSeedUpdate,
+  isSeedUpdateDismissed,
+} from "../state/seedUpdateDismiss";
 
 describe("UpdateBanner — membership の更新・削除の件数 (PR-0a-2b)", () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     useStore.getState().clearAll();
   });
   afterEach(cleanup);
@@ -66,6 +72,69 @@ describe("UpdateBanner — membership の更新・削除の件数 (PR-0a-2b)", (
       target.notes,
     );
     expect(st.memberships.some((m) => m.id === tombstoned)).toBe(false);
+    expect(st.lastSeedVersion).toBe(SEED_VERSION);
+  });
+});
+
+// PR-0a-2b (任意項目): 「あとで」は lastSeedVersion を進めない。以前は版を進めるだけで、
+// その版の MIGRATIONS (v47 の edge 修正など) が永久にスキップされていた。
+describe("UpdateBanner —「あとで」は版を進めず当日のセッション内だけ隠す (PR-0a-2b)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    useStore.getState().clearAll();
+  });
+  afterEach(() => {
+    cleanup();
+    sessionStorage.clear();
+  });
+
+  // v47 の MIGRATIONS (eikyu-to-d 5→4.5) が未適用の旧端末 (lastSeedVersion=46)。
+  const setOldState = () => {
+    const s = seed();
+    useStore.setState({
+      ...s,
+      edges: s.edges.map((e) => (e.id === "eikyu-to-d" ? { ...e, rate: 5 } : e)),
+      lastSeedVersion: 46,
+    });
+  };
+
+  it("「あとで」でバナーが消え、lastSeedVersion は据え置き。再マウントしても当日のセッション内は隠れたまま", () => {
+    setOldState();
+    const first = render(<UpdateBanner />);
+    fireEvent.click(screen.getByRole("button", { name: "あとで" }));
+    expect(first.container.querySelector(".update-banner")).toBeNull();
+    expect(useStore.getState().lastSeedVersion).toBe(46);
+    expect(isSeedUpdateDismissed(SEED_VERSION)).toBe(true);
+    first.unmount();
+
+    const again = render(<UpdateBanner />);
+    expect(again.container.querySelector(".update-banner")).toBeNull();
+  });
+
+  it("翌日 / 次の版 / セッション終了 (記録消去) では再表示される", () => {
+    setOldState();
+    const today = new Date("2026-09-30T10:00:00+09:00");
+    dismissSeedUpdate(SEED_VERSION, today);
+    expect(isSeedUpdateDismissed(SEED_VERSION, today)).toBe(true);
+    expect(
+      isSeedUpdateDismissed(SEED_VERSION, new Date("2026-10-01T10:00:00+09:00")),
+    ).toBe(false);
+    expect(isSeedUpdateDismissed(SEED_VERSION + 1, today)).toBe(false);
+
+    clearSeedUpdateDismiss();
+    const { container } = render(<UpdateBanner />);
+    expect(container.querySelector(".update-banner")).not.toBeNull();
+  });
+
+  it("「あとで」の後でも MIGRATIONS は保留され、あとから適用すれば届く", () => {
+    setOldState();
+    render(<UpdateBanner />);
+    fireEvent.click(screen.getByRole("button", { name: "あとで" }));
+    // 版を進めていないので、後の「アプリに反映」で v47 の edge 修正が適用される
+    useStore.getState().applySeedUpdate([]);
+    const st = useStore.getState();
+    expect(st.edges.find((e) => e.id === "eikyu-to-d")?.rate).toBe(4.5);
     expect(st.lastSeedVersion).toBe(SEED_VERSION);
   });
 });

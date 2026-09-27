@@ -15,6 +15,7 @@ import { useStore } from "../../state/store";
 import { SEED_VERSION } from "../../state/seed";
 import { isSwUpdated, dismissSwUpdate } from "../../state/swUpdateNotice";
 import { useOnline } from "../hooks/useOnline";
+import { useSeedUpdateDismissed } from "../hooks/useSeedUpdateDismissed";
 import { UpdateBanner } from "../UpdateBanner";
 import { CalcTodayBanner } from "./CalcTodayBanner";
 import { CalcAutoApplyBanner } from "./CalcAutoApplyBanner";
@@ -74,7 +75,11 @@ export function BannerSlot({
     setSwUpdated(false);
   };
 
-  const updateAvailable = online && hasData && lastSeedVersion < SEED_VERSION;
+  // PR-0a-2b: 「あとで」(当日のこのセッションだけ非表示) の間は update 枠を空けて次点 (自動反映 /
+  // 今日) に譲る。lastSeedVersion は進めないので、反映するまで MIGRATIONS は保留のまま。
+  const seedUpdateDismissed = useSeedUpdateDismissed();
+  const updateAvailable =
+    online && hasData && lastSeedVersion < SEED_VERSION && !seedUpdateDismissed;
   // 自動反映バナーは同期通知系なので update/modal と同じくオフライン時は抑制する。
   const autoApplyAvailable = online && autoApplyNotice !== null;
 
