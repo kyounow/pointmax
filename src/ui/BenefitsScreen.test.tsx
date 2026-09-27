@@ -20,7 +20,7 @@ import "@testing-library/jest-dom/vitest";
 import { BenefitsScreen } from "./BenefitsScreen";
 import { DialogProvider } from "./dialog/DialogProvider";
 import { useStore } from "../state/store";
-import { MASTER_PROGRAM_IDS } from "../state/seed";
+import { MASTER_PROGRAM_IDS, getSeedProgram } from "../state/seed";
 import type { BenefitProgram } from "../domain/types";
 
 beforeEach(() => {
@@ -211,6 +211,87 @@ describe("BenefitsScreen 手動登録フォーム", () => {
     // もう一度クリックで閉じる → unmount
     fireEvent.click(summary);
     expect(screen.queryByPlaceholderText(/○○ストア/)).toBeNull();
+  });
+});
+
+// PR-5a: officialUrl は META キー (既存端末に伝播しない) なので、未編集の公式 program は
+// 同梱 seed の値を優先し、seed に無ければ出さない。編集済み・ユーザー作成はローカルの値。
+describe("BenefitsScreen 公式リンク (PR-5a: 同梱 seed 優先)", () => {
+  const JAL_ID = "prog-jal-tokuyaku";
+  const seedJal = getSeedProgram(JAL_ID);
+  const seedJalUrl = seedJal?.officialUrl;
+
+  const linkByLabel = (label: string) =>
+    screen
+      .queryAllByRole("link")
+      .find((a) => (a.textContent ?? "").includes(label));
+
+  it("前提: seed の prog-jal-tokuyaku は安全な officialUrl を持つ", () => {
+    expect(seedJalUrl).toMatch(/^https:\/\//);
+  });
+
+  it("local に officialUrl が無い未編集の公式 program でも、seed の URL で『🔗 公式』を出す", () => {
+    seed([{ ...seedJal!, officialUrl: undefined }]);
+    renderScreen();
+    expect(linkByLabel("公式")).toHaveAttribute("href", seedJalUrl);
+  });
+
+  it("local と seed で URL が異なる未編集の公式 program は seed の URL を使う", () => {
+    seed([{ ...seedJal!, officialUrl: "https://old.example.com/stale" }]);
+    renderScreen();
+    expect(linkByLabel("公式")).toHaveAttribute("href", seedJalUrl);
+  });
+
+  it("seed に officialUrl が無い公式 program は、local に古い URL が残っていてもリンクを出さない", () => {
+    const base = getSeedProgram("prog-rakuten-ichiba-base");
+    expect(base?.officialUrl).toBeUndefined();
+    expect(base?.entryUrl).toBeUndefined();
+    seed([{ ...base!, officialUrl: "https://old.example.com/stale" }]);
+    renderScreen();
+    expect(linkByLabel("公式")).toBeUndefined();
+  });
+
+  it("編集済み (userModifiedAt) は seed を参照せずローカルの URL を使う", () => {
+    seed([
+      {
+        ...seedJal!,
+        officialUrl: "https://mine.example.com/edited",
+        userModifiedAt: "2026-08-01T00:00:00.000Z",
+      },
+    ]);
+    renderScreen();
+    expect(linkByLabel("公式")).toHaveAttribute(
+      "href",
+      "https://mine.example.com/edited",
+    );
+  });
+
+  it("ユーザー作成 program (seed に無い id) はローカルの URL を使う", () => {
+    seed([mkProg({ id: "u-own", officialUrl: "https://own.example.com/" })]);
+    renderScreen();
+    expect(linkByLabel("公式")).toHaveAttribute("href", "https://own.example.com/");
+  });
+
+  it("entryUrl を持つ program は従来どおり『エントリー』(公式より優先)", () => {
+    seed([
+      mkProg({
+        id: "u-entry",
+        entryUrl: "https://entry.example.com/",
+        officialUrl: "https://official.example.com/",
+      }),
+    ]);
+    renderScreen();
+    expect(linkByLabel("エントリー")).toHaveAttribute(
+      "href",
+      "https://entry.example.com/",
+    );
+    expect(linkByLabel("公式")).toBeUndefined();
+  });
+
+  it("危険スキームの officialUrl はリンクにしない (isSafeHttpUrl)", () => {
+    seed([mkProg({ id: "u-bad", officialUrl: "javascript:alert(1)" })]);
+    renderScreen();
+    expect(linkByLabel("公式")).toBeUndefined();
   });
 });
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { formatRatio } from "../../domain/currencyKind";
 import { isMonthStale } from "../../domain/edgeFreshness";
+import { seedFreshness } from "../../state/seedFreshness";
 import type { Card, ConversionEdge, Currency } from "../../domain/types";
 import { CurrencyIcon } from "../CurrencyIcon";
 
@@ -35,6 +36,9 @@ export function EdgeDetailPanel({
     setPrevEdgeId(edge.id);
     setIsEditing(false);
   }
+
+  // PR-5a: 表示する確認月 (同梱 seed 参照。seedFreshness = resolveVerifiedMonth + getSeedEdge)。
+  const verified = seedFreshness.edgeMonth(edge);
 
   const requiredCardNames = edge.requiredCardIds
     ?.map((id) => cards.find((c) => c.id === id)?.name ?? id)
@@ -110,19 +114,21 @@ export function EdgeDetailPanel({
               </div>
             )}
             {/* REM-#2: 最終確認月 (メンテ用ビュー)。12ヶ月超は ⚠ で棚卸し対象を示す。
-                未記入は「未確認」表示 (未検証を古いと誤警告しない = ⚠ は出さない)。 */}
+                未記入は「未確認」表示 (未検証を古いと誤警告しない = ⚠ は出さない)。
+                PR-5a: 確認月は META キーで既存端末に伝播しないため、同梱 seed を参照して解決する
+                (rate が seed と一致すれば seed の月。seed が未記入なら未確認)。 */}
             <div className="ratio-hint" style={{ marginTop: 4 }}>
               <strong>最終確認:</strong>{" "}
-              {edge.lastVerifiedAt ? (
-                isMonthStale(edge.lastVerifiedAt, new Date()) ? (
+              {verified ? (
+                isMonthStale(verified, new Date()) ? (
                   <span
                     style={{ color: "#d4a017" }}
                     title="最終確認から12ヶ月を超えています。公式ページでレートを再確認し lastVerifiedAt を更新してください (四半期棚卸し対象)。"
                   >
-                    ⚠ {edge.lastVerifiedAt} (要確認)
+                    ⚠ {verified} (要確認)
                   </span>
                 ) : (
-                  <span>{edge.lastVerifiedAt}</span>
+                  <span>{verified}</span>
                 )
               ) : (
                 <span className="hint-inline">未確認 (未記入)</span>
