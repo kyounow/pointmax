@@ -21,6 +21,7 @@
 //   - 新規 program が registry の target 宣言と合わない                → "targetMismatch" (PR-0b-3)
 //   - 新規 campaign の rate ≥ 10% / 5% 超で上限なし                    → "campaignRateCeiling" (PR-0b-3)
 //   - 新規 campaign の条件文言 (最大 / 対象商品 / 店舗限定 等) / lifestyle 語 → "campaignConditional" (PR-0b-3)
+//   (membership の storeNameMismatch / 条件文言は diff-and-propose の Phase C′ で guardMembershipContent が付ける)
 //
 // 全て満たさない場合 reviewReason は undefined となり、autoApplicable に分類される。
 // membership tombstone (seed-blocklist の REMOVED_MEMBERSHIP_IDS) の id は提案自体を出さない
@@ -30,7 +31,8 @@
 // (dedupeAcrossProposals) や category cap は diff-and-propose.ts 側で実施。
 
 import type { SeedShape } from "../../src/domain/mergeSeed";
-import type { PaymentApp } from "../../src/domain/types";
+import type { PaymentApp, PurchaseChannel } from "../../src/domain/types";
+import { effectiveChannel } from "../../src/domain/purchaseChannel";
 import { isSafeHttpUrl } from "../../src/domain/urlSafety";
 import {
   BLOCKED_STORE_IDS,
@@ -735,6 +737,165 @@ export function proposeMemberships(
   }
   logTombstoneSkip(tombstoneSkipped, data.sourceId);
   return result;
+}
+
+// ───────────────────────────────────────────────────────────────
+// Phase C′: membership の内容ガード (PR-0b-3、Z3 の membership 側)
+// ───────────────────────────────────────────────────────────────
+// diff-and-propose の Phase C (orphan) の後・C2 (atomicity) の前に、reviewReason の無い (= auto 候補の)
+// 新規 membership だけに適用する。Phase 1 (proposeMemberships) に入れると、既に missingStoreBody /
+// lowConfidence 等で review 行きの membership の理由まで付け替わり、triage の「店舗待ち」集計が壊れる。
+// C2 の前に置くのは、ここで membership が全て降格した同 run の新規 member-stores program を C2 が
+// orphanedProgram で拾えるようにするため。
+//   1. storeNameMismatch: 既存 store への membership なのに、evidence に店名が無い (店の取り違え疑い。
+//      2026-07〜09 の実事故: かっぱ寿司 → くら寿司、タカシマヤグループ SC → 高島屋、
+//      TOWER RECORDS ONLINE → タワーレコード、nojima online → ノジマ)。先に判定する。
+//   2. campaignConditional: evidence / notes に条件文言 (一部 / 最大 / EC 経由 / モバイルオーダー /
+//      ○○限定 / 支店限定)。実効チャネルが online の program (たまるマーケット: effectiveChannel が
+//      "online") は EC 語 (オンライン / ネット / 通販 / 経由) を免除する (たまるは EC 経由が付与条件そのもので、
+//      免除しないと正しい membership を全部止める。RF6)。
+// どれも export し、PR-3b の triage (channelSuspect と名前疑い) で再利用する。
+
+// 店名照合の正規化: NFKC → 小文字 → 空白・中黒・ハイフン・長音・句読点・引用符・感嘆符を除く。
+function normalizeStoreText(s: string): string {
+  return s
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\s・･\-‐‑‒–—―−ー~〜～、。,.!?'"’”「」『』]/g, "");
+}
+
+// store.name の括弧書き (「ユニクロ (一部店舗)」「ビックカメラ [家電量販店]」等) を除いた本体。
+function storeNameCore(name: string): string {
+  return name.replace(/[(（[［【][^)）\]］】]*[)）\]］】]/g, "").trim();
+}
+
+/**
+ * 既存 store への membership の evidence に店名があるか。無ければ判定詳細、あれば null。
+ * seed に無い store (新規。missingStoreBody / chain-promote の担当) と擬似 store (general 等) は null。
+ * store.name から括弧書きを除いた core と、core を「/」で分割した各要素 (2 字以上) のどれかが、
+ * 正規化した evidence に部分一致すれば通過。sources/aliases.json は id→id の対応だけで名前を持たないため使わない。
+ */
+export function storeNameMismatchDetail(
+  storeId: string,
+  evidenceQuote: string | undefined,
+  current: Pick<SeedShape, "stores">,
+): string | null {
+  if (PSEUDO_STORE_IDS.has(storeId)) return null;
+  const store = current.stores.find((s) => s.id === storeId);
+  if (!store) return null;
+  const core = storeNameCore(store.name);
+  const candidates = [core, ...core.split(/[/／]/)]
+    .map(normalizeStoreText)
+    .filter((c) => c.length >= 2);
+  if (candidates.length === 0) return null; // 照合できる名前が無い (安全側で通す)
+  const ev = normalizeStoreText(evidenceQuote ?? "");
+  if (candidates.some((c) => ev.includes(c))) return null;
+  return `evidence に店名「${core}」が無い`;
+}
+
+// membership の条件文言。[label, pattern, EC 語か]。素の「限定」(「この店舗限定」は店舗を特定する本質的な記述) と
+// 「税抜換算」は入れない。
+const MEMBERSHIP_WORDING_PATTERNS: ReadonlyArray<readonly [string, RegExp, boolean]> = [
+  ["一部", /一部/, false],
+  ["最大", /最大/, false],
+  ["EC経由", /オンライン|ネット|通販|経由/, true],
+  ["モバイルオーダー", /モバイルオーダー|デリバリー/, false],
+  ["限定", /(?:サービス|商品|メニュー|アプリ)限定/, false],
+  ["支店限定", /[\p{Script=Han}\p{Script=Katakana}ー]{2,}店舗?[】\]）)]/u, false],
+];
+
+/**
+ * membership の evidence → notes の順に条件文言を探し、最初の一致を『label:「語」@field』で返す (無ければ null)。
+ * exemptEcWording=true (実効チャネル online の program) なら EC 語 (オンライン / ネット / 通販 / 経由) を免除する。
+ */
+export function detectMembershipWording(
+  fields: { evidenceQuote?: string; notes?: string },
+  opts: { exemptEcWording?: boolean } = {},
+): string | null {
+  for (const field of ["evidenceQuote", "notes"] as const) {
+    const raw = fields[field];
+    if (!raw) continue;
+    const text = raw.normalize("NFKC");
+    for (const [label, re, isEc] of MEMBERSHIP_WORDING_PATTERNS) {
+      if (isEc && opts.exemptEcWording) continue;
+      const m = text.match(re);
+      if (m) return `${label}:「${m[0]}」@${field}`;
+    }
+  }
+  return null;
+}
+
+/**
+ * programId → program の channel (seed 既存 or 同 run の新規 program record)。membership の実効チャネル
+ * (effectiveChannel) の解決に使う。seed を優先し、無ければ同 run の addRecord/programs の record.channel。
+ */
+export function programChannelResolver(
+  proposals: readonly Proposal[],
+  current: Pick<SeedShape, "programs">,
+): (programId: string) => PurchaseChannel | undefined {
+  const channels = new Map<string, PurchaseChannel | undefined>();
+  for (const p of proposals) {
+    if (p.type !== "addRecord" || p.collection !== "programs") continue;
+    const rec = (p as AddRecordProposal).record;
+    if (typeof rec.id !== "string") continue;
+    const ch = rec.channel;
+    channels.set(rec.id, ch === "online" || ch === "in-store" ? ch : undefined);
+  }
+  for (const prog of current.programs ?? []) channels.set(prog.id, prog.channel);
+  return (programId) => channels.get(programId);
+}
+
+/**
+ * Phase C′: reviewReason の無い新規 membership に店名照合 (storeNameMismatch) と条件文言
+ * (campaignConditional) を当てる。既に reason を持つ membership と membership 以外の提案は触らない。
+ */
+export function guardMembershipContent(
+  proposals: Proposal[],
+  current: Pick<SeedShape, "stores" | "programs">,
+  opts: { programChannelOf?: (programId: string) => PurchaseChannel | undefined } = {},
+): { proposals: Proposal[]; demotedStoreName: number; demotedWording: number } {
+  const channelOf = opts.programChannelOf ?? programChannelResolver(proposals, current);
+  let demotedStoreName = 0;
+  let demotedWording = 0;
+  const out = proposals.map((p) => {
+    if (p.type !== "addRecord" || p.collection !== "memberships" || p.reviewReason) {
+      return p;
+    }
+    const rec = (p as AddRecordProposal).record as {
+      programId?: unknown;
+      storeId?: unknown;
+      notes?: unknown;
+      channel?: unknown;
+    };
+    const storeId = typeof rec.storeId === "string" ? rec.storeId : null;
+    const programId = typeof rec.programId === "string" ? rec.programId : null;
+    if (storeId !== null) {
+      const nameDetail = storeNameMismatchDetail(storeId, p.evidence?.evidenceQuote, current);
+      if (nameDetail !== null) {
+        demotedStoreName += 1;
+        return { ...p, reviewReason: "storeNameMismatch", reviewDetail: nameDetail } as Proposal;
+      }
+    }
+    const membershipChannel =
+      rec.channel === "online" || rec.channel === "in-store" ? rec.channel : undefined;
+    const online =
+      programId !== null &&
+      effectiveChannel({ channel: channelOf(programId) }, { channel: membershipChannel }) ===
+        "online";
+    const wording = detectMembershipWording(
+      {
+        evidenceQuote: p.evidence?.evidenceQuote,
+        notes: typeof rec.notes === "string" ? rec.notes : undefined,
+      },
+      { exemptEcWording: online },
+    );
+    if (wording !== null) {
+      demotedWording += 1;
+      return { ...p, reviewReason: "campaignConditional", reviewDetail: wording } as Proposal;
+    }
+    return p;
+  });
+  return { proposals: out, demotedStoreName, demotedWording };
 }
 
 // ───────────────────────────────────────────────────────────────

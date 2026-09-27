@@ -29,6 +29,7 @@ import type {
 } from "./types";
 import { computeProposalId, isApplicableProposal } from "./types";
 import {
+  guardMembershipContent,
   proposeCards,
   proposeExpiredCampaignDeletions,
   proposeJalTokuyakuMemberships,
@@ -604,8 +605,11 @@ export function guardStaleExtractGeneration(
 //                不変条件: B″ は常に C の直前 (降格した store / program を参照する membership を C が拾う)
 //   Phase C  : Orphan membership guard (downgradeOrphanMemberships)
 //              ─ store / program 本体が auto に無い membership を降格
+//   Phase C′ : Membership content guard (guardMembershipContent、propose-helpers.ts、PR-0b-3)
+//              ─ reviewReason の無い新規 membership の店名照合 (storeNameMismatch) と条件文言
+//                (campaignConditional)。実効チャネル online の program (たまる系) は EC 語を免除
 //   Phase C2 : Program/membership atomicity guard (demoteChildlessMemberStorePrograms)
-//              ─ Phase C で membership が全て降格した member-stores program 単独を降格
+//              ─ Phase C / C′ で membership が全て降格した member-stores program 単独を降格
 //   Phase C3 : Stale extract generation guard (guardStaleExtractGeneration)
 //              ─ 旧世代 extracted (promptVersion 不一致) 由来の PROGRAM_OVERRIDES 行き
 //                updateField を staleExtractGeneration で降格 (書き戻し防止)
@@ -766,6 +770,19 @@ function main(): void {
     if (orphan.downgradedProgram > 0)
       parts.push(`${orphan.downgradedProgram} 件を missingProgramBody`);
     console.log(`🧯 orphan guard: ${parts.join(" / ")} で降格`);
+  }
+
+  // Phase C′: Membership content guard (PR-0b-3)
+  //   reviewReason の無い新規 membership に、店名照合 (storeNameMismatch) と条件文言 (campaignConditional) を
+  //   当てる。実効チャネルが online の program (たまる系) は EC 語を免除。C2 の前に置く (ここで membership が
+  //   全て降格した同 run の新規 member-stores program を C2 が orphanedProgram で拾う)。
+  const membershipGuard = guardMembershipContent(finalProposals, current);
+  finalProposals = membershipGuard.proposals;
+  if (membershipGuard.demotedStoreName + membershipGuard.demotedWording > 0) {
+    console.log(
+      `🧯 membership content guard: ${membershipGuard.demotedStoreName + membershipGuard.demotedWording} 件` +
+        ` (storeNameMismatch ${membershipGuard.demotedStoreName} / campaignConditional ${membershipGuard.demotedWording})`,
+    );
   }
 
   // Phase C2: Program/membership atomicity guard (原子性ガード)

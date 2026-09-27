@@ -17,12 +17,14 @@ import { describe, it, expect } from "vitest";
 import {
   applyCategoryCap,
   dedupeAcrossProposals,
+  demoteChildlessMemberStorePrograms,
   downgradeOrphanMemberships,
   promoteChainStoreAutoMerge,
   proposeMemberships,
   proposePrograms,
   proposeStores,
 } from "./diff-and-propose";
+import { guardMembershipContent } from "./propose-helpers";
 import { applySourcePolicies, autoMergeDisabledSourceIds } from "./registry-policy";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 import type {
@@ -109,7 +111,8 @@ const campaignSource: ExtractedSource = {
   ],
 };
 
-// diff-and-propose の main と同じ Phase 順 (1 → A → B → B' → B″ → C) を再現する。
+// diff-and-propose の main と同じ Phase 順 (1 → A → B → B' → B″ → C → C′ → C2) を再現する
+// (C3 の stale ガードは promptVersion 依存なので省く)。
 // policies (registry のソース別ポリシー) を渡すと B' の除外と B″ (applySourcePolicies) が効く (PR-0b-3)。
 function runPipeline(
   extracted: ExtractedSource[],
@@ -150,10 +153,19 @@ function runPipeline(
     existingProgramIds,
   );
 
+  // Phase C′: membership の内容ガード (店名照合・条件文言)
+  const membershipGuard = guardMembershipContent(orphan.proposals, current);
+
+  // Phase C2: atomicity
+  const atomicity = demoteChildlessMemberStorePrograms(
+    membershipGuard.proposals,
+    new Set((current.memberships ?? []).map((m) => m.programId)),
+  );
+
   // Phase D: 分類
   const auto: Proposal[] = [];
   const review: Proposal[] = [];
-  for (const p of orphan.proposals) {
+  for (const p of atomicity.proposals) {
     if (p.reviewReason) review.push(p);
     else auto.push(p);
   }
@@ -167,6 +179,8 @@ function runPipeline(
       sourcePolicyDemoted: [...sourcePolicy.demotedBySource.values()].reduce((s, n) => s + n, 0),
       orphanDowngradedStore: orphan.downgradedStore,
       orphanDowngradedProgram: orphan.downgradedProgram,
+      membershipGuarded: membershipGuard.demotedStoreName + membershipGuard.demotedWording,
+      atomicityDemoted: atomicity.demoted,
     },
   };
 }

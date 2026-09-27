@@ -22,7 +22,10 @@ import {
 import {
   TOMBSTONED_MEMBERSHIP_IDS,
   deriveLoyaltyProgramId,
+  detectMembershipWording,
+  guardMembershipContent,
   rateToProgramSlug,
+  storeNameMismatchDetail,
 } from "./propose-helpers";
 import type { AddRecordProposal, ExtractedSource, Proposal } from "./types";
 
@@ -3014,6 +3017,199 @@ describe("PR-0b-3: campaign の auto ガード (proposePrograms)", () => {
       expect(ps[0].type).toBe("updateField");
       expect(ps[0].reviewReason).toBeUndefined();
     });
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// PR-0b-3 (Z3): Phase C′ membership の内容ガード
+// ───────────────────────────────────────────────────────────────
+
+describe("PR-0b-3: storeNameMismatchDetail (店名照合)", () => {
+  // seed() に依存しない凍結 store 名 (seed-data-stores / seed-additions の実名)
+  const stores: SeedShape = {
+    ...emptySeed,
+    stores: [
+      { id: "kura-sushi", name: "くら寿司", category: "飲食" },
+      { id: "takashimaya", name: "高島屋", category: "百貨店" },
+      { id: "tower-records", name: "タワーレコード", category: "音楽・映像" },
+      { id: "nojima", name: "ノジマ", category: "家電量販店" },
+      { id: "uniqlo", name: "ユニクロ (一部店舗)", category: "ファッション" },
+      { id: "conv-7eleven", name: "セブン-イレブン", category: "コンビニ" },
+      { id: "sukiya", name: "すき家", category: "飲食" },
+      { id: "general", name: "一般加盟店", category: "その他" },
+      { id: "multi", name: "ENEOS／エネオス", category: "ガソリン" },
+    ],
+  };
+
+  it.each([
+    ["kura-sushi", "かっぱ寿司の店舗で最大10倍！", "くら寿司"],
+    ["takashimaya", "タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍", "高島屋"],
+    ["tower-records", "TOWER RECORDS ONLINE エポスポイント 3 倍", "タワーレコード"],
+    ["nojima", "nojima online エポスポイント 3 倍", "ノジマ"],
+  ])("不一致: %s ←「%s」", (storeId, evidence, core) => {
+    expect(storeNameMismatchDetail(storeId, evidence, stores)).toBe(`evidence に店名「${core}」が無い`);
+  });
+
+  it.each([
+    ["uniqlo", "ユニクロオンラインストア エポスポイント 2 倍"], // 括弧除去で一致
+    ["conv-7eleven", "セブンイレブン 対象商品 3%"], // ハイフン除去で一致
+    ["sukiya", "すき家 ポイント 20倍"],
+    ["multi", "エネオス でポイント 2 倍"], // 「/」分割の要素で一致
+  ])("一致: %s ←「%s」", (storeId, evidence) => {
+    expect(storeNameMismatchDetail(storeId, evidence, stores)).toBeNull();
+  });
+
+  it("seed に無い新規 store と擬似 store (general) は null (missingStoreBody / pseudoStoreTarget の担当)", () => {
+    expect(storeNameMismatchDetail("brand-new-store", "無関係な引用", stores)).toBeNull();
+    expect(storeNameMismatchDetail("general", "無関係な引用", stores)).toBeNull();
+  });
+});
+
+describe("PR-0b-3: detectMembershipWording (membership の条件文言)", () => {
+  it("「マクドナルド(モバイルオーダー・マックデリバリー(R)サービス限定)」は一致する", () => {
+    expect(
+      detectMembershipWording({ evidenceQuote: "マクドナルド(モバイルオーダー・マックデリバリー(R)サービス限定)" }),
+    ).toBe("モバイルオーダー:「モバイルオーダー」@evidenceQuote");
+  });
+  it.each(["この店舗限定 2%", "税抜換算", "すき家 ポイント 20倍"])("「%s」は一致しない", (text) => {
+    expect(detectMembershipWording({ evidenceQuote: text })).toBeNull();
+  });
+  it("notes の「商品限定」「【池袋店】」も拾う", () => {
+    expect(detectMembershipWording({ evidenceQuote: "3 倍", notes: "対象の商品限定" })).toBe(
+      "限定:「商品限定」@notes",
+    );
+    expect(detectMembershipWording({ evidenceQuote: "【ビックカメラ池袋店】3 倍" })).toBe(
+      "支店限定:「ビックカメラ池袋店】」@evidenceQuote",
+    );
+  });
+  it("exemptEcWording は EC 語 (オンライン / ネット / 通販 / 経由) だけを免除する", () => {
+    expect(detectMembershipWording({ evidenceQuote: "無印良品ネットストア 2 倍" })).toBe(
+      "EC経由:「ネット」@evidenceQuote",
+    );
+    expect(
+      detectMembershipWording({ evidenceQuote: "無印良品ネットストア 2 倍" }, { exemptEcWording: true }),
+    ).toBeNull();
+    expect(
+      detectMembershipWording({ evidenceQuote: "一部店舗のみ ネット 2 倍" }, { exemptEcWording: true }),
+    ).toBe("一部:「一部」@evidenceQuote");
+  });
+});
+
+describe("PR-0b-3: guardMembershipContent (Phase C′)", () => {
+  const current: SeedShape = {
+    ...emptySeed,
+    stores: [
+      { id: "kura-sushi", name: "くら寿司", category: "飲食" },
+      { id: "muji", name: "無印良品 (一部店舗)", category: "ファッション" },
+      { id: "sukiya", name: "すき家", category: "飲食" },
+    ],
+    programs: [
+      {
+        id: "prog-epos-tamaru-2x", name: "たまるマーケット (2倍)", scope: "member-stores",
+        cardIds: ["epos-card"], rate: 0.01, currencyId: "epos", channel: "online",
+      },
+      {
+        id: "prog-jcb-jpoint-20x", name: "J-POINT (20倍)", scope: "member-stores",
+        cardIds: ["jcb-w"], rate: 0.105, currencyId: "j-point",
+      },
+    ],
+  };
+  const mem = (
+    programId: string,
+    storeId: string,
+    evidenceQuote: string,
+    reviewReason?: Proposal["reviewReason"],
+  ): Proposal => ({
+    type: "addRecord",
+    collection: "memberships",
+    record: { programId, storeId },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: { evidenceQuote, explicitness: 0.95, ambiguity: 0 },
+    ...(reviewReason ? { reviewReason } : {}),
+  });
+
+  it("店名不一致は storeNameMismatch (文言より先に判定)、条件文言は campaignConditional、判定詳細付き", () => {
+    const { proposals, demotedStoreName, demotedWording } = guardMembershipContent(
+      [
+        mem("prog-jcb-jpoint-20x", "kura-sushi", "かっぱ寿司の店舗で最大10倍！"),
+        mem("prog-jcb-jpoint-20x", "sukiya", "すき家 最大 20倍"),
+        mem("prog-jcb-jpoint-20x", "sukiya", "すき家 ポイント 20倍"),
+      ],
+      current,
+    );
+    expect(proposals.map((p) => p.reviewReason)).toEqual([
+      "storeNameMismatch",
+      "campaignConditional",
+      undefined,
+    ]);
+    expect(proposals[0].reviewDetail).toBe("evidence に店名「くら寿司」が無い");
+    expect(proposals[1].reviewDetail).toBe("最大:「最大」@evidenceQuote");
+    expect(demotedStoreName).toBe(1);
+    expect(demotedWording).toBe(1);
+  });
+
+  it("既に reason を持つ membership (missingStoreBody / lowConfidence) と membership 以外は変えない", () => {
+    const a = mem("prog-jcb-jpoint-20x", "kura-sushi", "かっぱ寿司", "missingStoreBody");
+    const b = mem("prog-jcb-jpoint-20x", "sukiya", "最大", "lowConfidence");
+    const prog: Proposal = {
+      type: "addRecord",
+      collection: "programs",
+      record: { id: "prog-x", name: "最大 3%", rate: 0.03, currencyId: "d-pt" },
+      sourceId: "src",
+      confidence: 1,
+      evidence: { evidenceQuote: "最大", explicitness: 1, ambiguity: 0 },
+    };
+    const { proposals } = guardMembershipContent([a, b, prog], current);
+    expect(proposals[0]).toBe(a);
+    expect(proposals[1]).toBe(b);
+    expect(proposals[2]).toBe(prog);
+  });
+
+  it("実効チャネル online の program (たまる) への membership は「ネットストア」でも通過 (RF6)", () => {
+    const { proposals } = guardMembershipContent(
+      [
+        mem("prog-epos-tamaru-2x", "muji", "無印良品ネットストア エポスポイント 2 倍"),
+        mem("prog-jcb-jpoint-20x", "muji", "無印良品ネットストア J-POINT 2 倍"), // online でない program は止める
+      ],
+      current,
+    );
+    expect(proposals[0].reviewReason).toBeUndefined();
+    expect(proposals[1].reviewReason).toBe("campaignConditional");
+  });
+
+  it("同 run の新規 program の record.channel=online も解決する (programChannelResolver)", () => {
+    const newTier: Proposal = {
+      type: "addRecord",
+      collection: "programs",
+      record: { id: "prog-epos-tamaru-5x", name: "たまる 5倍", scope: "member-stores", rate: 0.025, currencyId: "epos", channel: "online" },
+      sourceId: "epos-tamaru-market",
+      confidence: 0.95,
+      evidence: { evidenceQuote: "5倍", explicitness: 0.95, ambiguity: 0 },
+    };
+    const { proposals } = guardMembershipContent(
+      [newTier, mem("prog-epos-tamaru-5x", "muji", "無印良品ネットストア 5 倍")],
+      current,
+    );
+    expect(proposals[1].reviewReason).toBeUndefined();
+  });
+
+  it("C′ で membership が全て降格した同 run の新規 member-stores program は、C2 で orphanedProgram になる", () => {
+    const newProg: Proposal = {
+      type: "addRecord",
+      collection: "programs",
+      record: { id: "prog-dpay-kura", name: "d払い くら寿司 3%", scope: "member-stores", paymentAppId: "pa-d-pay", rate: 0.03, currencyId: "d-pt", validTo: "2099-12-31" },
+      sourceId: "src",
+      confidence: 1,
+      evidence: { evidenceQuote: "3%", explicitness: 1, ambiguity: 0 },
+    };
+    const guarded = guardMembershipContent(
+      [newProg, mem("prog-dpay-kura", "kura-sushi", "かっぱ寿司で d払い 3%")],
+      current,
+    );
+    expect(guarded.proposals[1].reviewReason).toBe("storeNameMismatch");
+    const atomic = demoteChildlessMemberStorePrograms(guarded.proposals, new Set());
+    expect(atomic.proposals[0].reviewReason).toBe("orphanedProgram");
   });
 });
 
