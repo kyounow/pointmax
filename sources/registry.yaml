@@ -392,7 +392,9 @@ sources:
       1 キャンペーン=1 program (validFrom/validTo) + 対象店舗ごとの
       membership として抽出。日付明記が無い／店舗非依存は出力しない方針。
       新規 program の auto 可否はルート README「cron が auto-merge する/しない範囲」表を参照
-      (PR #60 以降、campaign extractor 由来は isCampaignAutoMergeable を満たせば auto) (2026-09 訂正)。
+      (PR-0b-3 以降、campaign extractor 由来は Z3 ガード (campaignAutoMergeBlocker: rate 10% 未満・
+      5% 超は月上限必須・条件文言なし 等) と target (pointCardId=jre-pointcard) 照合を満たせば auto。
+      再開時に autoMerge:false を付けるかは再開 PR で判断する)。
       決済アプリ系キャンペーン (楽天Pay/d払い) は今後検討 (要 proposePrograms
       新設、SESSION_LOG「決済系キャンペーン deferral」参照)。
       ---
@@ -441,8 +443,9 @@ sources:
       1 キャンペーン=1 program (paymentAppId+validFrom/validTo) + 対象
       店舗 membership として抽出。店舗非依存の全体施策・日付なしは出力
       しない方針。新規 program の auto 可否はルート README「cron が auto-merge する/しない範囲」
-      表を参照 (PR #60 以降、campaign extractor 由来は isCampaignAutoMergeable を満たせば auto)
-      (2026-09 訂正)。
+      表を参照 (PR-0b-3 以降、campaign extractor 由来は Z3 ガード (campaignAutoMergeBlocker) と
+      target (paymentAppId=pa-rakuten-pay) 照合を満たせば auto。再開時に autoMerge:false を付けるかは
+      再開 PR で判断する)。
       ★ 実 fetch 検証 (2026-05-17、独立 2 回とも clean success):
       抽出 0 件。当一覧 URL は抽選・「最大」・店舗指定なしの全体施策
       中心で「固定還元率+対象店舗+期間」が揃うキャンペーンを含まない
@@ -473,8 +476,10 @@ sources:
       手動 seed 投入済 (V5-2 時点): W 系列 9 + Gold 系列 9 = 18 memberships。
       cron は未網羅の提携店を追加する位置付け。programs は extractor≠campaign のため
       needsReview (idCollision)、memberships は既存 store / program 参照かつ confidence≥0.9
-      なら auto (2026-09-14 #149 実績: prog-jcb-jpoint-gold-2x → takashimaya)。範囲の正は
-      ルート README「cron が auto-merge する/しない範囲」表 (2026-09 訂正)。
+      で、PR-0b-3 以降は Phase C′ (evidence に店名があること・条件文言が無いこと) も通過したときだけ auto
+      (2026-09-14 #149 の prog-jcb-jpoint-gold-2x → takashimaya は「タカシマヤグループの SC」の
+      誤マッピングで、今は tombstone 済み・storeNameMismatch でも止まる)。範囲の正は
+      ルート README「cron が auto-merge する/しない範囲」表。
       ★ enabled: true 化判断 (V5-1, 2026-05-20):
         手動 fetch 試行は Flash 503 (Google 側混雑) / Pro 429 (free tier クォータ 0)
         で全 3 attempt 失敗。実証検証できなかったが、現行 cron の他 source
@@ -634,6 +639,9 @@ sources:
       定額付与型 (ZOZOTOWN) 除外・G/P 個別上乗せ (Adidas 9倍) の conditions 記録も
       プロンプト指示どおり動作。schema 違反 memberships 14 件は graceful 除去 (許容)。
       新規 store は storeAdditionsDisabled / chain-promote の既存ガードに従う。
+      membership は PR-0b-3 以降 Phase C′ の店名照合を通る必要がある (TOWER RECORDS ONLINE → タワーレコード、
+      nojima online → ノジマ のような EC 版の実店舗紐付けは storeNameMismatch)。たまるの program は
+      channel:"online" なので「ネットストア」「オンライン」等の EC 語は条件文言として扱わない (免除)。
 
   # ↓ campaign 決済系 2 本は各 fetchGroup の末尾に置く (取得が不安定な campaign ソースが先に無料枠を
   #   使い切り、jcb / たまる / smbc を巻き添えにしないため。registry-consistency で順序を固定)。
