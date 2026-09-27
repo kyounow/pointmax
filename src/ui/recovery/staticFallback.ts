@@ -15,8 +15,7 @@ export function showStaticCrashFallback(): void {
     box.className = "recovery-panel";
     box.setAttribute("role", "alert");
     // 固定文言のみ (外部入力を含めない)
-    box.innerHTML =
-      "<p>エラーが発生しました。再読み込みしてください</p><button>再読み込み</button>";
+    box.innerHTML = "<p>エラーが発生しました</p><button>再読み込み</button>";
     box.querySelector("button")!.onclick = () => window.location.reload();
     document.body.append(box);
   } catch {

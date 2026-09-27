@@ -123,7 +123,7 @@ describe("RecoveryPanel 表示", () => {
 
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
     fireEvent.click(screen.getByRole("button", { name: "コピー" }));
-    expect(await screen.findByText(/コピーできませんでした/)).toBeInTheDocument();
+    expect(await screen.findByText("失敗しました")).toBeInTheDocument();
   });
 });
 
@@ -160,7 +160,7 @@ describe("RecoveryPanel 公式データで初期化 (2 段確認)", () => {
     expect(reloadMock).not.toHaveBeenCalled();
   });
 
-  it("『書き出してから初期化』は downloadJsonFile → resetToSeed の順で、保存を待つため自動 reload しない", () => {
+  it("『書き出してから初期化』は downloadJsonFile → resetToSeed → reload の順", () => {
     const reset = vi.fn();
     useStore.setState({ resetToSeed: reset });
     render(<RecoveryPanel mode="screen" error={new Error("x")} />);
@@ -170,11 +170,13 @@ describe("RecoveryPanel 公式データで初期化 (2 段確認)", () => {
 
     expect(downloadMock).toHaveBeenCalledTimes(1);
     expect(reset).toHaveBeenCalledTimes(1);
+    expect(reloadMock).toHaveBeenCalledTimes(1);
     expect(downloadMock.mock.invocationCallOrder[0]).toBeLessThan(
       reset.mock.invocationCallOrder[0],
     );
-    expect(reloadMock).not.toHaveBeenCalled();
-    expect(screen.getByRole("status")).toHaveTextContent("保存後に再読み込みしてください");
+    expect(reset.mock.invocationCallOrder[0]).toBeLessThan(
+      reloadMock.mock.invocationCallOrder[0],
+    );
   });
 
   it("書き出しに失敗したら初期化しない", () => {
@@ -188,7 +190,8 @@ describe("RecoveryPanel 公式データで初期化 (2 段確認)", () => {
     fireEvent.click(screen.getByRole("button", { name: "公式データで初期化…" }));
     fireEvent.click(screen.getByRole("button", { name: "書き出してから初期化" }));
     expect(reset).not.toHaveBeenCalled();
-    expect(screen.getByRole("status")).toHaveTextContent("書き出せませんでした");
+    expect(reloadMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent("失敗しました");
   });
 
   it("初期化の直前に壊れた生データを crash-backup に退避する", () => {

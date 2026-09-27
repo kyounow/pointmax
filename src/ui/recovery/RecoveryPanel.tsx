@@ -36,6 +36,7 @@ type Props = {
 };
 
 const reload = () => window.location.reload();
+const FAILED = "失敗しました";
 
 // ボタン 1 つ (className は primary / danger)。コンポーネントではなく JSX を返す関数。
 const button = (label: string, onClick: () => unknown, className?: string) => (
@@ -60,7 +61,7 @@ export function RecoveryPanel({
       downloadJsonFile(buildRecoveryExportJson(error, cause), "pointmax-recovery");
       return true;
     } catch {
-      setMessage("書き出せませんでした");
+      setMessage(FAILED);
       return false;
     }
   };
@@ -71,7 +72,7 @@ export function RecoveryPanel({
       await navigator.clipboard.writeText(buildRecoveryExportJson(error, cause));
       setMessage("コピーしました");
     } catch {
-      setMessage("コピーできませんでした");
+      setMessage(FAILED);
     }
   };
 
@@ -85,21 +86,19 @@ export function RecoveryPanel({
     // 書き出しに失敗したら初期化しない (「書き出してから」を保証する)
     if (exportFirst && !exportData()) return;
     // resetToSeed はスナップショットを取らないので、壊れた生データは先に crash-backup へ退避する
+    // (書き出しが reload で中断されても、設定の「読み込み失敗時の退避データ」から回収できる)。
     backupRawPersisted("reset");
-    let note = "";
     try {
       useStore.getState().resetToSeed();
     } catch {
       // 書き込み失敗 (quota 超過等)。persist キーだけ消して空プロファイルで起動させる
       // (次回起動で seedIfEmpty が公式データを投入する)。
       removePersistedForRecovery();
-      note = "再読み込み後は公式データで起動します (カードの「使う」設定はやり直し)";
+      setMessage(
+        "再読み込み後は公式データで起動します (カードの「使う」設定はやり直し)",
+      );
     }
-    setConfirmReset(false);
-    // ダウンロード (iOS では保存シート) の途中で reload すると保存が中断されうるため、
-    // 書き出し付きのときは自動で再読み込みせず、保存を確かめてから押してもらう。
-    setMessage(note || (exportFirst ? "保存後に再読み込みしてください" : ""));
-    if (!exportFirst) reload();
+    reload();
   };
 
   return (
@@ -123,7 +122,6 @@ export function RecoveryPanel({
         {confirmReset ? (
           <p>
             カードの「使う」設定・優先通貨・誕生月・除外設定はやり直しになります
-            <br />
             {button("書き出してから初期化", () => resetToOfficial(true), "primary")}
             {button("初期化する", () => resetToOfficial(false), "danger")}
             {button("やめる", () => setConfirmReset(false))}
