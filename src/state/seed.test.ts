@@ -860,3 +860,63 @@ describe("PR-0a-2a: 購入チャネル契約", () => {
     if (p && m) expect(effectiveChannel(p, m)).not.toBe("online");
   });
 });
+
+// PR-0a-2b (M3): J-POINT 20倍の店別条件は membership.notes、program の conditions は全店共通文。
+// conditions は primary 行の条件チップ (noteParser) に合流するので、チップ発火語を含むと
+// すき家・吉野家など店頭対象店にも『限定条件』が誤表示される (実測、Opus 2b corrections)。
+describe("PR-0a-2b: J-POINT 20倍の条件 (conditions / membership.notes) 契約", () => {
+  const TWENTY_X = ["prog-jcb-jpoint-20x", "prog-jcb-jpoint-gold-20x"] as const;
+  // noteParser の limited / exclusion の発火語 (extractNoteChips と同じ正規表現)
+  const CHIP_TRIGGER_RE = /限定|のみ(?!の|に)|対象外|除外/;
+  const LIMITED_RE = /限定|のみ(?!の|に)/;
+
+  it("20倍の 2 program の conditions はチップ発火語 (限定 / のみ / 対象外 / 除外) を含まない", () => {
+    const { programs } = seed();
+    for (const id of TWENTY_X) {
+      const p = programs.find((x) => x.id === id);
+      expect(p?.conditions, `${id} の conditions が無い`).toBeTruthy();
+      expect(p?.conditions ?? "", id).not.toMatch(CHIP_TRIGGER_RE);
+    }
+  });
+
+  it("starbucks / mcdonalds の membership.notes は『限定』を含み、starbucks は『対象外』も含む", () => {
+    const { memberships } = seed();
+    for (const programId of TWENTY_X) {
+      for (const storeId of ["starbucks", "mcdonalds"]) {
+        const id = membershipId(programId, storeId);
+        const rows = memberships.filter((m) => m.id === id);
+        // mcdonalds は ADDED 行と同 id だが seed() は id あたり 1 件で、手書きの notes が勝つ
+        expect(rows, id).toHaveLength(1);
+        expect(rows[0].notes ?? "", id).toMatch(/限定/);
+        if (storeId === "starbucks") expect(rows[0].notes ?? "", id).toMatch(/対象外/);
+        if (storeId === "mcdonalds")
+          expect(rows[0].notes ?? "", id).toMatch(/Apple Pay \/ Google Pay 経由も対象/);
+      }
+    }
+  });
+
+  it("店頭対象の飲食 5 店は公式の除外を『対象外』で持ち、『限定』『のみ』を含まない。吉野家は注記なし", () => {
+    const { memberships } = seed();
+    for (const programId of TWENTY_X) {
+      for (const storeId of ["sukiya", "gusto", "bamiyan", "jonathan", "saint-marc-cafe"]) {
+        const id = membershipId(programId, storeId);
+        const rows = memberships.filter((m) => m.id === id);
+        expect(rows, id).toHaveLength(1);
+        expect(rows[0].notes ?? "", id).toMatch(/対象外/);
+        expect(rows[0].notes ?? "", id).not.toMatch(LIMITED_RE);
+        expect(rows[0].channel, id).toBeUndefined();
+      }
+      const yoshinoya = memberships.filter(
+        (m) => m.id === membershipId(programId, "yoshinoya"),
+      );
+      expect(yoshinoya, `${programId} × yoshinoya`).toHaveLength(1);
+      expect(yoshinoya[0].notes ?? "").not.toMatch(CHIP_TRIGGER_RE);
+    }
+  });
+
+  it("seed() の membership id は重複しない (手書きと ADDED の同 id は手書きだけが残る)", () => {
+    const { memberships } = seed();
+    const ids = memberships.map((m) => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});

@@ -23,6 +23,15 @@ import { defineMemberships, type MembershipStoreSpec } from "./defineMemberships
 //   - 各ポイントカード提示 base (prog-*-pointcard-*pc)
 // 併せて交換 edge の lastVerifiedAt 棚卸し (未記入分の漸進記入) も同じ四半期サイクルで回す。
 // チェックリストの実体は SESSION_LOG「🗓 四半期ごと手動確認チェックリスト」を参照 (次回目安 2026-10)。
+
+// PR-0a-2b (M3): J-POINT パートナー 20倍 (W / Gold) の共通 conditions。条件チップ (NoteChips) に
+// 合流するため、店別の条件は書かず membership.notes (下の JPOINT_20X_* 指定) に置く。
+// 飲食 6 店の「店頭カード払いが対象」は 2026-09-27 に公式ページで確認済み (掲載継続)。
+const JPOINT_20X_CONDITIONS =
+  "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) が必須。" +
+  "対象店舗ごとに支払方法の条件が異なる (各店の注記を参照)。" +
+  "すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・ジョナサンは店頭決済も対象。";
+
 export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // ═══════════════════════════════════════════════════════════════
   // PR 1: JAL特約店
@@ -658,14 +667,11 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "JCB J-POINT パートナー 20倍店 (W はカード特典+1倍で計21倍 = 実効 10.5%)。" +
       "公式計算例: スタバ eGift 10,000円 = 通常50pt + Wボーナス50pt + パートナー950pt = 1,050pt (10.5%)。" +
       "対象店舗により適用条件が異なる (店舗ごとにモバイルオーダー等の限定条件あり)。",
-    conditions:
-      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) が必須。" +
-      "対象店舗により適用条件が異なる: " +
-      "スターバックスはモバイルオーダー・スターバックスカードへのオンライン入金・" +
-      "オートチャージ・Starbucks eGift限定、" +
-      "マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。" +
-      "その他対象店舗 (すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・" +
-      "ジョナサン等) は店頭決済含め対象。詳細は J-POINT パートナーサイトで確認。",
+    // PR-0a-2b (M3): 店別の条件 (スタバ / マックの経由型・各店の対象外) は membership.notes に移した。
+    // conditions は primary 行の条件チップに合流するので、全店共通の文だけにしてチップ発火語
+    // (限定 / のみ / 対象外 / 除外) を含めない (含めると すき家 等にも『限定条件』が誤表示される)。
+    // 契約は seed.test『J-POINT 20倍の conditions はチップ発火語を含まない』。
+    conditions: JPOINT_20X_CONDITIONS,
     requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
@@ -728,14 +734,8 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "JCB J-POINT パートナー店で 20倍 (Gold 基本 0.5% × 20 = 実効 10%)。" +
       "公式の「ポイント還元率は最大10%」と一致。" +
       "対象店舗により適用条件が異なる (店舗ごとにモバイルオーダー等の限定条件あり)。",
-    conditions:
-      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) が必須。" +
-      "対象店舗により適用条件が異なる: " +
-      "スターバックスはモバイルオーダー・スターバックスカードへのオンライン入金・" +
-      "オートチャージ・Starbucks eGift限定、" +
-      "マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。" +
-      "その他対象店舗 (すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・" +
-      "ジョナサン等) は店頭決済含め対象。詳細は J-POINT パートナーサイトで確認。",
+    // PR-0a-2b (M3): W 向け (prog-jcb-jpoint-20x) と同じ共通文。店別条件は membership.notes。
+    conditions: JPOINT_20X_CONDITIONS,
     requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
@@ -873,12 +873,46 @@ const JAL_TOKUYAKU_STORE_IDS = [
 
 // PR-0a-2a (A16): J-POINT 20倍の経由型 2 店 (スターバックス / マクドナルド) の membership 指定。
 // W / Gold の両系列で共有する (list のドリフト防止)。channel:"online" = 店頭計算に載せない。
-// mcdonalds の notes は seed-additions.ts の ADDED 行と同文 (手書き優先で ADDED 行を置き換えるため)。
+// mcdonalds は seed-additions.ts の ADDED 行と同 id。seed() は手書き優先なのでここの行が勝つ
+// (codegen ファイルの ADDED 行は残す)。
+// PR-0a-2b (M3): 店別の条件を membership.notes に置く (2026-09-27 の公式確認に合わせた文言)。
+// notes は条件チップ (NoteChips) の入力で、ネットモード (PR-4e) の結果カードで表示される
+// (店頭モードでは channel:"online" のため 20 倍自体が採用されずチップも出ない)。
 const JPOINT_20X_ONLINE_STORES: MembershipStoreSpec[] = [
-  ["starbucks", { channel: "online" }],
+  [
+    "starbucks",
+    {
+      channel: "online",
+      notes:
+        "モバイルオーダー (Apple Pay で JCB を選択)・スターバックス カードへのオンライン入金・" +
+        "オートチャージ・Starbucks eGift 限定。" +
+        "レジでのカード直接払い・店頭での入金・スターバックス カード払いは対象外。" +
+        "オンライン入金の 20 倍は 2027-01-12 まで",
+    },
+  ],
   [
     "mcdonalds",
-    { channel: "online", notes: "モバイルオーダー・マックデリバリー限定" },
+    {
+      channel: "online",
+      notes: "モバイルオーダー・マックデリバリー限定 (Apple Pay / Google Pay 経由も対象)",
+    },
+  ],
+];
+
+// PR-0a-2b (M3): 店頭カード払いが対象の J-POINT 20倍 飲食店のうち、公式の除外条件がある 5 店の
+// membership.notes (2026-09-27 公式確認)。いずれも seed-additions.ts の ADDED 行 (W / Gold) と同 id で、
+// seed() の手書き優先によりこの行が勝つ (ADDED 行は残す)。channel は付けない (両チャネル有効)。
+// 吉野家は公式の除外条件が無いので手書きに置かない (ADDED 行のまま)。
+// 『限定』『のみ』を含めない (『限定条件』チップを出さず、『対象外あり』だけにする)。
+const SKYLARK_APP_EXCLUSION = "すかいらーくアプリのテーブル決済は対象外";
+const JPOINT_20X_IN_STORE_NOTES: MembershipStoreSpec[] = [
+  ["sukiya", { notes: "QUICPay (Apple Pay / Google Pay 含む) は対象外" }],
+  ["gusto", { notes: SKYLARK_APP_EXCLUSION }],
+  ["bamiyan", { notes: SKYLARK_APP_EXCLUSION }],
+  ["jonathan", { notes: SKYLARK_APP_EXCLUSION }],
+  [
+    "saint-marc-cafe",
+    { notes: "20 倍は 2027-01-12 まで (以前は 2 倍)。テナント店・オンラインストアは対象外" },
   ],
 ];
 
@@ -1240,7 +1274,10 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   //   すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・ジョナサンは店頭カード払いが対象の
   //   ため channel 無し (両チャネル有効) のまま (seed-additions.ts の ADDED 行)。
   //   mcdonalds の 2 行は seed-additions.ts (ADDED) にもあるが、seed() は手書き優先で同 id を
-  //   排除するのでここに同 id で置く (codegen ファイルの ADDED 行は残す)。notes は ADDED と同文。
+  //   排除するのでここに同 id で置く (codegen ファイルの ADDED 行は残す)。
+  // PR-0a-2b (M3): 店別の条件を membership.notes に置く (JPOINT_20X_ONLINE_STORES の 2 店 +
+  //   JPOINT_20X_IN_STORE_NOTES の 5 店)。既存端末へは membership 更新伝播で届く
+  //   (notes だけの 5 店×2 系列は自動反映、channel が変わるスタバ / マックは確認モーダル)。
 
   // ─── W 系列 (jcb-w) ───
   ...defineMemberships("prog-jcb-jpoint-2x", [
@@ -1253,7 +1290,10 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
     "takashimaya",
   ]),
   ...defineMemberships("prog-jcb-jpoint-3x", ["amazon", "conv-7eleven"]),
-  ...defineMemberships("prog-jcb-jpoint-20x", JPOINT_20X_ONLINE_STORES),
+  ...defineMemberships("prog-jcb-jpoint-20x", [
+    ...JPOINT_20X_ONLINE_STORES,
+    ...JPOINT_20X_IN_STORE_NOTES,
+  ]),
 
   // ─── Gold 系列 (jcb-gold) ───
   ...defineMemberships("prog-jcb-jpoint-gold-2x", [
@@ -1265,7 +1305,10 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   ]),
   ...defineMemberships("prog-jcb-jpoint-gold-3x", ["amazon", "conv-7eleven"]),
   ...defineMemberships("prog-jcb-jpoint-gold-4x", ["takashimaya"]),
-  ...defineMemberships("prog-jcb-jpoint-gold-20x", JPOINT_20X_ONLINE_STORES),
+  ...defineMemberships("prog-jcb-jpoint-gold-20x", [
+    ...JPOINT_20X_ONLINE_STORES,
+    ...JPOINT_20X_IN_STORE_NOTES,
+  ]),
 
   // ═══════════════════════════════════════════════════════════════
   // v6.5.0: エポス ゴールド/プラチナ優待 + たまるマーケット memberships
