@@ -199,6 +199,64 @@ describe("validateImportData: v6 membership id 検証", () => {
   });
 });
 
+// PR-0a-2a: 購入チャネル (channel) は任意フィールド。値があるときだけ in-store / online を要求する。
+describe("validateImportData: PR-0a-2a channel 検証", () => {
+  const mkProgram = (over: Record<string, unknown> = {}) => ({
+    id: "prog-1",
+    name: "P",
+    scope: "member-stores",
+    rate: 0.05,
+    currencyId: "cur1",
+    ...over,
+  });
+  const mkMembership = (over: Record<string, unknown> = {}) => ({
+    id: membershipId("prog-1", "s1"),
+    programId: "prog-1",
+    storeId: "s1",
+    ...over,
+  });
+
+  it("programs[].channel が値域外 ('shop') なら拒否", () => {
+    const r = validateImportData({
+      ...valid,
+      programs: [mkProgram({ channel: "shop" })],
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("programs[0].channel");
+  });
+
+  it("programs[].channel が 'online' / 'in-store' / 未指定なら受理", () => {
+    for (const channel of ["online", "in-store", undefined]) {
+      const r = validateImportData({
+        ...valid,
+        programs: [mkProgram(channel === undefined ? {} : { channel })],
+      });
+      expect(r.ok, `channel=${String(channel)}`).toBe(true);
+    }
+  });
+
+  it("memberships[].channel の不正値 (数値 / 未知語) を拒否", () => {
+    for (const channel of [1, "web"]) {
+      const r = validateImportData({
+        ...valid,
+        programs: [mkProgram()],
+        memberships: [mkMembership({ channel })],
+      });
+      expect(r.ok, `channel=${String(channel)}`).toBe(false);
+      if (!r.ok) expect(r.error).toContain("memberships[0].channel");
+    }
+  });
+
+  it("memberships[].channel が 'online' なら受理", () => {
+    const r = validateImportData({
+      ...valid,
+      programs: [mkProgram()],
+      memberships: [mkMembership({ channel: "online" })],
+    });
+    expect(r.ok).toBe(true);
+  });
+});
+
 describe("validateImportData: v6 PR-1c card.familyId 検証", () => {
   it("familyId 未指定のカードは受理 (任意フィールド)", () => {
     expect(validateImportData(valid).ok).toBe(true);
