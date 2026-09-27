@@ -153,6 +153,18 @@ describe("fetchGroup 契約 (無料枠 mon/thu 分割)", () => {
     );
     expect(disabledWithGroup.map((s) => s.id)).toEqual([]);
   });
+
+  // 一般契約 (Z4 の個別 id 一覧に依存しない): 停止したソースの extracted を残すと、
+  // registry フィルタ導入前の propose や手動確認で残骸が入力に混ざる。停止時に git rm する
+  // (registry ヘッダの編集ルール)。再開検証で --allow-disabled 実行した結果も commit しない。
+  it("enabled: false のソースは sources/extracted/<id>.json を持たない", () => {
+    const leftovers = registry.sources.filter(
+      (s) =>
+        !s.enabled &&
+        existsSync(resolve(REPO_ROOT, `sources/extracted/${s.id}.json`)),
+    );
+    expect(leftovers.map((s) => s.id)).toEqual([]);
+  });
 });
 
 // ── Z4 停止ソース (2026-09-27、収穫ゼロのソース停止) の契約 ──
