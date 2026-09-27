@@ -420,6 +420,17 @@ export type ReviewReason =
   | "storeNameMismatch";      // 既存 store への新規 membership だが、evidence に store.name (括弧除去後) が無い
                               // (かっぱ寿司 → くら寿司 のような店の取り違え疑い)。Phase C′
 
+// PR-0b-3: 承認すると record がそのまま全額に乗る (上限・対象商品・店舗・帰属を record では表現できない)
+// 危険な reason。sync:approve はこれらの承認に --accept-risk を要求し、REVIEW_QUEUE の対応案も「原則見送り」にする。
+// sourceAutoMergeDisabled は含めない (ガードは通過済みで、人手確認のうえ普通に承認してよい)。
+export const RISKY_REVIEW_REASONS: ReadonlySet<ReviewReason> = new Set<ReviewReason>([
+  "campaignConditional",
+  "campaignRateCeiling",
+  "targetMismatch",
+  "storeNameMismatch",
+  "untargetedProgram",
+]);
+
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";
   collection: CollectionName;

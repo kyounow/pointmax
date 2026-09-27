@@ -6,6 +6,11 @@
 //   npm run sync:approve -- --list                 # needsReview 一覧を ID 付きで表示
 //   npm run sync:approve -- <ID> [<ID> ...]        # 指定項目を seed-additions.ts に適用
 //   npm run sync:approve -- <ID> --dry-run         # 書き込まずに内容確認
+//   npm run sync:approve -- <ID> --accept-risk     # 全額に乗る危険な reason の項目を承認する (PR-0b-3)
+//
+// 危険な reason (types.ts の RISKY_REVIEW_REASONS: campaignConditional / campaignRateCeiling /
+// targetMismatch / storeNameMismatch / untargetedProgram) の項目は、承認すると record がそのまま全額に乗る
+// (上限・対象商品・店舗・帰属を record では表現できない)。--accept-risk が無ければ理由を出して exit 1。
 //
 // ID は sync:propose が各 proposal に付与する安定 ID (REVIEW_QUEUE.md の
 // 各項目見出し / --list で確認)。適用すると:
@@ -28,7 +33,11 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Proposal, ProposalReport } from "./types";
-import { computeProposalId, isApplicableProposal } from "./types";
+import {
+  RISKY_REVIEW_REASONS,
+  computeProposalId,
+  isApplicableProposal,
+} from "./types";
 import {
   REMOVED_MEMBERSHIP_ID_SET,
   bucketProposals,
@@ -62,15 +71,17 @@ const REVIEW_QUEUE_PATH = resolve(REPO_ROOT, "sources/REVIEW_QUEUE.md");
 // CLI parsing
 // ───────────────────────────────────────────────────────────────
 
-type CliArgs = { ids: string[]; list: boolean; dryRun: boolean };
+export type CliArgs = { ids: string[]; list: boolean; dryRun: boolean; acceptRisk: boolean };
 
-function parseArgs(argv: string[]): CliArgs {
+export function parseArgs(argv: string[]): CliArgs {
   const ids: string[] = [];
   let list = false;
   let dryRun = false;
+  let acceptRisk = false;
   for (const a of argv) {
     if (a === "--list") list = true;
     else if (a === "--dry-run") dryRun = true;
+    else if (a === "--accept-risk") acceptRisk = true;
     else if (a === "--help" || a === "-h") {
       printUsage();
       process.exit(0);
@@ -86,7 +97,7 @@ function parseArgs(argv: string[]): CliArgs {
       }
     }
   }
-  return { ids, list, dryRun };
+  return { ids, list, dryRun, acceptRisk };
 }
 
 function printUsage(): void {
@@ -96,7 +107,10 @@ function printUsage(): void {
       "  npm run sync:approve -- --list                 needsReview 一覧を ID 付きで表示",
       "  npm run sync:approve -- <ID> [<ID> ...]        指定項目を seed-additions.ts に適用",
       "  npm run sync:approve -- <ID> --dry-run         書き込まずに内容確認",
+      "  npm run sync:approve -- <ID> --accept-risk     全額に乗る危険な reason の項目を承認",
       "",
+      "--accept-risk が必要な reason: " + [...RISKY_REVIEW_REASONS].join(" / "),
+      "  (承認すると record がそのまま全額に乗る。原則見送り、取り込むなら手書き seed で上限・限定・帰属を表現)",
       "ID は REVIEW_QUEUE.md の各項目見出し先頭 (例: pro-1a2b3c4d5e) か --list で確認。",
       "対応 type: addRecord 全般 + updateField/programs (rate/validFrom/validTo)",
       "         + delete/programs (期限切れキャンペーン削除 = tombstone)。",
@@ -176,6 +190,14 @@ export function excludeTombstonedSelections(
   });
 }
 
+// PR-0b-3: 承認対象のうち、全額に乗る危険な reason (RISKY_REVIEW_REASONS) の項目。
+// main は --accept-risk が無ければこれを表示して exit 1 する。
+export function findRiskyApprovals(found: Proposal[]): Proposal[] {
+  return found.filter(
+    (p) => p.reviewReason !== undefined && RISKY_REVIEW_REASONS.has(p.reviewReason),
+  );
+}
+
 // 承認済み項目を needsReview から除去し manuallyApproved に移動した
 // 新しい ProposalReport を返す (summary の件数も更新)。
 export function moveToManuallyApproved(
@@ -217,7 +239,9 @@ export function formatListLine(p: Proposal): string {
   }
   const reason = p.reviewReason ?? "-";
   const approvable = isApplicableProposal(p) ? "  " : "✋"; // ✋ = sync:approve 未対応 type/field
-  return `${pid}  ${approvable}${p.type}/${p.collection}  [${reason}]  ${desc}  <${p.sourceId}>`;
+  // PR-0b-3: 判定詳細 (一致した語・照合できなかった店名等) を末尾に付ける
+  const detail = p.reviewDetail ? `  — ${p.reviewDetail}` : "";
+  return `${pid}  ${approvable}${p.type}/${p.collection}  [${reason}]  ${desc}  <${p.sourceId}>${detail}`;
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -296,6 +320,22 @@ function main(): void {
     process.exit(1);
   }
 
+  // PR-0b-3: 全額に乗る危険な reason の項目は --accept-risk が無ければ中止 (全件 or 中止の方針と同じ)
+  const risky = findRiskyApprovals(approvable);
+  if (risky.length > 0 && !args.acceptRisk) {
+    console.error(
+      "💥 次の項目は承認すると record がそのまま全額に乗ります (上限・対象商品・店舗・帰属を record では表現できない):",
+    );
+    for (const p of risky) {
+      console.error(`   ${formatListLine(p)}`);
+    }
+    console.error(
+      "   原則は見送り、取り込むなら手書き seed で上限・限定・帰属を表現してください。" +
+        "それでも record のまま取り込むなら `--accept-risk` を付けて再実行してください。",
+    );
+    process.exit(1);
+  }
+
   console.log(`📥 承認対象: ${approvable.length} 件`);
   for (const p of approvable) {
     console.log(`  ${formatListLine(p)}`);
@@ -303,6 +343,11 @@ function main(): void {
       console.log(
         "  ⚠️ userBlocked 項目です。src/state/seed-blocklist.ts から該当 ID を外さないと" +
           "次回 cron で再び除外提案されます",
+      );
+    }
+    if (p.reviewReason && RISKY_REVIEW_REASONS.has(p.reviewReason)) {
+      console.log(
+        "  ⚠️ --accept-risk で承認: record がそのまま全額に乗ります。上限・限定は手書き seed で補ってください",
       );
     }
   }

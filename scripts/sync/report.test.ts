@@ -255,6 +255,20 @@ describe("buildReviewQueue: PR-0b-3 の reason と判定詳細", () => {
     }
   });
 
+  it("危険な reason の対応案は「原則見送り」+ --accept-risk、sourceAutoMergeDisabled は通常の approve コマンド", () => {
+    const risky = { ...mk("campaignRateCeiling"), proposalId: "pro-risky00001" };
+    const safe = { ...mk("sourceAutoMergeDisabled"), proposalId: "pro-safe000001" };
+    const md = buildReviewQueue(
+      baseReport({
+        needsReview: [risky, safe],
+        summary: { autoApplicableCount: 0, needsReviewCount: 2, sourcesProcessed: 1, sourcesFailed: 0 },
+      }),
+    );
+    expect(md).toContain("`npm run sync:approve -- pro-risky00001 --accept-risk`");
+    expect(md).toContain("- 対応案: 原則見送り");
+    expect(md).toContain("取り込むなら `npm run sync:approve -- pro-safe000001`、不要なら無視");
+  });
+
   it("reviewDetail がある項目は『判定詳細』行を描画し、無い項目では描画しない", () => {
     const withDetail = mk("campaignConditional", "最大:「最大」@name");
     const without = mk("campaignRateCeiling");

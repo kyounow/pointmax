@@ -25,6 +25,7 @@ import type {
   UpdateFieldProposal,
 } from "./types";
 import {
+  RISKY_REVIEW_REASONS,
   SYNC_HISTORY_MAX_ENTRIES,
   computeProposalId,
   isApplicableProposal,
@@ -607,7 +608,13 @@ function formatProposalDetail(p: Proposal): string {
   if (p.reviewDetail) {
     lines.push(`- 判定詳細: ${p.reviewDetail}`);
   }
-  if (isApplicableProposal(p)) {
+  if (isApplicableProposal(p) && p.reviewReason && RISKY_REVIEW_REASONS.has(p.reviewReason)) {
+    // PR-0b-3: 全額に乗る危険な reason は原則見送り。承認には --accept-risk が要る。
+    lines.push(
+      `- 対応案: 原則見送り (承認すると record がそのまま全額に乗る)。取り込むなら手書き seed で上限・限定・帰属を表現する。` +
+        `どうしても record のまま取り込むなら \`npm run sync:approve -- ${pid} --accept-risk\``,
+    );
+  } else if (isApplicableProposal(p)) {
     lines.push(
       `- 対応案: 取り込むなら \`npm run sync:approve -- ${pid}\`、不要なら無視`,
     );
@@ -708,6 +715,10 @@ export function buildReviewQueue(report: ProposalReport): string {
       "`npm run sync:approve -- <ID> [<ID> ...]` を実行 (ID は各項目見出しの先頭)。" +
       "seed-additions.ts への反映・queue からの除去・REVIEW_QUEUE.md の再生成まで自動。" +
       "`npm run sync:approve -- --list` で一覧表示。実行後 `npm test && npm run build` を確認して commit",
+  );
+  lines.push(
+    "- 🔴 untargetedProgram / campaignConditional / campaignRateCeiling / targetMismatch / storeNameMismatch は" +
+      "承認すると record がそのまま全額に乗るため原則見送り。承認には `--accept-risk` が必要",
   );
   lines.push(
     "- このまま **merge** すると、要レビュー項目を読み込んだ証拠として記録されるだけ (実体 seed 変更はなし)",
