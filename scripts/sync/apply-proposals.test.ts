@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   bucketProposals,
   buildSeedAdditionsContent,
@@ -9,6 +9,7 @@ import {
   pruneRemovedFromBuckets,
 } from "./apply-proposals";
 import type { Proposal } from "./types";
+import { membershipId } from "../../src/state/defineMemberships";
 
 const mkAdd = (collection: Proposal["collection"], record: Record<string, unknown>): Proposal => ({
   type: "addRecord",
@@ -321,9 +322,74 @@ describe("pruneRemovedFromBuckets", () => {
     expect(pruned.removedProgramIds).toEqual(["prog-old"]); // tombstone 自体は維持
   });
 
-  it("removedProgramIds が空なら同一参照を返す", () => {
+  it("removedProgramIds が空で membership tombstone も無ければ同一参照を返す", () => {
     const noRemovals = { ...base, removedProgramIds: [] };
     expect(pruneRemovedFromBuckets(noRemovals)).toBe(noRemovals);
+  });
+
+  // PR-0a-2c: 手書き membership tombstone (REMOVED_MEMBERSHIP_IDS) の ADDED 行も物理削除する。
+  describe("membership tombstone (PR-0a-2c)", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+    const takashimayaGold2x = membershipId("prog-jcb-jpoint-gold-2x", "takashimaya");
+    const withAdded = {
+      ...base,
+      removedProgramIds: [] as string[],
+      memberships: [
+        // 既存 ADDED 行 (id 付き) と新規提案 (id 無し) の両方の形
+        {
+          id: takashimayaGold2x,
+          programId: "prog-jcb-jpoint-gold-2x",
+          storeId: "takashimaya",
+        },
+        { programId: "prog-jcb-jpoint-gold-4x", storeId: "takashimaya" },
+        { programId: "prog-epos-tamaru-4x", storeId: "muji" },
+      ] as Record<string, unknown>[],
+    };
+    const tomb = new Set([
+      takashimayaGold2x,
+      membershipId("prog-epos-tamaru-4x", "muji"),
+    ]);
+
+    it("removedProgramIds が空でも tombstone 済み membership を落とし、件数をログに出す", () => {
+      const log = vi.spyOn(console, "log").mockImplementation(() => {});
+      const pruned = pruneRemovedFromBuckets(withAdded, tomb);
+      expect(pruned.memberships).toEqual([
+        { programId: "prog-jcb-jpoint-gold-4x", storeId: "takashimaya" },
+      ]);
+      // program / override は触らない
+      expect(pruned.programs).toEqual(withAdded.programs);
+      expect(pruned.programOverrides).toEqual(withAdded.programOverrides);
+      expect(log).toHaveBeenCalledWith(
+        expect.stringContaining("🪦 membership tombstone: 2 件を ADDED_MEMBERSHIPS から除去"),
+      );
+    });
+
+    it("program tombstone と membership tombstone を同時に適用できる", () => {
+      vi.spyOn(console, "log").mockImplementation(() => {});
+      const pruned = pruneRemovedFromBuckets(
+        {
+          ...withAdded,
+          memberships: [...withAdded.memberships, ...base.memberships],
+          removedProgramIds: ["prog-old"],
+        },
+        tomb,
+      );
+      expect(pruned.memberships.map((m) => `${m.programId}|${m.storeId}`)).toEqual([
+        "prog-jcb-jpoint-gold-4x|takashimaya",
+        "prog-keep|s1",
+      ]);
+      expect(pruned.programs.map((p) => p.id)).toEqual(["prog-keep"]);
+    });
+
+    it("生成物 (seed-additions.ts の内容) に tombstone 済み membership id が出ない", () => {
+      vi.spyOn(console, "log").mockImplementation(() => {});
+      const content = buildSeedAdditionsContent(pruneRemovedFromBuckets(withAdded, tomb));
+      expect(content).not.toContain(takashimayaGold2x);
+      expect(content).not.toContain(membershipId("prog-epos-tamaru-4x", "muji"));
+      expect(content).toContain(membershipId("prog-jcb-jpoint-gold-4x", "takashimaya"));
+    });
   });
 });
 

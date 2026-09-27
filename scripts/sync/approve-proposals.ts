@@ -21,6 +21,8 @@
 //   - delete/programs (REMOVED_PROGRAM_IDS = tombstone へ。期限切れキャンペーン
 //     削除の承認経路、Phase 5。seed() が cascade 除外、mergeSeed が既存ユーザー
 //     からも除去。手書き seed ファイルの物理削除は不要)
+// membership tombstone (seed-blocklist の REMOVED_MEMBERSHIP_IDS) に入る membership を選んだ場合は
+// 「⚠ tombstone 済みのため skip」を warn して適用しない (PR-0a-2c)。
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -28,6 +30,7 @@ import { fileURLToPath } from "node:url";
 import type { Proposal, ProposalReport } from "./types";
 import { computeProposalId, isApplicableProposal } from "./types";
 import {
+  REMOVED_MEMBERSHIP_ID_SET,
   bucketProposals,
   buildSeedAdditionsContent,
   mergeMemberships,
@@ -37,6 +40,7 @@ import {
   pruneRemovedFromBuckets,
   type Buckets,
 } from "./apply-proposals";
+import { membershipId } from "../../src/state/defineMemberships";
 import { buildReviewQueue } from "./report";
 import {
   ADDED_CARDS,
@@ -144,6 +148,32 @@ export function selectProposalsByIds(
     found.push(p);
   }
   return { found, missing, unsupported };
+}
+
+// PR-0a-2c: 承認対象のうち membership tombstone (seed-blocklist の REMOVED_MEMBERSHIP_IDS) に入る
+// addRecord/memberships を除き、1 件ごとに「⚠ tombstone 済みのため skip」を warn する。
+// 古い proposed-migrations.json (tombstone 前の run) の ID を承認した場合の防御。
+// 生成物側も pruneRemovedFromBuckets が落とすので二重の安全網になる。
+// skip した項目は manuallyApproved に移さない (適用していないため)。次の cron の propose では出ない。
+export function excludeTombstonedSelections(
+  found: Proposal[],
+  tombstoned: ReadonlySet<string> = REMOVED_MEMBERSHIP_ID_SET,
+  warn: (msg: string) => void = console.warn,
+): Proposal[] {
+  return found.filter((p) => {
+    if (p.type !== "addRecord" || p.collection !== "memberships") return true;
+    const rec = p.record as { programId?: unknown; storeId?: unknown };
+    if (typeof rec.programId !== "string" || typeof rec.storeId !== "string") {
+      return true;
+    }
+    const id = membershipId(rec.programId, rec.storeId);
+    if (!tombstoned.has(id)) return true;
+    warn(
+      `⚠ tombstone 済みのため skip: ${proposalIdOf(p)} ${id} ` +
+        "(src/state/seed-blocklist.ts の REMOVED_MEMBERSHIP_IDS)",
+    );
+    return false;
+  });
 }
 
 // 承認済み項目を needsReview から除去し manuallyApproved に移動した
@@ -259,8 +289,15 @@ function main(): void {
     process.exit(1);
   }
 
-  console.log(`📥 承認対象: ${sel.found.length} 件`);
-  for (const p of sel.found) {
+  // PR-0a-2c: tombstone 済み membership は warn して skip (生成物にも残さない)
+  const approvable = excludeTombstonedSelections(sel.found);
+  if (approvable.length === 0) {
+    console.error("💥 適用対象が 0 件です (tombstone 済みの membership を除く)。");
+    process.exit(1);
+  }
+
+  console.log(`📥 承認対象: ${approvable.length} 件`);
+  for (const p of approvable) {
     console.log(`  ${formatListLine(p)}`);
     if (p.reviewReason === "userBlocked") {
       console.log(
@@ -271,7 +308,7 @@ function main(): void {
   }
 
   // apply-proposals と同じ bucket → merge → emit 経路で seed-additions.ts を再生成
-  const { buckets } = bucketProposals(sel.found);
+  const { buckets } = bucketProposals(approvable);
   const merge = {
     stores: mergeWithExisting(ADDED_STORES, buckets.stores),
     cards: mergeWithExisting(ADDED_CARDS, buckets.cards),
@@ -314,10 +351,10 @@ function main(): void {
   writeFileSync(SEED_ADDITIONS_PATH, buildSeedAdditionsContent(mergedBuckets));
   console.log(`✓ wrote ${SEED_ADDITIONS_PATH}`);
 
-  const updated = moveToManuallyApproved(report, sel.found);
+  const updated = moveToManuallyApproved(report, approvable);
   writeFileSync(PROPOSAL_PATH, JSON.stringify(updated, null, 2));
   console.log(
-    `✓ wrote ${PROPOSAL_PATH} (needsReview ${report.needsReview.length} → ${updated.needsReview.length}, manuallyApproved +${sel.found.length})`,
+    `✓ wrote ${PROPOSAL_PATH} (needsReview ${report.needsReview.length} → ${updated.needsReview.length}, manuallyApproved +${approvable.length})`,
   );
 
   writeFileSync(REVIEW_QUEUE_PATH, buildReviewQueue(updated));
