@@ -191,6 +191,81 @@ describe("REASON_ORDER (理由グループの表示順) の網羅", () => {
     expect(i).toBeGreaterThanOrEqual(0);
     expect(REASON_ORDER[i + 1]).toBe("periodChange");
   });
+
+  it("PR-0b-3: sourceAutoMergeDisabled は autoMergeDisabled の直後、Z3 の 5 種は pseudoStoreTarget と missingStoreBody の間", () => {
+    const at = (r: (typeof REASON_ORDER)[number]) => REASON_ORDER.indexOf(r);
+    expect(at("sourceAutoMergeDisabled")).toBe(at("autoMergeDisabled") + 1);
+    const z3 = [
+      "targetMismatch",
+      "storeNameMismatch",
+      "untargetedProgram",
+      "campaignRateCeiling",
+      "campaignConditional",
+    ] as const;
+    expect(REASON_ORDER.slice(at("pseudoStoreTarget") + 1, at("missingStoreBody"))).toEqual([...z3]);
+  });
+});
+
+// PR-0b-3: 新しい 6 種の reason が REVIEW_QUEUE に見出し付きで出る (REASON_ORDER に無い reason は黙って消えるため)。
+describe("buildReviewQueue: PR-0b-3 の reason と判定詳細", () => {
+  const Z3_REASONS = [
+    "untargetedProgram",
+    "campaignConditional",
+    "campaignRateCeiling",
+    "targetMismatch",
+    "sourceAutoMergeDisabled",
+    "storeNameMismatch",
+  ] as const;
+  const mk = (
+    reason: (typeof Z3_REASONS)[number],
+    reviewDetail?: string,
+  ): Proposal => ({
+    type: "addRecord",
+    collection: "programs",
+    record: { id: `prog-${reason}`, name: reason, rate: 0.03, currencyId: "d-pt" },
+    sourceId: "d-pay-campaigns",
+    confidence: 0.95,
+    evidence: { evidenceQuote: "引用", explicitness: 0.95, ambiguity: 0 },
+    reviewReason: reason,
+    ...(reviewDetail !== undefined ? { reviewDetail } : {}),
+  });
+
+  it.each(Z3_REASONS)("%s は `### <label> (1 件)` の見出しで描画される", (reason) => {
+    const md = buildReviewQueue(
+      baseReport({
+        needsReview: [mk(reason)],
+        summary: { autoApplicableCount: 0, needsReviewCount: 1, sourcesProcessed: 1, sourcesFailed: 0 },
+      }),
+    );
+    expect(md).toContain(`### ${REASON_LABELS[reason]} (1 件)`);
+    expect(md).toContain(`${reason}=1`);
+  });
+
+  it("危険な 5 種の説明は全額に乗ること・--accept-risk を書き、sourceAutoMergeDisabled は解除条件を書く", () => {
+    for (const r of Z3_REASONS) {
+      if (r === "sourceAutoMergeDisabled") {
+        expect(REASON_EXPLANATIONS[r]).not.toContain("全額に乗る");
+        expect(REASON_EXPLANATIONS[r]).toContain("--accept-risk は不要");
+        expect(REASON_EXPLANATIONS[r]).toContain("4 週");
+      } else {
+        expect(REASON_EXPLANATIONS[r], r).toContain("--accept-risk");
+        expect(REASON_EXPLANATIONS[r], r).toContain("全額に乗る");
+      }
+    }
+  });
+
+  it("reviewDetail がある項目は『判定詳細』行を描画し、無い項目では描画しない", () => {
+    const withDetail = mk("campaignConditional", "最大:「最大」@name");
+    const without = mk("campaignRateCeiling");
+    const md = buildReviewQueue(
+      baseReport({
+        needsReview: [withDetail, without],
+        summary: { autoApplicableCount: 0, needsReviewCount: 2, sourcesProcessed: 1, sourcesFailed: 0 },
+      }),
+    );
+    expect(md).toContain("- 判定詳細: 最大:「最大」@name");
+    expect(md.match(/- 判定詳細:/g)).toHaveLength(1);
+  });
 });
 
 describe("buildReviewQueue", () => {

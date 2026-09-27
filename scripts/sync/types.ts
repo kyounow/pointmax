@@ -37,7 +37,29 @@ export type RegistrySource = {
   enabled: boolean;                 // 一時的に止めたい時 false
   fetchGroup?: FetchGroup;          // 同期グループ (mon/thu)。enabled ソースは必須 (無料枠分割)
   crawl?: RegistryCrawl;            // 索引ハブ型ソースの 2 段階クロール (省略時は単発 fetch)
+  // PR-0b-3: このソースの新規 program が帰属すべき対象 (単数または候補の配列)。
+  // 宣言があれば proposePrograms が targetMismatch を判定する (候補のどれかに一致すれば通過)。
+  // paymentAppId の候補は cardIds の併用 (絞り込み) を許し、pointCardId の混在だけ不一致。
+  target?: RegistryTarget | RegistryTarget[];
+  // PR-0b-3: false なら、このソース由来の提案 (stores / programs / memberships / updateField) は
+  // ガードを通過しても auto にせず sourceAutoMergeDisabled で review に回す。省略時は true。
+  autoMerge?: boolean;
   notes?: string;
+};
+
+// PR-0b-3: registry の target 宣言。キーはちょうど 1 つ (registry-policy の parse で検証)。
+export type RegistryTarget =
+  | { cardIds: string[] }
+  | { paymentAppId: string }
+  | { pointCardId: string };
+
+// PR-0b-3: propose が使うソース別ポリシー (registry-policy.ts が registry.yaml から作る)。
+// targets は配列に正規化済み (宣言が無ければ [])。
+export type SourcePolicy = {
+  sourceId: string;
+  extractor: ExtractorKind;
+  autoMerge: boolean;
+  targets: RegistryTarget[];
 };
 
 // 索引ハブ型ソースの 2 段階クロール設定。
@@ -347,6 +369,10 @@ type ProposalBase = {
   proposalId?: string;
   // needsReview 行きの理由 (autoApplicable には付かない)
   reviewReason?: ReviewReason;
+  // PR-0b-3: 降格の判定詳細 (人間向け 1 行)。例:『最大:「最大」@name』『evidence に店名「くら寿司」が無い』。
+  // REVIEW_QUEUE の「判定詳細」行と sync:approve の一覧に出す。computeProposalId の hash 対象外
+  // (record / id / field / to だけを hash する) なので、付けても proposalId は変わらない。
+  reviewDetail?: string;
 };
 
 export type ReviewReason =
@@ -377,10 +403,22 @@ export type ReviewReason =
   | "pseudoStoreTarget"       // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等) への
                               // 参照。店舗/決済手段を特定できない項目の受け皿誤マッピングを防止
                               // (#103 incident: jcb-jpoint extractor が general を受け皿にした事故対応)
-  | "tierMove";               // PR-0a-2c: membership 提案が、同じ store × 同じ tier 系列 (tierFamilyOf: J-POINT W /
+  | "tierMove"                // PR-0a-2c: membership 提案が、同じ store × 同じ tier 系列 (tierFamilyOf: J-POINT W /
                               // Gold / たまるマーケット) の別倍率 (seed 既存 or 同じ呼び出しの提案) と重なる。
                               // 倍率改定・受け皿誤りの疑い。承認するなら旧 tier を REMOVED_MEMBERSHIP_IDS に入れる PR と同時に。
                               // 他の降格理由 (lowConfidence 等) が付いていればそちらを優先する
+  // ─── PR-0b-3 (Z3: campaign / membership の auto ガード) ───
+  | "untargetedProgram"       // 新規 program が対象キー (非空 cardIds / pointCardId / paymentAppId) を 1 つも持たない。
+                              // cardIds:[] もここ (どのカードでも発火しない死にデータ)。integrity ラダーの最弱
+  | "campaignConditional"     // campaign の name / description / conditions / notes / evidence に条件文言
+                              // (最大 / 対象商品 / 一部 / 店舗限定 / 割引 / 新規 / 年齢 / 抽選 等) か lifestyle 語。
+                              // membership は Phase C′ の条件文言 (一部 / 最大 / EC 経由 等)。record では上限・限定を表現できない
+  | "campaignRateCeiling"     // campaign の rate ≥ 10%、または 5% 超で上限 (monthlyCapAmountYen) が無い。
+                              // campaign 由来 membership の overrideRate > 5% もここ
+  | "targetMismatch"          // registry の target 宣言と新規 program の対象キーが一致しない (帰属誤り疑い)
+  | "sourceAutoMergeDisabled" // registry で autoMerge:false のソース由来。ガードは通過している (解除は別 PR)
+  | "storeNameMismatch";      // 既存 store への新規 membership だが、evidence に store.name (括弧除去後) が無い
+                              // (かっぱ寿司 → くら寿司 のような店の取り違え疑い)。Phase C′
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";
