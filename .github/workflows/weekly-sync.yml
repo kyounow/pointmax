@@ -20,6 +20,10 @@ on:
           - mon
           - thu
           - all
+      thinking_budget:
+        description: 'Q1 の A/B 用。空なら既定の 1024'
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -32,6 +36,8 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # 既定の 360 分をやめる。concurrency は cancel-in-progress:false なので、ハングすると次の cron まで詰まる
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -48,6 +54,9 @@ jobs:
         run: npm ci
 
       # 無料枠 (gemini-2.5-flash = 20 req/日) を超えないよう enabled ソースを mon/thu に分割。
+      # 現構成 (2026-09-27、Z4 停止後): enabled 3 本、worst = 単発 3 attempts × 本数 = mon 6 / thu 3 req
+      # (d払い / PayPay を 0b-3 で再有効化すると mon 9 / thu 6)。見積りの正は registry.yaml ヘッダ。
+      # 429 の日次枠 (PerDay) を観測したら fetch-all が後続ソースを打ち切る (PR-0b-2)。
       # schedule 起動 (または workflow_dispatch group=auto) は実行時刻の JST 曜日から導出:
       #   木曜 (date +%u = 4) → thu、それ以外 (月曜含む) → mon。
       # workflow_dispatch で group を明示 (mon/thu/all) した場合はそれを優先。
@@ -69,10 +78,20 @@ jobs:
           fi
           echo "group=$GROUP" >> $GITHUB_OUTPUT
 
+      # fetch-all は常に exit 0 だが、ハングや想定外の失敗でも propose 以降 (部分的な結果 + keep-last-good
+      # で残った前回版) を進め、job の conclusion を success に保つため continue-on-error にする。
+      # source ごとの outcome は PM_FETCH_OUTCOME_DIR に書かれ、fetch-all が Step Summary と
+      # ::warning:: / ::error:: を出す。GEMINI_MODEL / GEMINI_THINKING_BUDGET は repo の vars
+      # (thinking は dispatch 入力が優先)。未設定なら空文字 → 既定 (gemini-2.5-flash / 1024)。
       - name: Fetch sources for group
+        timeout-minutes: 30
+        continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROUP: ${{ steps.group.outputs.group }}
+          PM_FETCH_OUTCOME_DIR: ${{ runner.temp }}/pointmax-fetch
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          GEMINI_THINKING_BUDGET: ${{ inputs.thinking_budget || vars.GEMINI_THINKING_BUDGET }}
         run: npm run sync:fetch-all -- --group "$GROUP"
 
       - name: Propose
@@ -131,6 +150,8 @@ jobs:
           npm test
           npm run build
           MAIN=$(ls dist/assets/index-*.js | head -1)
+          # 既定 shell (bash -e、pipefail 無し) では ls の失敗が head で消えるので、空を明示的に落とす
+          [ -n "$MAIN" ] || { echo "❌ main chunk not found"; exit 3; }
           KIB=$(( $(wc -c < "$MAIN") / 1024 ))
           echo "main chunk: $KIB KiB"
           echo "- main chunk: $KIB KiB" >> $GITHUB_STEP_SUMMARY
