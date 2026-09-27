@@ -60,6 +60,10 @@ export default defineConfig({
         // - seed-data: seed マスタデータ群 (v6 トレイン PR-1a で分離)。コードと違い
         //   データは cron 追加で単調増加するため、main chunk の 300 KiB ガードから
         //   切り離す (eager import のままなので読み込みタイミングは不変)
+        // - sync-data: 週次 cron が毎 run 追記する監査ログ sources/SYNC_HISTORY.json
+        //   (SyncHistorySection の static import のまま)。sync-data は eager + PWA precache。
+        //   main 300 KiB ガードからの切り離しが目的で配信量は変わらない。
+        //   将来の別ファイルを黙って吸わないよう明示パスで判定する。
         manualChunks(id: string) {
           if (id.includes("@xyflow/react")) return "xyflow";
           if (
@@ -75,6 +79,7 @@ export default defineConfig({
           ) {
             return "seed-data";
           }
+          if (id.includes("/sources/SYNC_HISTORY.json")) return "sync-data";
           return undefined;
         },
       },

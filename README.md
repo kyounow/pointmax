@@ -232,6 +232,7 @@
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
 | テスト | Vitest（**1061 ケース / 65 ファイル**） |
 | PWA | vite-plugin-pwa（precache + service worker） |
+| バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も `bundle-size.yml` で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
 
 ### ドメインの構造
