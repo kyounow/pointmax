@@ -1,7 +1,8 @@
 /*
  * scripts/ (sync パイプライン・generate-master) の型検査用。tsc -b (npm run typecheck / npm run build) の reference。
  * scripts は tsx (Node) で実行されるため lib に DOM を入れない。
- * 制約: scripts が import する src (seed 系・mergeSeed・migrations・types・urlSafety・defineMemberships など 15 ファイル) に
+ * 制約: scripts が import する src (seed 系・mergeSeed・migrations・types・urlSafety・defineMemberships・tierFamily など
+ * 16 ファイル、2026-09-27 時点。一覧は `npx tsc -p tsconfig.scripts.json --listFilesOnly` の src/ 行) に
  * DOM API や import.meta.env を入れないこと (ここで型エラーになる)。
  */
 {

@@ -82,15 +82,46 @@
   （`channel`: モバイルオーダー / オンライン入金 / オートチャージ / eGift / ネット限定 / オンライン限定 /
   経由 → 『{語}限定』。出たら同じ文の汎用『限定条件』は出さない）/ 上限 / 対象外 / 限定条件。
   `conditions` / membership 由来のぶんは**チップが 1 件以上のときだけ**描画し『詳細』ボタンは出さない
-  （`notes` 単独の従来挙動は不変）。例: JCB W × すき家 = 『⚠ 要エントリー』+『対象外あり』（QUICPay 除外）、
-  × 吉野家 = 『⚠ 要エントリー』のみ。スタバ / マックの 20倍は `channel:"online"` のため店頭の結果には
-  出ず、ネット評価では『モバイルオーダー限定』+『対象外あり』が付く。
+  （`notes` だけの program は、専用バッジ（『⚠ 要エントリー』『⚠ 上限』）と重ならない限り従来どおり。
+  重なる場合は同種のチップが専用バッジに吸収され、`notes` 全文は『詳細』ボタンで開く）。
+  例: JCB W × すき家 = 『⚠ 要エントリー』+『対象外あり』（QUICPay 除外）、× 吉野家 = 『⚠ 要エントリー』のみ。
+  スタバ / マックの 20倍は `channel:"online"` のため店頭の結果には出ず、ネット評価では
+  『モバイルオーダー限定』+『対象外あり』が付く。
 - **警告チップの表示予算（PR-0a-2b）**: 展開ビューの警告系（要エントリー / 条件チップ / 上限 /
   ルート要確認 (stale) / 最低交換単位 (端数)）は純関数 `rankWarningChips`
   （`src/domain/warningChips.ts`）で **要エントリー = 要経由 > 経由型 (channel) > 上限 > 限定・対象外 >
   stale > 端数** の優先順に並べ、**最大 3 件**だけ出す。同じ種類は 1 件（専用バッジ『⚠ 要エントリー』
   『⚠ 上限』が notes 由来の同種チップより優先）。円換算モード・要経由バッジ・stale 等の後続も
   この関数を使う（二重実装しない）。
+
+### 計算に反映していない条件（既知の近似）
+
+計算は「min(入力金額, 月次上限) × 還元率」の線形モデルで（月次上限 `monthlyCapAmountYen` は 1 取引ごとにクランプ。詳細は下の「データの取り扱い」）、下の条件は扱わない（実際の付与額・可否と表示がずれうる）。
+**個別プログラム固有の条件（対象商品・要エントリー・上限・店別の対象外など）は seed の `conditions` /
+`notes`（特典・キャンペーン画面の説明と、結果カードの条件チップ）が正**で、ここには制度レベルで
+モデルに無いものだけを並べる（店名や倍率はここに書き写さない）。
+
+1. **付与単位・端数切り捨て**（例: 200 円 = 1pt）は扱わず、`amount × rate` を丸めずに使う。
+   少額の支払いでは実際の付与が表示を下回る。
+2. **月間の合計額に対して付与する方式**も、取引ごとの線形計算で近似する。
+3. **税抜額を基準に付与する方式**も区別せず、入力した金額にそのまま率を掛ける。
+4. **ネット購入の対象額**（税抜・送料・クーポン・ポイント利用分を除くのが通例）は未モデル。
+5. **購入チャネル**: 評価は店頭が既定（純 EC 店はネット）で、ネット・アプリ経由限定
+   （`channel: "online"`）の還元は店頭の計算に含めない。物理店をネットで買う場合の比較
+   （ネット購入モード）は未対応（11 月予定。下の「購入チャネル」節）。
+6. **会員ランク・ステージ・ステップ制**（前月の利用実績などで率が上がる仕組み）は基本率だけで計算する
+   （上位の率は各支払方法・特典の説明文に記載）。
+7. **公共料金・税金・電子マネーチャージ**に対するカード会社ごとの減額・対象外は未モデル
+   （特典として登録したものを除き、電気・ガス等の店でもカードの基本還元率で計算する）。
+8. **期限切れキャンペーン**は `validTo` の翌日から計算対象外になるが、マスタからの削除（tombstone）は
+   `validTo` + 30 日を過ぎた後の週次 cron で行う。
+9. **公式に終了日の記載が無い倍率**は常設扱い（`validTo` なし）。終了は四半期の手動チェックで確認する。
+10. **経路条件**: モバイルオーダーや、プリペイド（スタバカード等）へのチャージを経由したときだけ付く
+    還元は、購入チャネルの条件（`channel: "online"`）として扱い、店頭の計算には載せない。店頭モードでは
+    条件チップ（要経由バッジ・店頭ヒント）で案内する方針で、ネット購入モードとあわせて 11 月予定
+    （それまでは店頭の結果に出ない）。
+11. **チャージ取引の基準額**: チャージ（入金）取引に付く還元は、購入額ではなく入金額が基準。
+    計算は入力金額をそのまま入金額とみなす（チャージと利用の時期・金額のずれ、残高の持ち越しは扱わない）。
 
 ### 優先通貨（v4.0.0）
 - 「普段ためたい通貨」を **順序付きリスト** で登録（CurrenciesScreen で ↑↓× 管理）。
@@ -318,7 +349,6 @@ src/domain/
   purchaseChannel.ts  # 購入チャネル (店頭/ネット) の既定導出 (店舗から) と program × membership の gate 判定
   rankCards.ts        # loyalty + paymentApp 評価を統合しカード別ランキング生成
   loyalty.ts          # ポイントカード提示分（重取り）の最良を返す
-  paymentApp.ts       # PaymentApp 評価アダプタ (programEvaluator へ委譲)
   bestPath.ts         # 通貨間の最大積交換ルートを探索
   mergeSeed.ts        # add-only マージ + 公式 program / membership の更新伝播・tombstone（ユーザー編集保護）
   migrations.ts       # 既存レコードへの宣言型マイグレーション基盤
@@ -358,7 +388,8 @@ src/state/
   tierFamily.ts                 # 倍率 tier 系列 (J-POINT W / Gold / たまる) の判定。sync の tierMove と seed の tier 契約用 (アプリは import しない)
 ```
 
-`seed()` が組み立てる現在のマスタ（手キュレート + 自動同期分の合算）:
+`seed()` が組み立てる現在のマスタ（手キュレート + 自動同期分の合算。2026-09-27 に `seed()` を実行して
+実測、SEED_VERSION 47。週次 cron の自動反映で変わる）:
 
 | エンティティ | 件数 |
 |---|---|
@@ -366,9 +397,9 @@ src/state/
 | カード (cards) | 24 |
 | ポイントカード (pointCards) | 7 |
 | 決済アプリ (paymentApps) | 11 |
-| 店舗 (stores) | 267（手キュレート + 自動同期分） |
-| BenefitProgram (programs) | 45 |
-| StoreProgramMembership (memberships) | 384 (2026-09-27 実測、tombstone 除外後) |
+| 店舗 (stores) | 268（手キュレート 116 + 自動同期分 152） |
+| BenefitProgram (programs) | 46（tombstone 除外後） |
+| StoreProgramMembership (memberships) | 384（tombstone 除外後） |
 | 交換エッジ (edges) | 58 |
 
 #### 還元の「有効化」規約（opt-in vs 都度登録）
@@ -407,7 +438,7 @@ scripts/sync/
   inject-prompt.ts     # extractor プロンプトに seed 内容を動的注入
   aliases.ts           # cardId / storeId の表記揺れ正規化
   evidence-check.ts    # hallucination guard (日付主張の根拠検証 等)
-  report.ts            # AUTO_SUMMARY.md / REVIEW_QUEUE.md 生成
+  report.ts            # AUTO_SUMMARY.md / REVIEW_QUEUE.md / SYNC_HISTORY(.json/.md) 生成
   types.ts             # 共通型 + 閾値定数 + scope ディレクティブ
 ```
 
@@ -433,7 +464,7 @@ npm run sync:approve -- --list     # needsReview 一覧 (ID 付き) を表示
 npm run sync:approve -- <ID> ...   # 指定 needsReview 項目を seed-additions.ts へ承認適用
                                     # (⚠ chore/sync-review-queue ブランチ上の commit は次回 cron の
                                     #  ブランチ再構築で失われるため、approve 後は速やかに PR をマージすること)
-npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE 生成
+npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE / SYNC_HISTORY 生成
 ```
 
 `scripts/generate-master.ts` がビルド時に走り、`src/state/seed.ts` の内容を
@@ -582,6 +613,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **改善 PR-0a-2b (membership 伝播 + 件数/指紋/安全判定 + M3 条件チップ)** — 未編集の公式 membership に notes / channel / override の公式更新を伝播 (`propagateMembershipUpdates`、`userModifiedAt` は保護)、membership 単体 tombstone (`REMOVED_MEMBERSHIP_IDS`) を seed 反映の全経路に配線 (#103 の general 4 件が反映されず自動反映が恒久停止していた F3)。件数 (`changeCount` / 更新バナー) と既読指紋 (`syncDigest`: program 更新は内容ハッシュ、`memU:` / `memD:`) に membership の更新・削除を含め、channel の変化は確認モーダルへ。J-POINT 20倍の店別条件を membership.notes に移し (スタバ / マック / すき家 / すかいらーく 3 店 / サンマルク、2026-09-27 公式確認)、結果カードの条件チップに conditions / membership.notes を合流 (M3、`channel` チップ)。警告チップは `rankWarningChips` で優先順・最大 3 に一本化。更新バナーの「あとで」は版を進めず当日のセッション内だけ非表示。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-0a-2c (tombstone 配線の残り + propose ミラー + tier 契約)** — 同じ店 × 同じ倍率系列の重複 2 件 (高島屋 × J-POINT Gold 2倍 = SC・レストラン街の受け皿誤り、無印 × たまる 4倍 = 旧値、公式は 2倍) を membership 単体 tombstone にし、`seed()` の memberships からも除外 (ADDED 行が毎回「追加 → 除去」を往復して自動反映が止まるのを防ぐ)。週次同期は tombstone 済み id を再提案せず (`🪦 tombstone-skip`)、同じ店 × 同じ系列の別倍率 membership を `tierMove` で review に回す。apply / approve は生成物から tombstone 行を物理削除。REVIEW_QUEUE の理由の表示順を `REASON_ORDER` に一本化し、全理由を含む網羅テストを追加。seed に tier 契約 (店 × 系列 × 有効チャネルごとに membership ≤ 1) を追加。SEED_VERSION / PERSIST_SCHEMA 据え置き (削除を含むので既存端末では確認モーダルで反映)
 - **改善 PR-6d (U6 復旧網)** — 保存データの読み込み失敗を検知して生データを `pointmax:crash-backup:v1` に退避し、App を描画せず復旧パネルを出す (`Root.tsx` / `hydrationGuard.ts`)。画面境界を `key={tab}` に、同期モーダル / 更新バナー / 計算タブの通知枠は例外で非表示に縮退、`onUncaughtError` の静的 fallback。復旧パネル (再読み込み / 書き出し / コピー / 直前の状態に戻す / 公式データで初期化 = スナップショットを取らない `resetToSeed`)。設定の「直前の状態に戻す」がマスタ更新前へ戻したときに自動反映で打ち消される既存バグを修正。SEED_VERSION / PERSIST_SCHEMA 据え置き
+- **改善 PR-0a-3b (docs)** — README のマスタ件数表を `seed()` の実測値 (stores 268 / programs 46 / memberships 384) に更新し、「計算に反映していない条件（既知の近似）」節を新設 (制度レベルの近似だけを列挙し、program 固有の条件は seed の conditions / notes を正とする)。seed のコメント (J-POINT の件数・W 高島屋の実効率・cron の書き込み範囲) と tsconfig.scripts.json のヘッダを現行実装に合わせた。コメントと docs のみで、SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
