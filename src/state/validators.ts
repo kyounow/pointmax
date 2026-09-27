@@ -282,20 +282,20 @@ function checkCardFamilyIds(data: Record<string, unknown>): string | null {
 // または cardIds が空配列) はどのカードでも発火しない死にデータ (programEvaluator は cardIds:[] を
 // 「どのカードにも一致しない」と扱う)。UI から作る program は必ず対象を持つ (CampaignForm は targetId 必須、
 // addUserLoyaltyProgram は pointCardId) ので、ここに来るのは手編集の JSON か壊れた master だけ。
+// (main chunk に載るので、エラー文は 1 種類にまとめて小さく保つ)
 function checkProgramTargets(data: Record<string, unknown>): string | null {
   if (!Array.isArray(data.programs)) return null;
   for (let i = 0; i < data.programs.length; i++) {
     const p = data.programs[i];
     if (!isObject(p)) continue; // checkArray 側で既に弾かれている想定
-    const label = `programs[${i}] (${String(p.id)})`;
-    if (p.cardIds !== undefined) {
-      if (!Array.isArray(p.cardIds) || p.cardIds.length === 0 || !p.cardIds.every(isStr)) {
-        return `${label} の cardIds が空、または文字列の配列ではありません`;
-      }
-    }
-    const hasCards = Array.isArray(p.cardIds) && p.cardIds.length > 0;
-    if (!hasCards && !isStr(p.pointCardId) && !isStr(p.paymentAppId)) {
-      return `${label} に対象 (cardIds / pointCardId / paymentAppId) がありません`;
+    const c = p.cardIds;
+    // cardIds は「無い」か「非空の文字列配列」。無いときは pointCardId か paymentAppId が要る。
+    const ok =
+      c === undefined
+        ? isStr(p.pointCardId) || isStr(p.paymentAppId)
+        : Array.isArray(c) && c.length > 0 && c.every(isStr);
+    if (!ok) {
+      return `programs[${i}] (${String(p.id)}) の対象 (空でない cardIds / pointCardId / paymentAppId) がありません`;
     }
   }
   return null;

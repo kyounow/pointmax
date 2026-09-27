@@ -306,10 +306,12 @@ describe("validateImportData: PR-0b-3 program の対象キー", () => {
     }
   });
 
-  it("cardIds: [] の program を拒否 (どのカードでも発火しない死にデータ)", () => {
-    const r = validateImportData({ ...valid, programs: [{ ...base, cardIds: [] }] });
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toContain("cardIds が空");
+  it("cardIds: [] の program を拒否 (どのカードでも発火しない死にデータ。paymentAppId があっても拒否)", () => {
+    for (const extra of [{}, { paymentAppId: "pa1" }]) {
+      const r = validateImportData({ ...valid, programs: [{ ...base, cardIds: [], ...extra }] });
+      expect(r.ok, JSON.stringify(extra)).toBe(false);
+      if (!r.ok) expect(r.error).toContain("空でない cardIds");
+    }
   });
 
   it("cardIds に文字列以外が混ざる program を拒否", () => {
