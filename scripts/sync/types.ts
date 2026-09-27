@@ -416,7 +416,8 @@ export type ReviewReason =
   | "campaignRateCeiling"     // campaign の rate ≥ 10%、または 5% 超で上限 (monthlyCapAmountYen) が無い。
                               // campaign 由来 membership の overrideRate > 5% もここ
   | "targetMismatch"          // registry の target 宣言と新規 program の対象キーが一致しない (帰属誤り疑い)
-  | "sourceAutoMergeDisabled" // registry で autoMerge:false のソース由来。ガードは通過している (解除は別 PR)
+  | "sourceAutoMergeDisabled" // registry で autoMerge:false のソース由来。ガードは通過している (解除は別 PR)。
+                              // membership は Phase C / C′ の後 (C″) で付くので missing*Body / storeNameMismatch 等を隠さない
   | "storeNameMismatch";      // 既存 store への新規 membership だが、evidence に store.name (括弧除去後) が無い
                               // (かっぱ寿司 → くら寿司 のような店の取り違え疑い)。Phase C′
 

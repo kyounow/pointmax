@@ -111,9 +111,10 @@ const campaignSource: ExtractedSource = {
   ],
 };
 
-// diff-and-propose の main と同じ Phase 順 (1 → A → B → B' → B″ → C → C′ → C2) を再現する
+// diff-and-propose の main と同じ Phase 順 (1 → A → B → B' → B″ → C → C′ → C″ → C2) を再現する
 // (C3 の stale ガードは promptVersion 依存なので省く)。
-// policies (registry のソース別ポリシー) を渡すと B' の除外と B″ (applySourcePolicies) が効く (PR-0b-3)。
+// policies (registry のソース別ポリシー) を渡すと B' の除外と B″ / C″ (applySourcePolicies) が効く (PR-0b-3)。
+// B″ は memberships 以外、C″ は memberships だけ (C / C′ の reason を sourceAutoMergeDisabled で隠さない)。
 function runPipeline(
   extracted: ExtractedSource[],
   current: SeedShape,
@@ -141,8 +142,10 @@ function runPipeline(
     autoMergeDisabledSourceIds(policies),
   );
 
-  // Phase B″: ソース別ポリシー
-  const sourcePolicy = applySourcePolicies(chainPromote.proposals, policies);
+  // Phase B″: ソース別ポリシー 1 段目 (memberships 以外)
+  const sourcePolicy = applySourcePolicies(chainPromote.proposals, policies, {
+    excludeCollections: ["memberships"],
+  });
 
   // Phase C: orphan guard
   const existingStoreIds = new Set(current.stores.map((s) => s.id));
@@ -156,9 +159,14 @@ function runPipeline(
   // Phase C′: membership の内容ガード (店名照合・条件文言)
   const membershipGuard = guardMembershipContent(orphan.proposals, current);
 
+  // Phase C″: ソース別ポリシー 2 段目 (memberships だけ。C / C′ を通過したものが対象)
+  const sourcePolicyMemberships = applySourcePolicies(membershipGuard.proposals, policies, {
+    onlyCollections: ["memberships"],
+  });
+
   // Phase C2: atomicity
   const atomicity = demoteChildlessMemberStorePrograms(
-    membershipGuard.proposals,
+    sourcePolicyMemberships.proposals,
     new Set((current.memberships ?? []).map((m) => m.programId)),
   );
 
@@ -176,7 +184,10 @@ function runPipeline(
       dedupCollisions: dedup.collisions,
       capDeferred: cap.deferred.length,
       chainPromoted: chainPromote.promoted,
-      sourcePolicyDemoted: [...sourcePolicy.demotedBySource.values()].reduce((s, n) => s + n, 0),
+      sourcePolicyDemoted: [
+        ...sourcePolicy.demotedBySource.values(),
+        ...sourcePolicyMemberships.demotedBySource.values(),
+      ].reduce((s, n) => s + n, 0),
       orphanDowngradedStore: orphan.downgradedStore,
       orphanDowngradedProgram: orphan.downgradedProgram,
       membershipGuarded: membershipGuard.demotedStoreName + membershipGuard.demotedWording,
@@ -362,7 +373,91 @@ describe("sync pipeline integration: ソース別ポリシー (autoMerge:false)"
       )?.reviewReason;
     expect(reasonOf("programs", "prog-dpay-mcd-2099")).toBe("sourceAutoMergeDisabled");
     expect(reasonOf("stores", "store-mcd")).toBe("storeAdditionsDisabled");
-    // membership は B″ で先に sourceAutoMergeDisabled (reason 無しの auto 候補だけが対象)
-    expect(reasonOf("memberships", "s-exist-1")).toBe("sourceAutoMergeDisabled");
+    // program は B″ で降格済みなので、membership は Phase C で missingProgramBody (本体が入らないことを正直に示す)。
+    // sourceAutoMergeDisabled (= ほかのガードは通過済み) は付かない
+    expect(reasonOf("memberships", "s-exist-1")).toBe("missingProgramBody");
+    expect(reasonOf("memberships", "store-mcd")).toBe("missingStoreBody");
+    expect(result.metrics.sourcePolicyDemoted).toBe(1); // program 1 件だけ
+  });
+
+  // 既存 program × 既存店への d-pay の membership (Phase C を通過する形)
+  const existingProgramCurrent: SeedShape = {
+    ...richCurrent,
+    stores: [...richCurrent.stores, { id: "mcdonalds", name: "マクドナルド", category: "飲食" } as never],
+    programs: [
+      {
+        id: "prog-dpay-existing",
+        name: "d払い 既存キャンペーン",
+        scope: "member-stores",
+        paymentAppId: "pa-d-pay",
+        rate: 0.03,
+        currencyId: "d-pt",
+        validFrom: "2030-01-01",
+        validTo: "2099-12-31",
+      } as never,
+    ],
+  };
+  const membershipOnly = (storeId: string, evidenceQuote: string): ExtractedSource => ({
+    ...dpaySource,
+    stores: [],
+    programs: [],
+    memberships: [
+      { programId: "prog-dpay-existing", storeId, evidenceQuote, explicitness: 1, ambiguity: 0 },
+    ],
+  });
+  const membershipReason = (r: ReturnType<typeof runPipeline>) =>
+    [...r.auto, ...r.review].find((p) => p.collection === "memberships")?.reviewReason;
+
+  it("C′ で止まる membership (店名不一致・条件文言) は、ポリシー付きでも storeNameMismatch / campaignConditional のまま", () => {
+    // 店名不一致: evidence に「既存飲食1」が無い
+    const wrongStore = membershipOnly("s-exist-1", "マクドナルド で d払い 3%還元");
+    expect(membershipReason(runPipeline([wrongStore], existingProgramCurrent))).toBe("storeNameMismatch");
+    expect(membershipReason(runPipeline([wrongStore], existingProgramCurrent, { policies: dpayPolicy }))).toBe(
+      "storeNameMismatch",
+    );
+    // 条件文言: モバイルオーダー限定
+    const conditional = membershipOnly("mcdonalds", "マクドナルド（モバイルオーダー限定）d払い 3%還元");
+    expect(membershipReason(runPipeline([conditional], existingProgramCurrent, { policies: dpayPolicy }))).toBe(
+      "campaignConditional",
+    );
+  });
+
+  it("C / C′ を通過した d-pay の membership だけが Phase C″ で sourceAutoMergeDisabled (ポリシー無しなら auto)", () => {
+    const clean = membershipOnly("mcdonalds", "マクドナルド で d払い 3%還元");
+    const plain = runPipeline([clean], existingProgramCurrent);
+    expect(plain.auto).toHaveLength(1);
+    const guarded = runPipeline([clean], existingProgramCurrent, { policies: dpayPolicy });
+    expect(guarded.auto).toEqual([]);
+    expect(membershipReason(guarded)).toBe("sourceAutoMergeDisabled");
+    expect(guarded.metrics.sourcePolicyDemoted).toBe(1);
+  });
+
+  it("C″ は C2 より前: 他ソースの新規 member-stores program の membership が d-pay 由来だけなら program は orphanedProgram", () => {
+    // 他ソース (ポリシー無し) の新規 campaign program が auto 候補になり、その membership は d-pay 由来だけ
+    const otherProgram: ExtractedSource = {
+      ...dpaySource,
+      sourceId: "other-campaigns",
+      stores: [],
+      memberships: [],
+      programs: [{ ...dpaySource.programs![0], programId: "prog-other-mcd-2099" }],
+    };
+    const dpayMembership: ExtractedSource = {
+      ...dpaySource,
+      stores: [],
+      programs: [],
+      memberships: [
+        { programId: "prog-other-mcd-2099", storeId: "mcdonalds", evidenceQuote: "マクドナルド で d払い 3%還元", explicitness: 1, ambiguity: 0 },
+      ],
+    };
+    const plain = runPipeline([otherProgram, dpayMembership], existingProgramCurrent);
+    const programReason = (r: ReturnType<typeof runPipeline>) =>
+      [...r.auto, ...r.review].find((p) => p.collection === "programs")?.reviewReason;
+    expect(programReason(plain)).toBeUndefined(); // 対照: ポリシー無しなら program・membership とも auto
+    expect(membershipReason(plain)).toBeUndefined();
+    const guarded = runPipeline([otherProgram, dpayMembership], existingProgramCurrent, { policies: dpayPolicy });
+    expect(membershipReason(guarded)).toBe("sourceAutoMergeDisabled");
+    // membership が C″ で降格したので、program 単独で auto (membership 0 の死にデータ) にならない
+    expect(programReason(guarded)).toBe("orphanedProgram");
+    expect(guarded.auto).toEqual([]);
   });
 });

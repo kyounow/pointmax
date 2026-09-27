@@ -2726,6 +2726,21 @@ describe("guardStaleExtractGeneration", () => {
     expect(proposals[0].reviewReason).toBe("rateDeltaTooLarge");
   });
 
+  it("PR-0b-3: Phase B″ の sourceAutoMergeDisabled (ガード通過済みの印) は stale の方が具体的なので上書きする", () => {
+    const { proposals, guardedBySource } = guardStaleExtractGeneration(
+      [
+        rateUpdate("d-pay-campaigns", "sourceAutoMergeDisabled"),
+        rateUpdate("paypay-campaigns", "sourceAutoMergeDisabled"), // stale でないソースはそのまま
+      ],
+      new Set(["d-pay-campaigns"]),
+    );
+    expect(proposals.map((p) => p.reviewReason)).toEqual([
+      "staleExtractGeneration",
+      "sourceAutoMergeDisabled",
+    ]);
+    expect(guardedBySource.get("d-pay-campaigns")).toBe(1);
+  });
+
   it("PROGRAM_OVERRIDES 経路でない updateField (cards.defaultRate) は対象外", () => {
     const cardUpdate: Proposal = {
       type: "updateField",

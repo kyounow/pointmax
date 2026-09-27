@@ -21,6 +21,7 @@ import {
   proposeStores,
 } from "./propose-helpers";
 import { applySourcePolicies, autoMergeDisabledSourceIds } from "./registry-policy";
+import { findRiskyApprovals } from "./approve-proposals";
 import type { AddRecordProposal, ExtractedSource, Proposal, SourcePolicy } from "./types";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 import {
@@ -43,7 +44,8 @@ import {
 
 // diff-and-propose の main と同じ Phase 順:
 //   1 (propose*) → 2 (expired-cleanup) → A dedup → B cap → B' chain-promote (autoMerge:false ソース除外)
-//   → B″ applySourcePolicies → C orphan → C′ membership 内容ガード → C2 atomicity
+//   → B″ applySourcePolicies (memberships 以外) → C orphan → C′ membership 内容ガード
+//   → C″ applySourcePolicies (memberships のみ) → C2 atomicity
 // (C3 の stale ガードは promptVersion の世代差だけを見るので省く)。
 // membership tombstone は実 seed-blocklist に依存させないため空集合を渡す。
 function runPhases(
@@ -62,15 +64,20 @@ function runPhases(
   const dedup = dedupeAcrossProposals(all);
   const cap = applyCategoryCap(dedup.proposals, 5);
   const chain = promoteChainStoreAutoMerge(cap.kept, current, autoMergeDisabledSourceIds(policies));
-  const sourcePolicy = applySourcePolicies(chain.proposals, policies);
+  const sourcePolicy = applySourcePolicies(chain.proposals, policies, {
+    excludeCollections: ["memberships"],
+  });
   const orphan = downgradeOrphanMemberships(
     sourcePolicy.proposals,
     new Set(current.stores.map((s) => s.id)),
     new Set((current.programs ?? []).map((p) => p.id)),
   );
   const content = guardMembershipContent(orphan.proposals, current);
+  const sourcePolicyMemberships = applySourcePolicies(content.proposals, policies, {
+    onlyCollections: ["memberships"],
+  });
   return demoteChildlessMemberStorePrograms(
-    content.proposals,
+    sourcePolicyMemberships.proposals,
     new Set((current.memberships ?? []).map((m) => m.programId)),
   ).proposals;
 }
@@ -118,6 +125,72 @@ describe("Z3 ゴールデン: membership の誤マッピング (既存 program �
     expect(p!.reviewReason).toBe(m.reason);
     expect(p!.reviewDetail).toBeTruthy();
   });
+
+  // 出荷時の設定 (d-pay / paypay が autoMerge:false) でも、membership の具体的な reason が
+  // sourceAutoMergeDisabled に隠れず、sync:approve が --accept-risk を要求する (Phase C″ は C′ の後)。
+  it.each(MEMBERSHIP_MISMAPS.map((m) => [m.note, m] as const))(
+    "GOLDEN_POLICIES 付きでも同じ reason で --accept-risk の対象: %s",
+    (_note, m) => {
+      const ps = runPhases([m.source], GOLDEN_SEED, { now: NOW_DPAY_0727, policies: GOLDEN_POLICIES });
+      const p = findMembership(ps, m.programId, m.storeId);
+      expect(p, `${m.programId}|${m.storeId}`).toBeDefined();
+      expect(p!.reviewReason).toBe(m.reason);
+      expect(findRiskyApprovals([p!])).toEqual([p]);
+    },
+  );
+
+  it("d-pay の かっぱ寿司 → くら寿司 (MEMBERSHIP_MISMAPS[0]) は GOLDEN_POLICIES 付きで storeNameMismatch", () => {
+    const m = MEMBERSHIP_MISMAPS[0];
+    expect(m.source.sourceId).toBe("d-pay-campaigns");
+    const ps = runPhases([m.source], GOLDEN_SEED, { now: NOW_DPAY_0727, policies: GOLDEN_POLICIES });
+    const p = findMembership(ps, m.programId, m.storeId);
+    expect(p?.reviewReason).toBe("storeNameMismatch");
+    expect(p?.reviewDetail).toContain("くら寿司");
+    expect(findRiskyApprovals(ps)).toEqual([p]);
+  });
+
+  it("paypay の既存 program への membership で evidence が『モバイルオーダー限定』なら GOLDEN_POLICIES 付きでも campaignConditional", () => {
+    const src: ExtractedSource = {
+      ...PAYPAY_0903,
+      programs: [],
+      memberships: [
+        {
+          programId: "prog-paypay-seven-eleven-30-2026-09",
+          storeId: "mcdonalds",
+          evidenceQuote: "マクドナルド（モバイルオーダー限定）",
+          explicitness: 1,
+          ambiguity: 0.05,
+        },
+      ],
+    };
+    for (const policies of [undefined, GOLDEN_POLICIES]) {
+      const ps = runPhases([src], GOLDEN_SEED_WITH_PAYPAY_SEVEN, { now: NOW_PAYPAY_0903, policies });
+      const p = findMembership(ps, "prog-paypay-seven-eleven-30-2026-09", "mcdonalds");
+      expect(p?.reviewReason, policies ? "with policies" : "no policies").toBe("campaignConditional");
+      expect(findRiskyApprovals([p!])).toHaveLength(1);
+    }
+  });
+
+  it("C / C′ を通過した d-pay の membership は GOLDEN_POLICIES 付きで sourceAutoMergeDisabled (--accept-risk 不要)", () => {
+    const clean: ExtractedSource = {
+      ...MEMBERSHIP_MISMAPS[0].source,
+      memberships: [
+        {
+          programId: "prog-dpay-kura-sushi-existing",
+          storeId: "kappa-sushi",
+          evidenceQuote: "かっぱ寿司 dポイント 10倍",
+          explicitness: 1,
+          ambiguity: 0.05,
+        },
+      ],
+    };
+    const noPolicy = runPhases([clean], GOLDEN_SEED, { now: NOW_DPAY_0727 });
+    expect(findMembership(noPolicy, "prog-dpay-kura-sushi-existing", "kappa-sushi")?.reviewReason).toBeUndefined();
+    const ps = runPhases([clean], GOLDEN_SEED, { now: NOW_DPAY_0727, policies: GOLDEN_POLICIES });
+    const p = findMembership(ps, "prog-dpay-kura-sushi-existing", "kappa-sushi");
+    expect(p?.reviewReason).toBe("sourceAutoMergeDisabled");
+    expect(findRiskyApprovals(ps)).toEqual([]);
+  });
 });
 
 describe("Z3 ゴールデン: ソース別ポリシー (d-pay / paypay の autoMerge:false)", () => {
@@ -125,10 +198,21 @@ describe("Z3 ゴールデン: ソース別ポリシー (d-pay / paypay の autoM
     const ps = runPhases([DPAY_0727], GOLDEN_SEED, { now: NOW_DPAY_0727, policies: GOLDEN_POLICIES });
     expect(ps).toHaveLength(17);
     expect(autoOf(ps).map((p) => `${p.collection}:${JSON.stringify(recordOf(p))}`)).toEqual([]);
-    // 既存店への membership は Phase B″ (C の直前) で sourceAutoMergeDisabled、新規店は storeAdditionsDisabled
+    // program は Phase 1 で review 行きなので、membership は Phase C で missingProgramBody (新規店は missingStoreBody)。
+    // sourceAutoMergeDisabled (= ほかのガードは通過済み) は付かない。新規店自体は storeAdditionsDisabled
     expect(findMembership(ps, "prog-dpay-mos-burger-dpoint-3x-2026-07", "mos-burger")?.reviewReason).toBe(
-      "sourceAutoMergeDisabled",
+      "missingProgramBody",
     );
+    const memberships = ps.filter((p) => p.collection === "memberships");
+    expect(memberships).toHaveLength(7);
+    for (const m of memberships) {
+      expect(["missingProgramBody", "missingStoreBody"], String(recordOf(m).storeId)).toContain(m.reviewReason);
+    }
+    // ポリシーの有無で membership の reason は変わらない
+    const noPolicy = runPhases([DPAY_0727], GOLDEN_SEED, { now: NOW_DPAY_0727 });
+    const reasonsOf = (xs: Proposal[]) =>
+      xs.filter((p) => p.collection === "memberships").map((p) => `${String(recordOf(p).storeId)}:${p.reviewReason}`);
+    expect(reasonsOf(ps)).toEqual(reasonsOf(noPolicy));
     const joyful = ps.find((p) => p.collection === "stores" && recordOf(p).id === "joyful-honda");
     expect(joyful?.reviewReason).toBe("storeAdditionsDisabled");
   });

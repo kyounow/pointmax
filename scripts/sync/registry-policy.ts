@@ -143,22 +143,41 @@ export function autoMergeDisabledSourceIds(
 }
 
 // ───────────────────────────────────────────────────────────────
-// Phase B″: ソース別ポリシー (autoMerge:false) の適用
+// Phase B″ / C″: ソース別ポリシー (autoMerge:false) の適用
 // ───────────────────────────────────────────────────────────────
 // reviewReason の無い提案 (= ここまでのガードを通過した auto 候補) のうち、registry で autoMerge:false の
 // ソース由来のものを sourceAutoMergeDisabled で review に回す。stores / programs / memberships /
 // updateField を問わない。registry に無い sourceId (期限切れ整理の "expired-cleanup") は素通りする
 // (期限切れの自動削除はソース別ポリシーの対象外)。
-// 不変条件: Phase C (orphan) の直前に走らせる。ここで降格した store / program を参照する membership を
-// Phase C が missing*Body で拾えるようにするため。
+//
+// sourceAutoMergeDisabled は「ほかのガードは全部通過した」という意味なので、後段のガードより先に付けると
+// そのガードの具体的な reason (missing*Body / storeNameMismatch / campaignConditional) を隠してしまう
+// (承認時の --accept-risk もすり抜ける)。そこで diff-and-propose の main は 2 回に分けて呼ぶ:
+//   Phase B″ (C の直前) : scope { excludeCollections: ["memberships"] }。stores / programs / updateField 等。
+//                         ここで降格した store / program を参照する (他ソースの) membership を Phase C が
+//                         missing*Body で拾えるようにするため、C より前に置く (不変条件)。
+//   Phase C″ (C′ の後・C2 の前): scope { onlyCollections: ["memberships"] }。membership は Phase C (orphan) と
+//                         Phase C′ (店名照合・条件文言) を通ったものだけが残る。C2 より前に置くのは、ここで
+//                         降格した membership を C2 (atomicity) が数えないようにするため。
+// scope を省くと全コレクションに適用する (単体テスト・過去の呼び出しとの互換)。
+
+export type SourcePolicyScope = {
+  /** 指定したコレクションの提案だけに適用する。 */
+  onlyCollections?: readonly string[];
+  /** 指定したコレクションの提案には適用しない。 */
+  excludeCollections?: readonly string[];
+};
 
 export function applySourcePolicies(
   proposals: Proposal[],
   policies: ReadonlyMap<string, SourcePolicy>,
+  scope: SourcePolicyScope = {},
 ): { proposals: Proposal[]; demotedBySource: Map<string, number> } {
   const demotedBySource = new Map<string, number>();
   const out = proposals.map((p) => {
     if (p.reviewReason) return p;
+    if (scope.onlyCollections && !scope.onlyCollections.includes(p.collection)) return p;
+    if (scope.excludeCollections?.includes(p.collection)) return p;
     if (policies.get(p.sourceId)?.autoMerge !== false) return p;
     demotedBySource.set(p.sourceId, (demotedBySource.get(p.sourceId) ?? 0) + 1);
     return {

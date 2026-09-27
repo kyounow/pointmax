@@ -189,4 +189,36 @@ describe("applySourcePolicies (Phase B″)", () => {
     expect(proposals[1].reviewReason).toBeUndefined();
     expect(demotedBySource.size).toBe(0);
   });
+
+  // main は B″ (C の前) で memberships 以外、C″ (C′ の後) で memberships だけに適用する
+  it("scope.excludeCollections: memberships を外すと store / program / updateField だけ降格 (B″)", () => {
+    const m = add("memberships", "d-pay-campaigns");
+    const { proposals, demotedBySource } = applySourcePolicies(
+      [add("stores", "d-pay-campaigns"), add("programs", "d-pay-campaigns"), m, update("d-pay-campaigns")],
+      policies,
+      { excludeCollections: ["memberships"] },
+    );
+    expect(proposals.map((p) => p.reviewReason)).toEqual([
+      "sourceAutoMergeDisabled",
+      "sourceAutoMergeDisabled",
+      undefined,
+      "sourceAutoMergeDisabled",
+    ]);
+    expect(proposals[2]).toBe(m);
+    expect(demotedBySource).toEqual(new Map([["d-pay-campaigns", 3]]));
+  });
+
+  it("scope.onlyCollections: memberships だけ降格し、C / C′ の reason が付いた membership はそのまま (C″)", () => {
+    const store = add("stores", "d-pay-campaigns");
+    const named = add("memberships", "d-pay-campaigns", "storeNameMismatch");
+    const { proposals, demotedBySource } = applySourcePolicies(
+      [store, add("memberships", "d-pay-campaigns"), named],
+      policies,
+      { onlyCollections: ["memberships"] },
+    );
+    expect(proposals[0]).toBe(store);
+    expect(proposals[1].reviewReason).toBe("sourceAutoMergeDisabled");
+    expect(proposals[2]).toBe(named);
+    expect(demotedBySource).toEqual(new Map([["d-pay-campaigns", 1]]));
+  });
 });

@@ -569,6 +569,8 @@ export function detectStaleExtractSources(
  * (rate/validFrom/validTo) で、現状 auto (reviewReason 無し) のものを
  * staleExtractGeneration で needsReview に降格する。
  * addRecord / 既に review 行き / 非 PROGRAM_OVERRIDES 経路は据え置き。
+ * 例外: sourceAutoMergeDisabled (Phase B″ で先に付く「ほかのガードは通過済み」の印) は上書きする
+ * (PR-0b-3。旧世代の書き戻しが「ガード通過済み」に見えて普通に承認されるのを防ぐ)。
  * guardedBySource は source ごとの降格件数 (ログ用)。
  */
 export function guardStaleExtractGeneration(
@@ -578,7 +580,8 @@ export function guardStaleExtractGeneration(
   const guardedBySource = new Map<string, number>();
   const out: Proposal[] = proposals.map((p) => {
     if (p.type !== "updateField") return p; // addRecord/delete/referenceChange は対象外
-    if (p.reviewReason) return p; // 既に別理由で review 行き
+    // 既に別理由で review 行き (sourceAutoMergeDisabled だけは stale の方が具体的なので上書き)
+    if (p.reviewReason && p.reviewReason !== "sourceAutoMergeDisabled") return p;
     if (!isApplicableProposal(p)) return p; // PROGRAM_OVERRIDES 行き (rate/validFrom/validTo) のみ
     if (!staleSourceIds.has(p.sourceId)) return p;
     guardedBySource.set(p.sourceId, (guardedBySource.get(p.sourceId) ?? 0) + 1);
@@ -600,19 +603,23 @@ export function guardStaleExtractGeneration(
 //   Phase B' : Chain-store auto-merge promote (promoteChainStoreAutoMerge)
 //              ─ storeAdditionsDisabled を campaign 参照 + チェーン判定で部分解除 (C-9)
 //                autoMerge:false ソースの program は campaign 参照に数えない (PR-0b-3)
-//   Phase B″ : Source policy guard (applySourcePolicies、registry-policy.ts)
+//   Phase B″ : Source policy guard 1 段目 (applySourcePolicies、registry-policy.ts、memberships 以外)
 //              ─ registry で autoMerge:false のソース由来の auto 候補を sourceAutoMergeDisabled で降格 (PR-0b-3)
-//                不変条件: B″ は常に C の直前 (降格した store / program を参照する membership を C が拾う)
+//                不変条件: B″ は常に C の前 (降格した store / program を参照する membership を C が拾う)
 //   Phase C  : Orphan membership guard (downgradeOrphanMemberships)
 //              ─ store / program 本体が auto に無い membership を降格
 //   Phase C′ : Membership content guard (guardMembershipContent、propose-helpers.ts、PR-0b-3)
 //              ─ reviewReason の無い新規 membership の店名照合 (storeNameMismatch) と条件文言
 //                (campaignConditional)。実効チャネル online の program (たまる系) は EC 語を免除
+//   Phase C″ : Source policy guard 2 段目 (applySourcePolicies、memberships のみ、PR-0b-3)
+//              ─ C / C′ を通過した autoMerge:false ソースの membership を sourceAutoMergeDisabled で降格。
+//                B″ で先に付けると C / C′ の reason (missing*Body / storeNameMismatch 等) が隠れるため C′ の後。
+//                C2 の前に置く (降格した membership を C2 が数えないように)
 //   Phase C2 : Program/membership atomicity guard (demoteChildlessMemberStorePrograms)
-//              ─ Phase C / C′ で membership が全て降格した member-stores program 単独を降格
+//              ─ Phase C / C′ / C″ で membership が全て降格した member-stores program 単独を降格
 //   Phase C3 : Stale extract generation guard (guardStaleExtractGeneration)
 //              ─ 旧世代 extracted (promptVersion 不一致) 由来の PROGRAM_OVERRIDES 行き
-//                updateField を staleExtractGeneration で降格 (書き戻し防止)
+//                updateField を staleExtractGeneration で降格 (書き戻し防止)。B″ の sourceAutoMergeDisabled は上書き
 //   Phase D  : auto / needsReview 振り分け + report 書き出し
 // Phase ラベルは log メッセージにも反映済 (🧯 = guard, 📐 = cap, 🔁 = dedup, 🧹 = expired, 🔓 = chain-promote)。
 
@@ -737,19 +744,15 @@ function main(): void {
     );
   }
 
-  // Phase B″: Source policy guard (PR-0b-3)
+  // Phase B″: Source policy guard 1 段目 (PR-0b-3)
   //   registry で autoMerge:false のソース由来の auto 候補を sourceAutoMergeDisabled で降格する
-  //   (stores / programs / memberships / updateField を問わない。expired-cleanup は registry に無いので素通り)。
+  //   (stores / programs / updateField 等。expired-cleanup は registry に無いので素通り)。
   //   Phase C の直前に置く (ここで降格した store / program を参照する membership を C が拾う)。
-  const sourcePolicy = applySourcePolicies(finalProposals, registry.policies);
+  //   membership は C / C′ の具体的な reason を隠さないよう、ここでは外して Phase C″ で降格する。
+  const sourcePolicy = applySourcePolicies(finalProposals, registry.policies, {
+    excludeCollections: ["memberships"],
+  });
   finalProposals = sourcePolicy.proposals;
-  if (sourcePolicy.demotedBySource.size > 0) {
-    const n = [...sourcePolicy.demotedBySource.values()].reduce((s, v) => s + v, 0);
-    const by = [...sourcePolicy.demotedBySource.entries()]
-      .map(([src, c]) => `${src}=${c}`)
-      .join(", ");
-    console.log(`🧯 source-policy guard: ${n} 件 (source=${by})`);
-  }
 
   // Phase C: Orphan membership guard
   //   store / program 本体が auto に居ない場合は降格。category cap で deferred
@@ -783,6 +786,26 @@ function main(): void {
       `🧯 membership content guard: ${membershipGuard.demotedStoreName + membershipGuard.demotedWording} 件` +
         ` (storeNameMismatch ${membershipGuard.demotedStoreName} / campaignConditional ${membershipGuard.demotedWording})`,
     );
+  }
+
+  // Phase C″: Source policy guard 2 段目 (membership、PR-0b-3)
+  //   C (orphan) と C′ (店名照合・条件文言) を通過した autoMerge:false ソースの membership だけを
+  //   sourceAutoMergeDisabled にする (= この reason は「ほかのガードは通過済み」を保つ)。C2 の前に置く
+  //   (ここで降格した membership を C2 が数えず、参照先の新規 member-stores program を orphanedProgram で拾う)。
+  const sourcePolicyMemberships = applySourcePolicies(finalProposals, registry.policies, {
+    onlyCollections: ["memberships"],
+  });
+  finalProposals = sourcePolicyMemberships.proposals;
+  const sourcePolicyDemoted = new Map(sourcePolicy.demotedBySource);
+  for (const [src, c] of sourcePolicyMemberships.demotedBySource) {
+    sourcePolicyDemoted.set(src, (sourcePolicyDemoted.get(src) ?? 0) + c);
+  }
+  if (sourcePolicyDemoted.size > 0) {
+    const n = [...sourcePolicyDemoted.values()].reduce((s, v) => s + v, 0);
+    const by = [...sourcePolicyDemoted.entries()]
+      .map(([src, c]) => `${src}=${c}`)
+      .join(", ");
+    console.log(`🧯 source-policy guard: ${n} 件 (source=${by})`);
   }
 
   // Phase C2: Program/membership atomicity guard (原子性ガード)
