@@ -529,9 +529,12 @@ export function loadExtractorVersions(
  * な source を { extracted 版, 現行版 } 付きで返す。
  * - registry に当該 extractor の版数が未定義 → gate skip (map に入れない)
  * - promptVersion 欠落 → "(none)" として不一致扱い (安全側)
+ *   (古い extracted ファイルでは欠落し得るので、引数型でも optional にしている)
  */
 export function detectStaleExtractSources(
-  extracted: Pick<ExtractedSource, "sourceId" | "extractor" | "promptVersion">[],
+  extracted: (Pick<ExtractedSource, "sourceId" | "extractor"> & {
+    promptVersion?: string;
+  })[],
   extractorVersions: Partial<Record<string, string>>,
 ): Map<string, StaleSourceInfo> {
   const stale = new Map<string, StaleSourceInfo>();

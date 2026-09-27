@@ -231,7 +231,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1061 ケース / 65 ファイル**） |
+| テスト | Vitest（**1198 ケース / 72 ファイル** (2026-09-27 時点)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -325,12 +325,19 @@ scripts/sync/
   types.ts             # 共通型 + 閾値定数 + scope ディレクティブ
 ```
 
+`scripts/**/*.ts` は `tsconfig.scripts.json` で `tsc -b` の型検査対象（lib は ES2023 のみ、DOM 無し）。
+CI の typecheck に加え、`npm run build`（= weekly-sync の safety gate と deploy）でも検査されるため、
+scripts だけの型エラーでも auto 反映は全件 safetyFailed に降格し deploy も止まる。
+scripts が import する `src/`（seed 系・mergeSeed・migrations・types・urlSafety・defineMemberships など）は
+Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わないこと。
+
 ## ローカル開発
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1061 ケース)
+npm run test         # Vitest (1198 ケース / 72 ファイル (2026-09-27 時点))
+npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
 npm run sync:fetch -- <sourceId>   # 1 ソースを Gemini で抽出

@@ -2,10 +2,11 @@
 // データソースは `sources/SYNC_HISTORY.json` (cron が `scripts/sync/report.ts`
 // 経由で先頭追記する)。本ファイルはアプリ側の型 + アクセサ。
 //
-// 型定義は意図的に `scripts/sync/types.ts` の SyncHistoryEntry / SyncHistoryFile
-// と独立して保持している (tsconfig.app は src/ のみ include、scripts/ は tsx で
-// 個別に走るため shared import 困難)。両者は JSON 構造で整合性が担保され、
-// drift があれば JSON 構造変更時に必ず両方更新する運用。
+// 型定義は現状 `scripts/sync/types.ts` の SyncHistoryEntry / SyncHistoryFile と
+// 独立して保持している。scripts/ も tsconfig.scripts.json で tsc -b の型検査対象に
+// なったので、scripts から本ファイルを import type することは可能 (JSON import 込みで
+// tsc 0 を確認済み)。型の統合は H1 (PR-1) で行う。それまでは両者を JSON 構造で整合させ、
+// JSON 構造変更時に必ず両方更新する運用。
 
 import syncHistoryJson from "../../sources/SYNC_HISTORY.json";
 

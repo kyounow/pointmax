@@ -1,0 +1,31 @@
+/*
+ * scripts/ (sync パイプライン・generate-master) の型検査用。tsc -b (npm run typecheck / npm run build) の reference。
+ * scripts は tsx (Node) で実行されるため lib に DOM を入れない。
+ * 制約: scripts が import する src (seed 系・mergeSeed・migrations・types・urlSafety・defineMemberships など 15 ファイル) に
+ * DOM API や import.meta.env を入れないこと (ここで型エラーになる)。
+ */
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.scripts.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Type safety + Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["scripts/**/*.ts"]
+}
