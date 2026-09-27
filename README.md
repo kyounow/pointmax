@@ -188,6 +188,7 @@
   1 段目 (`campaign-index` prompt) で詳細ページ URL を列挙 → 2 段目で各子ページを
   campaign extractor で抽出 → 1 つの extracted JSON に統合 (後段 propose は従来同形)。
   子 URL は同一ドメインの http(s) のみ・最大 10 件にガード。
+  2026-09 時点で enabled な crawl:index ソースは無い (jre / 楽天Pay は停止中、設定は再開用に保持)。
 - `npm run sync:propose` で現在 seed と diff、`autoApplicable`/`needsReview` に分類:
   - confidence ≥ 0.9 / rate 変動 ±10pp 以内 / 倍率 0.5x〜2x / 既存と衝突なし → auto
   - それ以外 (excludedCategory / lowConfidence / referenceChange / unsupportedDateClaim 等) → review
@@ -360,11 +361,13 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 
 - 週2回（毎週月曜・木曜 06:00 JST）GitHub Actions が同期パイプラインを実行 (`workflow_dispatch` で手動実行可)
 - **同期ソースの月/木 2グループ分割 (無料枠対策)**: 抽出に使う gemini-2.5-flash は無料枠が
-  20 リクエスト/日のため、enabled 15 ソースを 1 日で全 fetch すると後半ソースが 429 で枯渇する。
+  20 リクエスト/日のため、enabled ソースを 1 日で全 fetch すると後半ソースが 429 で枯渇する。
   そこで各ソースに `fetchGroup: mon | thu` を付与し (`sources/registry.yaml`)、**月曜 run は mon
-  グループ / 木曜 run は thu グループ**だけを fetch して各実行を無料枠内に収める。重量級
-  (3 attempts 常連: 楽天/Ponta/Vポイント) と crawl:index 型 (JRE/楽天Pay) を両グループに分散し、
-  worst-case を mon ≈18 req / thu ≈19 req に均衡させている。曜日は weekly-sync.yml が実行時刻の
+  グループ / 木曜 run は thu グループ**だけを fetch して各実行を無料枠内に収める。
+  2026-09-27 に収穫ゼロのソースを停止 (Z4) し、保有カード系だけを残した: enabled は 3 ソース
+  (mon: J-POINT パートナー / たまるマーケット、thu: SMBC Vポイントアップ) で、worst-case は
+  単発 3 attempts × 本数 = mon 6 req / thu 3 req (d払い / PayPay を再有効化すると mon 9 / thu 6)。
+  停止中のソースの理由と再開条件は registry の各 notes に記載。曜日は weekly-sync.yml が実行時刻の
   JST 曜日から自動導出。手動 `workflow_dispatch` では `group` 入力 (`auto` / `mon` / `thu` /
   `all`=全 enabled) でグループを明示指定できる (`all` は無料枠を消費するため手動フル実行専用)
 - 高信頼項目 (autoApplicable) は `auto-sync/YYYY-MM-DD-HHMM` ブランチ + `auto-sync` ラベル付き PR を作成し、
@@ -391,7 +394,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 
 | 対象 | auto-merge | 備考 |
 |---|---|---|
-| 既存 store/program 参照の **memberships** | ✅ する | rakuten/Ponta/JAL 等の提携店追加 |
+| 既存 store/program 参照の **memberships** | ✅ する | J-POINT パートナー / たまるマーケット等 |
 | 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview。反映は `seed-additions.ts` の `PROGRAM_OVERRIDES` (部分上書き) 経由で、手書き seed ファイルは書き換えない |
 | 既存 program の **期間変更** (validFrom/validTo) | ❌ しない (`periodChange` で needsReview) | キャンペーン延長/期間訂正の検知。承認は `npm run sync:approve -- <ID>` → `PROGRAM_OVERRIDES` 経由で反映 |
 | 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge |
