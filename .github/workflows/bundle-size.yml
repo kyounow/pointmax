@@ -61,3 +61,13 @@ jobs:
             exit 1
           fi
           echo "✓ within 300 KiB threshold"
+
+      # データ chunk (seed-data / sync-data) が main から切り出されていることを検査する。
+      # manualChunks の規則が外れてもデータが main に戻るだけで main は 300 KiB 以内に
+      # 収まり得るため、サイズ閾値では検知できない退行をここで止める。
+      - name: Check data chunks are split out
+        run: |
+          for p in seed-data sync-data; do
+            ls dist/assets/$p-*.js >/dev/null 2>&1 || { echo "❌ $p chunk missing (vite manualChunks の退行)"; exit 1; }
+            echo "✓ $p chunk: $(ls dist/assets/$p-*.js)"
+          done

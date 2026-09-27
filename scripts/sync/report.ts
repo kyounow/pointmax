@@ -668,7 +668,8 @@ export function buildReviewQueue(report: ProposalReport): string {
 // アプリ側「更新履歴」タブと GitHub 上の閲覧の両方で参照される。
 //
 // 設計判断:
-// - autoApplicable が 0 件の run は entry を追加しない (空エントリーで履歴を埋めない)
+// - auto=0 かつ review=0 の run だけ entry を作らない (PR #61。review のみの週も
+//   trend として残す。本当に変化なしの週だけ空エントリーで履歴を埋めない)
 // - 同じ generatedAt が既存 entries に居れば追加しない (workflow 再実行による重複防止)
 // - 最大 SYNC_HISTORY_MAX_ENTRIES 件で truncate (古いものから削除)
 // - commitSha は backfill 用のみ。新規 cron からは付与しない (squash merge SHA は事後判明のため)

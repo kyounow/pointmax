@@ -174,7 +174,7 @@
   (ボタン disabled + 理由表示)、不整合 state を作らない。quota 等の保存失敗は握りつぶし、
   **本体の破壊的操作は止めない** (`usageStats` / `calcFormDraft` と同型の schema-reset 非依存キー)。
 - **マスタ更新履歴** (設定画面内セクション、旧「更新履歴」タブ): 週次 cron で自動マージ
-  された変更を時系列で閲覧 (`sources/SYNC_HISTORY.json` を bundle 同梱、最新 104 件、
+  された変更を時系列で閲覧 (`sources/SYNC_HISTORY.json` を bundle 同梱、直近 52 件 (約半年)、
   GitHub commit/PR への動線あり)。最新 1 件は設定上部に常時プレビュー表示し、全履歴は
   折りたたみで展開する。`#settings/history` で直接開ける (旧 `#sync-history` からも自動
   リダイレクト)。自動マージが 0 件で要レビューのみの週も、件数と理由内訳 (`reviewStats`)
@@ -233,6 +233,7 @@
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
 | テスト | Vitest（**1061 ケース / 65 ファイル**） |
 | PWA | vite-plugin-pwa（precache + service worker） |
+| バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
 
 ### ドメインの構造
@@ -371,7 +372,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   JST 曜日から自動導出。手動 `workflow_dispatch` では `group` 入力 (`auto` / `mon` / `thu` /
   `all`=全 enabled) でグループを明示指定できる (`all` は無料枠を消費するため手動フル実行専用)
 - 高信頼項目 (autoApplicable) は `auto-sync/YYYY-MM-DD-HHMM` ブランチ + `auto-sync` ラベル付き PR を作成し、
-  safety check (件数上限/test/build) 通過後に **squash auto-merge** → main。
+  safety check (件数上限/test/build/main chunk 300 KiB) 通過後に **squash auto-merge** → main。
   bot のマージ (`GITHUB_TOKEN`) は push トリガーを起動しないため、GitHub Pages 再デプロイは
   `deploy.yml` の **`workflow_run`** (Weekly Master Sync 完了で発火) が担う
 - 要レビュー項目は `chore/sync-review-queue` ブランチの長寿命 PR (`needs-review` ラベル) に集約。
@@ -382,7 +383,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   updateField/programs の rate・validFrom・validTo / delete/programs)
 - `sync.config.json` の `autoMergeEnabled` で auto-merge の ON/OFF、`maxAutoChangesPerRun` が安全弁
   （超過時は全件 review 降格）
-- 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (最大 104 件、newest first)。
+- 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (直近 52 件 (約半年)、newest first)。
   auto-merge 週は auto-sync PR が、要レビューのみの週は weekly-sync の「Publish SYNC_HISTORY to main」step が
   履歴を main へ直 push し、いずれも `workflow_run` deploy でアプリの設定内「マスタ更新履歴」に反映される。
   GitHub の PR タブ (`auto-sync` ラベル絞り込み) + 履歴ファイルの両方で同じ情報を参照可
