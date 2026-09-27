@@ -335,7 +335,7 @@ export function effectiveOutcome(r: SourceRunResult): FetchOutcome {
       r.sourceId,
       "skipped",
       r.skippedBy.kind,
-      `${r.skippedBy.sourceId} の ${r.skippedBy.kind} で打ち切り (未実行、extracted は前回版)`,
+      `${r.skippedBy.sourceId} の ${r.skippedBy.kind} で打ち切り (未実行)`,
     );
   }
   if (r.outcome) return r.outcome;

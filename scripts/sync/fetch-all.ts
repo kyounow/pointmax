@@ -363,7 +363,7 @@ async function main(): Promise<void> {
       exitCode: null,
       elapsedSec: 0,
       outcome: null,
-      skippedBy: { kind: "config", sourceId: "(GEMINI_MODEL / GEMINI_THINKING_BUDGET)" },
+      skippedBy: { kind: "config", sourceId: "GEMINI_MODEL/GEMINI_THINKING_BUDGET" },
     }));
   } else {
     results = await runGroup(selectedSources, {
