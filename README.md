@@ -236,7 +236,7 @@
 
 | レイヤ | スタック |
 |---|---|
-| UI | React 19 + TypeScript + Vite + @xyflow/react |
+| UI | React 19.2 (`~19.2.8` 固定 ※) + TypeScript + Vite + @xyflow/react |
 | 状態管理 | Zustand + persist (`localStorage`) |
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
@@ -245,6 +245,13 @@
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
+
+※ **React は 19.2 系に固定している** (`react` / `react-dom` は `~19.2.8`)。React 19.3 は
+`react-vendor` chunk (eager 読み込みだが CI の bundle ゲートの対象外) を +29 KB raw
+(gzip +8.6 KB) 増やすため、19.3 の機能が必要になるまで 19.2 系に留める。`^` のままだと
+19.3 の型が入るので、`@types/react` (`~19.2.18`) と `@types/react-dom` (`~19.2.7`) も固定する。
+`npm install react@latest` などで固定を外さないこと。見直しは四半期チェック (V3) で行う
+(package.json にはコメントを書けないため、固定の理由はここに残す)。
 
 ### ドメインの構造
 
