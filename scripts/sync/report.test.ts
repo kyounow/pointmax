@@ -670,6 +670,29 @@ describe("appendSyncHistory", () => {
       out.entries.find((e) => e.date === survivorDate),
     ).toBeDefined();
   });
+
+  it("既存 entries が上限を超えていても、次の append で上限に切り詰める", () => {
+    // 上限を引き下げた直後 (旧上限で溜まったファイル) を想定: 上限 + 10 件の既存に 1 件 append
+    const overLimit = SYNC_HISTORY_MAX_ENTRIES + 10;
+    const existing: SyncHistoryFile = {
+      version: 1,
+      entries: Array.from({ length: overLimit }, (_, i) => ({
+        ...baseEntry,
+        generatedAt: `2024-01-01T00:00:00.${String(i).padStart(3, "0")}Z`,
+        date: `old-${i}`,
+      })),
+    };
+    const out = appendSyncHistory(existing, baseEntry);
+    expect(out.entries).toHaveLength(SYNC_HISTORY_MAX_ENTRIES);
+    expect(out.entries[0]).toBe(baseEntry); // 新規が先頭
+    // 既存の先頭 (新しい側) から SYNC_HISTORY_MAX_ENTRIES - 1 件だけ残り、以降は落ちる
+    expect(out.entries[out.entries.length - 1].date).toBe(
+      `old-${SYNC_HISTORY_MAX_ENTRIES - 2}`,
+    );
+    expect(
+      out.entries.find((e) => e.date === `old-${SYNC_HISTORY_MAX_ENTRIES - 1}`),
+    ).toBeUndefined();
+  });
 });
 
 describe("buildSyncHistoryMarkdown", () => {
