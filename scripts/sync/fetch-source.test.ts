@@ -61,7 +61,7 @@ describe("salvageBySchema", () => {
   it("(a) 違反アイテムが混在 → valid だけ残し違反のみ落とす", () => {
     const data: ExtractedSource = {
       ...baseSource(),
-      cards: [validCard, cardWithExtraProp, cardMissingExplicitness],
+      cards: [validCard, cardWithExtraProp, cardMissingExplicitness as never /* 意図的な schema 違反 fixture */],
     };
     const r = salvageBySchema(data, schema);
     expect(r.ok).toBe(true);
