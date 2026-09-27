@@ -1045,6 +1045,76 @@ describe("store: seed 反映の既存端末配信 (PR-0a-2a / MIGRATIONS v47 + t
   });
 });
 
+// PR-0a-2b (F3): membership 単体 tombstone (REMOVED_MEMBERSHIP_IDS) を seed 反映の 3 経路に配線。
+// 以前は preview (useSeedMerge) にだけ渡していたため、#103 の general 混入 4 件は
+// 「アプリに反映」しても消えず、isAutoApplySafe が恒久 false のままだった。
+describe("store: seed 反映の membership tombstone 配線 (PR-0a-2b)", () => {
+  const GENERAL_103: StoreProgramMembership[] = [
+    "prog-jcb-jpoint-20x",
+    "prog-jcb-jpoint-gold-20x",
+    "prog-jcb-jpoint-2x",
+    "prog-jcb-jpoint-gold-2x",
+  ].map((programId) => ({
+    id: `m-${programId}-general`,
+    programId,
+    storeId: "general",
+  }));
+  // ユーザー作成 program (UUID) の membership。tombstone とも公式 id とも衝突しない。
+  const USER_MEMBERSHIP: StoreProgramMembership = {
+    id: "m-5b1f0c7e-user-prog-general",
+    programId: "5b1f0c7e-user-prog",
+    storeId: "general",
+    userModifiedAt: "2026-09-01T00:00:00.000Z",
+  };
+
+  const setStateWith103 = () => {
+    const s = seed();
+    useStore.setState({
+      ...s,
+      memberships: [...s.memberships, ...GENERAL_103, USER_MEMBERSHIP],
+      lastSeedVersion: SEED_VERSION,
+    });
+  };
+
+  const expectTombstoned = () => {
+    const ids = new Set(useStore.getState().memberships.map((m) => m.id));
+    for (const m of GENERAL_103) expect(ids.has(m.id), m.id).toBe(false);
+    expect(ids.has(USER_MEMBERSHIP.id)).toBe(true);
+    // 反映後は preview (useSeedMerge と同じ opts) の差分が 0 件 = 再通知されない
+    const merged = mergeSeed(useStore.getState(), seed(), {
+      removedProgramIds: REMOVED_PROGRAM_IDS,
+      removedMembershipIds: REMOVED_MEMBERSHIP_IDS,
+    });
+    expect(changeCount(merged)).toBe(0);
+  };
+
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("前提: REMOVED_MEMBERSHIP_IDS は #103 の general 4 件を含む", () => {
+    for (const m of GENERAL_103) expect(REMOVED_MEMBERSHIP_IDS).toContain(m.id);
+  });
+
+  it("applySeedUpdate([]) (アプリに反映) で 4 件とも消え、UUID program の membership は残る", () => {
+    setStateWith103();
+    useStore.getState().applySeedUpdate([]);
+    expectTombstoned();
+  });
+
+  it("autoApplySeedUpdate (自動反映) でも同じく消える", () => {
+    setStateWith103();
+    useStore.getState().autoApplySeedUpdate({ digest: "d-103", count: 4 });
+    expectTombstoned();
+  });
+
+  it("mergeFromSeed (設定 > サンプル投入) でも同じく消える", () => {
+    setStateWith103();
+    useStore.getState().mergeFromSeed();
+    expectTombstoned();
+  });
+});
+
 // PR-4a (N-4): 破壊的操作 4 経路が直前スナップショットを採取するかの結線テスト。
 // takeSnapshot はモック済み (先頭 vi.mock)。ここでは「呼ばれること + trigger」だけを検査する
 // (state 引数は node 環境で localStorage 不在のため null になる = 中身は別テストの領域)。
