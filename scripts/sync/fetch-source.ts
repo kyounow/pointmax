@@ -1,27 +1,40 @@
 // 1ソース分のマスタ情報を Gemini で抽出するスクリプト。
 //
 // Usage:
-//   npx tsx scripts/sync/fetch-source.ts <sourceId> [--dry-run]
+//   npx tsx scripts/sync/fetch-source.ts <sourceId> [--dry-run] [--allow-disabled]
 //
 // 流れ:
-//   1. .env.local / process.env から GEMINI_API_KEY を読み込み
-//   2. sources/registry.yaml から <sourceId> を探す
+//   1. .env.local / process.env から GEMINI_API_KEY / GEMINI_MODEL / GEMINI_THINKING_BUDGET を読み込み
+//      (モデル名と thinking 予算はここで検証。不正なら Gemini を呼ばずに exit 1)
+//   2. sources/registry.yaml から <sourceId> を探す (enabled:false は --allow-disabled 指定時のみ)
 //   3. extractors/<extractor>.prompt.md を読み込み、INJECT マーカーを seed の現状で解決
 //   4. (--dry-run なら) ここで停止
-//   5. callGeminiWithRetry で 3 段階試行 (詳細は同関数の docblock 参照):
+//   5. callGeminiWithRetry で最大 3 attempts (planNextAttempt が次の手を決める):
 //        attempt 1: Gemini に URL Context Tool 経由で URL を渡し読み取り
 //        attempt 2: 5 秒待機して URL Context 再試行 (混雑回避)
 //        attempt 3: Node で URL を pre-fetch → HTML を plain text 化して
-//                   Gemini に直渡し (URL Context Tool 不通時の最終手段)
-//      各 attempt は classifyResponse で評価し、success なら即返却。
+//                   15 秒待機後に Gemini に直渡し (URL Context Tool 不通時の最終手段)
+//      allUrlsFailed / badRequest(400) の後は URL Context を再試行せず prefetch に進む。
+//      429 の日次枠 (quotaDaily) / 402 (billing) / API キー・モデル不正 (config) は即打ち切り。
 //   6. レスポンスを JSON parse (コードフェンス / 先頭 [...] ラッパに保険対応)
 //   7. ajv で schema 検証
 //   8. sources/extracted/<sourceId>.json に書き出し
 //
-// 失敗時 (全 attempt が success にならなかった、JSON 解析失敗、schema 違反):
-//   - process は exit code 1 でなく fallback ExtractedSource を書き出して終了
-//   - 後段の sync:propose が "URL retrieval failed" notes を見て gracefully skip する
-//   - これにより 1 ソース失敗で週次 cron 全体を停止させない
+// 失敗時:
+//   - 内容が原因の失敗 (応答はあったが URL 全取得失敗 / 空 / 非 JSON / schema 違反):
+//     `[fetch-failed:<kind>]` notes 付きの空の fallback ExtractedSource を書く。
+//     propose (isFailedExtraction) がこの prefix を見て失敗として数え、skip する。
+//   - API が原因の失敗 (quotaDaily / billing / config で打ち切り、または 1 度も応答が無い):
+//     extracted を書かない (keep-last-good。残るのは checkout 時点の main 版)。
+//   - crash (API キー欠落・registry / prompt / schema の読込失敗・モデル名不正など、main().catch に
+//     落ちる環境・設定エラー): fallback も書かない (全ソースの last-good を空で潰さないため)。exit 1。
+//   いずれも process は週次 cron 全体を止めない (fetch-all は常に exit 0)。
+//   古いファイルの流用は propose の fetchedAt 鮮度ガード (14 日) で updateField を review に回す。
+//
+// fetch outcome: PM_FETCH_OUTCOME_DIR が渡された時だけ (fetch-all 経由)、終了時 (finally) に
+//   <dir>/<sourceId>.outcome.json を書く (ok / empty / failed / quotaExhausted / crashed、
+//   calls・tokens・keptLastGood・abortRun)。fetch-all はこれを読んで後続ソースを打ち切る。
+//   dry-run では書かない。
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -45,13 +58,17 @@ import {
   addUsage,
   classifyGeminiError,
   classifyResponse,
+  decideWrite,
   DEFAULT_GEMINI_MODEL,
   DEFAULT_THINKING_BUDGET,
   extractUsage,
   formatDiagLine,
+  formatFailureNote,
   formatFetchError,
   formatUsage,
   headAndTail,
+  isRunAbortKind,
+  planNextAttempt,
   prefetchAsPlainText,
   prefetchRawHtml,
   probeUrl,
@@ -59,10 +76,22 @@ import {
   resolveThinkingBudget,
   summarizeGeminiDiag,
   type AttemptKind,
+  type AttemptRecord,
+  type FetchFailureNoteKind,
   type GeminiDiag,
+  type GeminiErrorKind,
   type ResponseStatus,
+  type RunAbortKind,
 } from "./fetch-response";
-import { createFetchStats } from "./fetch-outcome";
+import {
+  countExtractedItems,
+  createFetchStats,
+  createOutcomeDraft,
+  finalizeOutcome,
+  resolveFetchOutcomeDir,
+  writeFetchOutcome,
+  type OutcomeDraft,
+} from "./fetch-outcome";
 import {
   CHILD_FETCH_SLEEP_MS,
   extractAnchors,
@@ -75,7 +104,10 @@ import {
   type ParsedIndexResponse,
 } from "./crawl-index";
 
-const RETRY_DELAYS_MS = [5000, 15000];  // attempt 2: +5s, attempt 3: +15s (合計 max 20s wait)
+// attempt 間の待機。2 回目の URL Context の前は 5s、prefetch 経路で Gemini を呼ぶ前は 15s。
+// 直前が quotaMinute (分間枠の 429) なら retryDelay を尊重して min(max(retryDelay, 既定), 60s)。
+export const RETRY_DELAYS_MS = { urlContext: 5000, prefetch: 15000 } as const;
+export const QUOTA_MINUTE_MAX_WAIT_MS = 60_000;
 
 // ───────────────────────────────────────────────────────────────
 // Paths
@@ -361,60 +393,153 @@ async function callGemini(
   return { text, retrievedUrls, diag };
 }
 
-// callGemini を 3 段階で試す:
-//   attempt 1: URL Context Tool (現行)
-//   attempt 2: URL Context + 5s 待機
-//   attempt 3: pre-fetch → plain text を user prompt に注入 + 15s 待機
-// それぞれ classifyResponse で評価し、success なら即返却。
-// すべて失敗したら最後の (text, retrievedUrls, lastStatus) を返す。
-async function callGeminiWithRetry(
-  ai: GoogleGenAI,
-  args: {
-    systemInstruction: string;
-    url: string;
-    sourceId: string;
-  },
-): Promise<GeminiResult & { attempts: number; finalStatus: ResponseStatus }> {
-  let last: GeminiResult = { text: "", retrievedUrls: [] };
-  let lastStatus: ResponseStatus = "empty";
+export type RetryCallArgs = {
+  systemInstruction: string;
+  url: string;
+  sourceId: string;
+};
 
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const mode: AttemptKind = attempt === 3 ? "prefetch" : "urlContext";
+// callGeminiWithRetry の外部依存 (テストでは偽物と即時 sleep を注入する)。
+export type RetryDeps = {
+  callUrlContext(a: RetryCallArgs): Promise<GeminiCallResult>;
+  prefetchText(url: string): Promise<string>;
+  callWithText(a: RetryCallArgs & { plainText: string }): Promise<GeminiCallResult>;
+  sleep(ms: number): Promise<void>;
+};
+
+export type RetryResult = GeminiResult & {
+  /** 実施した attempt 数 (prefetch 自体の失敗を含む) */
+  attempts: number;
+  finalStatus: ResponseStatus;
+  /** Gemini 呼び出し回数 (= req 数。prefetch の失敗は数えない) */
+  geminiCalls: number;
+  /** 1 度でも応答があった (初期値 empty と「全 attempt が例外」を区別する) */
+  gotResponse: boolean;
+  errorKinds: GeminiErrorKind[];
+  /** run 打ち切り (quotaDaily / billing / config)。後続ソースも止める */
+  abort?: RunAbortKind;
+  history: AttemptRecord[];
+};
+
+export function createRetryDeps(ai: GoogleGenAI): RetryDeps {
+  return {
+    callUrlContext: (a) => callGemini(ai, a),
+    prefetchText: (url) => prefetchAsPlainText(url),
+    callWithText: (a) => callGeminiWithText(ai, a),
+    sleep: (ms) => new Promise((res) => setTimeout(res, ms)),
+  };
+}
+
+// 1 ソース最大 3 attempts (MAX_ATTEMPTS_PER_SOURCE)。次の手は planNextAttempt が決める:
+//   urlContext → (5s) urlContext → prefetch → (15s) Gemini に plain text 直渡し
+//   allUrlsFailed / badRequest の後は URL Context を再試行せず prefetch へ。
+//   quotaDaily / billing / config の例外は即 break し abort をセット (8/16 型は 1 call で止まる)。
+// 応答があった時だけ last / lastStatus を更新する。
+export async function callGeminiWithRetry(
+  args: RetryCallArgs,
+  deps: RetryDeps,
+): Promise<RetryResult> {
+  // 可変状態は 1 つのオブジェクトにまとめる (closure 内の代入で TS の narrowing が崩れないように)
+  const st: {
+    last: GeminiResult;
+    lastStatus: ResponseStatus;
+    gotResponse: boolean;
+    geminiCalls: number;
+    abort?: RunAbortKind;
+    /** 直前の attempt が quotaMinute の時だけ入る */
+    retryAfterMs?: number;
+  } = {
+    last: { text: "", retrievedUrls: [] },
+    lastStatus: "empty",
+    gotResponse: false,
+    geminiCalls: 0,
+  };
+  const errorKinds: GeminiErrorKind[] = [];
+  const history: AttemptRecord[] = [];
+
+  const waitMs = (base: number): number =>
+    st.retryAfterMs !== undefined
+      ? Math.min(Math.max(st.retryAfterMs, base), QUOTA_MINUTE_MAX_WAIT_MS)
+      : base;
+
+  const runGemini = async (
+    n: number,
+    kind: AttemptKind,
+    call: () => Promise<GeminiCallResult>,
+  ): Promise<void> => {
+    st.geminiCalls += 1;
     try {
-      let r: GeminiCallResult;
-      if (attempt === 3) {
-        // pre-fetch fallback strategy
-        console.log(`   🌐 attempt ${attempt}/3: pre-fetch HTML → plain text 渡し`);
-        const text = await prefetchAsPlainText(args.url);
-        r = await callGeminiWithText(ai, {
-          systemInstruction: args.systemInstruction,
-          sourceId: args.sourceId,
-          url: args.url,
-          plainText: text,
-        });
-      } else {
-        if (attempt > 1) {
-          console.log(`   ⏳ attempt ${attempt}/3 (URL Context, 待機 ${RETRY_DELAYS_MS[attempt - 2] / 1000}s)`);
-          await new Promise((res) => setTimeout(res, RETRY_DELAYS_MS[attempt - 2]));
-        }
-        r = await callGemini(ai, args);
+      const r = await call();
+      console.log(formatDiagLine(n, kind, r.diag));
+      st.last = { text: r.text, retrievedUrls: r.retrievedUrls };
+      st.lastStatus = classifyResponse(st.last);
+      st.gotResponse = true;
+      st.retryAfterMs = undefined;
+      history.push({
+        kind,
+        status: st.lastStatus,
+        ...(r.diag.finishReason !== undefined ? { finishReason: r.diag.finishReason } : {}),
+      });
+      if (st.lastStatus !== "success") {
+        console.log(`   ⚠️ attempt ${n} (${kind}) status: ${st.lastStatus}`);
+        logNonSuccessBody(st.last.text);
       }
-      console.log(formatDiagLine(attempt, mode, r.diag));
-      last = { text: r.text, retrievedUrls: r.retrievedUrls };
-
-      lastStatus = classifyResponse(last);
-      if (lastStatus === "success") {
-        return { ...last, attempts: attempt, finalStatus: "success" };
-      }
-      console.log(`   ⚠️ attempt ${attempt}/3 status: ${lastStatus}`);
-      logNonSuccessBody(last.text);
     } catch (e) {
-      console.log(`   ⚠️ attempt ${attempt}/3 error: ${formatFetchError(e)}`);
-      // 429 は特に retry 価値が高いが、他のエラーも次の attempt に進む
+      const c = classifyGeminiError(e);
+      errorKinds.push(c.kind);
+      history.push({ kind, errorKind: c.kind });
+      console.log(
+        `   ⚠️ attempt ${n} (${kind}) error [${c.kind}${c.httpStatus !== undefined ? ` ${c.httpStatus}` : ""}${c.quotaId ? ` ${c.quotaId}` : ""}]: ${c.message}`,
+      );
+      if (isRunAbortKind(c.kind)) st.abort = c.kind;
+      st.retryAfterMs = c.kind === "quotaMinute" ? c.retryAfterMs : undefined;
     }
+  };
+
+  for (;;) {
+    const next = planNextAttempt({ strategy: "urlContextFirst", history });
+    if (next === "stop") break;
+    const n = history.length + 1;
+
+    if (next === "urlContext") {
+      if (history.length > 0) {
+        const ms = waitMs(RETRY_DELAYS_MS.urlContext);
+        console.log(`   ⏳ attempt ${n} (URL Context, 待機 ${ms / 1000}s)`);
+        await deps.sleep(ms);
+      }
+      await runGemini(n, "urlContext", () => deps.callUrlContext(args));
+    } else {
+      // prefetch は Gemini 呼び出しとは別の try。失敗したら Gemini を呼ばずに終える (req を使わない)
+      console.log(`   🌐 attempt ${n}: pre-fetch HTML → plain text 渡し`);
+      let plainText: string;
+      try {
+        plainText = await deps.prefetchText(args.url);
+      } catch (e) {
+        history.push({ kind: "prefetch", prefetchFailed: true });
+        console.log(`   ⚠️ attempt ${n} (prefetch) 取得失敗: ${formatFetchError(e)}`);
+        continue; // 直前が prefetch なので planNextAttempt は stop を返す
+      }
+      const ms = waitMs(RETRY_DELAYS_MS.prefetch);
+      console.log(
+        `   ⏳ prefetch 成功 (${plainText.length.toLocaleString()} chars)、Gemini 直渡しの前に待機 ${ms / 1000}s`,
+      );
+      await deps.sleep(ms);
+      await runGemini(n, "prefetch", () => deps.callWithText({ ...args, plainText }));
+    }
+
+    if (st.abort !== undefined) break;
   }
 
-  return { ...last, attempts: 3, finalStatus: lastStatus };
+  return {
+    ...st.last,
+    attempts: history.length,
+    finalStatus: st.lastStatus,
+    geminiCalls: st.geminiCalls,
+    gotResponse: st.gotResponse,
+    errorKinds,
+    ...(st.abort !== undefined ? { abort: st.abort } : {}),
+    history,
+  };
 }
 
 // pre-fetch 用: URL Context Tool を使わず、plain text を user message に注入
@@ -582,17 +707,21 @@ function stampMeta(
 }
 
 // ───────────────────────────────────────────────────────────────
-// Fallback writer (空応答 / 非JSON / schema救済不能 で共通)
+// Fallback writer (内容が原因の失敗: URL 全取得失敗 / 空応答 / 非JSON / schema救済不能 / 索引失敗)
 // ───────────────────────────────────────────────────────────────
-// 旧: 3 箇所で同形の ExtractedSource リテラル + mkdir + write + log を
-// コピペしていた。生成 JSON は呼出側が notes/promptVersion を渡すため
-// 各サイトでバイト不変 (mkdirSync は recursive で冪等、outPath 同値)。
-function writeFallback(args: {
-  source: RegistrySource;
-  notes: string;
-  promptVersion: string;
-  logSuffix: string;
-}): void {
+// notes は `[fetch-failed:<kind>] <detail>` (formatFailureNote)。propose の isFailedExtraction は
+// この prefix で失敗ファイルを判定する。API が原因の失敗 (quota / billing / config / 応答ゼロ) と
+// crash ではこれを呼ばない (keep-last-good)。draft に「書いた / 失敗種別」を記録する。
+function writeFallback(
+  draft: OutcomeDraft,
+  args: {
+    source: RegistrySource;
+    kind: FetchFailureNoteKind;
+    detail: string;
+    promptVersion: string;
+    logSuffix: string;
+  },
+): void {
   const fallback: ExtractedSource = {
     sourceId: args.source.id,
     sourceUrl: args.source.url,
@@ -600,12 +729,39 @@ function writeFallback(args: {
     promptVersion: args.promptVersion,
     extractor: args.source.extractor,
     geminiModel: runtime.model,
-    notes: args.notes,
+    notes: formatFailureNote(args.kind, args.detail),
   };
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const outPath = resolve(OUTPUT_DIR, `${args.source.id}.json`);
   writeFileSync(outPath, JSON.stringify(fallback, null, 2));
   console.log(`✓ wrote ${outPath} ${args.logSuffix}`);
+  draft.wrote = true;
+  draft.failKind = args.kind;
+  draft.detail = args.detail;
+}
+
+// API が原因の失敗: extracted を上書きせず前回版を残す。後続ソースを止めるかは abort で決まる。
+export function keepLastGood(
+  draft: OutcomeDraft,
+  source: Pick<RegistrySource, "id">,
+  r: { abort?: RunAbortKind; errorKinds: readonly GeminiErrorKind[] },
+): void {
+  const reason = r.abort ?? "apiError";
+  console.log(
+    `⏸ keep-last-good (${reason}): ${source.id} は前回版を保持 (extracted を上書きしない)` +
+      (r.errorKinds.length > 0 ? ` errors=[${r.errorKinds.join(",")}]` : ""),
+  );
+  draft.keptLastGood = true;
+  draft.failKind = reason;
+  if (r.abort !== undefined) draft.abortRun = r.abort;
+  draft.detail =
+    r.abort === "quotaDaily"
+      ? "Gemini 日次枠 (429 PerDay) を使い切り。後続ソースは打ち切り"
+      : r.abort === "billing"
+        ? "Gemini 402 (billing)。後続ソースは打ち切り"
+        : r.abort === "config"
+          ? "API キー / モデル名 / 権限の不正 (401・403・404・API_KEY_INVALID)。後続ソースは打ち切り"
+          : `応答ゼロ (errors=${r.errorKinds.join(",") || "-"})`;
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -623,6 +779,13 @@ function writeFallback(args: {
 // URL Context 不使用なので responseMimeType を JSON に固定できる。
 // 2026-06-10 の実 fetch で URL Context 直読みの Gemini が URL を捏造する事象を
 // 確認したための設計 (crawl-index.ts の extractAnchors docblock 参照)。
+// 例外は classifyGeminiError を通し、run 打ち切り種別なら 2 回目を打たずに abort 付きで返す。
+type IndexSelectionResult = ParsedIndexResponse & {
+  abort?: RunAbortKind;
+  gotResponse: boolean;
+  errorKinds: GeminiErrorKind[];
+};
+
 async function callGeminiIndexSelection(
   ai: GoogleGenAI,
   args: {
@@ -631,7 +794,7 @@ async function callGeminiIndexSelection(
     indexUrl: string;
     candidates: IndexUrlEntry[];
   },
-): Promise<ParsedIndexResponse> {
+): Promise<IndexSelectionResult> {
   const list = args.candidates
     .map((c) => `- ${c.url}${c.title ? ` | ${c.title}` : ""}`)
     .join("\n");
@@ -644,6 +807,8 @@ async function callGeminiIndexSelection(
     `=== リンク一覧 (${args.candidates.length} 件) ===\n${list}`;
 
   let lastError = "no attempt";
+  let gotResponse = false;
+  const errorKinds: GeminiErrorKind[] = [];
   for (let attempt = 1; attempt <= 2; attempt++) {
     if (attempt > 1) {
       console.log(`   ⏳ index 選択 attempt ${attempt}/2 (待機 5s)`);
@@ -659,21 +824,37 @@ async function callGeminiIndexSelection(
           thinkingConfig: { thinkingBudget: runtime.thinkingBudget },
         },
       });
+      gotResponse = true;
       console.log(formatDiagLine(attempt, "indexSelect", diag));
       const parsed = parseIndexResponse(text);
-      if (parsed.ok) return parsed;
+      stats.attempts.push({
+        kind: "indexSelect",
+        status: parsed.ok ? "success" : "nonJson",
+        ...(diag.finishReason !== undefined ? { finishReason: diag.finishReason } : {}),
+      });
+      if (parsed.ok) return { ...parsed, gotResponse, errorKinds };
       lastError = parsed.error;
       console.log(`   ⚠️ index 選択 attempt ${attempt}/2 parse 失敗: ${parsed.error}`);
     } catch (e) {
-      lastError = formatFetchError(e);
+      const c = classifyGeminiError(e);
+      errorKinds.push(c.kind);
+      stats.attempts.push({ kind: "indexSelect", errorKind: c.kind });
+      lastError = `[${c.kind}] ${c.message}`;
       console.log(`   ⚠️ index 選択 attempt ${attempt}/2 error: ${lastError}`);
+      if (isRunAbortKind(c.kind)) {
+        return { ok: false, error: lastError, abort: c.kind, gotResponse, errorKinds };
+      }
     }
   }
-  return { ok: false, error: lastError };
+  return { ok: false, error: lastError, gotResponse, errorKinds };
 }
 
+// 索引段 / 子段のどちらかで run 打ち切り (quotaDaily / billing / config) を観測したら、
+// 子ループを止めて何も書かない (部分 merge はしない = keep-last-good)。
+// 2026-09 時点で enabled な crawl:index ソースは 0 本 (registry-consistency で固定) なので実装は最小限。
 async function runIndexCrawl(
   ai: GoogleGenAI,
+  draft: OutcomeDraft,
   args: {
     source: RegistrySource;
     childPrompt: string; // source.extractor の解決済み prompt (scope directive 込み)
@@ -681,6 +862,7 @@ async function runIndexCrawl(
   },
 ): Promise<void> {
   const { source, childPrompt, indexPrompt } = args;
+  const deps = createRetryDeps(ai);
   const maxChildren = resolveMaxChildren(source.crawl?.maxChildren);
 
   // ── 1 段目: 索引ページから子 URL を列挙 ──
@@ -701,27 +883,40 @@ async function runIndexCrawl(
     }
   } catch (e) {
     console.log(
-      `   ⚠️ 索引 prefetch 失敗 (${e instanceof Error ? e.message : String(e)})。URL Context 直読みに fallback`,
+      `   ⚠️ 索引 prefetch 失敗 (${formatFetchError(e)})。URL Context 直読みに fallback`,
     );
   }
 
   let parsedIndex: ParsedIndexResponse;
   if (candidates !== undefined) {
-    parsedIndex = await callGeminiIndexSelection(ai, {
+    const sel = await callGeminiIndexSelection(ai, {
       indexPrompt,
       sourceId: source.id,
       indexUrl: source.url,
       candidates,
     });
+    if (decideWrite(sel) === "keepLastGood") {
+      keepLastGood(draft, source, sel);
+      return;
+    }
+    parsedIndex = sel;
   } else {
-    const idx = await callGeminiWithRetry(ai, {
-      systemInstruction: indexPrompt,
-      url: source.url,
-      sourceId: source.id,
-    });
-    console.log(
-      `   ${idx.finalStatus === "success" ? "✓" : "⚠️"} attempts=${idx.attempts}, status=${idx.finalStatus}`,
+    const idx = await callGeminiWithRetry(
+      {
+        systemInstruction: indexPrompt,
+        url: source.url,
+        sourceId: source.id,
+      },
+      deps,
     );
+    stats.attempts.push(...idx.history);
+    console.log(
+      `   ${idx.finalStatus === "success" ? "✓" : "⚠️"} attempts=${idx.attempts}, calls=${idx.geminiCalls}, status=${idx.finalStatus}`,
+    );
+    if (decideWrite(idx) === "keepLastGood") {
+      keepLastGood(draft, source, idx);
+      return;
+    }
     parsedIndex =
       idx.finalStatus === "success"
         ? parseIndexResponse(idx.text)
@@ -729,9 +924,10 @@ async function runIndexCrawl(
   }
 
   if (!parsedIndex.ok) {
-    writeFallback({
+    writeFallback(draft, {
       source,
-      notes: `[crawl:index] 索引ページの子 URL 列挙に失敗: ${parsedIndex.error}。子ページ抽出は未実施。`,
+      kind: "indexFailed",
+      detail: `[crawl:index] 索引ページの子 URL 列挙に失敗: ${parsedIndex.error}。子ページ抽出は未実施。`,
       promptVersion: `${source.extractor}-vUnknown`,
       logSuffix: "(index 失敗)",
     });
@@ -772,14 +968,24 @@ async function runIndexCrawl(
       });
       continue;
     }
-    const res = await callGeminiWithRetry(ai, {
-      systemInstruction: childPrompt,
-      url: child.url,
-      sourceId: source.id,
-    });
+    const res = await callGeminiWithRetry(
+      {
+        systemInstruction: childPrompt,
+        url: child.url,
+        sourceId: source.id,
+      },
+      deps,
+    );
+    stats.attempts.push(...res.history);
+    if (res.abort !== undefined) {
+      // 子ループを止め、部分 merge もしない (前回版を保持)
+      keepLastGood(draft, source, res);
+      return;
+    }
     if (res.finalStatus !== "success") {
-      console.log(`   ⚠️ status=${res.finalStatus} (この子ページはスキップ)`);
-      children.push({ ...child, status: "failed", failReason: res.finalStatus });
+      const failReason = res.gotResponse ? res.finalStatus : "apiError";
+      console.log(`   ⚠️ status=${failReason} (この子ページはスキップ)`);
+      children.push({ ...child, status: "failed", failReason });
       continue;
     }
     let parsed: ExtractedSource;
@@ -817,9 +1023,10 @@ async function runIndexCrawl(
   // 子単位では salvage 済だが、merge ロジック退行の検知として統合結果も検証する
   const finalSalvage = salvageBySchema(merged, schema);
   if (!finalSalvage.ok) {
-    writeFallback({
+    writeFallback(draft, {
       source,
-      notes:
+      kind: "mergeSchema",
+      detail:
         `[crawl:index] merge 結果が schema 違反 (merge ロジック退行の疑い): ` +
         finalSalvage.errors.join("; ").slice(0, 300),
       promptVersion: merged.promptVersion,
@@ -832,6 +1039,10 @@ async function runIndexCrawl(
   const outPath = resolve(OUTPUT_DIR, `${source.id}.json`);
   writeFileSync(outPath, JSON.stringify(finalSalvage.data, null, 2));
   console.log(`✓ wrote ${outPath}`);
+  const counted = countExtractedItems(finalSalvage.data);
+  draft.wrote = true;
+  draft.itemCounts = counted.counts;
+  draft.totalItems = counted.total;
 
   const summary = {
     programs: finalSalvage.data.programs?.length ?? 0,
@@ -850,6 +1061,27 @@ async function runIndexCrawl(
 async function main(): Promise<void> {
   loadDotEnvLocal();
   const args = parseArgs(process.argv.slice(2));
+  // outcome は fetch-all 経由 (PM_FETCH_OUTCOME_DIR あり) の本番実行だけ書く。dry-run では書かない。
+  const outcomeDir = args.dryRun ? null : resolveFetchOutcomeDir(process.env);
+  // 初期値のまま finally に達した (= 例外で抜けた) ら crashed。extracted は書かない (keep-last-good)。
+  const draft = createOutcomeDraft(args.sourceId);
+  try {
+    await runSource(args, draft);
+  } catch (e) {
+    draft.detail = formatFetchError(e);
+    throw e;
+  } finally {
+    if (outcomeDir !== null) {
+      try {
+        writeFetchOutcome(outcomeDir, finalizeOutcome(draft, stats, runtime.model, new Date()));
+      } catch (we) {
+        console.error(`⚠️ outcome の書き出しに失敗: ${formatFetchError(we)}`);
+      }
+    }
+  }
+}
+
+async function runSource(args: CliArgs, draft: OutcomeDraft): Promise<void> {
   // モデル名 / thinking 予算は Gemini を呼ぶ前に解決する。不正なら throw → main().catch (exit 1、ファイルは書かない)
   runtime.model = resolveGeminiModel(process.env.GEMINI_MODEL);
   runtime.thinkingBudget = resolveThinkingBudget(process.env.GEMINI_THINKING_BUDGET);
@@ -887,7 +1119,7 @@ async function main(): Promise<void> {
   const ai = createGenAI(getApiKey());
 
   try {
-    await runFetch(ai, source, systemInstruction, indexPrompt);
+    await runFetch(ai, draft, source, systemInstruction, indexPrompt);
   } finally {
     console.log(`📈 usage total ${formatUsage(stats.usage)}`);
   }
@@ -895,13 +1127,14 @@ async function main(): Promise<void> {
 
 async function runFetch(
   ai: GoogleGenAI,
+  draft: OutcomeDraft,
   source: RegistrySource,
   systemInstruction: string,
   indexPrompt: string | undefined,
 ): Promise<void> {
   if (indexPrompt !== undefined) {
     console.log(`🤖 Gemini ${runtime.model} 呼び出し中 (index crawl、各段 3 attempts, thinking ${runtime.thinkingBudget})...`);
-    await runIndexCrawl(ai, {
+    await runIndexCrawl(ai, draft, {
       source,
       childPrompt: systemInstruction,
       indexPrompt,
@@ -910,12 +1143,28 @@ async function runFetch(
   }
 
   console.log(`🤖 Gemini ${runtime.model} 呼び出し中 (最大 3 attempts, retry/pre-fetch 込み, thinking ${runtime.thinkingBudget})...`);
-  const { text: rawJson, retrievedUrls, attempts, finalStatus } = await callGeminiWithRetry(ai, {
-    systemInstruction,
-    url: source.url,
-    sourceId: source.id,
-  });
-  console.log(`   ${finalStatus === "success" ? "✓" : "⚠️"} attempts=${attempts}, status=${finalStatus}`);
+  const r = await callGeminiWithRetry(
+    {
+      systemInstruction,
+      url: source.url,
+      sourceId: source.id,
+    },
+    createRetryDeps(ai),
+  );
+  stats.attempts.push(...r.history);
+  const { text: rawJson, retrievedUrls, attempts, finalStatus } = r;
+  console.log(
+    `   ${finalStatus === "success" ? "✓" : "⚠️"} attempts=${attempts}, calls=${r.geminiCalls}, status=${finalStatus}` +
+      (r.abort !== undefined ? `, abort=${r.abort}` : ""),
+  );
+
+  // API が原因の失敗 (run 打ち切り / 応答ゼロ) は extracted を上書きしない。
+  // annotation はここでは出さず fetch-all に任せる (outcome ファイル経由)。
+  if (decideWrite(r) === "keepLastGood") {
+    keepLastGood(draft, source, r);
+    return;
+  }
+
   if (retrievedUrls.length > 0) {
     console.log("   retrieved URLs:");
     for (const u of retrievedUrls) console.log(`     - ${u}`);
@@ -933,9 +1182,10 @@ async function runFetch(
       ? "URL retrieval failed (URL_RETRIEVAL_STATUS_ERROR)"
       : "Gemini empty response (output cut or model refusal)";
     console.log(`⚠️ ${reason}。空の ExtractedSource を書き出します。`);
-    writeFallback({
+    writeFallback(draft, {
       source,
-      notes: `${reason}. URL を確認するか、ソースを enabled: false に設定してください。`,
+      kind: allFailed ? "allUrlsFailed" : "empty",
+      detail: `${reason}. URL を確認するか、ソースを enabled: false に設定してください。`,
       promptVersion: `${source.extractor}-vUnknown`,
       logSuffix: "(空)",
     });
@@ -951,9 +1201,10 @@ async function runFetch(
     // crash せず空の ExtractedSource を書き出し、proposed-migrations 側で skip 判定。
     console.log("⚠️ Gemini レスポンスが JSON でない (取得には成功したが抽出失敗)");
     console.log(`     raw (first 300 chars): ${rawJson.slice(0, 300)}`);
-    writeFallback({
+    writeFallback(draft, {
       source,
-      notes:
+      kind: "nonJson",
+      detail:
         `Gemini could not extract structured data from this URL. ` +
         `Likely cause: page is a navigation hub, not the partner list itself. ` +
         `Raw response (first 300 chars): ${rawJson.slice(0, 300).replace(/\s+/g, " ")}`,
@@ -977,9 +1228,10 @@ async function runFetch(
   if (!salvage.ok) {
     console.log("⚠️ schema 違反 (アイテム除去後も不正)。空 fallback を書き出します。");
     for (const e of salvage.errors) console.log(`     ${e}`);
-    writeFallback({
+    writeFallback(draft, {
       source,
-      notes:
+      kind: "schema",
+      detail:
         `Schema validation failed even after per-item salvage; source skipped. ` +
         `Errors: ${salvage.errors.join("; ").slice(0, 400)}`,
       promptVersion: parsed.promptVersion || `${source.extractor}-vUnknown`,
@@ -1001,6 +1253,10 @@ async function runFetch(
 
   writeFileSync(outPath, JSON.stringify(finalData, null, 2));
   console.log(`✓ wrote ${outPath}`);
+  const counted = countExtractedItems(finalData);
+  draft.wrote = true;
+  draft.itemCounts = counted.counts;
+  draft.totalItems = counted.total;
 
   // 抽出件数のサマリ (programs / memberships を含む全配列キー)
   const summary = Object.fromEntries(
@@ -1010,6 +1266,8 @@ async function runFetch(
 }
 
 // CLI として実行された場合のみ main を呼ぶ (テストからの import 時は呼ばない)
+// crash (環境・設定エラー) では fallback を書かない: 空ファイルで全ソースの last-good を潰さないため。
+// outcome=crashed は main の finally で書かれている。
 const isMain =
   process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 if (isMain) {
