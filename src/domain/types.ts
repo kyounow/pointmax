@@ -138,6 +138,13 @@ export type PointCard = {
   notes?: string;
 };
 
+// 購入チャネル (PR-0a-2a)。還元の発動が「店頭での支払い」か「ネット・アプリ経由の購入」かを表す。
+//   "in-store": 店頭 (レジでのカード / タッチ / コード決済)
+//   "online"  : ネット・アプリ経由 (ポイントアップサイト経由の EC、モバイルオーダー、
+//               オンライン入金など「経由」が還元の条件になるもの)
+// 評価時の既定チャネルは店舗から導出する (src/domain/purchaseChannel.ts の defaultChannelForStore)。
+export type PurchaseChannel = "in-store" | "online";
+
 // PointMax v3: 還元プログラム
 // 「(発動者 × 場所 × 還元率)」を統一表現。
 // 旧 StoreRule / 提示還元ルール / PaymentApp.cardSpecificBonusRates の上位概念。
@@ -176,6 +183,17 @@ export type BenefitProgram = {
   validTo?: string;
   recurringDays?: number[];     // 毎月の日にち限定 (1-31)。ruleActiveAt (now.getDate()) と同義
   recurringWeekdays?: number[]; // 曜日限定 (0=日..6=土)。ruleActiveAt (now.getDay()) と同義 (C-6)
+
+  // ─── 購入チャネル (PR-0a-2a) ───
+  // channel: この program が発動する購入チャネル。**undefined = 両チャネルで有効** (既定)。
+  //   "online" = ネット・アプリ経由の購入でのみ発動 (例: たまるマーケット = サイト経由の EC 限定)。
+  //   "in-store" = 店頭でのみ発動。
+  //   有効値は membership.channel ?? program.channel (membership が優先。effectiveChannel)。
+  //   評価 (programEvaluator) は店舗から導出した既定チャネル (店頭。純 EC 店はネット) と
+  //   一致しない program を不発にする。
+  //   **per-user preference ではなく還元条件そのもの (本質フィールド)** なので、seed / master が
+  //   出荷し、mergeSeed の公式更新伝播の対象にもなる (R1 の preference キーとは別扱い)。
+  channel?: PurchaseChannel;
 
   // ─── opt-in / 誕生月ゲート (v6 PR-1d、R1 規約) ───
   // optIn: true = 登録/選択制の特典 (Olive 選べる特典・エポス選べるポイントアップ等)。
@@ -238,12 +256,19 @@ export type BenefitProgram = {
 //   (ISO 8601)。Card.userModifiedAt と同セマンティクス。id ベースの add-only
 //   merge では既存 id は上書きされないため、編集済み membership は構造的に保護
 //   される (公式 override 更新は既存 id には伝播しない = 現行挙動維持)。
+// channel: この店舗での program の購入チャネル (PR-0a-2a)。program.channel より優先する
+//   (effectiveChannel = membership.channel ?? program.channel)。undefined = program に従う。
+//   例: J-POINT 20倍 (program は店頭対象) のうちスターバックス / マクドナルドだけは
+//   モバイルオーダー・オンライン入金など経由型なので membership 単位で "online"。
+//   ⚠ membership は現状 add-only merge のため、既存端末の同 id 行への channel 付与は
+//   membership 更新伝播 (PR-0a-2b) まで届かない (新規端末・URL 同期では即時反映)。
 export type StoreProgramMembership = {
   id: string;
   programId: string;
   storeId: string;
   overrideRate?: number;
   overrideCurrencyId?: string;
+  channel?: PurchaseChannel;
   notes?: string;
   userModifiedAt?: string;
 };

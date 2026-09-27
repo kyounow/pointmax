@@ -9,6 +9,7 @@ import {
   type VersionMigration,
 } from "./migrations";
 import type { SeedShape } from "./mergeSeed";
+import { seed } from "../state/seed";
 
 const emptyState = (): SeedShape => ({
   cards: [],
@@ -619,5 +620,145 @@ describe("MIGRATIONS 全件 × optional collection 欠落 state 耐性 (回帰)"
     const deletePlan = plan.filter((p) => p.migration.type === "delete");
     expect(deletePlan.length).toBeGreaterThan(0);
     expect(deletePlan.every((p) => p.status === "alreadyApplied")).toBe(true);
+  });
+});
+
+// PR-0a-2a: v46 (四半期レート監査 2026-Q3) の edge 修正を既存端末へ配る v47。
+describe("MIGRATIONS v47 (v46 監査の edge 修正 3 本 + 削除 2 本の配信)", () => {
+  const e = (id: string, from: string, to: string, rate: number) => ({
+    id,
+    fromCurrencyId: from,
+    toCurrencyId: to,
+    rate,
+  });
+  const mkState = (rates: { d: number; amazon: number; jalNormal: number }, withRemoved: boolean): SeedShape => ({
+    cards: [],
+    currencies: [],
+    stores: [],
+    edges: [
+      e("eikyu-to-d", "eikyu", "d-pt", rates.d),
+      e("eikyu-to-amazon", "eikyu", "amazon-pt", rates.amazon),
+      e("jre-to-jal-normal", "jre", "jal-mile", rates.jalNormal),
+      ...(withRemoved
+        ? [
+            e("eikyu-to-edy", "eikyu", "edy", 4.5),
+            e("eikyu-to-rakuten", "eikyu", "rakuten-pt", 4.5),
+          ]
+        : []),
+      e("eikyu-to-ana", "eikyu", "ana-mile", 3),
+    ],
+    pointCards: [],
+    paymentApps: [],
+  });
+  const rateOf = (s: SeedShape, id: string) => s.edges.find((x) => x.id === id)?.rate;
+
+  it("旧値 (5 / 5 / 0.5 + 旧 2 edge) の state は全 5 件 applicable → 適用後 4.5 / 4 / 0.3333 で 2 edge が消える", () => {
+    const state = mkState({ d: 5, amazon: 5, jalNormal: 0.5 }, true);
+    const plan = planMigrations(state, 46, 47, MIGRATIONS);
+    expect(plan).toHaveLength(5);
+    expect(plan.every((p) => p.status === "applicable")).toBe(true);
+    const applied = applyMigrationsByKey(state, plan, autoApplicableKeys(plan));
+    expect(rateOf(applied, "eikyu-to-d")).toBe(4.5);
+    expect(rateOf(applied, "eikyu-to-amazon")).toBe(4);
+    expect(rateOf(applied, "jre-to-jal-normal")).toBe(0.3333);
+    expect(applied.edges.some((x) => x.id === "eikyu-to-edy")).toBe(false);
+    expect(applied.edges.some((x) => x.id === "eikyu-to-rakuten")).toBe(false);
+    // 無関係な edge は残る
+    expect(rateOf(applied, "eikyu-to-ana")).toBe(3);
+  });
+
+  it("新値 (v46 を初期化時点で持つ端末) は全件 alreadyApplied (no-op)", () => {
+    const state = mkState({ d: 4.5, amazon: 4, jalNormal: 0.3333 }, false);
+    const plan = planMigrations(state, 46, 47, MIGRATIONS);
+    expect(plan).toHaveLength(5);
+    expect(plan.every((p) => p.status === "alreadyApplied")).toBe(true);
+    expect(autoApplicableKeys(plan)).toEqual([]);
+  });
+
+  it("eikyu-to-d を手編集 (6) した state は conflict (自動適用されない)", () => {
+    const state = mkState({ d: 6, amazon: 5, jalNormal: 0.5 }, true);
+    const plan = planMigrations(state, 46, 47, MIGRATIONS);
+    const d = plan.find(
+      (p) => p.migration.type === "updateField" && p.migration.id === "eikyu-to-d",
+    );
+    expect(d?.status).toBe("conflict");
+    expect(d?.currentValue).toBe(6);
+    const applied = applyMigrationsByKey(state, plan, autoApplicableKeys(plan));
+    expect(rateOf(applied, "eikyu-to-d")).toBe(6);
+    // 他の修正は自動適用される
+    expect(rateOf(applied, "eikyu-to-amazon")).toBe(4);
+  });
+
+  it("lastSeedVersion が 47 以上なら v47 は plan に含まれない", () => {
+    const state = mkState({ d: 5, amazon: 5, jalNormal: 0.5 }, true);
+    expect(planMigrations(state, 47, 47, MIGRATIONS)).toEqual([]);
+  });
+});
+
+// PR-0a-2a 契約: MIGRATIONS と seed() の整合。
+//   - (collection, id, field) ごとに「最新の updateField.to」は seed() の現在値と一致する
+//     (seed を直したのに migration を足し忘れた / migration の to を typo した、の検出)。
+//   - 最新の操作が delete の (collection, id) は seed() に存在しない
+//     (削除したはずのレコードが seed に残っていると、新規端末と既存端末で結果が割れる)。
+describe("MIGRATIONS × seed() 整合契約", () => {
+  const s = seed();
+  type Row = { id: string } & Record<string, unknown>;
+  const collectionOf = (c: string): Row[] =>
+    ((s as unknown as Record<string, Row[] | undefined>)[c] ?? []);
+
+  // toVersion 昇順で走査し、キーごとの最新操作を得る
+  const ordered = [...MIGRATIONS].sort((a, b) => a.toVersion - b.toVersion);
+  const latestUpdate = new Map<string, { collection: string; id: string; field: string; to: unknown }>();
+  const latestOpById = new Map<string, "updateField" | "delete">();
+  for (const vm of ordered) {
+    for (const m of vm.changes) {
+      latestOpById.set(`${m.collection}/${m.id}`, m.type);
+      if (m.type === "updateField") {
+        latestUpdate.set(`${m.collection}/${m.id}/${m.field}`, {
+          collection: m.collection,
+          id: m.id,
+          field: m.field,
+          to: m.to,
+        });
+      }
+    }
+  }
+
+  it("最新の updateField.to が seed() の現在値と一致する", () => {
+    const mismatches: string[] = [];
+    for (const [key, u] of latestUpdate) {
+      if (latestOpById.get(`${u.collection}/${u.id}`) === "delete") continue;
+      const rec = collectionOf(u.collection).find((r) => r.id === u.id);
+      if (!rec) {
+        mismatches.push(`${key}: seed() にレコードが無い`);
+        continue;
+      }
+      // 値は数値 / 文字列 / 文字列配列なので JSON 比較で deep equal を判定する
+      const seedValue = JSON.stringify(rec[u.field]);
+      const toValue = JSON.stringify(u.to);
+      if (seedValue !== toValue) {
+        mismatches.push(`${key}: seed=${seedValue} / to=${toValue}`);
+      }
+    }
+    expect(mismatches, mismatches.join("\n")).toEqual([]);
+  });
+
+  it("最新の操作が delete のレコードは seed() に存在しない", () => {
+    const offending: string[] = [];
+    for (const [key, op] of latestOpById) {
+      if (op !== "delete") continue;
+      const [collection, ...rest] = key.split("/");
+      const id = rest.join("/");
+      if (collectionOf(collection).some((r) => r.id === id)) offending.push(key);
+    }
+    expect(offending, offending.join(",")).toEqual([]);
+  });
+
+  it("v47 の 5 件が契約の対象に入っている (空回り防止)", () => {
+    expect(latestUpdate.has("edges/eikyu-to-d/rate")).toBe(true);
+    expect(latestUpdate.has("edges/eikyu-to-amazon/rate")).toBe(true);
+    expect(latestUpdate.has("edges/jre-to-jal-normal/rate")).toBe(true);
+    expect(latestOpById.get("edges/eikyu-to-edy")).toBe("delete");
+    expect(latestOpById.get("edges/eikyu-to-rakuten")).toBe("delete");
   });
 });

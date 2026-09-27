@@ -44,6 +44,29 @@ describe("buildMasterData (R1 出荷契約)", () => {
     }
   });
 
+  // PR-0a-2a: channel は preference ではなく還元条件そのもの (本質フィールド) なので
+  // strip されず master.json に載る (既存端末へは mergeSeed の program 更新伝播で届く)。
+  it("prog-epos-tamaru-{2,3,4}x は channel:'online' を出荷する (strip されない)", () => {
+    for (const n of [2, 3, 4]) {
+      const p = data.programs.find((x) => x.id === `prog-epos-tamaru-${n}x`);
+      expect(p, `prog-epos-tamaru-${n}x が master に無い`).toBeDefined();
+      expect(p?.channel).toBe("online");
+    }
+  });
+
+  it("J-POINT 20倍の starbucks / mcdonalds membership は channel:'online' を出荷する", () => {
+    for (const id of [
+      "m-prog-jcb-jpoint-20x-starbucks",
+      "m-prog-jcb-jpoint-20x-mcdonalds",
+      "m-prog-jcb-jpoint-gold-20x-starbucks",
+      "m-prog-jcb-jpoint-gold-20x-mcdonalds",
+    ]) {
+      const m = data.memberships.find((x) => x.id === id);
+      expect(m, `${id} が master に無い`).toBeDefined();
+      expect(m?.channel).toBe("online");
+    }
+  });
+
   it("opt-in 特典 (optIn:true) は出荷される (既定 OFF は評価式が担う)", () => {
     const optInIds = data.programs.filter((p) => p.optIn === true).map((p) => p.id);
     expect(optInIds).toContain("prog-olive-vpoint-up-selected-benefit");

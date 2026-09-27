@@ -14,6 +14,7 @@ import {
   cleanup,
   fireEvent,
   waitFor,
+  within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { SettingsScreen } from "./SettingsScreen";
@@ -86,9 +87,18 @@ describe("SettingsScreen データ管理 (IA-6 / PR-2e)", () => {
   it("サンプル投入は mergeFromSeed でシードを取り込む (件数が増える)", async () => {
     renderSettings();
     expect(useStore.getState().currencies.length).toBe(0);
+    // PR-0a-2a: サンプル投入は公式反映と同経路 (修正・削除も反映) であることを、
+    // 見出し下のヒントと確認ダイアログの両方の文言で明示する。
+    expect(
+      screen.getByText(/公式の修正・削除も反映されます/),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "サンプル投入" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByText(/公式の修正・削除も反映されます/),
+    ).toBeInTheDocument();
     // 確認ダイアログの「投入」を押す。
-    fireEvent.click(await screen.findByRole("button", { name: "投入" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "投入" }));
     // seed が取り込まれ通貨などが 0 件から増える (非同期ハンドラ完了待ち)。
     await waitFor(() =>
       expect(useStore.getState().currencies.length).toBeGreaterThan(0),

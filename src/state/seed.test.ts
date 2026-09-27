@@ -11,6 +11,9 @@ import { SEED_CARDS, SEED_PAYMENT_APPS } from "./seed-data-cards";
 import { CARD_FAMILIES } from "./seed-data-card-families";
 import { isValidVerifiedMonth } from "../domain/edgeFreshness";
 import { isSafeHttpUrl } from "../domain/urlSafety";
+import { PURCHASE_CHANNELS, effectiveChannel } from "../domain/purchaseChannel";
+import { membershipId } from "./defineMemberships";
+import { REMOVED_PROGRAM_IDS } from "./seed-additions";
 
 describe("MASTER_CARD_IDS / isMasterCard", () => {
   it("SEED_CARDS の全 id が含まれる", () => {
@@ -695,6 +698,17 @@ describe("四半期監査 2026-Q3: 消滅ルート / 廃止優待の削除固定
     ).toBe(false);
   });
 
+  // PR-0a-2a: v46 で手書き seed から物理削除しただけだった 2 program を tombstone
+  // (REMOVED_PROGRAM_IDS) にも登録し、既存端末の localStorage からも除去する (M5 形式)。
+  // seed-additions.ts は codegen だが mergeRemovals が union で再出力するので cron で消えない。
+  it("REMOVED_PROGRAM_IDS に prog-au-pay-card-addon / prog-rakuten-pointcard-1pc が含まれ、seed() に無い", () => {
+    const { programs } = seed();
+    for (const id of ["prog-au-pay-card-addon", "prog-rakuten-pointcard-1pc"]) {
+      expect(REMOVED_PROGRAM_IDS, id).toContain(id);
+      expect(programs.some((p) => p.id === id), id).toBe(false);
+    }
+  });
+
   it("program prog-rakuten-pointcard-1pc は存在しない (有効加盟店ゼロ、membership も cascade 削除)", () => {
     const { programs, memberships } = seed();
     expect(programs.some((p) => p.id === "prog-rakuten-pointcard-1pc")).toBe(
@@ -762,5 +776,87 @@ describe("四半期監査 2026-Q3: 消滅ルート / 廃止優待の削除固定
     expect(byId.get("prog-jcb-jpoint-gold-3x")?.rate).toBe(0.015);
     expect(byId.get("prog-jcb-jpoint-gold-4x")?.rate).toBe(0.02);
     expect(byId.get("prog-jcb-jpoint-gold-20x")?.rate).toBe(0.1);
+  });
+});
+
+// PR-0a-2a: 購入チャネル (店頭 / ネット・アプリ経由) の seed 契約。
+// たまるマーケット (サイト経由のネット購入限定) と、J-POINT 20倍のうち経由型 2 店
+// (スターバックス / マクドナルド) を店頭計算から外す。物理店 membership は
+// ネット購入時の正しいデータなので残す (過剰剥離の退行防止)。
+// ⚠ target key 契約 (全 program が cardIds / pointCardId / paymentAppId のいずれか) はここに
+//   入れない (propose 側ガードと同時に PR-0b-3 で入れる)。
+describe("PR-0a-2a: 購入チャネル契約", () => {
+  it("(1) prog-epos-tamaru-{N}x は全て channel==='online'", () => {
+    const { programs } = seed();
+    const tamaru = programs.filter((p) => /^prog-epos-tamaru-\d+x$/.test(p.id));
+    expect(tamaru.length).toBeGreaterThanOrEqual(3);
+    const offending = tamaru.filter((p) => p.channel !== "online").map((p) => p.id);
+    expect(offending, offending.join(",")).toEqual([]);
+  });
+
+  it("(2) pointCardId を持つ program とその membership は有効チャネルが online でない (loyalty は店頭提示)", () => {
+    const { programs, memberships } = seed();
+    const loyaltyPrograms = programs.filter((p) => p.pointCardId !== undefined);
+    expect(loyaltyPrograms.length).toBeGreaterThan(0);
+    const byId = new Map(loyaltyPrograms.map((p) => [p.id, p]));
+    const offendingPrograms = loyaltyPrograms
+      .filter((p) => effectiveChannel(p) === "online")
+      .map((p) => p.id);
+    expect(offendingPrograms, offendingPrograms.join(",")).toEqual([]);
+    const offendingMemberships = (memberships ?? [])
+      .filter((m) => {
+        const p = byId.get(m.programId);
+        return p !== undefined && effectiveChannel(p, m) === "online";
+      })
+      .map((m) => m.id);
+    expect(offendingMemberships, offendingMemberships.join(",")).toEqual([]);
+  });
+
+  it("(3) programs / memberships の channel は PURCHASE_CHANNELS 内 (未指定可)", () => {
+    const { programs, memberships } = seed();
+    const allowed = new Set<string>(PURCHASE_CHANNELS);
+    const badPrograms = programs
+      .filter((p) => p.channel !== undefined && !allowed.has(p.channel))
+      .map((p) => `${p.id}:${String(p.channel)}`);
+    const badMemberships = (memberships ?? [])
+      .filter((m) => m.channel !== undefined && !allowed.has(m.channel))
+      .map((m) => `${m.id}:${String(m.channel)}`);
+    expect(badPrograms).toEqual([]);
+    expect(badMemberships).toEqual([]);
+  });
+
+  it("(4) たまるの物理店 membership (uniqlo・bic-camera) は残っている (ネット購入時の正しいデータ)", () => {
+    const { memberships } = seed();
+    const tamaruStoreIds = new Set(
+      (memberships ?? [])
+        .filter((m) => /^prog-epos-tamaru-\d+x$/.test(m.programId))
+        .map((m) => m.storeId),
+    );
+    expect(tamaruStoreIds.has("uniqlo")).toBe(true);
+    expect(tamaruStoreIds.has("bic-camera")).toBe(true);
+  });
+
+  it("(5) starbucks / mcdonalds の J-POINT 20倍 membership 4 件 (W / Gold) は channel==='online'", () => {
+    const { memberships } = seed();
+    const byId = new Map((memberships ?? []).map((m) => [m.id, m]));
+    for (const programId of ["prog-jcb-jpoint-20x", "prog-jcb-jpoint-gold-20x"]) {
+      for (const storeId of ["starbucks", "mcdonalds"]) {
+        const id = membershipId(programId, storeId);
+        const m = byId.get(id);
+        expect(m, `${id} が未登録`).toBeDefined();
+        expect(m?.channel, id).toBe("online");
+      }
+    }
+  });
+
+  it("(5') 店頭カード払いが対象の J-POINT 20倍店 (すき家) は online にしない", () => {
+    const { memberships, programs } = seed();
+    const p = programs.find((x) => x.id === "prog-jcb-jpoint-20x");
+    const m = (memberships ?? []).find(
+      (x) => x.id === membershipId("prog-jcb-jpoint-20x", "sukiya"),
+    );
+    expect(p).toBeDefined();
+    expect(m, "m-prog-jcb-jpoint-20x-sukiya が未登録").toBeDefined();
+    if (p && m) expect(effectiveChannel(p, m)).not.toBe("online");
   });
 });

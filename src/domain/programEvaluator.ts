@@ -8,7 +8,15 @@
 
 import { isRuleActiveAt } from "./ruleActiveAt";
 import { membersFor, type MembershipIndex } from "./membershipIndex";
-import type { BenefitProgram, Card, PaymentApp, Store, StoreProgramMembership } from "./types";
+import { defaultChannelForStore, isChannelMatch } from "./purchaseChannel";
+import type {
+  BenefitProgram,
+  Card,
+  PaymentApp,
+  PurchaseChannel,
+  Store,
+  StoreProgramMembership,
+} from "./types";
 
 export type ProgramMatch = {
   program: BenefitProgram;
@@ -73,6 +81,12 @@ export function evaluatePrograms(args: {
   membershipIndex?: MembershipIndex;
   /** optional: ユーザーの誕生月 (1-12)。birthdayMonthOnly program の発火判定に使う。 */
   userBirthMonth?: number;
+  /**
+   * optional: 評価する購入チャネル (PR-0a-2a)。省略時は店舗から導出する
+   * (defaultChannelForStore: 純 EC 店 = "online" / それ以外 = "in-store")。
+   * 有効チャネル (membership.channel ?? program.channel) がこれと異なる program は不発。
+   */
+  channel?: PurchaseChannel;
 }): ProgramEvalResult {
   const {
     card,
@@ -84,6 +98,7 @@ export function evaluatePrograms(args: {
     membershipIndex,
     userBirthMonth,
   } = args;
+  const channel = args.channel ?? defaultChannelForStore(store);
 
   // 1. この store に該当する membership を抽出 (index が渡されていれば O(1) lookup)
   const storeMembers = membershipIndex
@@ -126,6 +141,9 @@ export function evaluatePrograms(args: {
     if (p.paymentAppId && p.paymentAppId !== paymentApp.id) continue;
 
     const membership = storeMembers.find((m) => m.programId === p.id);
+    // PR-0a-2a: 購入チャネル gate。有効チャネル (membership 優先) が評価チャネルと
+    // 異なる program は不発 (例: たまるマーケット = online 限定は物理店の店頭計算に載せない)。
+    if (!isChannelMatch(p, membership, channel)) continue;
     eligible.push({
       program: p,
       effectiveRate: membership?.overrideRate ?? p.rate,
