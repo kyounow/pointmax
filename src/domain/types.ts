@@ -217,7 +217,19 @@ export type BenefitProgram = {
 
   // ─── Meta ───
   description?: string;
-  officialUrl?: string;            // 情報源 URL (詳細・解説ページ)
+  // 情報源 URL (詳細・解説ページ)。PR-5a: **META キー** (mergeSeed.PROGRAM_META_KEYS) で、
+  //   公式差分の比較・更新通知の対象外 (URL だけの seed 変更は既存端末に通知しない)。
+  //   表示 (特典画面の『🔗 公式』) は未編集の公式 program なら同梱 seed の値を優先する。
+  officialUrl?: string;
+  // PR-5a: 還元率を公式ページで最後に人手確認した月 ("YYYY-MM" 月精度。ConversionEdge.lastVerifiedAt と
+  //   同じ形式・同じ判定 src/domain/edgeFreshness.ts)。**未記入 (undefined) = 未検証扱い**で
+  //   『古い情報かも』チップは出さない。四半期チェック (SESSION_LOG の四半期表) の対象 program に
+  //   記入し、週次 cron が監視する倍率 tier (J-POINT / たまるマーケット) と cron の ADDED_PROGRAMS は空欄。
+  //   **META キー** (mergeSeed.PROGRAM_META_KEYS): 確認月だけの seed 変更は既存端末に通知・伝播しない。
+  //   代わりに表示時に同梱 seed を参照して解決する (resolveVerifiedMonth。rate が seed と一致すれば
+  //   seed の月、編集済み (userModifiedAt) は出さない)。per-user preference キーではないので
+  //   seed / master はそのまま出荷する (generate-master の strip 対象外)。
+  lastVerifiedAt?: string;
   // エントリー / 参加サイトの URL (任意)。officialUrl と分離する理由:
   //   - officialUrl は「制度を説明する公式ページ」(例: JAL カード特約店一覧)
   //   - entryUrl は「ユーザーが踏む先」(例: キャンペーンエントリーページ、提携店検索)
