@@ -20,7 +20,7 @@ export default function Root() {
   return (
     <ErrorBoundary
       scopeName="Root"
-      fallback={(e) => <RecoveryPanel mode="root" error={e} cause="render" />}
+      fallback={(e) => <RecoveryPanel mode="root" error={e} />}
     >
       {failure ? (
         <RecoveryPanel mode="root" cause="hydrate" error={failure} />

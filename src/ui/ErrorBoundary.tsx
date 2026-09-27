@@ -61,12 +61,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
     if (this.props.fallback) return this.props.fallback(error, this.reset);
 
+    // cause は既定の "render" (描画中の例外)
     return (
       <RecoveryPanel
         mode="screen"
         error={error}
         scopeName={this.props.scopeName}
-        cause="render"
         onRetry={this.reset}
       />
     );

@@ -13,20 +13,13 @@ import {
   type SnapshotResult,
 } from "./stateSnapshot";
 import { writeSyncSeen } from "./syncNotice";
-import { backupRawPersisted, readCrashBackup } from "./hydrationGuard";
+import {
+  backupRawPersisted,
+  readCrashBackup,
+  PERSIST_COLLECTION_KEYS,
+} from "./hydrationGuard";
 import { currentBuildId } from "./swUpdateNotice";
 
-// エクスポート JSON (store.exportJson) と同じ 8 collection。
-const COLLECTION_KEYS = [
-  "cards",
-  "currencies",
-  "stores",
-  "edges",
-  "pointCards",
-  "paymentApps",
-  "programs",
-  "memberships",
-] as const;
 // per-user 設定。importJson は戻さない (README に手動で戻す旨を記載) が、書き出しには含める。
 const PREFERENCE_KEYS = [
   "preferredCurrencyIds",
@@ -43,16 +36,13 @@ function readPersistRaw(): string | null {
   }
 }
 
-/** persist の { state } を object として取り出す。壊れていれば null。 */
-function parsePersisted(
-  raw: string | null,
-): { state: Record<string, unknown>; version: unknown } | null {
-  if (!raw) return null;
+type Persisted = { state: Record<string, unknown>; version: unknown };
+
+/** persist の { state, version } を取り出す。壊れている / state が object でなければ null。 */
+function parsePersisted(raw: string | null): Persisted | null {
   try {
-    const p = JSON.parse(raw) as { state?: unknown; version?: unknown } | null;
-    const s = p?.state;
-    if (!s || typeof s !== "object" || Array.isArray(s)) return null;
-    return { state: s as Record<string, unknown>, version: p?.version };
+    const p = JSON.parse(raw ?? "null") as Persisted | null;
+    return p?.state && typeof p.state === "object" ? p : null;
   } catch {
     return null;
   }
@@ -74,26 +64,25 @@ export function formatTakenAt(iso: string): string {
  *   - parse できて state が object なら、エクスポート JSON と同じ形
  *     ({version:1, schemaVersion, exportedAt, 8 collection}) で出す = 設定のインポートで戻せる
  *     (validateImportData(…, {requireSchemaVersion:true}) の round-trip 契約。schemaVersion は
- *     persist の version をそのまま載せる)。配列でない collection は載せず recovery.invalidKeys に並べる。
- *     加えて preferences (インポートでは戻らない per-user 設定) と recovery メタを付ける。
+ *     persist の version をそのまま載せる)。配列でない collection は載せない (インポートの検証で
+ *     弾かれるので、その場合は JSON を手で直す)。加えて preferences (インポートでは戻らない
+ *     per-user 設定) と recovery メタ (cause / message / buildId / crashBackupTakenAt) を付ける。
  *   - parse できなければ {kind:"pointmax-recovery-raw", raw} で生文字列をそのまま出す。
  */
 export function buildRecoveryExportJson(
   err?: Error | null,
   cause?: "render" | "hydrate",
 ): string {
-  const persisted = readPersistRaw();
   const backup = readCrashBackup();
-  const raw = persisted ?? backup?.raw ?? null;
+  const raw = readPersistRaw() ?? backup?.raw ?? null;
   const exportedAt = new Date().toISOString();
-  const recovery: Record<string, unknown> = {
-    cause: cause ?? null,
-    message: err?.message ?? null,
+  // undefined の項目は JSON.stringify が落とす
+  const recovery = {
+    cause,
+    message: err?.message,
     buildId: currentBuildId(),
-    source: persisted !== null ? "persist" : raw !== null ? "crash-backup" : null,
+    crashBackupTakenAt: backup?.takenAt,
   };
-  if (backup) recovery.crashBackupTakenAt = backup.takenAt;
-
   const parsed = parsePersisted(raw);
   if (!parsed) {
     return JSON.stringify(
@@ -102,35 +91,33 @@ export function buildRecoveryExportJson(
       2,
     );
   }
-  const out: Record<string, unknown> = {
-    version: 1,
-    schemaVersion: parsed.version,
-    exportedAt,
-  };
-  const invalidKeys: string[] = [];
-  for (const k of COLLECTION_KEYS) {
-    const v = parsed.state[k];
-    if (Array.isArray(v)) out[k] = v;
-    else invalidKeys.push(k);
-  }
-  const preferences: Record<string, unknown> = {};
-  for (const k of PREFERENCE_KEYS) {
-    if (parsed.state[k] !== undefined) preferences[k] = parsed.state[k];
-  }
-  out.preferences = preferences;
-  if (invalidKeys.length > 0) recovery.invalidKeys = invalidKeys;
-  out.recovery = recovery;
-  return JSON.stringify(out, null, 2);
+  const { state } = parsed;
+  const pick = (keys: readonly string[], keep: (v: unknown) => boolean) =>
+    Object.fromEntries(
+      keys.filter((k) => keep(state[k])).map((k) => [k, state[k]]),
+    );
+  return JSON.stringify(
+    {
+      version: 1,
+      schemaVersion: parsed.version,
+      exportedAt,
+      // エクスポート JSON (store.exportJson) と同じ 8 collection
+      ...pick(PERSIST_COLLECTION_KEYS, Array.isArray),
+      preferences: pick(PREFERENCE_KEYS, (v) => v !== undefined),
+      recovery,
+    },
+    null,
+    2,
+  );
 }
 
-/** 現行 schema で復元できるスナップショットのメタ (無い / 旧 schema / 読めないなら null)。 */
+/**
+ * 現行 schema で復元できるスナップショットのメタ (無い / 旧 schema / 読めないなら null)。
+ * 例外は投げない (getSnapshotMeta は localStorage 不在・parse 失敗を内部で try/catch 済み)。
+ */
 export function restorableSnapshotMeta(): SnapshotMeta | null {
-  try {
-    const meta = getSnapshotMeta();
-    return meta?.schemaVersion === PERSIST_SCHEMA_VERSION ? meta : null;
-  } catch {
-    return null;
-  }
+  const meta = getSnapshotMeta();
+  return meta?.schemaVersion === PERSIST_SCHEMA_VERSION ? meta : null;
 }
 
 /**
@@ -142,13 +129,13 @@ export function restorableSnapshotMeta(): SnapshotMeta | null {
  */
 export function restoreSnapshotForRecovery(): SnapshotResult {
   if (restorableSnapshotMeta()?.trigger === "seed-apply") {
-    const notice = parsePersisted(readPersistRaw())?.state.autoApplyNotice as
-      | { digest?: unknown }
-      | null
-      | undefined;
-    if (typeof notice?.digest === "string" && notice.digest) {
-      writeSyncSeen(notice.digest);
-    }
+    const digest = (
+      parsePersisted(readPersistRaw())?.state.autoApplyNotice as
+        | { digest?: string }
+        | null
+        | undefined
+    )?.digest;
+    if (digest) writeSyncSeen(digest);
   }
   return restoreSnapshot();
 }
@@ -160,12 +147,11 @@ export function restoreSnapshotForRecovery(): SnapshotResult {
  * onboarding-dismissed / sync-seen / build-id / crash-backup / sessionStorage の
  * seed-update-dismissed) は消さない。
  */
-export function removePersistedForRecovery(): { backedUp: boolean } {
-  const backedUp = backupRawPersisted("reset");
+export function removePersistedForRecovery(): void {
+  backupRawPersisted("reset");
   try {
     localStorage.removeItem(PERSIST_STORE_KEY);
   } catch {
     // localStorage 不可なら何もできない (reload で再試行してもらう)
   }
-  return { backedUp };
 }

@@ -122,7 +122,7 @@ describe("App の画面境界 (key={tab})", () => {
     flags.calc = true;
     renderApp();
     const alert = screen.getByRole("alert");
-    expect(alert).toHaveTextContent("画面エラーが発生しました");
+    expect(alert).toHaveTextContent("エラーが発生しました");
     expect(alert).toHaveTextContent("(計算)");
     expect(alert).toHaveTextContent("calc boom");
     expect(screen.getByRole("button", { name: "もう一度試す" })).toBeInTheDocument();

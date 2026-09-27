@@ -19,27 +19,20 @@ body,
   margin: 0 0 8px;
   font-size: 16px;
 }
-.recovery-scope,
 .recovery-error {
   color: var(--muted, #9ca3af);
-  font-weight: 400;
-}
-.recovery-error {
   font-size: 13px;
   word-break: break-all;
 }
-.recovery-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0;
+.recovery-panel button {
+  margin: 4px 8px 4px 0;
 }
 .recovery-panel button.primary {
   background: var(--accent-2, #2b7ad6);
   border-color: var(--accent-2, #2b7ad6);
   color: #fff;
 }
-.recovery-data summary {
+.recovery-panel summary {
   cursor: pointer;
   margin-top: 8px;
 }

@@ -69,7 +69,9 @@ describe("backupRawPersisted", () => {
     expect(readCrashBackup()).toBeNull();
     localStorage.setItem(CRASH_BACKUP_KEY, "{not json");
     expect(readCrashBackup()).toBeNull();
-    localStorage.setItem(CRASH_BACKUP_KEY, JSON.stringify({ raw: "x" }));
+    localStorage.setItem(CRASH_BACKUP_KEY, JSON.stringify({ takenAt: "x" }));
+    expect(readCrashBackup()).toBeNull();
+    localStorage.setItem(CRASH_BACKUP_KEY, JSON.stringify({ raw: 1 }));
     expect(readCrashBackup()).toBeNull();
   });
 });

@@ -14,14 +14,10 @@ export function showStaticCrashFallback(): void {
     box.id = FALLBACK_ID;
     box.className = "recovery-panel";
     box.setAttribute("role", "alert");
-    const p = document.createElement("p");
-    p.textContent =
-      "PointMax で予期しないエラーが発生しました。ページを再読み込みしてください。";
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = "再読み込み";
-    button.addEventListener("click", () => window.location.reload());
-    box.append(p, button);
+    // 固定文言のみ (外部入力を含めない)
+    box.innerHTML =
+      "<p>エラーが発生しました。再読み込みしてください</p><button>再読み込み</button>";
+    box.querySelector("button")!.onclick = () => window.location.reload();
     document.body.append(box);
   } catch {
     // 最後の防衛線なので、ここでの失敗は何もしない

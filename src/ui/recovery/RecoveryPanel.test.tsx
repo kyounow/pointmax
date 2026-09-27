@@ -118,7 +118,7 @@ describe("RecoveryPanel 表示", () => {
     render(<RecoveryPanel mode="screen" error={new Error("x")} />);
     openRecovery();
     fireEvent.click(screen.getByRole("button", { name: "コピー" }));
-    expect(await screen.findByText("クリップボードにコピーしました。")).toBeInTheDocument();
+    expect(await screen.findByText("コピーしました")).toBeInTheDocument();
     expect(writeText).toHaveBeenCalledTimes(1);
 
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
@@ -174,7 +174,7 @@ describe("RecoveryPanel 公式データで初期化 (2 段確認)", () => {
       reset.mock.invocationCallOrder[0],
     );
     expect(reloadMock).not.toHaveBeenCalled();
-    expect(screen.getByRole("status")).toHaveTextContent("ページを再読み込み");
+    expect(screen.getByRole("status")).toHaveTextContent("保存後に再読み込みしてください");
   });
 
   it("書き出しに失敗したら初期化しない", () => {

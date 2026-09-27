@@ -93,7 +93,7 @@ describe("Root: 描画例外", () => {
     flags.appThrows = true;
     render(<Root />);
     const alert = screen.getByRole("alert");
-    expect(alert).toHaveTextContent("PointMax を表示できませんでした");
+    expect(alert).toHaveTextContent("エラーが発生しました");
     expect(alert).toHaveTextContent("app boom");
     expect(screen.getByRole("button", { name: "ページを再読み込み" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "もう一度試す" })).toBeNull();

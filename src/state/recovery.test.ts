@@ -60,21 +60,21 @@ describe("buildRecoveryExportJson", () => {
       yenValueOverrides: { "j-point": 1.2 },
       excludedStorePayments: healthyState().excludedStorePayments,
     });
-    expect(out.recovery).toMatchObject({
-      cause: "render",
-      message: "boom",
-      source: "persist",
-    });
+    expect(out.recovery).toMatchObject({ cause: "render", message: "boom" });
     expect(typeof out.recovery.buildId).toBe("string");
+    // crash-backup が無ければ退避時刻は載らない
+    expect(out.recovery.crashBackupTakenAt).toBeUndefined();
   });
 
-  it("配列でない collection は載せず recovery.invalidKeys に並べる", () => {
+  it("配列でない collection は載せない (他の collection と preferences は残す)", () => {
     persist({ ...healthyState(), cards: null, stores: "x" });
     const out = JSON.parse(buildRecoveryExportJson(null));
     expect(out.cards).toBeUndefined();
     expect(out.stores).toBeUndefined();
     expect(out.currencies).toEqual(seed().currencies);
-    expect(out.recovery.invalidKeys).toEqual(["cards", "stores"]);
+    expect(out.preferences.birthMonth).toBe(7);
+    // cards 欠落はインポートの検証で弾かれる (JSON を手で直して取り込む)
+    expect(validateImportData(out, { requireSchemaVersion: true }).ok).toBe(false);
   });
 
   it("壊れた raw では throw せず kind='pointmax-recovery-raw' で raw を保持する", () => {
@@ -96,7 +96,6 @@ describe("buildRecoveryExportJson", () => {
     const out = JSON.parse(buildRecoveryExportJson(null));
     expect(out.kind).toBe("pointmax-recovery-raw");
     expect(out.raw).toBe("{broken");
-    expect(out.recovery.source).toBe("crash-backup");
     expect(out.recovery.crashBackupTakenAt).toBe(readCrashBackup()?.takenAt);
   });
 });
@@ -183,7 +182,7 @@ describe("removePersistedForRecovery", () => {
     sessionStorage.setItem("pointmax:seed-update-dismissed:v1", "x");
     localStorage.setItem(PERSIST_STORE_KEY, "{broken");
 
-    expect(removePersistedForRecovery()).toEqual({ backedUp: true });
+    removePersistedForRecovery();
 
     expect(localStorage.getItem(PERSIST_STORE_KEY)).toBeNull();
     for (const [k, v] of Object.entries(others)) {
@@ -195,8 +194,8 @@ describe("removePersistedForRecovery", () => {
     sessionStorage.clear();
   });
 
-  it("persist が無ければ backedUp:false (何も壊さない)", () => {
-    expect(removePersistedForRecovery()).toEqual({ backedUp: false });
+  it("persist が無ければ何も退避せず、例外も出さない", () => {
+    expect(() => removePersistedForRecovery()).not.toThrow();
     expect(readCrashBackup()).toBeNull();
   });
 });

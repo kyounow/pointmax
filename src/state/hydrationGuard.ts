@@ -21,6 +21,20 @@ import { PERSIST_STORE_KEY } from "./persist-versions";
 
 export const CRASH_BACKUP_KEY = "pointmax:crash-backup:v1";
 
+// persist state の 8 collection (seed() が返すもの / エクスポート JSON の本体)。
+// store.seedIfEmpty の「空」判定と recovery.ts の書き出しで共有する (bundle 節約のため 1 箇所に)。
+// persist-versions.ts は scripts の import グラフに入っているので、そちらには置かない。
+export const PERSIST_COLLECTION_KEYS = [
+  "cards",
+  "currencies",
+  "stores",
+  "edges",
+  "pointCards",
+  "paymentApps",
+  "programs",
+  "memberships",
+] as const;
+
 export type CrashBackup = {
   /** 退避した時刻 (ISO)。 */
   takenAt: string;
@@ -30,21 +44,13 @@ export type CrashBackup = {
   raw: string;
 };
 
-/** 退避データを読む。無い / 形が壊れている / localStorage 不可なら null。 */
+/** 退避データを読む。無い / raw が文字列でない (形が壊れている) / localStorage 不可なら null。 */
 export function readCrashBackup(): CrashBackup | null {
   try {
-    const text = localStorage.getItem(CRASH_BACKUP_KEY);
-    if (!text) return null;
-    const b = JSON.parse(text) as Partial<CrashBackup> | null;
-    if (
-      !b ||
-      typeof b.takenAt !== "string" ||
-      typeof b.raw !== "string" ||
-      (b.cause !== "hydrate" && b.cause !== "reset")
-    ) {
-      return null;
-    }
-    return { takenAt: b.takenAt, cause: b.cause, raw: b.raw };
+    const b = JSON.parse(
+      localStorage.getItem(CRASH_BACKUP_KEY) ?? "null",
+    ) as CrashBackup | null;
+    return typeof b?.raw === "string" ? b : null;
   } catch {
     return null;
   }

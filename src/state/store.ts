@@ -55,7 +55,11 @@ import { takeSnapshot } from "./stateSnapshot";
 import { writeSyncSeen, type AutoApplyNotice } from "./syncNotice";
 // PR-6d (U6): hydrate 失敗の検知 + 生データ退避。persist-versions にしか依存しない
 // (store.test の stateSnapshot モックと干渉させない)。
-import { backupRawPersisted, markHydrationFailure } from "./hydrationGuard";
+import {
+  backupRawPersisted,
+  markHydrationFailure,
+  PERSIST_COLLECTION_KEYS,
+} from "./hydrationGuard";
 
 // v0.8 リリース時に persist 階層を世代交代した。旧 v0.x キーは一度きりクリーンアップ。
 // （次回 v1.0 以降は migrate / mergeFromSeed で吸収する）
@@ -388,16 +392,8 @@ const empty: State = {
 };
 
 // PR-6a-1: seedIfEmpty が「空」とみなす対象 (seed() が返す 8 collection)。
-const SEED_COLLECTION_KEYS = [
-  "cards",
-  "currencies",
-  "stores",
-  "edges",
-  "pointCards",
-  "paymentApps",
-  "programs",
-  "memberships",
-] as const;
+// PR-6d: 復旧用の書き出し (recovery.ts) と共有するため hydrationGuard.ts の定数を使う。
+const SEED_COLLECTION_KEYS = PERSIST_COLLECTION_KEYS;
 
 // PR-6d (U6): 公式 seed を state に投入する共通処理。seedIfEmpty (新規プロファイル) /
 // resetToSeed (復旧パネルの初期化) / applySchemaMigration (schema reset の同意後) の 3 経路で
