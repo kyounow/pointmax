@@ -1,84 +1,93 @@
 # sources/ - マスタ自動同期パイプライン
 
-PointMax の seed データを各カード/ポイント/決済アプリの公式情報から自動更新する仕組みです。
-v1.0 で導入される予定の機能。週次 GitHub Actions cron で Gemini CLI が公式ページを読み取り、
-差分を Pull Request または Issue として自動提案します。
+週 2 回 (月・木 06:00 JST) GitHub Actions `weekly-sync.yml` が `registry.yaml` の enabled ソースを
+Gemini API (`@google/genai`、既定モデル gemini-2.5-flash) で抽出し、seed との差分を
+auto (自動反映) と review (要レビュー) に分けて処理する。単発ソースの抽出は URL Context →
+待機して再試行 → HTML を pre-fetch して直渡し、の最大 3 attempts。
+**auto-merge の範囲はルート README の「cron が auto-merge する/しない範囲」表が正**で、ここには書かない。
+
+現在の構成 (2026-09-27): enabled は 3 本 (mon: jcb-jpoint-partners / epos-tamaru-market、
+thu: smbc-vpoint-up。worst は mon 6 / thu 3 req)。d-pay-campaigns / paypay-campaigns は
+0b-3 (campaign auto ゲートの強化) で再有効化する予定 (mon 9 / thu 6)。停止中ソースの理由と再開条件は
+registry の各 notes、無料枠 (20 req/日) の見積りは registry ヘッダとルート README の「自動アップデート」節。
 
 ## ディレクトリ構成
 
 ```
 sources/
-  registry.yaml              # Layer 0: 取得元URLのレジストリ (人間が手で編集)
-  schema/
-    extracted-source.schema.json   # Gemini に強制する JSON Schema
-  extractors/                # 各 extractor 種別ごとの Gemini プロンプト
-    card.prompt.md           # 単一カードのスペック抽出
-    jal-tokuyaku.prompt.md   # JAL特約店リスト抽出
-    point-partner.prompt.md  # ポイント加盟店リスト抽出
-    payment-app.prompt.md    # 決済アプリ仕様抽出
-  extracted/                 # Layer 1: Gemini 出力 (週次で上書き、git 管理)
-    <sourceId>.json
-  history/                   # 過去スナップショット (4週分保持、ロールバック用)
-    YYYY-MM-DD/
-      <sourceId>.json
-  proposed-migrations.json   # Layer 2: 差分計算結果 (auto vs review に分類)
+  registry.yaml                  # 取得元 URL の台帳 (手編集)。enabled / fetchGroup (mon|thu) / notes
+  schema/extracted-source.schema.json  # 抽出 JSON の schema (fetch 時に ajv で検証)
+  extractors/<name>.prompt.md    # Gemini プロンプト 9 ファイル (ExtractorKind 8 種 + crawl 専用 campaign-index)
+  extracted/<sourceId>.json      # 抽出結果。main には auto-sync 週だけ入る
+  aliases.json                   # cardId / storeId の表記揺れ辞書 (propose 時に正規化)
+  proposed-migrations.json       # propose の出力 (autoApplicable / needsReview)。main には auto-sync 週だけ入る
+  SYNC_HISTORY.json / .md        # 同期履歴。run ごとに main に入り (変化の無い run を除く)、アプリ設定の「マスタ更新履歴」のデータ源
 ```
 
-## パイプライン
+main に置かないもの:
+- `REVIEW_QUEUE.md` — 要レビュー一覧。`chore/sync-review-queue` ブランチ (長寿命 PR #145 の本文) にだけ置く。
+  review-only 週の最新の extracted / proposed-migrations.json も同じブランチにある。
+- `AUTO_SUMMARY.md` — auto-sync の commit message / PR 本文用の一時生成物 (git 管理外)。
+- 過去スナップショットのディレクトリは無い。過去の抽出結果は git 履歴で追う。
 
-```
-registry.yaml
-   │
-   ▼
-scripts/sync/fetch-all.ts     ─ Gemini CLI 呼び出し ─▶ extracted/<sourceId>.json
-   │
-   ▼
-scripts/sync/diff-and-propose.ts ─ 現在の seed と比較 ─▶ proposed-migrations.json
-   │
-   ├─▶ autoApplicable: seed.ts + MIGRATIONS を更新する PR を自動作成 → CI green → 自動マージ
-   └─▶ needsReview:    GitHub Issue を1件ずつ作成 → 人間が判断
-```
+## パイプライン (weekly-sync.yml)
 
-## 自動マージ判定基準
+1. `sync:fetch-all -- --group mon|thu` (JST の曜日から導出。workflow_dispatch では `all` も指定可) → `extracted/`
+2. `sync:propose` → `proposed-migrations.json` (confidence と各種ガードで autoApplicable / needsReview に分類)
+3. `sync:report` → `AUTO_SUMMARY.md` / `REVIEW_QUEUE.md` / `SYNC_HISTORY.json`・`.md`
+4. auto > 0 なら `sync:apply` → `src/state/seed-additions.ts` だけを書く (SEED_VERSION・手書き seed は触らない)
+5. Safety check (auto > 0 かつ `sync.config.json` の `autoMergeEnabled` が true の週だけ走る):
+   件数上限 (`maxAutoChangesPerRun`) / `npm test` / `npm run build` ほか。検査内容は同 step が正
+6. 通過したら `auto-sync/YYYY-MM-DD-HHMM` PR を作り、`gh pr merge --squash --auto` で即時マージ
+   → `deploy.yml` の `workflow_run` が再デプロイ
+7. Safety 失敗・auto-merge 無効の週は auto を全件 review に降格 (`safetyFailed` / `autoMergeDisabled`) し、
+   SYNC_HISTORY だけを main に直 push する (「Publish SYNC_HISTORY to main」step)
+8. needsReview があれば peter-evans/create-pull-request が `chore/sync-review-queue` を作り直して PR #145 を更新
 
-`proposed-migrations.json` で各提案は次のルールで `autoApplicable` / `needsReview` に分類されます。
+## review 経路
 
-### autoApplicable (PR 自動マージ対象)
-- confidence ≥ 0.9
-- かつ 以下の **いずれか**:
-  - 新規追加 (既存ID と衝突しない)
-  - rate の更新で **絶対変動 ≤ 10pp AND 相対倍率 0.5x〜2x**
-  - メタ情報の追加 (category 未設定→設定、notes 追加 など)
+- PR #145 の本文 (REVIEW_QUEUE.md) で項目 ID を確認し、review ブランチ上で `sync:approve -- <ID> ...` を実行すると
+  seed-additions.ts への反映・queue からの除去・REVIEW_QUEUE.md の再生成まで行う (`--list` / `--dry-run` あり)。
+- review ブランチの commit は次回 cron の作り直しで消えるので、approve したら速やかにマージする。
+  そのままマージすると REVIEW_QUEUE.md も main に入るので、マージ前に review ブランチで
+  `git rm sources/REVIEW_QUEUE.md` するか、マージ後に外す。
 
-### needsReview (Issue 化)
-- confidence < 0.9
-- または 削除 / 通貨参照変更 / ID 衝突
-- または rate の **絶対変動 > 10pp** または **倍率が 0.5x 未満 / 2x 超**
-- 大キャンペーン (50%還元等) はここに落ちる。ニュース等の追加エビデンスで人間が承認
+## 判定基準
 
-## confidence の合成
-
-各抽出項目に Gemini が付ける `evidenceQuote / explicitness / ambiguity` から
-スクリプト側で機械的に計算 (`scripts/sync/types.ts` の `computeConfidence`):
+auto / review の詳細はルート README の表を参照 (唯一の正)。confidence の合成式だけここに残す
+(`scripts/sync/types.ts` の `computeConfidence`):
 
 ```
 confidence = evidenceQuote ? explicitness * (1 - ambiguity) : 0.3
 ```
 
-`evidenceQuote` (元ページからの逐語引用) が空なら強制的に 0.3 = 要レビュー扱い。
+`evidenceQuote` (元ページからの逐語引用) が空なら 0.3 になり、auto の基本閾値 0.9 を下回る。
 
-## 開発者向けセットアップ
+## ローカル実行
 
-1. Google AI Studio で API Key を発行 (https://aistudio.google.com/apikey)
-2. リポジトリルートに `.env.local` を作り、`.env.example` を参考に値を設定
-3. `npm run sync` (実装後) でローカルから 1 ソースをテスト実行可能
+1. Google AI Studio で API Key を発行し、`.env.example` を参考にリポジトリ直下の `.env.local` に
+   `GEMINI_API_KEY` を設定する (CI は GitHub Secrets `GEMINI_API_KEY` に別の Key を登録)。
+2. 実行は `npm run <script>`。一括実行用の `npm run sync` という script は存在しない。
 
-CI 上では GitHub Secrets `GEMINI_API_KEY` を別の Key として登録します
-(ローカル用と本番用を分離)。
+| script | 用途 |
+|---|---|
+| `sync:fetch -- <sourceId> [--dry-run]` | 1 ソースを抽出 (enabled:false のソースは拒否) |
+| `sync:fetch-all -- --group mon\|thu\|all [--dry-run]` | グループ単位で抽出 (cron と同じ) |
+| `sync:propose` | 全 extracted と seed の差分提案 |
+| `sync:report` | AUTO_SUMMARY / REVIEW_QUEUE / SYNC_HISTORY を生成 |
+| `sync:apply [--dry-run]` | autoApplicable を seed-additions.ts へ |
+| `sync:approve -- --list` / `-- <ID> ...` | needsReview の一覧 / 承認適用 |
 
-## セキュリティ
+- ローカルで `sync:report` / `sync:approve` を実行すると `REVIEW_QUEUE.md` / `AUTO_SUMMARY.md` が untracked で
+  再生成される。**commit しない** (`git add -A` や `git add sources/` で化石が main に戻る)。
+  `proposed-migrations.json` と `SYNC_HISTORY.json`・`.md` も書き換わるので `git checkout` で戻す。
 
-- API Key は `.env.local` / GitHub Secrets のみで管理。リポジトリには絶対 commit しない
-- pre-commit hook (`.githooks/pre-commit`) で `AIza...` パターンを検出 → ブロック
-- 自動マージ PR は CI green が gate (テスト破壊する変更は弾かれる)
-- main は branch protection で保護、自動 PR も必ず PR 経由
+## セキュリティと保護
+
+- API Key は `.env.local` / GitHub Secrets だけで管理し、commit しない。pre-commit hook (`.githooks/pre-commit`、
+  `git config core.hooksPath .githooks` で有効化) が `AIza...` 等を検出して commit を止める。
+- main に branch protection は無い (2026-09-26 に gh api で確認。Branch not protected / rulesets なし)。
+- PR 上の CI (ci / lint / bundle-size) は cron の変更に対して実質走らない。auto-sync PR の run は即時マージと
+  ブランチ削除で 0 jobs の failure になり、review PR の run は action_required のまま実行されない。
+  cron 由来の変更に対する事前検査は workflow 内の Safety check だけ。
+- review-only 週 (auto 0 件または降格した週) は bot が SYNC_HISTORY を main に直 push する。
