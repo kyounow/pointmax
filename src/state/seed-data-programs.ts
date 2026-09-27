@@ -23,6 +23,19 @@ import { defineMemberships, type MembershipStoreSpec } from "./defineMemberships
 //   - 各ポイントカード提示 base (prog-*-pointcard-*pc)
 // 併せて交換 edge の lastVerifiedAt 棚卸し (未記入分の漸進記入) も同じ四半期サイクルで回す。
 // チェックリストの実体は SESSION_LOG「🗓 四半期ごと手動確認チェックリスト」を参照 (次回目安 2026-10)。
+//
+// ─── lastVerifiedAt (確認月、PR-5a) ───
+// 上記の四半期チェック対象 program には、公式ページで率を突合した月を lastVerifiedAt ("YYYY-MM") に
+// 書く。四半期チェックのたびに**当月に更新**する (変わっていれば rate も直す)。最終確認から 12 ヶ月を
+// 超えると、その program を採用した計算結果に『⚠ 古い情報かも』が出る (src/domain/edgeFreshness.ts)。
+// 2026-07 は #142 (2026-07-21 初回監査) で突合済みの 27 件 + 同月に監査記録のある 3 件
+// (prog-rakuten-pay-rakuten-card-addon / prog-jal-tokuyaku / -normal)。
+// **空欄にするもの**: 週次 cron が監視する倍率 tier (J-POINT パートナー W / Gold・たまるマーケット。
+// cron は rate の一致を確認しても日付を更新しないので、書くと 12 ヶ月後に常に ⚠ が出る)、
+// cron が生成する ADDED_PROGRAMS (seed-additions.ts、codegen が出さない)、監査記録の無い program
+// (5b で記入)。契約は seed.test.ts「PR-5a: 確認月 (lastVerifiedAt) の契約」。
+// lastVerifiedAt / officialUrl は META キー (mergeSeed.PROGRAM_META_KEYS) なので、更新しても既存端末に
+// 通知・自動反映は起きず、表示時に同梱 seed の値が参照される (SEED_VERSION の bump も不要)。
 
 // PR-0a-2b (M3): J-POINT パートナー 20倍 (W / Gold) の共通 conditions。条件チップ (NoteChips) に
 // 合流するため、店別の条件は書かず membership.notes (下の JPOINT_20X_* 指定) に置く。
@@ -52,6 +65,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.02,
     currencyId: "jal-mile",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期監査 2026-Q3 (SMP 自動付帯の範囲を確認)
     description:
       "JALカード CLUB-A系 (ショッピングマイル・プレミアム自動付帯) は特約店で 100円=2 マイル (通常の 2 倍)",
     conditions:
@@ -68,6 +82,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.02,
     currencyId: "jal-mile",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期監査 2026-Q3 (CLUB-A系と同時に確認)
     // 普通カードの 2倍は SMP (年会費4,950円) 加入者のみ → optIn:true で既定 OFF 出荷。
     // enabled は書かない (ユーザー所有キー)。SMP 加入者が「使う」を ON にした時のみ評価に載る。
     optIn: true,
@@ -94,6 +109,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.03,
     currencyId: "rakuten-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 1 群)
     description: "楽天カード × 楽天市場 通常 + SPU 基本 = 3%",
   },
 
@@ -114,6 +130,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "rakuten-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 1 群)
     validFrom: "2020-01-01",
     recurringDays: [5, 10, 15, 20, 25, 30],
     monthlyCapAmountYen: 100000, // 獲得上限 1,000pt/月 ÷ 0.01
@@ -137,6 +154,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.07,
     currencyId: "v-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 2 群)
     validFrom: "2023-04-03",
     description:
       "SMBC ゴールド(NL) Visa/Master タッチ決済 + スマホ利用で 7% Vポイント還元",
@@ -154,6 +172,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.08,
     currencyId: "v-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 2 群)
     validFrom: "2023-04-03",
     // 四半期監査 2026-Q3: rate 0.08 は据え置き。2026-02-01 改定で「基本還元 8%」に構造変更
     //   (旧 7%+Olive連携1% の内訳記述を現況に更新)。
@@ -201,6 +220,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.015,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 4 群)
     description: "JALカードSuica (ビューカード機能) × Suicaチャージで 1.5% JRE POINT",
   },
 
@@ -213,6 +233,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.08,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 4 群)
     description: "ビューカード会員 新幹線eチケット 8% JRE POINT 還元",
   },
 
@@ -227,6 +248,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.08,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 4 群)
     description:
       "VIEWプラス カード分 8% (ゴールド)。えきねっと側の 5% は別枠 (合計最大13%)",
   },
@@ -240,6 +262,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.015,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 4 群)
     description: "ビューカード スタンダード × Suica オートチャージ/モバイルチャージで 1.5% JRE POINT",
   },
 
@@ -252,6 +275,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.04,
     currencyId: "mercari-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 3 群)
     monthlyCapAmountYen: 125000, // 還元上限 5,000pt/月 ÷ 0.04 (四半期監査 2026-Q3)
     description: "メルカリ内お買い物で最大 4% メルカリポイント還元 (利用額連動、定常最大)",
     notes: "メルカリ内還元は月P5,000上限",
@@ -268,6 +292,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.08,
     currencyId: "mercari-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 3 群)
     recurringDays: [8],
     // エントリーはメルカリアプリ内キャンペーンページのため entryUrl は無し (バッジのみ)。
     requiresEntry: true,
@@ -312,6 +337,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "rakuten-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "楽天ポイントカード提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -330,6 +356,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "d-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "dポイントカード提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -343,6 +370,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "d-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "dポイントカード提示で 100円=1pt (1%) 還元",
   },
 
@@ -355,6 +383,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "ponta-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "Pontaカード提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -368,6 +397,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "ponta-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "Pontaカード提示で 100円=1pt (1%) 還元",
   },
 
@@ -380,6 +410,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "v-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "Vポイントカード(旧Tカード)提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -393,6 +424,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "nanaco-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "nanacoカード提示で 100円=1pt (1%) 還元 (電子マネー支払い時)",
   },
 
@@ -405,6 +437,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "waon-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "WAONカード提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -418,6 +451,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "JRE POINT カード提示で 200円(税抜)=1pt (0.5%) 還元 (駅ナカ加盟店)",
     notes: "付与は200円(税抜)単位 (端数切り捨て)", // PR-1d
   },
@@ -435,6 +469,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "rakuten-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description: "楽天Pay 利用で 1% 楽天ポイント還元 (誰でも)",
   },
 
@@ -451,6 +486,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "rakuten-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期監査 2026-Q3 (#142 で 2025-07 改定条件を反映)
     optIn: true,
     description:
       "楽天Pay の残高払いで +0.5% 上乗せ (楽天Pay 1% と合わせて 1.5%)。" +
@@ -471,6 +507,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "d-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description: "d払い利用で 0.5% dポイント還元 (誰でも、200円=1pt)",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -497,6 +534,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "paypay",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description: "PayPay 残高払いで 0.5% PayPayポイント還元 (誰でも)",
   },
 
@@ -522,6 +560,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "ponta-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description: "au PAY コード支払いで 0.5% Pontaポイント還元 (誰でも)",
   },
 
@@ -578,6 +617,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "nanaco-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description:
       "nanaco 電子マネー支払いで 200円1pt (0.5%) 還元。" +
       "セブン-イレブン等 loyalty 加盟店は nanaco-card 経路で計上、ここは非 loyalty 店のみ。",
@@ -593,6 +633,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "waon-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description:
       "WAON 電子マネー支払いで 200円1pt (0.5%) 還元。" +
       "イオン系等 loyalty 加盟店は waon-card 経路で計上、ここは非 loyalty 店のみ。",
@@ -764,6 +805,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "epos",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 5 群)
     description:
       "ゴールド/プラチナはマルイ・モディ・マルイウェブチャネルで 200円=2pt (1.0%、一般は0.5%)。一部商品・ショップ除く。",
     officialUrl:
@@ -782,6 +824,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "epos",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 5 群)
     // R1 (PR-1d): 登録制の特典 (対象ショップ登録が前提) → optIn:true で既定 OFF 出荷。
     // enabled は書かない (ユーザー所有キー)。登録ショップがある人が「使う」を ON にする。
     optIn: true,

@@ -13,11 +13,18 @@ import { SEED_CARDS, SEED_PAYMENT_APPS } from "./seed-data-cards";
 import { SEED_EDGES } from "./seed-data-edges";
 import { SEED_BENEFIT_PROGRAMS } from "./seed-data-programs";
 import { CARD_FAMILIES } from "./seed-data-card-families";
-import { isValidVerifiedMonth } from "../domain/edgeFreshness";
+import {
+  collectStaleItems,
+  isValidVerifiedMonth,
+  monthsSince,
+} from "../domain/edgeFreshness";
 import { isSafeHttpUrl } from "../domain/urlSafety";
 import { PURCHASE_CHANNELS, effectiveChannel } from "../domain/purchaseChannel";
+import { changeCount, mergeSeed } from "../domain/mergeSeed";
+import { syncDigest } from "../domain/syncDigest";
 import { membershipId } from "./defineMemberships";
-import { REMOVED_PROGRAM_IDS } from "./seed-additions";
+import { ADDED_PROGRAMS, REMOVED_PROGRAM_IDS } from "./seed-additions";
+import { seedFreshness } from "./seedFreshness";
 import { REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
 import { tierFamilyOf } from "./tierFamily";
 
@@ -1055,5 +1062,109 @@ describe("PR-0a-2c: membership tombstone と tier 契約", () => {
     expect(
       memberships.filter((m) => m.programId === "prog-epos-tamaru-4x").length,
     ).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ─── PR-5a: 確認月 (lastVerifiedAt) / officialUrl の契約 ───
+// 手書きデータと codegen の不変条件にだけ掛かる (cron の safety gate を巻き添えにしない)。
+// 『週次監視以外は必ず記入』のカバレッジ契約は PR-5b (2026-Q4 四半期データ) で有効にする。
+describe("PR-5a: 確認月 (lastVerifiedAt) の契約", () => {
+  const NOW = new Date();
+  const isFuture = (v: string) => (monthsSince(v, NOW) ?? 0) < 0;
+
+  it("(a) program / edge / card の lastVerifiedAt は YYYY-MM で、未来月ではない", () => {
+    const { programs, edges, cards } = seed();
+    const rows = [
+      ...programs.map((p) => ["program", p.id, p.lastVerifiedAt] as const),
+      ...edges.map((e) => ["edge", e.id, e.lastVerifiedAt] as const),
+      ...cards.map((c) => ["card", c.id, c.lastVerifiedAt] as const),
+    ];
+    const bad = rows
+      .filter(([, , v]) => v !== undefined && (!isValidVerifiedMonth(v) || isFuture(v)))
+      .map(([kind, id, v]) => `${kind} ${id}: lastVerifiedAt=${v}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
+  it("(b) 記入済みの program が 30 件以上 (#142 の 27 件 + 監査記録のある 3 件。空振り防止)", () => {
+    const filled = seed().programs.filter((p) => p.lastVerifiedAt !== undefined);
+    expect(filled.length).toBeGreaterThanOrEqual(30);
+  });
+
+  it("(c) cron の ADDED_PROGRAMS は lastVerifiedAt を持たない (codegen は出さない)", () => {
+    const withMonth = ADDED_PROGRAMS.filter((p) => p.lastVerifiedAt !== undefined).map(
+      (p) => p.id,
+    );
+    expect(withMonth).toEqual([]);
+  });
+
+  it("(d) 週次監視の倍率 tier (J-POINT W / Gold・たまるマーケット) は lastVerifiedAt を持たない", () => {
+    const tiers = [...SEED_BENEFIT_PROGRAMS, ...seed().programs].filter(
+      (p) => tierFamilyOf(p.id) !== null,
+    );
+    // tier の検出が空振りしていないこと (J-POINT 7 + たまる 3)
+    expect(new Set(tiers.map((p) => p.id)).size).toBeGreaterThanOrEqual(10);
+    const withMonth = tiers.filter((p) => p.lastVerifiedAt !== undefined).map((p) => p.id);
+    expect(withMonth).toEqual([]);
+  });
+
+  it("(e) seed の officialUrl はすべて安全な http(s) URL", () => {
+    const programs = seed().programs.filter((p) => p.officialUrl !== undefined);
+    expect(programs.length).toBeGreaterThan(0);
+    const bad = programs
+      .filter((p) => !isSafeHttpUrl(p.officialUrl!))
+      .map((p) => `${p.id}: ${p.officialUrl}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
+  it("(f) meta だけの seed 変更は既存端末に通知も自動反映も起こさない (changeCount 0 / digest '')", () => {
+    // PR-5a 以前の seed で初期化した端末 = program の lastVerifiedAt / officialUrl を持たない state。
+    const S = seed();
+    const before = {
+      ...S,
+      programs: S.programs.map((p) => {
+        const rec = { ...p };
+        delete rec.lastVerifiedAt;
+        delete rec.officialUrl;
+        return rec;
+      }),
+    };
+    const result = mergeSeed(before, seed(), {
+      removedProgramIds: REMOVED_PROGRAM_IDS,
+      removedMembershipIds: REMOVED_MEMBERSHIP_IDS,
+    });
+    expect(result.updatedPrograms.map((p) => p.id)).toEqual([]);
+    expect(changeCount(result)).toBe(0);
+    expect(
+      syncDigest(result.diff, {
+        updatedPrograms: result.updatedPrograms,
+        removedPrograms: result.removedPrograms,
+        updatedMemberships: result.updatedMemberships,
+        removedMemberships: result.removedMemberships,
+      }),
+    ).toBe("");
+  });
+
+  it("(g) 2026-10 時点では seed の program / edge / card に『古い情報かも』の対象が無い", () => {
+    // 2026-07 記入 + 12 ヶ月 → 最初に stale になりうるのは 2027-08。次回四半期 (2027-01) までに更新する。
+    const OCT = new Date(2026, 9, 1);
+    const { programs, edges, cards } = seed();
+    const items = [
+      ...programs.map((p) => ({
+        kind: "rate" as const,
+        label: p.id,
+        month: seedFreshness.programMonth(p),
+      })),
+      ...edges.map((e) => ({
+        kind: "route" as const,
+        label: e.id,
+        month: seedFreshness.edgeMonth(e),
+      })),
+      ...cards.map((c) => ({
+        kind: "rate" as const,
+        label: c.id,
+        month: seedFreshness.cardMonth(c),
+      })),
+    ];
+    expect(collectStaleItems(items, OCT)).toBeNull();
   });
 });
