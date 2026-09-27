@@ -291,10 +291,10 @@ describe("CalcResultCard", () => {
     ...over,
   });
 
-  it("REM-#2: 経由 edge の最終確認が6ヶ月超なら展開ビューに「ルート要確認」を出す", () => {
+  it("REM-#2: 経由 edge の最終確認が12ヶ月超なら展開ビューに「ルート要確認」を出す", () => {
     const ranking = makeRanking({
-      // 2025-12 は基準日 2026-07 から 7ヶ月前 = stale
-      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-12" })],
+      // 2025-06 は基準日 2026-07 から 13ヶ月前 = stale (PR-5a で閾値 6→12ヶ月)
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-06" })],
     });
     render(
       <CalcResultCard
@@ -305,14 +305,14 @@ describe("CalcResultCard", () => {
       />,
     );
     expect(
-      screen.getByText(/ルート要確認 \(最終確認 2025-12\)/),
+      screen.getByText(/ルート要確認 \(最終確認 2025-06\)/),
     ).toBeInTheDocument();
   });
 
-  it("REM-#2: 最終確認がちょうど6ヶ月 (境界) なら警告を出さない", () => {
+  it("REM-#2: 最終確認がちょうど12ヶ月 (境界) なら警告を出さない", () => {
     const ranking = makeRanking({
-      // 2026-01 は基準日 2026-07 からちょうど6ヶ月 = stale でない
-      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2026-01" })],
+      // 2025-07 は基準日 2026-07 からちょうど12ヶ月 = stale でない
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-07" })],
     });
     render(
       <CalcResultCard
@@ -342,7 +342,7 @@ describe("CalcResultCard", () => {
 
   it("REM-#2: 折り畳み (非展開) 時は stale 警告を出さない", () => {
     const ranking = makeRanking({
-      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-12" })],
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-06" })],
     });
     render(
       <CalcResultCard
@@ -790,7 +790,7 @@ describe("CalcResultCard", () => {
 
   it("警告予算 (rankWarningChips): 要エントリー + 上限 + 条件チップ 2 種 + stale が立っても上位 3 件だけ出す", () => {
     const ranking = makeRanking({
-      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-12" })],
+      pathSteps: [edgeStep({ id: "epos-to-jal", lastVerifiedAt: "2025-06" })],
     });
     render(
       <CalcResultCard

@@ -154,7 +154,7 @@ export function CalcResultCard({
       )
     : undefined;
 
-  // REM-#2: 交換ルートの鮮度 (経由 edge の lastVerifiedAt 最古が 6ヶ月超なら "YYYY-MM")。
+  // REM-#2: 交換ルートの鮮度 (経由 edge の lastVerifiedAt 最古が 12ヶ月超なら "YYYY-MM")。
   const staleMonth = staleVerifiedMonth(r.pathSteps, now ?? new Date());
 
   // PR-0a-2b: 警告チップの表示予算 (rankWarningChips = 要エントリー=要経由 > channel > 上限 >
@@ -494,7 +494,7 @@ export function CalcResultCard({
             <div className="route-stale-notes">
               <span
                 className="rate-chip route-stale-chip"
-                title="この交換ルートに含まれるレートは公式ページでの最終確認から6ヶ月以上経過しています。各社公式サイトで最新のレートをご確認ください (計算には現在のレートをそのまま使用しています)。"
+                title="この交換ルートに含まれるレートは公式ページでの最終確認から12ヶ月を超えています。各社公式サイトで最新のレートをご確認ください (計算には現在のレートをそのまま使用しています)。"
               >
                 ⚠ ルート要確認 (最終確認 {staleMonth})
               </span>

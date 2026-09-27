@@ -109,7 +109,7 @@ export function EdgeDetailPanel({
                 <strong>メモ:</strong> {edge.notes}
               </div>
             )}
-            {/* REM-#2: 最終確認月 (メンテ用ビュー)。6ヶ月超は ⚠ で棚卸し対象を示す。
+            {/* REM-#2: 最終確認月 (メンテ用ビュー)。12ヶ月超は ⚠ で棚卸し対象を示す。
                 未記入は「未確認」表示 (未検証を古いと誤警告しない = ⚠ は出さない)。 */}
             <div className="ratio-hint" style={{ marginTop: 4 }}>
               <strong>最終確認:</strong>{" "}
@@ -117,7 +117,7 @@ export function EdgeDetailPanel({
                 isMonthStale(edge.lastVerifiedAt, new Date()) ? (
                   <span
                     style={{ color: "#d4a017" }}
-                    title="最終確認から6ヶ月以上経過。公式ページでレートを再確認し lastVerifiedAt を更新してください (四半期棚卸し対象)。"
+                    title="最終確認から12ヶ月を超えています。公式ページでレートを再確認し lastVerifiedAt を更新してください (四半期棚卸し対象)。"
                   >
                     ⚠ {edge.lastVerifiedAt} (要確認)
                   </span>

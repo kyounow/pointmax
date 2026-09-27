@@ -19,7 +19,7 @@ import type { NoteChipKind } from "./noteParser";
 export type WarningChipKind =
   | NoteChipKind // entry / channel / cap / exclusion / limited (noteParser の条件チップ)
   | "via" // 要経由 (PR-4e のネットモードで使用。要エントリーと同順位)
-  | "stale" // ⚠ ルート要確認 (交換ルートの最終確認が 6 ヶ月超)
+  | "stale" // 公式情報の最終確認が 12 ヶ月超 (edgeFreshness.FRESHNESS_STALE_MONTHS)
   | "minUnit"; // 最低交換単位 (端数) の注記
 
 /** 1 展開ビューに出す警告チップの上限件数。 */

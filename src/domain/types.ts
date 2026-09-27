@@ -114,7 +114,7 @@ export type ConversionEdge = {
   //   Calculator / EdgesScreen とも stale バッジは出さない (未検証を「古い」と誤警告しない)。
   //   bestPath に実際に乗る主要 edge のみ手記入し、残りは四半期棚卸し (SESSION_LOG の
   //   「四半期ごと手動確認チェックリスト」) で漸進的に埋める。stale 判定 (最終確認が
-  //   6ヶ月超で ⚠) は純関数 src/domain/edgeFreshness.ts に集約。passthrough フィールドの
+  //   12ヶ月超で ⚠、PR-5a で 6→12) は純関数 src/domain/edgeFreshness.ts に集約。passthrough フィールドの
   //   ため PERSIST_SCHEMA_VERSION の bump は不要 (未知フィールドはそのまま carry-over)。
   lastVerifiedAt?: string;
 };
