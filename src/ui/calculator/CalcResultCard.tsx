@@ -5,6 +5,7 @@
 import type { CardRanking, UnreachableReason } from "../../domain/rankCards";
 import type {
   BenefitProgram,
+  ConversionEdge,
   Currency,
   StoreProgramMembership,
 } from "../../domain/types";
@@ -12,7 +13,13 @@ import { cardLabel } from "../../domain/cardLabel";
 import { formatNum } from "../../domain/formatNum";
 import { formatRatio } from "../../domain/currencyKind";
 import { buildRateStackSummary } from "../../domain/rateStackSummary";
-import { staleVerifiedMonth } from "../../domain/edgeFreshness";
+import {
+  collectStaleItems,
+  FRESHNESS_STALE_MONTHS,
+  type FreshnessItem,
+  type FreshnessResolver,
+} from "../../domain/edgeFreshness";
+import { seedFreshness } from "../../state/seedFreshness";
 import { isSafeHttpUrl } from "../../domain/urlSafety";
 import {
   extractNoteChips,
@@ -77,10 +84,13 @@ type Props = {
   //   親が excludeStorePayment(現在の storeId, 引数の paymentAppId) を呼び即時再計算する。
   //   店舗未選択 (general) では親が undefined を渡すため、ボタンは出ない。
   onExcludePayment?: (paymentAppId: string) => void;
-  // REM-#2: 鮮度 (stale) 判定の基準日。経由 edge の lastVerifiedAt 最古が 6ヶ月超なら
-  //   展開ビューに「⚠ ルート要確認」を出す。省略時は new Date() (テスト以外は親が
+  // REM-#2 / PR-5a: 鮮度 (stale) 判定の基準日。採用した交換ルート・還元率の最終確認の最古が
+  //   12ヶ月超なら展開ビューに「⚠ 古い情報かも」を出す。省略時は new Date() (テスト以外は親が
   //   useToday() の today を渡し、日付跨ぎでも判定が更新される)。
   now?: Date;
+  // PR-5a: 確認月の解決方法。省略時 (= アプリ) は同梱 seed を参照する seedFreshness
+  //   (src/state/seedFreshness.ts)。テストは LOCAL_FRESHNESS (ローカル値そのまま) 等に差し替える。
+  freshness?: FreshnessResolver;
   // PR-0a-2b (M3): 現在の店舗での program の membership を引く関数 (親が storeId で束縛)。
   //   primary 行の条件チップに membership.notes (店別の条件) を合流させるのに使う。
   //   省略時は membership を見ない (program の notes / conditions だけ)。
@@ -108,6 +118,7 @@ export function CalcResultCard({
   onExcludePayment,
   now,
   membershipOf,
+  freshness = seedFreshness,
 }: Props) {
   const reachableLoyalties = r.loyalties.filter((l) => l.reachable);
   const loyaltyTotal = reachableLoyalties.reduce(
@@ -123,17 +134,17 @@ export function CalcResultCard({
       ? programById.get(r.resolved.programId)
       : undefined;
 
-  // REM-#5: 要エントリー バッジ。採用された program (primary=resolved / addOn=appBonusBreakdown /
-  // loyalty=loyalties) のいずれかに requiresEntry があるとき「⚠ 要エントリー」を出す。
+  // 採用された program (primary / charge の base / addOn / reachable な loyalty)。PR-5a で
+  // rankCards の adoptedProgramIds に集約 (要エントリーと鮮度チップで同じ集合を使う)。
+  const adoptedPrograms = r.adoptedProgramIds
+    .map((id) => programById.get(id))
+    .filter((p): p is BenefitProgram => p !== undefined);
+
+  // REM-#5: 要エントリー バッジ。採用された program のいずれかに requiresEntry があるとき
+  // 「⚠ 要エントリー」を出す (charge の base program は requiresEntry を持たないので挙動は不変)。
   // entryUrl があれば urlSafety.isSafeHttpUrl 検証を通してタップで別タブ起動、無ければバッジのみ。
   const entryWarning = (() => {
-    const ids = new Set<string>();
-    if (r.resolved.source === "program") ids.add(r.resolved.programId);
-    for (const b of r.appBonusBreakdown) ids.add(b.programId);
-    for (const l of reachableLoyalties) ids.add(l.rule.id);
-    const entryProgs = [...ids]
-      .map((id) => programById.get(id))
-      .filter((p): p is BenefitProgram => !!p && p.requiresEntry === true);
+    const entryProgs = adoptedPrograms.filter((p) => p.requiresEntry === true);
     if (entryProgs.length === 0) return null;
     const names = entryProgs.map((p) => p.name).join(" / ");
     // 採用 program のうち最初の安全な entryUrl を代表タップ先にする。
@@ -154,8 +165,40 @@ export function CalcResultCard({
       )
     : undefined;
 
-  // REM-#2: 交換ルートの鮮度 (経由 edge の lastVerifiedAt 最古が 12ヶ月超なら "YYYY-MM")。
-  const staleMonth = staleVerifiedMonth(r.pathSteps, now ?? new Date());
+  // REM-#2 / PR-5a: 公式情報の鮮度。採用した交換ルート (primary / addOn / loyalty の経路 edge) と
+  // 還元率 (採用 program) の確認月を集め、12ヶ月超のものがあれば 1 チップ『古い情報かも』に
+  // まとめる (最古の月を本文、内訳を title)。確認月は freshness (アプリは同梱 seed 参照) で解決する。
+  // 未記入は無視 (未検証を古い扱いしない)。対象外 (reachable=false) のカードには出さない。
+  const staleSummary = (() => {
+    if (!r.reachable) return null;
+    const items: FreshnessItem[] = [];
+    const seenEdgeIds = new Set<string>();
+    const addRoute = (steps: readonly ConversionEdge[]) => {
+      for (const e of steps) {
+        if (seenEdgeIds.has(e.id)) continue;
+        seenEdgeIds.add(e.id);
+        items.push({
+          kind: "route",
+          label: `${currencyName(e.fromCurrencyId)}→${currencyName(e.toCurrencyId)}`,
+          month: freshness.edgeMonth(e),
+        });
+      }
+    };
+    addRoute(r.pathSteps);
+    for (const b of r.appBonusBreakdown) addRoute(b.pathSteps);
+    for (const l of reachableLoyalties) addRoute(l.pathSteps);
+    for (const p of adoptedPrograms) {
+      items.push({ kind: "rate", label: p.name, month: freshness.programMonth(p) });
+    }
+    return collectStaleItems(items, now ?? new Date());
+  })();
+  // チップの title: 閾値と案内 + 古い項目の内訳 (ルート / 還元率ごとに 1 行)。
+  const staleTitle = staleSummary
+    ? `最終確認から${FRESHNESS_STALE_MONTHS}ヶ月超。公式サイトで最新の内容をご確認ください (計算は現在の値のまま)` +
+      staleSummary.stale
+        .map((s) => `\n・${s.kind === "route" ? "ルート" : "還元率"} ${s.label} (${s.month})`)
+        .join("")
+    : undefined;
 
   // PR-0a-2b: 警告チップの表示予算 (rankWarningChips = 要エントリー=要経由 > channel > 上限 >
   // 限定/対象外 > stale > 端数、最大 3)。専用バッジ (要エントリー・上限) を条件チップより先に渡し、
@@ -168,7 +211,7 @@ export function CalcResultCard({
     ...extractNoteChips(sanitizeNoteForDisplay(chipNotes)).map(
       (c): WarningCandidate => ({ kind: c.kind, source: "note" }),
     ),
-    ...(staleMonth ? [{ kind: "stale", source: "stale" } as const] : []),
+    ...(staleSummary ? [{ kind: "stale", source: "stale" } as const] : []),
     ...(r.minUnitAnnotations.length > 0
       ? [{ kind: "minUnit", source: "minUnit" } as const]
       : []),
@@ -482,21 +525,17 @@ export function CalcResultCard({
             </div>
           )}
 
-          {/* REM-#2: 交換ルートの鮮度警告。経由 edge の lastVerifiedAt 最古が 6ヶ月超なら
-              「⚠ ルート要確認 (最終確認 YYYY-MM)」を出す (未記入 edge は無視 = 未検証を古い扱い
-              しない)。判定は純関数 staleVerifiedMonth。到達不能カードは pathSteps が空なので出ない。
-              ── 警告チップの表示予算: PR-0a-2b でコメント運用から rankWarningChips
-              (src/domain/warningChips.ts、要エントリー=要経由 > channel > 上限 > 限定/対象外 >
-              stale > 端数 の優先順で最大 3) に一本化。M3 で条件チップ (notes / conditions /
-              membership.notes) が合流し、J-POINT 20倍 (要エントリー + 経由型 + 対象外) と
-              変換路の stale が同時に立ちうるため。 */}
-          {staleMonth && shownWarnings.has("stale") && (
+          {/* REM-#2 / PR-5a: 公式情報の鮮度警告。採用した交換ルートと還元率の最終確認のうち
+              最古が 12ヶ月超なら「⚠ 古い情報かも (最終確認 YYYY-MM)」を 1 チップだけ出す
+              (内訳は title。未記入は無視 = 未検証を古い扱いしない)。判定は純関数
+              collectStaleItems、確認月は freshness (同梱 seed 参照) で解決。
+              ── 警告チップの表示予算: rankWarningChips (src/domain/warningChips.ts、
+              要エントリー=要経由 > channel > 上限 > 限定/対象外 > stale > 端数 の優先順で最大 3)。
+              J-POINT 20倍 (要エントリー + 経由型 + 対象外) と stale が同時に立つと stale が落ちる。 */}
+          {staleSummary && shownWarnings.has("stale") && (
             <div className="route-stale-notes">
-              <span
-                className="rate-chip route-stale-chip"
-                title="この交換ルートに含まれるレートは公式ページでの最終確認から12ヶ月を超えています。各社公式サイトで最新のレートをご確認ください (計算には現在のレートをそのまま使用しています)。"
-              >
-                ⚠ ルート要確認 (最終確認 {staleMonth})
+              <span className="rate-chip route-stale-chip" title={staleTitle}>
+                ⚠ 古い情報かも (最終確認 {staleSummary.oldest})
               </span>
             </div>
           )}
