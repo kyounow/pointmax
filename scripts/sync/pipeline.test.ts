@@ -23,11 +23,13 @@ import {
   proposePrograms,
   proposeStores,
 } from "./diff-and-propose";
+import { applySourcePolicies, autoMergeDisabledSourceIds } from "./registry-policy";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 import type {
   AddRecordProposal,
   ExtractedSource,
   Proposal,
+  SourcePolicy,
 } from "./types";
 
 // 最小の seed fixture (テスト独立化のため src/state/seed には依存しない)
@@ -107,7 +109,14 @@ const campaignSource: ExtractedSource = {
   ],
 };
 
-function runPipeline(extracted: ExtractedSource[], current: SeedShape) {
+// diff-and-propose の main と同じ Phase 順 (1 → A → B → B' → B″ → C) を再現する。
+// policies (registry のソース別ポリシー) を渡すと B' の除外と B″ (applySourcePolicies) が効く (PR-0b-3)。
+function runPipeline(
+  extracted: ExtractedSource[],
+  current: SeedShape,
+  opts: { policies?: ReadonlyMap<string, SourcePolicy> } = {},
+) {
+  const policies = opts.policies ?? new Map<string, SourcePolicy>();
   // Phase 1: propose
   const allProposals: Proposal[] = [];
   for (const data of extracted) {
@@ -122,14 +131,21 @@ function runPipeline(extracted: ExtractedSource[], current: SeedShape) {
   // Phase B: category cap (5/cat)
   const cap = applyCategoryCap(dedup.proposals, 5);
 
-  // Phase B': chain promote
-  const chainPromote = promoteChainStoreAutoMerge(cap.kept, current);
+  // Phase B': chain promote (autoMerge:false ソースの program は campaign 参照に数えない)
+  const chainPromote = promoteChainStoreAutoMerge(
+    cap.kept,
+    current,
+    autoMergeDisabledSourceIds(policies),
+  );
+
+  // Phase B″: ソース別ポリシー
+  const sourcePolicy = applySourcePolicies(chainPromote.proposals, policies);
 
   // Phase C: orphan guard
   const existingStoreIds = new Set(current.stores.map((s) => s.id));
   const existingProgramIds = new Set((current.programs ?? []).map((p) => p.id));
   const orphan = downgradeOrphanMemberships(
-    chainPromote.proposals,
+    sourcePolicy.proposals,
     existingStoreIds,
     existingProgramIds,
   );
@@ -148,6 +164,7 @@ function runPipeline(extracted: ExtractedSource[], current: SeedShape) {
       dedupCollisions: dedup.collisions,
       capDeferred: cap.deferred.length,
       chainPromoted: chainPromote.promoted,
+      sourcePolicyDemoted: [...sourcePolicy.demotedBySource.values()].reduce((s, n) => s + n, 0),
       orphanDowngradedStore: orphan.downgradedStore,
       orphanDowngradedProgram: orphan.downgradedProgram,
     },
@@ -254,5 +271,84 @@ describe("sync pipeline integration", () => {
         (p as AddRecordProposal).record.id === "store-mcd",
     ).length;
     expect(autoMcdCount).toBeLessThanOrEqual(1);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// PR-0b-3: registry の autoMerge:false (d払い) が run 全体で auto 0 件にする
+// ───────────────────────────────────────────────────────────────
+
+describe("sync pipeline integration: ソース別ポリシー (autoMerge:false)", () => {
+  // 参照が揃った seed (program が全ガードを通過して auto になり得る状態)
+  const richCurrent: SeedShape = {
+    ...emptyCurrent,
+    currencies: [{ id: "d-pt", name: "dポイント", kind: "point" }],
+    paymentApps: [{ id: "pa-d-pay", name: "d払い" }],
+  };
+  const q = "マクドナルド・既存飲食1 で d払い 3%還元 (期間 2030/1/1〜2099/12/31)";
+  const dpaySource: ExtractedSource = {
+    sourceId: "d-pay-campaigns",
+    sourceUrl: "https://example.test/d-pay/",
+    fetchedAt: "2026-09-28T00:00:00Z",
+    promptVersion: "campaign-v3.5",
+    extractor: "campaign",
+    geminiModel: "gemini-2.5-flash",
+    stores: [
+      { storeId: "store-mcd", name: "マクドナルド", category: "飲食", evidenceQuote: q, explicitness: 1, ambiguity: 0 },
+    ],
+    programs: [
+      {
+        programId: "prog-dpay-mcd-2099",
+        name: "d払い マクドナルド 3%還元",
+        paymentAppId: "pa-d-pay",
+        rate: 0.03,
+        currencyId: "d-pt",
+        bonusType: "addOn",
+        scope: "member-stores",
+        validFrom: "2030-01-01",
+        validTo: "2099-12-31",
+        evidenceQuote: q,
+        explicitness: 1,
+        ambiguity: 0,
+      },
+    ],
+    memberships: [
+      { programId: "prog-dpay-mcd-2099", storeId: "store-mcd", evidenceQuote: q, explicitness: 1, ambiguity: 0 },
+      { programId: "prog-dpay-mcd-2099", storeId: "s-exist-1", evidenceQuote: q, explicitness: 1, ambiguity: 0 },
+    ],
+  };
+  const dpayPolicy = new Map<string, SourcePolicy>([
+    [
+      "d-pay-campaigns",
+      {
+        sourceId: "d-pay-campaigns",
+        extractor: "campaign",
+        autoMerge: false,
+        targets: [{ paymentAppId: "pa-d-pay" }, { pointCardId: "d-pointcard" }],
+      },
+    ],
+  ]);
+
+  it("対照: ポリシー無しなら campaign program・チェーン店・membership が auto になる筋書き", () => {
+    const result = runPipeline([dpaySource], richCurrent);
+    expect(result.auto.length).toBeGreaterThan(0);
+    expect(result.metrics.chainPromoted).toBe(1);
+  });
+
+  it("d-pay の autoMerge:false で run 全体の auto が 0 件 (program / membership / chain store とも review)", () => {
+    const result = runPipeline([dpaySource], richCurrent, { policies: dpayPolicy });
+    expect(result.auto).toEqual([]);
+    expect(result.metrics.chainPromoted).toBe(0); // 除外ソースの campaign は chain-promote の根拠にならない
+    const reasonOf = (collection: string, key: string) =>
+      result.review.find(
+        (p) =>
+          p.collection === collection &&
+          p.type === "addRecord" &&
+          ((p as AddRecordProposal).record.id === key || (p as AddRecordProposal).record.storeId === key),
+      )?.reviewReason;
+    expect(reasonOf("programs", "prog-dpay-mcd-2099")).toBe("sourceAutoMergeDisabled");
+    expect(reasonOf("stores", "store-mcd")).toBe("storeAdditionsDisabled");
+    // membership は B″ で先に sourceAutoMergeDisabled (reason 無しの auto 候補だけが対象)
+    expect(reasonOf("memberships", "s-exist-1")).toBe("sourceAutoMergeDisabled");
   });
 });

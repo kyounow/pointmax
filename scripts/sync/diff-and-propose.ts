@@ -39,6 +39,11 @@ import {
 } from "./propose-helpers";
 import { resolveCardId, resolveStoreId } from "./aliases";
 import { isChainLikeStore } from "./chain-store-detection";
+import {
+  applySourcePolicies,
+  autoMergeDisabledSourceIds,
+  loadRegistryPolicy,
+} from "./registry-policy";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 
 // 再エクスポート (テスト互換性のため diff-and-propose 経由で参照される旧APIを温存)
@@ -250,10 +255,16 @@ export function applyCategoryCap(
 //
 // (a) は store 単独抽出を排除 (= 注目度の高い store だけ通す)、(b) は明確な
 // チェーン業態のみ通す。両方満たすときのみ storeAdditionsDisabled を解除。
+//
+// PR-0b-3: ignoreProgramSourceIds (registry で autoMerge:false のソース) の program は (a) の campaign
+// 参照として数えない。chain-promote は参照元 program の reviewReason を見ないため、除外しないと
+// autoMerge:false のソースが出したキャンペーンが、他ソースの提案した店を auto に戻し得る
+// (Phase B″ は store 提案自身の sourceId しか見ないので、それだけでは取りこぼす)。
 
 export function promoteChainStoreAutoMerge(
   proposals: Proposal[],
   current: SeedShape,
+  ignoreProgramSourceIds: ReadonlySet<string> = new Set(),
 ): { proposals: Proposal[]; promoted: number } {
   // 同 run の campaign 系 (validTo 持ち) program の id を集計。
   // 注意: proposePrograms は新規 program に必ず idCollision を付けるため、
@@ -268,6 +279,7 @@ export function promoteChainStoreAutoMerge(
     const rec = (p as AddRecordProposal).record;
 
     if (p.collection === "programs") {
+      if (ignoreProgramSourceIds.has(p.sourceId)) continue; // autoMerge:false ソースの campaign は数えない
       const id = typeof rec.id === "string" ? rec.id : null;
       const validTo = typeof rec.validTo === "string" ? rec.validTo : null;
       // campaign 系 program = 終了日を持つ
@@ -586,6 +598,10 @@ export function guardStaleExtractGeneration(
 //   Phase B  : Category cap (applyCategoryCap) ─ 飲食 5/cat 等で deferred
 //   Phase B' : Chain-store auto-merge promote (promoteChainStoreAutoMerge)
 //              ─ storeAdditionsDisabled を campaign 参照 + チェーン判定で部分解除 (C-9)
+//                autoMerge:false ソースの program は campaign 参照に数えない (PR-0b-3)
+//   Phase B″ : Source policy guard (applySourcePolicies、registry-policy.ts)
+//              ─ registry で autoMerge:false のソース由来の auto 候補を sourceAutoMergeDisabled で降格 (PR-0b-3)
+//                不変条件: B″ は常に C の直前 (降格した store / program を参照する membership を C が拾う)
 //   Phase C  : Orphan membership guard (downgradeOrphanMemberships)
 //              ─ store / program 本体が auto に無い membership を降格
 //   Phase C2 : Program/membership atomicity guard (demoteChildlessMemberStorePrograms)
@@ -600,6 +616,10 @@ function main(): void {
   console.log("📥 reading extracted/*.json ...");
   const extracted = readExtractedSources();
   console.log(`   loaded: ${extracted.length} file(s)`);
+
+  // registry のソース別ポリシー (target / autoMerge)。fail-closed: 読めなければ throw → exit 1
+  // (黙って空にすると autoMerge:false のソースが auto に戻るため)。
+  const registry = loadRegistryPolicy();
 
   const current = seed();
   const allProposals: Proposal[] = [];
@@ -692,12 +712,31 @@ function main(): void {
   // Phase B': Chain-store auto-merge promote (C-9 audit-fix、PR #56 部分解除)
   //   storeAdditionsDisabled の店舗のうち、同 run の campaign program に
   //   membership 参照されていて、かつチェーン名/業態を満たすものを auto に復帰。
-  const chainPromote = promoteChainStoreAutoMerge(finalProposals, current);
+  //   autoMerge:false のソースの program は campaign 参照に数えない (PR-0b-3)。
+  const chainPromote = promoteChainStoreAutoMerge(
+    finalProposals,
+    current,
+    autoMergeDisabledSourceIds(registry.policies),
+  );
   finalProposals = chainPromote.proposals;
   if (chainPromote.promoted > 0) {
     console.log(
       `🔓 chain-promote: ${chainPromote.promoted} 件の新規 chain store を auto-merge に復帰`,
     );
+  }
+
+  // Phase B″: Source policy guard (PR-0b-3)
+  //   registry で autoMerge:false のソース由来の auto 候補を sourceAutoMergeDisabled で降格する
+  //   (stores / programs / memberships / updateField を問わない。expired-cleanup は registry に無いので素通り)。
+  //   Phase C の直前に置く (ここで降格した store / program を参照する membership を C が拾う)。
+  const sourcePolicy = applySourcePolicies(finalProposals, registry.policies);
+  finalProposals = sourcePolicy.proposals;
+  if (sourcePolicy.demotedBySource.size > 0) {
+    const n = [...sourcePolicy.demotedBySource.values()].reduce((s, v) => s + v, 0);
+    const by = [...sourcePolicy.demotedBySource.entries()]
+      .map(([src, c]) => `${src}=${c}`)
+      .join(", ");
+    console.log(`🧯 source-policy guard: ${n} 件 (source=${by})`);
   }
 
   // Phase C: Orphan membership guard

@@ -2042,6 +2042,40 @@ describe("promoteChainStoreAutoMerge", () => {
     expect(proposals[0].reviewReason).toBeUndefined();
   });
 
+  // PR-0b-3: autoMerge:false のソースが出した campaign は campaign 参照に数えない
+  it("除外ソース (autoMerge:false) の validTo 付き program だけが参照する店は promote されない", () => {
+    const dpayProgram: Proposal = { ...campaignProgram("prog-dpay-mcd"), sourceId: "d-pay-campaigns" };
+    const props = [
+      disabledStore("store-mcd-shibuya", "マクドナルド 渋谷店"),
+      dpayProgram,
+      membership("store-mcd-shibuya", "prog-dpay-mcd"),
+    ];
+    const current = { stores: [], cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [] };
+    const excluded = promoteChainStoreAutoMerge(props, current, new Set(["d-pay-campaigns"]));
+    expect(excluded.promoted).toBe(0);
+    expect(excluded.proposals[0].reviewReason).toBe("storeAdditionsDisabled");
+    // 除外しない既定の呼び方では従来どおり promote される
+    const legacy = promoteChainStoreAutoMerge(props, current);
+    expect(legacy.promoted).toBe(1);
+    expect(legacy.proposals[0].reviewReason).toBeUndefined();
+  });
+
+  it("除外ソース以外の campaign 参照があれば従来どおり promote", () => {
+    const props = [
+      disabledStore("store-mcd-shibuya", "マクドナルド 渋谷店"),
+      { ...campaignProgram("prog-dpay-mcd"), sourceId: "d-pay-campaigns" } as Proposal,
+      campaignProgram("prog-other-mcd"), // sourceId=src (除外外)
+      membership("store-mcd-shibuya", "prog-dpay-mcd"),
+      membership("store-mcd-shibuya", "prog-other-mcd"),
+    ];
+    const { promoted } = promoteChainStoreAutoMerge(
+      props,
+      { stores: [], cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [] },
+      new Set(["d-pay-campaigns"]),
+    );
+    expect(promoted).toBe(1);
+  });
+
   it("storeAdditionsDisabled 以外の理由は触らない", () => {
     const idCollisionStore: Proposal = {
       ...disabledStore("store-x", "マクドナルド"),

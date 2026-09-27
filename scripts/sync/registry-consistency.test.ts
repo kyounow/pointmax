@@ -5,6 +5,7 @@ import { load as parseYaml } from "js-yaml";
 import { SCOPE_DIRECTIVES } from "./types";
 import type { RegistryFile, RegistrySource } from "./types";
 import { selectSourcesForGroup } from "./fetch-all";
+import { autoMergeDisabledSourceIds, loadRegistryPolicy } from "./registry-policy";
 
 // registry.yaml の各ソースが「schema の extractor enum」「対応する
 // extractor プロンプトファイル」「有効な extractionScope」と整合することを
@@ -196,6 +197,48 @@ describe("Z4 停止ソース (収穫ゼロのソース停止)", () => {
       id,
     ).toBe(false);
   });
+});
+
+// ── ソース別ポリシー (PR-0b-3: target / autoMerge) の契約 ──
+// propose は registry を fail-closed で読む (registry-policy.ts)。壊れた target / autoMerge は
+// cron の Propose step を exit 1 で止めるので、ここで先に気付けるようにする。
+describe("ソース別ポリシー (target / autoMerge) の契約", () => {
+  const policy = loadRegistryPolicy();
+
+  it("実際の registry.yaml は loadRegistryPolicy を通る (target / autoMerge の値が正しい)", () => {
+    expect(policy.sources.length).toBe(registry.sources.length);
+    expect(policy.policies.size).toBe(registry.sources.length);
+  });
+
+  it("enabled な campaign extractor のソースは target を 1 つ以上宣言している", () => {
+    const missing = registry.sources.filter(
+      (s) =>
+        s.enabled &&
+        s.extractor === "campaign" &&
+        (policy.policies.get(s.id)?.targets.length ?? 0) === 0,
+    );
+    expect(missing.map((s) => s.id)).toEqual([]);
+  });
+
+  // 解除は PR-1 H4 の事後レビュー表で 4 週連続して誤りが無いことを確認してから別 PR で行い、
+  // この期待値も同じ PR で更新する。
+  it("autoMerge:false のソースは d-pay-campaigns と paypay-campaigns (解除 PR で意図的に更新する)", () => {
+    expect([...autoMergeDisabledSourceIds(policy.policies)].sort()).toEqual([
+      "d-pay-campaigns",
+      "paypay-campaigns",
+    ]);
+  });
+
+  it("d-pay は [pa-d-pay, d-pointcard] (d払い一覧に dポイントカード提示型が同居)、paypay は pa-paypay を宣言する", () => {
+    expect(policy.policies.get("d-pay-campaigns")?.targets).toEqual([
+      { paymentAppId: "pa-d-pay" },
+      { pointCardId: "d-pointcard" },
+    ]);
+    expect(policy.policies.get("paypay-campaigns")?.targets).toEqual([
+      { paymentAppId: "pa-paypay" },
+    ]);
+  });
+  // target が指す id が seed に存在するかは検査しない (seed↔registry 契約は保留中の別項目)。
 });
 
 // ── selectSourcesForGroup 単体 ──
