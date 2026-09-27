@@ -127,16 +127,20 @@ const OUTPUT_DIR = resolve(REPO_ROOT, "sources/extracted");
 // CLI parsing
 // ───────────────────────────────────────────────────────────────
 
-type CliArgs = {
+export type CliArgs = {
   sourceId: string;
   dryRun: boolean;
+  /** enabled:false のソースも実行する (停止ソースの再開検証専用。fetch-all / cron は渡さない) */
+  allowDisabled: boolean;
 };
 
-function parseArgs(argv: string[]): CliArgs {
+export function parseArgs(argv: string[]): CliArgs {
   let sourceId: string | undefined;
   let dryRun = false;
+  let allowDisabled = false;
   for (const a of argv) {
     if (a === "--dry-run") dryRun = true;
+    else if (a === "--allow-disabled") allowDisabled = true;
     else if (a === "--help" || a === "-h") {
       printUsage();
       process.exit(0);
@@ -151,7 +155,7 @@ function parseArgs(argv: string[]): CliArgs {
     printUsage();
     process.exit(1);
   }
-  return { sourceId, dryRun };
+  return { sourceId, dryRun, allowDisabled };
 }
 
 function printUsage(): void {
@@ -163,12 +167,14 @@ function printUsage(): void {
       "  <sourceId>   sources/registry.yaml で定義された id",
       "",
       "Options:",
-      "  --dry-run    Gemini を呼び出さず、registry読込・prompt解決まで実施",
-      "  --help, -h   この使い方を表示",
+      "  --dry-run          Gemini を呼び出さず、registry読込・prompt解決まで実施",
+      "  --allow-disabled   enabled:false のソースも実行する (停止ソースの再開検証専用)",
+      "  --help, -h         この使い方を表示",
       "",
       "例:",
-      "  npm run sync:fetch -- jal-card-tokuyaku-list --dry-run",
-      "  npm run sync:fetch -- rakuten-point-partners",
+      "  npm run sync:fetch -- epos-tamaru-market --dry-run",
+      "  npm run sync:fetch -- jcb-jpoint-partners",
+      "  npm run sync:fetch -- jre-point-campaigns --allow-disabled --dry-run",
     ].join("\n"),
   );
 }
@@ -223,7 +229,11 @@ function loadRegistry(): RegistryFile {
   return data;
 }
 
-function findSource(registry: RegistryFile, sourceId: string): RegistrySource {
+export function findSource(
+  registry: RegistryFile,
+  sourceId: string,
+  opts: { allowDisabled?: boolean } = {},
+): RegistrySource {
   const s = registry.sources.find((x) => x.id === sourceId);
   if (!s) {
     const available = registry.sources.map((x) => x.id).join(", ");
@@ -232,7 +242,14 @@ function findSource(registry: RegistryFile, sourceId: string): RegistrySource {
     );
   }
   if (!s.enabled) {
-    throw new Error(`"${sourceId}" は enabled: false。registry を確認してください。`);
+    if (!opts.allowDisabled) {
+      throw new Error(
+        `"${sourceId}" は enabled: false。registry を確認してください (再開の検証なら --allow-disabled)。`,
+      );
+    }
+    console.log(
+      `⚠️ enabled:false のソースを --allow-disabled で実行 (検証専用。propose は SYNC_INCLUDE_SOURCES 指定時だけ読む)`,
+    );
   }
   return s;
 }
@@ -1086,7 +1103,7 @@ async function runSource(args: CliArgs, draft: OutcomeDraft): Promise<void> {
   runtime.model = resolveGeminiModel(process.env.GEMINI_MODEL);
   runtime.thinkingBudget = resolveThinkingBudget(process.env.GEMINI_THINKING_BUDGET);
   const registry = loadRegistry();
-  const source = findSource(registry, args.sourceId);
+  const source = findSource(registry, args.sourceId, { allowDisabled: args.allowDisabled });
 
   console.log(`📥 source: ${source.id}`);
   console.log(`   label:    ${source.label}`);

@@ -4,13 +4,59 @@ import { resolve } from "node:path";
 import {
   callGeminiWithRetry,
   createGenAI,
+  findSource,
   keepLastGood,
+  parseArgs,
   RETRY_DELAYS_MS,
   salvageBySchema,
   type GeminiCallResult,
   type RetryDeps,
 } from "./fetch-source";
-import type { ExtractedSource } from "./types";
+import type { ExtractedSource, RegistryFile, RegistrySource } from "./types";
+
+// ───────────────────────────────────────────────────────────────
+// CLI: --allow-disabled / findSource
+// ───────────────────────────────────────────────────────────────
+describe("parseArgs / findSource (--allow-disabled)", () => {
+  it("parseArgs: --allow-disabled を受け付ける (既定 false)", () => {
+    expect(parseArgs(["x", "--allow-disabled"])).toEqual({
+      sourceId: "x",
+      dryRun: false,
+      allowDisabled: true,
+    });
+    expect(parseArgs(["x", "--dry-run"])).toEqual({
+      sourceId: "x",
+      dryRun: true,
+      allowDisabled: false,
+    });
+  });
+
+  const src = (id: string, enabled: boolean): RegistrySource => ({
+    id,
+    label: id,
+    url: `https://example.com/${id}`,
+    extractor: "campaign",
+    produces: ["programs"],
+    extractionScope: "chains-only",
+    enabled,
+  });
+  const registry: RegistryFile = { version: 1, sources: [src("on", true), src("off", false)] };
+
+  it("既定では disabled のソースで throw、{allowDisabled:true} なら返す", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      expect(() => findSource(registry, "off")).toThrow(/enabled: false/);
+      expect(findSource(registry, "off", { allowDisabled: true }).id).toBe("off");
+      expect(findSource(registry, "on").id).toBe("on");
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it("未登録の id は allowDisabled でも throw", () => {
+    expect(() => findSource(registry, "nope", { allowDisabled: true })).toThrow(/無い/);
+  });
+});
 import {
   classifyGeminiError,
   decideWrite,
