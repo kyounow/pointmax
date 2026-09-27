@@ -1163,7 +1163,9 @@ describe("store: tier 重複の membership tombstone (PR-0a-2c)", () => {
     expect(merged.removedMemberships.map((m) => m.id).sort()).toEqual(
       OLD_TIER_ROWS.map((m) => m.id).sort(),
     );
-    expect(isAutoApplySafe(merged, { seedVersionBumped: false })).toBe(false);
+    expect(
+      isAutoApplySafe(merged, { seedVersionBumped: false, now: new Date() }),
+    ).toBe(false);
   });
 
   it("applySeedUpdate([]) の後は 2 行が state から消え、差分 0 で isAutoApplySafe が true に戻る", () => {
@@ -1187,6 +1189,7 @@ describe("store: tier 重複の membership tombstone (PR-0a-2c)", () => {
     expect(
       isAutoApplySafe(merged, {
         seedVersionBumped: st.lastSeedVersion < SEED_VERSION,
+        now: new Date(),
       }),
     ).toBe(true);
   });
@@ -1200,7 +1203,9 @@ describe("store: tier 重複の membership tombstone (PR-0a-2c)", () => {
     expect(second.diff.memberships).toEqual([]);
     expect(second.removedMemberships).toEqual([]);
     expect(changeCount(second)).toBe(0);
-    expect(isAutoApplySafe(second, { seedVersionBumped: false })).toBe(true);
+    expect(
+      isAutoApplySafe(second, { seedVersionBumped: false, now: new Date() }),
+    ).toBe(true);
   });
 });
 
@@ -1292,6 +1297,16 @@ describe("store: 破壊的操作の直前 snapshot 採取 (PR-4a 結線)", () =>
       digest: "d-1",
       count: 3,
     });
+  });
+
+  it("PR-6a-2: autoApplySeedUpdate(null) (サイレント反映) も 'seed-apply' で 1 回採取し、前の notice を消す", () => {
+    useStore.setState({ autoApplyNotice: { digest: "d-prev", count: 2 } });
+    takeSnapshotMock.mockClear();
+    useStore.getState().autoApplySeedUpdate(null);
+    expect(takeSnapshotMock).toHaveBeenCalledTimes(1);
+    expect(takeSnapshotMock.mock.calls[0][0]).toBe("seed-apply");
+    expect(useStore.getState().autoApplyNotice).toBeNull();
+    expect(useStore.getState().lastSeedVersion).toBe(SEED_VERSION);
   });
 
   it("mergeFromSeed (サンプル投入) も trigger:'seed-apply' で採取する (PR-0a-2a: 公式の修正・削除も反映するため)", () => {

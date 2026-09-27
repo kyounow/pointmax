@@ -28,6 +28,8 @@ type Props = {
 
 export function CalcAutoApplyBanner({ notice }: Props) {
   const dismissAutoApplyNotice = useStore((s) => s.dismissAutoApplyNotice);
+  // PR-6a-2: 同じ週に整理した期限切れ campaign の件数 (無ければ undefined)
+  const expired = notice.expiredRemovedCount;
 
   // 直前スナップショットが「この自動反映の直前 (seed-apply)」で、かつ現行スキーマなら
   // 巻き戻し可能。import 等でスナップショットが上書きされていれば「元に戻す」は出さない。
@@ -56,7 +58,13 @@ export function CalcAutoApplyBanner({ notice }: Props) {
       <div className="update-banner-text">
         <strong>マスタを自動更新しました</strong>
         <br />
-        <small>追加・更新 {notice.count} 件を反映しました。</small>
+        {/* PR-6a-2: 同じ週に期限切れ campaign を整理していれば件数を併記する
+            (期限切れ整理だけの週はバナー自体を出さない)。 */}
+        <small>
+          {`追加・更新 ${notice.count} 件を反映しました${
+            expired ? `（期限切れ ${expired} 件を整理）` : ""
+          }。`}
+        </small>
       </div>
       <div className="update-banner-actions">
         <button onClick={() => navigate("settings/history")}>詳細</button>
