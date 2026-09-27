@@ -217,6 +217,34 @@
   スナップショットの `schemaVersion` が現行の `PERSIST_SCHEMA_VERSION` と異なる場合は復元を拒否し
   (ボタン disabled + 理由表示)、不整合 state を作らない。quota 等の保存失敗は握りつぶし、
   **本体の破壊的操作は止めない** (`usageStats` / `calcFormDraft` と同型の schema-reset 非依存キー)。
+  マスタ更新前 (`seed-apply`) へ戻すときは、自動反映の digest を既読にしてから戻す
+  (`restoreSnapshotForRecovery`。以前は reload 直後に同じ差分が再度自動反映され、巻き戻しが打ち消されていた。PR-6d)。
+- **エラー時の復旧 (PR-6d / U6)**:
+  - **境界の配置**: 最外にルート境界 (`src/Root.tsx`) があり、App のどこかで捕まらなかった描画例外は
+    復旧パネル (`src/ui/recovery/RecoveryPanel.tsx`) になる。画面単位の境界は `key={tab}` なので、
+    落ちた画面から別タブへ移ると自動で復帰する。同期モーダル・更新バナー (計算以外のタブ)・
+    計算タブの通知枠 (`BannerSlot`) は任意 UI なので、例外は非表示に縮退する (console.error のみ)。
+    `SchemaUpgradeModal` は包まない (非表示にすると移行待ちのまま先に進めないため、ルート境界に任せる)。
+    どの境界にも捕まらなかった例外 (復旧パネル自身の throw 等) は `createRoot` の `onUncaughtError` で拾い、
+    `document.body` に静的な再読み込み案内を出す (`staticFallback.ts`、`#root` には書かない)。
+  - **保存データの読み込み (hydrate) 失敗**: 壊れた JSON / migrate の例外などで persist の hydrate に
+    失敗すると、`store.ts` の `onRehydrateStorage` が生データを独立キー `pointmax:crash-backup:v1`
+    (1 世代) に退避して失敗を記録し (`src/state/hydrationGuard.ts`)、ルートは **App を描画せず**
+    復旧パネルだけを出す。zustand は失敗しても state を空のまま続行し、最初の書き込みで persist を
+    上書きしてしまうため、App を描画しないことで生データ (`pointmax-v08-store`) をそのまま残す。
+    旧 schema の正常な JSON は `SCHEMA_MIGRATIONS` が扱うので失敗にはならない。
+  - **復旧パネルの操作**: [ページを再読み込み] / (画面単位のみ) [もう一度試す] / 「データの復旧」に
+    [データを書き出す] [コピー] [直前の状態に戻す (現行 schema のスナップショットがあるとき)]
+    [公式データで初期化…] (2 段確認。「書き出してから初期化」が既定)。書き出し JSON はエクスポートと
+    同じ形 (設定のインポートで戻せる) に `preferences` (優先通貨・誕生月・円換算の上書き・店舗×決済の
+    除外) と `recovery` メタを加えたもので、読めない生データは `{ kind: "pointmax-recovery-raw", raw }`
+    で出す。**インポートは `preferences` を戻さない**ので、必要なら設定画面で手動で戻す。
+  - **公式データで初期化** (`store.resetToSeed`) は直前に生データを crash-backup へ退避し、
+    **スナップショットは取らない** (1 世代しかない健全なスナップショットを壊れた state で上書きしない)。
+    per-user 設定は引き継がない。書き込みにも失敗した場合は persist キーだけを消し、
+    次回起動で `seedIfEmpty` が公式データを投入する (カードの「使う」設定はやり直し)。
+  - 退避データがあるときは、設定「直前の状態に戻す」の下に「読み込み失敗時の退避データ (M/D HH:mm)
+    [書き出す] [削除]」を 1 行出す (自動では消さない)。
 - **マスタ更新履歴** (設定画面内セクション、旧「更新履歴」タブ): 週次 cron で自動マージ
   された変更を時系列で閲覧 (`sources/SYNC_HISTORY.json` を bundle 同梱、直近 52 件 (約半年)、
   GitHub commit/PR への動線あり)。最新 1 件は設定上部に常時プレビュー表示し、全履歴は
@@ -275,7 +303,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1444 ケース / 78 ファイル** (2026-09-27 時点)） |
+| テスト | Vitest（**1504 ケース / 86 ファイル** (2026-09-27 時点)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -394,7 +422,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1444 ケース / 78 ファイル (2026-09-27 時点))
+npm run test         # Vitest (1504 ケース / 86 ファイル (2026-09-27 時点))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -553,6 +581,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **改善 PR-0a-2a (購入チャネル核 + v46 修正の配信)** — `PurchaseChannel` (`in-store` / `online`) と `BenefitProgram.channel?` / `StoreProgramMembership.channel?` を追加し、`evaluatePrograms` に店舗から導出した既定チャネル (店頭、純 EC 店はネット) の gate を入れた。たまるマーケット 3 program と J-POINT 20倍のスタバ / マック membership 4 件を `online` にし、店頭計算での過大表示を修正 (エポス×ビックカメラ店頭 2.0%→0.5%、JCB W×スタバ店頭 10.5%→1%。楽天市場 / Yahoo! / じゃらん / HMV online は従来どおり)。v46 監査の edge 修正 3 本・削除 2 本を MIGRATIONS v47 で、廃止 program 2 件を `REMOVED_PROGRAM_IDS` で既存端末へ配信。設定の「サンプル投入」は `computeSeedUpdate` に委譲 (公式の修正・削除も反映)。sync は epos-tamaru 由来の新規 program に `channel:"online"` を決定論で付与。SEED_VERSION 46→47 / PERSIST_SCHEMA 据え置き
 - **改善 PR-0a-2b (membership 伝播 + 件数/指紋/安全判定 + M3 条件チップ)** — 未編集の公式 membership に notes / channel / override の公式更新を伝播 (`propagateMembershipUpdates`、`userModifiedAt` は保護)、membership 単体 tombstone (`REMOVED_MEMBERSHIP_IDS`) を seed 反映の全経路に配線 (#103 の general 4 件が反映されず自動反映が恒久停止していた F3)。件数 (`changeCount` / 更新バナー) と既読指紋 (`syncDigest`: program 更新は内容ハッシュ、`memU:` / `memD:`) に membership の更新・削除を含め、channel の変化は確認モーダルへ。J-POINT 20倍の店別条件を membership.notes に移し (スタバ / マック / すき家 / すかいらーく 3 店 / サンマルク、2026-09-27 公式確認)、結果カードの条件チップに conditions / membership.notes を合流 (M3、`channel` チップ)。警告チップは `rankWarningChips` で優先順・最大 3 に一本化。更新バナーの「あとで」は版を進めず当日のセッション内だけ非表示。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-0a-2c (tombstone 配線の残り + propose ミラー + tier 契約)** — 同じ店 × 同じ倍率系列の重複 2 件 (高島屋 × J-POINT Gold 2倍 = SC・レストラン街の受け皿誤り、無印 × たまる 4倍 = 旧値、公式は 2倍) を membership 単体 tombstone にし、`seed()` の memberships からも除外 (ADDED 行が毎回「追加 → 除去」を往復して自動反映が止まるのを防ぐ)。週次同期は tombstone 済み id を再提案せず (`🪦 tombstone-skip`)、同じ店 × 同じ系列の別倍率 membership を `tierMove` で review に回す。apply / approve は生成物から tombstone 行を物理削除。REVIEW_QUEUE の理由の表示順を `REASON_ORDER` に一本化し、全理由を含む網羅テストを追加。seed に tier 契約 (店 × 系列 × 有効チャネルごとに membership ≤ 1) を追加。SEED_VERSION / PERSIST_SCHEMA 据え置き (削除を含むので既存端末では確認モーダルで反映)
+- **改善 PR-6d (U6 復旧網)** — 保存データの読み込み失敗を検知して生データを `pointmax:crash-backup:v1` に退避し、App を描画せず復旧パネルを出す (`Root.tsx` / `hydrationGuard.ts`)。画面境界を `key={tab}` に、同期モーダル / 更新バナー / 計算タブの通知枠は例外で非表示に縮退、`onUncaughtError` の静的 fallback。復旧パネル (再読み込み / 書き出し / コピー / 直前の状態に戻す / 公式データで初期化 = スナップショットを取らない `resetToSeed`)。設定の「直前の状態に戻す」がマスタ更新前へ戻したときに自動反映で打ち消される既存バグを修正。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
@@ -596,6 +625,13 @@ sync インフラ修正系の PR (#19-#26、#33-#35、#37、#39 等) は tag な
   エクスポート JSON には `schemaVersion` が埋め込まれ、**現在のアプリと版が異なる (欠落含む) 旧形式の
   インポートは明確なメッセージで拒否**される (v6 未満のファイルは現行アプリで再エクスポートが必要)。
   この版ガードは import 経路のみで、公式 `master.json` の URL 同期には影響しない。
+- **端末内に保存するキー**: 本体データは Zustand persist の `pointmax-v08-store` (`localStorage`)。
+  それとは独立したキー (schema reset・スナップショット復元の影響を受けない) として、
+  `pointmax:snapshot:v1` (直前スナップショット)・`pointmax:crash-backup:v1` (読み込み失敗時の
+  生データ退避、PR-6d)・`pointmax:usage-stats:v1`・`pointmax:calc-form:v1`・
+  `pointmax:onboarding-dismissed:v1`・`pointmax-sync-seen-digest`・`pointmax:build-id:v1` を
+  `localStorage` に、`pointmax:seed-update-dismissed:v1` (更新バナーの「あとで」) を `sessionStorage` に持つ。
+  いずれも端末内のみで、送信しない。
 - **データの保持 (耐久性)**: ブラウザ利用（特に iOS Safari を非インストールで使う場合）は、
   長期間アクセスしないと `localStorage` が自動削除されたり、容量逼迫時に消去されることがあります。
   対策として、アプリ起動時に**永続ストレージ**（`navigator.storage.persist()`）を自動要求し、

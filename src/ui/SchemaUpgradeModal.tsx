@@ -71,7 +71,8 @@ export function SchemaUpgradeModal({ strategy }: Props) {
       // reset 必須のため Esc で閉じさせない (ネイティブ既定の close を無効化)。
       onCancel={(e) => e.preventDefault()}
     >
-      <h2 className="schema-upgrade-title">PointMax v3 アップデートのお知らせ</h2>
+      {/* PR-6d (任意): 版に依存しない見出し (旧『PointMax v3 アップデートのお知らせ』は v3 移行時の名残) */}
+      <h2 className="schema-upgrade-title">アップデートのお知らせ</h2>
 
       {reason && <p className="schema-upgrade-reason">{reason}</p>}
 
