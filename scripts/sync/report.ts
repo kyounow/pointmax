@@ -376,7 +376,7 @@ export function buildAutoSummary(report: ProposalReport): string {
 // REVIEW_QUEUE.md generator
 // ───────────────────────────────────────────────────────────────
 
-const REASON_LABELS: Record<ReviewReason, string> = {
+export const REASON_LABELS: Record<ReviewReason, string> = {
   safetyFailed: "🛡 safetyFailed (auto-merge 件数オーバー降格)",
   autoMergeDisabled: "🛡 autoMergeDisabled (auto-merge 無効化で降格)",
   lowConfidence: "🟡 lowConfidence",
@@ -400,9 +400,10 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   periodChange: "🟣 periodChange (キャンペーン期間の変更/延長)",
   staleExtractGeneration: "🧯 staleExtractGeneration (旧世代 extracted による書き戻し)",
   pseudoStoreTarget: "🔴 pseudoStoreTarget (規定還元用ダミー store への誤マッピング疑い)",
+  tierMove: "🪜 tierMove (同じ店 × 同じ倍率系列の別倍率)",
 };
 
-const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
+export const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
   safetyFailed:
     "auto-merge 候補だが、件数が maxAutoChangesPerRun を超えたため安全弁で review に降格。" +
     "内容は健全な auto 候補なので、個別精査の上 maxAutoChangesPerRun を一時 bump して再実行 or 手動で取り込み判断。",
@@ -472,7 +473,46 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "店舗/決済手段を特定できない項目 (例: 「海外でのお買い物」「クレカ乗車」等) を Gemini が受け皿として誤って汎用エンティティに" +
     "割り当てた疑いが高い (#103 incident と同型)。正しい参照先が特定できるなら手動で修正して取り込み、" +
     "特定できないなら無視 (このまま auto-merge すると規定還元表示 / 最頻決済モードの計算が壊れるため必ず人手判断)。",
+  tierMove:
+    "membership 提案が、同じ店舗 × 同じ倍率系列 (J-POINT W / J-POINT Gold / たまるマーケット) の**別倍率**と重なる " +
+    "(seed に既にある、または同じ run で別倍率も提案されている)。倍率の改定か、受け皿 (例: 高島屋の SC・レストラン街 2 倍を百貨店本体に) の誤りの疑い。" +
+    "承認すると計算は最大値が勝つため、旧 tier が残ると過大表示や死にデータになり、seed の tier 契約テスト " +
+    "(1 店 × 1 系列 × 1 チャネルに membership 1 件) も落ちる。" +
+    "**承認するなら、旧 tier の membership を `src/state/seed-blocklist.ts` の `REMOVED_MEMBERSHIP_IDS` に入れる PR と同時に**。" +
+    "誤抽出なら無視 (次の run でも同じ理由で review に留まる)。",
 };
+
+// REVIEW_QUEUE の理由グループの表示順。ReviewReason を足したら必ずここにも足す
+// (buildReviewQueue はこの配列の順に描画するので、無い reason の項目は REVIEW_QUEUE から黙って消える)。
+// report.test の網羅テストが REASON_LABELS / REASON_EXPLANATIONS の全キーを含み重複が無いことを検査する。
+// 並び: safetyFailed first (healthy auto items, easy to act on),
+// then data-quality issues, then others, then userBlocked last
+export const REASON_ORDER: readonly ReviewReason[] = [
+  "safetyFailed",         // 🛡 件数超過で降格された健全な auto 候補。内容確認の上 bump 判断
+  "autoMergeDisabled",    // 🛡 auto-merge 無効化で降格された健全な auto 候補 (手動テスト等)
+  "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
+  "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
+  "unsupportedRateClaim", // 🔴 rate hallucination 疑い、早めに目を通す
+  "pseudoStoreTarget",    // 🔴 擬似エンティティへの誤マッピング疑い、早めに目を通す
+  "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
+  "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
+  "orphanedProgram",      // 🟠 対象店 membership 0 の member-stores program。membership 側と同時 approve
+  "tierMove",             // 🪜 同じ店 × 同じ倍率系列の別倍率。承認は旧 tier の tombstone と同時 (PR-0a-2c)
+  "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目
+  "staleExtractGeneration", // 🧯 旧世代 extracted による書き戻し。次回 fetch で解消、それまで保留
+  "expiredCampaign",      // 🟠 validTo+30日経過。クリーンアップ候補
+  "storeAdditionsDisabled", // ⏸ store 追加は手動キュレ運用、参照リストとして末尾配置
+  "rateDeltaTooLarge",
+  "rateRatioOutOfRange",
+  "multiSourceConflict",
+  "referenceChange",
+  "deletion",
+  "lowConfidence",
+  "idCollision",
+  "excludedCategory",
+  "selfReportedExclusion",
+  "userBlocked",
+];
 
 function formatProposalDetail(p: Proposal): string {
   const lines: string[] = [];
@@ -578,36 +618,8 @@ export function buildReviewQueue(report: ProposalReport): string {
     lines.push("## 項目 (理由別)");
     lines.push("");
 
-    // Render each reason group
-    // Sort by priority: safetyFailed first (healthy auto items, easy to act on),
-    // then data-quality issues, then others, then userBlocked last
-    const reasonOrder: ReviewReason[] = [
-      "safetyFailed",         // 🛡 件数超過で降格された健全な auto 候補。内容確認の上 bump 判断
-      "autoMergeDisabled",    // 🛡 auto-merge 無効化で降格された健全な auto 候補 (手動テスト等)
-      "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
-      "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
-      "unsupportedRateClaim", // 🔴 rate hallucination 疑い、早めに目を通す
-      "pseudoStoreTarget",    // 🔴 擬似エンティティへの誤マッピング疑い、早めに目を通す
-      "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
-      "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
-      "orphanedProgram",      // 🟠 対象店 membership 0 の member-stores program。membership 側と同時 approve
-      "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目
-      "staleExtractGeneration", // 🧯 旧世代 extracted による書き戻し。次回 fetch で解消、それまで保留
-      "expiredCampaign",      // 🟠 validTo+30日経過。クリーンアップ候補
-      "storeAdditionsDisabled", // ⏸ store 追加は手動キュレ運用、参照リストとして末尾配置
-      "rateDeltaTooLarge",
-      "rateRatioOutOfRange",
-      "multiSourceConflict",
-      "referenceChange",
-      "deletion",
-      "lowConfidence",
-      "idCollision",
-      "excludedCategory",
-      "selfReportedExclusion",
-      "userBlocked",
-    ];
-
-    for (const reason of reasonOrder) {
+    // Render each reason group in REASON_ORDER (module scope、網羅は report.test で検査)
+    for (const reason of REASON_ORDER) {
       const items = byReason.get(reason);
       if (!items || items.length === 0) continue;
 

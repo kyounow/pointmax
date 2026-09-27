@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 // membership id は本体 (propose-helpers) と同じ生成源から導出する (文字列を直書きしない)
 import { membershipId } from "../../src/state/defineMemberships";
+import { REMOVED_MEMBERSHIP_IDS } from "../../src/state/seed-blocklist";
 import {
   applyCategoryCap,
   dedupeAcrossProposals,
@@ -19,6 +20,7 @@ import {
   proposeStores,
 } from "./diff-and-propose";
 import {
+  TOMBSTONED_MEMBERSHIP_IDS,
   deriveLoyaltyProgramId,
   rateToProgramSlug,
 } from "./propose-helpers";
@@ -1220,7 +1222,9 @@ describe("proposeMemberships (PR-D1)", () => {
         },
       ],
     });
-    const ps = proposeMemberships(data, emptySeed);
+    // この id 自体は #103 で REMOVED_MEMBERSHIP_IDS に入っており、実 run では tombstone-skip で
+    // 提案されない (PR-0a-2c)。ここでは pseudoStoreTarget ガード単体を見るため tombstone を空にする。
+    const ps = proposeMemberships(data, emptySeed, new Set());
     expect(ps).toHaveLength(1);
     expect(ps[0].reviewReason).toBe("pseudoStoreTarget");
   });
@@ -1408,6 +1412,244 @@ describe("proposeJalTokuyakuMemberships (PR-D2b)", () => {
       stores: [jalStore("royal-host")],
     });
     expect(proposeJalTokuyakuMemberships(data, seed)).toEqual([]);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// PR-0a-2c: membership tombstone の再提案 skip + tierMove
+// ───────────────────────────────────────────────────────────────
+
+// 高 confidence (0.95 × 0.95 = 0.9025 ≥ 0.9) の membership 抽出行。
+const mem = (programId: string, storeId: string, explicitness = 0.95) => ({
+  programId,
+  storeId,
+  evidenceQuote: `${storeId} ポイント 2 倍`,
+  explicitness,
+  ambiguity: 1 - explicitness,
+});
+const seedMem = (programId: string, storeId: string) => ({
+  id: membershipId(programId, storeId),
+  programId,
+  storeId,
+});
+const memIdsOf = (ps: Proposal[]) =>
+  ps.map((p) => {
+    const r = (p as AddRecordProposal).record;
+    return membershipId(r.programId as string, r.storeId as string);
+  });
+
+describe("PR-0a-2c: membership tombstone は再提案しない (silent skip + 1 行ログ)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("TOMBSTONED_MEMBERSHIP_IDS は seed-blocklist の REMOVED_MEMBERSHIP_IDS と一致する", () => {
+    expect([...TOMBSTONED_MEMBERSHIP_IDS].sort()).toEqual(
+      [...new Set(REMOVED_MEMBERSHIP_IDS)].sort(),
+    );
+  });
+
+  it("REMOVED_MEMBERSHIP_IDS (実データ) の id は auto にも review にも出ない。件数は 1 行ログ", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    // #103 の general 4 件 (tombstone 済み) + 健全な 1 件
+    const tombstoned = REMOVED_MEMBERSHIP_IDS.map((id) => {
+      const m = /^m-(prog-.+)-general$/.exec(id);
+      return m ? mem(m[1], "general") : null;
+    }).filter((x): x is ReturnType<typeof mem> => x !== null);
+    expect(tombstoned.length).toBeGreaterThan(0);
+    const data = baseSource({
+      sourceId: "jcb-jpoint-partners",
+      extractor: "jcb-jpoint",
+      memberships: [...tombstoned, mem("prog-jcb-jpoint-20x", "starbucks")],
+    });
+    const ps = proposeMemberships(data, emptySeed);
+    const ids = memIdsOf(ps);
+    for (const id of REMOVED_MEMBERSHIP_IDS) expect(ids).not.toContain(id);
+    expect(ids).toEqual([membershipId("prog-jcb-jpoint-20x", "starbucks")]);
+    expect(log).toHaveBeenCalledWith(
+      `🪦 tombstone-skip: ${tombstoned.length} 件 (source=jcb-jpoint-partners)`,
+    );
+  });
+
+  it("注入した tombstone (takashimaya × Gold 2倍) は skip され、seed に無くても提案されない", () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const tomb = new Set([membershipId("prog-jcb-jpoint-gold-2x", "takashimaya")]);
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [
+        mem("prog-jcb-jpoint-gold-2x", "takashimaya"),
+        mem("prog-jcb-jpoint-gold-2x", "mercari"),
+      ],
+    });
+    const ps = proposeMemberships(data, emptySeed, tomb);
+    expect(memIdsOf(ps)).toEqual([membershipId("prog-jcb-jpoint-gold-2x", "mercari")]);
+  });
+
+  it("skip が 0 件ならログを出さない", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-20x", "starbucks")],
+    });
+    proposeMemberships(data, emptySeed, new Set());
+    expect(log).not.toHaveBeenCalled();
+  });
+
+  it("jal-tokuyaku 経路も tombstone を skip する", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const jalSeed: SeedShape = {
+      ...emptySeed,
+      programs: [
+        {
+          id: "prog-jal-tokuyaku",
+          name: "JALカード特約店",
+          scope: "member-stores",
+          cardIds: ["jal-suica"],
+          rate: 0.02,
+          currencyId: "jal-mile",
+          bonusType: "primary",
+        },
+      ],
+      memberships: [],
+    };
+    const store = (storeId: string) => ({
+      storeId,
+      name: storeId,
+      category: "飲食",
+      evidenceQuote: "JALカード特約店",
+      explicitness: 0.95,
+      ambiguity: 0.05,
+    });
+    const data = baseSource({
+      sourceId: "jal-card-tokuyaku-list",
+      extractor: "jal-tokuyaku",
+      stores: [store("royal-host"), store("orix-rentacar")],
+    });
+    const tomb = new Set([membershipId("prog-jal-tokuyaku", "royal-host")]);
+    const ps = proposeJalTokuyakuMemberships(data, jalSeed, tomb);
+    expect(memIdsOf(ps)).toEqual([membershipId("prog-jal-tokuyaku", "orix-rentacar")]);
+    expect(log).toHaveBeenCalledWith(
+      "🪦 tombstone-skip: 1 件 (source=jal-card-tokuyaku-list)",
+    );
+  });
+});
+
+describe("PR-0a-2c: tierMove (同 store × 同 tier 系列の別倍率は review)", () => {
+  const noTomb = new Set<string>();
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("seed に gold-4x がある takashimaya への gold-2x 提案は tierMove", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-gold-4x", "takashimaya")],
+    };
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-gold-2x", "takashimaya")],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBe("tierMove");
+  });
+
+  it("W と Gold の 2倍は別系列なので tierMove にならない (Gold 4x がある高島屋への W 2x は auto)", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-gold-4x", "takashimaya")],
+    };
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-2x", "takashimaya")],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("同じ run で muji に たまる 2x と 4x を出すと両方 tierMove", () => {
+    const data = baseSource({
+      extractor: "epos-tamaru",
+      memberships: [
+        mem("prog-epos-tamaru-2x", "muji"),
+        mem("prog-epos-tamaru-4x", "muji"),
+      ],
+    });
+    const ps = proposeMemberships(data, emptySeed, noTomb);
+    expect(ps.map((p) => p.reviewReason)).toEqual(["tierMove", "tierMove"]);
+  });
+
+  it("tombstone で skip した行は同 run の集計に入らない (muji 4x を tombstone、2x は auto)", () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const data = baseSource({
+      extractor: "epos-tamaru",
+      memberships: [
+        mem("prog-epos-tamaru-4x", "muji"),
+        mem("prog-epos-tamaru-2x", "muji"),
+      ],
+    });
+    const tomb = new Set([membershipId("prog-epos-tamaru-4x", "muji")]);
+    const ps = proposeMemberships(data, emptySeed, tomb);
+    expect(memIdsOf(ps)).toEqual([membershipId("prog-epos-tamaru-2x", "muji")]);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("seed に同じ id がある行 (既存) は提案せず、他 tier への影響もない", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-epos-tamaru-2x", "muji")],
+    };
+    const data = baseSource({
+      extractor: "epos-tamaru",
+      memberships: [
+        mem("prog-epos-tamaru-2x", "muji"), // 既存
+        mem("prog-epos-tamaru-2x", "uniqlo"), // 新規・別店
+      ],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(memIdsOf(ps)).toEqual([membershipId("prog-epos-tamaru-2x", "uniqlo")]);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("tier 系列でない program は影響を受けない (同じ店に tier membership があっても auto)", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-gold-4x", "takashimaya")],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [mem("prog-jcb-takashimaya-campaign", "takashimaya")],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("既存の降格が優先: conf < 0.9 は lowConfidence のまま (tierMove で上書きしない)", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-gold-4x", "takashimaya")],
+    };
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-gold-2x", "takashimaya", 0.9)], // 0.9 × 0.9 = 0.81
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps[0].reviewReason).toBe("lowConfidence");
+  });
+
+  it("既存の降格が優先: general は pseudoStoreTarget のまま", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-20x", "general")],
+    };
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-2x", "general")],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps[0].reviewReason).toBe("pseudoStoreTarget");
   });
 });
 

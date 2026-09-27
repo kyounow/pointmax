@@ -15,8 +15,11 @@
 //   - rate はあるが evidenceQuote に数値根拠 (%/倍/円→pt) が無い  → "unsupportedRateClaim"
 //   - membership の overrideRate が不正 (非有限/0以下/30%超)     → "zeroOrInvalidRate"
 //   - membership の overrideCurrencyId が未知参照                → "referenceChange"
+//   - membership が同 store × 同 tier 系列の別倍率と重なる (上記が無いときだけ) → "tierMove"
 //
 // 全て満たさない場合 reviewReason は undefined となり、autoApplicable に分類される。
+// membership tombstone (seed-blocklist の REMOVED_MEMBERSHIP_IDS) の id は提案自体を出さない
+// (silent skip + 「🪦 tombstone-skip」1 行ログ。PR-0a-2c)。
 //
 // 注意: ここでは個別エンティティの分類だけ行う。同一 run 内の重複検出
 // (dedupeAcrossProposals) や category cap は diff-and-propose.ts 側で実施。
@@ -28,10 +31,12 @@ import {
   BLOCKED_STORE_IDS,
   PSEUDO_PAYMENT_APP_IDS,
   PSEUDO_STORE_IDS,
+  REMOVED_MEMBERSHIP_IDS,
 } from "../../src/state/seed-blocklist";
 import { resolveCategory } from "../../src/state/seed-category-aliases";
 // membership 突合キーは id 導出に統一 (membershipId が唯一の生成源)。
 import { membershipId } from "../../src/state/defineMemberships";
+import { tierFamilyOf } from "../../src/state/tierFamily";
 import {
   CONFIDENCE_AUTO_THRESHOLD,
   EXCLUDED_CATEGORIES,
@@ -518,23 +523,90 @@ export function proposePrograms(
 }
 
 // ───────────────────────────────────────────────────────────────
+// membership tombstone (PR-0a-2c)
+// ───────────────────────────────────────────────────────────────
+// seed-blocklist の REMOVED_MEMBERSHIP_IDS (手動 tombstone) は seed() から除外されるため、
+// 「seed に無い = 新規」判定のままだと抽出に残っている限り毎 run 再提案される
+// (例: m-prog-jcb-jpoint-gold-2x-takashimaya は 9/13 の jcb extracted から conf 0.9025 で auto に乗る)。
+// propose 層で silent skip し、件数だけ 1 行ログに出す。
+// 1 run で propose は 1 回だけ走る (report は 2 回走るが、ここは proposeMemberships 内で数えるので重複しない)。
+export const TOMBSTONED_MEMBERSHIP_IDS: ReadonlySet<string> = new Set(
+  REMOVED_MEMBERSHIP_IDS,
+);
+
+function logTombstoneSkip(skipped: number, sourceId: string): void {
+  if (skipped > 0) {
+    console.log(`🪦 tombstone-skip: ${skipped} 件 (source=${sourceId})`);
+  }
+}
+
+// ───────────────────────────────────────────────────────────────
 // memberships: StoreProgramMembership (program ↔ store の M2M join)。
 // join なので loyaltyRules と同じ分類 (idCollision ではなく lowConfidence base)。
+//
+// tierMove (PR-0a-2c): tier 系列 (tierFamilyOf: J-POINT W / Gold / たまるマーケット) の membership は、
+// 同じ store × 同じ系列に別倍率の membership が seed にある、または同じ呼び出しで提案されている場合に
+// review へ回す (倍率の改定・受け皿の誤りの疑い。そのまま足すと計算は最大値が勝ち、旧 tier が
+// 黙って残る / seed の tier 契約テストが apply 後の safety gate で落ちる)。
+// 他の降格理由が付いていればそちらを優先する (pseudoStoreTarget・lowConfidence 等)。
+// 同じ呼び出しの提案は 2 パスで集計する (1 パス目で key ごとの programId を積み、2 パス目で判定)。
+// 既存 (seed に同 id) と tombstone 済みの行は提案しないので集計にも入れない。
 // ───────────────────────────────────────────────────────────────
 
 export function proposeMemberships(
   data: ExtractedSource,
   current: SeedShape,
+  tombstoned: ReadonlySet<string> = TOMBSTONED_MEMBERSHIP_IDS,
 ): Proposal[] {
   if (!data.memberships || data.memberships.length === 0) return [];
   const existingIds = new Set(
     (current.memberships ?? []).map((x) => membershipId(x.programId, x.storeId)),
   );
-  const result: Proposal[] = [];
+
+  // tier 系列の集計: `${family}|${storeId}` → その key に紐づく programId の集合
+  // (seed 既存 + この呼び出しの新規提案)。
+  const tierKeyOf = (programId: string, storeId: string): string | null => {
+    const tier = tierFamilyOf(programId);
+    return tier === null ? null : `${tier.family}|${storeId}`;
+  };
+  const tierPrograms = new Map<string, Set<string>>();
+  const addTier = (programId: string, storeId: string): void => {
+    const key = tierKeyOf(programId, storeId);
+    if (key === null) return;
+    let set = tierPrograms.get(key);
+    if (!set) {
+      set = new Set();
+      tierPrograms.set(key, set);
+    }
+    set.add(programId);
+  };
+  for (const x of current.memberships ?? []) addTier(x.programId, x.storeId);
   for (const m of data.memberships) {
-    const { evidence, confidence } = evidenceAndConfidence(m);
+    const id = membershipId(m.programId, m.storeId);
+    if (existingIds.has(id) || tombstoned.has(id)) continue;
+    addTier(m.programId, m.storeId);
+  }
+  const isTierMove = (programId: string, storeId: string): boolean => {
+    const key = tierKeyOf(programId, storeId);
+    if (key === null) return false;
+    for (const pid of tierPrograms.get(key) ?? []) {
+      if (pid !== programId) return true;
+    }
+    return false;
+  };
+
+  const result: Proposal[] = [];
+  let tombstoneSkipped = 0;
+  for (const m of data.memberships) {
+    const id = membershipId(m.programId, m.storeId);
     // 既存 membership は id 突合で判定 (更新経路なし。PR-D1 は最小)
-    if (existingIds.has(membershipId(m.programId, m.storeId))) continue;
+    if (existingIds.has(id)) continue;
+    // membership tombstone は再提案しない (auto にも review にも出さない)
+    if (tombstoned.has(id)) {
+      tombstoneSkipped++;
+      continue;
+    }
+    const { evidence, confidence } = evidenceAndConfidence(m);
     const baseReviewReason = resolveReviewReason(
       confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
       [
@@ -556,7 +628,7 @@ export function proposeMemberships(
     // 「rate=0/負/非有限/過大の抽出」= zeroOrInvalidRate に降格。
     // overrideCurrencyId は seed に存在しない未知参照なら referenceChange
     // (「検証できない参照」の意味で既存 reason を流用) に降格。
-    const reviewReason: ReviewReason | undefined = resolveReviewReason(
+    const guardedReviewReason: ReviewReason | undefined = resolveReviewReason(
       pseudoReviewReason,
       [
         () =>
@@ -575,6 +647,10 @@ export function proposeMemberships(
             : undefined,
       ],
     );
+    // tierMove は既存の降格が無いときだけ付ける (既存 reason を上書きしない)。
+    const reviewReason: ReviewReason | undefined =
+      guardedReviewReason ??
+      (isTierMove(m.programId, m.storeId) ? "tierMove" : undefined);
     const rec: Record<string, unknown> = {
       programId: m.programId,
       storeId: m.storeId,
@@ -593,6 +669,7 @@ export function proposeMemberships(
       reviewReason,
     });
   }
+  logTombstoneSkip(tombstoneSkipped, data.sourceId);
   return result;
 }
 
@@ -611,6 +688,8 @@ export function proposeMemberships(
 //    基本レート変更の疑い → 一括リンクしない (誤クレジット防止)
 //  - storeRules で標準レート≠の例外店は対象外 (手動キュレーション領域、
 //    従来どおり drop。silent loss でない=元々 consumer 無し)
+//  - membership tombstone (REMOVED_MEMBERSHIP_IDS) は proposeMemberships と同じく
+//    silent skip + 1 行ログ (PR-0a-2c)
 // ───────────────────────────────────────────────────────────────
 
 const JAL_TOKUYAKU_PROGRAM_ID = "prog-jal-tokuyaku";
@@ -618,6 +697,7 @@ const JAL_TOKUYAKU_PROGRAM_ID = "prog-jal-tokuyaku";
 export function proposeJalTokuyakuMemberships(
   data: ExtractedSource,
   current: SeedShape,
+  tombstoned: ReadonlySet<string> = TOMBSTONED_MEMBERSHIP_IDS,
 ): Proposal[] {
   if (data.extractor !== "jal-tokuyaku") return [];
   if (!data.stores || data.stores.length === 0) return [];
@@ -644,10 +724,15 @@ export function proposeJalTokuyakuMemberships(
     (current.memberships ?? []).map((m) => membershipId(m.programId, m.storeId)),
   );
   const result: Proposal[] = [];
+  let tombstoneSkipped = 0;
   for (const st of data.stores) {
     if (exceptionStoreIds.has(st.storeId)) continue;
     const mkey = membershipId(JAL_TOKUYAKU_PROGRAM_ID, st.storeId);
     if (seenMemberships.has(mkey)) continue;
+    if (tombstoned.has(mkey)) {
+      tombstoneSkipped++;
+      continue;
+    }
     const { evidence, confidence } = evidenceAndConfidence(st);
     const baseReviewReason = resolveReviewReason(
       confidence < CONFIDENCE_AUTO_THRESHOLD ? "lowConfidence" : undefined,
@@ -675,6 +760,7 @@ export function proposeJalTokuyakuMemberships(
     });
     seenMemberships.add(mkey);
   }
+  logTombstoneSkip(tombstoneSkipped, data.sourceId);
   return result;
 }
 

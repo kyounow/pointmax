@@ -374,9 +374,13 @@ export type ReviewReason =
                               // updateField) を防ぐ。次回 fetch (新版) 後に promptVersion が一致し再判定される
   | "safetyFailed"            // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
   | "autoMergeDisabled"       // auto-merge 候補だが autoMergeEnabled=false / force_review_only=true のため review に降格 (手動テスト等)
-  | "pseudoStoreTarget";      // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等) への
+  | "pseudoStoreTarget"       // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等) への
                               // 参照。店舗/決済手段を特定できない項目の受け皿誤マッピングを防止
                               // (#103 incident: jcb-jpoint extractor が general を受け皿にした事故対応)
+  | "tierMove";               // PR-0a-2c: membership 提案が、同じ store × 同じ tier 系列 (tierFamilyOf: J-POINT W /
+                              // Gold / たまるマーケット) の別倍率 (seed 既存 or 同じ呼び出しの提案) と重なる。
+                              // 倍率改定・受け皿誤りの疑い。承認するなら旧 tier を REMOVED_MEMBERSHIP_IDS に入れる PR と同時に。
+                              // 他の降格理由 (lowConfidence 等) が付いていればそちらを優先する
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";
