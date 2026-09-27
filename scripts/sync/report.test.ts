@@ -9,6 +9,7 @@ import {
   buildReviewQueue,
   buildSyncHistoryEntry,
   buildSyncHistoryMarkdown,
+  reclassifyAutoAsReview,
 } from "./report";
 import type { Proposal, ProposalReport, SyncHistoryFile } from "./types";
 import { SYNC_HISTORY_MAX_ENTRIES } from "./types";
@@ -764,7 +765,8 @@ describe("appendSyncHistory", () => {
     expect(out).toBe(existing);
   });
 
-  it("同じ generatedAt が既に居れば追加しない (workflow 再実行による重複防止)", () => {
+  // PR-0b-3: 旧仕様 (同じ generatedAt は追加しない = 既存が残る) を反転。downgrade 後の Regenerate が勝つ。
+  it("同じ generatedAt が既に居れば後勝ちで置換する (件数は 1 のまま、downgrade 後の値が残る)", () => {
     const existing: SyncHistoryFile = {
       version: 1,
       entries: [baseEntry],
@@ -772,7 +774,83 @@ describe("appendSyncHistory", () => {
     const dup = { ...baseEntry, totalCount: 999 }; // 同じ generatedAt
     const out = appendSyncHistory(existing, dup);
     expect(out.entries).toHaveLength(1);
-    expect(out.entries[0].totalCount).toBe(43); // 既存が残る
+    expect(out.entries[0].totalCount).toBe(999); // 後から来た値が残る
+  });
+
+  it("3 件の中央の entry を置換しても順序が保たれ、既存の commitSha / prNumber を引き継ぐ", () => {
+    const newer = { ...baseEntry, generatedAt: "2026-05-27T22:00:00Z", date: "2026-05-28" };
+    const middle = { ...baseEntry, commitSha: "abc1234", prNumber: 77 };
+    const older = { ...baseEntry, generatedAt: "2026-05-13T22:00:00Z", date: "2026-05-14" };
+    const existing: SyncHistoryFile = { version: 1, entries: [newer, middle, older] };
+    const out = appendSyncHistory(existing, { ...baseEntry, totalCount: 0, avgConfidence: null });
+    expect(out.entries.map((e) => e.generatedAt)).toEqual([
+      newer.generatedAt,
+      baseEntry.generatedAt,
+      older.generatedAt,
+    ]);
+    expect(out.entries[1].totalCount).toBe(0);
+    expect(out.entries[1].commitSha).toBe("abc1234");
+    expect(out.entries[1].prNumber).toBe(77);
+    expect(out.entries[0]).toBe(newer);
+    expect(out.entries[2]).toBe(older);
+  });
+
+  it("downgrade 経路の再現: auto 3 件で append → safetyFailed に降格した report で再 append すると entry は 1 件で auto 0", () => {
+    const ev = { evidenceQuote: "x", explicitness: 0.95, ambiguity: 0.05 };
+    const auto: Proposal[] = [0, 1, 2].map((i) => ({
+      type: "updateField",
+      collection: "programs",
+      id: `prog-jcb-jpoint-${i}`,
+      field: "rate",
+      from: 0.105,
+      to: 0.2,
+      sourceId: "jcb-jpoint-partners",
+      confidence: 0.95,
+      evidence: ev,
+    }));
+    const review: Proposal = {
+      type: "addRecord",
+      collection: "stores",
+      record: { id: "s", name: "S" },
+      sourceId: "jcb-jpoint-partners",
+      confidence: 0.5,
+      evidence: ev,
+      reviewReason: "lowConfidence",
+    };
+    const passthrough = {
+      store: (id: string) => id,
+      program: (id: string) => id,
+      currency: (id: string) => id,
+      card: (id: string) => id,
+      paymentApp: (id: string) => id,
+      pointCard: (id: string) => id,
+      source: (id: string) => id,
+    };
+    const generated = baseReport({
+      generatedAt: "2026-07-22T22:07:42.738Z",
+      autoApplicable: auto,
+      needsReview: [review],
+      summary: { autoApplicableCount: 3, needsReviewCount: 1, sourcesProcessed: 15, sourcesFailed: 0 },
+    });
+    const first = appendSyncHistory(null, buildSyncHistoryEntry(generated, passthrough));
+    expect(first.entries[0].totalCount).toBe(3);
+    // workflow の Downgrade: autoApplicable を safetyFailed として needsReview に移す (generatedAt は同じ)
+    const downgraded = baseReport({
+      generatedAt: generated.generatedAt,
+      autoApplicable: [],
+      needsReview: [review, ...auto.map((p) => ({ ...p, reviewReason: "safetyFailed" as const }))],
+      summary: { autoApplicableCount: 0, needsReviewCount: 4, sourcesProcessed: 15, sourcesFailed: 0 },
+    });
+    const second = appendSyncHistory(first, buildSyncHistoryEntry(downgraded, passthrough));
+    expect(second.entries).toHaveLength(1);
+    expect(second.entries[0].totalCount).toBe(0);
+    expect(second.entries[0].items).toEqual([]);
+    expect(second.entries[0].reviewStats).toEqual({
+      total: 4,
+      byReason: { lowConfidence: 1, safetyFailed: 3 },
+    });
+    // 虚偽 entry の訂正 (reclassifyAutoAsReview) と同じ結果になる
+    expect(reclassifyAutoAsReview(first.entries[0], "safetyFailed")).toEqual(second.entries[0]);
   });
 
   it("新規 entry が先頭に prepend される (newest first)", () => {
@@ -832,6 +910,53 @@ describe("appendSyncHistory", () => {
     expect(
       out.entries.find((e) => e.date === `old-${SYNC_HISTORY_MAX_ENTRIES - 1}`),
     ).toBeUndefined();
+  });
+});
+
+describe("reclassifyAutoAsReview (PR-0b-3)", () => {
+  const entry = {
+    date: "2026-07-09",
+    generatedAt: "2026-07-08T22:11:52.499Z",
+    totalCount: 81,
+    avgConfidence: 0.93,
+    sourcesProcessed: 15,
+    bySource: [{ sourceId: "ponta-partners", collection: "memberships", count: 81 }],
+    items: [{ sourceId: "ponta-partners", collection: "memberships", summary: "x" }],
+    reviewStats: { total: 115, byReason: { lowConfidence: 100, idCollision: 15 } },
+  };
+
+  it("auto 81 / review 115 の entry は auto 0 / review 196 (safetyFailed 81)、items / bySource は空、avgConfidence は null", () => {
+    const out = reclassifyAutoAsReview(entry, "safetyFailed");
+    expect(out.totalCount).toBe(0);
+    expect(out.avgConfidence).toBeNull();
+    expect(out.bySource).toEqual([]);
+    expect(out.items).toEqual([]);
+    expect(out.reviewStats).toEqual({
+      total: 196,
+      byReason: { lowConfidence: 100, idCollision: 15, safetyFailed: 81 },
+    });
+    // date / generatedAt / sourcesProcessed は変えない
+    expect(out.date).toBe(entry.date);
+    expect(out.generatedAt).toBe(entry.generatedAt);
+    expect(out.sourcesProcessed).toBe(15);
+  });
+
+  it("既に同じ reason があれば加算する / reviewStats が無い entry にも付ける", () => {
+    const withSafety = { ...entry, reviewStats: { total: 2, byReason: { safetyFailed: 2 } } };
+    expect(reclassifyAutoAsReview(withSafety, "safetyFailed").reviewStats).toEqual({
+      total: 83,
+      byReason: { safetyFailed: 83 },
+    });
+    const noStats = { ...entry, reviewStats: undefined };
+    expect(reclassifyAutoAsReview(noStats, "safetyFailed").reviewStats).toEqual({
+      total: 81,
+      byReason: { safetyFailed: 81 },
+    });
+  });
+
+  it("auto 0 の entry はそのまま返す", () => {
+    const zero = { ...entry, totalCount: 0 };
+    expect(reclassifyAutoAsReview(zero, "safetyFailed")).toBe(zero);
   });
 });
 

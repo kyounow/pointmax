@@ -731,7 +731,11 @@ export function buildReviewQueue(report: ProposalReport): string {
 // 設計判断:
 // - auto=0 かつ review=0 の run だけ entry を作らない (PR #61。review のみの週も
 //   trend として残す。本当に変化なしの週だけ空エントリーで履歴を埋めない)
-// - 同じ generatedAt が既存 entries に居れば追加しない (workflow 再実行による重複防止)
+// - 同じ generatedAt が既存 entries に居れば、その位置で後勝ちの置換 (upsert、PR-0b-3)。
+//   weekly-sync.yml は「Generate reports」の後、safety 失敗時に「Downgrade」→「Regenerate reports」を
+//   同じ proposed-migrations.json (= 同じ generatedAt) で再実行する。旧実装 (同 generatedAt は追加しない) では
+//   降格前の auto 件数が残り、2026-07-09 / 07-16 / 07-23 の 3 entry が「auto 81 / 4 / 3」の虚偽記録になった。
+//   置換にすると workflow を変えずに降格後の値が残る (commitSha / prNumber は既存から引き継ぐ)。
 // - 最大 SYNC_HISTORY_MAX_ENTRIES 件で truncate (古いものから削除)
 // - commitSha は backfill 用のみ。新規 cron からは付与しない (squash merge SHA は事後判明のため)
 
@@ -823,8 +827,11 @@ export function buildSyncHistoryEntry(
 }
 
 /**
- * 既存の SYNC_HISTORY.json を読み込み、新規エントリーを先頭に追加した結果を返す。
- * pure function (file I/O なし)。0 件 entry / 同一 generatedAt は no-op。
+ * 既存の SYNC_HISTORY.json に新規エントリーを反映した結果を返す。pure function (file I/O なし)。
+ * - newEntry が null (auto も review も 0) なら既存をそのまま返す。
+ * - 同じ generatedAt の entry があれば、その位置で置換する (後勝ち。件数と順序は変えない)。
+ *   commitSha / prNumber は newEntry に無ければ既存の値を引き継ぐ。
+ * - 無ければ先頭に追加して SYNC_HISTORY_MAX_ENTRIES 件に切り詰める。
  */
 export function appendSyncHistory(
   existing: SyncHistoryFile | null,
@@ -832,12 +839,51 @@ export function appendSyncHistory(
 ): SyncHistoryFile {
   const base: SyncHistoryFile = existing ?? { version: 1, entries: [] };
   if (!newEntry) return base;
-  // 同じ generatedAt が既に居れば再実行とみなしスキップ
+  // 同じ generatedAt = 同じ run の再生成 (downgrade 後の Regenerate 等)。位置を保って置換する。
   if (base.entries.some((e) => e.generatedAt === newEntry.generatedAt)) {
-    return base;
+    const replaceAt = (e: SyncHistoryEntry): SyncHistoryEntry => {
+      const merged: SyncHistoryEntry = { ...newEntry };
+      const commitSha = newEntry.commitSha ?? e.commitSha;
+      const prNumber = newEntry.prNumber ?? e.prNumber;
+      if (commitSha !== undefined) merged.commitSha = commitSha;
+      if (prNumber !== undefined) merged.prNumber = prNumber;
+      return merged;
+    };
+    return {
+      version: 1,
+      entries: base.entries.map((e) =>
+        e.generatedAt === newEntry.generatedAt ? replaceAt(e) : e,
+      ),
+    };
   }
   const entries = [newEntry, ...base.entries].slice(0, SYNC_HISTORY_MAX_ENTRIES);
   return { version: 1, entries };
+}
+
+/**
+ * auto を全件 review (reason) に振り替えた entry を返す (PR-0b-3)。
+ * workflow の Downgrade (autoApplicable を reason 付きで needsReview に移す) → buildSyncHistoryEntry と同じ結果になる:
+ * totalCount 0 / avgConfidence null / bySource・items 空、reviewStats.total と byReason[reason] に auto 件数を加算。
+ * totalCount が 0 の entry はそのまま返す。過去の虚偽 auto entry の訂正と、PR-1 H1 の fetch 埋め込みが使う。
+ */
+export function reclassifyAutoAsReview(
+  e: SyncHistoryEntry,
+  reason: ReviewReason,
+): SyncHistoryEntry {
+  if (e.totalCount === 0) return e;
+  const n = e.totalCount;
+  const prev = e.reviewStats ?? { total: 0, byReason: {} };
+  return {
+    ...e,
+    totalCount: 0,
+    avgConfidence: null,
+    bySource: [],
+    items: [],
+    reviewStats: {
+      total: prev.total + n,
+      byReason: { ...prev.byReason, [reason]: (prev.byReason[reason] ?? 0) + n },
+    },
+  };
 }
 
 /** SYNC_HISTORY.md (人間向け) を生成。最新が上。 */
