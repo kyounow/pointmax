@@ -1,7 +1,26 @@
 # 週次マスタ同期 履歴
 
-> 自動生成。最新が上、最大 104 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
+> 自動生成。最新が上、最大 52 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
+
+## 2026-09-28 (auto 0 件 / review 259 件)
+
+- source 数: 3
+
+### Review queue 内訳 (259 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 141 |
+| storeAdditionsDisabled | 72 |
+| idCollision | 24 |
+| missingProgramBody | 14 |
+| lowConfidence | 8 |
+
+<details><summary>追加項目 0 件</summary>
+
+</details>
+
+---
 
 ## 2026-09-24 (auto 0 件 / review 331 件)
 
