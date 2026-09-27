@@ -266,24 +266,33 @@ jobs:
       # → アプリ内「更新履歴」タブに review-only 週が出ないバグの修正。
       # SYNC_HISTORY は監査ログ (seed/コード非変更) なので main へ直 push し、
       # deploy.yml の workflow_run トリガーが再デプロイ=公開を担う。
+      # PR-0b-2: sources/extracted/ も同じ commit に入れる (review-only 週も main の extracted を
+      # 更新する)。fetch-source は API 失敗時に extracted を上書きしない (keep-last-good) ので、
+      # 残る「前回版」が checkout 時点の main 版 = 直前 run の取得結果になり、propose の
+      # fetchedAt 鮮度ガード (14 日) が反対グループのソースで恒常的に効くのを防ぐ。
+      # extracted は bundle に入らず (src から import されない)、seed も変えない。
+      # 流れ: add → commit (SYNC_HISTORY + extracted) → stash -u (残りの proposed-migrations /
+      # REVIEW_QUEUE 等) → pull --rebase → push → stash pop。extracted は commit 済みなので
+      # stash に入らず、後段の review-PR (add-paths に extracted/**) には差分として出ない (main にある)。
       - name: Publish SYNC_HISTORY to main (review-only / no auto-merge runs)
         if: ${{ !(steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome == 'success') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add sources/SYNC_HISTORY.json sources/SYNC_HISTORY.md
+          git add sources/SYNC_HISTORY.json sources/SYNC_HISTORY.md sources/extracted/
           if git diff --cached --quiet; then
-            echo "ℹ️ SYNC_HISTORY に変更なし (本当に変化なしの週)。skip"
+            echo "ℹ️ SYNC_HISTORY / extracted に変更なし (本当に変化なしの週)。skip"
             exit 0
           fi
-          git commit -m "chore(sync): update SYNC_HISTORY (review-only run)"
-          # review-PR 用に残る作業ツリー変更 (REVIEW_QUEUE/extracted/proposed 等) を
+          git diff --cached --stat
+          git commit -m "chore(sync): update SYNC_HISTORY + extracted (review-only run)"
+          # review-PR 用に残る作業ツリー変更 (REVIEW_QUEUE/proposed 等。extracted は上で commit 済み) を
           # 一時退避してから rebase + push し、後段ステップ用に復元する。
           git stash push -u || true
           git pull --rebase origin main
           git push origin HEAD:main
           git stash pop || true
-          echo "✓ SYNC_HISTORY を main に公開 (workflow_run deploy が再デプロイ)"
+          echo "✓ SYNC_HISTORY / extracted を main に公開 (workflow_run deploy が再デプロイ)"
 
       # ===== Tier 2: Review PR =====
       # 条件:
