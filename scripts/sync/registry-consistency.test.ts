@@ -168,6 +168,10 @@ const Z4_STOPPED = [
   "d-point-partners",
   "v-point-partners",
   "ponta-partners",
+  // card extractor: cards の updateField に apply / approve 経路が無い (commit 3)
+  "mufg-card-global-point",
+  "orico-card-member-point",
+  "smbc-v-gold-7percent",
 ];
 
 describe("Z4 停止ソース (収穫ゼロのソース停止)", () => {

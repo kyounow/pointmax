@@ -238,9 +238,20 @@ sources:
       - storeRules
       - categoryRules
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、検知しかできない card extractor)。enabled:false + fetchGroup 削除。
+      停止理由: card extractor の出力を反映する経路が無い。cards の defaultRate 差分は
+      updateField/cards になるが、isApplicableProposal (scripts/sync/types.ts:550-557) が
+      false のため apply-proposals (L137-140) では skipped、approve-proposals (L140-143) では
+      unsupported になり、auto でも承認でも seed に書かれない。storeRules は propose が
+      消費しない (使うのは jal-tokuyaku 経路だけ)。SYNC_HISTORY 全 38 entry に mufg /
+      orico / smbc-v-gold 由来の反映は 0 件。直近 (9/13) は nonJson fallback で 0 件。
+      再開条件: cards の更新経路 (MIGRATIONS 自動生成等) ができたとき、または 0 req の
+      canary (rate-watch) で基本還元率を監視するとき。aliases.json の cardIds 対応
+      (smbc-v-gold-7percent → smbc-v) は再開用に残す。
+      停止に合わせて sources/extracted/smbc-v-gold-7percent.json を git rm 済み。
+      ---
       ★ 2026-05-12 成功: 対象店舗一覧ページ (cardinfo9001629.jsp) で URL Context Tool 取得成功。
       Gemini が 22 storeRules を抽出 (旧 proper_p5.jsp の散文ループ問題を回避)。
       ただし cardId: "smbc-v-gold" (架空) や storeId 命名差 (seven-eleven vs conv-7eleven 等)
@@ -260,9 +271,20 @@ sources:
       - cards
       - categoryRules
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、検知しかできない card extractor)。enabled:false + fetchGroup 削除。
+      停止理由: card extractor の出力を反映する経路が無い。cards の defaultRate 差分は
+      updateField/cards になるが、isApplicableProposal (scripts/sync/types.ts:550-557) が
+      false のため apply-proposals (L137-140) では skipped、approve-proposals (L140-143) では
+      unsupported になり、auto でも承認でも seed に書かれない (auto と判定されても履歴に
+      幻の auto が残るだけ)。SYNC_HISTORY 全 38 entry に mufg / orico / smbc-v-gold 由来の
+      反映は 0 件。直近 (9/16) の抽出 defaultRate 0.001 は seed の mufg-card と一致。
+      再開条件: cards の更新経路 (MIGRATIONS 自動生成等) ができたとき、または 0 req の
+      canary (rate-watch) で基本還元率を監視するとき。aliases.json の cardIds 対応
+      (mufg-card-global-point → mufg-card) は再開用に残す。
+      停止に合わせて sources/extracted/mufg-card-global-point.json を git rm 済み。
+      ---
       ★ 2026-05-16 url をルールページに差し替え。
       旧 overview ページ (/mufgcard/point/global/index.html) は
       「1ポイント5円相当」表記から Gemini が defaultRate 0.005 と誤読し、
@@ -285,9 +307,19 @@ sources:
       - cards
       - categoryRules
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、検知しかできない card extractor)。enabled:false + fetchGroup 削除。
+      停止理由: card extractor の出力を反映する経路が無い。cards の defaultRate 差分は
+      updateField/cards になるが、isApplicableProposal (scripts/sync/types.ts:550-557) が
+      false のため apply-proposals (L137-140) では skipped、approve-proposals (L140-143) では
+      unsupported になり、auto でも承認でも seed に書かれない。SYNC_HISTORY 全 38 entry に
+      mufg / orico / smbc-v-gold 由来の反映は 0 件。直近 (9/16) は nonJson fallback で 0 件。
+      再開条件: cards の更新経路 (MIGRATIONS 自動生成等) ができたとき、または 0 req の
+      canary (rate-watch) で基本還元率を監視するとき。aliases.json の cardIds 対応
+      (orico-card-member-point → orico-card) は再開用に残す。
+      停止に合わせて sources/extracted/orico-card-member-point.json を git rm 済み。
+      ---
       ★ 2026-05-16 url を THE POINT 専用ページに差し替え + enabled:true 復帰。
       旧汎用会員ページ (/for/member/orico/) は「全体付与率 0.5% (200円1pt)」を
       返し THE POINT 固有の 1% を誤 downgrade する問題があったため、
