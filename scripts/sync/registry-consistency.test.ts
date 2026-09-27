@@ -159,9 +159,15 @@ describe("fetchGroup 契約 (無料枠 mon/thu 分割)", () => {
 // 停止したソースが fetchGroup 付きで enabled:true に戻る (= 無料枠を再び消費する)
 // のを防ぐ。再開する PR は notes の再開条件を満たしたうえで、この一覧から id を外す。
 const Z4_STOPPED = [
+  // 索引ハブ / 単一カテゴリ (commit 1)
   "jre-point-campaigns",
   "rakuten-pay-campaigns",
   "jal-card-tokuyaku-list",
+  // point-partner: stores のみ出力で auto 経路が無い (commit 2)
+  "rakuten-point-partners",
+  "d-point-partners",
+  "v-point-partners",
+  "ponta-partners",
 ];
 
 describe("Z4 停止ソース (収穫ゼロのソース停止)", () => {

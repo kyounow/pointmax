@@ -147,9 +147,18 @@ sources:
     produces:
       - stores
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: point-partner v1.2 は stores しか出力せず、loyaltyRules は v6 PR-1e 以降
+      propose が無視している。全件が storeAdditionsDisabled か idCollision で review に
+      溜まり、auto になる経路が無い (構造的に収穫ゼロ)。しかも mon の先頭で保有カード系の
+      ソースより先に無料枠を使っていた。
+      再開条件: point-partner prompt の改訂 (programs + memberships を直接出力する形) と、
+      その契約テストが入ったとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- rakuten-point-partners --allow-disabled`。
+      停止に合わせて sources/extracted/rakuten-point-partners.json を git rm 済み。
+      ---
       楽天ポイントカード提示で貯まる加盟店一覧。
       加盟店数が膨大 (個店 + 全国チェーン) なので chains-only。
       pointCardId は rakuten-pointcard を対象。
@@ -162,9 +171,17 @@ sources:
     produces:
       - stores
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: point-partner v1.2 は stores しか出力せず、loyaltyRules は v6 PR-1e 以降
+      propose が無視している。全件が storeAdditionsDisabled か idCollision で review に
+      溜まり、auto になる経路が無い (構造的に収穫ゼロ)。
+      再開条件: point-partner prompt の改訂 (programs + memberships を直接出力する形) と、
+      その契約テストが入ったとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- d-point-partners --allow-disabled`。
+      停止に合わせて sources/extracted/d-point-partners.json を git rm 済み。
+      ---
       dポイントカード提示で貯まる加盟店一覧。
       加盟店数が膨大なので chains-only。
       pointCardId は d-pointcard を対象。
@@ -176,9 +193,17 @@ sources:
     produces:
       - stores
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: point-partner v1.2 は stores しか出力せず、loyaltyRules は v6 PR-1e 以降
+      propose が無視している。全件が storeAdditionsDisabled か idCollision で review に
+      溜まり、auto になる経路が無い (構造的に収穫ゼロ)。
+      再開条件: point-partner prompt の改訂 (programs + memberships を直接出力する形) と、
+      その契約テストが入ったとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- v-point-partners --allow-disabled`。
+      停止に合わせて sources/extracted/v-point-partners.json を git rm 済み。
+      ---
       Vポイントカード (旧Tカード) 提示で貯まる加盟店一覧。
       2024 年に Tポイント が Vポイント に統合。tsite.jp は旧サイトだが現在も提携店リストとして機能している模様。
       pointCardId は vpoint-card を対象。
@@ -190,9 +215,17 @@ sources:
     produces:
       - stores
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、収穫ゼロのソース停止)。enabled:false + fetchGroup 削除。
+      停止理由: point-partner v1.2 は stores しか出力せず、loyaltyRules は v6 PR-1e 以降
+      propose が無視している。全件が storeAdditionsDisabled か idCollision で review に
+      溜まり、auto になる経路が無い (構造的に収穫ゼロ)。
+      再開条件: point-partner prompt の改訂 (programs + memberships を直接出力する形) と、
+      その契約テストが入ったとき。
+      再開時の検証: PR-0b-2 以降 `npm run sync:fetch -- ponta-partners --allow-disabled`。
+      停止に合わせて sources/extracted/ponta-partners.json を git rm 済み。
+      ---
       Pontaカード提示で貯まる加盟店リスト。
       pointCardId は ponta-card を対象。
       ※ 昨夜 (2026-05-11 夜) は Gemini が混雑 + 思考散文応答で取得失敗、リトライ予定。
