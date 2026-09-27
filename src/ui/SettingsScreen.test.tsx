@@ -23,6 +23,7 @@ import { useStore } from "../state/store";
 import { loadSyncHistory } from "../domain/syncHistory";
 import { takeSnapshot, getSnapshotMeta } from "../state/stateSnapshot";
 import { PERSIST_SCHEMA_VERSION } from "../state/persist-versions";
+import { readSyncSeen } from "../state/syncNotice";
 
 beforeEach(() => {
   localStorage.clear();
@@ -167,6 +168,39 @@ describe("SettingsScreen 直前の状態に戻す (PR-4a / N-4)", () => {
       );
       expect(persisted?.state?.cards?.[0]?.id).toBe("rakuten-card");
       expect(getSnapshotMeta()).toBeNull();
+    } finally {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+    }
+  });
+
+  it("マスタ更新前 (seed-apply) へ戻すと自動反映の digest を既読にしてから reload する (PR-6d: 再自動反映ループの修正)", async () => {
+    // 自動反映の直後の状態: persist に autoApplyNotice (digest) があり、直前スナップは seed-apply。
+    useStore.setState({ autoApplyNotice: { digest: "d-x", count: 2 } });
+    takeSnapshot("seed-apply", sampleState());
+    expect(readSyncSeen()).toBe("");
+    const reloadMock = vi.fn();
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...originalLocation, hash: "", reload: reloadMock },
+    });
+    try {
+      renderSettings();
+      const btn = screen.getByRole("button", { name: /直前の状態に戻す/ });
+      expect(btn).toHaveTextContent("マスタ更新前");
+      fireEvent.click(btn);
+      fireEvent.click(await screen.findByRole("button", { name: "元に戻す" }));
+
+      await waitFor(() => expect(reloadMock).toHaveBeenCalled());
+      // 既読化されているので reload 後に同じ差分が再度自動反映されない
+      expect(readSyncSeen()).toBe("d-x");
+      const persisted = JSON.parse(
+        localStorage.getItem("pointmax-v08-store") ?? "null",
+      );
+      expect(persisted?.state?.lastSeedVersion).toBe(43);
     } finally {
       Object.defineProperty(window, "location", {
         configurable: true,

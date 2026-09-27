@@ -27,6 +27,17 @@ export type SnapshotTrigger =
   | "sync-overwrite"
   | "seed-apply";
 
+/**
+ * trigger の日本語ラベル (どの破壊的操作の「前」か)。設定画面と復旧パネル (RecoveryPanel) の
+ * 「直前の状態に戻す（M/D HH:mm・ラベル）」で共有する (PR-6d で SettingsScreen から移設)。
+ */
+export const SNAPSHOT_TRIGGER_LABEL: Record<SnapshotTrigger, string> = {
+  import: "インポート前",
+  reset: "初期化前",
+  "sync-overwrite": "URL同期前",
+  "seed-apply": "マスタ更新前",
+};
+
 /** localStorage に保存するスナップショット 1 件の形。 */
 export type Snapshot = {
   /** 採取時刻 (ISO)。 */
