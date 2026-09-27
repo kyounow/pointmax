@@ -59,7 +59,7 @@ import {
 // SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
-export const SEED_VERSION = 46;
+export const SEED_VERSION = 47;
 
 // デプロイされた公式マスタJSONのURL。
 // scripts/generate-master.ts でビルド時に public/master.json として出力され、
@@ -75,6 +75,17 @@ export const SEED_CHANGELOG: {
   date: string;
   summary: string;
 }[] = [
+  {
+    version: 47,
+    date: "2026-09-27",
+    summary:
+      "店頭 / ネット・アプリ経由の購入チャネルを導入。たまるマーケット (サイト経由のネット購入限定) の倍率と、" +
+      "スターバックス・マクドナルドの J-POINT 20倍 (モバイルオーダー・オンライン入金など経由型) を店頭の計算から外しました " +
+      "(例: エポスカード×ビックカメラ店頭 2.0%→0.5%、JCB CARD W×スターバックス店頭 10.5%→1%。" +
+      "スターバックス・マクドナルド分は既存端末には次回のデータ更新で反映)。" +
+      "楽天市場 / Yahoo!ショッピング / じゃらん / HMV&BOOKS online は従来どおり。" +
+      "これは還元の低下ではなく誤表示の修正で、ネット・アプリ経由の比較は 11 月のネットモードで表示予定。",
+  },
   {
     version: 46,
     date: "2026-07-21",
