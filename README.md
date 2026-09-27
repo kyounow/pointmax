@@ -76,7 +76,10 @@
 ### 優先通貨（v4.0.0）
 - 「普段ためたい通貨」を **順序付きリスト** で登録（CurrenciesScreen で ↑↓× 管理）。
 - Calculator は **通貨タブ切替** で、選んだ対象通貨ごとの最終取得量を単一表示。
-- 優先通貨が未設定の場合は従来どおり対象通貨 select にフォールバック。
+- **起動時の既定タブ（PR-6a-1 / G19）**: 計算画面のマウント時は「同日の下書き（上記 PR-3d）?? 優先通貨の
+  先頭」のタブで開き、結果の**同率 1 位を自動展開**する（`resolveInitialCurrencyId` + 展開ガードの初期値
+  `null`）。v6.2.0 の lint 対応（effect → render 中 guard 置換）で失われていた挙動の復旧。
+- 優先通貨が未設定の場合は従来どおり対象通貨 select にフォールバック（未選択で起動し、円換算を既定にはしない）。
 
 ### 円換算（目安）タブ（PR-5a / DB-2）
 - 通貨タブの末尾（優先通貨未設定時は対象通貨 select の選択肢）に **`¥ 円換算`** を追加。
@@ -160,7 +163,14 @@
   (ユーザーが編集したものは従来どおり保護され、更新も削除もされない)。
 - 公式由来データをユーザーが編集すると「公式」バッジが外れ、「公式に戻す」で復元可能
   （substantive な編集のみ判定、`src/state/userModified.ts`）。
+- **新規プロファイルの公式データ自動投入（PR-6a-1 / F7）**: `localStorage` が空の初回起動では公式マスタ
+  （`seed()`）を自動で投入する（`store.seedIfEmpty`、App マウント時 + persist の hydration 完了時）。
+  投入するのは **hydration 完了後に 8 collection が全て空かつ `lastSeedVersion === 0`** のときだけで、
+  hydration 失敗時・schema 移行待ち・1 件でもデータがある state では何もしない（壊れた生データを上書き
+  しない）。投入後の state は seed と一致するため同期モーダル／更新バナー／自動反映バナーは出ず、
+  カードは R1 どおり全 OFF で入る（オンボーディングから保有カードを選ぶ）。
 - 「サンプル投入」「ローカルデータ初期化」「JSONエクスポート/インポート」は設定画面から。
+  ローカルデータ初期化で空になった場合も、**次回起動時に同じ規則で公式マスタが再投入**される。
 - **破壊的操作の直前スナップショット＋「直前の状態に戻す」（PR-4a / N-4）**: インポート・
   ローカルデータ初期化・URL 同期の全上書き・マスタ更新の反映の**直前**に、その時点の
   persist state を独立キー `pointmax:snapshot:v1` に **1 世代だけ**自動退避する
@@ -477,6 +487,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
   採用。円換算モード / 金額未入力時は非表示。`CalculatorScreen` は `useMemo` で店舗/金額/通貨/データ
   変更時のみ再計算 (`pathCache` は `rankCards` 呼び出し単位で作り直される設計を壊さない方針)。
   SEED_VERSION / PERSIST_SCHEMA 据え置き (計算専用・新フィールドなし)
+- **改善 PR-6a-1 (起動回帰の修正 + 新規プロファイルの公式データ自動投入)** — 計算画面の起動時に「同日の下書き ?? 優先通貨の先頭」のタブを選び同率 1 位を自動展開する挙動を復旧 (v6.2.0 decb694 で失われた回帰、G19)、新規プロファイル / 初期化後の次回起動で公式 seed を通知なし・カード全 OFF で自動投入 (`seedIfEmpty`、F7)。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
