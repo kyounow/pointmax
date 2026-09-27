@@ -930,6 +930,166 @@ describe("opt-in / enabled / birthdayMonthOnly ゲート (PR-1d)", () => {
   });
 });
 
+// PR-0a-2a: 購入チャネル gate。既定チャネルは店舗から導出 (純 EC 店 = online / それ以外 = 店頭)。
+describe("購入チャネル gate (PR-0a-2a)", () => {
+  const epos: Card = {
+    id: "epos-card",
+    name: "エポスカード",
+    defaultRate: 0.005,
+    defaultCurrencyId: "epos",
+  };
+  const physicalStore: Store = { id: "bic-camera", name: "ビックカメラ", category: "家電量販店" };
+  const ecStore: Store = { id: "rakuten-ichiba", name: "楽天市場", category: "ネット通販" };
+  const noApp: PaymentApp = { id: "pa-no-app", name: "直接決済" };
+
+  const onlineProgram: BenefitProgram = {
+    id: "prog-online",
+    name: "ネット経由 2倍",
+    scope: "member-stores",
+    cardIds: ["epos-card"],
+    rate: 0.01,
+    currencyId: "epos",
+    bonusType: "primary",
+    channel: "online",
+  };
+  const bothProgram: BenefitProgram = {
+    id: "prog-both",
+    name: "チャネル指定なし",
+    scope: "member-stores",
+    cardIds: ["epos-card"],
+    rate: 0.008,
+    currencyId: "epos",
+    bonusType: "primary",
+  };
+  const mem = (programId: string, storeId: string, over: Partial<StoreProgramMembership> = {}) => ({
+    id: `m-${programId}-${storeId}`,
+    programId,
+    storeId,
+    ...over,
+  });
+
+  it("program.channel=online は物理店の既定 (店頭) では不発、channel:'online' 指定で発火", () => {
+    const base = {
+      card: epos,
+      store: physicalStore,
+      paymentApp: noApp,
+      programs: [onlineProgram],
+      memberships: [mem("prog-online", "bic-camera")],
+    };
+    expect(evaluatePrograms(base).primary).toBeNull();
+    expect(evaluatePrograms({ ...base, channel: "in-store" }).primary).toBeNull();
+    expect(evaluatePrograms({ ...base, channel: "online" }).primary?.program.id).toBe(
+      "prog-online",
+    );
+  });
+
+  it("membership.channel='in-store' が program の online を上書きする (店頭で発火・ネットで不発)", () => {
+    const base = {
+      card: epos,
+      store: physicalStore,
+      paymentApp: noApp,
+      programs: [onlineProgram],
+      memberships: [mem("prog-online", "bic-camera", { channel: "in-store" })],
+    };
+    expect(evaluatePrograms(base).primary?.program.id).toBe("prog-online");
+    expect(evaluatePrograms({ ...base, channel: "online" }).primary).toBeNull();
+  });
+
+  it("membership.channel='online' は channel 無し program でもその店だけ online 限定にする", () => {
+    const base = {
+      card: epos,
+      store: physicalStore,
+      paymentApp: noApp,
+      programs: [bothProgram],
+      memberships: [mem("prog-both", "bic-camera", { channel: "online" })],
+    };
+    expect(evaluatePrograms(base).primary).toBeNull();
+    expect(evaluatePrograms({ ...base, channel: "online" }).primary?.program.id).toBe(
+      "prog-both",
+    );
+  });
+
+  it("channel 無しの program は店頭・ネットの両方で発火する", () => {
+    const base = {
+      card: epos,
+      store: physicalStore,
+      paymentApp: noApp,
+      programs: [bothProgram],
+      memberships: [mem("prog-both", "bic-camera")],
+    };
+    expect(evaluatePrograms(base).primary?.program.id).toBe("prog-both");
+    expect(evaluatePrograms({ ...base, channel: "online" }).primary?.program.id).toBe(
+      "prog-both",
+    );
+  });
+
+  it("カテゴリ『ネット通販』の店では args.channel 未指定でも online program が発火する (既定を店舗から導出)", () => {
+    const result = evaluatePrograms({
+      card: epos,
+      store: ecStore,
+      paymentApp: noApp,
+      programs: [onlineProgram, bothProgram],
+      memberships: [
+        mem("prog-online", "rakuten-ichiba"),
+        mem("prog-both", "rakuten-ichiba"),
+      ],
+    });
+    expect(result.primary?.program.id).toBe("prog-online");
+    expect(result.primaryCandidates.map((c) => c.program.id)).toEqual([
+      "prog-online",
+      "prog-both",
+    ]);
+  });
+
+  it("ONLINE_ONLY_STORE_IDS の店 (jalannet) も既定で online program が発火する", () => {
+    const jalannet: Store = { id: "jalannet", name: "じゃらんnet", category: "旅行代理店" };
+    const result = evaluatePrograms({
+      card: epos,
+      store: jalannet,
+      paymentApp: noApp,
+      programs: [onlineProgram],
+      memberships: [mem("prog-online", "jalannet")],
+    });
+    expect(result.primary?.program.id).toBe("prog-online");
+  });
+
+  it("純 EC 店で channel:'in-store' を明示すると online program は不発", () => {
+    const result = evaluatePrograms({
+      card: epos,
+      store: ecStore,
+      paymentApp: noApp,
+      programs: [onlineProgram],
+      memberships: [mem("prog-online", "rakuten-ichiba")],
+      channel: "in-store",
+    });
+    expect(result.primary).toBeNull();
+  });
+
+  it("scope=all-stores の online program も gate される (addOn でも同様)", () => {
+    const allStoresOnlineAddOn: BenefitProgram = {
+      id: "prog-all-online",
+      name: "全店 ネット経由上乗せ",
+      scope: "all-stores",
+      cardIds: ["epos-card"],
+      rate: 0.005,
+      currencyId: "epos",
+      bonusType: "addOn",
+      channel: "online",
+    };
+    const base = {
+      card: epos,
+      store: physicalStore,
+      paymentApp: noApp,
+      programs: [allStoresOnlineAddOn],
+      memberships: [],
+    };
+    expect(evaluatePrograms(base).addOns).toHaveLength(0);
+    expect(evaluatePrograms({ ...base, channel: "online" }).addOns.map((a) => a.program.id)).toEqual([
+      "prog-all-online",
+    ]);
+  });
+});
+
 // isProgramPreferenceActive 単体 (通常 program / loyalty program 双方が共有する pure 判定)
 describe("isProgramPreferenceActive (PR-1d)", () => {
   const now = new Date("2026-07-15"); // 7月

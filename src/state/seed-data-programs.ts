@@ -1,5 +1,5 @@
 import type { BenefitProgram, StoreProgramMembership } from "../domain/types";
-import { defineMemberships } from "./defineMemberships";
+import { defineMemberships, type MembershipStoreSpec } from "./defineMemberships";
 
 // PointMax v3: BenefitProgram の seed データ。
 // PR 1: JAL特約店 1 件
@@ -797,8 +797,12 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // (c) たまるマーケット 3階層 (jcb-jpoint と同型、倍率=総倍率、rate = 0.005×N)
   // REM-#5: requiresEntry は付けない。たまるマーケットは「サイト経由 (経由型)」であって
   //   「エントリー/登録 (登録型)」ではないため (conditions は「経由して購入」)。requiresEntry の
-  //   語義 (= エントリー/登録が必要) を薄めないよう、経由型はスコープ外とする (将来「要経由」型が
-  //   必要になれば別フラグで表現)。J-POINT (店ごと登録必須) とは条件の質が異なる点に注意。
+  //   語義 (= エントリー/登録が必要) を薄めないよう、経由型はスコープ外とする。
+  //   経由型であることは channel:"online" で表現する (PR-0a-2a)。評価は店頭が既定なので、
+  //   物理店 (ビックカメラ・ユニクロ等) の店頭計算には載らず、純 EC 店 (楽天市場 / Yahoo! /
+  //   じゃらん / HMV&BOOKS online) だけで既定発火する。物理店 id への membership は
+  //   「その店のネット通販で買う」場合の正しいデータなので削除しない (ネット購入モードで使う)。
+  //   J-POINT (店ごと登録必須) とは条件の質が異なる点に注意。
   {
     id: "prog-epos-tamaru-2x",
     scope: "member-stores",
@@ -807,8 +811,10 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "epos",
     bonusType: "primary",
+    channel: "online", // PR-0a-2a: サイト経由のネット購入限定
     description:
-      "たまるマーケット (エポスポイントUPサイト) 経由の購入で 2倍 (基本0.5%×2)。一部ショップはゴールド/プラチナに個別上乗せ倍率あり (ショップごと設定のため未モデル化)。",
+      "たまるマーケット (エポスポイントUPサイト) 経由の購入で 2倍 (基本0.5%×2)。一部ショップはゴールド/プラチナに個別上乗せ倍率あり (ショップごと設定のため未モデル化)。" +
+      "店頭購入は対象外 (たまるマーケット経由のネット購入のみ)。",
     conditions:
       "たまるマーケットを経由して対象ショップで購入した場合のみボーナス付与。",
     entryUrl: "https://tamaru.eposcard.co.jp/",
@@ -821,8 +827,10 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.015,
     currencyId: "epos",
     bonusType: "primary",
+    channel: "online", // PR-0a-2a: サイト経由のネット購入限定
     description:
-      "たまるマーケット (エポスポイントUPサイト) 経由の購入で 3倍 (基本0.5%×3)。一部ショップはゴールド/プラチナに個別上乗せ倍率あり (ショップごと設定のため未モデル化)。",
+      "たまるマーケット (エポスポイントUPサイト) 経由の購入で 3倍 (基本0.5%×3)。一部ショップはゴールド/プラチナに個別上乗せ倍率あり (ショップごと設定のため未モデル化)。" +
+      "店頭購入は対象外 (たまるマーケット経由のネット購入のみ)。",
     conditions:
       "たまるマーケットを経由して対象ショップで購入した場合のみボーナス付与。",
     entryUrl: "https://tamaru.eposcard.co.jp/",
@@ -835,8 +843,10 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.02,
     currencyId: "epos",
     bonusType: "primary",
+    channel: "online", // PR-0a-2a: サイト経由のネット購入限定
     description:
-      "たまるマーケット (エポスポイントUPサイト) 経由の購入で 4倍 (基本0.5%×4)。一部ショップはゴールド/プラチナに個別上乗せ倍率あり (ショップごと設定のため未モデル化)。",
+      "たまるマーケット (エポスポイントUPサイト) 経由の購入で 4倍 (基本0.5%×4)。一部ショップはゴールド/プラチナに個別上乗せ倍率あり (ショップごと設定のため未モデル化)。" +
+      "店頭購入は対象外 (たまるマーケット経由のネット購入のみ)。",
     conditions:
       "たまるマーケットを経由して対象ショップで購入した場合のみボーナス付与。",
     entryUrl: "https://tamaru.eposcard.co.jp/",
@@ -859,6 +869,17 @@ const JAL_TOKUYAKU_STORE_IDS = [
   "royal-host",
   "tsuruha",
   "conv-familymart",
+];
+
+// PR-0a-2a (A16): J-POINT 20倍の経由型 2 店 (スターバックス / マクドナルド) の membership 指定。
+// W / Gold の両系列で共有する (list のドリフト防止)。channel:"online" = 店頭計算に載せない。
+// mcdonalds の notes は seed-additions.ts の ADDED 行と同文 (手書き優先で ADDED 行を置き換えるため)。
+const JPOINT_20X_ONLINE_STORES: MembershipStoreSpec[] = [
+  ["starbucks", { channel: "online" }],
+  [
+    "mcdonalds",
+    { channel: "online", notes: "モバイルオーダー・マックデリバリー限定" },
+  ],
 ];
 
 // 店舗 × プログラムの加盟関係 (M2M)
@@ -1209,6 +1230,17 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   // 倍率は j-pointpartner.jcb.co.jp/search で WebFetch 検証済 (mos-burger のみ未検証、subagent 一般知識)
   // W (jcb-w): 2倍 / 3倍 / 20倍 (4倍は廃止、高島屋を 2倍へ移管)
   // Gold (jcb-gold): 2倍 / 3倍 / 4倍 (高島屋プレミアム) / 20倍
+  //
+  // PR-0a-2a (A16): 20倍のうちスターバックス / マクドナルドは経由型 (店頭レジでのカード直接払いは
+  //   対象外) なので membership 単位で channel:"online" にして店頭計算から外す (2026-09-27 公式確認)。
+  //   - スターバックス: モバイルオーダー (Apple Pay で JCB を選択) / スターバックス カードへの
+  //     オンライン入金・オートチャージ / Starbucks eGift のみ。レジでのカード直接払い・店頭入金・
+  //     スターバックス カード払いは対象外。
+  //   - マクドナルド: モバイルオーダー・マックデリバリー限定。
+  //   すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・ジョナサンは店頭カード払いが対象の
+  //   ため channel 無し (両チャネル有効) のまま (seed-additions.ts の ADDED 行)。
+  //   mcdonalds の 2 行は seed-additions.ts (ADDED) にもあるが、seed() は手書き優先で同 id を
+  //   排除するのでここに同 id で置く (codegen ファイルの ADDED 行は残す)。notes は ADDED と同文。
 
   // ─── W 系列 (jcb-w) ───
   ...defineMemberships("prog-jcb-jpoint-2x", [
@@ -1221,7 +1253,7 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
     "takashimaya",
   ]),
   ...defineMemberships("prog-jcb-jpoint-3x", ["amazon", "conv-7eleven"]),
-  ...defineMemberships("prog-jcb-jpoint-20x", ["starbucks"]),
+  ...defineMemberships("prog-jcb-jpoint-20x", JPOINT_20X_ONLINE_STORES),
 
   // ─── Gold 系列 (jcb-gold) ───
   ...defineMemberships("prog-jcb-jpoint-gold-2x", [
@@ -1233,7 +1265,7 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   ]),
   ...defineMemberships("prog-jcb-jpoint-gold-3x", ["amazon", "conv-7eleven"]),
   ...defineMemberships("prog-jcb-jpoint-gold-4x", ["takashimaya"]),
-  ...defineMemberships("prog-jcb-jpoint-gold-20x", ["starbucks"]),
+  ...defineMemberships("prog-jcb-jpoint-gold-20x", JPOINT_20X_ONLINE_STORES),
 
   // ═══════════════════════════════════════════════════════════════
   // v6.5.0: エポス ゴールド/プラチナ優待 + たまるマーケット memberships

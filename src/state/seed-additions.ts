@@ -340,4 +340,6 @@ export const REMOVED_PROGRAM_IDS: string[] = [
   "prog-dpay-bic-camera-ikebukuro-5pc-cashback-2026-06",
   "prog-dpay-mos-burger-dpoint-3x-2026-07",
   "prog-dpay-yoshinoya-20pc-cashback-2026-07",
+  "prog-au-pay-card-addon",
+  "prog-rakuten-pointcard-1pc",
 ];

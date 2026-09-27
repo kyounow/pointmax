@@ -18,6 +18,7 @@ import type {
   Store,
   StoreProgramMembership,
 } from "../domain/types";
+import { PURCHASE_CHANNELS } from "../domain/purchaseChannel";
 import { PERSIST_SCHEMA_VERSION } from "./persist-versions";
 import { membershipId } from "./defineMemberships";
 import { CARD_FAMILIES } from "./seed-data-card-families";
@@ -75,6 +76,13 @@ const OPT_POS = (key: string): FieldCheck => ({
   key,
   check: (v) => v === undefined || (isNum(v) && v > 0),
   kind: "正の有限数",
+});
+// 任意の enum フィールド (undefined は許容。存在する場合のみ許容値のいずれかを要求)。
+// PR-0a-2a: BenefitProgram.channel / StoreProgramMembership.channel の値域検証に使う。
+const OPT_ENUM = (key: string, allowed: readonly string[]): FieldCheck => ({
+  key,
+  check: (v) => v === undefined || (typeof v === "string" && allowed.includes(v)),
+  kind: `${allowed.join(" / ")} のいずれか (または未指定)`,
 });
 const PROGRAM_SCOPES = ["all-stores", "member-stores"] as const;
 
@@ -164,12 +172,14 @@ export function validateImportData(
       data.programs,
       "programs",
       // v6: scope を必須 + enum 検証 (all-stores / member-stores)。
+      // PR-0a-2a: channel は任意 + 値域検証 (in-store / online)。
       [
         STR("id"),
         STR("name"),
         RATE("rate"),
         STR("currencyId"),
         ENUM("scope", PROGRAM_SCOPES),
+        OPT_ENUM("channel", PURCHASE_CHANNELS),
       ],
       false,
     ),
@@ -177,7 +187,13 @@ export function validateImportData(
       data.memberships,
       "memberships",
       // v6: id を必須化 (programId/storeId は従来どおり必須)。
-      [STR("id"), STR("programId"), STR("storeId")],
+      // PR-0a-2a: channel は任意 + 値域検証 (in-store / online)。
+      [
+        STR("id"),
+        STR("programId"),
+        STR("storeId"),
+        OPT_ENUM("channel", PURCHASE_CHANNELS),
+      ],
       false,
     ),
   ];

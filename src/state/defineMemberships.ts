@@ -15,8 +15,8 @@ export function membershipId(programId: string, storeId: string): string {
 
 // defineMemberships の store 指定。
 //   - プレーン: storeId 文字列のみ (override 無しの通常行)
-//   - タプル: [storeId, overrides] — overrideRate / overrideCurrencyId / notes /
-//     userModifiedAt を持つ行用。id / programId / storeId は規約側が権威を持つため
+//   - タプル: [storeId, overrides] — overrideRate / overrideCurrencyId / channel /
+//     notes / userModifiedAt を持つ行用。id / programId / storeId は規約側が権威を持つため
 //     overrides から指定しても無視される (下の spread 順を参照)。
 export type MembershipStoreSpec =
   | string
