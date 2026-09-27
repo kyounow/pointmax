@@ -10,6 +10,7 @@ name: CI
 #
 # 注: typecheck (tsc -b) は public/master.json を必要としない (同ファイルはランタイム fetch される
 # gitignore 済みアセットで、src からの型 import ではないため prebuild 不要)。
+# typecheck は scripts/ も対象 (tsconfig.scripts.json。lib は ES2023 のみで DOM 無し)。
 
 on:
   push:
