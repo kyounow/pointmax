@@ -126,7 +126,8 @@ export const SEED_STORES: Store[] = [
 
   // 孤児 membership backfill (cron pipeline の category cap で store 本体だけ deferred
   // されて membership が孤児化した分の補完、PR #53)。
-  // 元データ: sources/extracted/{rakuten-point-partners,ponta-partners,v-point-partners}.json
+  // 元データ: 当時の sources/extracted/{rakuten-point-partners,ponta-partners,v-point-partners}.json
+  // (2026-09-27 にソース停止で git rm 済み。内容は `git log -- sources/extracted/<id>.json` で git 履歴から参照)
   // 飲食系 (rakuten-point-partners 由来、prog-rakuten-pointcard-0.5pc)
   { id: "korakuen", name: "幸楽苑", category: "飲食" },
   { id: "jolly-pasta", name: "ジョリーパスタ", category: "飲食" },
