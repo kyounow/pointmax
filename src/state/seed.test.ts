@@ -6,8 +6,12 @@ import {
   isMasterPaymentApp,
   getSeedCard,
   getSeedPaymentApp,
+  getSeedProgram,
+  getSeedEdge,
 } from "./seed";
 import { SEED_CARDS, SEED_PAYMENT_APPS } from "./seed-data-cards";
+import { SEED_EDGES } from "./seed-data-edges";
+import { SEED_BENEFIT_PROGRAMS } from "./seed-data-programs";
 import { CARD_FAMILIES } from "./seed-data-card-families";
 import { isValidVerifiedMonth } from "../domain/edgeFreshness";
 import { isSafeHttpUrl } from "../domain/urlSafety";
@@ -83,6 +87,55 @@ describe("getSeedCard", () => {
     const first = getSeedCard("rakuten-card");
     const second = getSeedCard("rakuten-card");
     expect(first).toEqual(second);
+  });
+
+  it("PR-5a: seed().cards の全 id で seed() の行と一致する (seed() ベースの lookup)", () => {
+    for (const c of seed().cards) {
+      expect(getSeedCard(c.id)).toEqual(c);
+    }
+  });
+});
+
+// PR-5a: getSeedProgram / getSeedEdge は seed() の最終形 (PROGRAM_OVERRIDES 適用後・tombstone
+// 除外後) から作る lazy lookup。鮮度 (確認月) と officialUrl の表示解決に使う。
+describe("getSeedProgram / getSeedEdge (PR-5a)", () => {
+  it("seed().programs の全 id で getSeedProgram の結果が一致する", () => {
+    const programs = seed().programs;
+    expect(programs.length).toBeGreaterThan(0);
+    for (const p of programs) {
+      expect(getSeedProgram(p.id)).toEqual(p);
+    }
+  });
+
+  it("未知の id と '' は undefined", () => {
+    expect(getSeedProgram("some-random-uuid-12345")).toBeUndefined();
+    expect(getSeedProgram("")).toBeUndefined();
+    expect(getSeedEdge("some-random-uuid-12345")).toBeUndefined();
+    expect(getSeedEdge("")).toBeUndefined();
+  });
+
+  it("tombstone 済みの program は手書きの定義が残っていても引けない", () => {
+    // prog-dcard-bic-camera-may2026 は seed-data-programs.ts に定義が残り REMOVED_PROGRAM_IDS で除外
+    expect(REMOVED_PROGRAM_IDS).toContain("prog-dcard-bic-camera-may2026");
+    expect(
+      SEED_BENEFIT_PROGRAMS.some((p) => p.id === "prog-dcard-bic-camera-may2026"),
+    ).toBe(true);
+    expect(getSeedProgram("prog-dcard-bic-camera-may2026")).toBeUndefined();
+    for (const id of REMOVED_PROGRAM_IDS) {
+      expect(getSeedProgram(id), id).toBeUndefined();
+    }
+  });
+
+  it("2 回呼んでも同じ参照 (lazy cache)", () => {
+    const id = seed().programs[0].id;
+    expect(getSeedProgram(id)).toBe(getSeedProgram(id));
+    expect(getSeedEdge(SEED_EDGES[0].id)).toBe(getSeedEdge(SEED_EDGES[0].id));
+  });
+
+  it("getSeedEdge は SEED_EDGES の全 id で一致する", () => {
+    for (const e of SEED_EDGES) {
+      expect(getSeedEdge(e.id)).toEqual(e);
+    }
   });
 });
 
