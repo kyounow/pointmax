@@ -172,6 +172,9 @@ const Z4_STOPPED = [
   "mufg-card-global-point",
   "orico-card-member-point",
   "smbc-v-gold-7percent",
+  // campaign 決済系: 0b-3 (auto ガード + autoMerge:false + target) で再有効化する一時停止 (commit 4)
+  "d-pay-campaigns",
+  "paypay-campaigns",
 ];
 
 describe("Z4 停止ソース (収穫ゼロのソース停止)", () => {

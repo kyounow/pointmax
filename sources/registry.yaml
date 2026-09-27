@@ -467,9 +467,16 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: mon
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、一時停止)。enabled:false + fetchGroup 削除。
+      0b-3 (Z3 ガード + autoMerge:false + target) で再有効化する一時停止。
+      9/28・10/1 の cron で campaign auto 経路が無防備に走るのを避けるため
+      (campaign auto ゲートは「最大」語・対象キー無し・上限なし 30% を通す穴がある)。
+      直近 (9/13) の extracted は nonJson fallback で 0 件のため、停止による損失はほぼ無い。
+      再開時: 0b-3 で enabled:true + fetchGroup: mon に戻し、Z4_STOPPED から外す。
+      停止に合わせて sources/extracted/d-pay-campaigns.json を git rm 済み。
+      ---
       ★ 2026-05-17 追加 (#B 決済系キャンペーン)。paymentAppId=pa-d-pay、
       還元通貨 d-pt。扱いは rakuten-pay-campaigns と同じ (campaign-v3.0、
       店舗特定+期間明記のみ、新規 program は needsReview)。
@@ -493,9 +500,16 @@ sources:
       - programs
       - memberships
     extractionScope: chains-only
-    enabled: true
-    fetchGroup: thu
+    enabled: false
     notes: |
+      ★ 2026-09-27 停止 (Z4、一時停止)。enabled:false + fetchGroup 削除。
+      0b-3 (Z3 ガード + autoMerge:false + target) で再有効化する一時停止。
+      9/28・10/1 の cron で campaign auto 経路が無防備に走るのを避けるため
+      (campaign auto ゲートは「最大」語・対象キー無し・上限なし 30% を通す穴がある)。
+      直近 (9/16) の extracted は nonJson fallback で 0 件のため、停止による損失はほぼ無い。
+      再開時: 0b-3 で enabled:true + fetchGroup: thu に戻し、Z4_STOPPED から外す。
+      停止に合わせて sources/extracted/paypay-campaigns.json を git rm 済み。
+      ---
       ★ 2026-05-28 追加 (#C キャンペーン獲得拡充 PR #57)。
       paymentAppId=pa-paypay、還元通貨=paypay。campaign-v3.0 extractor が
       「対象店舗 × PayPay 期間限定上振れ」を 1 キャンペーン=1 program
