@@ -20,6 +20,8 @@
 #     rateWatched で review に回す (auto で seed が変わると上の契約が safety gate で落ちるため)。
 #   - candidates は到達性プローブ (--probe) 専用で照合しない。URL はリポジトリ (registry.yaml / seed) に既にあるものだけ。
 #   - excluded は意図して監視しない subject と理由 (実在は求めない。期限切れ整理で消える campaign も書くため)。
+#     excluded の program (prog-jcb-jpoint-20x / gold-20x / epos-tamaru-2x) は program 単位の句では照合しないが、
+#     監視 membership の率の元なので guardRateWatched の監視対象には含める (loadWatchedSubjects)。
 
 version: 1
 
@@ -141,21 +143,24 @@ targets:
     url: https://j-pointpartner.jcb.co.jp/shop/000014
     priority: 1
     assertions:
-      # 店紹介の文が長く、倍率表示から anchor まで約 400 字あるので window を広げる
+      # 店紹介の文が長く、倍率表示から anchor まで約 400 字あるので window を広げる。
+      # 期間限定の終了日『2027年1月12日』(本文「2026年1月13日(火)~2027年1月12日(火)まですべての券種でポイントが
+      # 20倍になります」、anchor の約 490 字前) も句にして、期間の延長・終了の書き換えを phraseMissing で拾う
       - subject: { kind: membership, programId: prog-jcb-jpoint-20x, storeId: starbucks }
         seedRateAtCuration: 0.105
         anchor: ポイントアップ期間
-        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+        phrases: ["J-POINT 20倍", "ポイントアップ登録", "2027年1月12日"]
         window: 700
       - subject: { kind: membership, programId: prog-jcb-jpoint-gold-20x, storeId: starbucks }
         seedRateAtCuration: 0.1
         anchor: ポイントアップ期間
-        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+        phrases: ["J-POINT 20倍", "ポイントアップ登録", "2027年1月12日"]
         window: 700
     notes: >-
       スタバの 3 エントリ (000014 オンライン入金・オートチャージ / 000445 モバイルオーダー / 000235 eGift) のうち、
       期間限定 (2027-01-12 まで全券種 20 倍、以前は一般カード 10 倍) で最初に変わりうる 000014 だけを照合する。
       残り 2 エントリの掲載は下の一覧 (storeSet) で見る。membership は channel online。2026-09-27 確認
+      (終了日の句は 2026-09-28 に rate-watch の GET で照合)
 
   # ─── J-POINT 20 倍 飲食店の一覧 (店名集合の fingerprint) ───
   - id: jpoint-20x-restaurants-list
