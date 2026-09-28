@@ -144,6 +144,13 @@ membership として出力。
 }
 ```
 
+`category` は次の語彙から選んでください。どれにも当てはまらない業態は無理に当てはめず、
+業態を表す短い名前をそのまま書いてください (語彙外・未設定のショップは自動追加されず、人手レビューに回ります):
+
+<!-- INJECT:categories -->
+_(実行時に scripts/sync/inject-prompt.ts が src/state/seed-categories.ts から語彙を注入)_
+<!-- /INJECT -->
+
 ### キャンペーン期間 (validFrom / validTo) — 通常は省略
 
 たまるマーケットの倍率は**期間限定ではなく常設**のため、通常は `validFrom` /

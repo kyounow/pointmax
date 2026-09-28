@@ -11,12 +11,21 @@
 //   <!-- /INJECT -->
 //
 // 対応する entity:
-//   cards | currencies | stores | pointCards | paymentApps
+//   cards | currencies | stores | pointCards | paymentApps | categories
+//
+// categories (PR-4a) は seed() ではなく店舗カテゴリ語彙 (src/state/seed-categories.ts) の
+// pseudo を除く 35 名を `| name |` の 1 列表で出す (filter は不可)。stores[] を出力する
+// extractor の prompt (jcb-jpoint / epos-tamaru / ongoing-program) が「category は次の語彙から選ぶ」
+// の直後に置く。語彙外の店は propose の unknownCategory で review に回る。
+// 注入は実行時の文脈で出力スキーマは変わらないので、INJECT を足しても promptVersion と
+// registry.yaml の extractorVersions は上げない (上げると旧世代扱いの staleExtractGeneration が
+// 1 周期走るだけで得るものが無い)。
 //
 // マーカー自体は出力にも保存される (再注入が冪等)。
 
 import { seed } from "../../src/state/seed";
 import { PSEUDO_PAYMENT_APP_IDS, PSEUDO_STORE_IDS } from "../../src/state/seed-blocklist";
+import { EXTRACTABLE_STORE_CATEGORIES } from "../../src/state/seed-categories";
 
 // ───────────────────────────────────────────────────────────────
 // Types
@@ -27,7 +36,8 @@ type InjectableEntity =
   | "currencies"
   | "stores"
   | "pointCards"
-  | "paymentApps";
+  | "paymentApps"
+  | "categories";
 
 type InjectParams = {
   filter?: { field: string; value: string };
@@ -43,6 +53,7 @@ const DEFAULT_COLUMNS: Record<InjectableEntity, string[]> = {
   stores: ["id", "name", "category"],
   pointCards: ["id", "name", "currencyId"],
   paymentApps: ["id", "name", "chargeBased"],
+  categories: ["name"],
 };
 
 // ───────────────────────────────────────────────────────────────
@@ -125,6 +136,15 @@ function collectRecords(
   kind: InjectableEntity,
   filter?: { field: string; value: string },
 ): Record<string, unknown>[] {
+  // PR-4a: 店舗カテゴリ語彙。pseudo (汎用) は見せない (新規店の category として認めないため)。
+  if (kind === "categories") {
+    if (filter) {
+      throw new Error(
+        `inject-prompt: INJECT:categories は filter を受け付けない: "${filter.field}:${filter.value}"`,
+      );
+    }
+    return EXTRACTABLE_STORE_CATEGORIES.map((name) => ({ name }));
+  }
   let all = data[kind] as unknown as Record<string, unknown>[];
   // PSEUDO_STORE_IDS (規定還元表示用ダミー store、例: "general") は Gemini に
   // 「既存 store」として見せない。プロンプト INJECT で見えると、店舗特定不能な

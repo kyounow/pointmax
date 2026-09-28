@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
+import { load as parseYaml } from "js-yaml";
 import { injectExistingEntities } from "./inject-prompt";
+import type { RegistryFile } from "./types";
 import { seed } from "../../src/state/seed";
-import { PSEUDO_PAYMENT_APP_IDS } from "../../src/state/seed-blocklist";
+import { PSEUDO_PAYMENT_APP_IDS, PSEUDO_STORE_IDS } from "../../src/state/seed-blocklist";
+import { EXTRACTABLE_STORE_CATEGORIES } from "../../src/state/seed-categories";
 
 describe("injectExistingEntities", () => {
   it("INJECT:stores マーカーが Markdown テーブルに置換される", () => {
@@ -85,6 +88,26 @@ placeholder
     const input = "# 普通の Markdown\nテキストのみ";
     expect(injectExistingEntities(input)).toBe(input);
   });
+
+  it("PR-4a: INJECT:categories は語彙 35 名 (汎用を除く) の 1 列表に展開される", () => {
+    const out = injectExistingEntities(
+      `<!-- INJECT:categories -->\nplaceholder\n<!-- /INJECT -->`,
+    );
+    expect(out).toContain("| name |");
+    expect(out).not.toContain("placeholder");
+    const rows = [...out.matchAll(/^\|\s*([^|]+?)\s*\|$/gm)]
+      .map((m) => m[1])
+      .filter((v) => v !== "name" && v !== "---");
+    expect(rows).toEqual([...EXTRACTABLE_STORE_CATEGORIES]);
+    expect(rows).toHaveLength(35);
+    expect(rows).not.toContain("汎用");
+    expect(out).toContain("<!-- INJECT:categories -->");
+  });
+
+  it("PR-4a: INJECT:categories に filter を付けると例外", () => {
+    const input = `<!-- INJECT:categories filter=name:飲食 -->\n<!-- /INJECT -->`;
+    expect(() => injectExistingEntities(input)).toThrow(/INJECT:categories は filter を受け付けない/);
+  });
 });
 
 describe("全プロンプトファイルが解決可能", () => {
@@ -162,6 +185,20 @@ describe("post-cron 追加エンティティのカバレッジ契約", () => {
     expect(cardIds).toContain("mufg-card");
   });
 
+  it("PR-4a: INJECT:categories は seed() の店舗が使う全カテゴリ (pseudo = 擬似店舗 general の汎用を除く) を含む", () => {
+    const out = injectExistingEntities(`<!-- INJECT:categories -->\n<!-- /INJECT -->`);
+    const injected = new Set(
+      [...out.matchAll(/^\|\s*([^|]+?)\s*\|$/gm)].map((m) => m[1]),
+    );
+    const used = new Set(
+      seed()
+        .stores.filter((s) => !PSEUDO_STORE_IDS.has(s.id))
+        .map((s) => s.category ?? "(未設定)"),
+    );
+    expect(used.size).toBeGreaterThan(10);
+    expect([...used].filter((c) => !injected.has(c))).toEqual([]);
+  });
+
   it("card extractor の実プロンプトが全 seed 通貨を含む (defaultCurrencyId マッピング用)", () => {
     // card extractor は cards[].defaultCurrencyId を既存通貨へ対応付ける。
     // 新通貨が card.prompt.md の INJECT:currencies から漏れると、Gemini が
@@ -175,4 +212,58 @@ describe("post-cron 追加エンティティのカバレッジ契約", () => {
       expect(resolved).toContain(c.id);
     }
   });
+});
+
+// PR-4a: stores[] を出力するソースの prompt に店舗カテゴリ語彙 (INJECT:categories) があることの契約。
+// 語彙外の category の新規店は propose の unknownCategory で review に回るので、語彙を見せていない
+// extractor はレビュー行きが増えるだけになる。対象外にする extractor は理由付きで EXEMPT に書く。
+describe("PR-4a: INJECT:categories の対象 extractor 契約", () => {
+  const REPO_ROOT = resolve(__dirname, "../..");
+  const promptsDir = resolve(REPO_ROOT, "sources/extractors");
+  const registry = parseYaml(
+    readFileSync(resolve(REPO_ROOT, "sources/registry.yaml"), "utf-8"),
+  ) as RegistryFile;
+
+  const CATEGORY_INJECT_EXTRACTORS = ["jcb-jpoint", "epos-tamaru", "ongoing-program"] as const;
+  const CATEGORY_INJECT_EXEMPT: Record<string, string> = {
+    campaign:
+      "固定語彙行 (語彙内 + alias キーの 9 名) のまま。F1p の campaign v3.6 改訂で INJECT に置換する",
+    "point-partner": "4 ソースとも停止中 (2026-09-27 Z4)。再開する PR で置換する",
+    "jal-tokuyaku": "停止中。JAL特約店の業種別カテゴリを扱う別系統 (再開する PR で判断する)",
+  };
+
+  it("stores を produces に持つ全ソースの extractor は、INJECT 対象か理由付きの対象外", () => {
+    const withStores = registry.sources.filter((s) => s.produces?.includes("stores"));
+    expect(withStores.length).toBeGreaterThan(0);
+    const unclassified = withStores
+      .filter(
+        (s) =>
+          !(CATEGORY_INJECT_EXTRACTORS as readonly string[]).includes(s.extractor) &&
+          !(s.extractor in CATEGORY_INJECT_EXEMPT),
+      )
+      .map((s) => `${s.id}:${s.extractor}`);
+    expect(unclassified).toEqual([]);
+  });
+
+  it.each(CATEGORY_INJECT_EXTRACTORS)(
+    "%s.prompt.md は INJECT:categories を持ち、解決後に語彙 35 名が全て載る",
+    (extractor) => {
+      const content = readFileSync(resolve(promptsDir, `${extractor}.prompt.md`), "utf-8");
+      expect(content).toMatch(/<!--\s*INJECT:categories\s*-->/);
+      const resolved = injectExistingEntities(content);
+      for (const name of EXTRACTABLE_STORE_CATEGORIES) {
+        expect(resolved, name).toMatch(new RegExp(`^\\| ${name} \\|$`, "m"));
+      }
+    },
+  );
+
+  it.each(CATEGORY_INJECT_EXTRACTORS)(
+    "%s.prompt.md の promptVersion は registry の extractorVersions と一致したまま (INJECT の追加では上げない)",
+    (extractor) => {
+      const content = readFileSync(resolve(promptsDir, `${extractor}.prompt.md`), "utf-8");
+      const version = registry.extractorVersions?.[extractor];
+      expect(version).toBeTruthy();
+      expect(content).toContain(`"promptVersion": "${extractor}-${version}"`);
+    },
+  );
 });
