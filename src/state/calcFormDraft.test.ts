@@ -11,6 +11,7 @@ import {
   localDateKey,
   type CalcFormDraft,
 } from "./calcFormDraft";
+import { YEN_TARGET_ID } from "../domain/yenValue";
 
 const STORAGE_KEY = "pointmax:calc-form:v1";
 
@@ -166,7 +167,7 @@ describe("resolveCalcFormRestore (同日ガード + 通貨/店舗ガード)", ()
   });
 });
 
-// PR-6a-1 (G19): マウント時の既定通貨タブ = 同日の下書き ?? 優先通貨の先頭 ?? ""。
+// PR-6a-1 (G19): マウント時の既定通貨タブ = 同日の下書き ?? 優先通貨の先頭 ?? ¥ 円換算 (PR-6b)。
 describe("resolveInitialCurrencyId (起動時の既定通貨タブ)", () => {
   it("復元 id があれば優先通貨の先頭より優先する", () => {
     expect(resolveInitialCurrencyId("ana-mile", ["rakuten-pt", "ana-mile"])).toBe(
@@ -180,8 +181,8 @@ describe("resolveInitialCurrencyId (起動時の既定通貨タブ)", () => {
     );
   });
 
-  it("復元 id も優先通貨も無ければ \"\" (未選択。¥ 円換算を既定にしない = 6b の担当)", () => {
-    expect(resolveInitialCurrencyId(null, [])).toBe("");
+  it("復元 id も優先通貨も無ければ ¥ 円換算 (YEN_TARGET_ID、PR-6b)", () => {
+    expect(resolveInitialCurrencyId(null, [])).toBe(YEN_TARGET_ID);
   });
 
   it("優先通貨から外れた下書き通貨 (resolveCalcFormRestore で null 化) は優先通貨の先頭になる", () => {

@@ -293,6 +293,11 @@ details summary {
   color: var(--text);
   font-weight: 700;
 }
+/* PR-6b: 円換算ビューの各行は result-meta に警告チップ (最大 3) が並ぶので折り返す。 */
+.results-yen .result-meta {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
 .path {
   margin-top: 10px;
 }

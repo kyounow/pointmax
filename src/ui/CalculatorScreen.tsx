@@ -98,8 +98,9 @@ export function CalculatorScreen() {
   const [storeCategory, setStoreCategory] = useState(""); // "" = 全カテゴリ
   const [amount, setAmount] = useState(restored.amount ?? "10000");
   // activeCurrencyId = 現在表示中の対象通貨 (= 通貨タブの選択中タブ)。
-  // マウント時は「同日の下書き (PR-3d、優先通貨に現存する id のみ) ?? 優先通貨の先頭 ?? ""」
-  // (PR-6a-1 / G19: v6.2.0 で失われた先頭タブ既定の復旧)。"" = 優先通貨未設定で select から選ぶ。
+  // マウント時は「同日の下書き (PR-3d、優先通貨に現存する id のみ) ?? 優先通貨の先頭 ?? ¥ 円換算」
+  // (PR-6a-1 / G19: v6.2.0 で失われた先頭タブ既定の復旧。PR-6b: 優先通貨が未設定の人は円換算
+  // ビューで起動し、目標通貨 select を選ばなくても結果が出る)。
   // 以後の preferred 変化への追従は下の prevPreferred ガードが担う。
   const [activeCurrencyId, setActiveCurrencyId] = useState(() =>
     resolveInitialCurrencyId(restored.activeCurrencyId, preferredCurrencyIds),
@@ -221,12 +222,14 @@ export function CalculatorScreen() {
   // result が非 null (= storeId/activeCurrency/amount が揃い ranking 算出済) のときだけ記録。
   // 同一 (store, 通貨) ペアの連続記録 (金額変更等の再計算) は usageStats 側の
   // last-pair ガードで抑止されるため、ここでは result 参照の変化を起点にするだけでよい。
+  // PR-6b: 円換算モード (通貨 id = 仮想ターゲット __yen__) でも記録する。直近店舗チップ
+  // (getRecentStoreIds) は calcEvents から作るため、円換算が既定の人 (優先通貨未設定) でも
+  // チップが育つようにする (通貨 id は統計の表示に使っていない)。
   useEffect(() => {
-    // PR-5a: 円換算モードの仮想ターゲット (__yen__) は実通貨ではないので統計に記録しない。
-    if (result && storeId && activeCurrencyId && !yenMode) {
+    if (result && storeId && activeCurrencyId) {
       recordCalcEvent(storeId, activeCurrencyId);
     }
-  }, [result, storeId, activeCurrencyId, yenMode]);
+  }, [result, storeId, activeCurrencyId]);
 
   // PR-3d (UX-6): 同日内復元用に、金額 / 優先通貨タブ / 店舗の変更を独立キーへ書き出す。
   // effect でまとめ書きするので、入力中の連続変更も commit ごとに 1 回に集約される
@@ -616,12 +619,15 @@ export function CalculatorScreen() {
         </div>
       )}
 
-      {/* PR-5a: 円換算 (目安) モードの結果リスト。 */}
+      {/* PR-5a: 円換算 (目安) モードの結果リスト。PR-6b: 通常ビューと同じ警告チップを各行に出す。 */}
       {hasHeldCards && result && yenMode && (
         <CalcYenResults
           rankings={result}
           currencyName={currencyName}
           yenValueOf={yenValueOf}
+          programById={programById}
+          membershipOf={membershipOf}
+          now={today}
         />
       )}
 
