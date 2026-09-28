@@ -1,9 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { seed } from "../../src/state/seed";
+import { isSafeHttpUrl } from "../../src/domain/urlSafety";
 import {
+  RATE_WATCH_PATH,
   carryForward,
+  collectRateWatchViolations,
   checkAssertion,
   checkStoreSet,
   loadRateWatchFile,
@@ -452,5 +456,230 @@ describe("subjectKey / loadWatchedSubjects", () => {
   it("file が null なら全部空", () => {
     const w = loadWatchedSubjects(null);
     expect(w.programIds.size + w.cardIds.size + w.membershipIds.size).toBe(0);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// 契約: sources/rate-watch.yaml と seed の整合 (npm test 経由で cron の safety gate でも走る)。
+// seed の率を直す PR では rate-watch.yaml の seedRateAtCuration も同じ PR で更新する (しないとここで落ちる)。
+// cron の auto 変更で落ちないよう、監視対象への updateField / delete は Phase C5 guardRateWatched が review に回す。
+// ───────────────────────────────────────────────────────────────
+
+describe("契約: sources/rate-watch.yaml", () => {
+  const file = loadRateWatchFile(RATE_WATCH_PATH);
+
+  it("ファイルがあり、読める (version 1)", () => {
+    expect(file).not.toBeNull();
+    expect(file!.version).toBe(1);
+  });
+
+  it("seed と整合し値域を満たす (collectRateWatchViolations が空)", () => {
+    // subject 実在 / seedRateAtCuration が seed の率と完全一致 / 監視 program は validTo 無し /
+    // id 一意・kebab-case / url https + isSafeHttpUrl / phrases 非空 / window 50〜2000 / priority 1〜4 /
+    // target と excluded の subject 重複なし / excluded.reason 非空 / candidates も isSafeHttpUrl
+    expect(collectRateWatchViolations(file!, seed())).toEqual([]);
+  });
+
+  it("パイロット: J-POINT 20 倍 8 店の W / Gold membership・20 倍飲食店の一覧・たまる無印を照合している", () => {
+    const keys = file!.targets.flatMap((t) => t.assertions.map((a) => subjectKey(a.subject)));
+    for (const store of [
+      "sukiya",
+      "yoshinoya",
+      "gusto",
+      "bamiyan",
+      "jonathan",
+      "saint-marc-cafe",
+      "mcdonalds",
+      "starbucks",
+    ]) {
+      expect(keys).toContain(`membership:m-prog-jcb-jpoint-20x-${store}`);
+      expect(keys).toContain(`membership:m-prog-jcb-jpoint-gold-20x-${store}`);
+    }
+    expect(keys).toContain("category:jpoint-20x-restaurants");
+    expect(keys).toContain("membership:m-prog-epos-tamaru-2x-muji");
+  });
+
+  it("J-POINT の target は 9/27 に確認した店舗詳細ページ / カテゴリ一覧だけ (search?keyword= は使わない)", () => {
+    const jpoint = file!.targets.filter((t) => t.url.includes("j-pointpartner.jcb.co.jp"));
+    for (const t of jpoint) {
+      expect(t.url, t.id).toMatch(
+        /^https:\/\/j-pointpartner\.jcb\.co\.jp\/(shop\/\d{6}|search\?shop_category=30)$/,
+      );
+    }
+  });
+
+  it("candidates の URL はリポジトリ (registry.yaml / seed の officialUrl・entryUrl) に既にあるものだけ", () => {
+    const registryText = readFileSync(resolve(RATE_WATCH_PATH, "../registry.yaml"), "utf-8");
+    const seedUrls = new Set(
+      seed().programs.flatMap((p) => [p.officialUrl, p.entryUrl].filter((u): u is string => !!u)),
+    );
+    for (const c of file!.candidates ?? []) {
+      expect(isSafeHttpUrl(c.url)).toBe(true);
+      expect(registryText.includes(c.url) || seedUrls.has(c.url), c.id).toBe(true);
+    }
+  });
+});
+
+describe("collectRateWatchViolations (fixture)", () => {
+  const seedView = {
+    programs: [
+      { id: "prog-a", rate: 0.105 },
+      { id: "prog-campaign", rate: 0.05, validTo: "2026-12-31" },
+    ],
+    cards: [{ id: "card-a", defaultRate: 0.01 }],
+    memberships: [
+      { id: "m-prog-a-store-a", programId: "prog-a" },
+      { id: "m-prog-a-store-b", programId: "prog-a", overrideRate: 0.02 },
+      { id: "m-prog-campaign-store-a", programId: "prog-campaign" },
+    ],
+  };
+  const ok: RateWatchFile = {
+    version: 1,
+    targets: [
+      {
+        id: "t-a",
+        label: "a",
+        url: "https://example.com/a",
+        priority: 1,
+        assertions: [
+          {
+            subject: { kind: "membership", programId: "prog-a", storeId: "store-a" },
+            seedRateAtCuration: 0.105,
+            anchor: "期間",
+            phrases: ["20倍"],
+          },
+          {
+            subject: { kind: "membership", programId: "prog-a", storeId: "store-b" },
+            seedRateAtCuration: 0.02, // overrideRate が勝つ
+            phrases: ["4倍"],
+          },
+          { subject: { kind: "program", id: "prog-a" }, seedRateAtCuration: 0.105, phrases: ["x"] },
+          { subject: { kind: "card", id: "card-a" }, seedRateAtCuration: 0.01, phrases: ["1%"] },
+          {
+            kind: "storeSet",
+            subject: { kind: "category", id: "list-a" },
+            expectedStoreNames: ["すき家", "吉野家"],
+          },
+        ],
+      },
+    ],
+    candidates: [{ id: "c-a", url: "https://example.com/c", note: "n" }],
+    excluded: [{ subject: { kind: "program", id: "prog-gone" }, reason: "実在は求めない" }],
+  };
+  const mutate = (f: (x: RateWatchFile) => void): RateWatchFile => {
+    const x = structuredClone(ok);
+    f(x);
+    return x;
+  };
+  const phraseAt = (x: RateWatchFile, j: number) => {
+    const a = x.targets[0].assertions[j];
+    if (a.kind === "storeSet") throw new Error("fixture");
+    return a;
+  };
+
+  it("fixture は違反なし", () => {
+    expect(collectRateWatchViolations(ok, seedView)).toEqual([]);
+  });
+
+  it("seedRateAtCuration をわざとずらすと落ちる (seed の率を直したのに yaml を更新し忘れた)", () => {
+    const v = collectRateWatchViolations(
+      mutate((x) => {
+        phraseAt(x, 0).seedRateAtCuration = 0.1;
+      }),
+      seedView,
+    );
+    expect(v).toHaveLength(1);
+    expect(v[0]).toMatch(/seedRateAtCuration 0\.1 が seed の率 0\.105 と一致しない/);
+    // membership の率は overrideRate ?? program.rate
+    expect(
+      collectRateWatchViolations(
+        mutate((x) => {
+          phraseAt(x, 1).seedRateAtCuration = 0.105;
+        }),
+        seedView,
+      ),
+    ).toHaveLength(1);
+    // card は defaultRate
+    expect(
+      collectRateWatchViolations(
+        mutate((x) => {
+          phraseAt(x, 3).seedRateAtCuration = 0.005;
+        }),
+        seedView,
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("実在しない subject は落ちる (raw id ではなく membershipId で照合)", () => {
+    const v = collectRateWatchViolations(
+      mutate((x) => {
+        phraseAt(x, 0).subject = { kind: "membership", programId: "prog-a", storeId: "store-z" };
+        phraseAt(x, 2).subject = { kind: "program", id: "prog-z" };
+        phraseAt(x, 3).subject = { kind: "card", id: "card-z" };
+      }),
+      seedView,
+    );
+    expect(v).toEqual([
+      expect.stringContaining("membership m-prog-a-store-z が seed().memberships に無い"),
+      expect.stringContaining("program prog-z が seed().programs に無い"),
+      expect.stringContaining("card card-z が seed().cards に無い"),
+    ]);
+  });
+
+  it("validTo を持つ program (membership の program を含む) を監視すると落ちる (常設だけ)", () => {
+    const v = collectRateWatchViolations(
+      mutate((x) => {
+        const a = phraseAt(x, 0);
+        a.subject = { kind: "membership", programId: "prog-campaign", storeId: "store-a" };
+        a.seedRateAtCuration = 0.05;
+      }),
+      seedView,
+    );
+    expect(v).toEqual([expect.stringContaining("validTo (2026-12-31)")]);
+  });
+
+  it("target と excluded の subject が重複すると落ちる / excluded.reason が空だと落ちる", () => {
+    const v = collectRateWatchViolations(
+      mutate((x) => {
+        x.excluded.push({ subject: { kind: "program", id: "prog-a" }, reason: " " });
+      }),
+      seedView,
+    );
+    expect(v).toEqual([
+      expect.stringContaining("reason が空"),
+      expect.stringContaining("target の subject と重複"),
+    ]);
+  });
+
+  it("値域: id / url / priority / window / phrases / minTextLength / storeSet / candidates", () => {
+    const v = collectRateWatchViolations(
+      mutate((x) => {
+        const t = x.targets[0];
+        t.id = "T_A";
+        t.url = "http://example.com/a";
+        t.priority = 5 as 1;
+        t.minTextLength = 20;
+        phraseAt(x, 0).window = 10;
+        phraseAt(x, 2).phrases = [];
+        phraseAt(x, 3).phrases = [" "];
+        const s = t.assertions[4];
+        if (s.kind === "storeSet") s.expectedStoreNames = ["すき家", "すき家"];
+        x.targets.push({ ...structuredClone(ok.targets[0]), id: "c-a" });
+        x.candidates = [{ id: "c-a", url: "javascript:alert(1)", note: "" }];
+      }),
+      seedView,
+    );
+    const joined = v.join("\n");
+    expect(joined).toContain("target T_A: id が kebab-case ではない");
+    expect(joined).toContain("url が https ではない");
+    expect(joined).toContain("priority は 1〜4");
+    expect(joined).toContain("minTextLength は 100〜5000");
+    expect(joined).toContain("window は 50〜2000");
+    expect(joined).toContain("phrases が空");
+    expect(joined).toContain("phrases に空文字");
+    expect(joined).toContain("expectedStoreNames が重複");
+    expect(joined).toContain("candidate c-a: id が target / candidate と重複");
+    expect(joined).toContain("candidate c-a: url が https ではない");
+    expect(joined).toContain("candidate c-a: note が空");
   });
 });
