@@ -261,6 +261,26 @@ describe("BenefitProgram.scope の seed 契約 (v6)", () => {
   });
 });
 
+// PR-0b-3: program の対象キー契約。対象 (cardIds / pointCardId / paymentAppId) の無い program は
+// どのカードでも発火しない死にデータで、import 検証 (validators の checkProgramTargets) も拒否する。
+// cardIds:[] も同じ (programEvaluator は「どのカードにも一致しない」と扱う)。propose 側は
+// untargetedProgram で review に回すので、cron の auto では入らない。
+describe("PR-0b-3: program の対象キー契約", () => {
+  it("seed() の全 program が対象キー (非空 cardIds / pointCardId / paymentAppId) を持つ", () => {
+    const { programs } = seed();
+    const untargeted = programs
+      .filter((p) => !((p.cardIds?.length ?? 0) > 0) && !p.pointCardId && !p.paymentAppId)
+      .map((p) => p.id);
+    expect(untargeted, `対象キーの無い program: ${untargeted.join(", ")}`).toEqual([]);
+  });
+
+  it("cardIds を持つ program は非空 (cardIds:[] が 0 件)", () => {
+    const { programs } = seed();
+    const empty = programs.filter((p) => p.cardIds !== undefined && p.cardIds.length === 0).map((p) => p.id);
+    expect(empty).toEqual([]);
+  });
+});
+
 // v4.0.0 ①: ルーティングテーブル拡充に伴い、edges の参照整合性を CI で保証する。
 // 通貨を追加 / リネームしたとき、edge の from/to が dangling になるのを検出。
 describe("SEED_EDGES の通貨参照整合性", () => {
@@ -845,8 +865,8 @@ describe("四半期監査 2026-Q3: 消滅ルート / 廃止優待の削除固定
 // たまるマーケット (サイト経由のネット購入限定) と、J-POINT 20倍のうち経由型 2 店
 // (スターバックス / マクドナルド) を店頭計算から外す。物理店 membership は
 // ネット購入時の正しいデータなので残す (過剰剥離の退行防止)。
-// ⚠ target key 契約 (全 program が cardIds / pointCardId / paymentAppId のいずれか) はここに
-//   入れない (propose 側ガードと同時に PR-0b-3 で入れる)。
+// target key 契約 (全 program が cardIds / pointCardId / paymentAppId のいずれか) は
+// 「PR-0b-3: program の対象キー契約」(上) にある。
 describe("PR-0a-2a: 購入チャネル契約", () => {
   it("(1) prog-epos-tamaru-{N}x は全て channel==='online'", () => {
     const { programs } = seed();

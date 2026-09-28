@@ -5,6 +5,7 @@ import { load as parseYaml } from "js-yaml";
 import { SCOPE_DIRECTIVES } from "./types";
 import type { RegistryFile, RegistrySource } from "./types";
 import { selectSourcesForGroup } from "./fetch-all";
+import { autoMergeDisabledSourceIds, loadRegistryPolicy } from "./registry-policy";
 
 // registry.yaml の各ソースが「schema の extractor enum」「対応する
 // extractor プロンプトファイル」「有効な extractionScope」と整合することを
@@ -153,6 +154,21 @@ describe("fetchGroup 契約 (無料枠 mon/thu 分割)", () => {
     );
     expect(disabledWithGroup.map((s) => s.id)).toEqual([]);
   });
+
+  // PR-0b-3: 記載順 = 実行順 (selectSourcesForGroup)。取得が不安定な campaign 決済系 (d-pay / paypay) は
+  // 各グループの末尾に置き、先頭で無料枠を使い切って収穫のあるソースを巻き添えにしないようにする。
+  // ソースを足す / 止める PR はこの期待値も同時に更新する。
+  it("enabled ソースのグループ内の並び (mon: jcb → たまる → d払い / thu: smbc → PayPay)", () => {
+    expect(selectSourcesForGroup(registry.sources, "mon").map((s) => s.id)).toEqual([
+      "jcb-jpoint-partners",
+      "epos-tamaru-market",
+      "d-pay-campaigns",
+    ]);
+    expect(selectSourcesForGroup(registry.sources, "thu").map((s) => s.id)).toEqual([
+      "smbc-vpoint-up",
+      "paypay-campaigns",
+    ]);
+  });
 });
 
 // ── Z4 停止ソース (2026-09-27、収穫ゼロのソース停止) の契約 ──
@@ -172,9 +188,8 @@ const Z4_STOPPED = [
   "mufg-card-global-point",
   "orico-card-member-point",
   "smbc-v-gold-7percent",
-  // campaign 決済系: 0b-3 (auto ガード + autoMerge:false + target) で再有効化する一時停止 (commit 4)
-  "d-pay-campaigns",
-  "paypay-campaigns",
+  // campaign 決済系 (d-pay-campaigns / paypay-campaigns) の一時停止 (0b-1 commit 4) は
+  // PR-0b-3 で autoMerge:false + target 付きで解除した (下の「enabled ソースの並び」で固定)。
 ];
 
 describe("Z4 停止ソース (収穫ゼロのソース停止)", () => {
@@ -196,6 +211,48 @@ describe("Z4 停止ソース (収穫ゼロのソース停止)", () => {
       id,
     ).toBe(false);
   });
+});
+
+// ── ソース別ポリシー (PR-0b-3: target / autoMerge) の契約 ──
+// propose は registry を fail-closed で読む (registry-policy.ts)。壊れた target / autoMerge は
+// cron の Propose step を exit 1 で止めるので、ここで先に気付けるようにする。
+describe("ソース別ポリシー (target / autoMerge) の契約", () => {
+  const policy = loadRegistryPolicy();
+
+  it("実際の registry.yaml は loadRegistryPolicy を通る (target / autoMerge の値が正しい)", () => {
+    expect(policy.sources.length).toBe(registry.sources.length);
+    expect(policy.policies.size).toBe(registry.sources.length);
+  });
+
+  it("enabled な campaign extractor のソースは target を 1 つ以上宣言している", () => {
+    const missing = registry.sources.filter(
+      (s) =>
+        s.enabled &&
+        s.extractor === "campaign" &&
+        (policy.policies.get(s.id)?.targets.length ?? 0) === 0,
+    );
+    expect(missing.map((s) => s.id)).toEqual([]);
+  });
+
+  // 解除は PR-1 H4 の事後レビュー表で 4 週連続して誤りが無いことを確認してから別 PR で行い、
+  // この期待値も同じ PR で更新する。
+  it("autoMerge:false のソースは d-pay-campaigns と paypay-campaigns (解除 PR で意図的に更新する)", () => {
+    expect([...autoMergeDisabledSourceIds(policy.policies)].sort()).toEqual([
+      "d-pay-campaigns",
+      "paypay-campaigns",
+    ]);
+  });
+
+  it("d-pay は [pa-d-pay, d-pointcard] (d払い一覧に dポイントカード提示型が同居)、paypay は pa-paypay を宣言する", () => {
+    expect(policy.policies.get("d-pay-campaigns")?.targets).toEqual([
+      { paymentAppId: "pa-d-pay" },
+      { pointCardId: "d-pointcard" },
+    ]);
+    expect(policy.policies.get("paypay-campaigns")?.targets).toEqual([
+      { paymentAppId: "pa-paypay" },
+    ]);
+  });
+  // target が指す id が seed に存在するかは検査しない (seed↔registry 契約は保留中の別項目)。
 });
 
 // ── selectSourcesForGroup 単体 ──

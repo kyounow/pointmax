@@ -317,6 +317,17 @@
 - `npm run sync:propose` で現在 seed と diff、`autoApplicable`/`needsReview` に分類:
   - confidence ≥ 0.9 / rate 変動 ±10pp 以内 / 倍率 0.5x〜2x / 既存と衝突なし → auto
   - それ以外 (excludedCategory / lowConfidence / referenceChange / unsupportedDateClaim 等) → review
+  - **ソース別ポリシー (Phase B″ / C″、PR-0b-3)**: `sources/registry.yaml` で `autoMerge: false` のソース
+    (d払い / PayPay) 由来の auto 候補は、全ガードを通過しても `sourceAutoMergeDisabled` で review。
+    store / program / updateField は orphan ガード (Phase C) の前 (B″)、membership は内容ガード (C′) の後 (C″) で
+    降格するので、この reason は「ほかのガードは通過済み」を意味する (C / C′ で止まる membership は
+    `missing*Body` / `storeNameMismatch` / `campaignConditional` のまま)。
+    `target` 宣言と帰属が合わない新規 program は `targetMismatch`。registry が読めない・値が不正なら
+    propose は exit 1 (fail-closed、`scripts/sync/registry-policy.ts`)
+  - **membership の内容ガード (Phase C′、PR-0b-3)**: auto 候補の新規 membership のうち、既存店なのに
+    evidence に店名が無いものは `storeNameMismatch`、条件文言 (一部 / 最大 / オンライン・ネット・通販・経由 /
+    モバイルオーダー / ○○限定 / 支店限定) を含むものは `campaignConditional`。実効チャネルが online の
+    program (たまるマーケット) は EC 語を免除
 - `npm run sync:apply` で autoApplicable を `src/state/seed-additions.ts` に書き出し。
 - Gemini が schema 外プロパティを混ぜた場合も、違反アイテムのみ除去して残りを救済
   （ソース全体のクラッシュを防ぐ段階的降格）。
@@ -356,7 +367,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1606 ケース / 88 ファイル** (2026-09-27 時点)） |
+| テスト | Vitest（**1780 ケース / 90 ファイル** (2026-09-28 時点、PR-0b-3 後)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -466,8 +477,9 @@ scripts/sync/
   approve-proposals.ts # needsReview を ID 指定で seed-additions.ts に承認適用 (半自動レビュー)
   inject-prompt.ts     # extractor プロンプトに seed 内容を動的注入
   aliases.ts           # cardId / storeId の表記揺れ正規化
-  evidence-check.ts    # hallucination guard (日付主張の根拠検証 等)
-  report.ts            # AUTO_SUMMARY.md / REVIEW_QUEUE.md / SYNC_HISTORY(.json/.md) 生成
+  evidence-check.ts    # hallucination guard (日付主張の根拠検証 等) + キャンペーン条件文言 / lifestyle 語の検知
+  report.ts            # AUTO_SUMMARY.md / REVIEW_QUEUE.md / SYNC_HISTORY(.json/.md) 生成 (同 generatedAt は upsert)
+  registry-policy.ts   # registry.yaml → ソース別ポリシー (target / autoMerge、fail-closed) と Phase B″ / C″
   types.ts             # 共通型 + 閾値定数 + scope ディレクティブ
 ```
 
@@ -482,7 +494,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1606 ケース / 88 ファイル (2026-09-27 時点))
+npm run test         # Vitest (1780 ケース / 90 ファイル (2026-09-28 時点、PR-0b-3 後))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -518,9 +530,11 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   20 リクエスト/日のため、enabled ソースを 1 日で全 fetch すると後半ソースが 429 で枯渇する。
   そこで各ソースに `fetchGroup: mon | thu` を付与し (`sources/registry.yaml`)、**月曜 run は mon
   グループ / 木曜 run は thu グループ**だけを fetch して各実行を無料枠内に収める。
-  2026-09-27 に収穫ゼロのソースを停止 (Z4) し、保有カード系だけを残した: enabled は 3 ソース
-  (mon: J-POINT パートナー / たまるマーケット、thu: SMBC Vポイントアップ) で、worst-case は
-  単発 3 attempts × 本数 = mon 6 req / thu 3 req (d払い / PayPay を再有効化すると mon 9 / thu 6)。
+  2026-09-27 に収穫ゼロのソースを停止 (Z4) し、保有カード系だけを残した。d払い / PayPay の
+  キャンペーン一覧は PR-0b-3 で `autoMerge: false` + `target` 付きで再有効化し、enabled は 5 ソース
+  (mon 3 本: J-POINT パートナー → たまるマーケット → d払い、thu 2 本: SMBC Vポイントアップ → PayPay。
+  記載順 = 実行順で、campaign 決済系は各グループの末尾)。worst-case は単発 3 attempts × 本数 =
+  **mon 9 req / thu 6 req** (無料枠 20 req/日の内)。
   停止中のソースの理由と再開条件は registry の各 notes に記載。曜日は weekly-sync.yml が実行時刻の
   JST 曜日から自動導出。手動 `workflow_dispatch` では `group` 入力 (`auto` / `mon` / `thu` /
   `all`=全 enabled) でグループを明示指定できる (`all` は無料枠を消費するため手動フル実行専用)
@@ -533,13 +547,19 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   `npm run sync:approve -- <ID> [<ID> ...]` を実行すると seed-additions.ts への反映・
   queue からの除去・REVIEW_QUEUE.md 再生成まで半自動で完了する
   (`--list` で一覧、`--dry-run` で確認のみ。対応: addRecord 全般 /
-  updateField/programs の rate・validFrom・validTo / delete/programs)
+  updateField/programs の rate・validFrom・validTo / delete/programs)。
+  承認すると record がそのまま全額に乗る危険な理由 (`untargetedProgram` / `campaignConditional` /
+  `campaignRateCeiling` / `targetMismatch` / `storeNameMismatch`) の項目は原則見送りで、承認には
+  `--accept-risk` が必要 (無ければ理由と判定詳細を出して exit 1。PR-0b-3)
 - `sync.config.json` の `autoMergeEnabled` で auto-merge の ON/OFF、`maxAutoChangesPerRun` が安全弁
   （超過時は全件 review 降格）
 - 同期履歴は `sources/SYNC_HISTORY.json` / `sources/SYNC_HISTORY.md` に時系列で蓄積 (直近 52 件 (約半年)、newest first)。
   auto-merge 週は auto-sync PR が、要レビューのみの週は weekly-sync の「Publish SYNC_HISTORY to main」step が
   履歴を main へ直 push し、いずれも `workflow_run` deploy でアプリの設定内「マスタ更新履歴」に反映される。
-  GitHub の PR タブ (`auto-sync` ラベル絞り込み) + 履歴ファイルの両方で同じ情報を参照可
+  GitHub の PR タブ (`auto-sync` ラベル絞り込み) + 履歴ファイルの両方で同じ情報を参照可。
+  同じ run (同じ `generatedAt`) の entry は**後勝ちで同じ位置に置換**する (safety 失敗時の
+  Downgrade → Regenerate reports の値が残る。PR-0b-3)。この upsert が入る前の 2026-07-09 / 07-16 / 07-23 の
+  3 entry は降格前の auto 件数 (81 / 4 / 3) が残った虚偽記録だったため、auto 0 / `safetyFailed` に訂正済み
 - inject-prompt は実行時に `seed()` をライブ参照するため、seed に追加した新カード/通貨は
   自動でプロンプトへ反映される（回帰契約テストで保証）
 - ローカル PC は完全に無関係 — GitHub のサーバー上で実行される
@@ -548,18 +568,35 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 
 | 対象 | auto-merge | 備考 |
 |---|---|---|
-| 既存 store/program 参照の **memberships** | ✅ する | J-POINT パートナー / たまるマーケット等 |
-| 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview。反映は `seed-additions.ts` の `PROGRAM_OVERRIDES` (部分上書き) 経由で、手書き seed ファイルは書き換えない |
+| 既存 store/program 参照の **memberships** | ✅ する (内容ガード通過時) | J-POINT パートナー / たまるマーケット等。**Phase C′ (PR-0b-3)**: 既存店なのに evidence に店名 (store.name の括弧書きを除いたもの) が無ければ `storeNameMismatch`、evidence / notes に条件文言 (一部 / 最大 / オンライン・ネット・通販・経由 / モバイルオーダー・デリバリー / (サービス\|商品\|メニュー\|アプリ)限定 / 支店限定) があれば `campaignConditional`。実効チャネルが online の program (たまる) は EC 語を免除。campaign 由来の率上書き (overrideRate) が 5% 超なら `campaignRateCeiling` |
+| 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview。既存 **campaign** (validTo あり) の率改定は新規と同じく 10% 以上 / 5% 超で月上限なしなら `campaignRateCeiling` (PR-0b-3。validTo の無い J-POINT 20 倍系は対象外)。反映は `seed-additions.ts` の `PROGRAM_OVERRIDES` (部分上書き) 経由で、手書き seed ファイルは書き換えない |
 | 既存 program の **期間変更** (validFrom/validTo) | ❌ しない (`periodChange` で needsReview) | キャンペーン延長/期間訂正の検知。承認は `npm run sync:approve -- <ID>` → `PROGRAM_OVERRIDES` 経由で反映 |
 | 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge |
-| 新規 **campaign program** (campaign extractor 由来) | ✅ する (安全条件を全て満たせば) | `isCampaignAutoMergeable` の全ゲート通過時のみ auto: 期間明示 (validTo 未来) / rate≤30% / 既存参照整合 / lifestyle 無し / confidence ≥ **0.90**。1 つでも外れたら needsReview (`idCollision`)。confidence は逐語根拠つきキャンペーンが ≥0.90 に乗るよう campaign プロンプトを校正 (v3.3、`explicitness=1.0`)。閾値は旧 0.95 → 0.90 (構造ゲートが既に強力なため) |
+| 新規 **campaign program** (campaign extractor 由来) | ⚠ Z3 ガードを全て通過し、かつ `autoMerge: false` でないソースのときだけ (現在 campaign ソースは d払い / PayPay の 2 本とも `autoMerge: false` なので**実質 auto なし**) | `campaignAutoMergeBlocker` (PR-0b-3) の判定順: extractor が campaign / 期間明示 (validTo 未来、validFrom ≤ validTo) / 値域 (月上限 > 0・bonusType・曜日日付) / confidence ≥ **0.90** / 既存参照整合 → 外れたら `idCollision`。**rate < 10%** (境界 10% を含めて review) と **5% 超は月上限 (monthlyCapAmountYen) 必須** (campaign prompt は上限を出さないので、当面 5% 超は常に review) → 外れたら `campaignRateCeiling`。lifestyle 語 (給与振込 / 住宅ローン / 投資 / 保険 / 家族ポイント / ○人以上 等) と条件文言 (最大 / 対象商品 等「対象+店・店舗・期間・カード以外」/ 一部商品 / ポイント利用 / 店舗限定 / 割引・クーポン / 新規・初回・ランク・年齢・学生 / オンライン・経由・モバイルオーダー / 抽選・先着) → `campaignConditional`。その前段の integrity: 対象キー (非空 cardIds / pointCardId / paymentAppId) が無ければ `untargetedProgram`、registry の `target` 宣言と帰属が合わなければ `targetMismatch` (review 行きの誤帰属にも付く)。confidence は逐語根拠つきキャンペーンが ≥0.90 に乗るよう campaign プロンプトを校正 (v3.3、`explicitness=1.0`) |
+| `autoMerge: false` の**ソース由来の提案** (d払い / PayPay) | ❌ しない (`sourceAutoMergeDisabled` で needsReview) | **Phase B″ / C″ `applySourcePolicies` (PR-0b-3)**: 全ガードを通過した auto 候補でも、registry で `autoMerge: false` のソース由来なら stores / programs / memberships / updateField を問わず review。membership だけは Phase C (orphan) と C′ (内容ガード) の後で降格するので、店名不一致・条件文言の membership は `storeNameMismatch` / `campaignConditional` (承認に `--accept-risk` が必要) のまま。旧世代 extracted の updateField は `staleExtractGeneration` が優先。chain-promote もこのソースの campaign を根拠にしない。期限切れ整理 (`expired-cleanup`) は registry に無いので対象外 (auto のまま)。**解除条件**: PR-1 H4 の事後レビュー表で 4 週連続して誤りが無いことを確認してから、別 PR で `autoMerge: false` を外す |
+| 対象キーの無い**新規 program** (全 extractor) | ❌ しない (`untargetedProgram` で needsReview) | cardIds / pointCardId / paymentAppId がどれも無い (`cardIds: []` を含む) program はどのカードでも発火しない死にデータ。import 検証 (`validators`) と seed 契約テストも拒否する (PR-0b-3) |
 | 対象店 membership が全滅した **新規 member-stores program 単独** | ❌ しない (`orphanedProgram` で needsReview) | **原子性ガード (Phase C2 `demoteChildlessMemberStorePrograms`)**: campaign 由来 program は auto でも、その membership が全て `missingStoreBody` 等で review 降格されると member-stores × membership 0 の死にデータになる。program 単独 auto を防ぎ、`member-stores は membership ≥1` 契約テストが apply 後 safety gate で fail → 無関係な auto 変更まで巻き添え review 降格するのを propose 層で阻止。対象店 membership 側と同時に `npm run sync:approve` する運用 |
 | **旧世代 extracted 由来の rate/期間 書き戻し** | ❌ しない (`staleExtractGeneration` で needsReview) | **stale-generation ガード (Phase C3 `guardStaleExtractGeneration`)**: extractor プロンプト改訂直後、旧版で fetch した `sources/extracted/<id>.json` が seed (新方針で修正済) との差分を書き戻し提案として出すのを防ぐ。当該 source の `promptVersion` が `registry.yaml` の `extractorVersions[extractor]` から導く現行版と不一致なら、`PROGRAM_OVERRIDES` 行きの updateField (rate/validFrom/validTo) を auto にせず review 降格。次回 fetch (新版) で `promptVersion` が一致すれば従来の閾値判定に戻る (`🧯 stale-generation guard` log) |
 | 新規 **cards / paymentApps / 非キャンペーン program** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
 | **membership tombstone** (`REMOVED_MEMBERSHIP_IDS`) の id | ❌ 再提案しない (propose で silent skip) | `src/state/seed-blocklist.ts` の手動 tombstone は `seed()` から除外されるため、抽出に残っている限り「seed に無い新規」として毎 run 再提案されてしまう。`proposeMemberships` / `proposeJalTokuyakuMemberships` が auto にも review にも出さず、`🪦 tombstone-skip: N 件 (source=…)` を 1 行ログに出す。apply / approve も生成物 (`ADDED_MEMBERSHIPS`) から該当行を物理削除し、approve で選ばれたら `⚠ tombstone 済みのため skip` と warn する (PR-0a-2c) |
 | 同じ店 × 同じ倍率系列の**別倍率 membership** (J-POINT W / Gold / たまる) | ❌ しない (`tierMove` で needsReview) | `tierFamilyOf` (`src/state/tierFamily.ts`) で系列を判定し、seed に同じ店 × 同じ系列の別倍率がある、または同じ run で別倍率も提案されたら review (倍率改定・受け皿誤りの疑い。そのまま足すと最大値が勝ち旧 tier が黙って残る)。他の降格理由 (lowConfidence 等) が付いていればそちらを優先。**承認するなら旧 tier を `REMOVED_MEMBERSHIP_IDS` に入れる PR と同時に** (seed の tier 契約 = 店 × 系列 × 有効チャネルごとに membership ≤ 1 が CI で落ちる、fail-closed) |
 | **epos-tamaru 由来の新規 program** の購入チャネル | ― (record に自動付与) | `ONLINE_CHANNEL_EXTRACTORS` (`scripts/sync/types.ts`) の extractor 由来の新規 program には propose 層が決定論で `channel: "online"` を付ける (Gemini 出力・schema に依存しない)。承認・auto の可否は従来の判定のまま。既存 program の rate / 期間 updateField と membership 提案は不変 |
-| **期限切れ campaign の削除** (validTo+30 日経過) | ✅ する (**自動削除**) | 既に非アクティブで還元計算に影響しないためクリーンアップを自動化。tombstone (`REMOVED_PROGRAM_IDS`) 化で program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。編集済みは保護。端末では確認なしで静かに整理 = 期限切れ整理だけの週はモーダルもバナーも出さない、PR-6a-2)。**安全弁**: 同 run で期間変更 (`periodChange`) が提案されている program は延長中の可能性を考慮し自動削除せず needsReview (`expiredCampaign`)。件数 cap / apply 後の test・build gate / `autoMergeEnabled` も従来どおり適用 |
+| **期限切れ campaign の削除** (validTo+30 日経過、d払い / PayPay 由来の program も含む) | ✅ する (**自動削除**) | 既に非アクティブで還元計算に影響しないためクリーンアップを自動化。tombstone (`REMOVED_PROGRAM_IDS`) 化で program + 関連 memberships が cascade 除外され、**既存ユーザーの端末からも次回更新で除去される** (未編集の公式由来コピーのみ。編集済みは保護。端末では確認なしで静かに整理 = 期限切れ整理だけの週はモーダルもバナーも出さない、PR-6a-2)。**安全弁**: 同 run で期間変更 (`periodChange`) が提案されている program は延長中の可能性を考慮し自動削除せず needsReview (`expiredCampaign`)。件数 cap / apply 後の test・build gate / `autoMergeEnabled` も従来どおり適用 |
+
+PR-0b-3 (Z3) で足した review 理由 (REVIEW_QUEUE では「判定詳細」行に一致した語・照合できなかった店名等を出す):
+
+| 理由 | 付く条件 | 対応 |
+|---|---|---|
+| `untargetedProgram` | 新規 program に対象キー (非空 cardIds / pointCardId / paymentAppId) が無い | 原則見送り。承認は `--accept-risk` |
+| `campaignConditional` | campaign の条件文言・lifestyle 語 / membership の条件文言 | 原則見送り。取り込むなら手書き seed で上限・限定を表現。承認は `--accept-risk` |
+| `campaignRateCeiling` | campaign の rate ≥ 10%、5% 超で月上限なし、既存 campaign の同条件の率改定、campaign 由来 overrideRate > 5% | 同上 |
+| `targetMismatch` | registry の `target` 宣言と新規 program の対象キーが一致しない | 同上 (帰属の取り違え疑い) |
+| `storeNameMismatch` | 既存店への新規 membership の evidence に店名が無い | 同上 (店の取り違え疑い) |
+| `sourceAutoMergeDisabled` | `autoMerge: false` のソース由来 (ガードは通過済み) | 人手で確認して `npm run sync:approve` (`--accept-risk` 不要) |
+
+キーワード判定は取りこぼしと誤検知の両方が起こり得る (LLM の表記揺れ)。campaign の auto 経路は
+`autoMerge: false` で休眠中なので、解除する PR で語彙 (`scripts/sync/evidence-check.ts` の
+`CONDITIONAL_WORDING_PATTERNS`、`propose-helpers.ts` の membership 語彙) を見直すこと。
 
 ---
 

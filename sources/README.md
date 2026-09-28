@@ -6,16 +6,17 @@ auto (自動反映) と review (要レビュー) に分けて処理する。単�
 待機して再試行 → HTML を pre-fetch して直渡し、の最大 3 attempts。
 **auto-merge の範囲はルート README の「cron が auto-merge する/しない範囲」表が正**で、ここには書かない。
 
-現在の構成 (2026-09-27): enabled は 3 本 (mon: jcb-jpoint-partners / epos-tamaru-market、
-thu: smbc-vpoint-up。worst は mon 6 / thu 3 req)。d-pay-campaigns / paypay-campaigns は
-0b-3 (campaign auto ゲートの強化) で再有効化する予定 (mon 9 / thu 6)。停止中ソースの理由と再開条件は
+現在の構成 (2026-09-27、PR-0b-3 後): enabled は 5 本 (mon: jcb-jpoint-partners → epos-tamaru-market →
+d-pay-campaigns、thu: smbc-vpoint-up → paypay-campaigns。記載順 = 実行順、worst は mon 9 / thu 6 req)。
+d-pay-campaigns / paypay-campaigns は `autoMerge: false` + `target` 付きで、由来の提案は全ガードを通過しても
+review (`sourceAutoMergeDisabled`) に回る。解除条件は registry の notes。停止中ソースの理由と再開条件は
 registry の各 notes、無料枠 (20 req/日) の見積りは registry ヘッダとルート README の「自動アップデート」節。
 
 ## ディレクトリ構成
 
 ```
 sources/
-  registry.yaml                  # 取得元 URL の台帳 (手編集)。enabled / fetchGroup (mon|thu) / notes
+  registry.yaml                  # 取得元 URL の台帳 (手編集)。enabled / fetchGroup (mon|thu) / target / autoMerge / notes
   schema/extracted-source.schema.json  # 抽出 JSON の schema (fetch 時に ajv で検証)
   extractors/<name>.prompt.md    # Gemini プロンプト 9 ファイル (ExtractorKind 8 種 + crawl 専用 campaign-index)
   extracted/<sourceId>.json      # 抽出結果。main には auto-sync 週だけ入る
@@ -41,7 +42,8 @@ main に置かないもの:
 6. 通過したら `auto-sync/YYYY-MM-DD-HHMM` PR を作り、`gh pr merge --squash --auto` で即時マージ
    → `deploy.yml` の `workflow_run` が再デプロイ
 7. Safety 失敗・auto-merge 無効の週は auto を全件 review に降格 (`safetyFailed` / `autoMergeDisabled`) し、
-   SYNC_HISTORY だけを main に直 push する (「Publish SYNC_HISTORY to main」step)
+   SYNC_HISTORY だけを main に直 push する (「Publish SYNC_HISTORY to main」step)。降格後の Regenerate reports は
+   同じ generatedAt の entry を置換するので、履歴には降格後の値 (auto 0) が残る (PR-0b-3)
 8. needsReview があれば peter-evans/create-pull-request が `chore/sync-review-queue` を作り直して PR #145 を更新
 
 ## review 経路
@@ -76,11 +78,14 @@ confidence = evidenceQuote ? explicitness * (1 - ambiguity) : 0.3
 | `sync:propose` | 全 extracted と seed の差分提案 |
 | `sync:report` | AUTO_SUMMARY / REVIEW_QUEUE / SYNC_HISTORY を生成 |
 | `sync:apply [--dry-run]` | autoApplicable を seed-additions.ts へ |
-| `sync:approve -- --list` / `-- <ID> ...` | needsReview の一覧 / 承認適用 |
+| `sync:approve -- --list` / `-- <ID> ... [--accept-risk]` | needsReview の一覧 / 承認適用 (全額に乗る危険な理由の項目は `--accept-risk` 必須) |
 
 - ローカルで `sync:report` / `sync:approve` を実行すると `REVIEW_QUEUE.md` / `AUTO_SUMMARY.md` が untracked で
   再生成される。**commit しない** (`git add -A` や `git add sources/` で化石が main に戻る)。
   `proposed-migrations.json` と `SYNC_HISTORY.json`・`.md` も書き換わるので `git checkout` で戻す。
+- PR-0b-3 以降の `appendSyncHistory` は同じ generatedAt の entry を同位置で置換 (upsert) する。ローカルの `sync:report` は
+  `proposed-migrations.json` と同じ generatedAt の過去 entry を上書きする (needsReview の減少やラベルの再解決が入る) ので、
+  変わった `SYNC_HISTORY.json`・`.md` も commit せず `git checkout` で戻す。
 
 ## セキュリティと保護
 

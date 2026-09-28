@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   excludeTombstonedSelections,
+  findRiskyApprovals,
   formatListLine,
   moveToManuallyApproved,
+  parseArgs,
   proposalIdOf,
   selectProposalsByIds,
 } from "./approve-proposals";
@@ -12,7 +14,7 @@ import {
   mergeMemberships,
   pruneRemovedFromBuckets,
 } from "./apply-proposals";
-import { computeProposalId } from "./types";
+import { RISKY_REVIEW_REASONS, computeProposalId } from "./types";
 import type { Proposal, ProposalReport } from "./types";
 import { membershipId } from "../../src/state/defineMemberships";
 
@@ -372,5 +374,59 @@ describe("formatListLine", () => {
     expect(formatListLine(cardUpdate)).toContain("✋");
     expect(formatListLine(cardUpdate)).toContain("rakuten-card.defaultRate");
     expect(formatListLine(storeDelete)).toContain("✋");
+  });
+
+  it("PR-0b-3: reviewDetail があれば末尾に付ける (無ければ付けない)", () => {
+    const withDetail: Proposal = {
+      ...programAdd,
+      reviewReason: "campaignConditional",
+      reviewDetail: "対象限定:「対象おにぎり・寿司」@name",
+    };
+    expect(formatListLine(withDetail)).toMatch(/<paypay-campaigns> {2}— 対象限定:「対象おにぎり・寿司」@name$/);
+    expect(formatListLine(programAdd)).toMatch(/<paypay-campaigns>$/);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// PR-0b-3: --accept-risk (全額に乗る危険な reason の承認)
+// ───────────────────────────────────────────────────────────────
+
+describe("findRiskyApprovals / parseArgs --accept-risk (PR-0b-3)", () => {
+  const withReason = (reviewReason: Proposal["reviewReason"]): Proposal => ({
+    ...programAdd,
+    reviewReason,
+  });
+
+  it("findRiskyApprovals は 5 種 (campaignConditional / campaignRateCeiling / targetMismatch / storeNameMismatch / untargetedProgram) を検出する", () => {
+    const risky = [
+      "campaignConditional",
+      "campaignRateCeiling",
+      "targetMismatch",
+      "storeNameMismatch",
+      "untargetedProgram",
+    ] as const;
+    const found = risky.map(withReason);
+    expect(findRiskyApprovals(found)).toEqual(found);
+    expect([...RISKY_REVIEW_REASONS].sort()).toEqual([...risky].sort());
+  });
+
+  it("idCollision / periodChange / sourceAutoMergeDisabled / reason 無しは検出しない", () => {
+    const safe = [
+      withReason("idCollision"),
+      withReason("periodChange"),
+      withReason("sourceAutoMergeDisabled"),
+      withReason(undefined),
+    ];
+    expect(findRiskyApprovals(safe)).toEqual([]);
+  });
+
+  it("parseArgs は --accept-risk を受理し、既定は false", () => {
+    expect(parseArgs(["pro-abc", "--accept-risk"])).toEqual({
+      ids: ["pro-abc"],
+      list: false,
+      dryRun: false,
+      acceptRisk: true,
+    });
+    expect(parseArgs(["pro-abc,pro-def", "--dry-run"]).acceptRisk).toBe(false);
   });
 });

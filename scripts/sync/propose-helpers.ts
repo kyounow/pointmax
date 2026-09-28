@@ -14,8 +14,14 @@
 //                                                          → "pseudoStoreTarget"
 //   - rate はあるが evidenceQuote に数値根拠 (%/倍/円→pt) が無い  → "unsupportedRateClaim"
 //   - membership の overrideRate が不正 (非有限/0以下/30%超)     → "zeroOrInvalidRate"
+//   - campaign 由来 membership の overrideRate が 5% 超            → "campaignRateCeiling" (PR-0b-3)
 //   - membership の overrideCurrencyId が未知参照                → "referenceChange"
 //   - membership が同 store × 同 tier 系列の別倍率と重なる (上記が無いときだけ) → "tierMove"
+//   - 新規 program に対象キー (非空 cardIds / pointCardId / paymentAppId) が無い → "untargetedProgram" (PR-0b-3)
+//   - 新規 program が registry の target 宣言と合わない                → "targetMismatch" (PR-0b-3)
+//   - 新規 campaign の rate ≥ 10% / 5% 超で上限なし                    → "campaignRateCeiling" (PR-0b-3)
+//   - 新規 campaign の条件文言 (最大 / 対象商品 / 店舗限定 等) / lifestyle 語 → "campaignConditional" (PR-0b-3)
+//   (membership の storeNameMismatch / 条件文言は diff-and-propose の Phase C′ で guardMembershipContent が付ける)
 //
 // 全て満たさない場合 reviewReason は undefined となり、autoApplicable に分類される。
 // membership tombstone (seed-blocklist の REMOVED_MEMBERSHIP_IDS) の id は提案自体を出さない
@@ -25,7 +31,8 @@
 // (dedupeAcrossProposals) や category cap は diff-and-propose.ts 側で実施。
 
 import type { SeedShape } from "../../src/domain/mergeSeed";
-import type { PaymentApp } from "../../src/domain/types";
+import type { PaymentApp, PurchaseChannel } from "../../src/domain/types";
+import { effectiveChannel } from "../../src/domain/purchaseChannel";
 import { isSafeHttpUrl } from "../../src/domain/urlSafety";
 import {
   BLOCKED_STORE_IDS,
@@ -47,13 +54,18 @@ import {
 import type {
   AddRecordProposal,
   Evidence,
+  ExtractedProgram,
   ExtractedSource,
   Proposal,
   ReferenceChangeProposal,
+  RegistryTarget,
   ReviewReason,
+  SourcePolicy,
   UpdateFieldProposal,
 } from "./types";
 import {
+  detectConditionalWording,
+  detectLifestyleWording,
   detectSelfReportedExclusion,
   detectUnsupportedDateClaim,
   detectUnsupportedRateClaim,
@@ -363,12 +375,22 @@ export function proposePaymentApps(
 // 期間限定プロモを programs[] として出力。新規は安全側で要レビュー。
 // ───────────────────────────────────────────────────────────────
 
+export type ProposeProgramsOptions = {
+  /** 期限判定の基準時刻 (既定 new Date())。golden テストは実事故の run 日時を注入する。 */
+  now?: Date;
+  /** registry のソース別ポリシー (target 宣言があれば targetMismatch を判定する)。 */
+  policy?: SourcePolicy;
+};
+
 export function proposePrograms(
   data: ExtractedSource,
   current: SeedShape,
+  opts: ProposeProgramsOptions = {},
 ): Proposal[] {
   if (!data.programs || data.programs.length === 0) return [];
   const existing = current.programs ?? [];
+  const now = opts.now ?? new Date();
+  const targets = opts.policy?.targets ?? [];
   const result: Proposal[] = [];
   // v6: scope が抽出に無く derive-on-missing で補完した件数 (末尾でログ)。
   let scopeDeriveCount = 0;
@@ -381,9 +403,12 @@ export function proposePrograms(
       if (p.scope === undefined) scopeDeriveCount++;
       // 新規 program は原則 idCollision で要レビュー (ライブ還元計算に直結)。
       // PR #60 (B 段階): campaign 専用 source の高品質 program は auto-merge
-      // を許可。integrity チェック (selfReported/unsupportedDate/zeroRate) が
-      // 引っかかれば優先降格、その他は isCampaignAutoMergeable で判定。
+      // を許可。integrity チェックが引っかかれば優先降格 (後勝ち)、その他は
+      // campaignAutoMergeBlocker (PR-0b-3) で判定。
+      const targetMismatch = checkTargetMismatch(p, targets);
       const integrityIssue = resolveReviewReason(undefined, [
+        // PR-0b-3: 対象キーが無い program は最弱 (他の integrity 理由があればそちらが勝つ)。
+        () => (isUntargetedProgram(p) ? "untargetedProgram" : undefined),
         () =>
           detectSelfReportedExclusion(evidence.evidenceQuote)
             ? "selfReportedExclusion"
@@ -399,6 +424,9 @@ export function proposePrograms(
           detectUnsupportedRateClaim(p.rate, evidence.evidenceQuote)
             ? "unsupportedRateClaim"
             : undefined,
+        // PR-0b-3: registry の target 宣言と帰属が合わない。review 行きの誤帰属にも付けるため
+        // (triage で見落とさない) Phase 1 のこのラダーで評価する。
+        () => (targetMismatch !== null ? "targetMismatch" : undefined),
         // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等)
         // への参照は特定不能項目の受け皿誤マッピング疑いとして最優先降格 (H3)。
         () =>
@@ -407,11 +435,23 @@ export function proposePrograms(
             ? "pseudoStoreTarget"
             : undefined,
       ]);
-      const reviewReason: ReviewReason | undefined = integrityIssue
-        ? integrityIssue
-        : isCampaignAutoMergeable(p, data, current, confidence)
-          ? undefined // 高品質 campaign → autoApplicable
-          : "idCollision"; // 既存挙動: 安全条件未達は要レビュー
+      const block: AutoMergeBlock | undefined = integrityIssue
+        ? {
+            reason: integrityIssue,
+            detail:
+              integrityIssue === "untargetedProgram"
+                ? "対象キー (非空の cardIds / pointCardId / paymentAppId) が無い"
+                : integrityIssue === "targetMismatch"
+                  ? (targetMismatch ?? undefined)
+                  : undefined,
+          }
+        : campaignAutoMergeBlocker(
+            { ...p, evidenceQuote: evidence.evidenceQuote },
+            data,
+            current,
+            confidence,
+            now,
+          ); // undefined = 高品質 campaign → autoApplicable
       // 定義済みフィールドのみ詰める (apply の emitObjectLiteral が
       // undefined/null を除外するのと整合、loyaltyRecord と同方式)
       const rec: Record<string, unknown> = {
@@ -421,7 +461,9 @@ export function proposePrograms(
         rate: p.rate,
         currencyId: p.currencyId,
       };
-      if (p.cardIds !== undefined) rec.cardIds = p.cardIds;
+      // PR-0b-3: cardIds は非空のときだけ入れる (cardIds:[] はどのカードでも発火しない死にデータで、
+      // validators / seed 契約も拒否する。record から除き untargeted として扱う)。
+      if (p.cardIds !== undefined && p.cardIds.length > 0) rec.cardIds = p.cardIds;
       if (p.pointCardId !== undefined) rec.pointCardId = p.pointCardId;
       if (p.paymentAppId !== undefined) rec.paymentAppId = p.paymentAppId;
       if (p.bonusType !== undefined) rec.bonusType = p.bonusType;
@@ -472,23 +514,34 @@ export function proposePrograms(
         sourceId: data.sourceId,
         confidence,
         evidence,
-        reviewReason,
+        reviewReason: block?.reason,
+        ...(block?.detail !== undefined ? { reviewDetail: block.detail } : {}),
       });
       continue;
     }
     // 既存 program: rate 変動を提案 (proposeLoyaltyRules と同方式)
     if (found.rate !== p.rate) {
-      result.push(
-        buildRateUpdate(
-          found.id,
-          "programs",
-          found.rate,
-          p.rate,
-          data.sourceId,
-          confidence,
-          evidence,
-        ),
+      const update = buildRateUpdate(
+        found.id,
+        "programs",
+        found.rate,
+        p.rate,
+        data.sourceId,
+        confidence,
+        evidence,
       );
+      // PR-0b-3: 既存 campaign (validTo あり) の率改定も新規と同じ rate 上限で止める
+      // (10% 以上、または 5% 超で月上限なし)。validTo の無い常設 program (J-POINT 20 倍 等) は対象外。
+      if (
+        update.reviewReason === undefined &&
+        found.validTo !== undefined &&
+        (!(p.rate < CAMPAIGN_AUTO_RATE_MAX) ||
+          (p.rate > CAMPAIGN_CAP_REQUIRED_ABOVE && !hasPositiveCap(found.monthlyCapAmountYen)))
+      ) {
+        update.reviewReason = "campaignRateCeiling";
+        update.reviewDetail = `既存 campaign の率改定 ${pct(found.rate)} → ${pct(p.rate)} (10% 以上、または 5% 超で上限なし)`;
+      }
+      result.push(update);
     }
     // 期間変更 (B-2): キャンペーン延長 / 期間訂正の検知。
     // - 抽出側に値がある場合のみ比較 (省略 = 「言及なし」であり削除主張ではない)
@@ -624,10 +677,17 @@ export function proposeMemberships(
       ? "pseudoStoreTarget"
       : baseReviewReason;
     // H2: overrideRate / overrideCurrencyId のガード。
-    // overrideRate は非有限/0以下/CAMPAIGN_AUTO_RATE_MAX (30%) 超なら
+    // overrideRate は非有限/0以下/MEMBERSHIP_OVERRIDE_RATE_MAX (30%) 超なら
     // 「rate=0/負/非有限/過大の抽出」= zeroOrInvalidRate に降格。
+    // PR-0b-3: campaign 由来の membership の overrideRate が 5% を超えるなら campaignRateCeiling
+    // (キャンペーンの率上書きは上限・対象商品付きがほとんど。値域外は zeroOrInvalidRate が後勝ち)。
     // overrideCurrencyId は seed に存在しない未知参照なら referenceChange
     // (「検証できない参照」の意味で既存 reason を流用) に降格。
+    const campaignOverrideTooHigh =
+      data.extractor === "campaign" &&
+      m.overrideRate !== undefined &&
+      Number.isFinite(m.overrideRate) &&
+      m.overrideRate > CAMPAIGN_CAP_REQUIRED_ABOVE;
     const guardedReviewReason: ReviewReason | undefined = resolveReviewReason(
       pseudoReviewReason,
       [
@@ -636,12 +696,13 @@ export function proposeMemberships(
           !current.currencies.some((c) => c.id === m.overrideCurrencyId)
             ? "referenceChange"
             : undefined,
+        () => (campaignOverrideTooHigh ? "campaignRateCeiling" : undefined),
         () =>
           m.overrideRate !== undefined &&
           !(
             Number.isFinite(m.overrideRate) &&
             m.overrideRate > 0 &&
-            m.overrideRate <= CAMPAIGN_AUTO_RATE_MAX
+            m.overrideRate <= MEMBERSHIP_OVERRIDE_RATE_MAX
           )
             ? "zeroOrInvalidRate"
             : undefined,
@@ -651,6 +712,10 @@ export function proposeMemberships(
     const reviewReason: ReviewReason | undefined =
       guardedReviewReason ??
       (isTierMove(m.programId, m.storeId) ? "tierMove" : undefined);
+    const reviewDetail =
+      reviewReason === "campaignRateCeiling" && m.overrideRate !== undefined
+        ? `campaign の率上書き overrideRate ${pct(m.overrideRate)} > ${pct(CAMPAIGN_CAP_REQUIRED_ABOVE)}`
+        : undefined;
     const rec: Record<string, unknown> = {
       programId: m.programId,
       storeId: m.storeId,
@@ -667,10 +732,170 @@ export function proposeMemberships(
       confidence,
       evidence,
       reviewReason,
+      ...(reviewDetail !== undefined ? { reviewDetail } : {}),
     });
   }
   logTombstoneSkip(tombstoneSkipped, data.sourceId);
   return result;
+}
+
+// ───────────────────────────────────────────────────────────────
+// Phase C′: membership の内容ガード (PR-0b-3、Z3 の membership 側)
+// ───────────────────────────────────────────────────────────────
+// diff-and-propose の Phase C (orphan) の後・C2 (atomicity) の前に、reviewReason の無い (= auto 候補の)
+// 新規 membership だけに適用する。Phase 1 (proposeMemberships) に入れると、既に missingStoreBody /
+// lowConfidence 等で review 行きの membership の理由まで付け替わり、triage の「店舗待ち」集計が壊れる。
+// C2 の前に置くのは、ここで membership が全て降格した同 run の新規 member-stores program を C2 が
+// orphanedProgram で拾えるようにするため。
+//   1. storeNameMismatch: 既存 store への membership なのに、evidence に店名が無い (店の取り違え疑い。
+//      2026-07〜09 の実事故: かっぱ寿司 → くら寿司、タカシマヤグループ SC → 高島屋、
+//      TOWER RECORDS ONLINE → タワーレコード、nojima online → ノジマ)。先に判定する。
+//   2. campaignConditional: evidence / notes に条件文言 (一部 / 最大 / EC 経由 / モバイルオーダー /
+//      ○○限定 / 支店限定)。実効チャネルが online の program (たまるマーケット: effectiveChannel が
+//      "online") は EC 語 (オンライン / ネット / 通販 / 経由) を免除する (たまるは EC 経由が付与条件そのもので、
+//      免除しないと正しい membership を全部止める。RF6)。
+// どれも export し、PR-3b の triage (channelSuspect と名前疑い) で再利用する。
+
+// 店名照合の正規化: NFKC → 小文字 → 空白・中黒・ハイフン・長音・句読点・引用符・感嘆符を除く。
+function normalizeStoreText(s: string): string {
+  return s
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\s・･\-‐‑‒–—―−ー~〜～、。,.!?'"’”「」『』]/g, "");
+}
+
+// store.name の括弧書き (「ユニクロ (一部店舗)」「ビックカメラ [家電量販店]」等) を除いた本体。
+function storeNameCore(name: string): string {
+  return name.replace(/[(（[［【][^)）\]］】]*[)）\]］】]/g, "").trim();
+}
+
+/**
+ * 既存 store への membership の evidence に店名があるか。無ければ判定詳細、あれば null。
+ * seed に無い store (新規。missingStoreBody / chain-promote の担当) と擬似 store (general 等) は null。
+ * store.name から括弧書きを除いた core と、core を「/」で分割した各要素 (2 字以上) のどれかが、
+ * 正規化した evidence に部分一致すれば通過。sources/aliases.json は id→id の対応だけで名前を持たないため使わない。
+ */
+export function storeNameMismatchDetail(
+  storeId: string,
+  evidenceQuote: string | undefined,
+  current: Pick<SeedShape, "stores">,
+): string | null {
+  if (PSEUDO_STORE_IDS.has(storeId)) return null;
+  const store = current.stores.find((s) => s.id === storeId);
+  if (!store) return null;
+  const core = storeNameCore(store.name);
+  const candidates = [core, ...core.split(/[/／]/)]
+    .map(normalizeStoreText)
+    .filter((c) => c.length >= 2);
+  if (candidates.length === 0) return null; // 照合できる名前が無い (安全側で通す)
+  const ev = normalizeStoreText(evidenceQuote ?? "");
+  if (candidates.some((c) => ev.includes(c))) return null;
+  return `evidence に店名「${core}」が無い`;
+}
+
+// membership の条件文言。[label, pattern, EC 語か]。素の「限定」(「この店舗限定」は店舗を特定する本質的な記述) と
+// 「税抜換算」は入れない。
+const MEMBERSHIP_WORDING_PATTERNS: ReadonlyArray<readonly [string, RegExp, boolean]> = [
+  ["一部", /一部/, false],
+  ["最大", /最大/, false],
+  ["EC経由", /オンライン|ネット|通販|経由/, true],
+  ["モバイルオーダー", /モバイルオーダー|デリバリー/, false],
+  ["限定", /(?:サービス|商品|メニュー|アプリ)限定/, false],
+  ["支店限定", /[\p{Script=Han}\p{Script=Katakana}ー]{2,}店舗?[】\]）)]/u, false],
+];
+
+/**
+ * membership の evidence → notes の順に条件文言を探し、最初の一致を『label:「語」@field』で返す (無ければ null)。
+ * exemptEcWording=true (実効チャネル online の program) なら EC 語 (オンライン / ネット / 通販 / 経由) を免除する。
+ */
+export function detectMembershipWording(
+  fields: { evidenceQuote?: string; notes?: string },
+  opts: { exemptEcWording?: boolean } = {},
+): string | null {
+  for (const field of ["evidenceQuote", "notes"] as const) {
+    const raw = fields[field];
+    if (!raw) continue;
+    const text = raw.normalize("NFKC");
+    for (const [label, re, isEc] of MEMBERSHIP_WORDING_PATTERNS) {
+      if (isEc && opts.exemptEcWording) continue;
+      const m = text.match(re);
+      if (m) return `${label}:「${m[0]}」@${field}`;
+    }
+  }
+  return null;
+}
+
+/**
+ * programId → program の channel (seed 既存 or 同 run の新規 program record)。membership の実効チャネル
+ * (effectiveChannel) の解決に使う。seed を優先し、無ければ同 run の addRecord/programs の record.channel。
+ */
+export function programChannelResolver(
+  proposals: readonly Proposal[],
+  current: Pick<SeedShape, "programs">,
+): (programId: string) => PurchaseChannel | undefined {
+  const channels = new Map<string, PurchaseChannel | undefined>();
+  for (const p of proposals) {
+    if (p.type !== "addRecord" || p.collection !== "programs") continue;
+    const rec = (p as AddRecordProposal).record;
+    if (typeof rec.id !== "string") continue;
+    const ch = rec.channel;
+    channels.set(rec.id, ch === "online" || ch === "in-store" ? ch : undefined);
+  }
+  for (const prog of current.programs ?? []) channels.set(prog.id, prog.channel);
+  return (programId) => channels.get(programId);
+}
+
+/**
+ * Phase C′: reviewReason の無い新規 membership に店名照合 (storeNameMismatch) と条件文言
+ * (campaignConditional) を当てる。既に reason を持つ membership と membership 以外の提案は触らない。
+ */
+export function guardMembershipContent(
+  proposals: Proposal[],
+  current: Pick<SeedShape, "stores" | "programs">,
+  opts: { programChannelOf?: (programId: string) => PurchaseChannel | undefined } = {},
+): { proposals: Proposal[]; demotedStoreName: number; demotedWording: number } {
+  const channelOf = opts.programChannelOf ?? programChannelResolver(proposals, current);
+  let demotedStoreName = 0;
+  let demotedWording = 0;
+  const out = proposals.map((p) => {
+    if (p.type !== "addRecord" || p.collection !== "memberships" || p.reviewReason) {
+      return p;
+    }
+    const rec = (p as AddRecordProposal).record as {
+      programId?: unknown;
+      storeId?: unknown;
+      notes?: unknown;
+      channel?: unknown;
+    };
+    const storeId = typeof rec.storeId === "string" ? rec.storeId : null;
+    const programId = typeof rec.programId === "string" ? rec.programId : null;
+    if (storeId !== null) {
+      const nameDetail = storeNameMismatchDetail(storeId, p.evidence?.evidenceQuote, current);
+      if (nameDetail !== null) {
+        demotedStoreName += 1;
+        return { ...p, reviewReason: "storeNameMismatch", reviewDetail: nameDetail } as Proposal;
+      }
+    }
+    const membershipChannel =
+      rec.channel === "online" || rec.channel === "in-store" ? rec.channel : undefined;
+    const online =
+      programId !== null &&
+      effectiveChannel({ channel: channelOf(programId) }, { channel: membershipChannel }) ===
+        "online";
+    const wording = detectMembershipWording(
+      {
+        evidenceQuote: p.evidence?.evidenceQuote,
+        notes: typeof rec.notes === "string" ? rec.notes : undefined,
+      },
+      { exemptEcWording: online },
+    );
+    if (wording !== null) {
+      demotedWording += 1;
+      return { ...p, reviewReason: "campaignConditional", reviewDetail: wording } as Proposal;
+    }
+    return p;
+  });
+  return { proposals: out, demotedStoreName, demotedWording };
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -893,26 +1118,28 @@ export function proposeExpiredCampaignDeletions(
 }
 
 // ───────────────────────────────────────────────────────────────
-// Campaign auto-merge eligibility (B 段階、PR #60)
+// Campaign auto-merge eligibility (B 段階 PR #60 → Z3 PR-0b-3)
 // ───────────────────────────────────────────────────────────────
 // 新規 program は本来 idCollision で全件 needsReview (ライブ還元計算に
 // 直接効くため誤適用が厳禁) だが、campaign 専用 source から抽出された
-// 「期限明示 + 既存参照 + 妥当 rate + 高 confidence + lifestyle 系
-// キーワード無し」の高品質な campaign は auto-merge を許可する。
+// 「期限明示 + 値域正常 + 高 confidence + 既存参照 + 低率 (上限付き) + 条件文言なし」の
+// 高品質な campaign は auto-merge を許可する。
 //
-// 安全ガード:
-// 1. extractor === "campaign" (ongoing-program は除外、smbc-vpoint-up
-//    系の lifestyle 条件付き program の混入を防ぐ)
-// 2. validTo 必須 + 未来日 (既に終了した campaign は提案不要)
-// 3. rate ∈ (0, CAMPAIGN_AUTO_RATE_MAX] (30% を超える率は誤抽出疑い)
-// 4. confidence ≥ CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD (0.90)
-// 5. cardIds / pointCardId / paymentAppId / currencyId が全て seed に
-//    存在 (未定義の参照を防ぐ)
-// 6. lifestyle 系キーワード除外 (memory feedback_pointmax_lifestyle_programs
-//    と整合、defense-in-depth として keyword filter で更に阻む)
-// 7. proposePrograms の他の reviewReason (selfReportedExclusion /
-//    unsupportedDateClaim / zeroOrInvalidRate) に該当しない (=
-//    その他のチェックは従来どおり通った後の最終ゲートとして本関数)
+// campaignAutoMergeBlocker の判定順 (上から、最初に外れたものの reason を返す):
+// 1. extractor === "campaign" でない → idCollision (ongoing-program 等は新規 program を auto にしない)
+// 2. validTo 必須 + 未来日、validFrom は parse 可能かつ validTo 以前 → idCollision
+// 3. 値域 (monthlyCapAmountYen > 0 / bonusType / recurringDays 1〜31 / recurringWeekdays 0〜6 / rate > 0)
+//    → idCollision。条件文言より前に置く (「月上限あり」+ cap=-100 を値域で拾うため)
+// 4. confidence ≥ CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD (0.90) → 外れたら idCollision
+// 5. cardIds / pointCardId / paymentAppId / currencyId が全て seed に存在 → 外れたら idCollision
+// 6. rate が有限でない、または rate ≥ CAMPAIGN_AUTO_RATE_MAX (10%、境界含む) → campaignRateCeiling
+// 7. rate > CAMPAIGN_CAP_REQUIRED_ABOVE (5%) で monthlyCapAmountYen が無い → campaignRateCeiling
+//    (campaign prompt は cap を出さないので、当面は「5% 超は常に review」と同じ意味)
+// 8. lifestyle 語 (evidence-check の LIFESTYLE_KEYWORDS) → campaignConditional
+// 9. 条件文言 (evidence-check の CONDITIONAL_WORDING_PATTERNS) → campaignConditional
+// proposePrograms の integrity ラダー (untargetedProgram / selfReportedExclusion / unsupportedDateClaim /
+// zeroOrInvalidRate / unsupportedRateClaim / targetMismatch / pseudoStoreTarget) に掛からなかったものだけが
+// 本関数に来る。
 //
 // 【校正メモ (confidence 閾値 0.95 → 0.90)】
 // 旧 0.95 は、campaign extractor が逐語根拠つき (= 上記 1-3,5-7 の構造条件を
@@ -920,25 +1147,18 @@ export function proposeExpiredCampaignDeletions(
 // 自己評価は explicitness=0.9 / ambiguity=0.1 (= プロンプト模範例の数値) で
 // confidence=0.81 となり、「期間明示 + 既存参照 + 妥当 rate + lifestyle 無し」を
 // 満たしてもキャンペーンが一切 auto 反映されない状態だった (REVIEW_QUEUE の
-// lowConfidence 過半数の主因)。本関数の他 6 条件 (特に期間の逐語明記・rate≤30%・
-// 参照整合) が既に強力な構造ゲートになっているため、自己申告 confidence の足切りは
+// lowConfidence 過半数の主因)。本関数の他の条件 (特に期間の逐語明記・rate 上限・
+// 参照整合・条件文言) が既に強力な構造ゲートになっているため、自己申告 confidence の足切りは
 // 0.90 で十分。併せて campaign.prompt.md の校正 (逐語根拠は explicitness=1.0) で
 // 健全キャンペーンが ≥0.90 に乗るようにした。
 export const CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD = 0.9;
-export const CAMPAIGN_AUTO_RATE_MAX = 0.3;
-
-// memory: feedback_pointmax_lifestyle_programs.md の禁止カテゴリ。
-// 本来 ongoing-program prompt で除外済だが、campaign extractor 経由で
-// 混入する万が一に備える defense-in-depth。
-const LIFESTYLE_KEYWORDS: ReadonlyArray<string> = [
-  "給与", "ボーナス振込",
-  "住宅ローン",
-  "外貨預金", "円預金", "預金残高",
-  "投資", "証券", "NISA", "iDeCo", "SBI",
-  "保険", "Vitality", "ヘルスケア",
-  "カードローン", "リボ払い",
-  "外貨積立",
-];
+// PR-0b-3: campaign を auto にできるのは rate < 10% だけ (境界 0.1 ちょうどは review)。
+// ⚠ PR-4b C3 (tier ladder) はこの値を再利用せず専用の定数を使うこと (JCB W の 20 倍は 0.105)。
+export const CAMPAIGN_AUTO_RATE_MAX = 0.1;
+// PR-0b-3: rate がこれを超える campaign は monthlyCapAmountYen (月上限) 必須。
+export const CAMPAIGN_CAP_REQUIRED_ABOVE = 0.05;
+// PR-0b-3: membership の overrideRate の値域上限 (旧 CAMPAIGN_AUTO_RATE_MAX 0.3 の membership 用途を分離)。
+export const MEMBERSHIP_OVERRIDE_RATE_MAX = 0.3;
 
 function parseDateEndMs(s: string | undefined): number | null {
   if (!s) return null;
@@ -960,112 +1180,210 @@ function parseDateStartMs(s: string | undefined): number | null {
   ).getTime();
 }
 
+/** campaignAutoMergeBlocker / isCampaignAutoMergeable が見る program のフィールド。 */
+export type CampaignCandidate = {
+  rate: number;
+  validFrom?: string;
+  validTo?: string;
+  cardIds?: string[];
+  pointCardId?: string;
+  paymentAppId?: string;
+  currencyId: string;
+  name?: string;
+  description?: string;
+  conditions?: string;
+  notes?: string;
+  evidenceQuote?: string;
+  monthlyCapAmountYen?: number;
+  bonusType?: string;
+  recurringDays?: number[];
+  recurringWeekdays?: number[];
+};
+
+/** auto にしない理由と、その判定詳細 (REVIEW_QUEUE の「判定詳細」行)。 */
+export type AutoMergeBlock = { reason: ReviewReason; detail?: string };
+
+function pct(rate: number): string {
+  return `${Number((rate * 100).toFixed(4))}%`;
+}
+
+function hasPositiveCap(cap: number | undefined): boolean {
+  return cap !== undefined && Number.isFinite(cap) && cap > 0;
+}
+
 /**
- * 新規 program が campaign auto-merge の安全条件を全て満たすか判定する。
- * 安全条件は AND チェック、1 つでも外れたら false (idCollision に降格)。
- *
- * 値域ガード (M2、いずれか外れたら false):
- *   - monthlyCapAmountYen : undefined || (Number.isFinite && > 0)
- *   - bonusType           : undefined || "primary" || "addOn"
- *   - recurringDays       : undefined || 全要素が Number.isInteger && 1〜31
- *   - recurringWeekdays   : undefined || 全要素が Number.isInteger && 0〜6
+ * 新規 program を campaign として auto-merge してよいか判定し、してはいけない場合は理由を返す
+ * (auto にしてよいなら undefined)。判定順はこのセクション冒頭のコメント (1〜9) のとおり。
+ */
+export function campaignAutoMergeBlocker(
+  p: CampaignCandidate,
+  data: Pick<ExtractedSource, "extractor">,
+  current: SeedShape,
+  confidence: number,
+  now: Date = new Date(),
+): AutoMergeBlock | undefined {
+  // 1. campaign extractor source 限定
+  if (data.extractor !== "campaign") {
+    return { reason: "idCollision", detail: `新規 program (extractor=${data.extractor} は campaign 以外)` };
+  }
+
+  // 2. validTo 必須 + 未来日。malformed 期間 (validFrom が parse 不能 / validTo より後) は
+  //    ruleActiveAt が常に非アクティブ判定する死にデータなので auto-merge しない (B-5)。
+  const validToMs = parseDateEndMs(p.validTo);
+  if (validToMs === null) {
+    return { reason: "idCollision", detail: "validTo が無い / 解析できない" };
+  }
+  if (validToMs <= now.getTime()) {
+    return { reason: "idCollision", detail: `validTo=${p.validTo} は終了済み` };
+  }
+  if (p.validFrom !== undefined) {
+    const validFromMs = parseDateStartMs(p.validFrom);
+    if (validFromMs === null || validFromMs > validToMs) {
+      return { reason: "idCollision", detail: `期間が不正 (validFrom=${p.validFrom} / validTo=${p.validTo})` };
+    }
+  }
+
+  // 3. 値域ガード (M2): 構造は妥当でも値が壊れている場合の防御。条件文言より前に判定する。
+  if (p.monthlyCapAmountYen !== undefined && !hasPositiveCap(p.monthlyCapAmountYen)) {
+    return { reason: "idCollision", detail: `値域: monthlyCapAmountYen=${p.monthlyCapAmountYen}` };
+  }
+  if (p.bonusType !== undefined && p.bonusType !== "primary" && p.bonusType !== "addOn") {
+    return { reason: "idCollision", detail: `値域: bonusType=${p.bonusType}` };
+  }
+  if (p.recurringDays?.some((d) => !Number.isInteger(d) || d < 1 || d > 31)) {
+    return { reason: "idCollision", detail: `値域: recurringDays=${JSON.stringify(p.recurringDays)}` };
+  }
+  if (p.recurringWeekdays?.some((d) => !Number.isInteger(d) || d < 0 || d > 6)) {
+    return { reason: "idCollision", detail: `値域: recurringWeekdays=${JSON.stringify(p.recurringWeekdays)}` };
+  }
+  if (Number.isFinite(p.rate) && p.rate <= 0) {
+    return { reason: "idCollision", detail: `値域: rate=${p.rate}` };
+  }
+
+  // 4. confidence 厳格化
+  if (confidence < CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD) {
+    return {
+      reason: "idCollision",
+      detail: `confidence ${confidence.toFixed(3)} < ${CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD}`,
+    };
+  }
+
+  // 5. seed 参照整合性
+  const unknownRef = (() => {
+    const cards = new Set((current.cards ?? []).map((c) => c.id));
+    const badCard = (p.cardIds ?? []).find((cid) => !cards.has(cid));
+    if (badCard !== undefined) return `cardIds の ${badCard}`;
+    if (p.pointCardId && !(current.pointCards ?? []).some((c) => c.id === p.pointCardId)) {
+      return `pointCardId ${p.pointCardId}`;
+    }
+    if (p.paymentAppId && !(current.paymentApps ?? []).some((a) => a.id === p.paymentAppId)) {
+      return `paymentAppId ${p.paymentAppId}`;
+    }
+    if (!(current.currencies ?? []).some((c) => c.id === p.currencyId)) {
+      return `currencyId ${p.currencyId}`;
+    }
+    return null;
+  })();
+  if (unknownRef !== null) {
+    return { reason: "idCollision", detail: `参照整合: ${unknownRef} が seed に無い` };
+  }
+
+  // 6. rate 上限 (境界 0.1 ちょうどを含む)
+  if (!Number.isFinite(p.rate) || p.rate >= CAMPAIGN_AUTO_RATE_MAX) {
+    return {
+      reason: "campaignRateCeiling",
+      detail: `rate ${Number.isFinite(p.rate) ? pct(p.rate) : String(p.rate)} ≥ ${pct(CAMPAIGN_AUTO_RATE_MAX)}`,
+    };
+  }
+
+  // 7. 5% 超は月上限必須
+  const hasCap = hasPositiveCap(p.monthlyCapAmountYen);
+  if (p.rate > CAMPAIGN_CAP_REQUIRED_ABOVE && !hasCap) {
+    return {
+      reason: "campaignRateCeiling",
+      detail: `rate ${pct(p.rate)} > ${pct(CAMPAIGN_CAP_REQUIRED_ABOVE)} で上限 (monthlyCapAmountYen) なし`,
+    };
+  }
+
+  // 8 / 9. ライフスタイル語 → 条件文言
+  const fields = {
+    name: p.name,
+    description: p.description,
+    conditions: p.conditions,
+    notes: p.notes,
+    evidenceQuote: p.evidenceQuote,
+  };
+  const lifestyle = detectLifestyleWording(fields);
+  if (lifestyle !== null) return { reason: "campaignConditional", detail: lifestyle };
+  const wording = detectConditionalWording(fields, hasCap);
+  if (wording !== null) return { reason: "campaignConditional", detail: wording };
+
+  return undefined;
+}
+
+/**
+ * 新規 program が campaign auto-merge の安全条件を全て満たすか (campaignAutoMergeBlocker の薄い wrapper)。
  */
 export function isCampaignAutoMergeable(
-  p: {
-    rate: number;
-    validFrom?: string;
-    validTo?: string;
-    cardIds?: string[];
-    pointCardId?: string;
-    paymentAppId?: string;
-    currencyId: string;
-    name?: string;
-    description?: string;
-    conditions?: string;
-    monthlyCapAmountYen?: number;
-    bonusType?: string;
-    recurringDays?: number[];
-    recurringWeekdays?: number[];
-  },
-  data: ExtractedSource,
+  p: CampaignCandidate,
+  data: Pick<ExtractedSource, "extractor">,
   current: SeedShape,
   confidence: number,
   now: Date = new Date(),
 ): boolean {
-  // 1. campaign extractor source 限定
-  if (data.extractor !== "campaign") return false;
+  return campaignAutoMergeBlocker(p, data, current, confidence, now) === undefined;
+}
 
-  // 2. validTo 必須 + 未来日
-  const validToMs = parseDateEndMs(p.validTo);
-  if (validToMs === null) return false;
-  if (validToMs <= now.getTime()) return false;
+// ───────────────────────────────────────────────────────────────
+// 対象キー (target) の検査 (PR-0b-3)
+// ───────────────────────────────────────────────────────────────
 
-  // 2.5 (B-5) malformed 期間ガード: validFrom がある場合は parse 可能かつ
-  // validTo 以前であること。validFrom > validTo は ruleActiveAt が常に
-  // 非アクティブ判定する死にデータなので auto-merge しない。
-  if (p.validFrom !== undefined) {
-    const validFromMs = parseDateStartMs(p.validFrom);
-    if (validFromMs === null) return false;
-    if (validFromMs > validToMs) return false;
-  }
+type TargetKeys = Pick<ExtractedProgram, "cardIds" | "pointCardId" | "paymentAppId">;
 
-  // 3. rate ∈ (0, CAMPAIGN_AUTO_RATE_MAX]
-  if (!Number.isFinite(p.rate)) return false;
-  if (p.rate <= 0 || p.rate > CAMPAIGN_AUTO_RATE_MAX) return false;
+function hasCards(p: TargetKeys): boolean {
+  return Array.isArray(p.cardIds) && p.cardIds.length > 0;
+}
 
-  // 4. confidence 厳格化
-  if (confidence < CAMPAIGN_AUTO_CONFIDENCE_THRESHOLD) return false;
+/** 対象キー (非空 cardIds / pointCardId / paymentAppId) を 1 つも持たない (cardIds:[] も含む)。 */
+export function isUntargetedProgram(p: TargetKeys): boolean {
+  return !hasCards(p) && !p.pointCardId && !p.paymentAppId;
+}
 
-  // 5. seed 参照整合性
-  if (p.cardIds && p.cardIds.length > 0) {
-    const known = new Set((current.cards ?? []).map((c) => c.id));
-    for (const cid of p.cardIds) {
-      if (!known.has(cid)) return false;
+function describeTarget(t: RegistryTarget): string {
+  if ("cardIds" in t) return `cardIds=${t.cardIds.join(",")}`;
+  if ("paymentAppId" in t) return `paymentAppId=${t.paymentAppId}`;
+  return `pointCardId=${t.pointCardId}`;
+}
+
+function describeProgramKeys(p: TargetKeys): string {
+  const parts: string[] = [];
+  if (hasCards(p)) parts.push(`cardIds=${(p.cardIds ?? []).join(",")}`);
+  if (p.paymentAppId) parts.push(`paymentAppId=${p.paymentAppId}`);
+  if (p.pointCardId) parts.push(`pointCardId=${p.pointCardId}`);
+  return parts.join(" + ");
+}
+
+/**
+ * registry の target 宣言 (候補の配列) と program の対象キーを照合する。候補のどれかに一致すれば null、
+ * 一致しなければ判定詳細 (文字列) を返す。targets が空、または program が untargeted なら null
+ * (untargeted は untargetedProgram の担当)。一致条件:
+ *   - paymentAppId の候補: p.paymentAppId が一致し、pointCardId が無い (cardIds は絞り込みとして可)
+ *   - pointCardId の候補 : p.pointCardId が一致し、paymentAppId も cardIds も無い
+ *   - cardIds の候補     : p.cardIds が非空で候補の部分集合、pointCardId が無い
+ */
+export function checkTargetMismatch(
+  p: TargetKeys,
+  targets: readonly RegistryTarget[],
+): string | null {
+  if (targets.length === 0 || isUntargetedProgram(p)) return null;
+  const matches = targets.some((t) => {
+    if ("paymentAppId" in t) return p.paymentAppId === t.paymentAppId && !p.pointCardId;
+    if ("pointCardId" in t) {
+      return p.pointCardId === t.pointCardId && !p.paymentAppId && !hasCards(p);
     }
-  }
-  if (p.pointCardId) {
-    const known = new Set((current.pointCards ?? []).map((c) => c.id));
-    if (!known.has(p.pointCardId)) return false;
-  }
-  if (p.paymentAppId) {
-    const known = new Set((current.paymentApps ?? []).map((a) => a.id));
-    if (!known.has(p.paymentAppId)) return false;
-  }
-  const knownCurrencies = new Set((current.currencies ?? []).map((c) => c.id));
-  if (!knownCurrencies.has(p.currencyId)) return false;
-
-  // 6. lifestyle 系キーワード除外 (defense-in-depth)
-  const text = [p.name ?? "", p.description ?? "", p.conditions ?? ""].join(" ");
-  for (const kw of LIFESTYLE_KEYWORDS) {
-    if (text.includes(kw)) return false;
-  }
-
-  // 7. 値域ガード (M2): 構造は妥当でも値が壊れている場合の防御。
-  if (p.monthlyCapAmountYen !== undefined) {
-    if (
-      !Number.isFinite(p.monthlyCapAmountYen) ||
-      p.monthlyCapAmountYen <= 0
-    ) {
-      return false;
-    }
-  }
-  if (
-    p.bonusType !== undefined &&
-    p.bonusType !== "primary" &&
-    p.bonusType !== "addOn"
-  ) {
-    return false;
-  }
-  if (p.recurringDays !== undefined) {
-    for (const d of p.recurringDays) {
-      if (!Number.isInteger(d) || d < 1 || d > 31) return false;
-    }
-  }
-  if (p.recurringWeekdays !== undefined) {
-    for (const d of p.recurringWeekdays) {
-      if (!Number.isInteger(d) || d < 0 || d > 6) return false;
-    }
-  }
-
-  return true;
+    const allowed = new Set(t.cardIds);
+    return hasCards(p) && (p.cardIds ?? []).every((c) => allowed.has(c)) && !p.pointCardId;
+  });
+  if (matches) return null;
+  return `target 宣言 [${targets.map(describeTarget).join(" | ")}] に対し program は ${describeProgramKeys(p)}`;
 }
