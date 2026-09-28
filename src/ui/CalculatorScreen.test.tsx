@@ -114,6 +114,30 @@ describe("CalculatorScreen 起動時の既定通貨タブ + #1 自動展開 (PR-
   });
 });
 
+// PR-U5: 通知枠と結果サマリは常設の aria-live="polite" 領域。
+describe("CalculatorScreen aria-live (PR-U5)", () => {
+  it("通知枠 (BannerSlot) を aria-live=polite の領域で包む (オンボーディング中はチェックリストが入る)", () => {
+    setupState({ preferredCurrencyIds: [] }); // ② 未完了 → オンボーディング枠
+    const { container } = render(<CalculatorScreen />);
+    const region = container.querySelector('div[aria-live="polite"]');
+    expect(region).not.toBeNull();
+    expect(region?.textContent).toMatch(/保有カードを選ぶ/);
+  });
+
+  it("結果サマリは件数と #1 のカードを読み、結果が無いときは空", () => {
+    setupState();
+    const { container } = render(<CalculatorScreen />);
+    const live = container.querySelector('p[aria-live="polite"]');
+    expect(live?.textContent).toMatch(/^結果 1 件。1 位は JCB CARD W/);
+
+    // 金額を消すと結果が無くなり、領域は残ったまま空になる
+    fireEvent.change(container.querySelector('input[inputmode="numeric"]')!, {
+      target: { value: "" },
+    });
+    expect(container.querySelector('p[aria-live="polite"]')).toHaveTextContent("");
+  });
+});
+
 // PR-6b: 優先通貨が未設定の人の既定 = 円換算ビュー。警告チップと直近店舗の記録が通常ビューと揃う。
 describe("CalculatorScreen 円換算ビュー (PR-6b)", () => {
   it("同日の下書きの店 (すき家) で起動すると、既定の円換算ビューに JCB W の『⚠ 要エントリー』+『対象外あり』が出る", () => {
@@ -145,6 +169,16 @@ describe("CalculatorScreen 円換算ビュー (PR-6b)", () => {
     // 金額だけ変えた再計算は last-pair ガードで記録しない
     fireEvent.click(container.querySelector('[data-amount="3000"]')!);
     expect(getUsageStats().calcEvents).toHaveLength(1);
+  });
+
+  it("U5: 結果サマリ (件数 / #1) の aria-live 領域は円換算ビューの #1 を読む", () => {
+    setupState({ preferredCurrencyIds: [], enabledCardIds: ["jcb-w", "epos-card"] });
+    const { container } = render(<CalculatorScreen />);
+    const top = container.querySelector(".results-yen .result-card.best strong");
+    const live = container.querySelector('p[aria-live="polite"]');
+    expect(live).toHaveAttribute("aria-atomic", "true");
+    expect(top?.textContent).toMatch(/JCB CARD W/);
+    expect(live?.textContent).toBe(`結果 2 件。1 位は ${top?.textContent}`);
   });
 
   it("優先通貨タブの ¥ 円換算に切り替えても記録する", () => {

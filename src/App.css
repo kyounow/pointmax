@@ -47,7 +47,9 @@ body {
 }
 
 .app {
+  /* PR-U5: モバイルのアドレスバー伸縮で下端が隠れないよう dvh (未対応ブラウザは vh) */
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -57,6 +59,11 @@ body {
   align-items: center;
   gap: 16px;
   padding: 10px 18px;
+  /* PR-U5: viewport-fit=cover (index.html) で端末の切り欠き・ステータスバー側に広がるので、
+     横向き (デスクトップ幅) でも safe area の内側に収める。モバイル幅は下の media で上書き。 */
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-left: max(18px, env(safe-area-inset-left));
+  padding-right: max(18px, env(safe-area-inset-right));
   background: var(--panel);
   border-bottom: 1px solid var(--border);
   position: sticky;
@@ -111,6 +118,10 @@ body {
 
 .content {
   padding: 18px;
+  /* PR-U5: viewport-fit=cover の横向きで切り欠き・ホームインジケータに被らないように */
+  padding-left: max(18px, env(safe-area-inset-left));
+  padding-right: max(18px, env(safe-area-inset-right));
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
@@ -873,6 +884,7 @@ details summary {
   gap: 2px;
   background: var(--panel);
   border-top: 1px solid var(--border);
+  /* ホームインジケータの分だけ下に余白 (index.html の viewport-fit=cover で env() が効く、PR-U5) */
   padding: 4px 4px env(safe-area-inset-bottom);
 }
 .bottom-bar-item {
@@ -2681,6 +2693,7 @@ details summary {
   max-width: 520px;
   width: calc(100% - 32px);
   max-height: calc(100vh - 64px);
+  max-height: calc(100dvh - 64px);
   display: flex;
   flex-direction: column;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
@@ -2992,4 +3005,32 @@ details summary {
 .sync-history-review-breakdown .num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* ==== PR-U5: アクセシビリティ ==== */
+/* 画面には出さず支援技術にだけ読ませる (計算結果サマリの aria-live 領域など)。 */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* OS の「視差効果を減らす」設定では transition / animation を無効化する
+   (ダイアログのスライドイン、ウォレットの強調フラッシュ、交換ルートのノード移動など)。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  /* ::backdrop は別ルール (未対応ブラウザでセレクタごと無効になり上の規則を巻き込まないように) */
+  ::backdrop {
+    animation: none !important;
+  }
 }

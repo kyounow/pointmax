@@ -35,7 +35,12 @@ import { CalcResultCard } from "./calculator/CalcResultCard";
 import { CalcBestDayHint } from "./calculator/CalcBestDayHint";
 import { CalcYenResults } from "./calculator/CalcYenResults";
 import { OnboardingChecklist } from "./calculator/OnboardingChecklist";
-import { isYenTarget, makeYenValueResolver } from "../domain/yenValue";
+import {
+  isYenTarget,
+  makeYenValueResolver,
+  sortRankingsInYen,
+} from "../domain/yenValue";
+import { cardLabel } from "../domain/cardLabel";
 import {
   isOnboardingDismissed,
   dismissOnboarding,
@@ -392,6 +397,16 @@ export function CalculatorScreen() {
     [result],
   );
 
+  // PR-U5: 結果サマリの読み上げ文 (aria-live)。「結果 N 件。1 位は {カード}」(量は各結果の行で読む)。
+  // 円換算モードの #1 は円換算ビューと同じ並び (sortRankingsInYen) で決める。
+  const liveSummary = useMemo(() => {
+    if (!hasHeldCards || !result?.length) return "";
+    const top = yenMode
+      ? sortRankingsInYen(result, yenValueOf).find((x) => x.v.reachable)?.r
+      : result.find((x) => x.reachable);
+    return `結果 ${result.length} 件${top ? `。1 位は ${cardLabel(top.card)}` : ""}`;
+  }, [hasHeldCards, result, yenMode, yenValueOf]);
+
   // マウント時と入力が変わるたびに、同率 1 位の reachable カード全部を展開状態にリセット
   // (totalFinalAmount が最上位値と等しい全カード = displayRank 1 の集合)。
   // render 中 guard で実装 (effect 内 setState を避ける React 公認パターン)。
@@ -447,23 +462,26 @@ export function CalculatorScreen() {
           onboarding > update(SEED_VERSION) > today を BannerSlot が判定する。
           onboardingActive 時は通知枠を抑制し、枠に 2 ステップチェックリストを描画する。
           PR-6d (U6): 通知枠は任意 UI。更新バナー / 自動反映バナー / オンボーディング枠の例外で
-          計算画面ごと落とさないよう、非表示に縮退する境界で包む。 */}
-      <ErrorBoundary scopeName="BannerSlot" fallback={() => null}>
-        <BannerSlot
-          onboardingActive={onboardingActive}
-          onboarding={
-            <OnboardingChecklist
-              step1Done={step1Done}
-              step2Done={step2Done}
-              onClose={closeOnboarding}
-            />
-          }
-          programs={programs}
-          now={today}
-          todayOpen={todayBreakdownOpen}
-          onToggleToday={() => setTodayBreakdownOpen((v) => !v)}
-        />
-      </ErrorBoundary>
+          計算画面ごと落とさないよう、非表示に縮退する境界で包む。
+          PR-U5: 通知枠は常設の aria-live="polite" 領域 (中身が入れ替わったら読み上げる)。 */}
+      <div aria-live="polite">
+        <ErrorBoundary scopeName="BannerSlot" fallback={() => null}>
+          <BannerSlot
+            onboardingActive={onboardingActive}
+            onboarding={
+              <OnboardingChecklist
+                step1Done={step1Done}
+                step2Done={step2Done}
+                onClose={closeOnboarding}
+              />
+            }
+            programs={programs}
+            now={today}
+            todayOpen={todayBreakdownOpen}
+            onToggleToday={() => setTodayBreakdownOpen((v) => !v)}
+          />
+        </ErrorBoundary>
+      </div>
 
       <CalcStoreForm
         stores={stores}
@@ -497,6 +515,11 @@ export function CalculatorScreen() {
           currencyById={currencyById}
         />
       )}
+
+      {/* PR-U5: 結果サマリ (件数 / #1) を支援技術に読み上げる常設の aria-live 領域 (画面には出さない)。 */}
+      <p className="visually-hidden" aria-live="polite" aria-atomic="true">
+        {liveSummary}
+      </p>
 
       {/* 保有 0 枚時 (ONB-1): 実 CTA は上部のオンボーディングチェックリストが受け持つので、
           結果エリアは簡素な 1 行の空メッセージに一本化する。 */}
