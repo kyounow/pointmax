@@ -1,9 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import {
   classifyResponse,
   stripHtmlToText,
   isRetryable,
   detectCharset,
+  prefetchRawHtml,
+  PrefetchError,
 } from "./fetch-response";
 
 describe("classifyResponse", () => {
@@ -151,5 +153,66 @@ describe("detectCharset", () => {
       '<meta charset="Shift_JIS">\n' +
       "<title>Vポイント アップ</title>";
     expect(detectCharset("text/html", head)).toBe("shift_jis");
+  });
+});
+
+// PR-5c-1: prefetchRawHtml の timeout (AbortController) と、失敗の種類 (http / network / timeout)。
+describe("prefetchRawHtml (PrefetchError / timeout)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("2xx は charset を解決して本文を返す", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("<html><body>ok 20倍</body></html>", {
+        status: 200,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      })),
+    );
+    await expect(prefetchRawHtml("https://example.com/")).resolves.toContain("ok 20倍");
+  });
+
+  it("403 は httpStatus 付きの PrefetchError (message は従来形式)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("forbidden", { status: 403, statusText: "Forbidden" })),
+    );
+    const err = await prefetchRawHtml("https://example.com/").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PrefetchError);
+    expect((err as PrefetchError).httpStatus).toBe(403);
+    expect((err as PrefetchError).reason).toBe("http");
+    expect((err as PrefetchError).message).toBe("prefetch HTTP 403: Forbidden");
+  });
+
+  it("応答が返らなければ timeoutMs で打ち切り、reason=timeout", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: string, init?: { signal?: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError")),
+            );
+          }),
+      ),
+    );
+    const err = await prefetchRawHtml("https://example.com/", 20).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PrefetchError);
+    expect((err as PrefetchError).reason).toBe("timeout");
+    expect((err as PrefetchError).httpStatus).toBeNull();
+  });
+
+  it("接続エラーは reason=network", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("fetch failed");
+      }),
+    );
+    const err = await prefetchRawHtml("https://example.com/").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PrefetchError);
+    expect((err as PrefetchError).reason).toBe("network");
+    expect((err as PrefetchError).message).toContain("fetch failed");
   });
 });

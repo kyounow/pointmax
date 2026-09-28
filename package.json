@@ -18,7 +18,8 @@
     "sync:propose": "tsx scripts/sync/diff-and-propose.ts",
     "sync:apply": "tsx scripts/sync/apply-proposals.ts",
     "sync:approve": "tsx scripts/sync/approve-proposals.ts",
-    "sync:report": "tsx scripts/sync/report.ts"
+    "sync:report": "tsx scripts/sync/report.ts",
+    "sync:rate-watch": "tsx scripts/sync/rate-watch.ts"
   },
   "dependencies": {
     "@xyflow/react": "^12.10.2",
