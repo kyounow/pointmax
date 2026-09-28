@@ -110,6 +110,13 @@ PointMax 未登録の新規対象店舗:
 }
 ```
 
+`category` は次の語彙から選んでください。どれにも当てはまらない業態は無理に当てはめず、
+業態を表す短い名前をそのまま書いてください (語彙外・未設定の店は自動追加されず、人手レビューに回ります):
+
+<!-- INJECT:categories -->
+_(実行時に scripts/sync/inject-prompt.ts が src/state/seed-categories.ts から語彙を注入)_
+<!-- /INJECT -->
+
 ## 既存の PointMax 全店舗 (参照用)
 
 ページ上の店舗が PointMax に登録済かを確認するための一覧:

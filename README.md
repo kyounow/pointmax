@@ -30,7 +30,8 @@
 - **店舗 picker の実行時フィルタ（PR-6c / B6）**: 計算画面の店舗 select には、選んでも一般店舗と
   同じ結果になる店と計算が実態とずれる店を出さない。隠すのは (1) **店舗別の還元 (membership) が
   1 件も無い店**、(2) 同期の除外カテゴリ (`EXCLUDED_CATEGORIES` と同じ語彙: 金融 / 保険 / 医療 /
-  ギャンブル / 葬儀 / 不動産・住宅 / ネットサービス / サービス / その他 / (未分類))、(3) **電気・ガス**
+  ギャンブル / 葬儀 / 不動産・住宅 / ネットサービス / サービス / その他 / (未分類) / サブスクリプション /
+  ゲーム / アプリストア。後ろ 3 語は PR-4a で追加)、(3) **電気・ガス**
   （公共料金の減額が未モデル。下の「計算に反映していない条件」7）。**一般店舗 (`general`) は常に表示**し、
   **選択中の店と直近店舗チップの店は隠す条件でも残す**（select の値とチップを壊さない）。
   判定は純関数 `visibleStoreIds`（`src/domain/storePicker.ts`、state の memberships から毎回導出するので
@@ -344,7 +345,7 @@
   2026-09 時点で enabled な crawl:index ソースは無い (jre / 楽天Pay は停止中、設定は再開用に保持)。
 - `npm run sync:propose` で現在 seed と diff、`autoApplicable`/`needsReview` に分類:
   - confidence ≥ 0.9 / rate 変動 ±10pp 以内 / 倍率 0.5x〜2x / 既存と衝突なし → auto
-  - それ以外 (excludedCategory / lowConfidence / referenceChange / unsupportedDateClaim 等) → review
+  - それ以外 (excludedCategory / unknownCategory / lowConfidence / referenceChange / unsupportedDateClaim 等) → review
   - **ソース別ポリシー (Phase B″ / C″、PR-0b-3)**: `sources/registry.yaml` で `autoMerge: false` のソース
     (d払い / PayPay) 由来の auto 候補は、全ガードを通過しても `sourceAutoMergeDisabled` で review。
     store / program / updateField は orphan ガード (Phase C) の前 (B″)、membership は内容ガード (C′) の後 (C″) で
@@ -395,7 +396,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1815 ケース / 93 ファイル** (2026-09-28 時点、PR-6b / 6c / U5 後)） |
+| テスト | Vitest（**1851 ケース / 94 ファイル** (2026-09-28 時点、PR-4a 後)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -452,7 +453,8 @@ src/state/
   seed-additions.ts             # 自動同期で追加されたデータ (auto-generated)
   seed-overrides.ts             # 既存 program への部分上書き (PROGRAM_OVERRIDES) の型 + 適用関数
   seed-blocklist.ts             # 自動同期で除外したい storeId + membership 単体 tombstone (REMOVED_MEMBERSHIP_IDS、手書き)
-  seed-category-aliases.ts      # カテゴリ統合マップ (旧名 → 新名)
+  seed-category-aliases.ts      # カテゴリ統合マップ (旧名 → 新名)。seed() が手書き店と自動同期分の category に読み取り時に適用
+  seed-categories.ts            # 店舗カテゴリ語彙 36 名 (汎用は擬似店舗専用) + 抽出時だけの alias 8 組。seed 契約 (store の category は語彙内)・sync の unknownCategory・INJECT:categories 用 (アプリは import しない = main chunk 0 B)
   tierFamily.ts                 # 倍率 tier 系列 (J-POINT W / Gold / たまる) の判定。sync の tierMove と seed の tier 契約用 (アプリは import しない)
 ```
 
@@ -503,7 +505,7 @@ scripts/sync/
   propose-helpers.ts   # propose<Entity> 個別関数群
   apply-proposals.ts   # autoApplicable を seed-additions.ts に書き出し
   approve-proposals.ts # needsReview を ID 指定で seed-additions.ts に承認適用 (半自動レビュー)
-  inject-prompt.ts     # extractor プロンプトに seed 内容を動的注入
+  inject-prompt.ts     # extractor プロンプトに seed 内容と店舗カテゴリ語彙 (INJECT:categories) を動的注入
   aliases.ts           # cardId / storeId の表記揺れ正規化
   evidence-check.ts    # hallucination guard (日付主張の根拠検証 等) + キャンペーン条件文言 / lifestyle 語の検知
   report.ts            # AUTO_SUMMARY.md / REVIEW_QUEUE.md / SYNC_HISTORY(.json/.md) 生成 (同 generatedAt は upsert)
@@ -514,7 +516,7 @@ scripts/sync/
 `scripts/**/*.ts` は `tsconfig.scripts.json` で `tsc -b` の型検査対象（lib は ES2023 のみ、DOM 無し）。
 CI の typecheck に加え、`npm run build`（= weekly-sync の safety gate と deploy）でも検査されるため、
 scripts だけの型エラーでも auto 反映は全件 safetyFailed に降格し deploy も止まる。
-scripts が import する `src/`（seed 系・mergeSeed・migrations・types・urlSafety・defineMemberships・tierFamily など）は
+scripts が import する `src/`（seed 系・mergeSeed・migrations・types・urlSafety・defineMemberships・tierFamily・seed-categories など）は
 Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わないこと。
 
 ## ローカル開発
@@ -522,7 +524,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1815 ケース / 93 ファイル (2026-09-28 時点、PR-6b / 6c / U5 後))
+npm run test         # Vitest (1851 ケース / 94 ファイル (2026-09-28 時点、PR-4a 後))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -589,7 +591,10 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   Downgrade → Regenerate reports の値が残る。PR-0b-3)。この upsert が入る前の 2026-07-09 / 07-16 / 07-23 の
   3 entry は降格前の auto 件数 (81 / 4 / 3) が残った虚偽記録だったため、auto 0 / `safetyFailed` に訂正済み
 - inject-prompt は実行時に `seed()` をライブ参照するため、seed に追加した新カード/通貨は
-  自動でプロンプトへ反映される（回帰契約テストで保証）
+  自動でプロンプトへ反映される（回帰契約テストで保証）。stores[] を出す jcb-jpoint / epos-tamaru /
+  ongoing-program の prompt には `INJECT:categories` で店舗カテゴリ語彙 (`src/state/seed-categories.ts`、
+  汎用を除く 35 名) も注入する (PR-4a)。INJECT の追加だけでは `promptVersion` / `extractorVersions` を上げない
+  (上げると `staleExtractGeneration` が 1 周期走るだけのため)。campaign の固定語彙行は F1p (campaign v3.6) で置換予定
 - ローカル PC は完全に無関係 — GitHub のサーバー上で実行される
 
 ### cron が auto-merge する/しない範囲
@@ -599,7 +604,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | 既存 store/program 参照の **memberships** | ✅ する (内容ガード通過時) | J-POINT パートナー / たまるマーケット等。**Phase C′ (PR-0b-3)**: 既存店なのに evidence に店名 (store.name の括弧書きを除いたもの) が無ければ `storeNameMismatch`、evidence / notes に条件文言 (一部 / 最大 / オンライン・ネット・通販・経由 / モバイルオーダー・デリバリー / (サービス\|商品\|メニュー\|アプリ)限定 / 支店限定) があれば `campaignConditional`。実効チャネルが online の program (たまる) は EC 語を免除。campaign 由来の率上書き (overrideRate) が 5% 超なら `campaignRateCeiling` |
 | 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview。既存 **campaign** (validTo あり) の率改定は新規と同じく 10% 以上 / 5% 超で月上限なしなら `campaignRateCeiling` (PR-0b-3。validTo の無い J-POINT 20 倍系は対象外)。反映は `seed-additions.ts` の `PROGRAM_OVERRIDES` (部分上書き) 経由で、手書き seed ファイルは書き換えない |
 | 既存 program の **期間変更** (validFrom/validTo) | ❌ しない (`periodChange` で needsReview) | キャンペーン延長/期間訂正の検知。承認は `npm run sync:approve -- <ID>` → `PROGRAM_OVERRIDES` 経由で反映 |
-| 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge |
+| 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge。**カテゴリ (PR-4a)**: 抽出の category は alias (`seed-categories.ts` の抽出時 8 組 → `seed-category-aliases.ts` の 7 組) で正規化し、語彙 (`STORE_CATEGORIES`、汎用を除く 35 名) に無い・未設定なら `unknownCategory` で review (判定順 userBlocked → excludedCategory → idCollision → **unknownCategory** → lowConfidence → storeAdditionsDisabled。chain-promote は storeAdditionsDisabled しか解除しないので語彙外の店は auto にならない)。サブスクリプション / ゲーム / アプリストアは `excludedCategory`。対応は alias か語彙を足す PR (そのまま `sync:approve` すると seed 契約 = store の category は語彙内 で CI が落ちる) |
 | 新規 **campaign program** (campaign extractor 由来) | ⚠ Z3 ガードを全て通過し、かつ `autoMerge: false` でないソースのときだけ (現在 campaign ソースは d払い / PayPay の 2 本とも `autoMerge: false` なので**実質 auto なし**) | `campaignAutoMergeBlocker` (PR-0b-3) の判定順: extractor が campaign / 期間明示 (validTo 未来、validFrom ≤ validTo) / 値域 (月上限 > 0・bonusType・曜日日付) / confidence ≥ **0.90** / 既存参照整合 → 外れたら `idCollision`。**rate < 10%** (境界 10% を含めて review) と **5% 超は月上限 (monthlyCapAmountYen) 必須** (campaign prompt は上限を出さないので、当面 5% 超は常に review) → 外れたら `campaignRateCeiling`。lifestyle 語 (給与振込 / 住宅ローン / 投資 / 保険 / 家族ポイント / ○人以上 等) と条件文言 (最大 / 対象商品 等「対象+店・店舗・期間・カード以外」/ 一部商品 / ポイント利用 / 店舗限定 / 割引・クーポン / 新規・初回・ランク・年齢・学生 / オンライン・経由・モバイルオーダー / 抽選・先着) → `campaignConditional`。その前段の integrity: 対象キー (非空 cardIds / pointCardId / paymentAppId) が無ければ `untargetedProgram`、registry の `target` 宣言と帰属が合わなければ `targetMismatch` (review 行きの誤帰属にも付く)。confidence は逐語根拠つきキャンペーンが ≥0.90 に乗るよう campaign プロンプトを校正 (v3.3、`explicitness=1.0`) |
 | `autoMerge: false` の**ソース由来の提案** (d払い / PayPay) | ❌ しない (`sourceAutoMergeDisabled` で needsReview) | **Phase B″ / C″ `applySourcePolicies` (PR-0b-3)**: 全ガードを通過した auto 候補でも、registry で `autoMerge: false` のソース由来なら stores / programs / memberships / updateField を問わず review。membership だけは Phase C (orphan) と C′ (内容ガード) の後で降格するので、店名不一致・条件文言の membership は `storeNameMismatch` / `campaignConditional` (承認に `--accept-risk` が必要) のまま。旧世代 extracted の updateField は `staleExtractGeneration` が優先。chain-promote もこのソースの campaign を根拠にしない。期限切れ整理 (`expired-cleanup`) は registry に無いので対象外 (auto のまま)。**解除条件**: PR-1 H4 の事後レビュー表で 4 週連続して誤りが無いことを確認してから、別 PR で `autoMerge: false` を外す |
 | 対象キーの無い**新規 program** (全 extractor) | ❌ しない (`untargetedProgram` で needsReview) | cardIds / pointCardId / paymentAppId がどれも無い (`cardIds: []` を含む) program はどのカードでも発火しない死にデータ。import 検証 (`validators`) と seed 契約テストも拒否する (PR-0b-3) |
@@ -711,6 +716,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **改善 PR-6a-2 (U1 期限切れ整理のサイレント反映 + PR-6d follow-up)** — 期限切れ campaign (validTo を過ぎた tombstone) とその cascade membership の削除だけの週は、確認モーダルもバナーも出さずに反映して digest を既読化し、他の追加・更新と同じ週はバナーに「（期限切れ M 件を整理）」を併記 (`planAutoApply` / `isExpiredRemoval`、validTo 当日は従来どおりモーダル)。新規プロファイルの seed 投入を Root で App の描画前に行い空画面の 1 フレームを解消、復旧パネルの小修正 (localStorage 例外の握りつぶし・初期化の予備経路で案内を見せてから再読み込み)。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-5a (V1 鮮度 = 同梱 seed 参照方式)** — 確認月 `lastVerifiedAt` を還元プログラムとカードの基本還元にも持たせ (`BenefitProgram` / `Card`)、計算結果の展開ビューで採用したルート・還元率の最終確認の最古が 12 ヶ月超なら『⚠ 古い情報かも (最終確認 YYYY-MM)』を 1 チップ出す (旧『⚠ ルート要確認』を置き換え、edge の 6 ヶ月判定も 12 ヶ月に統一)。確認月と `officialUrl` は META キーとして公式差分の比較・指紋から外し (通知しない)、表示時に同梱 seed を参照する (`resolveVerifiedMonth` / `getSeedProgram` / `getSeedEdge`)。`ResolvedRate` の charge 変種に `programId`、`CardRanking.adoptedProgramIds` を追加。四半期チェック対象 30 program に 2026-07 を記入 (週次監視 tier と ADDED は空欄)。SEED_VERSION 47 / PERSIST_SCHEMA 据え置き
 - **改善 PR-6b / 6c / U5 (円換算の既定化 + 店舗 picker の整理 + モバイル a11y)** — 優先通貨が未設定なら計算画面を ¥ 円換算で起動し、円換算ビューの各行に通常ビューと同じ警告チップ (要エントリー / 条件 / 上限 / 古い情報かも。`buildWarningPlan` に一本化) を出す。円換算でも直近店舗を記録。店舗 select から membership ゼロ・除外カテゴリ・電気・ガスの店を実行時に隠し (現 seed で 81 / 268 店、選択中・直近チップ・一般店舗は残す)、「一覧に無い店は一般店舗」の 1 行ヒントを追加。`viewport-fit=cover`・通知枠と結果サマリの `aria-live`・`prefers-reduced-motion`・`100dvh`。SEED_VERSION / PERSIST_SCHEMA 据え置き
+- **改善 PR-4a (店舗カテゴリ語彙 + unknownCategory)** — 店舗カテゴリの語彙 `src/state/seed-categories.ts` (seed() の実測 36 名、アプリは import しない) と抽出時だけの alias 8 組 (美容・健康→美容 等) を新設し、seed() は手書き店にも alias を当てる (出力不変)。週次同期は語彙外・未設定の category の新規店を `unknownCategory` で review に回し (idCollision の後・lowConfidence の前、chain-promote の対象外)、サブスクリプション / ゲーム / アプリストアを除外カテゴリに追加 (PR-6c の店舗 picker の除外語彙 `PICKER_EXCLUDED_CATEGORIES` にも同じ 3 語。現 seed にこの 3 語の店は無く、隠れる店は 81 / 268 のまま)。seed 契約 (store の category は語彙内) を同じ PR で追加。J-POINT / たまる / SMBC の prompt に `INJECT:categories` で語彙を注入 (promptVersion 据え置き)。現行 extracted のローカル propose で unknownCategory 0 件・excludedCategory 3→8 件。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。

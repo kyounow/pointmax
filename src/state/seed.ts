@@ -615,7 +615,9 @@ type SeedReturn = {
  *  - 手書きが常に前、追加分が後 (UI の並びはこの順)
  *  - id が重複した場合は手書きが勝つ (filter で排除)
  *  - 自動同期分の store のうち BLOCKED_STORE_IDS に含まれるものは除外
- *  - 追加 store の category は CATEGORY_ALIASES で正規化 (旧名 → 新名)
+ *  - store の category は合成後の配列で CATEGORY_ALIASES により正規化 (旧名 → 新名)。
+ *    手書き店も PR-4a から通す (手書きは既に正規名なので値は不変、要素は複製される)。
+ *    語彙 (seed-categories.ts) との照合は seed.test の契約が担う (アプリは語彙を import しない)
  *  - tombstone: REMOVED_PROGRAM_IDS の program (+ cascade membership) と
  *    REMOVED_MEMBERSHIP_IDS の membership 単体を除外
  */
@@ -642,11 +644,11 @@ export const seed = (): SeedReturn => {
       ...stores,
       ...ADDED_STORES.filter(
         (s) => !handwrittenStoreIds.has(s.id) && !BLOCKED_STORE_IDS.has(s.id),
-      ).map((s) => ({
-        ...s,
-        category: resolveCategory(s.category),
-      })),
-    ],
+      ),
+    ].map((s) => ({
+      ...s,
+      category: resolveCategory(s.category),
+    })),
     edges,
     pointCards,
     paymentApps: [

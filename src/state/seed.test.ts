@@ -12,6 +12,7 @@ import {
 import { SEED_CARDS, SEED_PAYMENT_APPS } from "./seed-data-cards";
 import { SEED_EDGES } from "./seed-data-edges";
 import { SEED_BENEFIT_PROGRAMS } from "./seed-data-programs";
+import { SEED_STORES } from "./seed-data-stores";
 import { CARD_FAMILIES } from "./seed-data-card-families";
 import {
   collectStaleItems,
@@ -25,7 +26,8 @@ import { syncDigest } from "../domain/syncDigest";
 import { membershipId } from "./defineMemberships";
 import { ADDED_PROGRAMS, REMOVED_PROGRAM_IDS } from "./seed-additions";
 import { seedFreshness } from "./seedFreshness";
-import { REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
+import { PSEUDO_STORE_IDS, REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
+import { STORE_CATEGORIES, isKnownStoreCategory } from "./seed-categories";
 import { tierFamilyOf } from "./tierFamily";
 
 describe("MASTER_CARD_IDS / isMasterCard", () => {
@@ -1186,5 +1188,33 @@ describe("PR-5a: 確認月 (lastVerifiedAt) の契約", () => {
       })),
     ];
     expect(collectStaleItems(items, OCT)).toBeNull();
+  });
+});
+
+// ─── PR-4a: 店舗カテゴリ (seed-categories.ts の語彙 + CATEGORY_ALIASES) ───
+describe("PR-4a: 店舗カテゴリの seed 契約", () => {
+  it("手書き店にも alias を当てるが、手書きの category は既に正規名なので内容は SEED_STORES と同じ (seed() 出力不変)", () => {
+    const { stores } = seed();
+    expect(stores.length).toBeGreaterThan(SEED_STORES.length);
+    // 合成後の配列で map するので要素は複製される (参照同一は保証しない)。内容の一致だけを見る。
+    SEED_STORES.forEach((s, i) => expect(stores[i], s.id).toEqual(s));
+  });
+
+  // propose の unknownCategory (語彙外・未設定の新規店は review) と同じ PR で入れる契約。
+  // 単独で入れると、語彙外の店が auto で apply された cron の safety gate がこの契約で落ち、
+  // 無関係な auto 変更まで巻き添えで降格する。
+  it("seed().stores は全件 category を持ち、語彙 (seed-categories.ts の STORE_CATEGORIES) に含まれる", () => {
+    const bad = seed()
+      .stores.filter((s) => !isKnownStoreCategory(s.category))
+      .map((s) => `${s.id}: category=${JSON.stringify(s.category)}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
+  it("pseudo カテゴリ (汎用) を持つのは擬似店舗 (PSEUDO_STORE_IDS) だけ", () => {
+    const pseudoNames = new Set(STORE_CATEGORIES.filter((c) => c.pseudo).map((c) => c.name));
+    const bad = seed()
+      .stores.filter((s) => pseudoNames.has(s.category ?? "") && !PSEUDO_STORE_IDS.has(s.id))
+      .map((s) => `${s.id}: ${s.category}`);
+    expect(bad).toEqual([]);
   });
 });

@@ -120,6 +120,8 @@ describe("proposeStores", () => {
         {
           storeId: "x",
           name: "y",
+          // PR-4a: category が無いと unknownCategory (lowConfidence より前) になるので語彙内を付ける
+          category: "飲食",
           evidenceQuote: "x",
           explicitness: 0.5,
           ambiguity: 0.3, // → 0.5 * 0.7 = 0.35
@@ -133,7 +135,7 @@ describe("proposeStores", () => {
   // 「Policy B: 金融カテゴリ excludedCategory」は単体ケース。
   // 下のパラメタライズドテスト (金融 / ギャンブル / 保険 / 医療 / 葬儀 / ネット
   // サービス / サービス / その他 / 不動産・住宅) で全カテゴリを網羅するため統合。
-  it("Policy B: 金融/ギャンブル/保険/医療/葬儀/ネットサービス/サービス/その他/不動産・住宅 すべて除外", () => {
+  it("Policy B: 金融/ギャンブル/保険/医療/葬儀/ネットサービス/サービス/その他/不動産・住宅/サブスクリプション/ゲーム/アプリストア すべて除外", () => {
     const excluded = [
       "金融",
       "ギャンブル",
@@ -144,6 +146,10 @@ describe("proposeStores", () => {
       "サービス",
       "その他",
       "不動産・住宅",
+      // PR-4a
+      "サブスクリプション",
+      "ゲーム",
+      "アプリストア",
     ];
     for (const cat of excluded) {
       const data = baseSource({
@@ -207,6 +213,15 @@ describe("proposeStores", () => {
       ["ネット買取", "買取"],
       ["リサイクル/買取", "買取"],
       ["エンターテイメント", "エンタメ・チケット"],
+      // PR-4a: 抽出時だけの 8 組 (seed-categories.ts の EXTRACTED_CATEGORY_ALIASES)
+      ["美容・健康", "美容"],
+      ["書籍・文房具", "書店"],
+      ["レジャー・エンタメ", "エンタメ・チケット"],
+      ["家具・インテリア", "雑貨"],
+      ["宿泊", "ホテル"],
+      ["旅行", "旅行代理店"],
+      ["自動車", "車・バイク"],
+      ["エネルギー", "電気・ガス"],
     ];
     for (const [oldCat, newCat] of cases) {
       const data = baseSource({
@@ -245,6 +260,76 @@ describe("proposeStores", () => {
     });
     const ps = proposeStores(data, emptySeed);
     expect(ps[0].reviewReason).toBe("userBlocked");
+  });
+
+  // ─── PR-4a: unknownCategory (語彙外 / 未設定 / pseudo) ───
+  const oneStore = (
+    over: Partial<NonNullable<ExtractedSource["stores"]>[number]>,
+  ): ExtractedSource =>
+    baseSource({
+      stores: [
+        {
+          storeId: "new-shop",
+          name: "新しい店",
+          evidenceQuote: "新しい店 ポイント 2 倍",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+          ...over,
+        },
+      ],
+    });
+
+  it("PR-4a: 語彙外カテゴリ (ショッピングモール) は unknownCategory", () => {
+    const ps = proposeStores(oneStore({ category: "ショッピングモール" }), emptySeed);
+    expect(ps[0].reviewReason).toBe("unknownCategory");
+    expect((ps[0] as AddRecordProposal).record.category).toBe("ショッピングモール");
+  });
+
+  it("PR-4a: category 未設定は confidence 0.95 でも unknownCategory (lowConfidence / storeAdditionsDisabled より前)", () => {
+    const ps = proposeStores(oneStore({}), emptySeed);
+    expect(ps[0].confidence).toBeGreaterThanOrEqual(0.9);
+    expect(ps[0].reviewReason).toBe("unknownCategory");
+  });
+
+  it("PR-4a: 語彙外かつ低 confidence は unknownCategory (lowConfidence より前)", () => {
+    const ps = proposeStores(
+      oneStore({ category: "ショッピングモール", explicitness: 0.5, ambiguity: 0.3 }),
+      emptySeed,
+    );
+    expect(ps[0].reviewReason).toBe("unknownCategory");
+  });
+
+  it("PR-4a: pseudo カテゴリ (汎用) の新規店も unknownCategory", () => {
+    const ps = proposeStores(oneStore({ category: "汎用" }), emptySeed);
+    expect(ps[0].reviewReason).toBe("unknownCategory");
+  });
+
+  it("PR-4a: 既存 id + 語彙外は idCollision (idCollision の後に判定する順序確認)", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      stores: [{ id: "new-shop", name: "既存", category: "飲食" }],
+    };
+    const ps = proposeStores(oneStore({ category: "ショッピングモール" }), seed);
+    expect(ps[0].reviewReason).toBe("idCollision");
+  });
+
+  it("PR-4a: EXCLUDED は unknownCategory より前 (サブスクリプションは excludedCategory)", () => {
+    const ps = proposeStores(oneStore({ category: "サブスクリプション" }), emptySeed);
+    expect(ps[0].reviewReason).toBe("excludedCategory");
+  });
+
+  it("PR-4a: alias で語彙内に正規化される名前は unknownCategory にならない (美容・健康 → 美容)", () => {
+    const ps = proposeStores(oneStore({ category: "美容・健康" }), emptySeed);
+    expect(ps[0].reviewReason).toBe("storeAdditionsDisabled");
+    expect((ps[0] as AddRecordProposal).record.category).toBe("美容");
+  });
+
+  it("PR-4a: Gemini の自己申告除外 (selfReportedExclusion) は unknownCategory より強い", () => {
+    const ps = proposeStores(
+      oneStore({ category: "ショッピングモール", evidenceQuote: "新しい店 (ページ上で確認できず、対象外)" }),
+      emptySeed,
+    );
+    expect(ps[0].reviewReason).toBe("selfReportedExclusion");
   });
 });
 

@@ -9,6 +9,7 @@
 //   - 既存ID / 既存 name と衝突                          → "idCollision"
 //   - BLOCKED_STORE_IDS 入りの id                        → "userBlocked"
 //   - EXCLUDED_CATEGORIES (金融/保険/医療等)             → "excludedCategory"
+//   - 新規 store の category が語彙外 / 未設定 (seed-categories.ts)  → "unknownCategory" (PR-4a、idCollision の後・lowConfidence の前)
 //   - PSEUDO_STORE_IDS / PSEUDO_STORE_IDS 入りの参照 (擬似エンティティ:
 //     ダミー store "general" / 基本決済モード "pa-default" 等)
 //                                                          → "pseudoStoreTarget"
@@ -40,7 +41,10 @@ import {
   PSEUDO_STORE_IDS,
   REMOVED_MEMBERSHIP_IDS,
 } from "../../src/state/seed-blocklist";
-import { resolveCategory } from "../../src/state/seed-category-aliases";
+import {
+  isExtractableStoreCategory,
+  resolveExtractedCategory,
+} from "../../src/state/seed-categories";
 // membership 突合キーは id 導出に統一 (membershipId が唯一の生成源)。
 import { membershipId } from "../../src/state/defineMemberships";
 import { tierFamilyOf } from "../../src/state/tierFamily";
@@ -185,10 +189,13 @@ export function proposeStores(
 
   for (const s of data.stores) {
     const { evidence, confidence } = evidenceAndConfidence(s);
-    // alias 適用: 旧名 (e.g., "鉄道・交通") は新名 ("交通") に正規化
-    const normalizedCategory = resolveCategory(s.category);
+    // alias 適用: 旧名 (e.g., "鉄道・交通") や抽出の揺れ (e.g., "美容・健康") を正規名に
+    // (seed-categories.ts の EXTRACTED_CATEGORY_ALIASES → CATEGORY_ALIASES の順)
+    const normalizedCategory = resolveExtractedCategory(s.category);
 
-    // base 判定 (現行の if/else-if を一切変えず維持)
+    // base 判定 (if/else-if の先勝ち): userBlocked → excludedCategory → idCollision →
+    // unknownCategory (PR-4a) → lowConfidence → storeAdditionsDisabled。
+    // 下の resolveReviewReason の override (selfReportedExclusion 等) は従来どおり後勝ち
     let baseReason: ReviewReason | undefined;
     if (BLOCKED_STORE_IDS.has(s.storeId)) {
       baseReason = "userBlocked";
@@ -199,6 +206,12 @@ export function proposeStores(
       baseReason = "excludedCategory";
     } else if (existingIds.has(s.storeId) || existingNames.has(s.name)) {
       baseReason = "idCollision";
+    } else if (!isExtractableStoreCategory(normalizedCategory)) {
+      // PR-4a: 語彙 (seed-categories.ts) に無い、未設定、または pseudo (汎用) の category。
+      // lowConfidence より前に置く: 昇格系 (chain-promote) は storeAdditionsDisabled しか
+      // 書き換えないので、語彙外の店が auto になって seed 契約 (category は語彙内) を
+      // apply 後の safety gate で壊す経路が構造的に無くなる。
+      baseReason = "unknownCategory";
     } else if (confidence < CONFIDENCE_AUTO_THRESHOLD) {
       baseReason = "lowConfidence";
     } else {

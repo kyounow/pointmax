@@ -37,6 +37,10 @@ export const PICKER_EXCLUDED_CATEGORIES: ReadonlySet<string> = new Set([
   "サービス",
   "その他",
   "(未分類)",
+  // PR-4a: 実店舗を持たないデジタル契約 (EXCLUDED_CATEGORIES と同時に追加)
+  "サブスクリプション",
+  "ゲーム",
+  "アプリストア",
 ]);
 
 /**

@@ -52,7 +52,7 @@ Gemini 呼び出し直前に現在の seed から最新一覧を注入します�
 
 | 部品 | 必須 | 意味 |
 |---|---|---|
-| `<entity>` | ✅ | `cards / currencies / stores / pointCards / paymentApps` のいずれか |
+| `<entity>` | ✅ | `cards / currencies / stores / pointCards / paymentApps / categories` のいずれか (`categories` は店舗カテゴリ語彙、下記) |
 | `filter=field:value` | 任意 | フィールドの完全一致でレコード絞り込み (例: `filter=category:JAL特約店`) |
 | `columns=col1,col2` | 任意 | 列指定 (省略時は entity ごとのデフォルト) |
 
@@ -65,6 +65,13 @@ Gemini 呼び出し直前に現在の seed から最新一覧を注入します�
 | stores | id, name, category |
 | pointCards | id, name, currencyId |
 | paymentApps | id, name, chargeBased |
+| categories | name |
+
+`categories` (PR-4a) は seed() ではなく `src/state/seed-categories.ts` の店舗カテゴリ語彙 (擬似店舗用の「汎用」を
+除く 35 名) を 1 列表で出す (`filter` を付けると例外。`columns` も `name` 以外は例外)。stores[] を出す `jcb-jpoint` / `epos-tamaru` /
+`ongoing-program` の prompt が「`category` は次の語彙から選ぶ」の直後に置く。語彙外・未設定の category の
+新規店は propose の `unknownCategory` で review に回る。`campaign` の固定語彙行は F1p (campaign v3.6) で置換予定、
+停止中の `point-partner` / `jal-tokuyaku` は再開する PR で判断する (`scripts/sync/inject-prompt.test.ts` の対象 extractor 契約)。
 
 ### 注入結果の例
 
@@ -98,6 +105,10 @@ Gemini 呼び出し直前に現在の seed から最新一覧を注入します�
 `promptVersion` は出力 JSON にも記録される。上げたら `sources/registry.yaml` の `extractorVersions` も
 同じ値に更新する。`scripts/sync/diff-and-propose.ts` の stale-generation ガードが両者の不一致を見て、
 旧版 prompt で取った extracted からの rate / 期間の書き戻しを review に降格する。
+
+例外: INJECT マーカー (と、その直前の「次の一覧から選ぶ」程度の導入文) を足すだけの変更は、出力スキーマと
+rate / 期間の抽出ルールが変わらないので上げない (PR-4a の `INJECT:categories`)。上げると次回 fetch までの
+1 周期、現行の extracted が旧世代扱いになり rate / 期間の書き戻しが `staleExtractGeneration` で止まるだけで得るものが無い。
 
 ## 追加時の規約
 
