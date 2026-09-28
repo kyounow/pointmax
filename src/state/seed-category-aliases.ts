@@ -33,9 +33,12 @@ export const CATEGORY_ALIASES: Record<string, string> = {
 };
 
 // category 文字列を alias 適用後の名前で返す。alias が無ければ原文を返す。
+// 自前のキーだけを引く (Object.hasOwn)。"constructor" 等のプロトタイプ名を alias と誤認しない。
 export function resolveCategory(
   category: string | undefined,
 ): string | undefined {
   if (!category) return category;
-  return CATEGORY_ALIASES[category] ?? category;
+  return Object.hasOwn(CATEGORY_ALIASES, category)
+    ? CATEGORY_ALIASES[category]
+    : category;
 }

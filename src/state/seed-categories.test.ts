@@ -8,6 +8,7 @@ import {
   STORE_CATEGORY_SET,
   isExtractableStoreCategory,
   isKnownStoreCategory,
+  resolveCategory,
   resolveExtractedCategory,
 } from "./seed-categories";
 import { ONLINE_ONLY_CATEGORIES } from "../domain/purchaseChannel";
@@ -76,6 +77,13 @@ describe("カテゴリ alias (seed() の 7 組 + 抽出時の 8 組)", () => {
     expect(resolveExtractedCategory("飲食")).toBe("飲食");
     expect(resolveExtractedCategory("ショッピングモール")).toBe("ショッピングモール");
     expect(resolveExtractedCategory(undefined)).toBeUndefined();
+  });
+
+  it("プロトタイプ名 (constructor / toString / __proto__) は alias と誤認せず原文を返す", () => {
+    for (const name of ["constructor", "toString", "__proto__", "hasOwnProperty"]) {
+      expect(resolveExtractedCategory(name), name).toBe(name);
+      expect(resolveCategory(name), name).toBe(name);
+    }
   });
 });
 

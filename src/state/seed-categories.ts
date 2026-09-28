@@ -25,6 +25,8 @@
 //     旧名のまま seed-additions.ts に残る 5 行 (airbnb / princess-cruises / mercedes-benz /
 //     hyundai-mobility-japan / kamei) は全て BLOCKED_STORE_IDS で seed() に出ない。BLOCKED の解除などで
 //     旧名の行が seed() に出るようになったら、その組を CATEGORY_ALIASES 側へ移す (seed 契約が CI で落ちて気付ける)。
+//     語彙外のまま残る 6 行目 shaddy-salada-kan (category「ギフト」、alias なし) も BLOCKED で seed() に出ない。
+//     unblock するなら「ギフト」→ 語彙内の名前の alias を CATEGORY_ALIASES に足す。
 //   - 2 層のキーは互いに素、値は全て語彙内、値がキーに現れない (多段 alias 無し) を seed-categories.test で検査。
 import { CATEGORY_ALIASES, resolveCategory } from "./seed-category-aliases";
 
@@ -128,10 +130,13 @@ export const ALL_CATEGORY_ALIASES: Readonly<Record<string, string>> = {
 /**
  * propose 用: 抽出された category を正規名にする (抽出時の 8 組 → seed() と同じ 7 組の順に引く)。
  * alias が無ければ原文を返し、未設定は undefined のまま (unknownCategory で review に回る)。
+ * 自前のキーだけを引く (Object.hasOwn)。"constructor" 等のプロトタイプ名を alias と誤認しない。
  */
 export function resolveExtractedCategory(
   category: string | undefined,
 ): string | undefined {
   if (!category) return category;
-  return EXTRACTED_CATEGORY_ALIASES[category] ?? resolveCategory(category);
+  return Object.hasOwn(EXTRACTED_CATEGORY_ALIASES, category)
+    ? EXTRACTED_CATEGORY_ALIASES[category]
+    : resolveCategory(category);
 }

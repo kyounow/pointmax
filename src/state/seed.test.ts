@@ -1193,10 +1193,11 @@ describe("PR-5a: 確認月 (lastVerifiedAt) の契約", () => {
 
 // ─── PR-4a: 店舗カテゴリ (seed-categories.ts の語彙 + CATEGORY_ALIASES) ───
 describe("PR-4a: 店舗カテゴリの seed 契約", () => {
-  it("手書き店にも alias を当てるが、手書きの category は既に正規名なので元の参照のまま返る (seed() 出力不変)", () => {
+  it("手書き店にも alias を当てるが、手書きの category は既に正規名なので内容は SEED_STORES と同じ (seed() 出力不変)", () => {
     const { stores } = seed();
     expect(stores.length).toBeGreaterThan(SEED_STORES.length);
-    SEED_STORES.forEach((s, i) => expect(stores[i], s.id).toBe(s));
+    // 合成後の配列で map するので要素は複製される (参照同一は保証しない)。内容の一致だけを見る。
+    SEED_STORES.forEach((s, i) => expect(stores[i], s.id).toEqual(s));
   });
 
   // propose の unknownCategory (語彙外・未設定の新規店は review) と同じ PR で入れる契約。
