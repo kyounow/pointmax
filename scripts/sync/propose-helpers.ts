@@ -40,7 +40,7 @@ import {
   PSEUDO_STORE_IDS,
   REMOVED_MEMBERSHIP_IDS,
 } from "../../src/state/seed-blocklist";
-import { resolveCategory } from "../../src/state/seed-category-aliases";
+import { resolveExtractedCategory } from "../../src/state/seed-categories";
 // membership 突合キーは id 導出に統一 (membershipId が唯一の生成源)。
 import { membershipId } from "../../src/state/defineMemberships";
 import { tierFamilyOf } from "../../src/state/tierFamily";
@@ -185,8 +185,9 @@ export function proposeStores(
 
   for (const s of data.stores) {
     const { evidence, confidence } = evidenceAndConfidence(s);
-    // alias 適用: 旧名 (e.g., "鉄道・交通") は新名 ("交通") に正規化
-    const normalizedCategory = resolveCategory(s.category);
+    // alias 適用: 旧名 (e.g., "鉄道・交通") や抽出の揺れ (e.g., "美容・健康") を正規名に
+    // (seed-categories.ts の EXTRACTED_CATEGORY_ALIASES → CATEGORY_ALIASES の順)
+    const normalizedCategory = resolveExtractedCategory(s.category);
 
     // base 判定 (現行の if/else-if を一切変えず維持)
     let baseReason: ReviewReason | undefined;

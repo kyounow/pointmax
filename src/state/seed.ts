@@ -607,6 +607,14 @@ type SeedReturn = {
   memberships: StoreProgramMembership[];
 };
 
+// 手書き店にも CATEGORY_ALIASES を当てる (PR-4a)。手書きの category は既に正規名なので、
+// 結果が同じなら元の参照を返し (seed() / master.json の出力は不変)、異なる時だけ複製する。
+// 語彙 (seed-categories.ts) との照合は seed.test の契約が担う (アプリは語彙を import しない)。
+const normalizeHandwrittenCategory = (s: Store): Store => {
+  const category = resolveCategory(s.category);
+  return category === s.category ? s : { ...s, category };
+};
+
 /**
  * 手書きシード (seed-data-*.ts) と自動同期で追加されたデータ
  * (seed-additions.ts) を合成して返す。
@@ -615,7 +623,7 @@ type SeedReturn = {
  *  - 手書きが常に前、追加分が後 (UI の並びはこの順)
  *  - id が重複した場合は手書きが勝つ (filter で排除)
  *  - 自動同期分の store のうち BLOCKED_STORE_IDS に含まれるものは除外
- *  - 追加 store の category は CATEGORY_ALIASES で正規化 (旧名 → 新名)
+ *  - store の category は CATEGORY_ALIASES で正規化 (旧名 → 新名。手書き店は PR-4a から、変化なし)
  *  - tombstone: REMOVED_PROGRAM_IDS の program (+ cascade membership) と
  *    REMOVED_MEMBERSHIP_IDS の membership 単体を除外
  */
@@ -624,7 +632,7 @@ export const seed = (): SeedReturn => {
   const cards = SEED_CARDS;
   const pointCards = SEED_POINT_CARDS;
   const paymentApps = SEED_PAYMENT_APPS;
-  const stores = SEED_STORES;
+  const stores = SEED_STORES.map(normalizeHandwrittenCategory);
   const edges = SEED_EDGES;
 
   // 手書きで定義済みの id 集合 (自動同期分が衝突したら捨てるため)

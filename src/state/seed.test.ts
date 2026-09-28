@@ -12,6 +12,7 @@ import {
 import { SEED_CARDS, SEED_PAYMENT_APPS } from "./seed-data-cards";
 import { SEED_EDGES } from "./seed-data-edges";
 import { SEED_BENEFIT_PROGRAMS } from "./seed-data-programs";
+import { SEED_STORES } from "./seed-data-stores";
 import { CARD_FAMILIES } from "./seed-data-card-families";
 import {
   collectStaleItems,
@@ -1186,5 +1187,14 @@ describe("PR-5a: 確認月 (lastVerifiedAt) の契約", () => {
       })),
     ];
     expect(collectStaleItems(items, OCT)).toBeNull();
+  });
+});
+
+// ─── PR-4a: 店舗カテゴリ (seed-categories.ts の語彙 + CATEGORY_ALIASES) ───
+describe("PR-4a: 店舗カテゴリの seed 契約", () => {
+  it("手書き店にも alias を当てるが、手書きの category は既に正規名なので元の参照のまま返る (seed() 出力不変)", () => {
+    const { stores } = seed();
+    expect(stores.length).toBeGreaterThan(SEED_STORES.length);
+    SEED_STORES.forEach((s, i) => expect(stores[i], s.id).toBe(s));
   });
 });
