@@ -299,7 +299,7 @@ jobs:
 
       - name: Create/update review PR
         if: steps.review_trigger.outputs.active == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: chore/sync-review-queue
