@@ -1466,6 +1466,24 @@ details summary {
   font-size: 11px;
   white-space: nowrap;
 }
+/* PR-6c (U3): 店舗 select 直下の 1 行ヒント「一覧に無い店は一般店舗を選ぶと…」。
+   .row (flex-wrap) の中で全幅 1 行を占める。店名部分は一般店舗を選ぶボタン (リンク風)。 */
+.store-general-hint {
+  flex: 1 0 100%;
+  margin: -2px 0 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.store-general-hint button {
+  background: none;
+  border: none;
+  padding: 0;
+  min-height: 0;
+  color: var(--accent);
+  font-size: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 /* PR-3a (UX-1): 店頭クイック入力チップ (直近店舗 / 金額プリセット)。
    .row (flex-wrap) の中で全幅 1 行を占め、溢れは横スクロールで高さを固定する

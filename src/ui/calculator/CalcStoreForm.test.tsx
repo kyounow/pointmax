@@ -107,3 +107,99 @@ describe("CalcStoreForm 金額プリセットチップ", () => {
     expect(preset3000).toHaveAttribute("aria-pressed", "true");
   });
 });
+
+// PR-6c (B6 = (a) + U3): 店舗 select の実行時フィルタと「一般店舗」ヒント。
+const pickerStores: Store[] = [
+  { id: "general", name: "一般店舗 (規定還元)", category: "汎用" },
+  { id: "seven", name: "セブンイレブン", category: "コンビニ" },
+  { id: "lawson", name: "ローソン", category: "コンビニ" }, // membership なし
+  { id: "denki", name: "○○でんき", category: "電気・ガス" },
+  { id: "hoken", name: "○○保険", category: "保険" },
+];
+const pickerMemberships = [
+  { id: "m-p-seven", programId: "p", storeId: "seven" },
+  { id: "m-p-denki", programId: "p", storeId: "denki" },
+  { id: "m-p-hoken", programId: "p", storeId: "hoken" },
+];
+
+function PickerHarness({
+  initialStoreId = "general",
+  recentStoreIds = [],
+}: {
+  initialStoreId?: string;
+  recentStoreIds?: string[];
+}) {
+  const [storeId, setStoreId] = useState(initialStoreId);
+  const [amount, setAmount] = useState("10000");
+  const [storeSearch, setStoreSearch] = useState("");
+  const [storeCategory, setStoreCategory] = useState("");
+  const [activeCurrencyId, setActiveCurrencyId] = useState("rakuten-pt");
+  return (
+    <CalcStoreForm
+      stores={pickerStores}
+      currencies={currencies}
+      storeId={storeId}
+      setStoreId={setStoreId}
+      storeSearch={storeSearch}
+      setStoreSearch={setStoreSearch}
+      storeCategory={storeCategory}
+      setStoreCategory={setStoreCategory}
+      amount={amount}
+      setAmount={setAmount}
+      activeCurrencyId={activeCurrencyId}
+      setActiveCurrencyId={setActiveCurrencyId}
+      showCurrencyFallback={false}
+      recentStoreIds={recentStoreIds}
+      memberships={pickerMemberships}
+    />
+  );
+}
+
+// 店舗 select (value が店舗 id の select) の option 値。
+const storeOptionValues = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll("select"))
+    .find((s) => s.querySelector('option[value="general"]'))!
+    .querySelectorAll("option");
+const optionIds = (container: HTMLElement) =>
+  Array.from(storeOptionValues(container))
+    .map((o) => o.value)
+    .filter((v) => v !== "");
+
+describe("CalcStoreForm 店舗 picker の実行時フィルタ (PR-6c)", () => {
+  it("membership ゼロ・電気・ガス・除外カテゴリの店は option に無く、カテゴリ件数も表示中の店で数える", () => {
+    const { container } = render(<PickerHarness />);
+    expect(optionIds(container)).toEqual(["general", "seven"]);
+    expect(screen.getByRole("option", { name: "全カテゴリ (2)" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /電気・ガス/ })).not.toBeInTheDocument();
+  });
+
+  it("選択中の店と直近店舗チップの店は、隠す条件でも option に残る", () => {
+    const { container } = render(
+      <PickerHarness initialStoreId="lawson" recentStoreIds={["lawson", "denki"]} />,
+    );
+    expect(optionIds(container).sort()).toEqual(["denki", "general", "lawson", "seven"]);
+    // 直近チップから選び直しても select の value が壊れない
+    fireEvent.click(screen.getByRole("button", { name: "○○でんき" }));
+    const select = Array.from(container.querySelectorAll("select")).find((s) =>
+      s.querySelector('option[value="general"]'),
+    )!;
+    expect(select).toHaveValue("denki");
+  });
+});
+
+describe("CalcStoreForm U3『一般店舗』ヒント (PR-6c)", () => {
+  it("一般店舗を選んでいるときは出さない", () => {
+    render(<PickerHarness />);
+    expect(screen.queryByText(/一覧に無い店は/)).not.toBeInTheDocument();
+  });
+
+  it("他の店を選んでいると 1 行ヒントを出し、店名タップで一般店舗に切り替わる (ヒントは消える)", () => {
+    render(<PickerHarness initialStoreId="seven" />);
+    const hint = screen.getByText(/一覧に無い店は/);
+    expect(hint).toHaveTextContent(
+      "一覧に無い店は「一般店舗 (規定還元)」を選ぶと、カードの基本還元率で比較できます",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "「一般店舗 (規定還元)」" }));
+    expect(screen.queryByText(/一覧に無い店は/)).not.toBeInTheDocument();
+  });
+});

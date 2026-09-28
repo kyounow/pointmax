@@ -480,6 +480,7 @@ export function CalculatorScreen() {
         setActiveCurrencyId={setActiveCurrencyId}
         showCurrencyFallback={preferredCurrencyIds.length === 0}
         recentStoreIds={recentStoreIds}
+        memberships={memberships}
       />
 
       {preferredCurrencyIds.length === 0 ? (

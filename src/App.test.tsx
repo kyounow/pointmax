@@ -14,6 +14,7 @@ import { useStore } from "./state/store";
 import { seed, SEED_VERSION } from "./state/seed";
 import { PERSIST_STORE_KEY } from "./state/persist-versions";
 import { clearHydrationFailure } from "./state/hydrationGuard";
+import { visibleStoreIds } from "./domain/storePicker";
 
 beforeEach(() => {
   localStorage.clear();
@@ -66,9 +67,13 @@ describe("App ナビゲーション ARIA (UX-8(1))", () => {
 });
 
 describe("App 起動時の公式データ自動投入 (PR-6a-1 / F7)", () => {
-  // 計算画面の店舗カテゴリ select に seed の店舗総数が出る = seed の店舗が入っている。
+  // 計算画面の店舗カテゴリ select に seed の店舗数が出る = seed の店舗が入っている。
+  // PR-6c (B6): 店舗 select は membership ゼロ・除外カテゴリ・電気・ガスの店を隠すので、
+  // 数えるのは picker に出る店 (visibleStoreIds、初回起動は選択中 = general のみ)。
   const expectSeedStoresOnCalculator = () => {
-    const stores = seed().stores;
+    const s = seed();
+    const ids = visibleStoreIds(s.stores, s.memberships);
+    const stores = s.stores.filter((st) => ids.has(st.id));
     expect(
       screen.getByRole("option", { name: `全カテゴリ (${stores.length})` }),
     ).toBeInTheDocument();
