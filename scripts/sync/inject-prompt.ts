@@ -14,7 +14,7 @@
 //   cards | currencies | stores | pointCards | paymentApps | categories
 //
 // categories (PR-4a) は seed() ではなく店舗カテゴリ語彙 (src/state/seed-categories.ts) の
-// pseudo を除く 35 名を `| name |` の 1 列表で出す (filter は不可)。stores[] を出力する
+// pseudo を除く 35 名を `| name |` の 1 列表で出す (filter は不可、columns は name だけ)。stores[] を出力する
 // extractor の prompt (jcb-jpoint / epos-tamaru / ongoing-program) が「category は次の語彙から選ぶ」
 // の直後に置く。語彙外の店は propose の unknownCategory で review に回る。
 // 注入は実行時の文脈で出力スキーマは変わらないので、INJECT を足しても promptVersion と
@@ -75,7 +75,7 @@ export function injectExistingEntities(prompt: string): string {
         throw new Error(`inject-prompt: 未知のエンティティ種別: "${kind}"`);
       }
       const params = parseParams(paramStr, DEFAULT_COLUMNS[kind]);
-      const records = collectRecords(data, kind, params.filter);
+      const records = collectRecords(data, kind, params);
       const table = renderMarkdownTable(records, params.columns);
       // マーカー自体は保存して冪等性を保つ
       return `<!-- INJECT:${kind}${paramStr.replace(/\s+$/, "")} -->\n${table}\n<!-- /INJECT -->`;
@@ -134,13 +134,20 @@ type SeedData = ReturnType<typeof seed>;
 function collectRecords(
   data: SeedData,
   kind: InjectableEntity,
-  filter?: { field: string; value: string },
+  params: InjectParams,
 ): Record<string, unknown>[] {
+  const { filter } = params;
   // PR-4a: 店舗カテゴリ語彙。pseudo (汎用) は見せない (新規店の category として認めないため)。
+  // レコードは name 列しか持たないので、他の列を指定すると空セルの表になる → 例外にする。
   if (kind === "categories") {
     if (filter) {
       throw new Error(
         `inject-prompt: INJECT:categories は filter を受け付けない: "${filter.field}:${filter.value}"`,
+      );
+    }
+    if (params.columns.length === 0 || params.columns.some((c) => c !== "name")) {
+      throw new Error(
+        `inject-prompt: INJECT:categories の columns は name だけ: "${params.columns.join(",")}"`,
       );
     }
     return EXTRACTABLE_STORE_CATEGORIES.map((name) => ({ name }));

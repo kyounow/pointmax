@@ -108,6 +108,13 @@ placeholder
     const input = `<!-- INJECT:categories filter=name:飲食 -->\n<!-- /INJECT -->`;
     expect(() => injectExistingEntities(input)).toThrow(/INJECT:categories は filter を受け付けない/);
   });
+
+  it("PR-4a: INJECT:categories の columns は name だけ受け付ける (他の列は空セルになるので例外)", () => {
+    const bad = `<!-- INJECT:categories columns=name,id -->\n<!-- /INJECT -->`;
+    expect(() => injectExistingEntities(bad)).toThrow(/INJECT:categories の columns は name だけ/);
+    const ok = `<!-- INJECT:categories columns=name -->\n<!-- /INJECT -->`;
+    expect(injectExistingEntities(ok)).toContain("| 飲食 |");
+  });
 });
 
 describe("全プロンプトファイルが解決可能", () => {

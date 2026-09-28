@@ -193,7 +193,9 @@ export function proposeStores(
     // (seed-categories.ts の EXTRACTED_CATEGORY_ALIASES → CATEGORY_ALIASES の順)
     const normalizedCategory = resolveExtractedCategory(s.category);
 
-    // base 判定 (現行の if/else-if を一切変えず維持)
+    // base 判定 (if/else-if の先勝ち): userBlocked → excludedCategory → idCollision →
+    // unknownCategory (PR-4a) → lowConfidence → storeAdditionsDisabled。
+    // 下の resolveReviewReason の override (selfReportedExclusion 等) は従来どおり後勝ち
     let baseReason: ReviewReason | undefined;
     if (BLOCKED_STORE_IDS.has(s.storeId)) {
       baseReason = "userBlocked";

@@ -68,7 +68,7 @@ Gemini 呼び出し直前に現在の seed から最新一覧を注入します�
 | categories | name |
 
 `categories` (PR-4a) は seed() ではなく `src/state/seed-categories.ts` の店舗カテゴリ語彙 (擬似店舗用の「汎用」を
-除く 35 名) を 1 列表で出す (`filter` を付けると例外)。stores[] を出す `jcb-jpoint` / `epos-tamaru` /
+除く 35 名) を 1 列表で出す (`filter` を付けると例外。`columns` も `name` 以外は例外)。stores[] を出す `jcb-jpoint` / `epos-tamaru` /
 `ongoing-program` の prompt が「`category` は次の語彙から選ぶ」の直後に置く。語彙外・未設定の category の
 新規店は propose の `unknownCategory` で review に回る。`campaign` の固定語彙行は F1p (campaign v3.6) で置換予定、
 停止中の `point-partner` / `jal-tokuyaku` は再開する PR で判断する (`scripts/sync/inject-prompt.test.ts` の対象 extractor 契約)。
