@@ -27,6 +27,17 @@
   主従関係をUIで切り替え表示。例：「**[d払い] の残高にカードからチャージ、dカード**」
 - 店舗別の **ポイントカード二重取り／三重取り** にも対応（複数提示可能な店舗）。
 - 店舗 select は **文字列検索 + カテゴリ絞り込み** で多数の店舗から素早く選択可能。
+- **店舗 picker の実行時フィルタ（PR-6c / B6）**: 計算画面の店舗 select には、選んでも一般店舗と
+  同じ結果になる店と計算が実態とずれる店を出さない。隠すのは (1) **店舗別の還元 (membership) が
+  1 件も無い店**、(2) 同期の除外カテゴリ (`EXCLUDED_CATEGORIES` と同じ語彙: 金融 / 保険 / 医療 /
+  ギャンブル / 葬儀 / 不動産・住宅 / ネットサービス / サービス / その他 / (未分類))、(3) **電気・ガス**
+  （公共料金の減額が未モデル。下の「計算に反映していない条件」7）。**一般店舗 (`general`) は常に表示**し、
+  **選択中の店と直近店舗チップの店は隠す条件でも残す**（select の値とチップを壊さない）。
+  判定は純関数 `visibleStoreIds`（`src/domain/storePicker.ts`、state の memberships から毎回導出するので
+  seed からは消さない。2026-09-28 の seed では 268 店中 81 店が隠れる）。カテゴリ・検索の件数も表示中の店で数える。
+  店舗 select の直下には、一般店舗以外を選んでいる間だけ **「一覧に無い店は『一般店舗 (規定還元)』を
+  選ぶと、カードの基本還元率で比較できます」** の 1 行ヒント（U3、店名タップで一般店舗に切替）を出す。
+  手動で追加した店舗も、特典 (membership) を登録するまでは同じ規則で隠れる。
 - **店頭クイック入力（PR-3a）**: 店舗 select の上に **直近に計算した店舗チップ**（新しい順・
   現選択は active、`usageStats.getRecentStoreIds` が `calcEvents` から抽出。履歴が無ければ
   `storeSelections` 上位で fallback）、金額欄に **プリセットチップ**（500 / 1,000 / 3,000 /
@@ -103,8 +114,16 @@
   古い情報かも (stale、PR-5a) / 最低交換単位 (端数)）は純関数 `rankWarningChips`
   （`src/domain/warningChips.ts`）で **要エントリー = 要経由 > 経由型 (channel) > 上限 > 限定・対象外 >
   stale > 端数** の優先順に並べ、**最大 3 件**だけ出す。同じ種類は 1 件（専用バッジ『⚠ 要エントリー』
-  『⚠ 上限』が notes 由来の同種チップより優先）。円換算モード・要経由バッジ・stale 等の後続も
-  この関数を使う（二重実装しない）。
+  『⚠ 上限』が notes 由来の同種チップより優先）。候補の組み立てから予算までは純関数 `buildWarningPlan`
+  （同ファイル、PR-6b）に一本化し、描画部品（`src/ui/calculator/WarningBadges.tsx`）とあわせて
+  通常ビューの展開ビューと**円換算ビュー**の両方が同じ出力を使う（二重実装しない。要経由バッジ等の後続も同じ）。
+- **U5（モバイル表示とアクセシビリティ）**: `index.html` の viewport に `viewport-fit=cover` を付け、
+  iOS のホーム画面アプリで下部タブバーがホームインジケータに隠れないよう `env(safe-area-inset-*)` の
+  余白を効かせる（横向きの appbar / 本文にも左右の余白）。通知枠（`BannerSlot`）と結果サマリ
+  （画面には出さない「結果 N 件。1 位は {カード}」）は常設の `aria-live="polite"` 領域で、内容が
+  変わるとスクリーンリーダーが読み上げる。OS の「視差効果を減らす」（`prefers-reduced-motion: reduce`）では
+  transition / animation を無効化し、`100vh` は `100dvh` との 2 段指定（未対応ブラウザは vh）。
+  これらの約束は `src/mobileLayout.test.ts` がファイルを読んで固定する。
 
 ### 計算に反映していない条件（既知の近似）
 
@@ -124,7 +143,8 @@
 6. **会員ランク・ステージ・ステップ制**（前月の利用実績などで率が上がる仕組み）は基本率だけで計算する
    （上位の率は各支払方法・特典の説明文に記載）。
 7. **公共料金・税金・電子マネーチャージ**に対するカード会社ごとの減額・対象外は未モデル
-   （特典として登録したものを除き、電気・ガス等の店でもカードの基本還元率で計算する）。
+   （特典として登録したものを除き、電気・ガス等の店でもカードの基本還元率で計算する。
+   そのため計算画面の店舗 select では電気・ガスの店を隠す、PR-6c）。
 8. **期限切れキャンペーン**は `validTo` の翌日から計算対象外になるが、マスタからの削除（tombstone）は
    `validTo` + 30 日を過ぎた後の週次 cron で行う。
 9. **公式に終了日の記載が無い倍率**は常設扱い（`validTo` なし）。終了は四半期の手動チェックで確認する。
@@ -138,10 +158,11 @@
 ### 優先通貨（v4.0.0）
 - 「普段ためたい通貨」を **順序付きリスト** で登録（CurrenciesScreen で ↑↓× 管理）。
 - Calculator は **通貨タブ切替** で、選んだ対象通貨ごとの最終取得量を単一表示。
-- **起動時の既定タブ（PR-6a-1 / G19）**: 計算画面のマウント時は「同日の下書き（上記 PR-3d）?? 優先通貨の
-  先頭」のタブで開き、結果の**同率 1 位を自動展開**する（`resolveInitialCurrencyId` + 展開ガードの初期値
+- **起動時の既定タブ（PR-6a-1 / G19、PR-6b）**: 計算画面のマウント時は「同日の下書き（上記 PR-3d）?? 優先通貨の
+  先頭 ?? ¥ 円換算」のタブで開き、結果の**同率 1 位を自動展開**する（`resolveInitialCurrencyId` + 展開ガードの初期値
   `null`）。v6.2.0 の lint 対応（effect → render 中 guard 置換）で失われていた挙動の復旧。
-- 優先通貨が未設定の場合は従来どおり対象通貨 select にフォールバック（未選択で起動し、円換算を既定にはしない）。
+- 優先通貨が未設定の場合は対象通貨 select にフォールバックし、**¥ 円換算（目安）を選んだ状態で起動する**
+  （PR-6b。以前は未選択で起動して結果が出なかった。円換算ビューにも警告チップを移植したうえでの変更）。
 
 ### 円換算（目安）タブ（PR-5a / DB-2）
 - 通貨タブの末尾（優先通貨未設定時は対象通貨 select の選択肢）に **`¥ 円換算`** を追加。
@@ -152,6 +173,13 @@
   **`目安` バッジ**（muted）を付け、path 由来の正確値と視覚的に区別する。
 - 貯まる通貨に `yenValue` が無い（マイル/ホテル系など価値が使い方で大きく変わる通貨は
   **あえて未設定**）カードは「目安値未設定」で対象外表示。
+- **警告チップ（PR-6b）**: 優先通貨が未設定の人の既定ビューなので、各行の下に通常ビューの展開ビューと
+  同じ警告（採用特典の期間バッジ / 条件チップ / ⚠ 上限 / ⚠ 要エントリー（`entryUrl` があればリンク）/
+  ⚠ 古い情報かも）を `buildWarningPlan` の出力どおり最大 3 件出す。例: JCB W × すき家 = 『⚠ 要エントリー』+
+  『対象外あり』、× 吉野家 = 『⚠ 要エントリー』のみ。stale は円で比較できる行（目安値あり）にだけ出し、
+  端数（最低交換単位）は交換 path の注記なので円換算では出ない。説明の hint は 1 行。
+- 円換算モードでも計算イベント（`recordCalcEvent`、通貨 id は `__yen__`）を記録するので、直近店舗チップが育つ
+  （同じ店 × 通貨の再計算は 1 件にまとめる last-pair ガードは従来どおり）。
 - **yenValue 規約**: `path`（交換ルート）が存在する通貨間は、edge の
   `rate × yenValue(to) / yenValue(from)` が概ね 1 付近（`[1/2.5, 2.5]`）に収まる。
   この契約は `seed.test.ts`（`findYenRatioViolations`）で seed の全 edge をガードする
@@ -367,7 +395,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1780 ケース / 90 ファイル** (2026-09-28 時点、PR-0b-3 後)） |
+| テスト | Vitest（**1815 ケース / 93 ファイル** (2026-09-28 時点、PR-6b / 6c / U5 後)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -494,7 +522,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1780 ケース / 90 ファイル (2026-09-28 時点、PR-0b-3 後))
+npm run test         # Vitest (1815 ケース / 93 ファイル (2026-09-28 時点、PR-6b / 6c / U5 後))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -682,6 +710,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **改善 PR-0a-3b (docs)** — README のマスタ件数表を `seed()` の実測値 (stores 268 / programs 46 / memberships 384) に更新し、「計算に反映していない条件（既知の近似）」節を新設 (制度レベルの近似だけを列挙し、program 固有の条件は seed の conditions / notes を正とする)。seed のコメント (J-POINT の件数・W 高島屋の実効率・cron の書き込み範囲) と tsconfig.scripts.json のヘッダを現行実装に合わせた。コメントと docs のみで、SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-6a-2 (U1 期限切れ整理のサイレント反映 + PR-6d follow-up)** — 期限切れ campaign (validTo を過ぎた tombstone) とその cascade membership の削除だけの週は、確認モーダルもバナーも出さずに反映して digest を既読化し、他の追加・更新と同じ週はバナーに「（期限切れ M 件を整理）」を併記 (`planAutoApply` / `isExpiredRemoval`、validTo 当日は従来どおりモーダル)。新規プロファイルの seed 投入を Root で App の描画前に行い空画面の 1 フレームを解消、復旧パネルの小修正 (localStorage 例外の握りつぶし・初期化の予備経路で案内を見せてから再読み込み)。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-5a (V1 鮮度 = 同梱 seed 参照方式)** — 確認月 `lastVerifiedAt` を還元プログラムとカードの基本還元にも持たせ (`BenefitProgram` / `Card`)、計算結果の展開ビューで採用したルート・還元率の最終確認の最古が 12 ヶ月超なら『⚠ 古い情報かも (最終確認 YYYY-MM)』を 1 チップ出す (旧『⚠ ルート要確認』を置き換え、edge の 6 ヶ月判定も 12 ヶ月に統一)。確認月と `officialUrl` は META キーとして公式差分の比較・指紋から外し (通知しない)、表示時に同梱 seed を参照する (`resolveVerifiedMonth` / `getSeedProgram` / `getSeedEdge`)。`ResolvedRate` の charge 変種に `programId`、`CardRanking.adoptedProgramIds` を追加。四半期チェック対象 30 program に 2026-07 を記入 (週次監視 tier と ADDED は空欄)。SEED_VERSION 47 / PERSIST_SCHEMA 据え置き
+- **改善 PR-6b / 6c / U5 (円換算の既定化 + 店舗 picker の整理 + モバイル a11y)** — 優先通貨が未設定なら計算画面を ¥ 円換算で起動し、円換算ビューの各行に通常ビューと同じ警告チップ (要エントリー / 条件 / 上限 / 古い情報かも。`buildWarningPlan` に一本化) を出す。円換算でも直近店舗を記録。店舗 select から membership ゼロ・除外カテゴリ・電気・ガスの店を実行時に隠し (現 seed で 81 / 268 店、選択中・直近チップ・一般店舗は残す)、「一覧に無い店は一般店舗」の 1 行ヒントを追加。`viewport-fit=cover`・通知枠と結果サマリの `aria-live`・`prefers-reduced-motion`・`100dvh`。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。

@@ -9,6 +9,7 @@
 
 import type { CardRanking } from "./rankCards";
 import type { ConversionEdge, Currency } from "./types";
+import { cardLabel } from "./cardLabel";
 
 // 円換算タブが目標通貨の代わりに渡す仮想ターゲット id。実在通貨・edge には決して現れない
 // センチネルなので、rankCards は全カードを「path 到達不能」として返し (finalAmount=0)、
@@ -84,6 +85,24 @@ export function valuateRankingInYen(
     totalYen: primaryYen + appBonusYen,
     missingCurrencyId: reachable ? null : r.earnedCurrencyId,
   };
+}
+
+/** 円換算ビューの 1 行 (試算結果 + 円換算評価)。 */
+export type YenRow = { r: CardRanking; v: YenValuation };
+
+// 円換算ビューの並び順: reachable 優先 → 円換算合計 降順 → カード名 (ja) で安定ソート。
+// CalcYenResults の表示順と、計算画面の結果サマリ (aria-live、PR-U5) の #1 が同じ関数を使う。
+export function sortRankingsInYen(
+  rankings: readonly CardRanking[],
+  yenValueOf: (currencyId: string) => number | undefined,
+): YenRow[] {
+  return rankings
+    .map((r) => ({ r, v: valuateRankingInYen(r, yenValueOf) }))
+    .sort((a, b) => {
+      if (a.v.reachable !== b.v.reachable) return a.v.reachable ? -1 : 1;
+      if (b.v.totalYen !== a.v.totalYen) return b.v.totalYen - a.v.totalYen;
+      return cardLabel(a.r.card).localeCompare(cardLabel(b.r.card), "ja");
+    });
 }
 
 // ─── edge レート妥当性 validator (seed 契約用) ───
