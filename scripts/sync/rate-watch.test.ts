@@ -331,6 +331,12 @@ describe("renderRateWatchMarkdown", () => {
     const u: TargetResult = { ...t("u", "match"), status: "unreachable", unreachableReason: "timeout", httpStatus: null };
     expect(renderRateWatchMarkdown(run([u])).annotations).toEqual([]);
   });
+  it("carried の match は到達不可に数え、match には数えない", () => {
+    const c: TargetResult = { ...t("c", "match"), carried: true, unreachableReason: "http", httpStatus: 403 };
+    const { markdown } = renderRateWatchMarkdown(run([c, t("m", "match")]));
+    expect(markdown).toContain("match 1 / 不一致 0 / 到達不可 1 (うち前回の状態を引き継ぎ 1)");
+    expect(markdown).toContain("今回は到達不可 (http 403)、前回の状態を表示");
+  });
 });
 
 describe("CLI の引数と出力先", () => {
@@ -497,6 +503,26 @@ describe("契約: sources/rate-watch.yaml", () => {
     }
     expect(keys).toContain("category:jpoint-20x-restaurants");
     expect(keys).toContain("membership:m-prog-epos-tamaru-2x-muji");
+  });
+
+  it("句は倍率表示に固有: J-POINT は『J-POINT 20倍』、たまるは店名と倍率を 1 句に (周りの文言に一致させない)", () => {
+    // 『20倍』だけだと詳細ページのカテゴリ名『ポイント20倍!飲食店』に一致し、店の倍率が変わっても match になる。
+    // たまるの詳細ページは下部の人気ランキングに他店の『エポスポイント 2 倍』が並ぶ。
+    const text =
+      "店舗 ポイント20倍!飲食店 / グルメ バーミヤン J-POINT 10 倍 手順 1 ポイントアップ登録 無料 ポイントアップ期間 2026年1月13日 〜";
+    for (const t of file!.targets.filter((x) => x.url.includes("j-pointpartner.jcb.co.jp/shop/"))) {
+      for (const a of t.assertions) {
+        if (a.kind === "storeSet") continue;
+        expect(a.phrases, t.id).toContain("J-POINT 20倍");
+        expect(checkAssertion(text, a).status, t.id).toBe("phraseMissing");
+      }
+    }
+    const muji = file!.targets.find((x) => x.id === "tamaru-muji")!.assertions[0];
+    const tamaru =
+      "下記に同意しショップを利用する 無印良品ネットストア エポスポイント 3 倍 下記に同意しショップを利用する " +
+      "人気ショップランキング 5 ユニクロオンラインストア エポスポイント 2 倍 6 無印良品ネットストア エポスポイント 3 倍";
+    if (muji.kind === "storeSet") throw new Error("fixture");
+    expect(checkAssertion(tamaru, muji).status).toBe("phraseMissing");
   });
 
   it("J-POINT の target は 9/27 に確認した店舗詳細ページ / カテゴリ一覧だけ (search?keyword= は使わない)", () => {

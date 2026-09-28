@@ -794,7 +794,8 @@ const MAX_ANNOTATIONS = 5;
 /** check の結果を Step Summary の Markdown と ::warning:: (最大 5 行) にする。 */
 export function renderRateWatchMarkdown(run: RateWatchRun): { markdown: string; annotations: string[] } {
   const rows = [...run.targets].sort((a, b) => a.priority - b.priority);
-  const matched = rows.filter((t) => t.status === "match").length;
+  // carried (今回は到達不可で前回の状態を表示) は match に数えず到達不可に数える。不一致は carried でも未解決なので数えて警告する
+  const matched = rows.filter((t) => t.status === "match" && !t.carried).length;
   const mismatched = rows.filter((t) => isMismatch(t.status));
   const unreachable = rows.filter((t) => t.status === "unreachable" || t.carried).length;
   const lines = [

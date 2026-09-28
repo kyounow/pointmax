@@ -526,7 +526,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1919 ケース / 95 ファイル (2026-09-28 時点、PR-5c-1 後))
+npm run test         # Vitest (1921 ケース / 95 ファイル (2026-09-28 時点、PR-5c-1 後))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)

@@ -190,13 +190,16 @@ targets:
     url: https://tamaru.eposcard.co.jp/shop/620/
     priority: 2
     assertions:
+      # ページ下部の人気ランキングにも他店の『エポスポイント 2 倍』が並ぶので、店名と倍率を 1 句にし、
+      # 見出しの購入ボタン (『下記に同意しショップを利用する』) の近くだけで照合する
       - subject: { kind: membership, programId: prog-epos-tamaru-2x, storeId: muji }
         seedRateAtCuration: 0.01
-        anchor: 無印良品ネットストア
-        phrases: ["エポスポイント 2倍"]
+        anchor: 下記に同意しショップを利用する
+        phrases: ["無印良品ネットストア エポスポイント 2倍"]
+        window: 100
     notes: >-
-      ショップ詳細ページ (トップの人気ランキングは毎週入れ替わるので使わない)。「無印良品ネットストア エポスポイント 2 倍」、
-      期間限定の表記なし。2026-09-28 に curl と WebFetch で確認
+      ショップ詳細ページ (トップの人気ランキングは毎週入れ替わるので使わない)。見出しは「下記に同意しショップを利用する
+      無印良品ネットストア エポスポイント 2 倍」、期間限定の表記なし。2026-09-28 に curl と WebFetch で確認
 
 candidates:
   - id: jpoint-search
