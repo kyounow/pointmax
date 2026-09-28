@@ -394,6 +394,7 @@ export const REASON_LABELS: Record<ReviewReason, string> = {
   idCollision: "🟠 idCollision",
   multiSourceConflict: "🔴 multiSourceConflict",
   excludedCategory: "🟠 excludedCategory",
+  unknownCategory: "🟠 unknownCategory (語彙外カテゴリ)",
   userBlocked: "⚫ userBlocked",
   selfReportedExclusion: "🟠 selfReportedExclusion",
   unsupportedDateClaim: "🔴 unsupportedDateClaim",
@@ -438,7 +439,11 @@ export const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
   multiSourceConflict:
     "複数ソースで同じフィールドが矛盾している。どちらが正しいか要判断。",
   excludedCategory:
-    "Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)。自動追加しない。",
+    "Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル/サブスクリプション等)。自動追加しない。",
+  unknownCategory:
+    "新規店舗の category が店舗カテゴリの語彙 (`src/state/seed-categories.ts`) に無い、または未設定。語彙外の店は自動追加されない (chain-promote 等の昇格の対象にもならない)。" +
+    "既存語彙の表記揺れなら seed-categories.ts の `EXTRACTED_CATEGORY_ALIASES` に alias を、新しい業態なら `STORE_CATEGORIES` に語彙を足す PR を出す (次回 cron から再判定される)。" +
+    "この項目を `npm run sync:approve` でそのまま承認すると、seed 契約 (store の category は語彙内) で CI が落ちる。取り込むなら category を語彙内に直して手書き seed へ。",
   userBlocked:
     "seed-blocklist.ts でユーザが除外指定済み。意図した除外であれば無視してよい。",
   selfReportedExclusion:
@@ -557,6 +562,7 @@ export const REASON_ORDER: readonly ReviewReason[] = [
   "deletion",
   "lowConfidence",
   "idCollision",
+  "unknownCategory",      // 🟠 語彙外 / 未設定カテゴリの新規店 (PR-4a)。alias か語彙を足す PR で解消
   "excludedCategory",
   "selfReportedExclusion",
   "userBlocked",
@@ -613,6 +619,12 @@ function formatProposalDetail(p: Proposal): string {
     lines.push(
       `- 対応案: 原則見送り (承認すると record がそのまま全額に乗る)。取り込むなら手書き seed で上限・限定・帰属を表現する。` +
         `どうしても record のまま取り込むなら \`npm run sync:approve -- ${pid} --accept-risk\``,
+    );
+  } else if (p.reviewReason === "unknownCategory") {
+    // PR-4a: 語彙外の category のまま承認すると seed 契約 (store の category は語彙内) で CI が落ちる。
+    lines.push(
+      `- 対応案: 表記揺れなら \`src/state/seed-categories.ts\` の EXTRACTED_CATEGORY_ALIASES に alias を、新しい業態なら STORE_CATEGORIES に語彙を足す PR を出す (次回 cron で再判定)。` +
+        `この項目を sync:approve でそのまま承認すると seed 契約で CI が落ちる。不要なら無視`,
     );
   } else if (isApplicableProposal(p)) {
     lines.push(

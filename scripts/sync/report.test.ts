@@ -205,6 +205,41 @@ describe("REASON_ORDER (理由グループの表示順) の網羅", () => {
     ] as const;
     expect(REASON_ORDER.slice(at("pseudoStoreTarget") + 1, at("missingStoreBody"))).toEqual([...z3]);
   });
+
+  it("PR-4a: unknownCategory は excludedCategory の直前に並ぶ", () => {
+    const i = REASON_ORDER.indexOf("unknownCategory");
+    expect(i).toBeGreaterThanOrEqual(0);
+    expect(REASON_ORDER[i + 1]).toBe("excludedCategory");
+  });
+});
+
+// PR-4a: 語彙外カテゴリの新規店は REVIEW_QUEUE に見出し・説明付きで出て、対応案は sync:approve ではなく
+// alias / 語彙を足す PR (そのまま承認すると seed 契約で CI が落ちるため)。
+describe("buildReviewQueue: PR-4a の unknownCategory", () => {
+  const item: Proposal = {
+    type: "addRecord",
+    collection: "stores",
+    record: { id: "lalaport", name: "ららぽーと", category: "ショッピングモール" },
+    sourceId: "jcb-jpoint-partners",
+    confidence: 0.95,
+    evidence: { evidenceQuote: "ららぽーと ポイント 2 倍", explicitness: 0.95, ambiguity: 0 },
+    reviewReason: "unknownCategory",
+    proposalId: "sto-unknown001",
+  };
+
+  it("見出し・説明・対応案が出る", () => {
+    const md = buildReviewQueue(
+      baseReport({
+        needsReview: [item],
+        summary: { autoApplicableCount: 0, needsReviewCount: 1, sourcesProcessed: 1, sourcesFailed: 0 },
+      }),
+    );
+    expect(md).toContain(`### ${REASON_LABELS.unknownCategory} (1 件)`);
+    expect(md).toContain("unknownCategory=1");
+    expect(md).toContain(REASON_EXPLANATIONS.unknownCategory);
+    expect(md).toContain("EXTRACTED_CATEGORY_ALIASES");
+    expect(md).not.toContain("npm run sync:approve -- sto-unknown001");
+  });
 });
 
 // PR-0b-3: 新しい 6 種の reason が REVIEW_QUEUE に見出し付きで出る (REASON_ORDER に無い reason は黙って消えるため)。

@@ -383,7 +383,10 @@ export type ReviewReason =
   | "referenceChange"         // 通貨・カード参照変更
   | "idCollision"             // 新規追加だが既存 ID と衝突
   | "multiSourceConflict"     // 複数ソースで同じフィールドが矛盾
-  | "excludedCategory"        // Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)
+  | "excludedCategory"        // Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル/サブスクリプション等)
+  | "unknownCategory"         // PR-4a: 新規 store の category が語彙 (src/state/seed-categories.ts) に無い、または未設定。
+                              // proposeStores の base ラダーで idCollision の後・lowConfidence の前。昇格系
+                              // (chain-promote) は storeAdditionsDisabled しか書き換えないので、語彙外の店は auto にならない
   | "userBlocked"             // src/state/seed-blocklist.ts でユーザが除外指定
   | "selfReportedExclusion"   // evidenceQuote に Gemini 自身による除外記述を検知
   | "unsupportedDateClaim"    // validFrom/validTo があるのに evidenceQuote に日付根拠がない
@@ -628,6 +631,12 @@ export const CONFIDENCE_AUTO_THRESHOLD = 0.9;
 // SCOPE_DIRECTIVES['chains-only'] でも Gemini に指示しているが、漏れた場合の
 // defense-in-depth として Phase C (diff-and-propose) でも store の addRecord を
 // 強制的に needsReview に振り分ける。
+// 店舗カテゴリ語彙 (src/state/seed-categories.ts) と alias のキー・値とは交わらない (types.test で検査)。
+// 語彙外のカテゴリは unknownCategory で review に回るので、ここに置くのは「語彙に足さない」と
+// 決めた業態 (excludedCategory のほうが理由として正確なもの) だけ。
+// 計算画面の店舗 picker (src/domain/storePicker.ts の PICKER_EXCLUDED_CATEGORIES、PR-6c) が同じ語彙を
+// 複製して常に隠す (app は scripts を import しない)。一致は storePicker.test で固定しているので、
+// ここに語を足すときは PICKER_EXCLUDED_CATEGORIES にも同じコミットで足す。
 export const EXCLUDED_CATEGORIES = new Set<string>([
   "金融",
   "保険",
@@ -641,6 +650,11 @@ export const EXCLUDED_CATEGORIES = new Set<string>([
   "サービス",        // 漠然カテゴリ
   "その他",           // 漠然カテゴリ
   "(未分類)",         // category 未設定で inject-prompt が補ったもの
+  // PR-4a: 実店舗を持たないデジタル契約 (動画・音楽配信、ゲーム内課金、アプリ内購入)。
+  // J-POINT / たまるの抽出に出る (Disney+ 等)。店頭の支払いで還元を比べる用途に合わない
+  "サブスクリプション",
+  "ゲーム",
+  "アプリストア",
 ]);
 
 // rate 変動: pp (絶対値) と相対倍率 (比) の両方を見る

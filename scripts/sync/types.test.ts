@@ -1,9 +1,36 @@
 import { describe, it, expect } from "vitest";
 import {
+  ALL_CATEGORY_ALIASES,
+  STORE_CATEGORIES,
+} from "../../src/state/seed-categories";
+import {
+  EXCLUDED_CATEGORIES,
   SCOPE_DIRECTIVES,
   computeConfidence,
   judgeRateChange,
 } from "./types";
+
+// PR-4a: 店舗カテゴリ語彙と Policy B の除外カテゴリは排他。交わると「語彙内なのに除外」「除外語を alias で
+// 語彙に寄せる」の矛盾になり、proposeStores の判定 (excludedCategory → unknownCategory の順) が読めなくなる。
+describe("EXCLUDED_CATEGORIES と店舗カテゴリ語彙 (seed-categories.ts) の排他", () => {
+  it("語彙 (STORE_CATEGORIES) と EXCLUDED_CATEGORIES は交わらない", () => {
+    const overlap = STORE_CATEGORIES.map((c) => c.name).filter((n) => EXCLUDED_CATEGORIES.has(n));
+    expect(overlap).toEqual([]);
+  });
+
+  it("alias のキーと値は EXCLUDED_CATEGORIES と交わらない", () => {
+    const overlap = Object.entries(ALL_CATEGORY_ALIASES)
+      .flat()
+      .filter((n) => EXCLUDED_CATEGORIES.has(n));
+    expect(overlap).toEqual([]);
+  });
+
+  it("PR-4a で足した 3 語 (サブスクリプション / ゲーム / アプリストア) を含む", () => {
+    for (const c of ["サブスクリプション", "ゲーム", "アプリストア"]) {
+      expect(EXCLUDED_CATEGORIES.has(c), c).toBe(true);
+    }
+  });
+});
 
 describe("SCOPE_DIRECTIVES", () => {
   it("全ての ExtractionScope に対応するディレクティブがある", () => {
