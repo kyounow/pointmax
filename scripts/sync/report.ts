@@ -407,6 +407,7 @@ export const REASON_LABELS: Record<ReviewReason, string> = {
   expiredCampaign: "🟠 expiredCampaign (期限切れだが同 run で期間変更提案あり、人手判断)",
   periodChange: "🟣 periodChange (キャンペーン期間の変更/延長)",
   staleExtractGeneration: "🧯 staleExtractGeneration (旧世代 extracted による書き戻し)",
+  rateWatched: "🧯 rateWatched (率カナリアで監視中の率・店)",
   pseudoStoreTarget: "🔴 pseudoStoreTarget (規定還元用ダミー store への誤マッピング疑い)",
   tierMove: "🪜 tierMove (同じ店 × 同じ倍率系列の別倍率)",
   untargetedProgram: "🔴 untargetedProgram (対象カード / ポイントカード / 決済アプリが無い program)",
@@ -485,6 +486,13 @@ export const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "プロンプト改訂直後の旧世代キャッシュによる rate/期間の書き戻し提案を防ぐ。" +
     "旧版プロンプトで抽出した古い値が seed (新方針で修正済) との差分を「変更」として出しているだけの可能性が高いため自動適用しない。" +
     "次回 fetch (新版プロンプト) 後に promptVersion が一致し、従来の閾値判定で再判定される。それまでは無視で OK。",
+  rateWatched:
+    "sources/rate-watch.yaml で監視中の率。取り込むなら seed の手修正と seedRateAtCuration の更新を同じ PR で。" +
+    "率カナリア (npm run sync:rate-watch、0 req) が公式ページの逐語句で照合している program / membership / card への変更 " +
+    "(program の率・期間の updateField と削除、membership の削除、card の updateField)。auto で seed が変わると、" +
+    "rate-watch の契約テスト (seedRateAtCuration = seed の率) が apply 後の safety gate で落ち、その run の auto が全件 safetyFailed になるので自動適用しない。" +
+    "まず `npm run sync:rate-watch -- --only <target id>` か公式ページで実際に変わったかを確かめる。" +
+    "`npm run sync:approve` でそのまま承認すると同じ理由で CI が落ちる。誤抽出なら無視。",
   pseudoStoreTarget:
     "membership/loyaltyRule/program 等が擬似エンティティ (例: \"general\" = 規定還元表示用ダミー store、" +
     "\"pa-default\" = 「通常クレカ決済」基本モード) を指している。" +
@@ -553,7 +561,8 @@ export const REASON_ORDER: readonly ReviewReason[] = [
   "tierMove",             // 🪜 同じ店 × 同じ倍率系列の別倍率。承認は旧 tier の tombstone と同時 (PR-0a-2c)
   "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目
   "staleExtractGeneration", // 🧯 旧世代 extracted による書き戻し。次回 fetch で解消、それまで保留
-  "expiredCampaign",      // 🟠 validTo+30日経過。クリーンアップ候補
+  "rateWatched",          // 🧯 率カナリアで監視中の率・店への変更 (PR-5c-1)。seed の手修正と rate-watch.yaml を同じ PR で
+  "expiredCampaign",     // 🟠 validTo+30日経過。クリーンアップ候補
   "storeAdditionsDisabled", // ⏸ store 追加は手動キュレ運用、参照リストとして末尾配置
   "rateDeltaTooLarge",
   "rateRatioOutOfRange",
@@ -625,6 +634,12 @@ function formatProposalDetail(p: Proposal): string {
     lines.push(
       `- 対応案: 表記揺れなら \`src/state/seed-categories.ts\` の EXTRACTED_CATEGORY_ALIASES に alias を、新しい業態なら STORE_CATEGORIES に語彙を足す PR を出す (次回 cron で再判定)。` +
         `この項目を sync:approve でそのまま承認すると seed 契約で CI が落ちる。不要なら無視`,
+    );
+  } else if (p.reviewReason === "rateWatched") {
+    // PR-5c-1: 監視中の率を sync:approve で変えると rate-watch の契約 (seedRateAtCuration = seed の率) で CI が落ちる。
+    lines.push(
+      `- 対応案: 公式ページ (sources/rate-watch.yaml の target) で実際に変わったかを確かめ、正しければ seed の手修正と ` +
+        `rate-watch.yaml の seedRateAtCuration の更新を同じ PR で出す。sync:approve でそのまま承認すると契約テストで CI が落ちる。誤抽出なら無視`,
     );
   } else if (isApplicableProposal(p)) {
     lines.push(

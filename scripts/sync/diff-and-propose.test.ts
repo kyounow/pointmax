@@ -9,6 +9,7 @@ import {
   demoteChildlessMemberStorePrograms,
   detectStaleExtractSources,
   downgradeOrphanMemberships,
+  guardRateWatched,
   guardStaleExtractGeneration,
   isFailedExtraction,
   promoteChainStoreAutoMerge,
@@ -28,6 +29,10 @@ import {
   storeNameMismatchDetail,
 } from "./propose-helpers";
 import type { AddRecordProposal, ExtractedSource, Proposal } from "./types";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { loadRateWatchFile, loadWatchedSubjects, type RateWatchFile } from "./rate-watch";
 
 // テスト用の最小 SeedShape
 const emptySeed: SeedShape = {
@@ -3341,5 +3346,182 @@ describe("PR-0b-3: membership の overrideRate (campaign 由来は 5% 超を rev
   });
   it("ongoing-program 由来で 0.2 は従来どおり auto", () => {
     expect(mem(0.2, "ongoing-program").reviewReason).toBeUndefined();
+  });
+});
+
+// PR-5c-1: Phase C5 guardRateWatched。率カナリア (sources/rate-watch.yaml) で監視中の率を cron の auto で
+// 動かすと、rate-watch の契約テスト (seedRateAtCuration = seed の率) が apply 後の safety gate で落ち、
+// その run の auto が全件 safetyFailed になる。その経路を rateWatched で review に回す。
+describe("PR-5c-1: guardRateWatched (Phase C5)", () => {
+  const ev = { evidenceQuote: "J-POINT 20倍", explicitness: 1, ambiguity: 0 };
+  const watchedFile: RateWatchFile = {
+    version: 1,
+    targets: [
+      {
+        id: "jpoint-20x-sukiya",
+        label: "すき家",
+        url: "https://example.com/shop/000450",
+        priority: 1,
+        assertions: [
+          {
+            subject: { kind: "membership", programId: "prog-jcb-jpoint-20x", storeId: "sukiya" },
+            seedRateAtCuration: 0.105,
+            phrases: ["J-POINT 20倍"],
+          },
+        ],
+      },
+      {
+        id: "program-and-card",
+        label: "p",
+        url: "https://example.com/p",
+        priority: 3,
+        assertions: [
+          { subject: { kind: "program", id: "prog-watched" }, seedRateAtCuration: 0.01, phrases: ["x"] },
+          { subject: { kind: "card", id: "jcb-w" }, seedRateAtCuration: 0.01, phrases: ["1%"] },
+        ],
+      },
+    ],
+    excluded: [],
+  };
+  const watched = loadWatchedSubjects(watchedFile);
+  const base = { sourceId: "jcb-jpoint-partners", confidence: 0.95, evidence: ev };
+  const update = (
+    collection: "programs" | "cards",
+    id: string,
+    reviewReason?: Proposal["reviewReason"],
+  ): Proposal => ({
+    ...base,
+    type: "updateField",
+    collection,
+    id,
+    field: collection === "cards" ? "defaultRate" : "rate",
+    from: 0.105,
+    to: 0.11,
+    ...(reviewReason ? { reviewReason } : {}),
+  });
+  const del = (collection: "programs" | "memberships", id: string): Proposal => ({
+    ...base,
+    type: "delete",
+    collection,
+    id,
+  });
+
+  it("監視 program への auto の updateField → rateWatched (reviewDetail に監視元の target)", () => {
+    const { proposals, guarded } = guardRateWatched([update("programs", "prog-watched")], watched);
+    expect(guarded).toBe(1);
+    expect(proposals[0].reviewReason).toBe("rateWatched");
+    expect(proposals[0].reviewDetail).toContain("target「program-and-card」");
+  });
+
+  it("監視 membership の program (率の元) の updateField も rateWatched", () => {
+    const { proposals } = guardRateWatched([update("programs", "prog-jcb-jpoint-20x")], watched);
+    expect(proposals[0].reviewReason).toBe("rateWatched");
+    expect(proposals[0].reviewDetail).toContain(membershipId("prog-jcb-jpoint-20x", "sukiya"));
+  });
+
+  it("監視外の id はそのまま (auto)", () => {
+    const { proposals, guarded } = guardRateWatched(
+      [update("programs", "prog-jcb-jpoint-2x"), del("memberships", membershipId("prog-jcb-jpoint-20x", "gusto"))],
+      watched,
+    );
+    expect(guarded).toBe(0);
+    expect(proposals.map((p) => p.reviewReason)).toEqual([undefined, undefined]);
+  });
+
+  it("既に別理由で review 行きなら触らない (staleExtractGeneration / rateDeltaTooLarge)", () => {
+    const { proposals, guarded } = guardRateWatched(
+      [
+        update("programs", "prog-watched", "staleExtractGeneration"),
+        update("programs", "prog-jcb-jpoint-20x", "rateDeltaTooLarge"),
+      ],
+      watched,
+    );
+    expect(guarded).toBe(0);
+    expect(proposals.map((p) => p.reviewReason)).toEqual(["staleExtractGeneration", "rateDeltaTooLarge"]);
+  });
+
+  it("sourceAutoMergeDisabled (ガード通過済みの印) は rateWatched で上書きする", () => {
+    const { proposals } = guardRateWatched(
+      [update("programs", "prog-watched", "sourceAutoMergeDisabled")],
+      watched,
+    );
+    expect(proposals[0].reviewReason).toBe("rateWatched");
+  });
+
+  it("addRecord はそのまま (監視 program と同じ id でも)", () => {
+    const add: Proposal = {
+      ...base,
+      type: "addRecord",
+      collection: "memberships",
+      record: {
+        id: membershipId("prog-jcb-jpoint-20x", "sukiya"),
+        programId: "prog-jcb-jpoint-20x",
+        storeId: "sukiya",
+      },
+    };
+    const { proposals, guarded } = guardRateWatched([add], watched);
+    expect(guarded).toBe(0);
+    expect(proposals[0].reviewReason).toBeUndefined();
+  });
+
+  it("監視 program の delete と監視 membership の delete → rateWatched", () => {
+    const { proposals, guarded } = guardRateWatched(
+      [
+        del("programs", "prog-jcb-jpoint-20x"),
+        del("memberships", membershipId("prog-jcb-jpoint-20x", "sukiya")),
+      ],
+      watched,
+    );
+    expect(guarded).toBe(2);
+    expect(proposals.map((p) => p.reviewReason)).toEqual(["rateWatched", "rateWatched"]);
+  });
+
+  it("監視 card の updateField/cards → rateWatched (apply 経路は無いが偽の auto を防ぐ)", () => {
+    const { proposals } = guardRateWatched(
+      [update("cards", "jcb-w"), update("cards", "epos-card")],
+      watched,
+    );
+    expect(proposals.map((p) => p.reviewReason)).toEqual(["rateWatched", undefined]);
+  });
+
+  it("rate-watch.yaml が無い → no-op、壊れている → throw (fail-closed)", () => {
+    const missing = loadRateWatchFile(join(tmpdir(), "no-such-dir-5c1", "rate-watch.yaml"));
+    expect(missing).toBeNull();
+    const { proposals, guarded } = guardRateWatched(
+      [update("programs", "prog-jcb-jpoint-20x"), del("programs", "prog-jcb-jpoint-20x")],
+      loadWatchedSubjects(missing),
+    );
+    expect(guarded).toBe(0);
+    expect(proposals.every((p) => p.reviewReason === undefined)).toBe(true);
+
+    const dir = mkdtempSync(join(tmpdir(), "rate-watch-guard-"));
+    try {
+      const broken = join(dir, "rate-watch.yaml");
+      writeFileSync(broken, "version: 1\ntargets:\n  - id: [\n");
+      expect(() => loadRateWatchFile(broken)).toThrow(/rate-watch/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("実際の sources/rate-watch.yaml: J-POINT 20 倍 (W / Gold) の率と店・たまる無印を守る", () => {
+    const real = loadWatchedSubjects(loadRateWatchFile());
+    const { proposals } = guardRateWatched(
+      [
+        update("programs", "prog-jcb-jpoint-20x"),
+        update("programs", "prog-jcb-jpoint-gold-20x"),
+        update("programs", "prog-epos-tamaru-2x"),
+        del("memberships", membershipId("prog-jcb-jpoint-gold-20x", "starbucks")),
+        update("programs", "prog-jcb-jpoint-3x"), // 監視外の tier は従来どおり
+      ],
+      real,
+    );
+    expect(proposals.map((p) => p.reviewReason)).toEqual([
+      "rateWatched",
+      "rateWatched",
+      "rateWatched",
+      "rateWatched",
+      undefined,
+    ]);
   });
 });

@@ -211,6 +211,48 @@ describe("REASON_ORDER (理由グループの表示順) の網羅", () => {
     expect(i).toBeGreaterThanOrEqual(0);
     expect(REASON_ORDER[i + 1]).toBe("excludedCategory");
   });
+
+  it("PR-5c-1: rateWatched は staleExtractGeneration の直後に並ぶ", () => {
+    const i = REASON_ORDER.indexOf("staleExtractGeneration");
+    expect(REASON_ORDER[i + 1]).toBe("rateWatched");
+  });
+});
+
+// PR-5c-1: 率カナリアで監視中の率への変更 (Phase C5) は REVIEW_QUEUE に見出し・説明付きで出て、対応案は
+// sync:approve ではなく seed の手修正 + rate-watch.yaml の更新 (そのまま承認すると契約テストで CI が落ちるため)。
+describe("buildReviewQueue: PR-5c-1 の rateWatched", () => {
+  const item: Proposal = {
+    type: "updateField",
+    collection: "programs",
+    id: "prog-jcb-jpoint-20x",
+    field: "rate",
+    from: 0.105,
+    to: 0.1,
+    sourceId: "jcb-jpoint-partners",
+    confidence: 0.95,
+    evidence: { evidenceQuote: "J-POINT 20倍", explicitness: 0.95, ambiguity: 0 },
+    reviewReason: "rateWatched",
+    reviewDetail: "sources/rate-watch.yaml の target「jpoint-20x-sukiya」が監視中",
+    proposalId: "pro-ratewatch1",
+  };
+
+  it("見出し・説明・判定詳細・対応案が出る (sync:approve のコマンドは出さない)", () => {
+    const md = buildReviewQueue(
+      baseReport({
+        needsReview: [item],
+        summary: { autoApplicableCount: 0, needsReviewCount: 1, sourcesProcessed: 1, sourcesFailed: 0 },
+      }),
+    );
+    expect(md).toContain(`### ${REASON_LABELS.rateWatched} (1 件)`);
+    expect(md).toContain("rateWatched=1");
+    expect(md).toContain(REASON_EXPLANATIONS.rateWatched);
+    expect(REASON_EXPLANATIONS.rateWatched).toContain(
+      "sources/rate-watch.yaml で監視中の率。取り込むなら seed の手修正と seedRateAtCuration の更新を同じ PR で",
+    );
+    expect(md).toContain("- 判定詳細: sources/rate-watch.yaml の target「jpoint-20x-sukiya」が監視中");
+    expect(md).toContain("seedRateAtCuration の更新を同じ PR で出す");
+    expect(md).not.toContain("npm run sync:approve -- pro-ratewatch1");
+  });
 });
 
 // PR-4a: 語彙外カテゴリの新規店は REVIEW_QUEUE に見出し・説明付きで出て、対応案は sync:approve ではなく
