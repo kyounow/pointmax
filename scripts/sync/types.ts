@@ -401,7 +401,12 @@ export type ReviewReason =
   | "staleExtractGeneration" // extracted の promptVersion が registry の現行 extractor 版と不一致。
                               // プロンプト改訂直後の旧世代キャッシュによる rate/期間の書き戻し提案 (PROGRAM_OVERRIDES 行き
                               // updateField) を防ぐ。次回 fetch (新版) 後に promptVersion が一致し再判定される
-  | "safetyFailed"            // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
+  | "rateWatched"             // PR-5c-1: sources/rate-watch.yaml (率カナリア) で監視中の subject への変更 (Phase C5
+                              // guardRateWatched)。監視 program (membership の program を含む) の updateField・delete、
+                              // 監視 membership の delete、監視 card の updateField。auto で seed が変わると
+                              // rate-watch の契約テスト (seedRateAtCuration = seed の率) が safety gate で落ちるため。
+                              // 取り込むなら seed の手修正と seedRateAtCuration の更新を同じ PR で
+  | "safetyFailed"           // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
   | "autoMergeDisabled"       // auto-merge 候補だが autoMergeEnabled=false / force_review_only=true のため review に降格 (手動テスト等)
   | "pseudoStoreTarget"       // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等) への
                               // 参照。店舗/決済手段を特定できない項目の受け皿誤マッピングを防止

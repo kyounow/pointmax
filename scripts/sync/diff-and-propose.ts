@@ -45,6 +45,11 @@ import {
   autoMergeDisabledSourceIds,
   loadRegistryPolicy,
 } from "./registry-policy";
+import {
+  loadRateWatchFile,
+  loadWatchedSubjects,
+  type WatchedSubjects,
+} from "./rate-watch";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 
 // 再エクスポート (テスト互換性のため diff-and-propose 経由で参照される旧APIを温存)
@@ -591,6 +596,45 @@ export function guardStaleExtractGeneration(
 }
 
 // ───────────────────────────────────────────────────────────────
+// Rate-watch guard (Phase C5、PR-5c-1)
+// ───────────────────────────────────────────────────────────────
+// sources/rate-watch.yaml (率カナリア) で監視中の subject は、seedRateAtCuration = seed の率 という契約
+// (scripts/sync/rate-watch.test.ts) を持つ。cron の auto 変更でその率が動くと、apply 後の safety gate
+// (npm test) で契約が落ち、その run の auto が全件 safetyFailed で降格する (#142 / #143 と同じ形)。
+// そこで次の 4 経路を rateWatched で review に回す (取り込むのは seed の手修正 + yaml 更新の人手 PR):
+//   (1) updateField / programs : 監視 program (membership subject の program を含む。membership の率は
+//                                overrideRate ?? program.rate なので program の率が動くと契約が落ちる)
+//   (2) delete / programs      : 同上 (cascade で監視 membership も消える)
+//   (3) delete / memberships   : 監視 membership (C3 以降の tierMove 系の削除提案への防御)
+//   (4) updateField / cards    : 監視 card (apply 経路は無いが、SYNC_HISTORY に偽の auto が残るのを防ぐ)
+// reviewReason 未設定のものだけが対象。例外: sourceAutoMergeDisabled (「ほかのガードは通過済み」の印) は
+// 上書きする (stale ガードと同じく具体的な reason を優先)。rate-watch.yaml が無ければ watched が空 = no-op。
+
+export function guardRateWatched(
+  proposals: Proposal[],
+  watched: WatchedSubjects,
+): { proposals: Proposal[]; guarded: number } {
+  let guarded = 0;
+  const out: Proposal[] = proposals.map((p) => {
+    if (p.reviewReason && p.reviewReason !== "sourceAutoMergeDisabled") return p;
+    let by: string | undefined;
+    if (p.type === "updateField" || p.type === "delete") {
+      if (p.collection === "programs") by = watched.programIds.get(p.id);
+      else if (p.type === "delete" && p.collection === "memberships") by = watched.membershipIds.get(p.id);
+      else if (p.type === "updateField" && p.collection === "cards") by = watched.cardIds.get(p.id);
+    }
+    if (by === undefined) return p;
+    guarded += 1;
+    return {
+      ...p,
+      reviewReason: "rateWatched",
+      reviewDetail: `sources/rate-watch.yaml の ${by} が監視中`,
+    } as Proposal;
+  });
+  return { proposals: out, guarded };
+}
+
+// ───────────────────────────────────────────────────────────────
 // Main
 // ───────────────────────────────────────────────────────────────
 
@@ -620,6 +664,12 @@ export function guardStaleExtractGeneration(
 //   Phase C3 : Stale extract generation guard (guardStaleExtractGeneration)
 //              ─ 旧世代 extracted (promptVersion 不一致) 由来の PROGRAM_OVERRIDES 行き
 //                updateField を staleExtractGeneration で降格 (書き戻し防止)。B″ の sourceAutoMergeDisabled は上書き
+//   (Phase C4 は PR-1 の detectionOnly 用に空けてある)
+//   Phase C5 : Rate-watch guard (guardRateWatched、PR-5c-1)
+//              ─ sources/rate-watch.yaml で監視中の program (membership の program を含む) の updateField・delete、
+//                membership の delete、card の updateField を rateWatched で降格 (率カナリアの契約を safety gate で
+//                壊さない)。yaml が無ければ no-op、壊れていれば main の冒頭で throw (fail-closed)。B″ の
+//                sourceAutoMergeDisabled は上書き
 //   Phase D  : auto / needsReview 振り分け + report 書き出し
 // Phase ラベルは log メッセージにも反映済 (🧯 = guard, 📐 = cap, 🔁 = dedup, 🧹 = expired, 🔓 = chain-promote)。
 
@@ -631,6 +681,9 @@ function main(): void {
   // registry のソース別ポリシー (target / autoMerge)。fail-closed: 読めなければ throw → exit 1
   // (黙って空にすると autoMerge:false のソースが auto に戻るため)。
   const registry = loadRegistryPolicy();
+  // 率カナリアの監視リスト (PR-5c-1)。無ければ null (Phase C5 は no-op)、壊れていれば throw → exit 1
+  // (黙って空にすると監視中の率が auto で動き、rate-watch の契約が safety gate で落ちるため)。
+  const rateWatch = loadRateWatchFile();
   // campaign の期限判定と期限切れ整理の基準時刻を 1 回だけ作る (PR-0b-3)
   const now = new Date();
 
@@ -845,6 +898,16 @@ function main(): void {
       `🧯 stale-generation guard: ${n} 件 (source=${src}, extracted=${info.extractedVersion} ≠ 現行 ${info.currentVersion})`,
     );
   }
+
+  // Phase C5: Rate-watch guard (PR-5c-1。C4 は PR-1 の detectionOnly 用に空けてある)
+  //   sources/rate-watch.yaml で監視中の率への updateField / delete を rateWatched で review に回す。
+  //   0 件でも毎回ログを出す (cron ログで guard が動いたことを確認するため)。
+  const rateGuard = guardRateWatched(finalProposals, loadWatchedSubjects(rateWatch));
+  finalProposals = rateGuard.proposals;
+  console.log(
+    `🧯 rate-watch guard: ${rateGuard.guarded} 件` +
+      (rateWatch ? "" : " (sources/rate-watch.yaml が無いので no-op)"),
+  );
 
   const autoApplicable: Proposal[] = [];
   const needsReview: Proposal[] = [];

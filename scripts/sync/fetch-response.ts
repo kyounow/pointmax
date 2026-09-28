@@ -106,19 +106,86 @@ const PREFETCH_HEADERS = {
   "Accept-Language": "ja,en;q=0.8",
 } as const;
 
+// prefetch の失敗。reason で HTTP エラー / ネットワーク / timeout を区別する (PR-5c-1 の率カナリアが
+// 404・403・timeout を見分けるため)。message は従来の `prefetch HTTP <status>: <statusText>` のまま。
+// (tsconfig の erasableSyntaxOnly によりパラメータプロパティは使わず、フィールドを明示宣言する)
+// ⚠ PR-0b-2 (#159) も同名・同形の PrefetchError / PREFETCH_TIMEOUT_MS を持つ。rebase 時は #159 側の
+// 実装 (formatFetchError 等) に寄せ、ここは 1 つにまとめる (httpStatus / reason の意味は同じ)。
+export type PrefetchFailReason = "http" | "network" | "timeout";
+
+export class PrefetchError extends Error {
+  readonly httpStatus: number | null;
+  readonly reason: PrefetchFailReason;
+
+  constructor(
+    message: string,
+    httpStatus: number | null,
+    reason: PrefetchFailReason,
+    options?: { cause?: unknown },
+  ) {
+    super(message, options);
+    this.name = "PrefetchError";
+    this.httpStatus = httpStatus;
+    this.reason = reason;
+  }
+}
+
+/** prefetch 1 回 (fetch + body 受信) の上限。無応答のサーバで呼び出し元が止まるのを防ぐ。 */
+export const PREFETCH_TIMEOUT_MS = 20_000;
+
+function wrapPrefetchError(e: unknown, timedOut: boolean): PrefetchError {
+  const detail = e instanceof Error ? e.message : String(e);
+  return new PrefetchError(
+    `prefetch ${timedOut ? "timeout" : "network error"}: ${detail}`,
+    null,
+    timedOut ? "timeout" : "network",
+    { cause: e },
+  );
+}
+
 // Pre-fetch helper (生 HTML): URL から HTML を取り、charset (Shift_JIS 等) を
 // 検出して正しく decode した文字列を返す。タグはそのまま (index crawl の
 // アンカー抽出が href を必要とするため)。
-export async function prefetchRawHtml(url: string): Promise<string> {
-  const res = await fetch(url, { headers: PREFETCH_HEADERS });
-  if (!res.ok) {
-    throw new Error(`prefetch HTTP ${res.status}: ${res.statusText}`);
+// 失敗は PrefetchError (http / network / timeout)。timeoutMs は fetch と body 受信の合計で、
+// AbortController で打ち切る (PR-5c-1。既定 20 秒)。
+export async function prefetchRawHtml(
+  url: string,
+  timeoutMs: number = PREFETCH_TIMEOUT_MS,
+): Promise<string> {
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  let buf: ArrayBuffer;
+  let res: Response;
+  try {
+    try {
+      res = await fetch(url, { headers: PREFETCH_HEADERS, signal: controller.signal });
+    } catch (e) {
+      throw wrapPrefetchError(e, timedOut);
+    }
+    if (!res.ok) {
+      // body は読まない (接続を早く返す)。破棄の失敗は無視
+      await res.body?.cancel().catch(() => undefined);
+      throw new PrefetchError(
+        `prefetch HTTP ${res.status}: ${res.statusText}`,
+        res.status,
+        "http",
+      );
+    }
+    // 一度 ArrayBuffer で受けて charset 検出→decode の順で処理する。
+    // res.text() を使うと fetch 実装が UTF-8 で勝手に decode してしまい、
+    // Shift_JIS 等のページが mojibake になる (smbc.co.jp で実害確認 2026-05-20)。
+    try {
+      buf = await res.arrayBuffer();
+    } catch (e) {
+      throw wrapPrefetchError(e, timedOut);
+    }
+  } finally {
+    clearTimeout(timer);
   }
-
-  // 一度 ArrayBuffer で受けて charset 検出→decode の順で処理する。
-  // res.text() を使うと fetch 実装が UTF-8 で勝手に decode してしまい、
-  // Shift_JIS 等のページが mojibake になる (smbc.co.jp で実害確認 2026-05-20)。
-  const buf = await res.arrayBuffer();
   // 先頭 4KB を ASCII レンジで peek して meta charset を読む
   // (charset 宣言は ASCII 範囲のはずなので utf-8 として safely decode 可能)
   const head = new TextDecoder("utf-8", { fatal: false }).decode(

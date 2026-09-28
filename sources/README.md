@@ -23,6 +23,7 @@ sources/
   aliases.json                   # cardId / storeId の表記揺れ辞書 (propose 時に正規化)
   proposed-migrations.json       # propose の出力 (autoApplicable / needsReview)。main には auto-sync 週だけ入る
   SYNC_HISTORY.json / .md        # 同期履歴。run ごとに main に入り (変化の無い run を除く)、アプリ設定の「マスタ更新履歴」のデータ源
+  rate-watch.yaml                # 率カナリア (PR-5c-1) の監視リスト (手編集)。targets / candidates / excluded
 ```
 
 main に置かないもの:
@@ -45,6 +46,25 @@ main に置かないもの:
    SYNC_HISTORY だけを main に直 push する (「Publish SYNC_HISTORY to main」step)。降格後の Regenerate reports は
    同じ generatedAt の entry を置換するので、履歴には降格後の値 (auto 0) が残る (PR-0b-3)
 8. needsReview があれば peter-evans/create-pull-request が `chore/sync-review-queue` を作り直して PR #145 を更新
+
+## 率カナリア (rate-watch.yaml、PR-5c-1)
+
+registry.yaml (Gemini で抽出するソースの台帳) とは別の、**Gemini を使わない**監視リスト。
+`npm run sync:rate-watch` が各 target の公式ページを素の HTTP GET で取り、seed の率の根拠になった逐語句
+(anchor の近くの phrases) や一覧の店名集合 (storeSet) がまだ載っているかを照合する。検知だけで、seed も
+extracted も書かない (結果 JSON は既定で `os.tmpdir()`、`sources/extracted` 配下への出力は拒否)。
+
+- **target**: 照合する公式ページ。URL と逐語句は実際に開いて確認したものだけ (捏造禁止、確認日を notes に)。
+  subject (program / card / membership / category) と `seedRateAtCuration` (照合したときの seed の率) を持つ。
+- **candidates**: 到達性プローブ (`--probe`) 専用。リポジトリ (registry / seed) に既にある URL だけ。
+  Actions ランナーから届くか (403 / JS 描画) を測り、target に昇格させるかを V3 (四半期チェック) で決める。
+- **excluded**: 意図して監視しない subject と理由 (倍率 tier = 週次ソースが監視 / 提示還元 = 店ごとに率が違う /
+  ADDED の期間限定 campaign = cron が管理)。
+- 契約 (`scripts/sync/rate-watch.test.ts`、npm test = cron の safety gate でも走る): subject が seed に実在し、
+  `seedRateAtCuration` が seed の率と完全一致し、監視 program は validTo を持たない。**seed の率を直す PR では
+  このファイルも同じ PR で更新する**。監視中の率への cron の変更は propose の Phase C5 が `rateWatched` で review に回す。
+- 手動プローブ (Actions から): weekly-sync を `group=rate-watch-only` で workflow_dispatch (Gemini 0 req。手順は
+  ルート README の「率カナリア」)。
 
 ## review 経路
 
@@ -79,6 +99,7 @@ confidence = evidenceQuote ? explicitness * (1 - ambiguity) : 0.3
 | `sync:report` | AUTO_SUMMARY / REVIEW_QUEUE / SYNC_HISTORY を生成 |
 | `sync:apply [--dry-run]` | autoApplicable を seed-additions.ts へ |
 | `sync:approve -- --list` / `-- <ID> ... [--accept-risk]` | needsReview の一覧 / 承認適用 (全額に乗る危険な理由の項目は `--accept-risk` 必須) |
+| `sync:rate-watch [-- --probe \| --only <id> \| --out <file> \| --history <file>]` | 率カナリアの照合 / 到達性プローブ (Gemini 0 req、API キー不要) |
 
 - ローカルで `sync:report` / `sync:approve` を実行すると `REVIEW_QUEUE.md` / `AUTO_SUMMARY.md` が untracked で
   再生成される。**commit しない** (`git add -A` や `git add sources/` で化石が main に戻る)。

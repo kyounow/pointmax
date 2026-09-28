@@ -396,7 +396,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**1851 ケース / 94 ファイル** (2026-09-28 時点、PR-4a 後)） |
+| テスト | Vitest（**1922 ケース / 95 ファイル** (2026-09-28 時点、PR-5c-1 後)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -510,6 +510,8 @@ scripts/sync/
   evidence-check.ts    # hallucination guard (日付主張の根拠検証 等) + キャンペーン条件文言 / lifestyle 語の検知
   report.ts            # AUTO_SUMMARY.md / REVIEW_QUEUE.md / SYNC_HISTORY(.json/.md) 生成 (同 generatedAt は upsert)
   registry-policy.ts   # registry.yaml → ソース別ポリシー (target / autoMerge、fail-closed) と Phase B″ / C″
+  rate-watch.ts        # 率カナリア (Gemini 0 req): sources/rate-watch.yaml の公式ページを HTTP GET で逐語照合 / 到達性プローブ。
+                       #   監視対象の集合は Phase C5 (guardRateWatched) も使う
   types.ts             # 共通型 + 閾値定数 + scope ディレクティブ
 ```
 
@@ -524,7 +526,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (1851 ケース / 94 ファイル (2026-09-28 時点、PR-4a 後))
+npm run test         # Vitest (1922 ケース / 95 ファイル (2026-09-28 時点、PR-5c-1 後))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -536,13 +538,16 @@ npm run sync:approve -- <ID> ...   # 指定 needsReview 項目を seed-additions
                                     # (⚠ chore/sync-review-queue ブランチ上の commit は次回 cron の
                                     #  ブランチ再構築で失われるため、approve 後は速やかに PR をマージすること)
 npm run sync:report                # AUTO_SUMMARY / REVIEW_QUEUE / SYNC_HISTORY 生成
+npm run sync:rate-watch            # 率カナリア: rate-watch.yaml の target を照合 (Gemini 0 req、API キー不要)
+npm run sync:rate-watch -- --probe # 到達性だけ (HTTP status・本文長・title)。結果 JSON は既定で os.tmpdir()/rate-watch.json
 ```
 
 `scripts/generate-master.ts` がビルド時に走り、`src/state/seed.ts` の内容を
 `public/master.json` として出力します。これが GitHub Pages から
 `https://kyounow.github.io/pointmax/master.json` として配信されます。
 
-`npm run sync:*` には `.env.local` の `GEMINI_API_KEY` が必要です（gitignore 済）。
+`npm run sync:fetch` / `sync:fetch-all` には `.env.local` の `GEMINI_API_KEY` が必要です（gitignore 済）。
+`sync:rate-watch` は Gemini を使わないので不要です。
 
 ## デプロイ
 
@@ -567,7 +572,8 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
   **mon 9 req / thu 6 req** (無料枠 20 req/日の内)。
   停止中のソースの理由と再開条件は registry の各 notes に記載。曜日は weekly-sync.yml が実行時刻の
   JST 曜日から自動導出。手動 `workflow_dispatch` では `group` 入力 (`auto` / `mon` / `thu` /
-  `all`=全 enabled) でグループを明示指定できる (`all` は無料枠を消費するため手動フル実行専用)
+  `all`=全 enabled) でグループを明示指定できる (`all` は無料枠を消費するため手動フル実行専用)。
+  `rate-watch-only` は同期 job を動かさず、率カナリアの到達性プローブ job だけを動かす (Gemini 0 req、下の「率カナリア」)
 - 高信頼項目 (autoApplicable) は `auto-sync/YYYY-MM-DD-HHMM` ブランチ + `auto-sync` ラベル付き PR を作成し、
   safety check (件数上限/test/build/main chunk 300 KiB) 通過後に **squash auto-merge** → main。
   bot のマージ (`GITHUB_TOKEN`) は push トリガーを起動しないため、GitHub Pages 再デプロイは
@@ -602,7 +608,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | 対象 | auto-merge | 備考 |
 |---|---|---|
 | 既存 store/program 参照の **memberships** | ✅ する (内容ガード通過時) | J-POINT パートナー / たまるマーケット等。**Phase C′ (PR-0b-3)**: 既存店なのに evidence に店名 (store.name の括弧書きを除いたもの) が無ければ `storeNameMismatch`、evidence / notes に条件文言 (一部 / 最大 / オンライン・ネット・通販・経由 / モバイルオーダー・デリバリー / (サービス\|商品\|メニュー\|アプリ)限定 / 支店限定) があれば `campaignConditional`。実効チャネルが online の program (たまる) は EC 語を免除。campaign 由来の率上書き (overrideRate) が 5% 超なら `campaignRateCeiling` |
-| 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview。既存 **campaign** (validTo あり) の率改定は新規と同じく 10% 以上 / 5% 超で月上限なしなら `campaignRateCeiling` (PR-0b-3。validTo の無い J-POINT 20 倍系は対象外)。反映は `seed-additions.ts` の `PROGRAM_OVERRIDES` (部分上書き) 経由で、手書き seed ファイルは書き換えない |
+| 既存 program の **rate 変動** | ✅ する (pp ±10 / 倍率 0.5x〜2x 以内なら) | 範囲外は needsReview。率カナリアで監視中の program (下の行) は `rateWatched` で needsReview。既存 **campaign** (validTo あり) の率改定は新規と同じく 10% 以上 / 5% 超で月上限なしなら `campaignRateCeiling` (PR-0b-3。validTo の無い J-POINT 20 倍系は対象外)。反映は `seed-additions.ts` の `PROGRAM_OVERRIDES` (部分上書き) 経由で、手書き seed ファイルは書き換えない |
 | 既存 program の **期間変更** (validFrom/validTo) | ❌ しない (`periodChange` で needsReview) | キャンペーン延長/期間訂正の検知。承認は `npm run sync:approve -- <ID>` → `PROGRAM_OVERRIDES` 経由で反映 |
 | 新規 **stores** | ⚠ 原則しない (PR #56) / 部分例外 (Wave 3 C-9) | 原則: キャンペーン情報の獲得に注力するため、店舗の seed 肥大化を抑制 (`storeAdditionsDisabled`)。**例外 (Phase B' chain-promote)**: 同 run に campaign extractor 由来の program (validTo 持ち) が当該 store を membership 参照 **AND** チェーン名パターン (KNOWN_CHAIN_NAME_PATTERNS) or chain-heavy category (同 category に既存 3+ 店) なら `🔓 chain-promote` log とともに auto。詳細は `scripts/sync/chain-store-detection.ts` / `scripts/sync/diff-and-propose.ts` の promoteChainStoreAutoMerge。**カテゴリ (PR-4a)**: 抽出の category は alias (`seed-categories.ts` の抽出時 8 組 → `seed-category-aliases.ts` の 7 組) で正規化し、語彙 (`STORE_CATEGORIES`、汎用を除く 35 名) に無い・未設定なら `unknownCategory` で review (判定順 userBlocked → excludedCategory → idCollision → **unknownCategory** → lowConfidence → storeAdditionsDisabled。chain-promote は storeAdditionsDisabled しか解除しないので語彙外の店は auto にならない)。サブスクリプション / ゲーム / アプリストアは `excludedCategory`。対応は alias か語彙を足す PR (そのまま `sync:approve` すると seed 契約 = store の category は語彙内 で CI が落ちる) |
 | 新規 **campaign program** (campaign extractor 由来) | ⚠ Z3 ガードを全て通過し、かつ `autoMerge: false` でないソースのときだけ (現在 campaign ソースは d払い / PayPay の 2 本とも `autoMerge: false` なので**実質 auto なし**) | `campaignAutoMergeBlocker` (PR-0b-3) の判定順: extractor が campaign / 期間明示 (validTo 未来、validFrom ≤ validTo) / 値域 (月上限 > 0・bonusType・曜日日付) / confidence ≥ **0.90** / 既存参照整合 → 外れたら `idCollision`。**rate < 10%** (境界 10% を含めて review) と **5% 超は月上限 (monthlyCapAmountYen) 必須** (campaign prompt は上限を出さないので、当面 5% 超は常に review) → 外れたら `campaignRateCeiling`。lifestyle 語 (給与振込 / 住宅ローン / 投資 / 保険 / 家族ポイント / ○人以上 等) と条件文言 (最大 / 対象商品 等「対象+店・店舗・期間・カード以外」/ 一部商品 / ポイント利用 / 店舗限定 / 割引・クーポン / 新規・初回・ランク・年齢・学生 / オンライン・経由・モバイルオーダー / 抽選・先着) → `campaignConditional`。その前段の integrity: 対象キー (非空 cardIds / pointCardId / paymentAppId) が無ければ `untargetedProgram`、registry の `target` 宣言と帰属が合わなければ `targetMismatch` (review 行きの誤帰属にも付く)。confidence は逐語根拠つきキャンペーンが ≥0.90 に乗るよう campaign プロンプトを校正 (v3.3、`explicitness=1.0`) |
@@ -610,6 +616,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | 対象キーの無い**新規 program** (全 extractor) | ❌ しない (`untargetedProgram` で needsReview) | cardIds / pointCardId / paymentAppId がどれも無い (`cardIds: []` を含む) program はどのカードでも発火しない死にデータ。import 検証 (`validators`) と seed 契約テストも拒否する (PR-0b-3) |
 | 対象店 membership が全滅した **新規 member-stores program 単独** | ❌ しない (`orphanedProgram` で needsReview) | **原子性ガード (Phase C2 `demoteChildlessMemberStorePrograms`)**: campaign 由来 program は auto でも、その membership が全て `missingStoreBody` 等で review 降格されると member-stores × membership 0 の死にデータになる。program 単独 auto を防ぎ、`member-stores は membership ≥1` 契約テストが apply 後 safety gate で fail → 無関係な auto 変更まで巻き添え review 降格するのを propose 層で阻止。対象店 membership 側と同時に `npm run sync:approve` する運用 |
 | **旧世代 extracted 由来の rate/期間 書き戻し** | ❌ しない (`staleExtractGeneration` で needsReview) | **stale-generation ガード (Phase C3 `guardStaleExtractGeneration`)**: extractor プロンプト改訂直後、旧版で fetch した `sources/extracted/<id>.json` が seed (新方針で修正済) との差分を書き戻し提案として出すのを防ぐ。当該 source の `promptVersion` が `registry.yaml` の `extractorVersions[extractor]` から導く現行版と不一致なら、`PROGRAM_OVERRIDES` 行きの updateField (rate/validFrom/validTo) を auto にせず review 降格。次回 fetch (新版) で `promptVersion` が一致すれば従来の閾値判定に戻る (`🧯 stale-generation guard` log) |
+| **率カナリアで監視中の率・店** (`sources/rate-watch.yaml`) | ❌ しない (`rateWatched` で needsReview) | **rate-watch ガード (Phase C5 `guardRateWatched`、PR-5c-1)**: 監視中の program (membership の target が参照する program を含む。J-POINT 20 倍 W / Gold・たまる 2 倍) の updateField (率・期間) と delete、監視中の membership の delete、監視中の card の updateField を review に回す。auto で率が動くと rate-watch の契約テスト (`seedRateAtCuration` = seed の率) が apply 後の safety gate で落ち、その run の auto が全件 `safetyFailed` になるため。B″ の `sourceAutoMergeDisabled` は上書き、他の reason は優先。取り込むなら seed の手修正と `seedRateAtCuration` の更新を同じ PR で (`sync:approve` でそのまま承認すると契約で CI が落ちる)。yaml が無ければ no-op、壊れていれば propose が exit 1 (fail-closed)。0 件でも `🧯 rate-watch guard: N 件` をログに出す (C4 は PR-1 の detectionOnly 用に空けてある) |
 | 新規 **cards / paymentApps / 非キャンペーン program** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
 | **membership tombstone** (`REMOVED_MEMBERSHIP_IDS`) の id | ❌ 再提案しない (propose で silent skip) | `src/state/seed-blocklist.ts` の手動 tombstone は `seed()` から除外されるため、抽出に残っている限り「seed に無い新規」として毎 run 再提案されてしまう。`proposeMemberships` / `proposeJalTokuyakuMemberships` が auto にも review にも出さず、`🪦 tombstone-skip: N 件 (source=…)` を 1 行ログに出す。apply / approve も生成物 (`ADDED_MEMBERSHIPS`) から該当行を物理削除し、approve で選ばれたら `⚠ tombstone 済みのため skip` と warn する (PR-0a-2c) |
 | 同じ店 × 同じ倍率系列の**別倍率 membership** (J-POINT W / Gold / たまる) | ❌ しない (`tierMove` で needsReview) | `tierFamilyOf` (`src/state/tierFamily.ts`) で系列を判定し、seed に同じ店 × 同じ系列の別倍率がある、または同じ run で別倍率も提案されたら review (倍率改定・受け皿誤りの疑い。そのまま足すと最大値が勝ち旧 tier が黙って残る)。他の降格理由 (lowConfidence 等) が付いていればそちらを優先。**承認するなら旧 tier を `REMOVED_MEMBERSHIP_IDS` に入れる PR と同時に** (seed の tier 契約 = 店 × 系列 × 有効チャネルごとに membership ≤ 1 が CI で落ちる、fail-closed) |
@@ -630,6 +637,36 @@ PR-0b-3 (Z3) で足した review 理由 (REVIEW_QUEUE では「判定詳細」�
 キーワード判定は取りこぼしと誤検知の両方が起こり得る (LLM の表記揺れ)。campaign の auto 経路は
 `autoMerge: false` で休眠中なので、解除する PR で語彙 (`scripts/sync/evidence-check.ts` の
 `CONDITIONAL_WORDING_PATTERNS`、`propose-helpers.ts` の membership 語彙) を見直すこと。
+
+### 率カナリア (0 req、PR-5c-1)
+
+週次の抽出 (Gemini) は「加盟店リスト」「期間限定キャンペーン」は拾うが、常設の率や、20 倍などの高還元店が
+**一覧から外れたこと**を確実には検知できない。そこで `sources/rate-watch.yaml` に並べた公式ページを
+`scripts/sync/rate-watch.ts` が**素の HTTP GET で取り (Gemini 0 req)**、seed の率の根拠になった逐語句が今も
+載っているかを照合する。検知だけで seed は書き換えない (直すのは人手の PR)。
+
+- 照合は 2 種類。**phrases**: anchor (例『ポイントアップ期間』) の前後 window 字に逐語句 (例『J-POINT 20倍』
+  『ポイントアップ登録』) が全部そろえば match (比較は NFKC・空白の圧縮・3 桁カンマ除去・数字と 倍/%/pt の間の
+  空白除去の後の部分一致)。**storeSet**: 一覧ページに店名が全部あるか (欠けた店名 = `storeMissing`。
+  20 倍からの脱落 = membership の欠落を 0 req で検知する fingerprint)。
+- 状態は match / phraseMissing / anchorMissing / storeMissing / notFound (HTTP 404・410 = ページ消滅) /
+  unreachable (その他の HTTP エラー・20 秒 timeout・接続エラー・本文が短すぎる = JS 描画の疑い)。
+  unreachable は `--history` の前回結果があれば前回の状態を引き継ぐ。不一致・到達不可があっても exit 0。
+- パイロット (2026-09-28): J-POINT パートナー 20 倍の店舗詳細ページ 8 件 (すき家 / 吉野家 / ガスト / バーミヤン /
+  ジョナサン / サンマルクカフェ / マクドナルド / スターバックス オンライン入金) を W (10.5%) と Gold (10%) の
+  membership で、「ポイント２０倍！飲食店」一覧 (11 店) を storeSet で、たまるマーケットの無印良品ネットストア
+  (2 倍) を照合。URL はすべて実際に開いて逐語を確認したものだけ。
+- **seed の率を直す PR では、rate-watch.yaml の `seedRateAtCuration` も同じ PR で更新する**
+  (`scripts/sync/rate-watch.test.ts` の契約テストが seed の値と完全一致を要求し、npm test = cron の safety gate でも走る)。
+  監視中の率を cron の auto が動かさないよう、propose の Phase C5 が `rateWatched` で review に回す (上の表)。
+- ローカル: `npm run sync:rate-watch` (照合、`--only <target id>` で 1 件)、`npm run sync:rate-watch -- --probe`
+  (到達性だけ)。結果 JSON は既定で `os.tmpdir()/rate-watch.json` (`--out` で変更。`sources/extracted` 配下は拒否)。
+- **手動プローブ (Actions ランナーからの到達性の実測)**: GitHub の Actions → Weekly Master Sync →
+  Run workflow で `group` に `rate-watch-only` を選ぶ。同期 job は動かず、`rate-watch-probe` job
+  (`contents: read`、10 分) が target と candidate の HTTP status・本文長・title を Step Summary に表で出す。
+  Gemini は 0 req、main には何も push しない。この run の完了でも `deploy.yml` の `workflow_run` が発火して
+  main が再デプロイされる (内容は同じなので害はない)。
+- 週次の自動照合 (木曜 run の step)・SYNC_HISTORY への記録・設定画面の 1 行は PR-5c-2 (11 月予定)。
 
 ---
 
@@ -717,6 +754,7 @@ schema 変更時の挙動は `src/state/persist-versions.ts` の `SCHEMA_MIGRATI
 - **改善 PR-5a (V1 鮮度 = 同梱 seed 参照方式)** — 確認月 `lastVerifiedAt` を還元プログラムとカードの基本還元にも持たせ (`BenefitProgram` / `Card`)、計算結果の展開ビューで採用したルート・還元率の最終確認の最古が 12 ヶ月超なら『⚠ 古い情報かも (最終確認 YYYY-MM)』を 1 チップ出す (旧『⚠ ルート要確認』を置き換え、edge の 6 ヶ月判定も 12 ヶ月に統一)。確認月と `officialUrl` は META キーとして公式差分の比較・指紋から外し (通知しない)、表示時に同梱 seed を参照する (`resolveVerifiedMonth` / `getSeedProgram` / `getSeedEdge`)。`ResolvedRate` の charge 変種に `programId`、`CardRanking.adoptedProgramIds` を追加。四半期チェック対象 30 program に 2026-07 を記入 (週次監視 tier と ADDED は空欄)。SEED_VERSION 47 / PERSIST_SCHEMA 据え置き
 - **改善 PR-6b / 6c / U5 (円換算の既定化 + 店舗 picker の整理 + モバイル a11y)** — 優先通貨が未設定なら計算画面を ¥ 円換算で起動し、円換算ビューの各行に通常ビューと同じ警告チップ (要エントリー / 条件 / 上限 / 古い情報かも。`buildWarningPlan` に一本化) を出す。円換算でも直近店舗を記録。店舗 select から membership ゼロ・除外カテゴリ・電気・ガスの店を実行時に隠し (現 seed で 81 / 268 店、選択中・直近チップ・一般店舗は残す)、「一覧に無い店は一般店舗」の 1 行ヒントを追加。`viewport-fit=cover`・通知枠と結果サマリの `aria-live`・`prefers-reduced-motion`・`100dvh`。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **改善 PR-4a (店舗カテゴリ語彙 + unknownCategory)** — 店舗カテゴリの語彙 `src/state/seed-categories.ts` (seed() の実測 36 名、アプリは import しない) と抽出時だけの alias 8 組 (美容・健康→美容 等) を新設し、seed() は手書き店にも alias を当てる (出力不変)。週次同期は語彙外・未設定の category の新規店を `unknownCategory` で review に回し (idCollision の後・lowConfidence の前、chain-promote の対象外)、サブスクリプション / ゲーム / アプリストアを除外カテゴリに追加 (PR-6c の店舗 picker の除外語彙 `PICKER_EXCLUDED_CATEGORIES` にも同じ 3 語。現 seed にこの 3 語の店は無く、隠れる店は 81 / 268 のまま)。seed 契約 (store の category は語彙内) を同じ PR で追加。J-POINT / たまる / SMBC の prompt に `INJECT:categories` で語彙を注入 (promptVersion 据え置き)。現行 extracted のローカル propose で unknownCategory 0 件・excludedCategory 3→8 件。SEED_VERSION / PERSIST_SCHEMA 据え置き
+- **改善 PR-5c-1 (率カナリア = 0 req の公式ページ照合)** — `scripts/sync/rate-watch.ts` と `sources/rate-watch.yaml` を新設し、J-POINT 20 倍の店舗詳細 8 ページ (W / Gold の membership)・「ポイント２０倍！飲食店」一覧の店名集合 (storeSet)・たまる無印を素の HTTP GET で逐語照合 (Gemini 0 req、`npm run sync:rate-watch`)。`seedRateAtCuration` と seed の率の一致を契約テストで固定し、監視中の率への cron の変更を propose の Phase C5 `guardRateWatched` が `rateWatched` で review に回す。weekly-sync に `group=rate-watch-only` の到達性プローブ job (contents: read)。prefetch に 20 秒 timeout。SEED_VERSION / PERSIST_SCHEMA 据え置き
 - **新 extractor**: `jcb-jpoint` (v5.0.0、JCB J-POINT 倍率階層別) / `ongoing-program` (v5.1.3 系、常設優遇プログラム、validFrom/validTo を付けない汎用版) / `epos-tamaru` (v6.5.0、たまるマーケット倍率一覧)。`ExtractorKind` は計 8 種類
 
 リリース運用: 1 PR = 1 commit 群 → merge 後に annotated tag + `gh release`。
