@@ -2,6 +2,42 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-10-01",
+      "generatedAt": "2026-10-01T00:20:06.734Z",
+      "totalCount": 1,
+      "avgConfidence": 1,
+      "sourcesProcessed": 4,
+      "bySource": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "count": 1,
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "summary": "プログラム 削除 prog-dpay-kura-sushi-10x-dpoint-2026-07",
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "reviewStats": {
+        "total": 281,
+        "byReason": {
+          "idCollision": 23,
+          "missingStoreBody": 125,
+          "lowConfidence": 53,
+          "missingProgramBody": 40,
+          "excludedCategory": 8,
+          "storeAdditionsDisabled": 32
+        }
+      }
+    },
+    {
       "date": "2026-09-28",
       "generatedAt": "2026-09-27T23:39:54.029Z",
       "totalCount": 0,

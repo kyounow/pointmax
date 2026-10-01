@@ -1,0 +1,12 @@
+{
+  "sourceId": "paypay-campaigns",
+  "sourceUrl": "https://paypay.ne.jp/event/",
+  "fetchedAt": "2026-10-01T00:20:06.157Z",
+  "promptVersion": "campaign-v3.5",
+  "extractor": "campaign",
+  "geminiModel": "gemini-2.5-flash",
+  "programs": [],
+  "memberships": [],
+  "stores": [],
+  "notes": "「スクラッチくじ」「最大全額戻ってくる」「最大1,000円分が1,000名様に当たる」「対象者限定」「PayPayギフトを送ると最大300ポイント戻ってくる」などのキャンペーンは、還元率が不明確または抽選・上限設定があり、本プログラムの対象外です。きせかえや金融商品、長期開催キャンペーン（PayPayステップなど）も対象外です。SKUキャンペーン「エリスルナフィット商品の購入で最大30％戻ってくる」は商品限定であり、ここでは除外しています。"
+}

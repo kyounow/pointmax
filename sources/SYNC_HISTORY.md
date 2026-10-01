@@ -3,6 +3,33 @@
 > 自動生成。最新が上、最大 52 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-10-01 (auto 1 件 / review 281 件)
+
+- 平均 confidence: 1.00 / source 数: 4
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| expired-cleanup | プログラム | 1 |
+
+### Review queue 内訳 (281 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 125 |
+| lowConfidence | 53 |
+| missingProgramBody | 40 |
+| storeAdditionsDisabled | 32 |
+| idCollision | 23 |
+| excludedCategory | 8 |
+
+<details><summary>追加項目 1 件</summary>
+
+### expired-cleanup / プログラム (1)
+- プログラム 削除 prog-dpay-kura-sushi-10x-dpoint-2026-07
+
+</details>
+
+---
+
 ## 2026-09-28 (auto 0 件 / review 259 件)
 
 - source 数: 3
