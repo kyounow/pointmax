@@ -673,10 +673,14 @@ export function detectStaleExtractSources(
  * 例外: sourceAutoMergeDisabled (Phase B″ で先に付く「ほかのガードは通過済み」の印) は上書きする
  * (PR-0b-3。旧世代の書き戻しが「ガード通過済み」に見えて普通に承認されるのを防ぐ)。
  * guardedBySource は source ごとの降格件数 (ログ用)。
+ * details (任意、PR-0b-2): sourceId → reviewDetail。渡したソースは降格した提案の reviewDetail を
+ * これで置き換える (promptVersion 不一致か fetchedAt 超過かを ReviewReason を増やさず区別する。
+ * sourceAutoMergeDisabled を上書きしたときに「autoMerge:false」の detail が残るのも防ぐ)。
  */
 export function guardStaleExtractGeneration(
   proposals: Proposal[],
   staleSourceIds: ReadonlySet<string>,
+  details?: ReadonlyMap<string, string>,
 ): { proposals: Proposal[]; guardedBySource: Map<string, number> } {
   const guardedBySource = new Map<string, number>();
   const out: Proposal[] = proposals.map((p) => {
@@ -686,9 +690,41 @@ export function guardStaleExtractGeneration(
     if (!isApplicableProposal(p)) return p; // PROGRAM_OVERRIDES 行き (rate/validFrom/validTo) のみ
     if (!staleSourceIds.has(p.sourceId)) return p;
     guardedBySource.set(p.sourceId, (guardedBySource.get(p.sourceId) ?? 0) + 1);
+    const detail = details?.get(p.sourceId);
+    if (detail !== undefined) {
+      return { ...p, reviewReason: "staleExtractGeneration", reviewDetail: detail } as Proposal;
+    }
     return { ...p, reviewReason: "staleExtractGeneration" } as Proposal;
   });
   return { proposals: out, guardedBySource };
+}
+
+/**
+ * Phase C3 の stale ソースごとの reviewDetail (promptVersion 不一致 / fetchedAt 超過、両方なら併記)。
+ * staleSources と staleFetched の和集合を返し、どちらか片方にしか無いソースでも落ちない。
+ */
+export function describeStaleExtractSources(
+  staleSources: ReadonlyMap<string, StaleSourceInfo>,
+  staleFetched: ReadonlyMap<string, StaleFetchedAtInfo>,
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const src of new Set([...staleSources.keys(), ...staleFetched.keys()])) {
+    const parts: string[] = [];
+    const info = staleSources.get(src);
+    if (info) {
+      parts.push(`promptVersion 不一致 (extracted=${info.extractedVersion} ≠ 現行 ${info.currentVersion})`);
+    }
+    const fetched = staleFetched.get(src);
+    if (fetched) {
+      parts.push(
+        fetched.ageDays === null
+          ? `fetchedAt 不明 (${fetched.fetchedAt})`
+          : `fetchedAt ${Math.floor(fetched.ageDays)} 日前 (> ${EXTRACT_MAX_AGE_DAYS} 日)`,
+      );
+    }
+    out.set(src, parts.join(" / "));
+  }
+  return out;
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -764,7 +800,8 @@ export function guardRateWatched(
 //   Phase C3 : Stale extract generation guard (guardStaleExtractGeneration)
 //              ─ 旧世代 extracted (promptVersion 不一致、registry.extractorVersions と比較) または fetchedAt が
 //                14 日超 (main の now 基準、PR-0b-2 の鮮度ガード) の extracted 由来の PROGRAM_OVERRIDES 行き
-//                updateField を staleExtractGeneration で降格 (書き戻し防止)。B″ の sourceAutoMergeDisabled は上書き
+//                updateField を staleExtractGeneration で降格 (書き戻し防止)。B″ の sourceAutoMergeDisabled は上書き。
+//                どちらに当たったかは reviewDetail に書く
 //   (Phase C4 は PR-1 の detectionOnly 用に空けてある)
 //   Phase C5 : Rate-watch guard (guardRateWatched、PR-5c-1)
 //              ─ sources/rate-watch.yaml で監視中の program (membership の program を含む) の updateField・delete、
@@ -1026,6 +1063,7 @@ function main(): void {
   const staleGuard = guardStaleExtractGeneration(
     finalProposals,
     new Set([...staleSources.keys(), ...staleFetched.keys()]),
+    describeStaleExtractSources(staleSources, staleFetched),
   );
   finalProposals = staleGuard.proposals;
   for (const [src, n] of staleGuard.guardedBySource) {

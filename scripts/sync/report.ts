@@ -487,7 +487,7 @@ export const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "旧版プロンプトで抽出した古い値が seed (新方針で修正済) との差分を「変更」として出しているだけの可能性が高いため自動適用しない。" +
     "次回 fetch (新版プロンプト) 後に promptVersion が一致し、従来の閾値判定で再判定される。それまでは無視で OK。" +
     "または extracted の fetchedAt が 14 日を超えている (keep-last-good や取得停止で古い抽出が残っている) 場合もこの理由になる。" +
-    "次に取得が成功すれば解消する。",
+    "次に取得が成功すれば解消する。どちらに当たったかは各項目の「判定詳細」(promptVersion 不一致 / fetchedAt N 日前) に出る。",
   rateWatched:
     "sources/rate-watch.yaml で監視中の率。取り込むなら seed の手修正と seedRateAtCuration の更新を同じ PR で。" +
     "率カナリア (npm run sync:rate-watch、0 req) が公式ページの逐語句で照合している program / membership / card への変更 " +

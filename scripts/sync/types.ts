@@ -416,7 +416,8 @@ export type ReviewReason =
   | "staleExtractGeneration" // extracted の promptVersion が registry の現行 extractor 版と不一致。
                               // プロンプト改訂直後の旧世代キャッシュによる rate/期間の書き戻し提案 (PROGRAM_OVERRIDES 行き
                               // updateField) を防ぐ。次回 fetch (新版) 後に promptVersion が一致し再判定される。
-                              // PR-0b-2: extracted の fetchedAt が 14 日超 (keep-last-good / 取得停止) もこの理由 (Phase C3)
+                              // PR-0b-2: extracted の fetchedAt が 14 日超 (keep-last-good / 取得停止) もこの理由 (Phase C3。
+                              // どちらに当たったかは reviewDetail)
   | "rateWatched"             // PR-5c-1: sources/rate-watch.yaml (率カナリア) で監視中の subject への変更 (Phase C5
                               // guardRateWatched)。監視 program (membership の program を含む) の updateField・delete、
                               // 監視 membership の delete、監視 card の updateField。auto で seed が変わると

@@ -355,7 +355,7 @@
     抽出 0 件) のファイルは skip して `sources_failed` に数える。
   - `fetchedAt` が 14 日を超えた extracted (keep-last-good や取得停止で古いまま) 由来の rate・期間の
     updateField は auto にせず `staleExtractGeneration` で review に回す (Phase C3 で promptVersion 不一致と合流。
-    `🧯 fetchedAt 鮮度ガード` ログ)。
+    `🧯 fetchedAt 鮮度ガード` ログ。どちらに当たったかは REVIEW_QUEUE の「判定詳細」)。
   - **ソース別ポリシー (Phase B″ / C″、PR-0b-3)**: `sources/registry.yaml` で `autoMerge: false` のソース
     (d払い / PayPay) 由来の auto 候補は、全ガードを通過しても `sourceAutoMergeDisabled` で review。
     store / program / updateField は orphan ガード (Phase C) の前 (B″)、membership は内容ガード (C′) の後 (C″) で
@@ -406,7 +406,7 @@
 | ドメインロジック | `src/domain/` 配下に純関数で集約（テスト容易） |
 | グラフ最適化 | Bellman-Ford 派生の **最大積パス** (`bestPath.ts`) |
 | 自動同期 | `scripts/sync/*` ＋ Gemini API (`@google/genai`) |
-| テスト | Vitest（**2036 ケース / 97 ファイル** (2026-10-01 時点、PR-0b-2 後)） |
+| テスト | Vitest（**2038 ケース / 97 ファイル** (2026-10-01 時点、PR-0b-2 後)） |
 | PWA | vite-plugin-pwa（precache + service worker） |
 | バンドル | main chunk (`index-*.js`) ≤ 300 KiB を `bundle-size.yml` と週次 cron の Safety check で検査。データは `seed-data` (`seed-data-*.ts` / `seed-additions.ts`) と `sync-data` (`sources/SYNC_HISTORY.json`) の別 chunk (いずれも eager・PWA precache、ガード対象外。chunk の存在も同じ 2 箇所で検査) |
 | デプロイ | GitHub Actions → GitHub Pages（main push で自動） |
@@ -540,7 +540,7 @@ Node (tsx) で実行されるため、DOM API や `import.meta.env` を使わな
 ```bash
 npm install
 npm run dev          # http://localhost:5173 （predev で master.json も再生成）
-npm run test         # Vitest (2036 ケース / 97 ファイル (2026-10-01 時点、PR-0b-2 後))
+npm run test         # Vitest (2038 ケース / 97 ファイル (2026-10-01 時点、PR-0b-2 後))
 npm run typecheck    # tsc -b (src + vite.config + scripts/)。CI ゲート
 npm run build        # 本番ビルド
 npm run lint         # 全 lint (eslint .)。CI ゲート (PR / main push でブロック)
@@ -654,7 +654,7 @@ push トリガーが起動しない (GitHub の再帰防止仕様) ため、`dep
 | `autoMerge: false` の**ソース由来の提案** (d払い / PayPay) | ❌ しない (`sourceAutoMergeDisabled` で needsReview) | **Phase B″ / C″ `applySourcePolicies` (PR-0b-3)**: 全ガードを通過した auto 候補でも、registry で `autoMerge: false` のソース由来なら stores / programs / memberships / updateField を問わず review。membership だけは Phase C (orphan) と C′ (内容ガード) の後で降格するので、店名不一致・条件文言の membership は `storeNameMismatch` / `campaignConditional` (承認に `--accept-risk` が必要) のまま。旧世代 extracted の updateField は `staleExtractGeneration` が優先。chain-promote もこのソースの campaign を根拠にしない。期限切れ整理 (`expired-cleanup`) は registry に無いので対象外 (auto のまま)。**解除条件**: PR-1 H4 の事後レビュー表で 4 週連続して誤りが無いことを確認してから、別 PR で `autoMerge: false` を外す |
 | 対象キーの無い**新規 program** (全 extractor) | ❌ しない (`untargetedProgram` で needsReview) | cardIds / pointCardId / paymentAppId がどれも無い (`cardIds: []` を含む) program はどのカードでも発火しない死にデータ。import 検証 (`validators`) と seed 契約テストも拒否する (PR-0b-3) |
 | 対象店 membership が全滅した **新規 member-stores program 単独** | ❌ しない (`orphanedProgram` で needsReview) | **原子性ガード (Phase C2 `demoteChildlessMemberStorePrograms`)**: campaign 由来 program は auto でも、その membership が全て `missingStoreBody` 等で review 降格されると member-stores × membership 0 の死にデータになる。program 単独 auto を防ぎ、`member-stores は membership ≥1` 契約テストが apply 後 safety gate で fail → 無関係な auto 変更まで巻き添え review 降格するのを propose 層で阻止。対象店 membership 側と同時に `npm run sync:approve` する運用 |
-| **旧世代 extracted 由来の rate/期間 書き戻し** | ❌ しない (`staleExtractGeneration` で needsReview) | **stale-generation ガード (Phase C3 `guardStaleExtractGeneration`)**: extractor プロンプト改訂直後、旧版で fetch した `sources/extracted/<id>.json` が seed (新方針で修正済) との差分を書き戻し提案として出すのを防ぐ。当該 source の `promptVersion` が `registry.yaml` の `extractorVersions[extractor]` から導く現行版と不一致なら、`PROGRAM_OVERRIDES` 行きの updateField (rate/validFrom/validTo) を auto にせず review 降格。次回 fetch (新版) で `promptVersion` が一致すれば従来の閾値判定に戻る (`🧯 stale-generation guard` log)。**fetchedAt 鮮度ガード (PR-0b-2)**: extracted の `fetchedAt` が 14 日を超えている (keep-last-good や取得停止で古い抽出が残っている) ソースも同じ C3 で同じ reason で降格する (stale 集合 = promptVersion 不一致 ∪ fetchedAt 超過、基準時刻は propose の実行時刻 1 つ。ReviewReason は増やさない。`🧯 fetchedAt 鮮度ガード` log のみで annotation は出さない)。B″ の `sourceAutoMergeDisabled` は上書き。addRecord は対象外 |
+| **旧世代 extracted 由来の rate/期間 書き戻し** | ❌ しない (`staleExtractGeneration` で needsReview) | **stale-generation ガード (Phase C3 `guardStaleExtractGeneration`)**: extractor プロンプト改訂直後、旧版で fetch した `sources/extracted/<id>.json` が seed (新方針で修正済) との差分を書き戻し提案として出すのを防ぐ。当該 source の `promptVersion` が `registry.yaml` の `extractorVersions[extractor]` から導く現行版と不一致なら、`PROGRAM_OVERRIDES` 行きの updateField (rate/validFrom/validTo) を auto にせず review 降格。次回 fetch (新版) で `promptVersion` が一致すれば従来の閾値判定に戻る (`🧯 stale-generation guard` log)。**fetchedAt 鮮度ガード (PR-0b-2)**: extracted の `fetchedAt` が 14 日を超えている (keep-last-good や取得停止で古い抽出が残っている) ソースも同じ C3 で同じ reason で降格する (stale 集合 = promptVersion 不一致 ∪ fetchedAt 超過、基準時刻は propose の実行時刻 1 つ。ReviewReason は増やさず、どちらに当たったかは「判定詳細」に出す。`🧯 fetchedAt 鮮度ガード` log のみで annotation は出さない)。B″ の `sourceAutoMergeDisabled` は上書き。addRecord は対象外 |
 | **率カナリアで監視中の率・店** (`sources/rate-watch.yaml`) | ❌ しない (`rateWatched` で needsReview) | **rate-watch ガード (Phase C5 `guardRateWatched`、PR-5c-1)**: 監視中の program (membership の target が参照する program を含む。J-POINT 20 倍 W / Gold・たまる 2 倍) の updateField (率・期間) と delete、監視中の membership の delete、監視中の card の updateField を review に回す。auto で率が動くと rate-watch の契約テスト (`seedRateAtCuration` = seed の率) が apply 後の safety gate で落ち、その run の auto が全件 `safetyFailed` になるため。B″ の `sourceAutoMergeDisabled` は上書き、他の reason は優先。取り込むなら seed の手修正と `seedRateAtCuration` の更新を同じ PR で (`sync:approve` でそのまま承認すると契約で CI が落ちる)。yaml が無ければ no-op、壊れていれば propose が exit 1 (fail-closed)。0 件でも `🧯 rate-watch guard: N 件` をログに出す (C4 は PR-1 の detectionOnly 用に空けてある) |
 | 新規 **cards / paymentApps / 非キャンペーン program** | ❌ しない | 還元計算に直結するため必ず人手レビュー (`idCollision` 理由で needsReview) |
 | **membership tombstone** (`REMOVED_MEMBERSHIP_IDS`) の id | ❌ 再提案しない (propose で silent skip) | `src/state/seed-blocklist.ts` の手動 tombstone は `seed()` から除外されるため、抽出に残っている限り「seed に無い新規」として毎 run 再提案されてしまう。`proposeMemberships` / `proposeJalTokuyakuMemberships` が auto にも review にも出さず、`🪦 tombstone-skip: N 件 (source=…)` を 1 行ログに出す。apply / approve も生成物 (`ADDED_MEMBERSHIPS`) から該当行を物理削除し、approve で選ばれたら `⚠ tombstone 済みのため skip` と warn する (PR-0a-2c) |

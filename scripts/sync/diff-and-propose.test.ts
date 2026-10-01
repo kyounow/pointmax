@@ -7,6 +7,7 @@ import {
   applyCategoryCap,
   dedupeAcrossProposals,
   demoteChildlessMemberStorePrograms,
+  describeStaleExtractSources,
   detectStaleExtractSources,
   detectStaleFetchedAt,
   downgradeOrphanMemberships,
@@ -280,6 +281,73 @@ describe("fetchedAt 鮮度ガード (Z6)", () => {
       undefined,
     ]);
     expect(guarded.guardedBySource.get("epos-tamaru-market")).toBe(1);
+  });
+
+  it("describeStaleExtractSources: promptVersion / fetchedAt の片方だけ・両方・日付不明でも落ちず、和集合を返す", () => {
+    const staleSources = detectStaleExtractSources(
+      [
+        { sourceId: "old-prompt", extractor: "jcb-jpoint", promptVersion: "jcb-jpoint-v1.2" },
+        { sourceId: "both", extractor: "jcb-jpoint", promptVersion: "jcb-jpoint-v1.2" },
+      ],
+      { "jcb-jpoint": "v1.3" },
+    );
+    const staleFetched = detectStaleFetchedAt(
+      [
+        { sourceId: "old-fetch", fetchedAt: at(15 * DAY + 60_000) },
+        { sourceId: "both", fetchedAt: at(20 * DAY) },
+        { sourceId: "no-date" },
+      ],
+      now,
+    );
+    const d = describeStaleExtractSources(staleSources, staleFetched);
+    expect([...d.keys()].sort()).toEqual(["both", "no-date", "old-fetch", "old-prompt"]);
+    expect(d.get("old-prompt")).toBe(
+      "promptVersion 不一致 (extracted=jcb-jpoint-v1.2 ≠ 現行 jcb-jpoint-v1.3)",
+    );
+    expect(d.get("old-fetch")).toBe("fetchedAt 15 日前 (> 14 日)");
+    expect(d.get("both")).toBe(
+      "promptVersion 不一致 (extracted=jcb-jpoint-v1.2 ≠ 現行 jcb-jpoint-v1.3) / fetchedAt 20 日前 (> 14 日)",
+    );
+    expect(d.get("no-date")).toBe("fetchedAt 不明 ((none))");
+  });
+
+  it("details を渡すと降格した提案の reviewDetail を置き換える (sourceAutoMergeDisabled の detail を残さない)", () => {
+    const ev = { evidenceQuote: "x", explicitness: 1, ambiguity: 0 };
+    const base = {
+      type: "updateField" as const,
+      collection: "programs" as const,
+      field: "rate",
+      from: 0.01,
+      to: 0.015,
+      confidence: 0.95,
+      evidence: ev,
+    };
+    const proposals: Proposal[] = [
+      { ...base, id: "prog-a", sourceId: "src-a" },
+      {
+        ...base,
+        id: "prog-b",
+        sourceId: "src-b",
+        reviewReason: "sourceAutoMergeDisabled",
+        reviewDetail: "registry の src-b が autoMerge:false",
+      },
+      { ...base, id: "prog-c", sourceId: "src-c" },
+    ];
+    const details = new Map([
+      ["src-a", "fetchedAt 15 日前 (> 14 日)"],
+      ["src-b", "promptVersion 不一致 (extracted=x ≠ 現行 y)"],
+    ]);
+    const guarded = guardStaleExtractGeneration(
+      proposals,
+      new Set(["src-a", "src-b", "src-c"]),
+      details,
+    );
+    expect(guarded.proposals.map((p) => [p.reviewReason, p.reviewDetail])).toEqual([
+      ["staleExtractGeneration", "fetchedAt 15 日前 (> 14 日)"],
+      ["staleExtractGeneration", "promptVersion 不一致 (extracted=x ≠ 現行 y)"],
+      // details に無いソースは従来どおり reason だけ付ける
+      ["staleExtractGeneration", undefined],
+    ]);
   });
 });
 
