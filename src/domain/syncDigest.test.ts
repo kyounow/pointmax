@@ -139,13 +139,138 @@ describe("syncDigest extras (Phase 5)", () => {
       { updatedPrograms: [updated], removedPrograms: [removed] },
     );
     const labels = groups.map((g) => g.label);
-    expect(labels).toContain("内容更新 (還元率・期間)");
+    expect(labels).toContain("内容更新 (還元率・期間・条件)");
     expect(labels).toContain("終了・削除");
-    expect(groups.find((g) => g.label === "内容更新 (還元率・期間)")?.items[0]).toBe(
-      "Aキャンペーン (5.0%、〜2026-07-31)",
-    );
+    expect(
+      groups.find((g) => g.label === "内容更新 (還元率・期間・条件)")?.items[0],
+    ).toBe("Aキャンペーン (5.0%、〜2026-07-31)");
     expect(groups.find((g) => g.label === "終了・削除")?.items[0]).toBe(
       "終了キャンペーン",
     );
+  });
+
+  // PR-0a-2b (GAPS P3): 以前の指紋は rate / validFrom / validTo だけで、channel / conditions /
+  // notes だけの公式更新が既読 digest と同一になり自動反映されなかった。
+  it.each([
+    ["channel", { channel: "online" as const }],
+    ["conditions", { conditions: "店ごとの登録が必須" }],
+    ["notes", { notes: "QUICPay は対象外" }],
+  ])("rate・期間が同じでも %s だけの更新は別 digest (内容ハッシュ)", (_label, over) => {
+    const d1 = syncDigest(emptyDiff(), { updatedPrograms: [updated] });
+    const d2 = syncDigest(emptyDiff(), {
+      updatedPrograms: [{ ...updated, ...over }],
+    });
+    expect(d2).not.toBe("");
+    expect(d1).not.toBe(d2);
+  });
+
+  // PR-5a: META キー (lastVerifiedAt / officialUrl) は内容ハッシュの正規形から外れる。
+  // 実際の内容更新がある週に meta が一緒に変わっても digest は内容だけで決まり、
+  // meta だけの差 (確認月の一斉更新) で既読 digest が変わって再通知されることはない。
+  it("META キー (lastVerifiedAt / officialUrl) だけが違う更新は同じ digest", () => {
+    const d1 = syncDigest(emptyDiff(), { updatedPrograms: [updated] });
+    const d2 = syncDigest(emptyDiff(), {
+      updatedPrograms: [
+        {
+          ...updated,
+          lastVerifiedAt: "2026-07",
+          officialUrl: "https://example.com/official",
+        },
+      ],
+    });
+    expect(d2).not.toBe("");
+    expect(d2).toBe(d1);
+  });
+
+  it("同内容の更新はキー順序が違っても同じ digest (正規形のハッシュ)", () => {
+    const reordered = {
+      validTo: "2026-07-31",
+      currencyId: "d-pt",
+      rate: 0.05,
+      scope: "member-stores" as const,
+      name: "Aキャンペーン",
+      id: "prog-a",
+    };
+    expect(syncDigest(emptyDiff(), { updatedPrograms: [reordered] })).toBe(
+      syncDigest(emptyDiff(), { updatedPrograms: [updated] }),
+    );
+  });
+});
+
+// ─── PR-0a-2b: membership の更新 (memU) / 単体 tombstone 削除 (memD) ───
+
+describe("syncDigest / buildSyncGroups — membership extras (PR-0a-2b)", () => {
+  const mUpd = {
+    id: "m-prog-j20-sukiya",
+    programId: "prog-j20",
+    storeId: "sukiya",
+    notes: "QUICPay は対象外",
+  };
+  const mDel = {
+    id: "m-prog-j20-general",
+    programId: "prog-j20",
+    storeId: "general",
+  };
+
+  it("membership の更新 / 削除だけでも非空 digest (通知・自動反映の対象になる)", () => {
+    expect(syncDigest(emptyDiff(), { updatedMemberships: [mUpd] })).not.toBe("");
+    expect(syncDigest(emptyDiff(), { removedMemberships: [mDel] })).not.toBe("");
+  });
+
+  it("memU は notes / channel / overrideRate の値込みで指紋化される (値が変われば別 digest)", () => {
+    const base = syncDigest(emptyDiff(), { updatedMemberships: [mUpd] });
+    for (const over of [
+      { notes: "別の注記" },
+      { channel: "online" as const },
+      { overrideRate: 0.03 },
+      { overrideCurrencyId: "j-point" },
+    ]) {
+      expect(
+        syncDigest(emptyDiff(), { updatedMemberships: [{ ...mUpd, ...over }] }),
+      ).not.toBe(base);
+    }
+  });
+
+  it("memU / memD は順序に依存しない", () => {
+    const m2 = { ...mUpd, id: "m-prog-j20-gusto", storeId: "gusto" };
+    const mDel2 = { ...mDel, id: "m-prog-j2-general", programId: "prog-j2" };
+    expect(
+      syncDigest(emptyDiff(), {
+        updatedMemberships: [mUpd, m2],
+        removedMemberships: [mDel, mDel2],
+      }),
+    ).toBe(
+      syncDigest(emptyDiff(), {
+        updatedMemberships: [m2, mUpd],
+        removedMemberships: [mDel2, mDel],
+      }),
+    );
+  });
+
+  it("更新と削除は別キー (同じ membership でも memU と memD で digest が変わる)", () => {
+    expect(syncDigest(emptyDiff(), { updatedMemberships: [mDel] })).not.toBe(
+      syncDigest(emptyDiff(), { removedMemberships: [mDel] }),
+    );
+  });
+
+  it("buildSyncGroups が『提携条件の更新』『提携店舗の削除』を program 名 → 店舗名で出す", () => {
+    const storeNames: Record<string, string> = {
+      sukiya: "すき家",
+      general: "一般店舗",
+    };
+    const groups = buildSyncGroups(
+      emptyDiff(),
+      {
+        store: (id) => storeNames[id] ?? id,
+        program: (id) => (id === "prog-j20" ? "J-POINT 20倍" : id),
+      },
+      { updatedMemberships: [mUpd], removedMemberships: [mDel] },
+    );
+    expect(groups.find((g) => g.label === "提携条件の更新")?.items).toEqual([
+      "J-POINT 20倍 → すき家",
+    ]);
+    expect(groups.find((g) => g.label === "提携店舗の削除")?.items).toEqual([
+      "J-POINT 20倍 → 一般店舗",
+    ]);
   });
 });

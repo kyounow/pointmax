@@ -6,6 +6,11 @@
 //   npm run sync:approve -- --list                 # needsReview 一覧を ID 付きで表示
 //   npm run sync:approve -- <ID> [<ID> ...]        # 指定項目を seed-additions.ts に適用
 //   npm run sync:approve -- <ID> --dry-run         # 書き込まずに内容確認
+//   npm run sync:approve -- <ID> --accept-risk     # 全額に乗る危険な reason の項目を承認する (PR-0b-3)
+//
+// 危険な reason (types.ts の RISKY_REVIEW_REASONS: campaignConditional / campaignRateCeiling /
+// targetMismatch / storeNameMismatch / untargetedProgram) の項目は、承認すると record がそのまま全額に乗る
+// (上限・対象商品・店舗・帰属を record では表現できない)。--accept-risk が無ければ理由を出して exit 1。
 //
 // ID は sync:propose が各 proposal に付与する安定 ID (REVIEW_QUEUE.md の
 // 各項目見出し / --list で確認)。適用すると:
@@ -21,13 +26,20 @@
 //   - delete/programs (REMOVED_PROGRAM_IDS = tombstone へ。期限切れキャンペーン
 //     削除の承認経路、Phase 5。seed() が cascade 除外、mergeSeed が既存ユーザー
 //     からも除去。手書き seed ファイルの物理削除は不要)
+// membership tombstone (seed-blocklist の REMOVED_MEMBERSHIP_IDS) に入る membership を選んだ場合は
+// 「⚠ tombstone 済みのため skip」を warn して適用しない (PR-0a-2c)。
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Proposal, ProposalReport } from "./types";
-import { computeProposalId, isApplicableProposal } from "./types";
 import {
+  RISKY_REVIEW_REASONS,
+  computeProposalId,
+  isApplicableProposal,
+} from "./types";
+import {
+  REMOVED_MEMBERSHIP_ID_SET,
   bucketProposals,
   buildSeedAdditionsContent,
   mergeMemberships,
@@ -37,6 +49,7 @@ import {
   pruneRemovedFromBuckets,
   type Buckets,
 } from "./apply-proposals";
+import { membershipId } from "../../src/state/defineMemberships";
 import { buildReviewQueue } from "./report";
 import {
   ADDED_CARDS,
@@ -58,15 +71,17 @@ const REVIEW_QUEUE_PATH = resolve(REPO_ROOT, "sources/REVIEW_QUEUE.md");
 // CLI parsing
 // ───────────────────────────────────────────────────────────────
 
-type CliArgs = { ids: string[]; list: boolean; dryRun: boolean };
+export type CliArgs = { ids: string[]; list: boolean; dryRun: boolean; acceptRisk: boolean };
 
-function parseArgs(argv: string[]): CliArgs {
+export function parseArgs(argv: string[]): CliArgs {
   const ids: string[] = [];
   let list = false;
   let dryRun = false;
+  let acceptRisk = false;
   for (const a of argv) {
     if (a === "--list") list = true;
     else if (a === "--dry-run") dryRun = true;
+    else if (a === "--accept-risk") acceptRisk = true;
     else if (a === "--help" || a === "-h") {
       printUsage();
       process.exit(0);
@@ -82,7 +97,7 @@ function parseArgs(argv: string[]): CliArgs {
       }
     }
   }
-  return { ids, list, dryRun };
+  return { ids, list, dryRun, acceptRisk };
 }
 
 function printUsage(): void {
@@ -92,7 +107,10 @@ function printUsage(): void {
       "  npm run sync:approve -- --list                 needsReview 一覧を ID 付きで表示",
       "  npm run sync:approve -- <ID> [<ID> ...]        指定項目を seed-additions.ts に適用",
       "  npm run sync:approve -- <ID> --dry-run         書き込まずに内容確認",
+      "  npm run sync:approve -- <ID> --accept-risk     全額に乗る危険な reason の項目を承認",
       "",
+      "--accept-risk が必要な reason: " + [...RISKY_REVIEW_REASONS].join(" / "),
+      "  (承認すると record がそのまま全額に乗る。原則見送り、取り込むなら手書き seed で上限・限定・帰属を表現)",
       "ID は REVIEW_QUEUE.md の各項目見出し先頭 (例: pro-1a2b3c4d5e) か --list で確認。",
       "対応 type: addRecord 全般 + updateField/programs (rate/validFrom/validTo)",
       "         + delete/programs (期限切れキャンペーン削除 = tombstone)。",
@@ -146,6 +164,40 @@ export function selectProposalsByIds(
   return { found, missing, unsupported };
 }
 
+// PR-0a-2c: 承認対象のうち membership tombstone (seed-blocklist の REMOVED_MEMBERSHIP_IDS) に入る
+// addRecord/memberships を除き、1 件ごとに「⚠ tombstone 済みのため skip」を warn する。
+// 古い proposed-migrations.json (tombstone 前の run) の ID を承認した場合の防御。
+// 生成物側も pruneRemovedFromBuckets が落とすので二重の安全網になる。
+// skip した項目は manuallyApproved に移さない (適用していないため)。次の cron の propose では出ない。
+export function excludeTombstonedSelections(
+  found: Proposal[],
+  tombstoned: ReadonlySet<string> = REMOVED_MEMBERSHIP_ID_SET,
+  warn: (msg: string) => void = console.warn,
+): Proposal[] {
+  return found.filter((p) => {
+    if (p.type !== "addRecord" || p.collection !== "memberships") return true;
+    const rec = p.record as { programId?: unknown; storeId?: unknown };
+    if (typeof rec.programId !== "string" || typeof rec.storeId !== "string") {
+      return true;
+    }
+    const id = membershipId(rec.programId, rec.storeId);
+    if (!tombstoned.has(id)) return true;
+    warn(
+      `⚠ tombstone 済みのため skip: ${proposalIdOf(p)} ${id} ` +
+        "(src/state/seed-blocklist.ts の REMOVED_MEMBERSHIP_IDS)",
+    );
+    return false;
+  });
+}
+
+// PR-0b-3: 承認対象のうち、全額に乗る危険な reason (RISKY_REVIEW_REASONS) の項目。
+// main は --accept-risk が無ければこれを表示して exit 1 する。
+export function findRiskyApprovals(found: Proposal[]): Proposal[] {
+  return found.filter(
+    (p) => p.reviewReason !== undefined && RISKY_REVIEW_REASONS.has(p.reviewReason),
+  );
+}
+
 // 承認済み項目を needsReview から除去し manuallyApproved に移動した
 // 新しい ProposalReport を返す (summary の件数も更新)。
 export function moveToManuallyApproved(
@@ -187,7 +239,9 @@ export function formatListLine(p: Proposal): string {
   }
   const reason = p.reviewReason ?? "-";
   const approvable = isApplicableProposal(p) ? "  " : "✋"; // ✋ = sync:approve 未対応 type/field
-  return `${pid}  ${approvable}${p.type}/${p.collection}  [${reason}]  ${desc}  <${p.sourceId}>`;
+  // PR-0b-3: 判定詳細 (一致した語・照合できなかった店名等) を末尾に付ける
+  const detail = p.reviewDetail ? `  — ${p.reviewDetail}` : "";
+  return `${pid}  ${approvable}${p.type}/${p.collection}  [${reason}]  ${desc}  <${p.sourceId}>${detail}`;
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -259,8 +313,31 @@ function main(): void {
     process.exit(1);
   }
 
-  console.log(`📥 承認対象: ${sel.found.length} 件`);
-  for (const p of sel.found) {
+  // PR-0a-2c: tombstone 済み membership は warn して skip (生成物にも残さない)
+  const approvable = excludeTombstonedSelections(sel.found);
+  if (approvable.length === 0) {
+    console.error("💥 適用対象が 0 件です (tombstone 済みの membership を除く)。");
+    process.exit(1);
+  }
+
+  // PR-0b-3: 全額に乗る危険な reason の項目は --accept-risk が無ければ中止 (全件 or 中止の方針と同じ)
+  const risky = findRiskyApprovals(approvable);
+  if (risky.length > 0 && !args.acceptRisk) {
+    console.error(
+      "💥 次の項目は承認すると record がそのまま全額に乗ります (上限・対象商品・店舗・帰属を record では表現できない):",
+    );
+    for (const p of risky) {
+      console.error(`   ${formatListLine(p)}`);
+    }
+    console.error(
+      "   原則は見送り、取り込むなら手書き seed で上限・限定・帰属を表現してください。" +
+        "それでも record のまま取り込むなら `--accept-risk` を付けて再実行してください。",
+    );
+    process.exit(1);
+  }
+
+  console.log(`📥 承認対象: ${approvable.length} 件`);
+  for (const p of approvable) {
     console.log(`  ${formatListLine(p)}`);
     if (p.reviewReason === "userBlocked") {
       console.log(
@@ -268,10 +345,15 @@ function main(): void {
           "次回 cron で再び除外提案されます",
       );
     }
+    if (p.reviewReason && RISKY_REVIEW_REASONS.has(p.reviewReason)) {
+      console.log(
+        "  ⚠️ --accept-risk で承認: record がそのまま全額に乗ります。上限・限定は手書き seed で補ってください",
+      );
+    }
   }
 
   // apply-proposals と同じ bucket → merge → emit 経路で seed-additions.ts を再生成
-  const { buckets } = bucketProposals(sel.found);
+  const { buckets } = bucketProposals(approvable);
   const merge = {
     stores: mergeWithExisting(ADDED_STORES, buckets.stores),
     cards: mergeWithExisting(ADDED_CARDS, buckets.cards),
@@ -314,10 +396,10 @@ function main(): void {
   writeFileSync(SEED_ADDITIONS_PATH, buildSeedAdditionsContent(mergedBuckets));
   console.log(`✓ wrote ${SEED_ADDITIONS_PATH}`);
 
-  const updated = moveToManuallyApproved(report, sel.found);
+  const updated = moveToManuallyApproved(report, approvable);
   writeFileSync(PROPOSAL_PATH, JSON.stringify(updated, null, 2));
   console.log(
-    `✓ wrote ${PROPOSAL_PATH} (needsReview ${report.needsReview.length} → ${updated.needsReview.length}, manuallyApproved +${sel.found.length})`,
+    `✓ wrote ${PROPOSAL_PATH} (needsReview ${report.needsReview.length} → ${updated.needsReview.length}, manuallyApproved +${approvable.length})`,
   );
 
   writeFileSync(REVIEW_QUEUE_PATH, buildReviewQueue(updated));

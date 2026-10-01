@@ -4,8 +4,8 @@ import { membershipId } from "./defineMemberships";
 // 最終 seed には含めない storeId のリスト。
 //
 // 動作:
-//   - src/state/seed.ts: ADDED_STORES / ADDED_LOYALTY_RULES / ADDED_RULES から
-//     ここに列挙された storeId を持つ records を filter
+//   - src/state/seed.ts: ADDED_STORES (自動同期分の store) から
+//     ここに列挙された storeId を filter
 //   - scripts/sync/diff-and-propose.ts: 新規 store の addRecord 提案を
 //     reviewReason="userBlocked" に格下げ (再追加されないように)
 //
@@ -63,8 +63,8 @@ export const BLOCKED_STORE_IDS = new Set<string>([
 //
 // 例: "general" (src/state/seed-data-stores.ts) = 「一般店舗 (規定還元)」。
 // Calculator のデフォルト選択店で、店舗未選択時の規定還元率を表示するための
-// プレースホルダ。実在店舗ではないため、ここに実 program の membership /
-// loyaltyRule が紐づくと「一般店舗を選んだのに特定キャンペーンの倍率が乗る」
+// プレースホルダ。実在店舗ではないため、ここに実 program の membership
+// が紐づくと「一般店舗を選んだのに特定キャンペーンの倍率が乗る」
 // という誤表示になる。
 //
 // 背景 (#103 incident): jcb-jpoint extractor が「クレカ乗車 ポイント20倍」
@@ -75,7 +75,7 @@ export const BLOCKED_STORE_IDS = new Set<string>([
 // REMOVED_MEMBERSHIP_IDS で除去済み)。
 //
 // 再発防止として:
-//   - scripts/sync/propose-helpers.ts: memberships / loyaltyRules の storeId が
+//   - scripts/sync/propose-helpers.ts: memberships の storeId が
 //     ここに含まれる場合、reviewReason="pseudoStoreTarget" で必ず needsReview に降格
 //   - scripts/sync/inject-prompt.ts: このリストの store を INJECT 一覧から除外
 //     (Gemini がそもそも受け皿候補として見れないようにする)
@@ -101,26 +101,48 @@ export const PSEUDO_PAYMENT_APP_IDS = new Set<string>([
 // ===========================================================
 // REMOVED_MEMBERSHIP_IDS (membership 単体 tombstone)
 // ===========================================================
+// 手動 tombstone (codegen 非対応)。PR-4b で REMOVED_MEMBERSHIP_IDS_AUTO と union 予定。
+//
 // 公式 seed から誤配信された membership を、既存ユーザーの localStorage から
-// も除去するための id リスト。mergeSeed の removedMembershipIds オプション
-// (useSeedMerge 経由) が消費する。v6 で membership.id (`m-{programId}-{storeId}`)
+// も除去するための id リスト。v6 で membership.id (`m-{programId}-{storeId}`)
 // が付いたため、他エンティティ tombstone と同じ id 完全一致で除去する。
 // id 文字列は直書きせず membershipId() で機械生成する (規約の唯一の源)。
+// 消費者 (PR-0a-2c で全経路に配線):
+//   - src/state/seed.ts: seed() の memberships から除外 (ADDED 行・手書き行とも)。
+//     これが無いと ADDED 行が毎回「追加 → tombstone 除去」を往復し、自動反映の安全判定
+//     (isAutoApplySafe) が恒久 false になる
+//   - mergeSeed の removedMembershipIds (seed 反映の全経路 = useSeedMerge / computeSeedUpdate):
+//     既存端末の localStorage から除去
+//   - scripts/sync/propose-helpers.ts: 同じ id の再提案を silent skip (「🪦 tombstone-skip」ログ)
+//   - scripts/sync/apply-proposals.ts / approve-proposals.ts: 生成物 (ADDED_MEMBERSHIPS) から物理削除、
+//     approve で選ばれたら warn して skip
 //
 // ★ このファイル (手書き) に置く理由: seed-additions.ts は AUTO-GENERATED で
 //   cron の apply-proposals (buildSeedAdditionsContent) がファイル全体を
 //   再生成するため、codegen が emit しない定数をそこに置くと次回 cron で
 //   消えて import が壊れる。REMOVED_PROGRAM_IDS と違いこちらは codegen
 //   非対応 (手動事故対応専用) なので、再生成対象外の本ファイルに置く。
+//   ADDED 行そのもの (seed-additions.ts) は手で消さない (cron PR と衝突する。次の apply が物理削除する)。
 //
-// #103 incident: jcb-jpoint extractor が店舗特定不能な項目 (「クレカ乗車
-// ポイント20倍」「海外でのお買い物 ポイント2倍」) をダミー store "general"
-// への membership として混入させた 4 件。confidence 0.9025 ≥ 0.9 で
-// autoApplicable を通過し、7/02 に本番配信済み。既存ユーザーの localStorage
-// にも mergeSeed (add-only) で入っているため tombstone で除去する。
+// ⚠ tier 系列 (tierFamilyOf) の membership を tombstone するときは、その program の membership が
+//   0 件にならないか確認する (member-stores は membership ≥ 1 の seed 契約)。例: prog-epos-tamaru-4x は
+//   muji の tombstone 後 bic-camera (ADDED) の 1 件だけで存続しており、bic-camera 4x も落とすなら
+//   program の tombstone (REMOVED_PROGRAM_IDS) が同時に必要。
 export const REMOVED_MEMBERSHIP_IDS: string[] = [
+  // #103 incident: jcb-jpoint extractor が店舗特定不能な項目 (「クレカ乗車
+  // ポイント20倍」「海外でのお買い物 ポイント2倍」) をダミー store "general"
+  // への membership として混入させた 4 件。confidence 0.9025 ≥ 0.9 で
+  // autoApplicable を通過し、7/02 に本番配信済み。既存ユーザーの localStorage
+  // にも mergeSeed の追加で入っているため tombstone で除去する。
   membershipId("prog-jcb-jpoint-20x", "general"),
   membershipId("prog-jcb-jpoint-gold-20x", "general"),
   membershipId("prog-jcb-jpoint-2x", "general"),
   membershipId("prog-jcb-jpoint-gold-2x", "general"),
+  // PR-0a-2c: tier 重複の解消 (同じ店 × 同じ系列に 2 倍率が並び、計算は最大値が勝っていた)。
+  // ADDED (9/14 auto)。抽出の根拠は「タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍」で、
+  // 百貨店本体 (takashimaya) を受け皿にした誤り。Gold の高島屋は gold-4x (手書き) を維持する。
+  membershipId("prog-jcb-jpoint-gold-2x", "takashimaya"),
+  // 手書き (2026-07 の実測で 4 倍)。9/13 の抽出と 9/26 の公式トップは「無印良品ネットストア 2倍」で、
+  // tamaru-2x × muji (ADDED) が正。過小側に倒す (§4 A17 = Yes)。
+  membershipId("prog-epos-tamaru-4x", "muji"),
 ];

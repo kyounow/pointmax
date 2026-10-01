@@ -43,9 +43,12 @@ export function clearSyncSeen(): void {
  * PR-4b: 直近に「自動反映」したバッチのバナー表示情報。
  * store の永続 state に保持し (reload 越しでバナーを再表示)、✕ dismiss で消す。
  *   - digest: 反映した差分集合の指紋 (syncDigest)。SEEN との突合 / restore ループ防止に使う。
- *   - count:  反映した変更件数 (追加 + 内容更新。安全週は削除 0 なので totalChangeCount と一致)。
+ *   - count:  反映した変更件数 (追加 + 内容更新。期限切れ整理は含まない)。
+ *   - expiredRemovedCount: 同じ週に整理した期限切れ campaign の件数 (PR-6a-2。0 件なら無し)。
+ *     期限切れ整理だけの週はバナー自体を出さない (notice を立てない)。
  */
 export type AutoApplyNotice = {
   digest: string;
   count: number;
+  expiredRemovedCount?: number;
 };

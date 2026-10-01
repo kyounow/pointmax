@@ -84,6 +84,15 @@ const OPT_ENUM = (key: string, allowed: readonly string[]): FieldCheck => ({
   check: (v) => v === undefined || (typeof v === "string" && allowed.includes(v)),
   kind: `${allowed.join(" / ")} のいずれか (または未指定)`,
 });
+// 任意の文字列フィールド (undefined は許容。存在する場合のみ文字列を要求)。
+// PR-5a (B11): Card.lastVerifiedAt (基本還元率の確認月 "YYYY-MM") の型検証に使う。形式 (月の妥当性) は
+// 表示側 (edgeFreshness) が不正値を無視するので、取込では型だけを見る。edge / program の確認月は
+// 従来どおり検証しない (同じく表示側が不正値を無視する)。
+const OPT_STR = (key: string): FieldCheck => ({
+  key,
+  check: (v) => v === undefined || typeof v === "string",
+  kind: "文字列",
+});
 const PROGRAM_SCOPES = ["all-stores", "member-stores"] as const;
 
 function checkItem(
@@ -144,7 +153,13 @@ export function validateImportData(
     checkArray(
       data.cards,
       "cards",
-      [STR("id"), STR("name"), RATE("defaultRate"), STR("defaultCurrencyId")],
+      [
+        STR("id"),
+        STR("name"),
+        RATE("defaultRate"),
+        STR("defaultCurrencyId"),
+        OPT_STR("lastVerifiedAt"), // PR-5a (B11): 基本還元率の確認月
+      ],
       true,
     ),
     checkArray(data.currencies, "currencies", [STR("id"), STR("name")], true),
@@ -210,6 +225,10 @@ export function validateImportData(
   const cardFamilyError = checkCardFamilyIds(data);
   if (cardFamilyError !== null) return { ok: false, error: cardFamilyError };
 
+  // PR-0b-3: program は対象キー (cardIds / pointCardId / paymentAppId) を 1 つ以上持ち、cardIds は非空。
+  const targetError = checkProgramTargets(data);
+  if (targetError !== null) return { ok: false, error: targetError };
+
   // v6: scope 整合性のクロスチェック。
   //   「all-stores なのに membership を持つ」program は矛盾 (全店適用 program は
   //   membership を持ってはいけない) → import ではエラーにする。
@@ -254,6 +273,29 @@ function checkCardFamilyIds(data: Record<string, unknown>): string | null {
     if (c.familyId === undefined) continue;
     if (!isStr(c.familyId) || !VALID_CARD_FAMILY_IDS.has(c.familyId)) {
       return `cards[${i}].familyId "${String(c.familyId)}" が CARD_FAMILIES に存在しません`;
+    }
+  }
+  return null;
+}
+
+// PR-0b-3: program の対象キー。対象の無い program (cardIds / pointCardId / paymentAppId がどれも無い、
+// または cardIds が空配列) はどのカードでも発火しない死にデータ (programEvaluator は cardIds:[] を
+// 「どのカードにも一致しない」と扱う)。UI から作る program は必ず対象を持つ (CampaignForm は targetId 必須、
+// addUserLoyaltyProgram は pointCardId) ので、ここに来るのは手編集の JSON か壊れた master だけ。
+// (main chunk に載るので、エラー文は 1 種類にまとめて小さく保つ)
+function checkProgramTargets(data: Record<string, unknown>): string | null {
+  if (!Array.isArray(data.programs)) return null;
+  for (let i = 0; i < data.programs.length; i++) {
+    const p = data.programs[i];
+    if (!isObject(p)) continue; // checkArray 側で既に弾かれている想定
+    const c = p.cardIds;
+    // cardIds は「無い」か「非空の文字列配列」。無いときは pointCardId か paymentAppId が要る。
+    const ok =
+      c === undefined
+        ? isStr(p.pointCardId) || isStr(p.paymentAppId)
+        : Array.isArray(c) && c.length > 0 && c.every(isStr);
+    if (!ok) {
+      return `programs[${i}] (${String(p.id)}) の対象 (空でない cardIds / pointCardId / paymentAppId) がありません`;
     }
   }
   return null;

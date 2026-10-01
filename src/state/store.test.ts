@@ -15,6 +15,8 @@ import { seed, SEED_VERSION } from "./seed";
 import { MIGRATIONS, conflictItems, planMigrations } from "../domain/migrations";
 import { REMOVED_PROGRAM_IDS } from "./seed-additions";
 import { REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
+import { membershipId } from "./defineMemberships";
+import { isAutoApplySafe } from "../domain/autoApplySafety";
 import type {
   BenefitProgram,
   Card,
@@ -238,6 +240,7 @@ describe("store: exportJson / importJson は programs / memberships を保持す
     id: "prog-a4-test",
     name: "A4 テストプログラム",
     scope: "member-stores",
+    pointCardId: "rakuten-pointcard", // PR-0b-3: import 検証は対象キー必須
     rate: 0.05,
     currencyId: "rakuten-pt",
   };
@@ -586,6 +589,7 @@ describe("store: importJson の program enabled carry-over (v6 PR-1d)", () => {
     id: "prog-optin",
     name: "opt-in 特典",
     scope: "all-stores",
+    cardIds: ["smbc-v"], // PR-0b-3: import 検証は対象キー必須
     rate: 0.01,
     currencyId: "v-pt",
     optIn: true,
@@ -635,6 +639,7 @@ describe("store: syncFromUrl の program enabled carry-over (v6 PR-1d)", () => {
     id: "prog-optin",
     name: "opt-in 特典",
     scope: "all-stores",
+    cardIds: ["smbc-v"], // PR-0b-3: master 検証は対象キー必須
     rate: 0.01,
     currencyId: "v-pt",
     optIn: true,
@@ -1045,6 +1050,168 @@ describe("store: seed 反映の既存端末配信 (PR-0a-2a / MIGRATIONS v47 + t
   });
 });
 
+// PR-0a-2b (F3): membership 単体 tombstone (REMOVED_MEMBERSHIP_IDS) を seed 反映の 3 経路に配線。
+// 以前は preview (useSeedMerge) にだけ渡していたため、#103 の general 混入 4 件は
+// 「アプリに反映」しても消えず、isAutoApplySafe が恒久 false のままだった。
+describe("store: seed 反映の membership tombstone 配線 (PR-0a-2b)", () => {
+  const GENERAL_103: StoreProgramMembership[] = [
+    "prog-jcb-jpoint-20x",
+    "prog-jcb-jpoint-gold-20x",
+    "prog-jcb-jpoint-2x",
+    "prog-jcb-jpoint-gold-2x",
+  ].map((programId) => ({
+    id: `m-${programId}-general`,
+    programId,
+    storeId: "general",
+  }));
+  // ユーザー作成 program (UUID) の membership。tombstone とも公式 id とも衝突しない。
+  const USER_MEMBERSHIP: StoreProgramMembership = {
+    id: "m-5b1f0c7e-user-prog-general",
+    programId: "5b1f0c7e-user-prog",
+    storeId: "general",
+    userModifiedAt: "2026-09-01T00:00:00.000Z",
+  };
+
+  const setStateWith103 = () => {
+    const s = seed();
+    useStore.setState({
+      ...s,
+      memberships: [...s.memberships, ...GENERAL_103, USER_MEMBERSHIP],
+      lastSeedVersion: SEED_VERSION,
+    });
+  };
+
+  const expectTombstoned = () => {
+    const ids = new Set(useStore.getState().memberships.map((m) => m.id));
+    for (const m of GENERAL_103) expect(ids.has(m.id), m.id).toBe(false);
+    expect(ids.has(USER_MEMBERSHIP.id)).toBe(true);
+    // 反映後は preview (useSeedMerge と同じ opts) の差分が 0 件 = 再通知されない
+    const merged = mergeSeed(useStore.getState(), seed(), {
+      removedProgramIds: REMOVED_PROGRAM_IDS,
+      removedMembershipIds: REMOVED_MEMBERSHIP_IDS,
+    });
+    expect(changeCount(merged)).toBe(0);
+  };
+
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("前提: REMOVED_MEMBERSHIP_IDS は #103 の general 4 件を含む", () => {
+    for (const m of GENERAL_103) expect(REMOVED_MEMBERSHIP_IDS).toContain(m.id);
+  });
+
+  it("applySeedUpdate([]) (アプリに反映) で 4 件とも消え、UUID program の membership は残る", () => {
+    setStateWith103();
+    useStore.getState().applySeedUpdate([]);
+    expectTombstoned();
+  });
+
+  it("autoApplySeedUpdate (自動反映) でも同じく消える", () => {
+    setStateWith103();
+    useStore.getState().autoApplySeedUpdate({ digest: "d-103", count: 4 });
+    expectTombstoned();
+  });
+
+  it("mergeFromSeed (設定 > サンプル投入) でも同じく消える", () => {
+    setStateWith103();
+    useStore.getState().mergeFromSeed();
+    expectTombstoned();
+  });
+});
+
+// PR-0a-2c: tier 重複 2 件 (高島屋 × Gold 2倍 = ADDED、無印 × たまる 4倍 = 旧手書き) の membership
+// tombstone を seed() 実データ (ADDED 行込み) で検証する。seed() 側のフィルタが無いと ADDED 行が
+// 毎回「追加 → tombstone 除去」を往復し、isAutoApplySafe が恒久 false になる。
+// (ADDED 行は次の cron apply が物理削除するので、ここでは ADDED の有無に依存せず行を組み立てる)
+describe("store: tier 重複の membership tombstone (PR-0a-2c)", () => {
+  const OLD_TIER_ROWS: StoreProgramMembership[] = [
+    ["prog-jcb-jpoint-gold-2x", "takashimaya"],
+    ["prog-epos-tamaru-4x", "muji"],
+  ].map(([programId, storeId]) => ({
+    id: membershipId(programId, storeId),
+    programId,
+    storeId,
+  }));
+  const MERGE_OPTS = {
+    removedProgramIds: REMOVED_PROGRAM_IDS,
+    removedMembershipIds: REMOVED_MEMBERSHIP_IDS,
+  };
+
+  // 2c 以前の端末: seed() (ADDED 行込み) に加えて、tombstone 対象の 2 行を持っている。
+  const setOldDevice = () => {
+    const s = seed();
+    useStore.setState({
+      ...s,
+      memberships: [...s.memberships, ...OLD_TIER_ROWS],
+      lastSeedVersion: SEED_VERSION,
+    });
+  };
+
+  beforeEach(() => {
+    useStore.getState().clearAll();
+  });
+
+  it("前提: 2 行とも REMOVED_MEMBERSHIP_IDS に入っており、seed() には無い", () => {
+    const ids = new Set(seed().memberships.map((m) => m.id));
+    for (const m of OLD_TIER_ROWS) {
+      expect(REMOVED_MEMBERSHIP_IDS).toContain(m.id);
+      expect(ids.has(m.id), m.id).toBe(false);
+    }
+  });
+
+  it("反映前は membership 削除 2 件で isAutoApplySafe が false (確認モーダルで届く)", () => {
+    setOldDevice();
+    const merged = mergeSeed(useStore.getState(), seed(), MERGE_OPTS);
+    expect(merged.removedMemberships.map((m) => m.id).sort()).toEqual(
+      OLD_TIER_ROWS.map((m) => m.id).sort(),
+    );
+    expect(
+      isAutoApplySafe(merged, { seedVersionBumped: false, now: new Date() }),
+    ).toBe(false);
+  });
+
+  it("applySeedUpdate([]) の後は 2 行が state から消え、差分 0 で isAutoApplySafe が true に戻る", () => {
+    setOldDevice();
+    useStore.getState().applySeedUpdate([]);
+    const st = useStore.getState();
+    for (const m of OLD_TIER_ROWS) {
+      expect(st.memberships.some((x) => x.id === m.id), m.id).toBe(false);
+    }
+    // 正しい tier は残る
+    expect(
+      st.memberships.some(
+        (x) => x.id === membershipId("prog-jcb-jpoint-gold-4x", "takashimaya"),
+      ),
+    ).toBe(true);
+    expect(
+      st.memberships.some((x) => x.id === membershipId("prog-epos-tamaru-2x", "muji")),
+    ).toBe(true);
+    const merged = mergeSeed(st, seed(), MERGE_OPTS);
+    expect(changeCount(merged)).toBe(0);
+    expect(
+      isAutoApplySafe(merged, {
+        seedVersionBumped: st.lastSeedVersion < SEED_VERSION,
+        now: new Date(),
+      }),
+    ).toBe(true);
+  });
+
+  it("フィルタ後の seed() を mergeSeed に 2 回通しても diff.memberships が空 (追加 → 除去の往復が無い)", () => {
+    const s = seed();
+    const first = mergeSeed(s, seed(), MERGE_OPTS);
+    expect(first.diff.memberships).toEqual([]);
+    expect(first.removedMemberships).toEqual([]);
+    const second = mergeSeed(first, seed(), MERGE_OPTS);
+    expect(second.diff.memberships).toEqual([]);
+    expect(second.removedMemberships).toEqual([]);
+    expect(changeCount(second)).toBe(0);
+    expect(
+      isAutoApplySafe(second, { seedVersionBumped: false, now: new Date() }),
+    ).toBe(true);
+  });
+});
+
 // PR-4a (N-4): 破壊的操作 4 経路が直前スナップショットを採取するかの結線テスト。
 // takeSnapshot はモック済み (先頭 vi.mock)。ここでは「呼ばれること + trigger」だけを検査する
 // (state 引数は node 環境で localStorage 不在のため null になる = 中身は別テストの領域)。
@@ -1133,6 +1300,16 @@ describe("store: 破壊的操作の直前 snapshot 採取 (PR-4a 結線)", () =>
       digest: "d-1",
       count: 3,
     });
+  });
+
+  it("PR-6a-2: autoApplySeedUpdate(null) (サイレント反映) も 'seed-apply' で 1 回採取し、前の notice を消す", () => {
+    useStore.setState({ autoApplyNotice: { digest: "d-prev", count: 2 } });
+    takeSnapshotMock.mockClear();
+    useStore.getState().autoApplySeedUpdate(null);
+    expect(takeSnapshotMock).toHaveBeenCalledTimes(1);
+    expect(takeSnapshotMock.mock.calls[0][0]).toBe("seed-apply");
+    expect(useStore.getState().autoApplyNotice).toBeNull();
+    expect(useStore.getState().lastSeedVersion).toBe(SEED_VERSION);
   });
 
   it("mergeFromSeed (サンプル投入) も trigger:'seed-apply' で採取する (PR-0a-2a: 公式の修正・削除も反映するため)", () => {
@@ -1257,5 +1434,92 @@ describe("store: seedIfEmpty (新規プロファイルの seed 自動投入、PR
     expect(useStore.getState().seedIfEmpty()).toBe(true);
     expect(useStore.getState().stores).toEqual(seed().stores);
     expect(useStore.getState().cards.every((c) => c.enabled !== true)).toBe(true);
+  });
+});
+
+// PR-6d (U6): 復旧パネルの「公式データで初期化」(resetToSeed) と、それに委譲した
+// schema reset の Apply (applySchemaMigration)。投入内容は seedIfEmpty と共通 (applySeedState)。
+describe("store: resetToSeed / applySchemaMigration (PR-6d)", () => {
+  const COLLECTIONS = [
+    "cards",
+    "currencies",
+    "stores",
+    "edges",
+    "pointCards",
+    "paymentApps",
+    "programs",
+    "memberships",
+  ] as const;
+  const takeSnapshotMock = vi.mocked(takeSnapshot);
+
+  // ユーザーが使い込んだ state (per-user 設定・通知・編集済みデータ入り)。
+  const dirtyState = () => {
+    useStore.getState().clearAll();
+    useStore.getState().seedIfEmpty();
+    const s = useStore.getState();
+    s.setCardEnabled(s.cards[0].id, true);
+    s.addPreferredCurrency(s.currencies[0].id);
+    s.setBirthMonth(7);
+    s.setYenValueOverride(s.currencies[0].id, 1.5);
+    s.excludeStorePayment(s.stores[0].id, s.paymentApps[0].id);
+    s.addCard({
+      name: "ユーザ追加",
+      defaultRate: 0.01,
+      defaultCurrencyId: s.currencies[0].id,
+    });
+    useStore.setState({
+      autoApplyNotice: { digest: "d-1", count: 1 },
+      lastSeedVersion: 1,
+    });
+    takeSnapshotMock.mockClear();
+  };
+
+  const expectSeedState = () => {
+    const s = useStore.getState();
+    const expected = seed();
+    for (const k of COLLECTIONS) {
+      expect(s[k]).toEqual(expected[k]);
+    }
+    expect(s.lastSeedVersion).toBe(SEED_VERSION);
+    expect(s.autoApplyNotice).toBeNull();
+    // per-user 設定は引き継がない (open 項目の決定)
+    expect(s.preferredCurrencyIds).toEqual([]);
+    expect(s.birthMonth).toBeUndefined();
+    expect(s.yenValueOverrides).toEqual({});
+    expect(s.excludedStorePayments).toEqual([]);
+    expect(s.cards.every((c) => c.enabled !== true)).toBe(true);
+    expect(s._pendingSchemaMigration).toBeUndefined();
+    expect(s._legacyPersistedState).toBeUndefined();
+  };
+
+  it("resetToSeed は seed と一致する state にし、スナップショットを取らない", () => {
+    dirtyState();
+    useStore.getState().resetToSeed();
+    expectSeedState();
+    expect(takeSnapshotMock).not.toHaveBeenCalled();
+  });
+
+  it("applySchemaMigration も同じ結果で、_pending / _legacy を消す (スナップショット無し)", () => {
+    dirtyState();
+    useStore.setState({
+      _pendingSchemaMigration: { type: "reset", reason: "test" },
+      _legacyPersistedState: { cards: "legacy" },
+    });
+    useStore.getState().applySchemaMigration();
+    expectSeedState();
+    expect(takeSnapshotMock).not.toHaveBeenCalled();
+  });
+
+  it("seedIfEmpty と resetToSeed の投入内容は一致する", () => {
+    useStore.getState().clearAll();
+    useStore.getState().seedIfEmpty();
+    const bySeedIfEmpty = useStore.getState();
+    dirtyState();
+    useStore.getState().resetToSeed();
+    const byReset = useStore.getState();
+    for (const k of COLLECTIONS) {
+      expect(byReset[k]).toEqual(bySeedIfEmpty[k]);
+    }
+    expect(byReset.lastSeedVersion).toBe(bySeedIfEmpty.lastSeedVersion);
   });
 });

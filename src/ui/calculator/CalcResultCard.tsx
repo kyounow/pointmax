@@ -3,17 +3,21 @@
 // 動作不変リファクタ: 元の JSX をそのまま移植し、resolver / Map を props 化しただけ。
 
 import type { CardRanking, UnreachableReason } from "../../domain/rankCards";
-import type { BenefitProgram, Currency } from "../../domain/types";
+import type {
+  BenefitProgram,
+  Currency,
+  StoreProgramMembership,
+} from "../../domain/types";
 import { cardLabel } from "../../domain/cardLabel";
 import { formatNum } from "../../domain/formatNum";
 import { formatRatio } from "../../domain/currencyKind";
 import { buildRateStackSummary } from "../../domain/rateStackSummary";
-import { staleVerifiedMonth } from "../../domain/edgeFreshness";
-import { isSafeHttpUrl } from "../../domain/urlSafety";
+import type { FreshnessResolver } from "../../domain/edgeFreshness";
+import { seedFreshness } from "../../state/seedFreshness";
+import { buildWarningPlan } from "../../domain/warningChips";
 import { navigate } from "../../navigation";
 import { NodePill } from "../NodePill";
-import { RuleStatusBadge } from "../RuleStatusBadge";
-import { NoteChips } from "../NoteChips";
+import { MetaWarnings, MinUnitChips, StaleWarnChip } from "./WarningBadges";
 
 // 還元率をパーセント表記に整形 (0.005 → "0.5%")。formatNum で末尾ゼロを抑制。
 function fmtPct(rate: number): string {
@@ -63,10 +67,17 @@ type Props = {
   //   親が excludeStorePayment(現在の storeId, 引数の paymentAppId) を呼び即時再計算する。
   //   店舗未選択 (general) では親が undefined を渡すため、ボタンは出ない。
   onExcludePayment?: (paymentAppId: string) => void;
-  // REM-#2: 鮮度 (stale) 判定の基準日。経由 edge の lastVerifiedAt 最古が 6ヶ月超なら
-  //   展開ビューに「⚠ ルート要確認」を出す。省略時は new Date() (テスト以外は親が
+  // REM-#2 / PR-5a: 鮮度 (stale) 判定の基準日。採用した交換ルート・還元率の最終確認の最古が
+  //   12ヶ月超なら展開ビューに「⚠ 古い情報かも」を出す。省略時は new Date() (テスト以外は親が
   //   useToday() の today を渡し、日付跨ぎでも判定が更新される)。
   now?: Date;
+  // PR-5a: 確認月の解決方法。省略時 (= アプリ) は同梱 seed を参照する seedFreshness
+  //   (src/state/seedFreshness.ts)。テストは LOCAL_FRESHNESS (ローカル値そのまま) 等に差し替える。
+  freshness?: FreshnessResolver;
+  // PR-0a-2b (M3): 現在の店舗での program の membership を引く関数 (親が storeId で束縛)。
+  //   primary 行の条件チップに membership.notes (店別の条件) を合流させるのに使う。
+  //   省略時は membership を見ない (program の notes / conditions だけ)。
+  membershipOf?: (programId: string) => StoreProgramMembership | undefined;
 };
 
 export function CalcResultCard({
@@ -83,6 +94,8 @@ export function CalcResultCard({
   secondBestTotal,
   onExcludePayment,
   now,
+  membershipOf,
+  freshness = seedFreshness,
 }: Props) {
   const reachableLoyalties = r.loyalties.filter((l) => l.reachable);
   const loyaltyTotal = reachableLoyalties.reduce(
@@ -90,6 +103,20 @@ export function CalcResultCard({
     0,
   );
   const hasLoyalty = reachableLoyalties.length > 0;
+
+  // ── 警告チップ (展開ビュー) ──
+  // 要エントリー / 上限 / 条件チップ (notes + conditions + membership.notes) / 古い情報かも (stale) /
+  // 端数 の候補を組み立て、警告予算 (rankWarningChips = 要エントリー=要経由 > channel > 上限 >
+  // 限定/対象外 > stale > 端数、最大 3) に通す。PR-6b で純関数 buildWarningPlan に切り出し、
+  // 円換算ビュー (CalcYenResults) と同じ出力を使う (二重実装しない)。
+  const plan = buildWarningPlan({
+    ranking: r,
+    programById,
+    membershipOf,
+    freshness,
+    now: now ?? new Date(),
+    currencyName,
+  });
 
   // UX-7: 対象外カードの理由メタ (reachable なら null)。ヘッダのバッジと展開ビューの
   // CTA の両方で参照する。r.unreachableReason の narrowing を 1 箇所に閉じる。
@@ -273,77 +300,9 @@ export function CalcResultCard({
             {r.resolved.source === "program" && (
               <span className="badge">プログラム適用</span>
             )}
-            {r.resolved.source === "program" &&
-              (() => {
-                const resolved = r.resolved;
-                const prog =
-                  resolved.source === "program"
-                    ? programById.get(resolved.programId)
-                    : null;
-                if (!prog) return null;
-                return (
-                  <>
-                    <RuleStatusBadge
-                      validFrom={prog.validFrom}
-                      validTo={prog.validTo}
-                      style={{ marginLeft: 4 }}
-                    />
-                    <NoteChips notes={prog.notes} />
-                    {prog.monthlyCapAmountYen && (
-                      <span
-                        className="cap-warn"
-                        title="この還元率には月間/年間の上限があります"
-                      >
-                        ⚠ 上限 {prog.monthlyCapAmountYen.toLocaleString()}円/月
-                      </span>
-                    )}
-                  </>
-                );
-              })()}
-            {/* REM-#5: 要エントリー バッジ。採用された program (primary=resolved /
-                addOn=appBonusBreakdown / loyalty=loyalties) のいずれかに requiresEntry が
-                あるとき「⚠ 要エントリー」を出す。位置は result-meta 内 (上限バッジ / NoteChips
-                の隣) に固定。entryUrl があれば urlSafety.isSafeHttpUrl 検証を通してタップで別タブ
-                起動、無ければバッジのみ (タップ不可)。
-                ── 警告チップの表示予算 (横断規律: 要エントリー > 上限 > stale > 失効 > 端数 の
-                優先順で最大3): 要エントリーは最優先なので条件を満たせば必ず出す。この result-meta
-                には 上限 / 要エントリー が並びうるが、実データ上 要エントリー を持つ program は
-                同一通貨 (楽天5と0) か J-POINT で、前者は cap 併存だが変換路が無く stale/端数 が
-                出ず、後者は cap を持たないため、1 展開ビューで並ぶ警告系は実質 3 種以内に収まる
-                (コメント運用維持の根拠。判断は PR-4 報告参照)。 */}
-            {(() => {
-              const ids = new Set<string>();
-              if (r.resolved.source === "program") ids.add(r.resolved.programId);
-              for (const b of r.appBonusBreakdown) ids.add(b.programId);
-              for (const l of reachableLoyalties) ids.add(l.rule.id);
-              const entryProgs = [...ids]
-                .map((id) => programById.get(id))
-                .filter(
-                  (p): p is BenefitProgram => !!p && p.requiresEntry === true,
-                );
-              if (entryProgs.length === 0) return null;
-              const names = entryProgs.map((p) => p.name).join(" / ");
-              // 採用 program のうち最初の安全な entryUrl を代表タップ先にする。
-              const entryUrl = entryProgs
-                .map((p) => p.entryUrl)
-                .find((u): u is string => !!u && isSafeHttpUrl(u));
-              const title = `エントリー / 登録が必要な特典が含まれます (${names})。${entryUrl ? "タップでエントリーページを開きます。" : ""}未エントリーだと表示の還元が付かない場合があります。`;
-              return entryUrl ? (
-                <a
-                  className="entry-warn entry-warn-link"
-                  href={entryUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={title}
-                >
-                  ⚠ 要エントリー
-                </a>
-              ) : (
-                <span className="entry-warn" title={title}>
-                  ⚠ 要エントリー
-                </span>
-              );
-            })()}
+            {/* 採用 program の期間バッジ・条件チップ・⚠ 上限、要エントリー (REM-#5、警告予算の
+                最優先なので条件を満たせば必ず出る)。描画するのは警告予算の内側に残ったものだけ。 */}
+            <MetaWarnings plan={plan} />
           </div>
 
           {r.resolved.source === "charge" && r.paymentApp && (
@@ -419,47 +378,28 @@ export function CalcResultCard({
             </div>
           )}
 
-          {/* REM-#2: 交換ルートの鮮度警告。経由 edge の lastVerifiedAt 最古が 6ヶ月超なら
-              「⚠ ルート要確認 (最終確認 YYYY-MM)」を出す (未記入 edge は無視 = 未検証を古い扱い
-              しない)。判定は純関数 staleVerifiedMonth。到達不能カードは pathSteps が空なので出ない。
-              ── 警告チップの表示予算 (横断規律: 要エントリー > 上限 > stale > 失効 > 端数 の
-              優先順で最大3): この展開ビューに出うる警告系は 要エントリー (entry-warn, 上の
-              result-meta、最優先で必ず表示) / 上限 (cap-warn, 同 result-meta) / stale (ここ) /
-              端数 (minunit, 下) の 4 種。名目上は 4 種だが、実データ上 要エントリー を持つ
-              program は 楽天5と0 (同一通貨=変換路なし→stale/端数が出ない) か J-POINT (cap 無し)
-              に限られ、cap と stale/端数 が同時に立つ組合せが存在しないため、1 展開ビューで
-              実際に並ぶ警告は 3 種以内に収まる (REM-#5 はコメント運用を維持。優先順ヘルパへの
-              切り出しは、この排他性が崩れる program (要エントリー かつ cap かつ変換路あり) が
-              追加された時に再検討)。 */}
-          {(() => {
-            const staleMonth = staleVerifiedMonth(r.pathSteps, now ?? new Date());
-            if (!staleMonth) return null;
-            return (
-              <div className="route-stale-notes">
-                <span
-                  className="rate-chip route-stale-chip"
-                  title="この交換ルートに含まれるレートは公式ページでの最終確認から6ヶ月以上経過しています。各社公式サイトで最新のレートをご確認ください (計算には現在のレートをそのまま使用しています)。"
-                >
-                  ⚠ ルート要確認 (最終確認 {staleMonth})
-                </span>
-              </div>
-            );
-          })()}
+          {/* REM-#2 / PR-5a: 公式情報の鮮度警告。採用した交換ルートと還元率の最終確認のうち
+              最古が 12ヶ月超なら「⚠ 古い情報かも (最終確認 YYYY-MM)」を 1 チップだけ出す
+              (内訳は title。未記入は無視 = 未検証を古い扱いしない)。判定は純関数
+              collectStaleItems、確認月は freshness (同梱 seed 参照) で解決。
+              ── 警告チップの表示予算: rankWarningChips (src/domain/warningChips.ts、
+              要エントリー=要経由 > channel > 上限 > 限定/対象外 > stale > 端数 の優先順で最大 3)。
+              J-POINT 20倍 (要エントリー + 経由型 + 対象外) と stale が同時に立つと stale が落ちる。 */}
+          {plan.stale && plan.shown.has("stale") && (
+            <div className="route-stale-notes">
+              <StaleWarnChip stale={plan.stale} />
+            </div>
+          )}
 
           {/* DB-8: 最低交換単位に満たない交換ステップの事後注記 (折り畳みヘッダには出さない)。
-              経路選択には影響せず、貯めてから交換すればレート積どおりになる旨を chip で示す。 */}
-          {r.minUnitAnnotations.length > 0 && (
+              経路選択には影響せず、貯めてから交換すればレート積どおりになる旨を chip で示す。
+              警告予算では最下位 (端数)。複数 edge の注記は 1 枠として扱う。 */}
+          {plan.shown.has("minUnit") && (
             <div className="minunit-notes">
-              {r.minUnitAnnotations.map((a) => (
-                <span
-                  key={a.edgeId}
-                  className="rate-chip minunit-chip"
-                  title="この交換には最低交換単位があります。少額では単位に満たないため、貯めてから交換してください (経路選択には影響しません)。"
-                >
-                  {currencyName(a.fromCurrencyId)} は {formatNum(a.minFromUnits)}{" "}
-                  貯めてから交換 (最低交換単位)
-                </span>
-              ))}
+              <MinUnitChips
+                annotations={r.minUnitAnnotations}
+                currencyName={currencyName}
+              />
             </div>
           )}
 

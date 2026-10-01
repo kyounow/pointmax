@@ -277,9 +277,22 @@ describe("classifyGeminiError (status 無し)", () => {
   });
 });
 
+// PR-0b-2 / PR-5c-1: prefetchRawHtml の timeout (AbortSignal.timeout) と、失敗の種類 (http / network / timeout)。
+// 両 PR が別々に足したテストを main 追従 (2026-10-01) でまとめた (実装は 1 つ)。
 describe("prefetchRawHtml (PrefetchError / timeout)", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it("2xx は charset を解決して本文を返す", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("<html><body>ok 20倍</body></html>", {
+        status: 200,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      })),
+    );
+    await expect(prefetchRawHtml("https://example.com/")).resolves.toContain("ok 20倍");
   });
 
   it("403 → PrefetchError{httpStatus:403, reason:'http'}、message は従来の文言", async () => {
@@ -308,6 +321,24 @@ describe("prefetchRawHtml (PrefetchError / timeout)", () => {
     expect(err).toMatchObject({ httpStatus: null, reason: "timeout" });
   });
 
+  it("abort 時に AbortError (DOMException) で reject する fetch でも、timeoutMs で打ち切り reason=timeout", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: string, init?: { signal?: AbortSignal }) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () =>
+              reject(new DOMException("aborted", "AbortError")),
+            );
+          }),
+      ),
+    );
+    const err = await prefetchRawHtml("https://example.com/", 20).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PrefetchError);
+    expect((err as PrefetchError).reason).toBe("timeout");
+    expect((err as PrefetchError).httpStatus).toBeNull();
+  });
+
   it("TypeError (ネットワーク) → reason:'network'", async () => {
     vi.stubGlobal(
       "fetch",
@@ -319,6 +350,19 @@ describe("prefetchRawHtml (PrefetchError / timeout)", () => {
     expect(err).toBeInstanceOf(PrefetchError);
     expect(err).toMatchObject({ reason: "network" });
     expect((err as Error).message).toContain("ENOTFOUND");
+  });
+
+  it("cause の無い接続エラーも reason=network (message に 'fetch failed')", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("fetch failed");
+      }),
+    );
+    const err = await prefetchRawHtml("https://example.com/").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PrefetchError);
+    expect((err as PrefetchError).reason).toBe("network");
+    expect((err as PrefetchError).message).toContain("fetch failed");
   });
 });
 

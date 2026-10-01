@@ -1,12 +1,22 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
+  excludeTombstonedSelections,
+  findRiskyApprovals,
   formatListLine,
   moveToManuallyApproved,
+  parseArgs,
   proposalIdOf,
   selectProposalsByIds,
 } from "./approve-proposals";
-import { computeProposalId } from "./types";
+import {
+  bucketProposals,
+  buildSeedAdditionsContent,
+  mergeMemberships,
+  pruneRemovedFromBuckets,
+} from "./apply-proposals";
+import { RISKY_REVIEW_REASONS, computeProposalId } from "./types";
 import type { Proposal, ProposalReport } from "./types";
+import { membershipId } from "../../src/state/defineMemberships";
 
 // ───────────────────────────────────────────────────────────────
 // Fixtures
@@ -261,6 +271,80 @@ describe("moveToManuallyApproved", () => {
 });
 
 // ───────────────────────────────────────────────────────────────
+// excludeTombstonedSelections (PR-0a-2c)
+// ───────────────────────────────────────────────────────────────
+
+describe("excludeTombstonedSelections (PR-0a-2c: tombstone 済み membership の承認は skip)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+  const tombMembership: Proposal = {
+    type: "addRecord",
+    collection: "memberships",
+    record: { programId: "prog-jcb-jpoint-gold-2x", storeId: "takashimaya" },
+    sourceId: "jcb-jpoint-partners",
+    confidence: 0.9025,
+    evidence,
+    reviewReason: "tierMove",
+  };
+  const okMembership: Proposal = {
+    type: "addRecord",
+    collection: "memberships",
+    record: { programId: "prog-jcb-jpoint-gold-2x", storeId: "mercari" },
+    sourceId: "jcb-jpoint-partners",
+    confidence: 0.81,
+    evidence,
+    reviewReason: "lowConfidence",
+  };
+  const tomb = new Set([membershipId("prog-jcb-jpoint-gold-2x", "takashimaya")]);
+
+  it("tombstone 済みの membership を除き、1 件ごとに『⚠ tombstone 済みのため skip』を warn する", () => {
+    const warn = vi.fn();
+    const out = excludeTombstonedSelections(
+      [tombMembership, okMembership, programAdd],
+      tomb,
+      warn,
+    );
+    expect(out).toEqual([okMembership, programAdd]);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain("⚠ tombstone 済みのため skip");
+    expect(warn.mock.calls[0][0]).toContain(proposalIdOf(tombMembership));
+    expect(warn.mock.calls[0][0]).toContain(
+      membershipId("prog-jcb-jpoint-gold-2x", "takashimaya"),
+    );
+  });
+
+  it("tombstone に該当が無ければ warn せず全件を返す", () => {
+    const warn = vi.fn();
+    expect(excludeTombstonedSelections([okMembership, rateUpdate], tomb, warn)).toEqual([
+      okMembership,
+      rateUpdate,
+    ]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("tombstone 済みの id を選択しても生成物 (seed-additions.ts) に残らない (skip + prune の二重防御)", () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const warn = vi.fn();
+    const approvable = excludeTombstonedSelections([tombMembership, okMembership], tomb, warn);
+    // skip をすり抜けた場合 (旧経路) も prune が落とす: 両方を bucket に入れて確認する
+    for (const selected of [approvable, [tombMembership, okMembership]]) {
+      const { buckets } = bucketProposals(selected);
+      const merged = mergeMemberships([], buckets.memberships);
+      const content = buildSeedAdditionsContent(
+        pruneRemovedFromBuckets(
+          { ...buckets, memberships: merged.merged as Record<string, unknown>[] },
+          tomb,
+        ),
+      );
+      expect(content).not.toContain(membershipId("prog-jcb-jpoint-gold-2x", "takashimaya"));
+      expect(content).toContain(membershipId("prog-jcb-jpoint-gold-2x", "mercari"));
+    }
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
 // formatListLine
 // ───────────────────────────────────────────────────────────────
 
@@ -290,5 +374,59 @@ describe("formatListLine", () => {
     expect(formatListLine(cardUpdate)).toContain("✋");
     expect(formatListLine(cardUpdate)).toContain("rakuten-card.defaultRate");
     expect(formatListLine(storeDelete)).toContain("✋");
+  });
+
+  it("PR-0b-3: reviewDetail があれば末尾に付ける (無ければ付けない)", () => {
+    const withDetail: Proposal = {
+      ...programAdd,
+      reviewReason: "campaignConditional",
+      reviewDetail: "対象限定:「対象おにぎり・寿司」@name",
+    };
+    expect(formatListLine(withDetail)).toMatch(/<paypay-campaigns> {2}— 対象限定:「対象おにぎり・寿司」@name$/);
+    expect(formatListLine(programAdd)).toMatch(/<paypay-campaigns>$/);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// PR-0b-3: --accept-risk (全額に乗る危険な reason の承認)
+// ───────────────────────────────────────────────────────────────
+
+describe("findRiskyApprovals / parseArgs --accept-risk (PR-0b-3)", () => {
+  const withReason = (reviewReason: Proposal["reviewReason"]): Proposal => ({
+    ...programAdd,
+    reviewReason,
+  });
+
+  it("findRiskyApprovals は 5 種 (campaignConditional / campaignRateCeiling / targetMismatch / storeNameMismatch / untargetedProgram) を検出する", () => {
+    const risky = [
+      "campaignConditional",
+      "campaignRateCeiling",
+      "targetMismatch",
+      "storeNameMismatch",
+      "untargetedProgram",
+    ] as const;
+    const found = risky.map(withReason);
+    expect(findRiskyApprovals(found)).toEqual(found);
+    expect([...RISKY_REVIEW_REASONS].sort()).toEqual([...risky].sort());
+  });
+
+  it("idCollision / periodChange / sourceAutoMergeDisabled / reason 無しは検出しない", () => {
+    const safe = [
+      withReason("idCollision"),
+      withReason("periodChange"),
+      withReason("sourceAutoMergeDisabled"),
+      withReason(undefined),
+    ];
+    expect(findRiskyApprovals(safe)).toEqual([]);
+  });
+
+  it("parseArgs は --accept-risk を受理し、既定は false", () => {
+    expect(parseArgs(["pro-abc", "--accept-risk"])).toEqual({
+      ids: ["pro-abc"],
+      list: false,
+      dryRun: false,
+      acceptRisk: true,
+    });
+    expect(parseArgs(["pro-abc,pro-def", "--dry-run"]).acceptRisk).toBe(false);
   });
 });

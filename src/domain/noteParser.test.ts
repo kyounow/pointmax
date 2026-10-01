@@ -1,5 +1,75 @@
 import { describe, it, expect } from "vitest";
-import { extractNoteChips, sanitizeNoteForDisplay } from "./noteParser";
+import {
+  extractNoteChips,
+  joinNoteTexts,
+  sanitizeNoteForDisplay,
+} from "./noteParser";
+
+// PR-0a-2b (M3): 経由型・チャネル限定の channel チップ。
+describe("extractNoteChips — channel (PR-0a-2b)", () => {
+  it.each([
+    ["モバイルオーダー・マックデリバリー限定", "モバイルオーダー限定"],
+    ["スターバックス カードへのオンライン入金で 20 倍", "オンライン入金限定"],
+    ["オートチャージ分も対象", "オートチャージ限定"],
+    ["Starbucks eGift の購入", "eGift限定"],
+    ["ネット限定のキャンペーン", "ネット限定"],
+    ["オンライン限定クーポン", "オンライン限定"],
+    ["たまるマーケットを経由して購入", "経由限定"],
+  ])("『%s』→ channel チップ『%s』", (notes, label) => {
+    const chips = extractNoteChips(notes);
+    expect(chips.find((c) => c.kind === "channel")?.label).toBe(label);
+  });
+
+  it("最初に現れた語をラベルにする (オンライン入金 は オンライン(限定) より優先)", () => {
+    const chips = extractNoteChips(
+      "オンライン入金・オートチャージ・モバイルオーダー限定",
+    );
+    expect(chips.find((c) => c.kind === "channel")?.label).toBe(
+      "オンライン入金限定",
+    );
+  });
+
+  it("channel チップが出たら同じ notes の汎用『限定条件』は出さない (対象外は別種で残る)", () => {
+    const chips = extractNoteChips(
+      "モバイルオーダー・Starbucks eGift 限定。レジでのカード直接払いは対象外",
+    );
+    expect(chips.map((c) => c.kind)).toEqual(["channel", "exclusion"]);
+    expect(chips.some((c) => c.kind === "limited")).toBe(false);
+  });
+
+  it("『オンラインストアは対象外』『ネット』単独は channel にしない", () => {
+    expect(
+      extractNoteChips("テナント店・オンラインストアは対象外").map((c) => c.kind),
+    ).toEqual(["exclusion"]);
+    expect(extractNoteChips("ネットでも店頭でも可")).toEqual([]);
+  });
+
+  it("J-POINT 20倍の共通 conditions (店別条件なし) からはチップが出ない", () => {
+    expect(
+      extractNoteChips(
+        "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) が必須。" +
+          "対象店舗ごとに支払方法の条件が異なる (各店の注記を参照)。" +
+          "すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・ジョナサンは店頭決済も対象。",
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("joinNoteTexts (PR-0a-2b)", () => {
+  it("undefined / 空文字 / 空白だけを除いて ' / ' で連結する", () => {
+    expect(joinNoteTexts("A", undefined, "", "  ", "B")).toBe("A / B");
+  });
+  it("重複 (前後空白を除いて同一) は 1 回だけ", () => {
+    expect(joinNoteTexts("A", " A ", "B", "A")).toBe("A / B");
+  });
+  it("全て空なら undefined", () => {
+    expect(joinNoteTexts()).toBeUndefined();
+    expect(joinNoteTexts(undefined, "", " ")).toBeUndefined();
+  });
+  it("1 件だけならそのまま (trim のみ)", () => {
+    expect(joinNoteTexts(" 注記 ")).toBe("注記");
+  });
+});
 
 describe("extractNoteChips", () => {
   it("要エントリー を検出", () => {

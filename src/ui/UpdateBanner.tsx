@@ -10,6 +10,8 @@ import {
 } from "../domain/migrations";
 import { useSeedMerge } from "./hooks/useSeedMerge";
 import { useOnline } from "./hooks/useOnline";
+import { useSeedUpdateDismissed } from "./hooks/useSeedUpdateDismissed";
+import { dismissSeedUpdate } from "../state/seedUpdateDismiss";
 
 export function UpdateBanner() {
   // PR-0c: オフライン時は同期系 UI を出さない (店頭・弱電波での出しゃばり抑制)。
@@ -18,13 +20,15 @@ export function UpdateBanner() {
   // online/offline イベントで再購読するため、復帰時は自動で再表示される。
   const online = useOnline();
   // Wave 5 B-1: 3 個別 subscribe → 単一 useShallow
-  const { lastSeedVersion, applySeedUpdate, dismissSeedUpdate } = useStore(
+  const { lastSeedVersion, applySeedUpdate } = useStore(
     useShallow((s) => ({
       lastSeedVersion: s.lastSeedVersion,
       applySeedUpdate: s.applySeedUpdate,
-      dismissSeedUpdate: s.dismissSeedUpdate,
     })),
   );
+  // PR-0a-2b: 「あとで」は lastSeedVersion を進めず、当日のこのセッションだけ隠す
+  // (以前は版を進めてその版の MIGRATIONS を永久にスキップしていた)。
+  const dismissed = useSeedUpdateDismissed();
   const [showDetail, setShowDetail] = useState(false);
   const [overrideKeys, setOverrideKeys] = useState<Set<string>>(new Set());
 
@@ -61,14 +65,21 @@ export function UpdateBanner() {
   ).length;
   const conflicts = conflictItems(plan);
   // Phase 5: 公式 program の内容更新伝播 / tombstone 削除も適用件数に含める
-  const seedUpdatedCount = merged?.updatedPrograms.length ?? 0;
-  const seedRemovedCount = merged?.removedPrograms.length ?? 0;
+  // PR-0a-2b: membership の内容更新 (提携条件) / 単体 tombstone 削除 (提携店舗) も含める
+  // (以前は数えず、membership の変更だけの版で「0件適用」と表示されていた)。
+  const membershipUpdatedCount = merged?.updatedMemberships.length ?? 0;
+  const membershipRemovedCount = merged?.removedMemberships.length ?? 0;
+  const seedUpdatedCount =
+    (merged?.updatedPrograms.length ?? 0) + membershipUpdatedCount;
+  const seedRemovedCount =
+    (merged?.removedPrograms.length ?? 0) + membershipRemovedCount;
   const totalChanges =
     additionCount + autoApplyCount + seedUpdatedCount + seedRemovedCount;
 
   if (!online) return null;
   if (!hasData) return null;
   if (lastSeedVersion >= SEED_VERSION) return null;
+  if (dismissed) return null;
 
   const relevantChangelog = SEED_CHANGELOG.filter(
     (c) => c.version > lastSeedVersion && c.version <= SEED_VERSION,
@@ -136,7 +147,11 @@ export function UpdateBanner() {
               ? `${totalChanges + overrideKeys.size}件適用`
               : `${totalChanges}件適用`}
           </button>
-          <button onClick={dismissSeedUpdate} className="dismiss">
+          <button
+            onClick={() => dismissSeedUpdate(SEED_VERSION)}
+            className="dismiss"
+            title="今日はこの画面を開いている間だけ隠します。公式の修正は「適用」するまで保留され、次に開いたときに再表示します。"
+          >
             あとで
           </button>
         </div>
@@ -183,8 +198,8 @@ export function UpdateBanner() {
           {merged && (seedUpdatedCount > 0 || seedRemovedCount > 0) && (
             <div className="update-detail-section">
               <h4>
-                特典・キャンペーンの内容更新
-                {seedRemovedCount > 0 && "・終了削除"}（
+                特典・キャンペーン・提携店舗の内容更新
+                {seedRemovedCount > 0 && "・削除"}（
                 {seedUpdatedCount + seedRemovedCount} 件）
               </h4>
               <ul className="diff-counts">
@@ -194,6 +209,12 @@ export function UpdateBanner() {
                 {merged.removedPrograms.map((p) => (
                   <li key={`d-${p.id}`}>削除: {p.name}</li>
                 ))}
+                {membershipUpdatedCount > 0 && (
+                  <li>提携条件の更新: {membershipUpdatedCount}件</li>
+                )}
+                {membershipRemovedCount > 0 && (
+                  <li>提携店舗の削除: {membershipRemovedCount}件</li>
+                )}
               </ul>
             </div>
           )}

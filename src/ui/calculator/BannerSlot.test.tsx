@@ -9,6 +9,8 @@ import "@testing-library/jest-dom/vitest";
 import { BannerSlot } from "./BannerSlot";
 import { selectBannerSlot } from "./bannerPriority";
 import { useStore } from "../../state/store";
+import { seed, SEED_VERSION } from "../../state/seed";
+import { dismissSeedUpdate } from "../../state/seedUpdateDismiss";
 
 describe("selectBannerSlot (通知枠の優先度規則)", () => {
   it("onboarding は最優先で、update/today を抑制する", () => {
@@ -151,6 +153,24 @@ describe("BannerSlot (描画)", () => {
     expect(container.querySelector(".auto-apply-banner")).not.toBeNull();
     expect(screen.getByText(/マスタを自動更新しました/)).toBeInTheDocument();
     expect(container.querySelector(".today-banner")).toBeNull();
+  });
+
+  it("PR-0a-2b: 更新バナーを「あとで」した (当日のセッション内) なら update 枠を空けて today を描画する", () => {
+    sessionStorage.clear();
+    useStore.setState({ ...seed(), lastSeedVersion: SEED_VERSION - 1 });
+    const first = render(<BannerSlot onboardingActive={false} {...baseProps} />);
+    expect(first.container.querySelector(".update-banner")).not.toBeNull();
+    first.unmount();
+
+    dismissSeedUpdate(SEED_VERSION);
+    const { container } = render(
+      <BannerSlot onboardingActive={false} {...baseProps} />,
+    );
+    expect(container.querySelector(".update-banner")).toBeNull();
+    expect(container.querySelector(".today-banner")).not.toBeNull();
+    // 版は進めていない (反映するまで MIGRATIONS は保留)
+    expect(useStore.getState().lastSeedVersion).toBe(SEED_VERSION - 1);
+    sessionStorage.clear();
   });
 
   it("SW 更新後の初回起動は swUpdate バナーを描画する (最優先の通知枠)", () => {

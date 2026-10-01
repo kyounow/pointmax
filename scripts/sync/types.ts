@@ -37,7 +37,29 @@ export type RegistrySource = {
   enabled: boolean;                 // 一時的に止めたい時 false
   fetchGroup?: FetchGroup;          // 同期グループ (mon/thu)。enabled ソースは必須 (無料枠分割)
   crawl?: RegistryCrawl;            // 索引ハブ型ソースの 2 段階クロール (省略時は単発 fetch)
+  // PR-0b-3: このソースの新規 program が帰属すべき対象 (単数または候補の配列)。
+  // 宣言があれば proposePrograms が targetMismatch を判定する (候補のどれかに一致すれば通過)。
+  // paymentAppId の候補は cardIds の併用 (絞り込み) を許し、pointCardId の混在だけ不一致。
+  target?: RegistryTarget | RegistryTarget[];
+  // PR-0b-3: false なら、このソース由来の提案 (stores / programs / memberships / updateField) は
+  // ガードを通過しても auto にせず sourceAutoMergeDisabled で review に回す。省略時は true。
+  autoMerge?: boolean;
   notes?: string;
+};
+
+// PR-0b-3: registry の target 宣言。キーはちょうど 1 つ (registry-policy の parse で検証)。
+export type RegistryTarget =
+  | { cardIds: string[] }
+  | { paymentAppId: string }
+  | { pointCardId: string };
+
+// PR-0b-3: propose が使うソース別ポリシー (registry-policy.ts が registry.yaml から作る)。
+// targets は配列に正規化済み (宣言が無ければ [])。
+export type SourcePolicy = {
+  sourceId: string;
+  extractor: ExtractorKind;
+  autoMerge: boolean;
+  targets: RegistryTarget[];
 };
 
 // 索引ハブ型ソースの 2 段階クロール設定。
@@ -362,6 +384,10 @@ type ProposalBase = {
   proposalId?: string;
   // needsReview 行きの理由 (autoApplicable には付かない)
   reviewReason?: ReviewReason;
+  // PR-0b-3: 降格の判定詳細 (人間向け 1 行)。例:『最大:「最大」@name』『evidence に店名「くら寿司」が無い』。
+  // REVIEW_QUEUE の「判定詳細」行と sync:approve の一覧に出す。computeProposalId の hash 対象外
+  // (record / id / field / to だけを hash する) なので、付けても proposalId は変わらない。
+  reviewDetail?: string;
 };
 
 export type ReviewReason =
@@ -372,7 +398,10 @@ export type ReviewReason =
   | "referenceChange"         // 通貨・カード参照変更
   | "idCollision"             // 新規追加だが既存 ID と衝突
   | "multiSourceConflict"     // 複数ソースで同じフィールドが矛盾
-  | "excludedCategory"        // Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)
+  | "excludedCategory"        // Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル/サブスクリプション等)
+  | "unknownCategory"         // PR-4a: 新規 store の category が語彙 (src/state/seed-categories.ts) に無い、または未設定。
+                              // proposeStores の base ラダーで idCollision の後・lowConfidence の前。昇格系
+                              // (chain-promote) は storeAdditionsDisabled しか書き換えないので、語彙外の店は auto にならない
   | "userBlocked"             // src/state/seed-blocklist.ts でユーザが除外指定
   | "selfReportedExclusion"   // evidenceQuote に Gemini 自身による除外記述を検知
   | "unsupportedDateClaim"    // validFrom/validTo があるのに evidenceQuote に日付根拠がない
@@ -386,12 +415,46 @@ export type ReviewReason =
   | "periodChange"            // 既存 program の validFrom/validTo 変更 (キャンペーン延長/期間訂正)。誤期間適用防止のため必ず人手レビュー (sync:approve で承認可)
   | "staleExtractGeneration" // extracted の promptVersion が registry の現行 extractor 版と不一致。
                               // プロンプト改訂直後の旧世代キャッシュによる rate/期間の書き戻し提案 (PROGRAM_OVERRIDES 行き
-                              // updateField) を防ぐ。次回 fetch (新版) 後に promptVersion が一致し再判定される
-  | "safetyFailed"            // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
+                              // updateField) を防ぐ。次回 fetch (新版) 後に promptVersion が一致し再判定される。
+                              // PR-0b-2: extracted の fetchedAt が 14 日超 (keep-last-good / 取得停止) もこの理由 (Phase C3)
+  | "rateWatched"             // PR-5c-1: sources/rate-watch.yaml (率カナリア) で監視中の subject への変更 (Phase C5
+                              // guardRateWatched)。監視 program (membership の program を含む) の updateField・delete、
+                              // 監視 membership の delete、監視 card の updateField。auto で seed が変わると
+                              // rate-watch の契約テスト (seedRateAtCuration = seed の率) が safety gate で落ちるため。
+                              // 取り込むなら seed の手修正と seedRateAtCuration の更新を同じ PR で
+  | "safetyFailed"           // auto-merge 候補だが件数が maxAutoChangesPerRun を超えたため安全弁で降格
   | "autoMergeDisabled"       // auto-merge 候補だが autoMergeEnabled=false / force_review_only=true のため review に降格 (手動テスト等)
-  | "pseudoStoreTarget";      // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等) への
+  | "pseudoStoreTarget"       // 擬似エンティティ (ダミー store "general" / 基本決済モード "pa-default" 等) への
                               // 参照。店舗/決済手段を特定できない項目の受け皿誤マッピングを防止
                               // (#103 incident: jcb-jpoint extractor が general を受け皿にした事故対応)
+  | "tierMove"                // PR-0a-2c: membership 提案が、同じ store × 同じ tier 系列 (tierFamilyOf: J-POINT W /
+                              // Gold / たまるマーケット) の別倍率 (seed 既存 or 同じ呼び出しの提案) と重なる。
+                              // 倍率改定・受け皿誤りの疑い。承認するなら旧 tier を REMOVED_MEMBERSHIP_IDS に入れる PR と同時に。
+                              // 他の降格理由 (lowConfidence 等) が付いていればそちらを優先する
+  // ─── PR-0b-3 (Z3: campaign / membership の auto ガード) ───
+  | "untargetedProgram"       // 新規 program が対象キー (非空 cardIds / pointCardId / paymentAppId) を 1 つも持たない。
+                              // cardIds:[] もここ (どのカードでも発火しない死にデータ)。integrity ラダーの最弱
+  | "campaignConditional"     // campaign の name / description / conditions / notes / evidence に条件文言
+                              // (最大 / 対象商品 / 一部 / 店舗限定 / 割引 / 新規 / 年齢 / 抽選 等) か lifestyle 語。
+                              // membership は Phase C′ の条件文言 (一部 / 最大 / EC 経由 等)。record では上限・限定を表現できない
+  | "campaignRateCeiling"     // campaign の rate ≥ 10%、または 5% 超で上限 (monthlyCapAmountYen) が無い。
+                              // campaign 由来 membership の overrideRate > 5% もここ
+  | "targetMismatch"          // registry の target 宣言と新規 program の対象キーが一致しない (帰属誤り疑い)
+  | "sourceAutoMergeDisabled" // registry で autoMerge:false のソース由来。ガードは通過している (解除は別 PR)。
+                              // membership は Phase C / C′ の後 (C″) で付くので missing*Body / storeNameMismatch 等を隠さない
+  | "storeNameMismatch";      // 既存 store への新規 membership だが、evidence に store.name (括弧除去後) が無い
+                              // (かっぱ寿司 → くら寿司 のような店の取り違え疑い)。Phase C′
+
+// PR-0b-3: 承認すると record がそのまま全額に乗る (上限・対象商品・店舗・帰属を record では表現できない)
+// 危険な reason。sync:approve はこれらの承認に --accept-risk を要求し、REVIEW_QUEUE の対応案も「原則見送り」にする。
+// sourceAutoMergeDisabled は含めない (ガードは通過済みで、人手確認のうえ普通に承認してよい)。
+export const RISKY_REVIEW_REASONS: ReadonlySet<ReviewReason> = new Set<ReviewReason>([
+  "campaignConditional",
+  "campaignRateCeiling",
+  "targetMismatch",
+  "storeNameMismatch",
+  "untargetedProgram",
+]);
 
 export type AddRecordProposal = ProposalBase & {
   type: "addRecord";
@@ -589,6 +652,12 @@ export const CONFIDENCE_AUTO_THRESHOLD = 0.9;
 // SCOPE_DIRECTIVES['chains-only'] でも Gemini に指示しているが、漏れた場合の
 // defense-in-depth として Phase C (diff-and-propose) でも store の addRecord を
 // 強制的に needsReview に振り分ける。
+// 店舗カテゴリ語彙 (src/state/seed-categories.ts) と alias のキー・値とは交わらない (types.test で検査)。
+// 語彙外のカテゴリは unknownCategory で review に回るので、ここに置くのは「語彙に足さない」と
+// 決めた業態 (excludedCategory のほうが理由として正確なもの) だけ。
+// 計算画面の店舗 picker (src/domain/storePicker.ts の PICKER_EXCLUDED_CATEGORIES、PR-6c) が同じ語彙を
+// 複製して常に隠す (app は scripts を import しない)。一致は storePicker.test で固定しているので、
+// ここに語を足すときは PICKER_EXCLUDED_CATEGORIES にも同じコミットで足す。
 export const EXCLUDED_CATEGORIES = new Set<string>([
   "金融",
   "保険",
@@ -602,6 +671,11 @@ export const EXCLUDED_CATEGORIES = new Set<string>([
   "サービス",        // 漠然カテゴリ
   "その他",           // 漠然カテゴリ
   "(未分類)",         // category 未設定で inject-prompt が補ったもの
+  // PR-4a: 実店舗を持たないデジタル契約 (動画・音楽配信、ゲーム内課金、アプリ内購入)。
+  // J-POINT / たまるの抽出に出る (Disney+ 等)。店頭の支払いで還元を比べる用途に合わない
+  "サブスクリプション",
+  "ゲーム",
+  "アプリストア",
 ]);
 
 // rate 変動: pp (絶対値) と相対倍率 (比) の両方を見る

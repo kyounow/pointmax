@@ -49,6 +49,13 @@ export type Card = {
   //   **計算には一切使用しない** (還元率やゲートに影響しない、純粋に表示順のヒント)。
   //   family 内で重複しないこと (seed.test.ts で担保)。undefined = 単独カード。
   gradeLevel?: number;
+  // 基本還元率の最終確認月 YYYY-MM (PR-5a / B11)。defaultRate (source:'default' の結果 = 例 JCB W の 1%)
+  //   を公式ページで最後に人手確認した月。BenefitProgram.lastVerifiedAt と同じ形式・同じ判定
+  //   (src/domain/edgeFreshness.ts)・同じ META 扱い (mergeSeed.CARD_META_KEYS。cards は add-only で
+  //   比較しないが、将来の propagateCardUpdates と MIGRATIONS 設計が参照する)。表示時は同梱 seed を
+  //   参照し、defaultRate が seed と一致すれば seed の月を使う。未記入 = 未検証扱い (チップを出さない)。
+  //   seed 24 枚への記入は PR-5b (2026-Q4 四半期データ) で行う。
+  lastVerifiedAt?: string;
 };
 
 // カードの family (同一ブランドのグレード系列)。Card.familyId が参照する静的マスタ。
@@ -114,7 +121,7 @@ export type ConversionEdge = {
   //   Calculator / EdgesScreen とも stale バッジは出さない (未検証を「古い」と誤警告しない)。
   //   bestPath に実際に乗る主要 edge のみ手記入し、残りは四半期棚卸し (SESSION_LOG の
   //   「四半期ごと手動確認チェックリスト」) で漸進的に埋める。stale 判定 (最終確認が
-  //   6ヶ月超で ⚠) は純関数 src/domain/edgeFreshness.ts に集約。passthrough フィールドの
+  //   12ヶ月超で ⚠、PR-5a で 6→12) は純関数 src/domain/edgeFreshness.ts に集約。passthrough フィールドの
   //   ため PERSIST_SCHEMA_VERSION の bump は不要 (未知フィールドはそのまま carry-over)。
   lastVerifiedAt?: string;
 };
@@ -217,7 +224,19 @@ export type BenefitProgram = {
 
   // ─── Meta ───
   description?: string;
-  officialUrl?: string;            // 情報源 URL (詳細・解説ページ)
+  // 情報源 URL (詳細・解説ページ)。PR-5a: **META キー** (mergeSeed.PROGRAM_META_KEYS) で、
+  //   公式差分の比較・更新通知の対象外 (URL だけの seed 変更は既存端末に通知しない)。
+  //   表示 (特典画面の『🔗 公式』) は未編集の公式 program なら同梱 seed の値を優先する。
+  officialUrl?: string;
+  // PR-5a: 還元率を公式ページで最後に人手確認した月 ("YYYY-MM" 月精度。ConversionEdge.lastVerifiedAt と
+  //   同じ形式・同じ判定 src/domain/edgeFreshness.ts)。**未記入 (undefined) = 未検証扱い**で
+  //   『古い情報かも』チップは出さない。四半期チェック (SESSION_LOG の四半期表) の対象 program に
+  //   記入し、週次 cron が監視する倍率 tier (J-POINT / たまるマーケット) と cron の ADDED_PROGRAMS は空欄。
+  //   **META キー** (mergeSeed.PROGRAM_META_KEYS): 確認月だけの seed 変更は既存端末に通知・伝播しない。
+  //   代わりに表示時に同梱 seed を参照して解決する (resolveVerifiedMonth。rate が seed と一致すれば
+  //   seed の月、編集済み (userModifiedAt) は出さない)。per-user preference キーではないので
+  //   seed / master はそのまま出荷する (generate-master の strip 対象外)。
+  lastVerifiedAt?: string;
   // エントリー / 参加サイトの URL (任意)。officialUrl と分離する理由:
   //   - officialUrl は「制度を説明する公式ページ」(例: JAL カード特約店一覧)
   //   - entryUrl は「ユーザーが踏む先」(例: キャンペーンエントリーページ、提携店検索)
@@ -253,15 +272,16 @@ export type BenefitProgram = {
 //   v6 以前の (programId, storeId) 複合キー運用 (mergeSeed の `:` / `|` 区切り
 //   キー) は廃止し、他エンティティと同じ id ベースの merge / tombstone に統一。
 // userModifiedAt: ユーザが overrideRate/overrideCurrencyId/notes を編集した日時
-//   (ISO 8601)。Card.userModifiedAt と同セマンティクス。id ベースの add-only
-//   merge では既存 id は上書きされないため、編集済み membership は構造的に保護
-//   される (公式 override 更新は既存 id には伝播しない = 現行挙動維持)。
+//   (ISO 8601)。Card.userModifiedAt と同セマンティクス。
+//   PR-0a-2b: 未編集の公式 membership は、同 id の公式行の内容更新 (notes / channel /
+//   overrideRate / overrideCurrencyId) が mergeSeed で伝播する (program の更新伝播と同じ規約)。
+//   userModifiedAt がある行は保護され、公式更新で上書きされない。
 // channel: この店舗での program の購入チャネル (PR-0a-2a)。program.channel より優先する
 //   (effectiveChannel = membership.channel ?? program.channel)。undefined = program に従う。
 //   例: J-POINT 20倍 (program は店頭対象) のうちスターバックス / マクドナルドだけは
 //   モバイルオーダー・オンライン入金など経由型なので membership 単位で "online"。
-//   ⚠ membership は現状 add-only merge のため、既存端末の同 id 行への channel 付与は
-//   membership 更新伝播 (PR-0a-2b) まで届かない (新規端末・URL 同期では即時反映)。
+//   既存端末の同 id 行への channel 付与は membership 更新伝播 (PR-0a-2b) で届く
+//   (channel の変化は自動反映せず、確認モーダルで反映する)。
 export type StoreProgramMembership = {
   id: string;
   programId: string;

@@ -13,13 +13,19 @@ import { DialogProvider } from "./ui/dialog/DialogProvider";
 import { useStore } from "./state/store";
 import { seed, SEED_VERSION } from "./state/seed";
 import { PERSIST_STORE_KEY } from "./state/persist-versions";
+import { clearHydrationFailure } from "./state/hydrationGuard";
+import { visibleStoreIds } from "./domain/storePicker";
 
 beforeEach(() => {
   localStorage.clear();
   useStore.getState().clearAll();
   window.location.hash = "";
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // PR-6d: 壊れた JSON の hydrate テストが立てる hydrate 失敗のモジュール状態を漏らさない
+  clearHydrationFailure();
+});
 
 const renderApp = () =>
   render(
@@ -61,9 +67,13 @@ describe("App ナビゲーション ARIA (UX-8(1))", () => {
 });
 
 describe("App 起動時の公式データ自動投入 (PR-6a-1 / F7)", () => {
-  // 計算画面の店舗カテゴリ select に seed の店舗総数が出る = seed の店舗が入っている。
+  // 計算画面の店舗カテゴリ select に seed の店舗数が出る = seed の店舗が入っている。
+  // PR-6c (B6): 店舗 select は membership ゼロ・除外カテゴリ・電気・ガスの店を隠すので、
+  // 数えるのは picker に出る店 (visibleStoreIds、初回起動は選択中 = general のみ)。
   const expectSeedStoresOnCalculator = () => {
-    const stores = seed().stores;
+    const s = seed();
+    const ids = visibleStoreIds(s.stores, s.memberships);
+    const stores = s.stores.filter((st) => ids.has(st.id));
     expect(
       screen.getByRole("option", { name: `全カテゴリ (${stores.length})` }),
     ).toBeInTheDocument();
@@ -71,11 +81,11 @@ describe("App 起動時の公式データ自動投入 (PR-6a-1 / F7)", () => {
       screen.getAllByRole("option", { name: stores[0].name }).length,
     ).toBeGreaterThan(0);
   };
-  const expectNoSyncUi = (container: HTMLElement) => {
-    // SyncUpdateModal (<dialog>) も UpdateBanner / 自動反映バナーも出ない (差分 0 件)
+  const expectNoSyncUi = () => {
+    // SyncUpdateModal (<dialog>) も自動反映 (notice) も出ない (差分 0 件)。
+    // 更新バナーの不在は計算タブでは確かめられない (カード全 OFF でオンボーディングが通知枠を
+    // 取るので常に不在になる) ため、main 上部に UpdateBanner を出す #stores タブで別に確かめる。
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(container.querySelector(".update-banner")).toBeNull();
-    expect(container.querySelector(".auto-apply-banner")).toBeNull();
     expect(useStore.getState().autoApplyNotice).toBeNull();
   };
 
@@ -86,7 +96,7 @@ describe("App 起動時の公式データ自動投入 (PR-6a-1 / F7)", () => {
     expect(localStorage.getItem(PERSIST_STORE_KEY)).toBeNull();
 
     // main.tsx と同じ StrictMode (effect 二重実行) でも 1 回だけ投入される
-    const { container } = render(
+    render(
       <StrictMode>
         <DialogProvider>
           <App />
@@ -95,7 +105,7 @@ describe("App 起動時の公式データ自動投入 (PR-6a-1 / F7)", () => {
     );
 
     expectSeedStoresOnCalculator();
-    expectNoSyncUi(container);
+    expectNoSyncUi();
     const s = useStore.getState();
     expect(s.lastSeedVersion).toBe(SEED_VERSION);
     expect(s.cards).toEqual(seed().cards);
@@ -109,10 +119,29 @@ describe("App 起動時の公式データ自動投入 (PR-6a-1 / F7)", () => {
 
   it("初期化 (clearAll) 済みの state で次回起動しても同じ規則で再投入される", () => {
     // beforeEach の clearAll で empty + lastSeedVersion 0 が persist 済み
-    const { container } = renderApp();
+    renderApp();
     expectSeedStoresOnCalculator();
-    expectNoSyncUi(container);
+    expectNoSyncUi();
     expect(useStore.getState().lastSeedVersion).toBe(SEED_VERSION);
+  });
+
+  it("#stores (UpdateBanner を main 上部に出すタブ) で新規プロファイルを起動しても更新バナーは出ない", async () => {
+    localStorage.clear();
+    await useStore.persist.rehydrate();
+    window.location.hash = "#stores";
+    const { container } = renderApp();
+    expect(useStore.getState().lastSeedVersion).toBe(SEED_VERSION);
+    expect(useStore.getState().stores).toEqual(seed().stores);
+    expectNoSyncUi();
+    expect(container.querySelector(".update-banner")).toBeNull();
+  });
+
+  it("陽性コントロール: #stores でデータあり + lastSeedVersion < SEED_VERSION なら更新バナーが出る", () => {
+    useStore.setState({ ...seed(), lastSeedVersion: SEED_VERSION - 1 });
+    window.location.hash = "#stores";
+    const { container } = renderApp();
+    expect(container.querySelector(".update-banner")).not.toBeNull();
+    expect(screen.getByText(`サンプルデータの新バージョン v${SEED_VERSION}`)).toBeInTheDocument();
   });
 
   it("データがある state では何も投入しない (no-op)", () => {

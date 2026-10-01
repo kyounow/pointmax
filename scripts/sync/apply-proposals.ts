@@ -42,6 +42,15 @@ import type { ProgramOverride } from "../../src/state/seed-overrides";
 // membership id は src/state の membershipId() が唯一の生成源。
 // scripts は既に src/state を import しているため、規約をここに複製せず共有する。
 import { membershipId } from "../../src/state/defineMemberships";
+import { REMOVED_MEMBERSHIP_IDS } from "../../src/state/seed-blocklist";
+
+// PR-0a-2c: 手動 membership tombstone (seed-blocklist.ts の REMOVED_MEMBERSHIP_IDS) の Set。
+// seed-blocklist.ts は codegen の再生成対象外の手書きファイルなので、ここでは読むだけで emit しない。
+// pruneRemovedFromBuckets が ADDED_MEMBERSHIPS (生成物) から該当行を物理削除するのに使う
+// (seed() 側のフィルタで挙動は同じだが、生成ファイルに死にデータを残さない)。approve も共用する。
+export const REMOVED_MEMBERSHIP_ID_SET: ReadonlySet<string> = new Set(
+  REMOVED_MEMBERSHIP_IDS,
+);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
@@ -251,17 +260,40 @@ export function mergeRemovals(
 // 残っていれば物理的に落とす。seed() 側のフィルタで挙動は同じだが、
 // 生成ファイルに死にデータを残さないための整理。手書き seed-data-programs.ts
 // は触らない (tombstone フィルタが除外を担う)。
-export function pruneRemovedFromBuckets(buckets: Buckets): Buckets {
-  if (buckets.removedProgramIds.length === 0) return buckets;
+//
+// PR-0a-2c: 手書きの membership tombstone (REMOVED_MEMBERSHIP_IDS) に入る ADDED_MEMBERSHIPS の行も
+// 物理削除する。以前は removedProgramIds が空だと早期 return していたため、program tombstone の無い
+// run では membership tombstone の ADDED 行が生成物に残り続けた。除去件数はログに出す。
+// 何も落とさない場合は入力の参照をそのまま返す。
+export function pruneRemovedFromBuckets(
+  buckets: Buckets,
+  removedMembershipIds: ReadonlySet<string> = REMOVED_MEMBERSHIP_ID_SET,
+): Buckets {
   const removed = new Set(buckets.removedProgramIds);
+  const tombstonedMembershipIds: string[] = [];
+  const memberships = buckets.memberships.filter((m) => {
+    if (removed.has(m.programId as string)) return false;
+    const key = membershipKey(m as MembershipLike);
+    if (key !== null && removedMembershipIds.has(key)) {
+      tombstonedMembershipIds.push(key);
+      return false;
+    }
+    return true;
+  });
+  if (tombstonedMembershipIds.length > 0) {
+    console.log(
+      `🪦 membership tombstone: ${tombstonedMembershipIds.length} 件を ADDED_MEMBERSHIPS から除去 (${tombstonedMembershipIds.join(", ")})`,
+    );
+  }
+  if (removed.size === 0 && memberships.length === buckets.memberships.length) {
+    return buckets;
+  }
   return {
     ...buckets,
     programs: buckets.programs.filter(
       (p) => !removed.has(p.id as string),
     ),
-    memberships: buckets.memberships.filter(
-      (m) => !removed.has(m.programId as string),
-    ),
+    memberships,
     programOverrides: buckets.programOverrides.filter(
       (o) => !removed.has(o.id),
     ),

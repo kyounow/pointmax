@@ -6,14 +6,29 @@ import {
   isMasterPaymentApp,
   getSeedCard,
   getSeedPaymentApp,
+  getSeedProgram,
+  getSeedEdge,
 } from "./seed";
 import { SEED_CARDS, SEED_PAYMENT_APPS } from "./seed-data-cards";
+import { SEED_EDGES } from "./seed-data-edges";
+import { SEED_BENEFIT_PROGRAMS } from "./seed-data-programs";
+import { SEED_STORES } from "./seed-data-stores";
 import { CARD_FAMILIES } from "./seed-data-card-families";
-import { isValidVerifiedMonth } from "../domain/edgeFreshness";
+import {
+  collectStaleItems,
+  isValidVerifiedMonth,
+  monthsSince,
+} from "../domain/edgeFreshness";
 import { isSafeHttpUrl } from "../domain/urlSafety";
 import { PURCHASE_CHANNELS, effectiveChannel } from "../domain/purchaseChannel";
+import { changeCount, mergeSeed } from "../domain/mergeSeed";
+import { syncDigest } from "../domain/syncDigest";
 import { membershipId } from "./defineMemberships";
-import { REMOVED_PROGRAM_IDS } from "./seed-additions";
+import { ADDED_PROGRAMS, REMOVED_PROGRAM_IDS } from "./seed-additions";
+import { seedFreshness } from "./seedFreshness";
+import { PSEUDO_STORE_IDS, REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
+import { STORE_CATEGORIES, isKnownStoreCategory } from "./seed-categories";
+import { tierFamilyOf } from "./tierFamily";
 
 describe("MASTER_CARD_IDS / isMasterCard", () => {
   it("SEED_CARDS の全 id が含まれる", () => {
@@ -81,6 +96,55 @@ describe("getSeedCard", () => {
     const first = getSeedCard("rakuten-card");
     const second = getSeedCard("rakuten-card");
     expect(first).toEqual(second);
+  });
+
+  it("PR-5a: seed().cards の全 id で seed() の行と一致する (seed() ベースの lookup)", () => {
+    for (const c of seed().cards) {
+      expect(getSeedCard(c.id)).toEqual(c);
+    }
+  });
+});
+
+// PR-5a: getSeedProgram / getSeedEdge は seed() の最終形 (PROGRAM_OVERRIDES 適用後・tombstone
+// 除外後) から作る lazy lookup。鮮度 (確認月) と officialUrl の表示解決に使う。
+describe("getSeedProgram / getSeedEdge (PR-5a)", () => {
+  it("seed().programs の全 id で getSeedProgram の結果が一致する", () => {
+    const programs = seed().programs;
+    expect(programs.length).toBeGreaterThan(0);
+    for (const p of programs) {
+      expect(getSeedProgram(p.id)).toEqual(p);
+    }
+  });
+
+  it("未知の id と '' は undefined", () => {
+    expect(getSeedProgram("some-random-uuid-12345")).toBeUndefined();
+    expect(getSeedProgram("")).toBeUndefined();
+    expect(getSeedEdge("some-random-uuid-12345")).toBeUndefined();
+    expect(getSeedEdge("")).toBeUndefined();
+  });
+
+  it("tombstone 済みの program は手書きの定義が残っていても引けない", () => {
+    // prog-dcard-bic-camera-may2026 は seed-data-programs.ts に定義が残り REMOVED_PROGRAM_IDS で除外
+    expect(REMOVED_PROGRAM_IDS).toContain("prog-dcard-bic-camera-may2026");
+    expect(
+      SEED_BENEFIT_PROGRAMS.some((p) => p.id === "prog-dcard-bic-camera-may2026"),
+    ).toBe(true);
+    expect(getSeedProgram("prog-dcard-bic-camera-may2026")).toBeUndefined();
+    for (const id of REMOVED_PROGRAM_IDS) {
+      expect(getSeedProgram(id), id).toBeUndefined();
+    }
+  });
+
+  it("2 回呼んでも同じ参照 (lazy cache)", () => {
+    const id = seed().programs[0].id;
+    expect(getSeedProgram(id)).toBe(getSeedProgram(id));
+    expect(getSeedEdge(SEED_EDGES[0].id)).toBe(getSeedEdge(SEED_EDGES[0].id));
+  });
+
+  it("getSeedEdge は SEED_EDGES の全 id で一致する", () => {
+    for (const e of SEED_EDGES) {
+      expect(getSeedEdge(e.id)).toEqual(e);
+    }
   });
 });
 
@@ -196,6 +260,26 @@ describe("BenefitProgram.scope の seed 契約 (v6)", () => {
       contradictory,
       `all-stores なのに membership を持つ program: ${contradictory.join(", ")}`,
     ).toEqual([]);
+  });
+});
+
+// PR-0b-3: program の対象キー契約。対象 (cardIds / pointCardId / paymentAppId) の無い program は
+// どのカードでも発火しない死にデータで、import 検証 (validators の checkProgramTargets) も拒否する。
+// cardIds:[] も同じ (programEvaluator は「どのカードにも一致しない」と扱う)。propose 側は
+// untargetedProgram で review に回すので、cron の auto では入らない。
+describe("PR-0b-3: program の対象キー契約", () => {
+  it("seed() の全 program が対象キー (非空 cardIds / pointCardId / paymentAppId) を持つ", () => {
+    const { programs } = seed();
+    const untargeted = programs
+      .filter((p) => !((p.cardIds?.length ?? 0) > 0) && !p.pointCardId && !p.paymentAppId)
+      .map((p) => p.id);
+    expect(untargeted, `対象キーの無い program: ${untargeted.join(", ")}`).toEqual([]);
+  });
+
+  it("cardIds を持つ program は非空 (cardIds:[] が 0 件)", () => {
+    const { programs } = seed();
+    const empty = programs.filter((p) => p.cardIds !== undefined && p.cardIds.length === 0).map((p) => p.id);
+    expect(empty).toEqual([]);
   });
 });
 
@@ -783,8 +867,8 @@ describe("四半期監査 2026-Q3: 消滅ルート / 廃止優待の削除固定
 // たまるマーケット (サイト経由のネット購入限定) と、J-POINT 20倍のうち経由型 2 店
 // (スターバックス / マクドナルド) を店頭計算から外す。物理店 membership は
 // ネット購入時の正しいデータなので残す (過剰剥離の退行防止)。
-// ⚠ target key 契約 (全 program が cardIds / pointCardId / paymentAppId のいずれか) はここに
-//   入れない (propose 側ガードと同時に PR-0b-3 で入れる)。
+// target key 契約 (全 program が cardIds / pointCardId / paymentAppId のいずれか) は
+// 「PR-0b-3: program の対象キー契約」(上) にある。
 describe("PR-0a-2a: 購入チャネル契約", () => {
   it("(1) prog-epos-tamaru-{N}x は全て channel==='online'", () => {
     const { programs } = seed();
@@ -858,5 +942,279 @@ describe("PR-0a-2a: 購入チャネル契約", () => {
     expect(p).toBeDefined();
     expect(m, "m-prog-jcb-jpoint-20x-sukiya が未登録").toBeDefined();
     if (p && m) expect(effectiveChannel(p, m)).not.toBe("online");
+  });
+});
+
+// PR-0a-2b (M3): J-POINT 20倍の店別条件は membership.notes、program の conditions は全店共通文。
+// conditions は primary 行の条件チップ (noteParser) に合流するので、チップ発火語を含むと
+// すき家・吉野家など店頭対象店にも『限定条件』が誤表示される (実測、Opus 2b corrections)。
+describe("PR-0a-2b: J-POINT 20倍の条件 (conditions / membership.notes) 契約", () => {
+  const TWENTY_X = ["prog-jcb-jpoint-20x", "prog-jcb-jpoint-gold-20x"] as const;
+  // noteParser の limited / exclusion の発火語 (extractNoteChips と同じ正規表現)
+  const CHIP_TRIGGER_RE = /限定|のみ(?!の|に)|対象外|除外/;
+  const LIMITED_RE = /限定|のみ(?!の|に)/;
+
+  it("20倍の 2 program の conditions はチップ発火語 (限定 / のみ / 対象外 / 除外) を含まない", () => {
+    const { programs } = seed();
+    for (const id of TWENTY_X) {
+      const p = programs.find((x) => x.id === id);
+      expect(p?.conditions, `${id} の conditions が無い`).toBeTruthy();
+      expect(p?.conditions ?? "", id).not.toMatch(CHIP_TRIGGER_RE);
+    }
+  });
+
+  it("starbucks / mcdonalds の membership.notes は『限定』を含み、starbucks は『対象外』も含む", () => {
+    const { memberships } = seed();
+    for (const programId of TWENTY_X) {
+      for (const storeId of ["starbucks", "mcdonalds"]) {
+        const id = membershipId(programId, storeId);
+        const rows = memberships.filter((m) => m.id === id);
+        // mcdonalds は ADDED 行と同 id だが seed() は id あたり 1 件で、手書きの notes が勝つ
+        expect(rows, id).toHaveLength(1);
+        expect(rows[0].notes ?? "", id).toMatch(/限定/);
+        if (storeId === "starbucks") expect(rows[0].notes ?? "", id).toMatch(/対象外/);
+        if (storeId === "mcdonalds")
+          expect(rows[0].notes ?? "", id).toMatch(/Apple Pay \/ Google Pay 経由も対象/);
+      }
+    }
+  });
+
+  it("店頭対象の飲食 5 店は公式の除外を『対象外』で持ち、『限定』『のみ』を含まない。吉野家は注記なし", () => {
+    const { memberships } = seed();
+    for (const programId of TWENTY_X) {
+      for (const storeId of ["sukiya", "gusto", "bamiyan", "jonathan", "saint-marc-cafe"]) {
+        const id = membershipId(programId, storeId);
+        const rows = memberships.filter((m) => m.id === id);
+        expect(rows, id).toHaveLength(1);
+        expect(rows[0].notes ?? "", id).toMatch(/対象外/);
+        expect(rows[0].notes ?? "", id).not.toMatch(LIMITED_RE);
+        expect(rows[0].channel, id).toBeUndefined();
+      }
+      const yoshinoya = memberships.filter(
+        (m) => m.id === membershipId(programId, "yoshinoya"),
+      );
+      expect(yoshinoya, `${programId} × yoshinoya`).toHaveLength(1);
+      expect(yoshinoya[0].notes ?? "").not.toMatch(CHIP_TRIGGER_RE);
+    }
+  });
+
+  it("seed() の membership id は重複しない (手書きと ADDED の同 id は手書きだけが残る)", () => {
+    const { memberships } = seed();
+    const ids = memberships.map((m) => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+// PR-0a-2c: membership 単体 tombstone (REMOVED_MEMBERSHIP_IDS) と倍率 tier の契約。
+// 同じ店 × 同じ tier 系列 (J-POINT W / Gold / たまる) に複数倍率が並ぶと、計算は最大値が勝つため
+// 古い tier が黙って残る。cron が新 tier を足す週は propose の tierMove で review に回り、承認時に
+// 旧 tier を tombstone しないとこの契約が落ちる (fail-closed)。
+describe("PR-0a-2c: membership tombstone と tier 契約", () => {
+  it("seed().memberships と REMOVED_MEMBERSHIP_IDS は交わらない (ADDED 行も除外される)", () => {
+    const { memberships } = seed();
+    const tomb = new Set(REMOVED_MEMBERSHIP_IDS);
+    const offending = memberships.filter((m) => tomb.has(m.id)).map((m) => m.id);
+    expect(offending, offending.join(",")).toEqual([]);
+  });
+
+  it("REMOVED_MEMBERSHIP_IDS は全件 membershipId() 形式 (m-{programId}-{storeId}) で重複なし", () => {
+    expect(new Set(REMOVED_MEMBERSHIP_IDS).size).toBe(REMOVED_MEMBERSHIP_IDS.length);
+    // programId 部分が実在 (seed の program か program tombstone) し、store 部分が空でないこと
+    // (typo の tombstone は何も消さずに素通りするため)。
+    const programIds = [...seed().programs.map((p) => p.id), ...REMOVED_PROGRAM_IDS];
+    for (const id of REMOVED_MEMBERSHIP_IDS) {
+      const programId = programIds.find(
+        (pid) => id.startsWith(`m-${pid}-`) && id.length > `m-${pid}-`.length,
+      );
+      expect(programId, `${id} が既知 program の membershipId() 形式でない`).toBeDefined();
+      if (programId !== undefined) {
+        const storeId = id.slice(`m-${programId}-`.length);
+        expect(membershipId(programId, storeId)).toBe(id);
+      }
+    }
+    // 追加した 2 件は membershipId() で生成したものと一致する
+    expect(REMOVED_MEMBERSHIP_IDS).toContain(
+      membershipId("prog-jcb-jpoint-gold-2x", "takashimaya"),
+    );
+    expect(REMOVED_MEMBERSHIP_IDS).toContain(membershipId("prog-epos-tamaru-4x", "muji"));
+  });
+
+  it("(storeId, tier 系列, 有効チャネル) ごとに membership は 1 件以下", () => {
+    const { programs, memberships } = seed();
+    const progById = new Map(programs.map((p) => [p.id, p]));
+    const groups = new Map<string, string[]>();
+    for (const m of memberships) {
+      const tier = tierFamilyOf(m.programId);
+      if (tier === null) continue;
+      const p = progById.get(m.programId);
+      const channel = (p ? effectiveChannel(p, m) : m.channel) ?? "both";
+      const key = `${m.storeId}|${tier.family}|${channel}`;
+      groups.set(key, [...(groups.get(key) ?? []), m.id]);
+    }
+    expect(groups.size).toBeGreaterThan(0);
+    const dups = [...groups.entries()]
+      .filter(([, ids]) => ids.length > 1)
+      .map(([key, ids]) => `${key}: ${ids.join(",")}`);
+    expect(dups, dups.join(" / ")).toEqual([]);
+  });
+
+  it("回帰: 無印のたまる系は 2倍のみ", () => {
+    const { memberships } = seed();
+    const muji = memberships
+      .filter((m) => m.storeId === "muji" && tierFamilyOf(m.programId)?.family === "epos-tamaru")
+      .map((m) => m.programId);
+    expect(muji).toEqual(["prog-epos-tamaru-2x"]);
+  });
+
+  it("回帰: 高島屋の J-POINT Gold 系は gold-4x のみ", () => {
+    const { memberships } = seed();
+    const gold = memberships
+      .filter(
+        (m) =>
+          m.storeId === "takashimaya" &&
+          tierFamilyOf(m.programId)?.family === "jcb-jpoint-gold",
+      )
+      .map((m) => m.programId);
+    expect(gold).toEqual(["prog-jcb-jpoint-gold-4x"]);
+  });
+
+  it("prog-epos-tamaru-4x は membership を 1 件以上持つ (member-stores の孤立防止)", () => {
+    const { programs, memberships } = seed();
+    expect(programs.some((p) => p.id === "prog-epos-tamaru-4x")).toBe(true);
+    expect(
+      memberships.filter((m) => m.programId === "prog-epos-tamaru-4x").length,
+    ).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ─── PR-5a: 確認月 (lastVerifiedAt) / officialUrl の契約 ───
+// 手書きデータと codegen の不変条件にだけ掛かる (cron の safety gate を巻き添えにしない)。
+// 『週次監視以外は必ず記入』のカバレッジ契約は PR-5b (2026-Q4 四半期データ) で有効にする。
+describe("PR-5a: 確認月 (lastVerifiedAt) の契約", () => {
+  const NOW = new Date();
+  const isFuture = (v: string) => (monthsSince(v, NOW) ?? 0) < 0;
+
+  it("(a) program / edge / card の lastVerifiedAt は YYYY-MM で、未来月ではない", () => {
+    const { programs, edges, cards } = seed();
+    const rows = [
+      ...programs.map((p) => ["program", p.id, p.lastVerifiedAt] as const),
+      ...edges.map((e) => ["edge", e.id, e.lastVerifiedAt] as const),
+      ...cards.map((c) => ["card", c.id, c.lastVerifiedAt] as const),
+    ];
+    const bad = rows
+      .filter(([, , v]) => v !== undefined && (!isValidVerifiedMonth(v) || isFuture(v)))
+      .map(([kind, id, v]) => `${kind} ${id}: lastVerifiedAt=${v}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
+  it("(b) 記入済みの program が 30 件以上 (#142 の 27 件 + 監査記録のある 3 件。空振り防止)", () => {
+    const filled = seed().programs.filter((p) => p.lastVerifiedAt !== undefined);
+    expect(filled.length).toBeGreaterThanOrEqual(30);
+  });
+
+  it("(c) cron の ADDED_PROGRAMS は lastVerifiedAt を持たない (codegen は出さない)", () => {
+    const withMonth = ADDED_PROGRAMS.filter((p) => p.lastVerifiedAt !== undefined).map(
+      (p) => p.id,
+    );
+    expect(withMonth).toEqual([]);
+  });
+
+  it("(d) 週次監視の倍率 tier (J-POINT W / Gold・たまるマーケット) は lastVerifiedAt を持たない", () => {
+    const tiers = [...SEED_BENEFIT_PROGRAMS, ...seed().programs].filter(
+      (p) => tierFamilyOf(p.id) !== null,
+    );
+    // tier の検出が空振りしていないこと (J-POINT 7 + たまる 3)
+    expect(new Set(tiers.map((p) => p.id)).size).toBeGreaterThanOrEqual(10);
+    const withMonth = tiers.filter((p) => p.lastVerifiedAt !== undefined).map((p) => p.id);
+    expect(withMonth).toEqual([]);
+  });
+
+  it("(e) seed の officialUrl はすべて安全な http(s) URL", () => {
+    const programs = seed().programs.filter((p) => p.officialUrl !== undefined);
+    expect(programs.length).toBeGreaterThan(0);
+    const bad = programs
+      .filter((p) => !isSafeHttpUrl(p.officialUrl!))
+      .map((p) => `${p.id}: ${p.officialUrl}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
+  it("(f) meta だけの seed 変更は既存端末に通知も自動反映も起こさない (changeCount 0 / digest '')", () => {
+    // PR-5a 以前の seed で初期化した端末 = program の lastVerifiedAt / officialUrl を持たない state。
+    const S = seed();
+    const before = {
+      ...S,
+      programs: S.programs.map((p) => {
+        const rec = { ...p };
+        delete rec.lastVerifiedAt;
+        delete rec.officialUrl;
+        return rec;
+      }),
+    };
+    const result = mergeSeed(before, seed(), {
+      removedProgramIds: REMOVED_PROGRAM_IDS,
+      removedMembershipIds: REMOVED_MEMBERSHIP_IDS,
+    });
+    expect(result.updatedPrograms.map((p) => p.id)).toEqual([]);
+    expect(changeCount(result)).toBe(0);
+    expect(
+      syncDigest(result.diff, {
+        updatedPrograms: result.updatedPrograms,
+        removedPrograms: result.removedPrograms,
+        updatedMemberships: result.updatedMemberships,
+        removedMemberships: result.removedMemberships,
+      }),
+    ).toBe("");
+  });
+
+  it("(g) 2026-10 時点では seed の program / edge / card に『古い情報かも』の対象が無い", () => {
+    // 2026-07 記入 + 12 ヶ月 → 最初に stale になりうるのは 2027-08。次回四半期 (2027-01) までに更新する。
+    const OCT = new Date(2026, 9, 1);
+    const { programs, edges, cards } = seed();
+    const items = [
+      ...programs.map((p) => ({
+        kind: "rate" as const,
+        label: p.id,
+        month: seedFreshness.programMonth(p),
+      })),
+      ...edges.map((e) => ({
+        kind: "route" as const,
+        label: e.id,
+        month: seedFreshness.edgeMonth(e),
+      })),
+      ...cards.map((c) => ({
+        kind: "rate" as const,
+        label: c.id,
+        month: seedFreshness.cardMonth(c),
+      })),
+    ];
+    expect(collectStaleItems(items, OCT)).toBeNull();
+  });
+});
+
+// ─── PR-4a: 店舗カテゴリ (seed-categories.ts の語彙 + CATEGORY_ALIASES) ───
+describe("PR-4a: 店舗カテゴリの seed 契約", () => {
+  it("手書き店にも alias を当てるが、手書きの category は既に正規名なので内容は SEED_STORES と同じ (seed() 出力不変)", () => {
+    const { stores } = seed();
+    expect(stores.length).toBeGreaterThan(SEED_STORES.length);
+    // 合成後の配列で map するので要素は複製される (参照同一は保証しない)。内容の一致だけを見る。
+    SEED_STORES.forEach((s, i) => expect(stores[i], s.id).toEqual(s));
+  });
+
+  // propose の unknownCategory (語彙外・未設定の新規店は review) と同じ PR で入れる契約。
+  // 単独で入れると、語彙外の店が auto で apply された cron の safety gate がこの契約で落ち、
+  // 無関係な auto 変更まで巻き添えで降格する。
+  it("seed().stores は全件 category を持ち、語彙 (seed-categories.ts の STORE_CATEGORIES) に含まれる", () => {
+    const bad = seed()
+      .stores.filter((s) => !isKnownStoreCategory(s.category))
+      .map((s) => `${s.id}: category=${JSON.stringify(s.category)}`);
+    expect(bad, bad.join("\n")).toEqual([]);
+  });
+
+  it("pseudo カテゴリ (汎用) を持つのは擬似店舗 (PSEUDO_STORE_IDS) だけ", () => {
+    const pseudoNames = new Set(STORE_CATEGORIES.filter((c) => c.pseudo).map((c) => c.name));
+    const bad = seed()
+      .stores.filter((s) => pseudoNames.has(s.category ?? "") && !PSEUDO_STORE_IDS.has(s.id))
+      .map((s) => `${s.id}: ${s.category}`);
+    expect(bad).toEqual([]);
   });
 });

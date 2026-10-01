@@ -36,6 +36,8 @@ import {
 import { membershipId } from "./defineMemberships";
 import { CARD_FAMILIES } from "./seed-data-card-families";
 import { REMOVED_PROGRAM_IDS } from "./seed-additions";
+// 手書きファイル側 (seed-additions.ts は cron の codegen が全再生成するため置けない)。
+import { REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
 import { preservePreferences } from "./preferenceMerge";
 import {
   MIGRATIONS,
@@ -51,6 +53,13 @@ import {
 } from "./persist-versions";
 import { takeSnapshot } from "./stateSnapshot";
 import { writeSyncSeen, type AutoApplyNotice } from "./syncNotice";
+// PR-6d (U6): hydrate 失敗の検知 + 生データ退避。persist-versions にしか依存しない
+// (store.test の stateSnapshot モックと干渉させない)。
+import {
+  backupRawPersisted,
+  markHydrationFailure,
+  PERSIST_COLLECTION_KEYS,
+} from "./hydrationGuard";
 
 // v0.8 リリース時に persist 階層を世代交代した。旧 v0.x キーは一度きりクリーンアップ。
 // （次回 v1.0 以降は migrate / mergeFromSeed で吸収する）
@@ -108,10 +117,14 @@ function computeSeedUpdate(
   programs: BenefitProgram[];
   memberships: StoreProgramMembership[];
 } {
-  // 1. seed マージ: 追加 (add-only) + 公式由来・未編集 program の内容更新伝播 +
-  //    tombstone (REMOVED_PROGRAM_IDS) 削除 (Phase 5)
+  // 1. seed マージ: 追加 (add-only) + 公式由来・未編集 program / membership の内容更新伝播 +
+  //    tombstone (REMOVED_PROGRAM_IDS) 削除 (Phase 5) + membership 単体 tombstone
+  //    (REMOVED_MEMBERSHIP_IDS)。PR-0a-2b: 以前は membership tombstone を preview
+  //    (useSeedMerge) にだけ渡していたため、反映しても消えず isAutoApplySafe が恒久 false だった (F3)。
+  //    preview と同じ opts にそろえる (設定 > サンプル投入 = mergeFromSeed も本関数経由で乗る)。
   const merged = mergeSeedFn(current, seed(), {
     removedProgramIds: REMOVED_PROGRAM_IDS,
+    removedMembershipIds: REMOVED_MEMBERSHIP_IDS,
   });
   // 2. マイグレーション計画 (追加後の state で再計算)
   const plan = planMigrations(merged, lastSeedVersion, SEED_VERSION, MIGRATIONS);
@@ -328,6 +341,9 @@ type Actions = {
   resetPaymentAppToSeed: (id: string) => void;
 
   clearAll: () => void;
+  // PR-6d (U6): 復旧パネルの「公式データで初期化」。state を公式 seed そのものに置き換える
+  // (per-user 設定も引き継がない)。clearAll と違いスナップショットを取らない。
+  resetToSeed: () => void;
   // PR-6a-1 (F7): 新規プロファイル / 初期化後の次回起動で公式 seed を自動投入する。
   // 投入したら true、条件外 (データあり・投入済み・hydration 未完了/失敗・schema 移行待ち) は false。
   seedIfEmpty: () => boolean;
@@ -335,10 +351,12 @@ type Actions = {
   // 追加 + 自動適用可能なマイグレーション + ユーザー選択した衝突上書きをまとめて適用
   applySeedUpdate: (overrideKeys: string[]) => void;
   // PR-4b: 安全な週の seed 更新を自動反映し、Undo バナー用の通知 (notice) を立てる。
-  autoApplySeedUpdate: (notice: AutoApplyNotice) => void;
+  // PR-6a-2: null = 期限切れ整理だけの週のサイレント反映 (前の notice も消す)。
+  autoApplySeedUpdate: (notice: AutoApplyNotice | null) => void;
   // PR-4b: 自動反映バナーを閉じる (同一 digest を既読にして再表示を抑止)。
   dismissAutoApplyNotice: () => void;
-  dismissSeedUpdate: () => void;
+  // (PR-0a-2b: 更新バナーの「あとで」用 action (lastSeedVersion を進めていた) は廃止。
+  //  「あとで」は src/state/seedUpdateDismiss.ts が当日のセッション内だけ非表示にし、版は進めない)
   exportJson: () => string;
   importJson: (json: string) => { ok: true } | { ok: false; error: string };
   setSyncUrl: (url: string) => void;
@@ -375,16 +393,19 @@ const empty: State = {
 };
 
 // PR-6a-1: seedIfEmpty が「空」とみなす対象 (seed() が返す 8 collection)。
-const SEED_COLLECTION_KEYS = [
-  "cards",
-  "currencies",
-  "stores",
-  "edges",
-  "pointCards",
-  "paymentApps",
-  "programs",
-  "memberships",
-] as const;
+// PR-6d: 復旧用の書き出し (recovery.ts) と共有するため hydrationGuard.ts の定数を使う。
+const SEED_COLLECTION_KEYS = PERSIST_COLLECTION_KEYS;
+
+// PR-6d (U6): 公式 seed を state に投入する共通処理。seedIfEmpty (新規プロファイル) /
+// resetToSeed (復旧パネルの初期化) / applySchemaMigration (schema reset の同意後) の 3 経路で
+// 投入内容を一致させる (empty で per-user 設定・通知を初期値に戻し、seed() の 8 collection を入れる)。
+// state は immer draft (Object.assign の代入が追跡される)。
+function applySeedState(state: State): void {
+  Object.assign(state, empty, seed());
+  state.lastSeedVersion = SEED_VERSION;
+  state._pendingSchemaMigration = undefined;
+  state._legacyPersistedState = undefined;
+}
 
 // Wave 5 A-4 audit-fix: zustand/immer middleware で構造共有を有効化。
 // 1 件更新時に他要素の object reference を保持 → useShallow(B-1) と組み合わせ
@@ -710,6 +731,17 @@ export const useStore = create<State & Actions>()(
           Object.assign(state, empty);
         });
       },
+      // PR-6d (U6): 復旧パネル (RecoveryPanel) の「公式データで初期化」。
+      // clearAll と違って takeSnapshot を呼ばない: 1 世代しかない健全なスナップショットを、
+      // 壊れた state で上書きしない (復旧パネルの「直前の状態に戻す」の戻り先を残す)。
+      // 壊れた生データの退避は呼び出し側が直前に backupRawPersisted("reset") で行う。
+      // per-user 設定 (優先通貨・誕生月・円換算の上書き・店舗×決済の除外) は引き継がない。
+      // birthMonth は empty にキーが無く Object.assign では消えないので明示的に消す。
+      resetToSeed: () =>
+        set((state) => {
+          applySeedState(state);
+          state.birthMonth = undefined;
+        }),
       // PR-6a-1 (F7): 新規プロファイル (localStorage 空) は初期値 empty のままカード 0 / 店舗 0 で
       // 起動し、useSeedMerge も hasData=false で null を返すため更新バナー・同期モーダルも出なかった。
       // App のマウント時 (と persist の hydration 完了時) に呼び、次の全てを満たすときだけ seed() を投入する:
@@ -733,10 +765,9 @@ export const useStore = create<State & Actions>()(
         ) {
           return false;
         }
-        set((state) => {
-          Object.assign(state, seed());
-          state.lastSeedVersion = SEED_VERSION;
-        });
+        // PR-6d: 投入内容は resetToSeed / applySchemaMigration と共通 (applySeedState)。
+        // 上の判定で 8 collection は空なので、差は per-user 設定を初期値に揃えることだけ。
+        set((state) => applySeedState(state));
         return true;
       },
       mergeFromSeed: () =>
@@ -770,8 +801,11 @@ export const useStore = create<State & Actions>()(
       },
       // PR-4b: 安全な週の seed 更新を「起動時に自動反映」する。中身は applySeedUpdate([]) と
       // 同一 (snapshot:"seed-apply" + マージ) だが、加えて Undo バナー用の通知 (autoApplyNotice)
-      // を立てる。安全判定 (isAutoApplySafe) はオーケストレータ側 (SyncUpdateModal) が行い、
-      // 安全なときだけ本 action を呼ぶ。notice.digest は「元に戻す後の再自動反映ループ防止」に使う。
+      // を立てる。安全判定 (isAutoApplySafe / planAutoApply) はオーケストレータ側 (SyncUpdateModal) が
+      // 行い、安全なときだけ本 action を呼ぶ。notice.digest は「元に戻す後の再自動反映ループ防止」に使う。
+      // PR-6a-2: 期限切れ整理だけの週は notice=null (バナーを出さない)。その場合の digest の既読化は
+      // オーケストレータが writeSyncSeen で行う。スナップショットはサイレントでも取る
+      // (設定 > 直前の状態に戻す (マスタ更新前) がサイレント削除を戻す唯一の手段)。
       autoApplySeedUpdate: (notice) => {
         takeSnapshot("seed-apply", readPersistedAppState());
         set((state) => {
@@ -786,6 +820,9 @@ export const useStore = create<State & Actions>()(
           state.memberships = next.memberships;
           state.lastSeedVersion = SEED_VERSION;
           // Undo バナー表示情報 (永続 state。reload 越しでバナー再表示)。
+          // PR-6a-2: null (サイレント反映) のときも上書きして前の notice を消す。前の週の閉じられて
+          // いない Undo バナーが残っていても、seed-apply スナップショットは今回の反映の直前に
+          // 取り直されたので、そのバナーの「元に戻す」は別の状態へ戻る意味に変わってしまうため。
           state.autoApplyNotice = notice;
         });
       },
@@ -798,18 +835,10 @@ export const useStore = create<State & Actions>()(
           state.autoApplyNotice = null;
         });
       },
-      dismissSeedUpdate: () =>
-        set((state) => {
-          state.lastSeedVersion = SEED_VERSION;
-        }),
 
-      applySchemaMigration: () =>
-        set((state) => {
-          Object.assign(state, empty, seed());
-          state.lastSeedVersion = SEED_VERSION;
-          state._pendingSchemaMigration = undefined;
-          state._legacyPersistedState = undefined;
-        }),
+      // schema reset の同意後 (SchemaUpgradeModal の Apply)。PR-6d で resetToSeed に委譲
+      // (投入内容を 1 箇所に集約。スナップショットを取らない点も従来どおり)。
+      applySchemaMigration: () => get().resetToSeed(),
 
       exportLegacyState: () => {
         const s = get();
@@ -979,6 +1008,17 @@ export const useStore = create<State & Actions>()(
       name: PERSIST_STORE_KEY,
       storage: createJSONStorage(() => localStorage),
       version: PERSIST_SCHEMA_VERSION,  // 5 → 6 (v6.0.0 で scope 必須化の破壊的刷新、v5 を reset 化)
+      // PR-6d (U6): hydrate 失敗 (壊れた JSON / migrate の例外 / localStorage の例外) を検知し、
+      // persist の生文字列を crash-backup に退避する。失敗しても zustand は state を empty のまま
+      // 続行し、最初の set() で生データを上書きしてしまう。それを止めるのは Root が App を
+      // 描画しないこと (hydrationGuard.ts の冒頭コメント参照)。ここは退避と検知だけを担う。
+      // 旧 schema version の正常な JSON は migrate (SCHEMA_MIGRATIONS) が扱うので失敗にならない。
+      // callback は throw しないこと: 成功経路で throw すると zustand が error 付きで再度呼ぶ。
+      onRehydrateStorage: () => (_state, error) => {
+        if (error === undefined) return;
+        backupRawPersisted("hydrate");
+        markHydrationFailure(error);
+      },
       migrate: (persistedState: unknown, fromVersion: number) => {
         // 新規 install (version フィールドが無い = fromVersion が undefined 扱い)
         // → そのまま通す (既存の empty+seed 初期化フローへ)

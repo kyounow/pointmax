@@ -3,13 +3,15 @@
 // データ本体は src/state/seed-data-*.ts に分割:
 //   seed-data-currencies.ts : 通貨マスタ (Currency[])
 //   seed-data-cards.ts      : クレカ / ポイントカード / 決済アプリ
-//   seed-data-stores.ts     : 店舗 / クレカ還元ルール / ポイントカード提示ルール
+//   seed-data-stores.ts     : 店舗 (提示還元は BenefitProgram に統合済み)
+//   seed-data-programs.ts   : BenefitProgram / StoreProgramMembership
 //   seed-data-edges.ts      : 通貨間の交換レート
 //
 // この seed.ts は:
 //   - SEED_VERSION / SEED_CHANGELOG / DEFAULT_SYNC_URL の運用メタを保持
-//   - seed() 関数で 4 つのデータ + 自動同期 (seed-additions) を合成して返す
-//   - BLOCKED_STORE_IDS や CATEGORY_ALIASES の最終 filter / remap を適用
+//   - seed() 関数で手書きデータ + 自動同期 (seed-additions) を合成して返す
+//   - BLOCKED_STORE_IDS や CATEGORY_ALIASES の最終 filter / remap、PROGRAM_OVERRIDES の部分上書き、
+//     tombstone (REMOVED_PROGRAM_IDS / REMOVED_MEMBERSHIP_IDS) の除外を適用
 //
 // 自動同期 (scripts/sync/apply-proposals.ts) は seed-additions.ts に書き込む。
 // この seed.ts や seed-data-*.ts を直接書き換えるのは「手書きで永続化する」時のみ。
@@ -37,7 +39,11 @@ import { applyProgramOverrides } from "./seed-overrides";
 // tombstone (削除済み program id) の Set。seed() の programs/memberships
 // フィルタと、mergeSeed のユーザー localStorage からの除去の両方で参照する。
 const REMOVED_PROGRAM_ID_SET = new Set(REMOVED_PROGRAM_IDS);
-import { BLOCKED_STORE_IDS } from "./seed-blocklist";
+import { BLOCKED_STORE_IDS, REMOVED_MEMBERSHIP_IDS } from "./seed-blocklist";
+// membership 単体 tombstone (seed-blocklist の手動 tombstone) の Set。seed() の memberships から
+// 除外する (PR-0a-2c)。これが無いと ADDED 行 (seed-additions.ts) が seed() に残り、mergeSeed が
+// 毎回「追加 → tombstone 除去」を往復して自動反映の安全判定 (isAutoApplySafe) が恒久 false になる。
+const REMOVED_MEMBERSHIP_ID_SET = new Set(REMOVED_MEMBERSHIP_IDS);
 import { resolveCategory } from "./seed-category-aliases";
 import { SEED_CURRENCIES } from "./seed-data-currencies";
 import {
@@ -54,9 +60,9 @@ import {
 
 // シードデータの版数。**手動リリース粒度**でのみ bump する
 // (型構造変更や大きなデータ追加を伴うリリース時に人手で +1)。
-// 週次 cron auto-sync は seed-additions.ts への add-only のみで
-// この値には触れない。既存ユーザーへの cron 追加分の通知は
-// SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
+// 週次 cron auto-sync は seed-additions.ts (ADDED_* / PROGRAM_OVERRIDES / REMOVED_PROGRAM_IDS)
+// だけを書き換え、この値には触れない。既存ユーザーへの cron 追加分の通知は
+// 自動反映 (安全な週) / SyncUpdateModal が差分検知で担う (SEED_VERSION 非依存)。
 // UpdateBanner は lastSeedVersion とこの値の差でリリース通知を出す。
 // v0.8 リリースを起点として 1 から再開、v1.0 リリースで 9 に到達。
 export const SEED_VERSION = 47;
@@ -542,22 +548,40 @@ export const MASTER_PROGRAM_IDS = new Set<string>(
 export const isMasterProgram = (id: string): boolean =>
   MASTER_PROGRAM_IDS.has(id);
 
-// 「公式値に戻す」機能用の seed lookup ヘルパー。
+// ─── 同梱 seed の id lookup (lazy) ───
+// PR-5a: program / edge / card の lookup は **必ず seed() の最終形から作る**
+// (PROGRAM_OVERRIDES 適用後・REMOVED_PROGRAM_IDS / REMOVED_MEMBERSHIP_IDS 除外後)。
+// SEED_* を手で組み立てると、override 後の rate を持つ端末で鮮度の解決
+// (edgeFreshness.resolveVerifiedMonth の rate 一致判定) が常に「不一致」になり、
+// tombstone 済みの手書き定義 (prog-dcard-bic-camera-may2026 等) も引けてしまう。
+// seed() は初回呼び出しで 1 回だけ評価してキャッシュする (seed-data-*.ts / seed-additions.ts は
+// import 時に static なので safe)。scripts もこのファイルを import するので DOM API は使わない。
+let _seedSnapshot: SeedReturn | null = null;
+const seedSnapshot = (): SeedReturn => (_seedSnapshot ??= seed());
+
+// id → 行の Map。同 id が複数あれば先勝ち (seed() の「手書きが勝つ」と同じ)。
+function indexById<T extends { id: string }>(rows: readonly T[]): Map<string, T> {
+  const m = new Map<string, T>();
+  for (const r of rows) if (!m.has(r.id)) m.set(r.id, r);
+  return m;
+}
+
+// 「公式値に戻す」機能と鮮度の解決 (カード基本還元の確認月) 用の seed lookup ヘルパー。
 // 編集前の master 値を返す。userModifiedAt クリアと合わせて使う (src/state/userModified.ts)。
-// 初回呼び出しで lazy にキャッシュ (seed-data-cards.ts / seed-additions.ts は
-// import 時に static なので safe)。
 let _seedCardLookup: Map<string, Card> | null = null;
-export const getSeedCard = (id: string): Card | undefined => {
-  if (!_seedCardLookup) {
-    _seedCardLookup = new Map();
-    for (const c of SEED_CARDS) _seedCardLookup.set(c.id, c);
-    for (const c of ADDED_CARDS) {
-      // 手書きが優先 (seed() と同じセマンティクス)
-      if (!_seedCardLookup.has(c.id)) _seedCardLookup.set(c.id, c);
-    }
-  }
-  return _seedCardLookup.get(id);
-};
+export const getSeedCard = (id: string): Card | undefined =>
+  (_seedCardLookup ??= indexById(seedSnapshot().cards)).get(id);
+
+// PR-5a: 公式 program の同梱 seed 値 (確認月 lastVerifiedAt・officialUrl の表示解決用)。
+// ユーザー作成 (UUID) や tombstone 済みの id は undefined。
+let _seedProgramLookup: Map<string, BenefitProgram> | null = null;
+export const getSeedProgram = (id: string): BenefitProgram | undefined =>
+  (_seedProgramLookup ??= indexById(seedSnapshot().programs)).get(id);
+
+// PR-5a: 公式 edge の同梱 seed 値 (確認月 lastVerifiedAt の表示解決用)。
+let _seedEdgeLookup: Map<string, ConversionEdge> | null = null;
+export const getSeedEdge = (id: string): ConversionEdge | undefined =>
+  (_seedEdgeLookup ??= indexById(seedSnapshot().edges)).get(id);
 
 let _seedPaymentAppLookup: Map<string, PaymentApp> | null = null;
 export const getSeedPaymentApp = (id: string): PaymentApp | undefined => {
@@ -590,8 +614,12 @@ type SeedReturn = {
  * 合成ルール:
  *  - 手書きが常に前、追加分が後 (UI の並びはこの順)
  *  - id が重複した場合は手書きが勝つ (filter で排除)
- *  - BLOCKED_STORE_IDS に含まれる store と、それを参照する rules は除外
- *  - 追加 store の category は CATEGORY_ALIASES で正規化 (旧名 → 新名)
+ *  - 自動同期分の store のうち BLOCKED_STORE_IDS に含まれるものは除外
+ *  - store の category は合成後の配列で CATEGORY_ALIASES により正規化 (旧名 → 新名)。
+ *    手書き店も PR-4a から通す (手書きは既に正規名なので値は不変、要素は複製される)。
+ *    語彙 (seed-categories.ts) との照合は seed.test の契約が担う (アプリは語彙を import しない)
+ *  - tombstone: REMOVED_PROGRAM_IDS の program (+ cascade membership) と
+ *    REMOVED_MEMBERSHIP_IDS の membership 単体を除外
  */
 export const seed = (): SeedReturn => {
   const currencies = SEED_CURRENCIES;
@@ -616,11 +644,11 @@ export const seed = (): SeedReturn => {
       ...stores,
       ...ADDED_STORES.filter(
         (s) => !handwrittenStoreIds.has(s.id) && !BLOCKED_STORE_IDS.has(s.id),
-      ).map((s) => ({
-        ...s,
-        category: resolveCategory(s.category),
-      })),
-    ],
+      ),
+    ].map((s) => ({
+      ...s,
+      category: resolveCategory(s.category),
+    })),
     edges,
     pointCards,
     paymentApps: [
@@ -644,6 +672,8 @@ export const seed = (): SeedReturn => {
       ],
       PROGRAM_OVERRIDES,
     ).filter((p) => !REMOVED_PROGRAM_ID_SET.has(p.id)),
+    // membership は program tombstone の cascade に加え、単体 tombstone
+    // (REMOVED_MEMBERSHIP_IDS、手書き・ADDED の両方) も除外する (PR-0a-2c)。
     memberships: [
       ...SEED_STORE_PROGRAM_MEMBERSHIPS,
       // v6: 手書きと自動同期分の重複排除は membership.id で行う
@@ -651,6 +681,8 @@ export const seed = (): SeedReturn => {
       ...ADDED_MEMBERSHIPS.filter(
         (m) => !SEED_STORE_PROGRAM_MEMBERSHIPS.some((sm) => sm.id === m.id),
       ),
-    ].filter((m) => !REMOVED_PROGRAM_ID_SET.has(m.programId)),
+    ]
+      .filter((m) => !REMOVED_PROGRAM_ID_SET.has(m.programId))
+      .filter((m) => !REMOVED_MEMBERSHIP_ID_SET.has(m.id)),
   };
 };

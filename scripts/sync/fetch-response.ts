@@ -109,8 +109,12 @@ const PREFETCH_HEADERS = {
   "Accept-Language": "ja,en;q=0.8",
 } as const;
 
-// prefetch の失敗。reason で HTTP エラー / ネットワーク / timeout を区別する。
+// prefetch の失敗。reason で HTTP エラー / ネットワーク / timeout を区別する (PR-0b-2 の fetch-source が
+// prefetch 失敗を attempt 履歴に積むため、PR-5c-1 の率カナリアが 404・403・timeout を見分けるため)。
+// message は従来の `prefetch HTTP <status>: <statusText>` のまま。
 // (tsconfig の erasableSyntaxOnly によりパラメータプロパティは使わず、フィールドを明示宣言する)
+// PR-0b-2 と PR-5c-1 が同名・同形で別々に足した定義を、main 追従 (2026-10-01) で PR-0b-2 側の実装
+// (AbortSignal.timeout + isTimeoutLike / formatFetchError) に 1 つにまとめた。rate-watch.ts もこれを import する。
 export type PrefetchFailReason = "http" | "network" | "timeout";
 
 export class PrefetchError extends Error {
@@ -130,9 +134,13 @@ export class PrefetchError extends Error {
   }
 }
 
-/** prefetch 1 回 (fetch + body 受信) の上限。無応答のサーバで fetch step 全体が止まるのを防ぐ。 */
+/**
+ * prefetch 1 回 (fetch + body 受信) の上限。無応答のサーバで fetch step 全体 (fetch-source) や
+ * 率カナリア (rate-watch) が止まるのを防ぐ。
+ */
 export const PREFETCH_TIMEOUT_MS = 20_000;
 
+// prefetchRawHtml の signal は自前の AbortSignal.timeout だけなので、Abort/TimeoutError は timeout とみなす。
 function wrapPrefetchError(e: unknown): PrefetchError {
   const timeout = isTimeoutLike(e);
   return new PrefetchError(
@@ -146,7 +154,8 @@ function wrapPrefetchError(e: unknown): PrefetchError {
 // Pre-fetch helper (生 HTML): URL から HTML を取り、charset (Shift_JIS 等) を
 // 検出して正しく decode した文字列を返す。タグはそのまま (index crawl の
 // アンカー抽出が href を必要とするため)。
-// 失敗は PrefetchError (http / network / timeout)。timeoutMs は fetch と body 受信の合計。
+// 失敗は PrefetchError (http / network / timeout)。timeoutMs は fetch と body 受信の合計で、
+// AbortSignal.timeout で打ち切る (既定 20 秒。テストは fake timers ではなく実タイマ + signal を尊重する fetch スタブで)。
 export async function prefetchRawHtml(
   url: string,
   timeoutMs: number = PREFETCH_TIMEOUT_MS,
@@ -159,6 +168,8 @@ export async function prefetchRawHtml(
     throw wrapPrefetchError(e);
   }
   if (!res.ok) {
+    // body は読まない (接続を早く返す。PR-5c-1)。破棄の失敗は無視
+    await res.body?.cancel().catch(() => undefined);
     throw new PrefetchError(
       `prefetch HTTP ${res.status}: ${res.statusText}`,
       res.status,

@@ -23,6 +23,28 @@ import { defineMemberships, type MembershipStoreSpec } from "./defineMemberships
 //   - 各ポイントカード提示 base (prog-*-pointcard-*pc)
 // 併せて交換 edge の lastVerifiedAt 棚卸し (未記入分の漸進記入) も同じ四半期サイクルで回す。
 // チェックリストの実体は SESSION_LOG「🗓 四半期ごと手動確認チェックリスト」を参照 (次回目安 2026-10)。
+//
+// ─── lastVerifiedAt (確認月、PR-5a) ───
+// 上記の四半期チェック対象 program には、公式ページで率を突合した月を lastVerifiedAt ("YYYY-MM") に
+// 書く。四半期チェックのたびに**当月に更新**する (変わっていれば rate も直す)。最終確認から 12 ヶ月を
+// 超えると、その program を採用した計算結果に『⚠ 古い情報かも』が出る (src/domain/edgeFreshness.ts)。
+// 2026-07 は #142 (2026-07-21 初回監査) で突合済みの 27 件 + 同月に監査記録のある 3 件
+// (prog-rakuten-pay-rakuten-card-addon / prog-jal-tokuyaku / -normal)。
+// **空欄にするもの**: 週次 cron が監視する倍率 tier (J-POINT パートナー W / Gold・たまるマーケット。
+// cron は rate の一致を確認しても日付を更新しないので、書くと 12 ヶ月後に常に ⚠ が出る)、
+// cron が生成する ADDED_PROGRAMS (seed-additions.ts、codegen が出さない)、監査記録の無い program
+// (5b で記入)。契約は seed.test.ts「PR-5a: 確認月 (lastVerifiedAt) の契約」。
+// lastVerifiedAt / officialUrl は META キー (mergeSeed.PROGRAM_META_KEYS) なので、更新しても既存端末に
+// 通知・自動反映は起きず、表示時に同梱 seed の値が参照される (SEED_VERSION の bump も不要)。
+
+// PR-0a-2b (M3): J-POINT パートナー 20倍 (W / Gold) の共通 conditions。条件チップ (NoteChips) に
+// 合流するため、店別の条件は書かず membership.notes (下の JPOINT_20X_* 指定) に置く。
+// 飲食 6 店の「店頭カード払いが対象」は 2026-09-27 に公式ページで確認済み (掲載継続)。
+const JPOINT_20X_CONDITIONS =
+  "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) が必須。" +
+  "対象店舗ごとに支払方法の条件が異なる (各店の注記を参照)。" +
+  "すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・ジョナサンは店頭決済も対象。";
+
 export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
   // ═══════════════════════════════════════════════════════════════
   // PR 1: JAL特約店
@@ -43,6 +65,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.02,
     currencyId: "jal-mile",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期監査 2026-Q3 (SMP 自動付帯の範囲を確認)
     description:
       "JALカード CLUB-A系 (ショッピングマイル・プレミアム自動付帯) は特約店で 100円=2 マイル (通常の 2 倍)",
     conditions:
@@ -59,6 +82,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.02,
     currencyId: "jal-mile",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期監査 2026-Q3 (CLUB-A系と同時に確認)
     // 普通カードの 2倍は SMP (年会費4,950円) 加入者のみ → optIn:true で既定 OFF 出荷。
     // enabled は書かない (ユーザー所有キー)。SMP 加入者が「使う」を ON にした時のみ評価に載る。
     optIn: true,
@@ -85,6 +109,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.03,
     currencyId: "rakuten-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 1 群)
     description: "楽天カード × 楽天市場 通常 + SPU 基本 = 3%",
   },
 
@@ -105,6 +130,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "rakuten-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 1 群)
     validFrom: "2020-01-01",
     recurringDays: [5, 10, 15, 20, 25, 30],
     monthlyCapAmountYen: 100000, // 獲得上限 1,000pt/月 ÷ 0.01
@@ -128,6 +154,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.07,
     currencyId: "v-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 2 群)
     validFrom: "2023-04-03",
     description:
       "SMBC ゴールド(NL) Visa/Master タッチ決済 + スマホ利用で 7% Vポイント還元",
@@ -145,6 +172,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.08,
     currencyId: "v-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 2 群)
     validFrom: "2023-04-03",
     // 四半期監査 2026-Q3: rate 0.08 は据え置き。2026-02-01 改定で「基本還元 8%」に構造変更
     //   (旧 7%+Olive連携1% の内訳記述を現況に更新)。
@@ -192,6 +220,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.015,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 4 群)
     description: "JALカードSuica (ビューカード機能) × Suicaチャージで 1.5% JRE POINT",
   },
 
@@ -204,6 +233,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.08,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 4 群)
     description: "ビューカード会員 新幹線eチケット 8% JRE POINT 還元",
   },
 
@@ -218,6 +248,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.08,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 4 群)
     description:
       "VIEWプラス カード分 8% (ゴールド)。えきねっと側の 5% は別枠 (合計最大13%)",
   },
@@ -231,6 +262,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.015,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 4 群)
     description: "ビューカード スタンダード × Suica オートチャージ/モバイルチャージで 1.5% JRE POINT",
   },
 
@@ -243,6 +275,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.04,
     currencyId: "mercari-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 3 群)
     monthlyCapAmountYen: 125000, // 還元上限 5,000pt/月 ÷ 0.04 (四半期監査 2026-Q3)
     description: "メルカリ内お買い物で最大 4% メルカリポイント還元 (利用額連動、定常最大)",
     notes: "メルカリ内還元は月P5,000上限",
@@ -259,6 +292,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.08,
     currencyId: "mercari-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 3 群)
     recurringDays: [8],
     // エントリーはメルカリアプリ内キャンペーンページのため entryUrl は無し (バッジのみ)。
     requiresEntry: true,
@@ -303,6 +337,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "rakuten-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "楽天ポイントカード提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -321,6 +356,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "d-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "dポイントカード提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -334,6 +370,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "d-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "dポイントカード提示で 100円=1pt (1%) 還元",
   },
 
@@ -346,6 +383,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "ponta-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "Pontaカード提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -359,6 +397,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "ponta-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "Pontaカード提示で 100円=1pt (1%) 還元",
   },
 
@@ -371,6 +410,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "v-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "Vポイントカード(旧Tカード)提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -384,6 +424,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "nanaco-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "nanacoカード提示で 100円=1pt (1%) 還元 (電子マネー支払い時)",
   },
 
@@ -396,6 +437,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "waon-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "WAONカード提示で 200円=1pt (0.5%) 還元",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -409,6 +451,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "jre",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 7 群)
     description: "JRE POINT カード提示で 200円(税抜)=1pt (0.5%) 還元 (駅ナカ加盟店)",
     notes: "付与は200円(税抜)単位 (端数切り捨て)", // PR-1d
   },
@@ -426,6 +469,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "rakuten-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description: "楽天Pay 利用で 1% 楽天ポイント還元 (誰でも)",
   },
 
@@ -442,6 +486,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "rakuten-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期監査 2026-Q3 (#142 で 2025-07 改定条件を反映)
     optIn: true,
     description:
       "楽天Pay の残高払いで +0.5% 上乗せ (楽天Pay 1% と合わせて 1.5%)。" +
@@ -462,6 +507,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "d-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description: "d払い利用で 0.5% dポイント還元 (誰でも、200円=1pt)",
     notes: "付与は200円単位 (端数切り捨て)", // PR-1d
   },
@@ -488,6 +534,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "paypay",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description: "PayPay 残高払いで 0.5% PayPayポイント還元 (誰でも)",
   },
 
@@ -513,6 +560,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "ponta-pt",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description: "au PAY コード支払いで 0.5% Pontaポイント還元 (誰でも)",
   },
 
@@ -569,6 +617,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "nanaco-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description:
       "nanaco 電子マネー支払いで 200円1pt (0.5%) 還元。" +
       "セブン-イレブン等 loyalty 加盟店は nanaco-card 経路で計上、ここは非 loyalty 店のみ。",
@@ -584,6 +633,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.005,
     currencyId: "waon-pt",
     bonusType: "addOn",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 6 群)
     description:
       "WAON 電子マネー支払いで 200円1pt (0.5%) 還元。" +
       "イオン系等 loyalty 加盟店は waon-card 経路で計上、ここは非 loyalty 店のみ。",
@@ -658,14 +708,11 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "JCB J-POINT パートナー 20倍店 (W はカード特典+1倍で計21倍 = 実効 10.5%)。" +
       "公式計算例: スタバ eGift 10,000円 = 通常50pt + Wボーナス50pt + パートナー950pt = 1,050pt (10.5%)。" +
       "対象店舗により適用条件が異なる (店舗ごとにモバイルオーダー等の限定条件あり)。",
-    conditions:
-      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) が必須。" +
-      "対象店舗により適用条件が異なる: " +
-      "スターバックスはモバイルオーダー・スターバックスカードへのオンライン入金・" +
-      "オートチャージ・Starbucks eGift限定、" +
-      "マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。" +
-      "その他対象店舗 (すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・" +
-      "ジョナサン等) は店頭決済含め対象。詳細は J-POINT パートナーサイトで確認。",
+    // PR-0a-2b (M3): 店別の条件 (スタバ / マックの経由型・各店の対象外) は membership.notes に移した。
+    // conditions は primary 行の条件チップに合流するので、全店共通の文だけにしてチップ発火語
+    // (限定 / のみ / 対象外 / 除外) を含めない (含めると すき家 等にも『限定条件』が誤表示される)。
+    // 契約は seed.test『J-POINT 20倍の conditions はチップ発火語を含まない』。
+    conditions: JPOINT_20X_CONDITIONS,
     requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
@@ -728,14 +775,8 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
       "JCB J-POINT パートナー店で 20倍 (Gold 基本 0.5% × 20 = 実効 10%)。" +
       "公式の「ポイント還元率は最大10%」と一致。" +
       "対象店舗により適用条件が異なる (店舗ごとにモバイルオーダー等の限定条件あり)。",
-    conditions:
-      "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料) が必須。" +
-      "対象店舗により適用条件が異なる: " +
-      "スターバックスはモバイルオーダー・スターバックスカードへのオンライン入金・" +
-      "オートチャージ・Starbucks eGift限定、" +
-      "マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。" +
-      "その他対象店舗 (すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・" +
-      "ジョナサン等) は店頭決済含め対象。詳細は J-POINT パートナーサイトで確認。",
+    // PR-0a-2b (M3): W 向け (prog-jcb-jpoint-20x) と同じ共通文。店別条件は membership.notes。
+    conditions: JPOINT_20X_CONDITIONS,
     requiresEntry: true, // REM-#5: 店ごとのポイントアップ登録が必須 (無料・恒久) → 要エントリー
     entryUrl: "https://j-pointpartner.jcb.co.jp/search",
   },
@@ -764,6 +805,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "epos",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 5 群)
     description:
       "ゴールド/プラチナはマルイ・モディ・マルイウェブチャネルで 200円=2pt (1.0%、一般は0.5%)。一部商品・ショップ除く。",
     officialUrl:
@@ -782,6 +824,7 @@ export const SEED_BENEFIT_PROGRAMS: BenefitProgram[] = [
     rate: 0.01,
     currencyId: "epos",
     bonusType: "primary",
+    lastVerifiedAt: "2026-07", // 四半期チェック (#142、第 5 群)
     // R1 (PR-1d): 登録制の特典 (対象ショップ登録が前提) → optIn:true で既定 OFF 出荷。
     // enabled は書かない (ユーザー所有キー)。登録ショップがある人が「使う」を ON にする。
     optIn: true,
@@ -873,12 +916,46 @@ const JAL_TOKUYAKU_STORE_IDS = [
 
 // PR-0a-2a (A16): J-POINT 20倍の経由型 2 店 (スターバックス / マクドナルド) の membership 指定。
 // W / Gold の両系列で共有する (list のドリフト防止)。channel:"online" = 店頭計算に載せない。
-// mcdonalds の notes は seed-additions.ts の ADDED 行と同文 (手書き優先で ADDED 行を置き換えるため)。
+// mcdonalds は seed-additions.ts の ADDED 行と同 id。seed() は手書き優先なのでここの行が勝つ
+// (codegen ファイルの ADDED 行は残す)。
+// PR-0a-2b (M3): 店別の条件を membership.notes に置く (2026-09-27 の公式確認に合わせた文言)。
+// notes は条件チップ (NoteChips) の入力で、ネットモード (PR-4e) の結果カードで表示される
+// (店頭モードでは channel:"online" のため 20 倍自体が採用されずチップも出ない)。
 const JPOINT_20X_ONLINE_STORES: MembershipStoreSpec[] = [
-  ["starbucks", { channel: "online" }],
+  [
+    "starbucks",
+    {
+      channel: "online",
+      notes:
+        "モバイルオーダー (Apple Pay で JCB を選択)・スターバックス カードへのオンライン入金・" +
+        "オートチャージ・Starbucks eGift 限定。" +
+        "レジでのカード直接払い・店頭での入金・スターバックス カード払いは対象外。" +
+        "オンライン入金の 20 倍は 2027-01-12 まで",
+    },
+  ],
   [
     "mcdonalds",
-    { channel: "online", notes: "モバイルオーダー・マックデリバリー限定" },
+    {
+      channel: "online",
+      notes: "モバイルオーダー・マックデリバリー限定 (Apple Pay / Google Pay 経由も対象)",
+    },
+  ],
+];
+
+// PR-0a-2b (M3): 店頭カード払いが対象の J-POINT 20倍 飲食店のうち、公式の除外条件がある 5 店の
+// membership.notes (2026-09-27 公式確認)。いずれも seed-additions.ts の ADDED 行 (W / Gold) と同 id で、
+// seed() の手書き優先によりこの行が勝つ (ADDED 行は残す)。channel は付けない (両チャネル有効)。
+// 吉野家は公式の除外条件が無いので手書きに置かない (ADDED 行のまま)。
+// 『限定』『のみ』を含めない (『限定条件』チップを出さず、『対象外あり』だけにする)。
+const SKYLARK_APP_EXCLUSION = "すかいらーくアプリのテーブル決済は対象外";
+const JPOINT_20X_IN_STORE_NOTES: MembershipStoreSpec[] = [
+  ["sukiya", { notes: "QUICPay (Apple Pay / Google Pay 含む) は対象外" }],
+  ["gusto", { notes: SKYLARK_APP_EXCLUSION }],
+  ["bamiyan", { notes: SKYLARK_APP_EXCLUSION }],
+  ["jonathan", { notes: SKYLARK_APP_EXCLUSION }],
+  [
+    "saint-marc-cafe",
+    { notes: "20 倍は 2027-01-12 まで (以前は 2 倍)。テナント店・オンラインストアは対象外" },
   ],
 ];
 
@@ -1226,7 +1303,9 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   ]),
 
   // V5: JCB J-POINT パートナー memberships
-  // V5-2 で W 系列 / Gold 系列の 2 系列に分離 (10 件 = W6 + Gold9、高島屋は Gold のみプレミアム)
+  // V5-2 で W 系列 / Gold 系列の 2 系列に分離。ここ (手書き) は 30 件 = W 15 (2倍 6 + 3倍 2 + 20倍 7) +
+  //   Gold 15 (2倍 5 + 3倍 2 + 4倍 1 + 20倍 7) (2026-09-27 時点)。20倍の吉野家や自動同期で増えた店は
+  //   seed-additions.ts (ADDED) 側。高島屋は W = 2倍店 / Gold = 4倍 (プレミアム) で系列ごとに 1 件。
   // 倍率は j-pointpartner.jcb.co.jp/search で WebFetch 検証済 (mos-burger のみ未検証、subagent 一般知識)
   // W (jcb-w): 2倍 / 3倍 / 20倍 (4倍は廃止、高島屋を 2倍へ移管)
   // Gold (jcb-gold): 2倍 / 3倍 / 4倍 (高島屋プレミアム) / 20倍
@@ -1240,7 +1319,10 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   //   すき家・吉野家・ガスト・バーミヤン・サンマルクカフェ・ジョナサンは店頭カード払いが対象の
   //   ため channel 無し (両チャネル有効) のまま (seed-additions.ts の ADDED 行)。
   //   mcdonalds の 2 行は seed-additions.ts (ADDED) にもあるが、seed() は手書き優先で同 id を
-  //   排除するのでここに同 id で置く (codegen ファイルの ADDED 行は残す)。notes は ADDED と同文。
+  //   排除するのでここに同 id で置く (codegen ファイルの ADDED 行は残す)。
+  // PR-0a-2b (M3): 店別の条件を membership.notes に置く (JPOINT_20X_ONLINE_STORES の 2 店 +
+  //   JPOINT_20X_IN_STORE_NOTES の 5 店)。既存端末へは membership 更新伝播で届く
+  //   (notes だけの 5 店×2 系列は自動反映、channel が変わるスタバ / マックは確認モーダル)。
 
   // ─── W 系列 (jcb-w) ───
   ...defineMemberships("prog-jcb-jpoint-2x", [
@@ -1249,11 +1331,16 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
     "apollo-station",
     "bic-camera",
     "mos-burger",
-    // V5-2: 高島屋を W では 2倍 (実効 2%) に移管 (Gold プレミアム 4倍 = 2% と同等)
+    // V5-2: 高島屋を W では 2倍店として登録 (加算方式で計 3 倍 = 実効 1.5%。Gold プレミアム 4倍 =
+    //   実効 2.0% とは別値)。※ 抽出では百貨店本体が「最大 4 倍」— W の倍率は V3 四半期チェック
+    //   項目 1 で要確認 (値はここでは断定しない)。
     "takashimaya",
   ]),
   ...defineMemberships("prog-jcb-jpoint-3x", ["amazon", "conv-7eleven"]),
-  ...defineMemberships("prog-jcb-jpoint-20x", JPOINT_20X_ONLINE_STORES),
+  ...defineMemberships("prog-jcb-jpoint-20x", [
+    ...JPOINT_20X_ONLINE_STORES,
+    ...JPOINT_20X_IN_STORE_NOTES,
+  ]),
 
   // ─── Gold 系列 (jcb-gold) ───
   ...defineMemberships("prog-jcb-jpoint-gold-2x", [
@@ -1265,7 +1352,10 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   ]),
   ...defineMemberships("prog-jcb-jpoint-gold-3x", ["amazon", "conv-7eleven"]),
   ...defineMemberships("prog-jcb-jpoint-gold-4x", ["takashimaya"]),
-  ...defineMemberships("prog-jcb-jpoint-gold-20x", JPOINT_20X_ONLINE_STORES),
+  ...defineMemberships("prog-jcb-jpoint-gold-20x", [
+    ...JPOINT_20X_ONLINE_STORES,
+    ...JPOINT_20X_IN_STORE_NOTES,
+  ]),
 
   // ═══════════════════════════════════════════════════════════════
   // v6.5.0: エポス ゴールド/プラチナ優待 + たまるマーケット memberships
@@ -1300,12 +1390,15 @@ export const SEED_STORE_PROGRAM_MEMBERSHIPS: StoreProgramMembership[] = [
   ]),
 
   // (c) たまるマーケット (2/3/4倍)。倍率は 2026-07 実測
-  // 楽天市場2倍 / Yahoo!2倍 / ユニクロ2倍 / じゃらん3倍 / 無印4倍
+  // 楽天市場2倍 / Yahoo!2倍 / ユニクロ2倍 / じゃらん3倍
+  // PR-0a-2c (A17): 手書きの「無印 4倍」(2026-07 実測) は削除した。9/13 の抽出と 9/26 の公式トップは
+  //   「無印良品ネットストア 2倍」で、tamaru-2x × muji (seed-additions.ts の ADDED 行) が正。
+  //   既存端末の 4倍行は REMOVED_MEMBERSHIP_IDS (seed-blocklist.ts) の tombstone で除去する。
+  //   prog-epos-tamaru-4x は bic-camera (ADDED) の 1 件で存続 (member-stores は membership ≥ 1)。
   ...defineMemberships("prog-epos-tamaru-2x", [
     "rakuten-ichiba",
     "yahoo-shopping",
     "uniqlo",
   ]),
   ...defineMemberships("prog-epos-tamaru-3x", ["jalannet"]),
-  ...defineMemberships("prog-epos-tamaru-4x", ["muji"]),
 ];

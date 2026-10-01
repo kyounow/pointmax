@@ -3,16 +3,19 @@ import { useShallow } from "zustand/shallow";
 import { useStore } from "../state/store";
 import { SEED_VERSION } from "../state/seed";
 import { syncDigest, buildSyncGroups } from "../domain/syncDigest";
-import { isAutoApplySafe } from "../domain/autoApplySafety";
+import { planAutoApply, UNSAFE_PLAN } from "../domain/autoApplySafety";
 import { readSyncSeen, writeSyncSeen } from "../state/syncNotice";
 import { useSeedMerge } from "./hooks/useSeedMerge";
 import { useOnline } from "./hooks/useOnline";
+import { useToday } from "./hooks/useToday";
 
 // 週次 cron が bundled seed に追加/更新/削除したデータの取り込み経路 (PR-4b で二分化):
-//   - 安全な週 (追加・非破壊更新のみ) は起動時に「自動反映」し、事後 Undo バナーに委譲
+//   - 安全な週 (追加・非破壊更新・期限切れ campaign の整理のみ) は起動時に「自動反映」する
 //     (本コンポーネントはモーダルを出さず、autoApplySeedUpdate を呼ぶだけ)。
-//   - 削除 / scope 変更 / SEED_VERSION bump を含む週だけ、従来どおりこのモーダルを出して
-//     ユーザーに確認してもらう。
+//     追加・更新を含む週は事後 Undo バナーに委譲し、期限切れ整理だけの週 (PR-6a-2 / U1) は
+//     バナーも出さずに反映して digest を既読化する (planAutoApply の silent)。
+//   - 期限切れでない削除 / scope 変更 / channel (購入チャネル) 変更 / SEED_VERSION bump を含む
+//     週だけ、従来どおりこのモーダルを出してユーザーに確認してもらう。
 // SEED_VERSION とは独立した差分検知 (cron は版数を bump しない)。既読は共有 digest
 // (syncNotice) で管理し、同じバッチでは再表示しない。次回 cron で差分集合が変わると
 // digest が変わり再通知される。
@@ -41,24 +44,40 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
 
   // Wave 4 B-7: 共有 hook 経由で mergeSeed (UpdateBanner と同じ計算ロジック)
   // Phase 5: 追加だけでなく program の内容更新 / 終了削除も通知対象に含める
+  // PR-0a-2b: membership の内容更新 (提携条件) / 単体 tombstone 削除も含める
+  // (count = changeCount も membership 分を数える)。
   const { merged, totalChangeCount: count } = useSeedMerge();
   const digest = merged
     ? syncDigest(merged.diff, {
         updatedPrograms: merged.updatedPrograms,
         removedPrograms: merged.removedPrograms,
+        updatedMemberships: merged.updatedMemberships,
+        removedMemberships: merged.removedMemberships,
       })
     : "";
 
   // PR-4b: 自動反映してよい安全な週か (追加・非破壊更新のみ / 削除・scope変更・版bump 無し)。
-  const safe = merged
-    ? isAutoApplySafe(merged, { seedVersionBumped: lastSeedVersion < SEED_VERSION })
-    : false;
+  // PR-6a-2: 期限切れ整理だけなら silent、追加・更新があれば notice (期限切れ判定は今日基準)。
+  // plan は下の effect の deps に直接入れるので useMemo で参照を安定させる
+  // (useToday は同じ暦日なら同じ Date を返す)。
+  const today = useToday();
+  const plan = useMemo(
+    () =>
+      merged
+        ? planAutoApply(merged, count, {
+            seedVersionBumped: lastSeedVersion < SEED_VERSION,
+            now: today,
+          })
+        : UNSAFE_PLAN,
+    [merged, count, lastSeedVersion, today],
+  );
+  const safe = plan.kind !== "unsafe";
 
   const groups = useMemo(() => {
     if (!merged || count === 0) return [];
     const storeName = new Map(merged.stores.map((s) => [s.id, s.name]));
     // 削除された program の名前は merged.programs に居ないため
-    // removedPrograms 自身から解決する
+    // removedPrograms 自身から解決する (削除された membership の programId もこの Map で解決)
     const programName = new Map([
       ...(merged.programs ?? []).map((p) => [p.id, p.name] as const),
       ...merged.removedPrograms.map((p) => [p.id, p.name] as const),
@@ -72,6 +91,8 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
       {
         updatedPrograms: merged.updatedPrograms,
         removedPrograms: merged.removedPrograms,
+        updatedMemberships: merged.updatedMemberships,
+        removedMemberships: merged.removedMemberships,
       },
     );
   }, [merged, count]);
@@ -94,16 +115,30 @@ export function SyncUpdateModal({ onViewHistory }: SyncUpdateModalProps = {}) {
   // applySeedUpdate 相当を実行しつつ Undo バナー用の通知 (autoApplyNotice) を立てる。
   // 反映後は merged が空 (count=0) に再計算されるので条件が自然に落ちて再実行しない。
   // digest 単位の ref guard で StrictMode の effect 二重実行 / 中間再レンダーでの重複起動を防ぐ。
+  // PR-6a-2: silent (期限切れ整理だけ) はバナーを出さないので、ここで digest を既読化する。
+  // 既読化しないと、設定の「直前の状態に戻す」で戻して reload した直後に同じ digest がまた
+  // 自動反映され、巻き戻しが消える。notice の件数は期限切れ整理を除いた追加・更新の件数。
+  // count === 0 の週も planAutoApply は silent を返すので、count の判定は外せない。
+  // plan が unsafe でなければ merged は非 null (merged=null は UNSAFE_PLAN)。
   const autoAppliedDigestRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!online) return;
-    if (!merged || count === 0) return;
-    if (digest === "" || digest === seen) return;
+    if (!online || count === 0 || digest === "" || digest === seen) return;
     if (!safe) return; // unsafe は上の visible (モーダル) が担当
     if (autoAppliedDigestRef.current === digest) return;
     autoAppliedDigestRef.current = digest;
-    autoApplySeedUpdate({ digest, count });
-  }, [online, merged, count, digest, seen, safe, autoApplySeedUpdate]);
+    if (plan.kind === "notice") {
+      autoApplySeedUpdate({
+        digest,
+        count: plan.changeCount,
+        // 期限切れ整理を伴うときだけ載せる (0 件なら undefined = persist の JSON に出ない)
+        expiredRemovedCount: plan.expiredRemovedCount || undefined,
+      });
+    } else {
+      // silent (期限切れ整理だけ): バナーを出さず、前の notice も消す
+      writeSyncSeen(digest);
+      autoApplySeedUpdate(null);
+    }
+  }, [online, count, digest, seen, safe, plan, autoApplySeedUpdate]);
 
   // Wave 4 B-5 a11y → PR-5b: ネイティブ <dialog> + showModal で focus trap / 背景 inert /
   // Esc(cancel イベント) をブラウザ標準に委譲。初期 focus を primary ボタンに合わせる。

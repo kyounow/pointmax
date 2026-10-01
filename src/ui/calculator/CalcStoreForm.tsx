@@ -3,10 +3,15 @@
 // currenciesByKind) もここに閉じ込めて親をスリム化。動作不変リファクタ。
 
 import { useMemo } from "react";
-import type { Currency, Store } from "../../domain/types";
+import type {
+  Currency,
+  Store,
+  StoreProgramMembership,
+} from "../../domain/types";
 import { groupBy } from "../../domain/groupBy";
 import { recordStoreSelection } from "../../state/usageStats";
 import { YEN_TARGET_ID } from "../../domain/yenValue";
+import { GENERAL_STORE_ID, visibleStoreIds } from "../../domain/storePicker";
 
 // PR-3a (UX-1): 店頭クイック入力の金額プリセット。ワンタップで amount に流し込む。
 const AMOUNT_PRESETS = [500, 1000, 3000, 5000, 10000] as const;
@@ -28,6 +33,11 @@ type Props = {
   showCurrencyFallback: boolean;
   /** PR-3a: 直近選択順の店舗 id (親が usageStats.getRecentStoreIds から供給)。 */
   recentStoreIds: string[];
+  /**
+   * PR-6c (B6): 店舗別還元 (membership) の一覧。membership が 1 件も無い店を店舗 select から隠す
+   * (選択中・直近店舗チップの店と general は残す)。省略時は membership では絞り込まない。
+   */
+  memberships?: readonly StoreProgramMembership[];
 };
 
 export function CalcStoreForm({
@@ -45,6 +55,7 @@ export function CalcStoreForm({
   setActiveCurrencyId,
   showCurrencyFallback,
   recentStoreIds,
+  memberships,
 }: Props) {
   // 店舗選択の共通処理: state 更新 + 端末内利用統計への記録 (select / チップ 共用)。
   const selectStore = (id: string) => {
@@ -70,22 +81,34 @@ export function CalcStoreForm({
     [recentStoreIds, storeById],
   );
 
+  // PR-6c (B6 = (a)): 店舗 select に出す店。membership ゼロ・除外カテゴリ・電気・ガスの店は
+  // 隠す (選んでも一般店舗と同じ結果 / 減額が未モデル)。選択中と直近チップの店、general は残す。
+  // カテゴリ件数・検索件数もこの集合で数える。直近店舗チップ自体は全店舗から引く (storeById)。
+  const pickerStores = useMemo(() => {
+    const ids = visibleStoreIds(stores, memberships, {
+      selectedId: storeId,
+      recentIds: recentStoreIds,
+    });
+    return stores.filter((s) => ids.has(s.id));
+  }, [stores, memberships, storeId, recentStoreIds]);
+  const generalStore = storeById.get(GENERAL_STORE_ID);
+
   // 利用可能なカテゴリ一覧 (件数付き)
   const categoryOptions = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const s of stores) {
+    for (const s of pickerStores) {
       const c = s.category ?? "(未分類)";
       counts.set(c, (counts.get(c) ?? 0) + 1);
     }
     return Array.from(counts.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => a.name.localeCompare(b.name, "ja"));
-  }, [stores]);
+  }, [pickerStores]);
 
   // カテゴリ絞り込み + 文字検索 (AND)。どちらも空ならデフォルトで全件表示
   const filteredStores = useMemo(() => {
     const q = storeSearch.trim().toLowerCase();
-    return stores.filter((s) => {
+    return pickerStores.filter((s) => {
       if (storeCategory) {
         const cat = s.category ?? "(未分類)";
         if (cat !== storeCategory) return false;
@@ -97,7 +120,7 @@ export function CalcStoreForm({
       }
       return true;
     });
-  }, [stores, storeSearch, storeCategory]);
+  }, [pickerStores, storeSearch, storeCategory]);
 
   // 店舗をカテゴリ別にグループ化 (検索フィルタ後)
   const storesByCategory = useMemo(
@@ -155,7 +178,7 @@ export function CalcStoreForm({
             aria-label="カテゴリで絞り込み"
             title="カテゴリで絞り込み"
           >
-            <option value="">全カテゴリ ({stores.length})</option>
+            <option value="">全カテゴリ ({pickerStores.length})</option>
             {categoryOptions.map((c) => (
               <option key={c.name} value={c.name}>
                 {c.name} ({c.count})
@@ -192,6 +215,20 @@ export function CalcStoreForm({
           )}
         </span>
       </label>
+      {/* PR-6c (U3): 一覧に無い店 (picker から隠した店を含む) は一般店舗で比較できる案内。
+          店名部分のタップで一般店舗を選ぶ。一般店舗を選んでいるときは出さない。 */}
+      {generalStore && storeId !== GENERAL_STORE_ID && (
+        <p className="store-general-hint">
+          一覧に無い店は
+          <button
+            type="button"
+            onClick={() => selectStore(GENERAL_STORE_ID)}
+          >
+            「{generalStore.name}」
+          </button>
+          を選ぶと、カードの基本還元率で比較できます
+        </p>
+      )}
       <label>
         金額:
         <input

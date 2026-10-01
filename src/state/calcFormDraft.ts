@@ -13,6 +13,8 @@
 //   sessionStorage は Android PWA の kill で消えるため不採用 (設計確定事項)。
 //   全 API は try/catch で quota / parse エラーを握りつぶし、下書きのために本体を壊さない。
 
+import { YEN_TARGET_ID } from "../domain/yenValue";
+
 // persist スキーマとは混ぜない独立キー (冒頭コメント参照)。
 const STORAGE_KEY = "pointmax:calc-form:v1";
 
@@ -138,14 +140,15 @@ export function resolveCalcFormRestore(
 
 /**
  * PR-6a-1 (G19): 計算画面マウント時の既定通貨タブ。
- *   同日の下書き (resolveCalcFormRestore で優先通貨外は null 化済み) → 優先通貨の先頭 → ""。
- *   "" は「未選択」= 優先通貨が未設定の人は従来どおり目標通貨 select で選ぶ。
+ *   同日の下書き (resolveCalcFormRestore で優先通貨外は null 化済み) → 優先通貨の先頭 →
+ *   ¥ 円換算 (YEN_TARGET_ID、PR-6b)。
  *   v6.2.0 (decb694) で preferred[0] への既定が失われた回帰の復旧。
- *   末尾を ¥ 円換算 (YEN_TARGET_ID) に広げるのは 6b の担当 (要エントリー表示の移植と同時)。
+ *   PR-6b: 優先通貨が未設定の人は円換算ビューで起動する (円換算ビューにも要エントリー等の
+ *   警告チップを移植したので、警告ゼロの『≈ N 円』だけが既定ビューに出ることはない)。
  */
 export function resolveInitialCurrencyId(
   restoredId: string | null,
   preferredCurrencyIds: readonly string[],
 ): string {
-  return restoredId ?? preferredCurrencyIds[0] ?? "";
+  return restoredId ?? preferredCurrencyIds[0] ?? YEN_TARGET_ID;
 }

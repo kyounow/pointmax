@@ -30,6 +30,7 @@ function makeRanking(over: Partial<CardRanking> = {}): CardRanking {
     loyalties: [],
     totalFinalAmount: 50,
     minUnitAnnotations: [],
+    adoptedProgramIds: [],
     ...over,
   };
 }

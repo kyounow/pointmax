@@ -20,20 +20,19 @@
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { load as parseYaml } from "js-yaml";
 import { seed, SEED_VERSION } from "../../src/state/seed";
 import type {
   AddRecordProposal,
   ExtractedSource,
   Proposal,
   ProposalReport,
-  RegistryFile,
   RegistrySource,
 } from "./types";
 import { computeProposalId, isApplicableProposal } from "./types";
 import { hasFailureNotePrefix } from "./fetch-response";
 import { countExtractedItems } from "./fetch-outcome";
 import {
+  guardMembershipContent,
   proposeCards,
   proposeExpiredCampaignDeletions,
   proposeJalTokuyakuMemberships,
@@ -44,6 +43,16 @@ import {
 } from "./propose-helpers";
 import { resolveCardId, resolveStoreId } from "./aliases";
 import { isChainLikeStore } from "./chain-store-detection";
+import {
+  applySourcePolicies,
+  autoMergeDisabledSourceIds,
+  loadRegistryPolicy,
+} from "./registry-policy";
+import {
+  loadRateWatchFile,
+  loadWatchedSubjects,
+  type WatchedSubjects,
+} from "./rate-watch";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 
 // 再エクスポート (テスト互換性のため diff-and-propose 経由で参照される旧APIを温存)
@@ -65,7 +74,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
 const EXTRACTED_DIR = resolve(REPO_ROOT, "sources/extracted");
 const OUTPUT_PATH = resolve(REPO_ROOT, "sources/proposed-migrations.json");
-const REGISTRY_PATH = resolve(REPO_ROOT, "sources/registry.yaml");
+// registry.yaml の読み込みは registry-policy.ts の loadRegistryPolicy (fail-closed) の 1 か所だけ
+// (Phase 0′ の enabled フィルタ / Phase 1 の target / B″・C″ の autoMerge / C3 の extractorVersions)。
 
 const DEFAULT_CAP_PER_CATEGORY = 5;
 
@@ -126,22 +136,14 @@ export function isFailedExtraction(d: ExtractedSource): boolean {
 }
 
 // ───────────────────────────────────────────────────────────────
-// Registry enabled フィルタ (Z6)
+// Registry enabled フィルタ (Z6、Phase 0′)
 // ───────────────────────────────────────────────────────────────
 // readExtractedSources は extracted/*.json を registry と無関係に全部読む。停止 (enabled:false) した
 // ソースや registry から消えたソースの残骸が propose の入力に残らないよう、registry で絞る。
+// registry は main の loadRegistryPolicy() (registry-policy.ts、fail-closed) が読んだ `sources` を渡す
+// (読めなければ throw → exit 1 なので、registry 無しで全件素通りになることは無い)。
 // 停止ソースの再開検証は SYNC_INCLUDE_SOURCES=<id>[,<id>...] で disabled でも含められる
 // (fetch-source --allow-disabled と組で使う)。
-
-/** registry.yaml の sources を読む。読めない・形式不正なら throw (全件素通りを避ける)。 */
-export function loadRegistrySources(registryPath: string = REGISTRY_PATH): RegistrySource[] {
-  const text = readFileSync(registryPath, "utf-8");
-  const data = parseYaml(text) as RegistryFile | undefined;
-  if (!data || !Array.isArray(data.sources)) {
-    throw new Error(`registry.yaml の形式が不正 (sources[] が無い): ${registryPath}`);
-  }
-  return data.sources;
-}
 
 /** SYNC_INCLUDE_SOURCES (カンマ区切り) → id 集合。空白は無視。 */
 export function parseIncludeSources(raw?: string): Set<string> {
@@ -158,6 +160,10 @@ export type RegistryFilterSkip = {
   reason: "unregistered" | "disabled";
 };
 
+/**
+ * enabled のソース (と includeIds) の extracted だけを残す。enabled の判定は `enabled === true`
+ * (registry-policy の enabledIds と同じ。"true" 文字列などの不正値は無効扱い = 安全側)。
+ */
 export function filterExtractedByRegistry<T extends Pick<ExtractedSource, "sourceId">>(
   extracted: T[],
   sources: readonly Pick<RegistrySource, "id" | "enabled">[],
@@ -170,7 +176,7 @@ export function filterExtractedByRegistry<T extends Pick<ExtractedSource, "sourc
     const s = byId.get(ex.sourceId);
     if (!s) {
       skipped.push({ sourceId: ex.sourceId, reason: "unregistered" });
-    } else if (!s.enabled && !includeIds.has(ex.sourceId)) {
+    } else if (s.enabled !== true && !includeIds.has(ex.sourceId)) {
       skipped.push({ sourceId: ex.sourceId, reason: "disabled" });
     } else {
       kept.push(ex);
@@ -186,6 +192,11 @@ export function filterExtractedByRegistry<T extends Pick<ExtractedSource, "sourc
 // propose にかかり続けることがある。fetchedAt が 14 日を超えたソース由来の
 // PROGRAM_OVERRIDES 行き updateField は、既存の staleExtractGeneration で review に回す
 // (ReviewReason は増やさない)。ログのみ (::warning:: は出さない。毎 run のノイズになるため)。
+// main の Phase C3 で、promptVersion 不一致 (detectStaleExtractSources) との和集合を
+// guardStaleExtractGeneration に渡す。基準時刻は main の `now` (Phase 2 の期限切れ判定と同じ)。
+// 閾値 14 日は cron 2 周期 (月・木で 3〜4 日間隔 × 週 2) とちょうど同じ。2 回続けて取得できなかった
+// ソースは、月曜は cron の遅延 (実測 2h〜2h40m) で判定がぶれ、木曜 (17 日) は必ず stale になる。
+// 影響は rate / 期間の updateField が 1 run 分 auto か review かだけ (addRecord は対象外)。
 
 export const EXTRACT_MAX_AGE_DAYS = 14;
 
@@ -364,10 +375,16 @@ export function applyCategoryCap(
 //
 // (a) は store 単独抽出を排除 (= 注目度の高い store だけ通す)、(b) は明確な
 // チェーン業態のみ通す。両方満たすときのみ storeAdditionsDisabled を解除。
+//
+// PR-0b-3: ignoreProgramSourceIds (registry で autoMerge:false のソース) の program は (a) の campaign
+// 参照として数えない。chain-promote は参照元 program の reviewReason を見ないため、除外しないと
+// autoMerge:false のソースが出したキャンペーンが、他ソースの提案した店を auto に戻し得る
+// (Phase B″ は store 提案自身の sourceId しか見ないので、それだけでは取りこぼす)。
 
 export function promoteChainStoreAutoMerge(
   proposals: Proposal[],
   current: SeedShape,
+  ignoreProgramSourceIds: ReadonlySet<string> = new Set(),
 ): { proposals: Proposal[]; promoted: number } {
   // 同 run の campaign 系 (validTo 持ち) program の id を集計。
   // 注意: proposePrograms は新規 program に必ず idCollision を付けるため、
@@ -382,6 +399,7 @@ export function promoteChainStoreAutoMerge(
     const rec = (p as AddRecordProposal).record;
 
     if (p.collection === "programs") {
+      if (ignoreProgramSourceIds.has(p.sourceId)) continue; // autoMerge:false ソースの campaign は数えない
       const id = typeof rec.id === "string" ? rec.id : null;
       const validTo = typeof rec.validTo === "string" ? rec.validTo : null;
       // campaign 系 program = 終了日を持つ
@@ -618,29 +636,11 @@ export type StaleSourceInfo = {
   currentVersion: string;
 };
 
-/** registry.yaml から extractorVersions を読む (string 正規化)。読めなければ {}。 */
-export function loadExtractorVersions(
-  registryPath: string = REGISTRY_PATH,
-): Partial<Record<string, string>> {
-  try {
-    const text = readFileSync(registryPath, "utf-8");
-    const data = parseYaml(text) as RegistryFile | undefined;
-    const ev = data?.extractorVersions;
-    if (!ev || typeof ev !== "object") return {};
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(ev)) {
-      // YAML が number 化した版数 (例: 3.5) の保険で String 化
-      if (v != null) out[k] = String(v);
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
 /**
  * extracted の promptVersion が registry の現行 extractor 版と不一致 (旧世代キャッシュ)
  * な source を { extracted 版, 現行版 } 付きで返す。
+ * extractorVersions は main が loadRegistryPolicy().extractorVersions (String 化済み) を渡す
+ * (main 追従 2026-10-01 で旧 loadExtractorVersions を廃止し、registry の読み込みを 1 回にした)。
  * - registry に当該 extractor の版数が未定義 → gate skip (map に入れない)
  * - promptVersion 欠落 → "(none)" として不一致扱い (安全側)
  *   (古い extracted ファイルでは欠落し得るので、引数型でも optional にしている)
@@ -670,6 +670,8 @@ export function detectStaleExtractSources(
  * (rate/validFrom/validTo) で、現状 auto (reviewReason 無し) のものを
  * staleExtractGeneration で needsReview に降格する。
  * addRecord / 既に review 行き / 非 PROGRAM_OVERRIDES 経路は据え置き。
+ * 例外: sourceAutoMergeDisabled (Phase B″ で先に付く「ほかのガードは通過済み」の印) は上書きする
+ * (PR-0b-3。旧世代の書き戻しが「ガード通過済み」に見えて普通に承認されるのを防ぐ)。
  * guardedBySource は source ごとの降格件数 (ログ用)。
  */
 export function guardStaleExtractGeneration(
@@ -679,7 +681,8 @@ export function guardStaleExtractGeneration(
   const guardedBySource = new Map<string, number>();
   const out: Proposal[] = proposals.map((p) => {
     if (p.type !== "updateField") return p; // addRecord/delete/referenceChange は対象外
-    if (p.reviewReason) return p; // 既に別理由で review 行き
+    // 既に別理由で review 行き (sourceAutoMergeDisabled だけは stale の方が具体的なので上書き)
+    if (p.reviewReason && p.reviewReason !== "sourceAutoMergeDisabled") return p;
     if (!isApplicableProposal(p)) return p; // PROGRAM_OVERRIDES 行き (rate/validFrom/validTo) のみ
     if (!staleSourceIds.has(p.sourceId)) return p;
     guardedBySource.set(p.sourceId, (guardedBySource.get(p.sourceId) ?? 0) + 1);
@@ -689,26 +692,85 @@ export function guardStaleExtractGeneration(
 }
 
 // ───────────────────────────────────────────────────────────────
+// Rate-watch guard (Phase C5、PR-5c-1)
+// ───────────────────────────────────────────────────────────────
+// sources/rate-watch.yaml (率カナリア) で監視中の subject は、seedRateAtCuration = seed の率 という契約
+// (scripts/sync/rate-watch.test.ts) を持つ。cron の auto 変更でその率が動くと、apply 後の safety gate
+// (npm test) で契約が落ち、その run の auto が全件 safetyFailed で降格する (#142 / #143 と同じ形)。
+// そこで次の 4 経路を rateWatched で review に回す (取り込むのは seed の手修正 + yaml 更新の人手 PR):
+//   (1) updateField / programs : 監視 program (membership subject の program を含む。membership の率は
+//                                overrideRate ?? program.rate なので program の率が動くと契約が落ちる)
+//   (2) delete / programs      : 同上 (cascade で監視 membership も消える)
+//   (3) delete / memberships   : 監視 membership (C3 以降の tierMove 系の削除提案への防御)
+//   (4) updateField / cards    : 監視 card (apply 経路は無いが、SYNC_HISTORY に偽の auto が残るのを防ぐ)
+// reviewReason 未設定のものだけが対象。例外: sourceAutoMergeDisabled (「ほかのガードは通過済み」の印) は
+// 上書きする (stale ガードと同じく具体的な reason を優先)。rate-watch.yaml が無ければ watched が空 = no-op。
+
+export function guardRateWatched(
+  proposals: Proposal[],
+  watched: WatchedSubjects,
+): { proposals: Proposal[]; guarded: number } {
+  let guarded = 0;
+  const out: Proposal[] = proposals.map((p) => {
+    if (p.reviewReason && p.reviewReason !== "sourceAutoMergeDisabled") return p;
+    let by: string | undefined;
+    if (p.type === "updateField" || p.type === "delete") {
+      if (p.collection === "programs") by = watched.programIds.get(p.id);
+      else if (p.type === "delete" && p.collection === "memberships") by = watched.membershipIds.get(p.id);
+      else if (p.type === "updateField" && p.collection === "cards") by = watched.cardIds.get(p.id);
+    }
+    if (by === undefined) return p;
+    guarded += 1;
+    return {
+      ...p,
+      reviewReason: "rateWatched",
+      reviewDetail: `sources/rate-watch.yaml の ${by} が監視中`,
+    } as Proposal;
+  });
+  return { proposals: out, guarded };
+}
+
+// ───────────────────────────────────────────────────────────────
 // Main
 // ───────────────────────────────────────────────────────────────
 
 // ─── Sync pipeline phase 一覧 (実行順、Wave 3 C-3 audit-fix で可視化) ───
-//   Phase 0  : extracted/*.json 読み込み + alias 正規化
-//   Phase 0' : registry の enabled フィルタ (filterExtractedByRegistry、SYNC_INCLUDE_SOURCES で disabled を含める)
-//   Phase 1  : 各エンティティの propose* (stores / cards / programs / memberships 等)
+//   Phase 0  : extracted/*.json 読み込み + registry 読み込み (loadRegistryPolicy、fail-closed) + rate-watch.yaml
+//   Phase 0′ : registry の enabled フィルタ (filterExtractedByRegistry に loadRegistryPolicy().sources を渡す。
+//              enabled === true のソースだけ残し、SYNC_INCLUDE_SOURCES で disabled を含める、PR-0b-2)。
+//              Phase 1 と C3 はフィルタ後の extracted を使う
+//   Phase 1  : 各エンティティの propose* (stores / cards / programs / memberships 等。alias 正規化はここ)
 //              isFailedExtraction (`[fetch-failed:` prefix / vUnknown かつ 0 件 / 旧正規表現かつ 0 件) は skip
 //   Phase 2  : 期限切れ campaign の自動削除提案 (proposeExpiredCampaignDeletions)
 //   Phase A  : 同 run 重複の dedup (dedupeAcrossProposals) ─ 2 件目以降 idCollision
 //   Phase B  : Category cap (applyCategoryCap) ─ 飲食 5/cat 等で deferred
 //   Phase B' : Chain-store auto-merge promote (promoteChainStoreAutoMerge)
 //              ─ storeAdditionsDisabled を campaign 参照 + チェーン判定で部分解除 (C-9)
+//                autoMerge:false ソースの program は campaign 参照に数えない (PR-0b-3)
+//   Phase B″ : Source policy guard 1 段目 (applySourcePolicies、registry-policy.ts、memberships 以外)
+//              ─ registry で autoMerge:false のソース由来の auto 候補を sourceAutoMergeDisabled で降格 (PR-0b-3)
+//                不変条件: B″ は常に C の前 (降格した store / program を参照する membership を C が拾う)
 //   Phase C  : Orphan membership guard (downgradeOrphanMemberships)
 //              ─ store / program 本体が auto に無い membership を降格
+//   Phase C′ : Membership content guard (guardMembershipContent、propose-helpers.ts、PR-0b-3)
+//              ─ reviewReason の無い新規 membership の店名照合 (storeNameMismatch) と条件文言
+//                (campaignConditional)。実効チャネル online の program (たまる系) は EC 語を免除
+//   Phase C″ : Source policy guard 2 段目 (applySourcePolicies、memberships のみ、PR-0b-3)
+//              ─ C / C′ を通過した autoMerge:false ソースの membership を sourceAutoMergeDisabled で降格。
+//                B″ で先に付けると C / C′ の reason (missing*Body / storeNameMismatch 等) が隠れるため C′ の後。
+//                C2 の前に置く (降格した membership を C2 が数えないように)
 //   Phase C2 : Program/membership atomicity guard (demoteChildlessMemberStorePrograms)
-//              ─ Phase C で membership が全て降格した member-stores program 単独を降格
+//              ─ Phase C / C′ / C″ で membership が全て降格した member-stores program 単独を降格
 //   Phase C3 : Stale extract generation guard (guardStaleExtractGeneration)
-//              ─ 旧世代 extracted (promptVersion 不一致) または fetchedAt が 14 日超の extracted
-//                由来の PROGRAM_OVERRIDES 行き updateField を staleExtractGeneration で降格 (書き戻し防止)
+//              ─ 旧世代 extracted (promptVersion 不一致、registry.extractorVersions と比較) または fetchedAt が
+//                14 日超 (main の now 基準、PR-0b-2 の鮮度ガード) の extracted 由来の PROGRAM_OVERRIDES 行き
+//                updateField を staleExtractGeneration で降格 (書き戻し防止)。B″ の sourceAutoMergeDisabled は上書き
+//   (Phase C4 は PR-1 の detectionOnly 用に空けてある)
+//   Phase C5 : Rate-watch guard (guardRateWatched、PR-5c-1)
+//              ─ sources/rate-watch.yaml で監視中の program (membership の program を含む) の updateField・delete、
+//                membership の delete、card の updateField を rateWatched で降格 (率カナリアの契約を safety gate で
+//                壊さない)。yaml が無ければ no-op、壊れていれば main の冒頭で throw (fail-closed)。B″ の
+//                sourceAutoMergeDisabled は上書き
 //   Phase D  : auto / needsReview 振り分け + report 書き出し
 // Phase ラベルは log メッセージにも反映済 (🧯 = guard, 📐 = cap, 🔁 = dedup, 🧹 = expired, 🔓 = chain-promote)。
 
@@ -717,11 +779,17 @@ function main(): void {
   const loaded = readExtractedSources();
   console.log(`   loaded: ${loaded.length} file(s)`);
 
-  // Phase 0': registry の enabled フィルタ (停止ソース・未登録ソースの残骸を入力にしない)
+  // registry のソース別ポリシー (target / autoMerge) と sources / extractorVersions。registry.yaml を読むのは
+  // ここ 1 回だけ。fail-closed: 読めなければ throw → exit 1
+  // (黙って空にすると autoMerge:false のソースが auto に戻り、Phase 0′ のフィルタも素通りになるため)。
+  const registry = loadRegistryPolicy();
+
+  // Phase 0′: registry の enabled フィルタ (停止ソース・未登録ソースの残骸を入力にしない)。
+  //   enabled の判定は enabled === true (registry.enabledIds と同じ)。Phase 1 と C3 はフィルタ後を使う。
   const includeIds = parseIncludeSources(process.env.SYNC_INCLUDE_SOURCES);
   const { kept: extracted, skipped: registrySkipped } = filterExtractedByRegistry(
     loaded,
-    loadRegistrySources(),
+    registry.sources,
     includeIds,
   );
   console.log(
@@ -736,6 +804,12 @@ function main(): void {
       console.log(`   ⚠️ SYNC_INCLUDE_SOURCES の ${id} は extracted/${id}.json が無いため skip`);
     }
   }
+
+  // 率カナリアの監視リスト (PR-5c-1)。無ければ null (Phase C5 は no-op)、壊れていれば throw → exit 1
+  // (黙って空にすると監視中の率が auto で動き、rate-watch の契約が safety gate で落ちるため)。
+  const rateWatch = loadRateWatchFile();
+  // campaign の期限判定・期限切れ整理・C3 の fetchedAt 鮮度ガードの基準時刻を 1 回だけ作る (PR-0b-3 / PR-0b-2)
+  const now = new Date();
 
   const current = seed();
   const allProposals: Proposal[] = [];
@@ -756,7 +830,13 @@ function main(): void {
     allProposals.push(...proposeCards(data, current));
     // v6 PR-1e: 抽出 loyaltyRules は propose では無視 (LoyaltyRule 廃止)。
     allProposals.push(...proposePaymentApps(data, current));
-    allProposals.push(...proposePrograms(data, current));
+    // PR-0b-3: registry の target 宣言があれば targetMismatch を判定する
+    allProposals.push(
+      ...proposePrograms(data, current, {
+        now,
+        policy: registry.policies.get(data.sourceId),
+      }),
+    );
     allProposals.push(...proposeMemberships(data, current));
     allProposals.push(...proposeJalTokuyakuMemberships(data, current));
   }
@@ -777,7 +857,7 @@ function main(): void {
   }
   const expiredProposals = proposeExpiredCampaignDeletions(
     current,
-    undefined,
+    now,
     undefined,
     extendedProgramIds,
   );
@@ -828,13 +908,28 @@ function main(): void {
   // Phase B': Chain-store auto-merge promote (C-9 audit-fix、PR #56 部分解除)
   //   storeAdditionsDisabled の店舗のうち、同 run の campaign program に
   //   membership 参照されていて、かつチェーン名/業態を満たすものを auto に復帰。
-  const chainPromote = promoteChainStoreAutoMerge(finalProposals, current);
+  //   autoMerge:false のソースの program は campaign 参照に数えない (PR-0b-3)。
+  const chainPromote = promoteChainStoreAutoMerge(
+    finalProposals,
+    current,
+    autoMergeDisabledSourceIds(registry.policies),
+  );
   finalProposals = chainPromote.proposals;
   if (chainPromote.promoted > 0) {
     console.log(
       `🔓 chain-promote: ${chainPromote.promoted} 件の新規 chain store を auto-merge に復帰`,
     );
   }
+
+  // Phase B″: Source policy guard 1 段目 (PR-0b-3)
+  //   registry で autoMerge:false のソース由来の auto 候補を sourceAutoMergeDisabled で降格する
+  //   (stores / programs / updateField 等。expired-cleanup は registry に無いので素通り)。
+  //   Phase C の直前に置く (ここで降格した store / program を参照する membership を C が拾う)。
+  //   membership は C / C′ の具体的な reason を隠さないよう、ここでは外して Phase C″ で降格する。
+  const sourcePolicy = applySourcePolicies(finalProposals, registry.policies, {
+    excludeCollections: ["memberships"],
+  });
+  finalProposals = sourcePolicy.proposals;
 
   // Phase C: Orphan membership guard
   //   store / program 本体が auto に居ない場合は降格。category cap で deferred
@@ -855,6 +950,39 @@ function main(): void {
     if (orphan.downgradedProgram > 0)
       parts.push(`${orphan.downgradedProgram} 件を missingProgramBody`);
     console.log(`🧯 orphan guard: ${parts.join(" / ")} で降格`);
+  }
+
+  // Phase C′: Membership content guard (PR-0b-3)
+  //   reviewReason の無い新規 membership に、店名照合 (storeNameMismatch) と条件文言 (campaignConditional) を
+  //   当てる。実効チャネルが online の program (たまる系) は EC 語を免除。C2 の前に置く (ここで membership が
+  //   全て降格した同 run の新規 member-stores program を C2 が orphanedProgram で拾う)。
+  const membershipGuard = guardMembershipContent(finalProposals, current);
+  finalProposals = membershipGuard.proposals;
+  if (membershipGuard.demotedStoreName + membershipGuard.demotedWording > 0) {
+    console.log(
+      `🧯 membership content guard: ${membershipGuard.demotedStoreName + membershipGuard.demotedWording} 件` +
+        ` (storeNameMismatch ${membershipGuard.demotedStoreName} / campaignConditional ${membershipGuard.demotedWording})`,
+    );
+  }
+
+  // Phase C″: Source policy guard 2 段目 (membership、PR-0b-3)
+  //   C (orphan) と C′ (店名照合・条件文言) を通過した autoMerge:false ソースの membership だけを
+  //   sourceAutoMergeDisabled にする (= この reason は「ほかのガードは通過済み」を保つ)。C2 の前に置く
+  //   (ここで降格した membership を C2 が数えず、参照先の新規 member-stores program を orphanedProgram で拾う)。
+  const sourcePolicyMemberships = applySourcePolicies(finalProposals, registry.policies, {
+    onlyCollections: ["memberships"],
+  });
+  finalProposals = sourcePolicyMemberships.proposals;
+  const sourcePolicyDemoted = new Map(sourcePolicy.demotedBySource);
+  for (const [src, c] of sourcePolicyMemberships.demotedBySource) {
+    sourcePolicyDemoted.set(src, (sourcePolicyDemoted.get(src) ?? 0) + c);
+  }
+  if (sourcePolicyDemoted.size > 0) {
+    const n = [...sourcePolicyDemoted.values()].reduce((s, v) => s + v, 0);
+    const by = [...sourcePolicyDemoted.entries()]
+      .map(([src, c]) => `${src}=${c}`)
+      .join(", ");
+    console.log(`🧯 source-policy guard: ${n} 件 (source=${by})`);
   }
 
   // Phase C2: Program/membership atomicity guard (原子性ガード)
@@ -879,13 +1007,15 @@ function main(): void {
   //   rate 差分を書き戻し提案として出すのを防ぐ。当該 source の promptVersion が
   //   registry の現行 extractor 版と不一致なら、PROGRAM_OVERRIDES 行きの updateField
   //   (rate/validFrom/validTo) を auto にせず staleExtractGeneration で review 降格。
-  //   加えて fetchedAt 鮮度ガード (Z6): fetchedAt が 14 日を超えた (keep-last-good / 取得停止で
+  //   加えて fetchedAt 鮮度ガード (Z6、PR-0b-2): fetchedAt が 14 日を超えた (keep-last-good / 取得停止で
   //   古いまま残った) extracted 由来の同じ updateField も staleExtractGeneration で降格。ログのみ。
+  //   stale 集合 = promptVersion 不一致 ∪ fetchedAt 超過。基準時刻は Phase 2 と同じ now。
+  //   extractorVersions は loadRegistryPolicy の値 (registry.yaml を読み直さない)。
   const staleSources = detectStaleExtractSources(
     extracted,
-    loadExtractorVersions(),
+    registry.extractorVersions,
   );
-  const staleFetched = detectStaleFetchedAt(extracted, new Date());
+  const staleFetched = detectStaleFetchedAt(extracted, now);
   for (const [src, info] of staleFetched) {
     console.log(
       `🧯 fetchedAt 鮮度ガード: ${src} (fetchedAt ${info.fetchedAt}, ${
@@ -908,6 +1038,16 @@ function main(): void {
       .join(" / ");
     console.log(`🧯 stale-generation guard: ${n} 件 (source=${src}, ${why})`);
   }
+
+  // Phase C5: Rate-watch guard (PR-5c-1。C4 は PR-1 の detectionOnly 用に空けてある)
+  //   sources/rate-watch.yaml で監視中の率への updateField / delete を rateWatched で review に回す。
+  //   0 件でも毎回ログを出す (cron ログで guard が動いたことを確認するため)。
+  const rateGuard = guardRateWatched(finalProposals, loadWatchedSubjects(rateWatch));
+  finalProposals = rateGuard.proposals;
+  console.log(
+    `🧯 rate-watch guard: ${rateGuard.guarded} 件` +
+      (rateWatch ? "" : " (sources/rate-watch.yaml が無いので no-op)"),
+  );
 
   const autoApplicable: Proposal[] = [];
   const needsReview: Proposal[] = [];

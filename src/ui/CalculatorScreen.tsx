@@ -22,9 +22,11 @@ import { findBestPurchaseDay } from "../domain/bestPurchaseDay";
 import { byId } from "../domain/entityIndex";
 import { useNameResolvers } from "./hooks/useNameResolvers";
 import { isMasterCard } from "../state/seed";
+import { membershipId } from "../state/defineMemberships";
 import { CardComparisonSection } from "./CardComparisonSection";
 import { useToday } from "./hooks/useToday";
 import { BannerSlot } from "./calculator/BannerSlot";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { CalcStoreForm } from "./calculator/CalcStoreForm";
 import { CalcCurrencyTabs } from "./calculator/CalcCurrencyTabs";
 import { CalcLoyaltyBanner } from "./calculator/CalcLoyaltyBanner";
@@ -33,7 +35,12 @@ import { CalcResultCard } from "./calculator/CalcResultCard";
 import { CalcBestDayHint } from "./calculator/CalcBestDayHint";
 import { CalcYenResults } from "./calculator/CalcYenResults";
 import { OnboardingChecklist } from "./calculator/OnboardingChecklist";
-import { isYenTarget, makeYenValueResolver } from "../domain/yenValue";
+import {
+  isYenTarget,
+  makeYenValueResolver,
+  sortRankingsInYen,
+} from "../domain/yenValue";
+import { cardLabel } from "../domain/cardLabel";
 import {
   isOnboardingDismissed,
   dismissOnboarding,
@@ -96,8 +103,9 @@ export function CalculatorScreen() {
   const [storeCategory, setStoreCategory] = useState(""); // "" = 全カテゴリ
   const [amount, setAmount] = useState(restored.amount ?? "10000");
   // activeCurrencyId = 現在表示中の対象通貨 (= 通貨タブの選択中タブ)。
-  // マウント時は「同日の下書き (PR-3d、優先通貨に現存する id のみ) ?? 優先通貨の先頭 ?? ""」
-  // (PR-6a-1 / G19: v6.2.0 で失われた先頭タブ既定の復旧)。"" = 優先通貨未設定で select から選ぶ。
+  // マウント時は「同日の下書き (PR-3d、優先通貨に現存する id のみ) ?? 優先通貨の先頭 ?? ¥ 円換算」
+  // (PR-6a-1 / G19: v6.2.0 で失われた先頭タブ既定の復旧。PR-6b: 優先通貨が未設定の人は円換算
+  // ビューで起動し、目標通貨 select を選ばなくても結果が出る)。
   // 以後の preferred 変化への追従は下の prevPreferred ガードが担う。
   const [activeCurrencyId, setActiveCurrencyId] = useState(() =>
     resolveInitialCurrencyId(restored.activeCurrencyId, preferredCurrencyIds),
@@ -127,6 +135,14 @@ export function CalculatorScreen() {
   const currencyById = useMemo(() => byId(currencies), [currencies]);
   const programById = useMemo(() => byId(programs), [programs]);
   const paymentAppById = useMemo(() => byId(paymentApps), [paymentApps]);
+  // PR-0a-2b (M3): 結果カードの条件チップに店別の membership.notes を合流させるための lookup
+  // (id 規約 m-{programId}-{storeId} で現在の店舗の membership を引く)。
+  const membershipById = useMemo(() => byId(memberships), [memberships]);
+  const membershipOf = useCallback(
+    (programId: string) =>
+      membershipById.get(membershipId(programId, storeId)),
+    [membershipById, storeId],
+  );
 
   // PR-2: 現在の店舗で除外中の (店舗 × 決済) レコード。対象外グループの復帰チップに使う。
   const excludedForStore = useMemo(
@@ -211,12 +227,14 @@ export function CalculatorScreen() {
   // result が非 null (= storeId/activeCurrency/amount が揃い ranking 算出済) のときだけ記録。
   // 同一 (store, 通貨) ペアの連続記録 (金額変更等の再計算) は usageStats 側の
   // last-pair ガードで抑止されるため、ここでは result 参照の変化を起点にするだけでよい。
+  // PR-6b: 円換算モード (通貨 id = 仮想ターゲット __yen__) でも記録する。直近店舗チップ
+  // (getRecentStoreIds) は calcEvents から作るため、円換算が既定の人 (優先通貨未設定) でも
+  // チップが育つようにする (通貨 id は統計の表示に使っていない)。
   useEffect(() => {
-    // PR-5a: 円換算モードの仮想ターゲット (__yen__) は実通貨ではないので統計に記録しない。
-    if (result && storeId && activeCurrencyId && !yenMode) {
+    if (result && storeId && activeCurrencyId) {
       recordCalcEvent(storeId, activeCurrencyId);
     }
-  }, [result, storeId, activeCurrencyId, yenMode]);
+  }, [result, storeId, activeCurrencyId]);
 
   // PR-3d (UX-6): 同日内復元用に、金額 / 優先通貨タブ / 店舗の変更を独立キーへ書き出す。
   // effect でまとめ書きするので、入力中の連続変更も commit ごとに 1 回に集約される
@@ -379,6 +397,16 @@ export function CalculatorScreen() {
     [result],
   );
 
+  // PR-U5: 結果サマリの読み上げ文 (aria-live)。「結果 N 件。1 位は {カード}」(量は各結果の行で読む)。
+  // 円換算モードの #1 は円換算ビューと同じ並び (sortRankingsInYen) で決める。
+  const liveSummary = useMemo(() => {
+    if (!hasHeldCards || !result?.length) return "";
+    const top = yenMode
+      ? sortRankingsInYen(result, yenValueOf).find((x) => x.v.reachable)?.r
+      : result.find((x) => x.reachable);
+    return `結果 ${result.length} 件${top ? `。1 位は ${cardLabel(top.card)}` : ""}`;
+  }, [hasHeldCards, result, yenMode, yenValueOf]);
+
   // マウント時と入力が変わるたびに、同率 1 位の reachable カード全部を展開状態にリセット
   // (totalFinalAmount が最上位値と等しい全カード = displayRank 1 の集合)。
   // render 中 guard で実装 (effect 内 setState を避ける React 公認パターン)。
@@ -432,21 +460,28 @@ export function CalculatorScreen() {
 
       {/* PR-3a (N-1) + PR-3c (ONB-1): 通知系バナーは常時 1 枚まで。優先度
           onboarding > update(SEED_VERSION) > today を BannerSlot が判定する。
-          onboardingActive 時は通知枠を抑制し、枠に 2 ステップチェックリストを描画する。 */}
-      <BannerSlot
-        onboardingActive={onboardingActive}
-        onboarding={
-          <OnboardingChecklist
-            step1Done={step1Done}
-            step2Done={step2Done}
-            onClose={closeOnboarding}
+          onboardingActive 時は通知枠を抑制し、枠に 2 ステップチェックリストを描画する。
+          PR-6d (U6): 通知枠は任意 UI。更新バナー / 自動反映バナー / オンボーディング枠の例外で
+          計算画面ごと落とさないよう、非表示に縮退する境界で包む。
+          PR-U5: 通知枠は常設の aria-live="polite" 領域 (中身が入れ替わったら読み上げる)。 */}
+      <div aria-live="polite">
+        <ErrorBoundary scopeName="BannerSlot" fallback={() => null}>
+          <BannerSlot
+            onboardingActive={onboardingActive}
+            onboarding={
+              <OnboardingChecklist
+                step1Done={step1Done}
+                step2Done={step2Done}
+                onClose={closeOnboarding}
+              />
+            }
+            programs={programs}
+            now={today}
+            todayOpen={todayBreakdownOpen}
+            onToggleToday={() => setTodayBreakdownOpen((v) => !v)}
           />
-        }
-        programs={programs}
-        now={today}
-        todayOpen={todayBreakdownOpen}
-        onToggleToday={() => setTodayBreakdownOpen((v) => !v)}
-      />
+        </ErrorBoundary>
+      </div>
 
       <CalcStoreForm
         stores={stores}
@@ -463,6 +498,7 @@ export function CalculatorScreen() {
         setActiveCurrencyId={setActiveCurrencyId}
         showCurrencyFallback={preferredCurrencyIds.length === 0}
         recentStoreIds={recentStoreIds}
+        memberships={memberships}
       />
 
       {preferredCurrencyIds.length === 0 ? (
@@ -479,6 +515,11 @@ export function CalculatorScreen() {
           currencyById={currencyById}
         />
       )}
+
+      {/* PR-U5: 結果サマリ (件数 / #1) を支援技術に読み上げる常設の aria-live 領域 (画面には出さない)。 */}
+      <p className="visually-hidden" aria-live="polite" aria-atomic="true">
+        {liveSummary}
+      </p>
 
       {/* 保有 0 枚時 (ONB-1): 実 CTA は上部のオンボーディングチェックリストが受け持つので、
           結果エリアは簡素な 1 行の空メッセージに一本化する。 */}
@@ -549,6 +590,7 @@ export function CalculatorScreen() {
                   canExcludePayment ? onExcludePayment : undefined
                 }
                 now={today}
+                membershipOf={membershipOf}
               />
               {/* REM-#4: ベスト購入日ヒントを #1 カード直下に 1 行チップで出す (結果リスト
                   上部には置かず、店頭フローの視線を塞がない)。円換算モードは bestDay=null で
@@ -601,12 +643,15 @@ export function CalculatorScreen() {
         </div>
       )}
 
-      {/* PR-5a: 円換算 (目安) モードの結果リスト。 */}
+      {/* PR-5a: 円換算 (目安) モードの結果リスト。PR-6b: 通常ビューと同じ警告チップを各行に出す。 */}
       {hasHeldCards && result && yenMode && (
         <CalcYenResults
           rankings={result}
           currencyName={currencyName}
           yenValueOf={yenValueOf}
+          programById={programById}
+          membershipOf={membershipOf}
+          now={today}
         />
       )}
 

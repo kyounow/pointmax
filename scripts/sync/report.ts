@@ -25,6 +25,7 @@ import type {
   UpdateFieldProposal,
 } from "./types";
 import {
+  RISKY_REVIEW_REASONS,
   SYNC_HISTORY_MAX_ENTRIES,
   computeProposalId,
   isApplicableProposal,
@@ -376,7 +377,13 @@ export function buildAutoSummary(report: ProposalReport): string {
 // REVIEW_QUEUE.md generator
 // ───────────────────────────────────────────────────────────────
 
-const REASON_LABELS: Record<ReviewReason, string> = {
+// PR-0b-3: 全額に乗る危険な reason (approve-proposals の RISKY_REVIEW_REASONS) の説明に共通で付ける注意書き。
+const RISKY_APPROVAL_NOTE =
+  "**承認すると record がそのまま全額に乗る** (上限・対象商品・店舗・帰属を record では表現できない)。" +
+  "原則は見送る。取り込むなら手書き seed で上限・限定・帰属を表現する。" +
+  "`npm run sync:approve` で承認するには `--accept-risk` が必要。";
+
+export const REASON_LABELS: Record<ReviewReason, string> = {
   safetyFailed: "🛡 safetyFailed (auto-merge 件数オーバー降格)",
   autoMergeDisabled: "🛡 autoMergeDisabled (auto-merge 無効化で降格)",
   lowConfidence: "🟡 lowConfidence",
@@ -387,6 +394,7 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   idCollision: "🟠 idCollision",
   multiSourceConflict: "🔴 multiSourceConflict",
   excludedCategory: "🟠 excludedCategory",
+  unknownCategory: "🟠 unknownCategory (語彙外カテゴリ)",
   userBlocked: "⚫ userBlocked",
   selfReportedExclusion: "🟠 selfReportedExclusion",
   unsupportedDateClaim: "🔴 unsupportedDateClaim",
@@ -399,10 +407,18 @@ const REASON_LABELS: Record<ReviewReason, string> = {
   expiredCampaign: "🟠 expiredCampaign (期限切れだが同 run で期間変更提案あり、人手判断)",
   periodChange: "🟣 periodChange (キャンペーン期間の変更/延長)",
   staleExtractGeneration: "🧯 staleExtractGeneration (旧世代 / 14 日超の古い extracted による書き戻し)",
+  rateWatched: "🧯 rateWatched (率カナリアで監視中の率・店)",
   pseudoStoreTarget: "🔴 pseudoStoreTarget (規定還元用ダミー store への誤マッピング疑い)",
+  tierMove: "🪜 tierMove (同じ店 × 同じ倍率系列の別倍率)",
+  untargetedProgram: "🔴 untargetedProgram (対象カード / ポイントカード / 決済アプリが無い program)",
+  campaignConditional: "🔴 campaignConditional (条件付きキャンペーン: 最大 / 対象商品 / 店舗限定 等)",
+  campaignRateCeiling: "🔴 campaignRateCeiling (還元率 10% 以上、または 5% 超で上限なし)",
+  targetMismatch: "🔴 targetMismatch (registry の対象宣言と program の帰属が不一致)",
+  sourceAutoMergeDisabled: "🛡 sourceAutoMergeDisabled (autoMerge:false のソース由来)",
+  storeNameMismatch: "🔴 storeNameMismatch (evidence に店名が無い membership)",
 };
 
-const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
+export const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
   safetyFailed:
     "auto-merge 候補だが、件数が maxAutoChangesPerRun を超えたため安全弁で review に降格。" +
     "内容は健全な auto 候補なので、個別精査の上 maxAutoChangesPerRun を一時 bump して再実行 or 手動で取り込み判断。",
@@ -424,7 +440,11 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
   multiSourceConflict:
     "複数ソースで同じフィールドが矛盾している。どちらが正しいか要判断。",
   excludedCategory:
-    "Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル等)。自動追加しない。",
+    "Policy B: 対象外カテゴリ (金融/保険/医療/ギャンブル/サブスクリプション等)。自動追加しない。",
+  unknownCategory:
+    "新規店舗の category が店舗カテゴリの語彙 (`src/state/seed-categories.ts`) に無い、または未設定。語彙外の店は自動追加されない (chain-promote 等の昇格の対象にもならない)。" +
+    "既存語彙の表記揺れなら seed-categories.ts の `EXTRACTED_CATEGORY_ALIASES` に alias を、新しい業態なら `STORE_CATEGORIES` に語彙を足す PR を出す (次回 cron から再判定される)。" +
+    "この項目を `npm run sync:approve` でそのまま承認すると、seed 契約 (store の category は語彙内) で CI が落ちる。取り込むなら category を語彙内に直して手書き seed へ。",
   userBlocked:
     "seed-blocklist.ts でユーザが除外指定済み。意図した除外であれば無視してよい。",
   selfReportedExclusion:
@@ -468,13 +488,96 @@ const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "次回 fetch (新版プロンプト) 後に promptVersion が一致し、従来の閾値判定で再判定される。それまでは無視で OK。" +
     "または extracted の fetchedAt が 14 日を超えている (keep-last-good や取得停止で古い抽出が残っている) 場合もこの理由になる。" +
     "次に取得が成功すれば解消する。",
+  rateWatched:
+    "sources/rate-watch.yaml で監視中の率。取り込むなら seed の手修正と seedRateAtCuration の更新を同じ PR で。" +
+    "率カナリア (npm run sync:rate-watch、0 req) が公式ページの逐語句で照合している program / membership / card への変更 " +
+    "(program の率・期間の updateField と削除、membership の削除、card の updateField)。auto で seed が変わると、" +
+    "rate-watch の契約テスト (seedRateAtCuration = seed の率) が apply 後の safety gate で落ち、その run の auto が全件 safetyFailed になるので自動適用しない。" +
+    "まず `npm run sync:rate-watch -- --only <target id>` か公式ページで実際に変わったかを確かめる。" +
+    "`npm run sync:approve` でそのまま承認すると同じ理由で CI が落ちる。誤抽出なら無視。",
   pseudoStoreTarget:
     "membership/loyaltyRule/program 等が擬似エンティティ (例: \"general\" = 規定還元表示用ダミー store、" +
     "\"pa-default\" = 「通常クレカ決済」基本モード) を指している。" +
     "店舗/決済手段を特定できない項目 (例: 「海外でのお買い物」「クレカ乗車」等) を Gemini が受け皿として誤って汎用エンティティに" +
     "割り当てた疑いが高い (#103 incident と同型)。正しい参照先が特定できるなら手動で修正して取り込み、" +
     "特定できないなら無視 (このまま auto-merge すると規定還元表示 / 最頻決済モードの計算が壊れるため必ず人手判断)。",
+  tierMove:
+    "membership 提案が、同じ店舗 × 同じ倍率系列 (J-POINT W / J-POINT Gold / たまるマーケット) の**別倍率**と重なる " +
+    "(seed に既にある、または同じ run で別倍率も提案されている)。倍率の改定か、受け皿 (例: 高島屋の SC・レストラン街 2 倍を百貨店本体に) の誤りの疑い。" +
+    "承認すると計算は最大値が勝つため、旧 tier が残ると過大表示や死にデータになり、seed の tier 契約テスト " +
+    "(1 店 × 1 系列 × 1 チャネルに membership 1 件) も落ちる。" +
+    "**承認するなら、旧 tier の membership を `src/state/seed-blocklist.ts` の `REMOVED_MEMBERSHIP_IDS` に入れる PR と同時に**。" +
+    "誤抽出なら無視 (次の run でも同じ理由で review に留まる)。",
+  // PR-0b-3 (Z3)。次の 5 種は承認すると record がそのまま全額に乗る (上限・対象商品・店舗・帰属を record では
+  // 表現できない) ため、sync:approve は --accept-risk を要求する。
+  untargetedProgram:
+    "新規 program が対象キー (cardIds / pointCardId / paymentAppId) を 1 つも持たない (cardIds が空配列のものも含む)。" +
+    "対象が無い program はどのカードでも発火しない死にデータになり、seed 契約テストと import 検証 (validators) も通らない。" +
+    RISKY_APPROVAL_NOTE,
+  campaignConditional:
+    "キャンペーンの名前・説明・条件・notes・evidence に条件文言 (最大 / 対象商品 / 一部 / 店舗限定 / 割引・クーポン / 新規・初回 / " +
+    "年齢・学生 / 抽選・先着 / ネット・アプリ経由 等) か、ライフスタイル条件 (給与振込 / 住宅ローン / 投資 等) がある。" +
+    "membership の場合は evidence / notes に「一部」「最大」「オンライン」「モバイルオーダー」「○○限定」等がある。" +
+    "判定詳細の行に一致した語とフィールドを出している。" +
+    RISKY_APPROVAL_NOTE,
+  campaignRateCeiling:
+    "キャンペーンの還元率が 10% 以上 (境界を含む)、または 5% を超えるのに月上限 (monthlyCapAmountYen) が無い。" +
+    "高率キャンペーンは上限・対象商品付きがほとんどで、record のまま取り込むと全額に高率が乗る過大表示になる。" +
+    "campaign 由来の membership の率上書き (overrideRate) が 5% を超える場合もここ。" +
+    RISKY_APPROVAL_NOTE,
+  targetMismatch:
+    "registry.yaml でこのソースに宣言した対象 (target) と、新規 program の対象キーが一致しない " +
+    "(例: d払いのソースなのに PayPay の paymentAppId、ポイントカード提示型に決済アプリが混在)。帰属の取り違え疑い。" +
+    RISKY_APPROVAL_NOTE,
+  sourceAutoMergeDisabled:
+    "registry.yaml で autoMerge:false にしたソース由来。ほかのガードは通過している。" +
+    "解除条件 (PR-1 H4 の事後レビュー表で 4 週連続して誤りが無いこと) を満たすまでは人手で確認して承認する。" +
+    "内容に問題が無ければ `npm run sync:approve` で取り込める (--accept-risk は不要)。",
+  storeNameMismatch:
+    "既存の店舗への新規 membership だが、evidence に店名 (seed の store.name から括弧書きを除いたもの) が見当たらない " +
+    "(例: かっぱ寿司の evidence でくら寿司に紐付け、ネット通販版の店名で実店舗に紐付け)。店の取り違え疑い。" +
+    RISKY_APPROVAL_NOTE,
 };
+
+// REVIEW_QUEUE の理由グループの表示順。ReviewReason を足したら必ずここにも足す
+// (buildReviewQueue はこの配列の順に描画するので、無い reason の項目は REVIEW_QUEUE から黙って消える)。
+// report.test の網羅テストが REASON_LABELS / REASON_EXPLANATIONS の全キーを含み重複が無いことを検査する。
+// 並び: safetyFailed first (healthy auto items, easy to act on),
+// then data-quality issues, then others, then userBlocked last
+export const REASON_ORDER: readonly ReviewReason[] = [
+  "safetyFailed",         // 🛡 件数超過で降格された健全な auto 候補。内容確認の上 bump 判断
+  "autoMergeDisabled",    // 🛡 auto-merge 無効化で降格された健全な auto 候補 (手動テスト等)
+  "sourceAutoMergeDisabled", // 🛡 autoMerge:false ソース由来の健全な auto 候補 (PR-0b-3)。人手で確認して approve
+  "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
+  "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
+  "unsupportedRateClaim", // 🔴 rate hallucination 疑い、早めに目を通す
+  "pseudoStoreTarget",    // 🔴 擬似エンティティへの誤マッピング疑い、早めに目を通す
+  "targetMismatch",       // 🔴 registry の target 宣言と帰属が不一致 (PR-0b-3)。承認は --accept-risk
+  "storeNameMismatch",    // 🔴 evidence に店名が無い membership (PR-0b-3)。承認は --accept-risk
+  "untargetedProgram",    // 🔴 対象キー無しの program (PR-0b-3)。承認は --accept-risk
+  "campaignRateCeiling",  // 🔴 10% 以上 / 5% 超で上限なしのキャンペーン (PR-0b-3)。承認は --accept-risk
+  "campaignConditional",  // 🔴 条件付きキャンペーン・membership (PR-0b-3)。承認は --accept-risk
+  "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
+  "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
+  "orphanedProgram",      // 🟠 対象店 membership 0 の member-stores program。membership 側と同時 approve
+  "tierMove",             // 🪜 同じ店 × 同じ倍率系列の別倍率。承認は旧 tier の tombstone と同時 (PR-0a-2c)
+  "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目
+  "staleExtractGeneration", // 🧯 旧世代 / fetchedAt 14 日超の extracted による書き戻し。次回 fetch で解消、それまで保留
+  "rateWatched",          // 🧯 率カナリアで監視中の率・店への変更 (PR-5c-1)。seed の手修正と rate-watch.yaml を同じ PR で
+  "expiredCampaign",     // 🟠 validTo+30日経過。クリーンアップ候補
+  "storeAdditionsDisabled", // ⏸ store 追加は手動キュレ運用、参照リストとして末尾配置
+  "rateDeltaTooLarge",
+  "rateRatioOutOfRange",
+  "multiSourceConflict",
+  "referenceChange",
+  "deletion",
+  "lowConfidence",
+  "idCollision",
+  "unknownCategory",      // 🟠 語彙外 / 未設定カテゴリの新規店 (PR-4a)。alias か語彙を足す PR で解消
+  "excludedCategory",
+  "selfReportedExclusion",
+  "userBlocked",
+];
 
 function formatProposalDetail(p: Proposal): string {
   const lines: string[] = [];
@@ -518,7 +621,29 @@ function formatProposalDetail(p: Proposal): string {
   if (p.evidence?.evidenceQuote) {
     lines.push(`- 評価: \`evidenceQuote="${p.evidence.evidenceQuote.slice(0, 120)}"\``);
   }
-  if (isApplicableProposal(p)) {
+  // PR-0b-3: 降格の判定詳細 (一致した語とフィールド、照合できなかった店名 等)
+  if (p.reviewDetail) {
+    lines.push(`- 判定詳細: ${p.reviewDetail}`);
+  }
+  if (isApplicableProposal(p) && p.reviewReason && RISKY_REVIEW_REASONS.has(p.reviewReason)) {
+    // PR-0b-3: 全額に乗る危険な reason は原則見送り。承認には --accept-risk が要る。
+    lines.push(
+      `- 対応案: 原則見送り (承認すると record がそのまま全額に乗る)。取り込むなら手書き seed で上限・限定・帰属を表現する。` +
+        `どうしても record のまま取り込むなら \`npm run sync:approve -- ${pid} --accept-risk\``,
+    );
+  } else if (p.reviewReason === "unknownCategory") {
+    // PR-4a: 語彙外の category のまま承認すると seed 契約 (store の category は語彙内) で CI が落ちる。
+    lines.push(
+      `- 対応案: 表記揺れなら \`src/state/seed-categories.ts\` の EXTRACTED_CATEGORY_ALIASES に alias を、新しい業態なら STORE_CATEGORIES に語彙を足す PR を出す (次回 cron で再判定)。` +
+        `この項目を sync:approve でそのまま承認すると seed 契約で CI が落ちる。不要なら無視`,
+    );
+  } else if (p.reviewReason === "rateWatched") {
+    // PR-5c-1: 監視中の率を sync:approve で変えると rate-watch の契約 (seedRateAtCuration = seed の率) で CI が落ちる。
+    lines.push(
+      `- 対応案: 公式ページ (sources/rate-watch.yaml の target) で実際に変わったかを確かめ、正しければ seed の手修正と ` +
+        `rate-watch.yaml の seedRateAtCuration の更新を同じ PR で出す。sync:approve でそのまま承認すると契約テストで CI が落ちる。誤抽出なら無視`,
+    );
+  } else if (isApplicableProposal(p)) {
     lines.push(
       `- 対応案: 取り込むなら \`npm run sync:approve -- ${pid}\`、不要なら無視`,
     );
@@ -580,36 +705,8 @@ export function buildReviewQueue(report: ProposalReport): string {
     lines.push("## 項目 (理由別)");
     lines.push("");
 
-    // Render each reason group
-    // Sort by priority: safetyFailed first (healthy auto items, easy to act on),
-    // then data-quality issues, then others, then userBlocked last
-    const reasonOrder: ReviewReason[] = [
-      "safetyFailed",         // 🛡 件数超過で降格された健全な auto 候補。内容確認の上 bump 判断
-      "autoMergeDisabled",    // 🛡 auto-merge 無効化で降格された健全な auto 候補 (手動テスト等)
-      "zeroOrInvalidRate",    // 🔴 rate=0 抽出失敗。データ品質低の auto 候補を確認
-      "unsupportedDateClaim", // 🔴 hallucination 疑い、早めに目を通す
-      "unsupportedRateClaim", // 🔴 rate hallucination 疑い、早めに目を通す
-      "pseudoStoreTarget",    // 🔴 擬似エンティティへの誤マッピング疑い、早めに目を通す
-      "missingStoreBody",     // 🟠 store 本体なし membership。store 側を手動キュレートで補完
-      "missingProgramBody",   // 🟠 program 本体なし membership。program 側を手動キュレートで補完
-      "orphanedProgram",      // 🟠 対象店 membership 0 の member-stores program。membership 側と同時 approve
-      "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目
-      "staleExtractGeneration", // 🧯 旧世代 / fetchedAt 14 日超の extracted による書き戻し。次回 fetch で解消、それまで保留
-      "expiredCampaign",      // 🟠 validTo+30日経過。クリーンアップ候補
-      "storeAdditionsDisabled", // ⏸ store 追加は手動キュレ運用、参照リストとして末尾配置
-      "rateDeltaTooLarge",
-      "rateRatioOutOfRange",
-      "multiSourceConflict",
-      "referenceChange",
-      "deletion",
-      "lowConfidence",
-      "idCollision",
-      "excludedCategory",
-      "selfReportedExclusion",
-      "userBlocked",
-    ];
-
-    for (const reason of reasonOrder) {
+    // Render each reason group in REASON_ORDER (module scope、網羅は report.test で検査)
+    for (const reason of REASON_ORDER) {
       const items = byReason.get(reason);
       if (!items || items.length === 0) continue;
 
@@ -649,6 +746,10 @@ export function buildReviewQueue(report: ProposalReport): string {
       "`npm run sync:approve -- --list` で一覧表示。実行後 `npm test && npm run build` を確認して commit",
   );
   lines.push(
+    "- 🔴 untargetedProgram / campaignConditional / campaignRateCeiling / targetMismatch / storeNameMismatch は" +
+      "承認すると record がそのまま全額に乗るため原則見送り。承認には `--accept-risk` が必要",
+  );
+  lines.push(
     "- このまま **merge** すると、要レビュー項目を読み込んだ証拠として記録されるだけ (実体 seed 変更はなし)",
   );
   lines.push(
@@ -670,7 +771,11 @@ export function buildReviewQueue(report: ProposalReport): string {
 // 設計判断:
 // - auto=0 かつ review=0 の run だけ entry を作らない (PR #61。review のみの週も
 //   trend として残す。本当に変化なしの週だけ空エントリーで履歴を埋めない)
-// - 同じ generatedAt が既存 entries に居れば追加しない (workflow 再実行による重複防止)
+// - 同じ generatedAt が既存 entries に居れば、その位置で後勝ちの置換 (upsert、PR-0b-3)。
+//   weekly-sync.yml は「Generate reports」の後、safety 失敗時に「Downgrade」→「Regenerate reports」を
+//   同じ proposed-migrations.json (= 同じ generatedAt) で再実行する。旧実装 (同 generatedAt は追加しない) では
+//   降格前の auto 件数が残り、2026-07-09 / 07-16 / 07-23 の 3 entry が「auto 81 / 4 / 3」の虚偽記録になった。
+//   置換にすると workflow を変えずに降格後の値が残る (commitSha / prNumber は既存から引き継ぐ)。
 // - 最大 SYNC_HISTORY_MAX_ENTRIES 件で truncate (古いものから削除)
 // - commitSha は backfill 用のみ。新規 cron からは付与しない (squash merge SHA は事後判明のため)
 
@@ -762,8 +867,11 @@ export function buildSyncHistoryEntry(
 }
 
 /**
- * 既存の SYNC_HISTORY.json を読み込み、新規エントリーを先頭に追加した結果を返す。
- * pure function (file I/O なし)。0 件 entry / 同一 generatedAt は no-op。
+ * 既存の SYNC_HISTORY.json に新規エントリーを反映した結果を返す。pure function (file I/O なし)。
+ * - newEntry が null (auto も review も 0) なら既存をそのまま返す。
+ * - 同じ generatedAt の entry があれば、その位置で置換する (後勝ち。件数と順序は変えない)。
+ *   commitSha / prNumber は newEntry に無ければ既存の値を引き継ぐ。
+ * - 無ければ先頭に追加して SYNC_HISTORY_MAX_ENTRIES 件に切り詰める。
  */
 export function appendSyncHistory(
   existing: SyncHistoryFile | null,
@@ -771,12 +879,51 @@ export function appendSyncHistory(
 ): SyncHistoryFile {
   const base: SyncHistoryFile = existing ?? { version: 1, entries: [] };
   if (!newEntry) return base;
-  // 同じ generatedAt が既に居れば再実行とみなしスキップ
+  // 同じ generatedAt = 同じ run の再生成 (downgrade 後の Regenerate 等)。位置を保って置換する。
   if (base.entries.some((e) => e.generatedAt === newEntry.generatedAt)) {
-    return base;
+    const replaceAt = (e: SyncHistoryEntry): SyncHistoryEntry => {
+      const merged: SyncHistoryEntry = { ...newEntry };
+      const commitSha = newEntry.commitSha ?? e.commitSha;
+      const prNumber = newEntry.prNumber ?? e.prNumber;
+      if (commitSha !== undefined) merged.commitSha = commitSha;
+      if (prNumber !== undefined) merged.prNumber = prNumber;
+      return merged;
+    };
+    return {
+      version: 1,
+      entries: base.entries.map((e) =>
+        e.generatedAt === newEntry.generatedAt ? replaceAt(e) : e,
+      ),
+    };
   }
   const entries = [newEntry, ...base.entries].slice(0, SYNC_HISTORY_MAX_ENTRIES);
   return { version: 1, entries };
+}
+
+/**
+ * auto を全件 review (reason) に振り替えた entry を返す (PR-0b-3)。
+ * workflow の Downgrade (autoApplicable を reason 付きで needsReview に移す) → buildSyncHistoryEntry と同じ結果になる:
+ * totalCount 0 / avgConfidence null / bySource・items 空、reviewStats.total と byReason[reason] に auto 件数を加算。
+ * totalCount が 0 の entry はそのまま返す。過去の虚偽 auto entry の訂正と、PR-1 H1 の fetch 埋め込みが使う。
+ */
+export function reclassifyAutoAsReview(
+  e: SyncHistoryEntry,
+  reason: ReviewReason,
+): SyncHistoryEntry {
+  if (e.totalCount === 0) return e;
+  const n = e.totalCount;
+  const prev = e.reviewStats ?? { total: 0, byReason: {} };
+  return {
+    ...e,
+    totalCount: 0,
+    avgConfidence: null,
+    bySource: [],
+    items: [],
+    reviewStats: {
+      total: prev.total + n,
+      byReason: { ...prev.byReason, [reason]: (prev.byReason[reason] ?? 0) + n },
+    },
+  };
 }
 
 /** SYNC_HISTORY.md (人間向け) を生成。最新が上。 */

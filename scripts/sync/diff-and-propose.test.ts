@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import type { SeedShape } from "../../src/domain/mergeSeed";
 // membership id は本体 (propose-helpers) と同じ生成源から導出する (文字列を直書きしない)
 import { membershipId } from "../../src/state/defineMemberships";
+import { REMOVED_MEMBERSHIP_IDS } from "../../src/state/seed-blocklist";
 import {
   applyCategoryCap,
   dedupeAcrossProposals,
@@ -11,9 +12,9 @@ import {
   downgradeOrphanMemberships,
   EXTRACT_MAX_AGE_DAYS,
   filterExtractedByRegistry,
+  guardRateWatched,
   guardStaleExtractGeneration,
   isFailedExtraction,
-  loadRegistrySources,
   parseIncludeSources,
   promoteChainStoreAutoMerge,
   proposeCards,
@@ -24,11 +25,20 @@ import {
   proposeStores,
 } from "./diff-and-propose";
 import {
+  TOMBSTONED_MEMBERSHIP_IDS,
   deriveLoyaltyProgramId,
+  detectMembershipWording,
+  guardMembershipContent,
   rateToProgramSlug,
+  storeNameMismatchDetail,
 } from "./propose-helpers";
 import type { AddRecordProposal, ExtractedSource, Proposal } from "./types";
 import { FETCH_FAILURE_NOTE_KINDS, formatFailureNote } from "./fetch-response";
+import { loadRegistryPolicy } from "./registry-policy";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { loadRateWatchFile, loadWatchedSubjects, type RateWatchFile } from "./rate-watch";
 
 // テスト用の最小 SeedShape
 const emptySeed: SeedShape = {
@@ -157,10 +167,27 @@ describe("registry enabled フィルタ (Z6)", () => {
     expect([...parseIncludeSources("a,b")]).toEqual(["a", "b"]);
   });
 
-  it("loadRegistrySources: 実 registry を読める / 読めなければ throw (全件素通りにしない)", () => {
-    const all = loadRegistrySources();
-    expect(all.some((s) => s.id === "jcb-jpoint-partners" && s.enabled)).toBe(true);
-    expect(() => loadRegistrySources("/nonexistent/registry.yaml")).toThrow();
+  it("enabled の判定は === true (registry-policy の enabledIds と同じ。'true' 文字列や未指定は disabled)", () => {
+    const loose = [
+      { id: "str", enabled: "true" as unknown as boolean },
+      { id: "missing" } as { id: string; enabled: boolean },
+    ];
+    const r = filterExtractedByRegistry([ex("str"), ex("missing")], loose, new Set());
+    expect(r.kept).toEqual([]);
+    expect(r.skipped.map((s) => s.reason)).toEqual(["disabled", "disabled"]);
+  });
+
+  it("loadRegistryPolicy().sources を渡す: 実 registry の enabled は kept、停止中は disabled で skip、kept は enabledIds と一致", () => {
+    const registry = loadRegistryPolicy();
+    const all = registry.sources.map((s) => ex(s.id));
+    const r = filterExtractedByRegistry(all, registry.sources, new Set());
+    expect(new Set(r.kept.map((x) => x.sourceId))).toEqual(new Set(registry.enabledIds));
+    expect(r.kept.some((x) => x.sourceId === "jcb-jpoint-partners")).toBe(true);
+    expect(r.skipped).toContainEqual({ sourceId: "jre-point-campaigns", reason: "disabled" });
+  });
+
+  it("loadRegistryPolicy: 読めなければ throw (registry 無しでフィルタが全件素通りにならない)", () => {
+    expect(() => loadRegistryPolicy("/nonexistent/registry.yaml")).toThrow();
   });
 });
 
@@ -302,6 +329,8 @@ describe("proposeStores", () => {
         {
           storeId: "x",
           name: "y",
+          // PR-4a: category が無いと unknownCategory (lowConfidence より前) になるので語彙内を付ける
+          category: "飲食",
           evidenceQuote: "x",
           explicitness: 0.5,
           ambiguity: 0.3, // → 0.5 * 0.7 = 0.35
@@ -315,7 +344,7 @@ describe("proposeStores", () => {
   // 「Policy B: 金融カテゴリ excludedCategory」は単体ケース。
   // 下のパラメタライズドテスト (金融 / ギャンブル / 保険 / 医療 / 葬儀 / ネット
   // サービス / サービス / その他 / 不動産・住宅) で全カテゴリを網羅するため統合。
-  it("Policy B: 金融/ギャンブル/保険/医療/葬儀/ネットサービス/サービス/その他/不動産・住宅 すべて除外", () => {
+  it("Policy B: 金融/ギャンブル/保険/医療/葬儀/ネットサービス/サービス/その他/不動産・住宅/サブスクリプション/ゲーム/アプリストア すべて除外", () => {
     const excluded = [
       "金融",
       "ギャンブル",
@@ -326,6 +355,10 @@ describe("proposeStores", () => {
       "サービス",
       "その他",
       "不動産・住宅",
+      // PR-4a
+      "サブスクリプション",
+      "ゲーム",
+      "アプリストア",
     ];
     for (const cat of excluded) {
       const data = baseSource({
@@ -389,6 +422,15 @@ describe("proposeStores", () => {
       ["ネット買取", "買取"],
       ["リサイクル/買取", "買取"],
       ["エンターテイメント", "エンタメ・チケット"],
+      // PR-4a: 抽出時だけの 8 組 (seed-categories.ts の EXTRACTED_CATEGORY_ALIASES)
+      ["美容・健康", "美容"],
+      ["書籍・文房具", "書店"],
+      ["レジャー・エンタメ", "エンタメ・チケット"],
+      ["家具・インテリア", "雑貨"],
+      ["宿泊", "ホテル"],
+      ["旅行", "旅行代理店"],
+      ["自動車", "車・バイク"],
+      ["エネルギー", "電気・ガス"],
     ];
     for (const [oldCat, newCat] of cases) {
       const data = baseSource({
@@ -427,6 +469,76 @@ describe("proposeStores", () => {
     });
     const ps = proposeStores(data, emptySeed);
     expect(ps[0].reviewReason).toBe("userBlocked");
+  });
+
+  // ─── PR-4a: unknownCategory (語彙外 / 未設定 / pseudo) ───
+  const oneStore = (
+    over: Partial<NonNullable<ExtractedSource["stores"]>[number]>,
+  ): ExtractedSource =>
+    baseSource({
+      stores: [
+        {
+          storeId: "new-shop",
+          name: "新しい店",
+          evidenceQuote: "新しい店 ポイント 2 倍",
+          explicitness: 0.95,
+          ambiguity: 0.05,
+          ...over,
+        },
+      ],
+    });
+
+  it("PR-4a: 語彙外カテゴリ (ショッピングモール) は unknownCategory", () => {
+    const ps = proposeStores(oneStore({ category: "ショッピングモール" }), emptySeed);
+    expect(ps[0].reviewReason).toBe("unknownCategory");
+    expect((ps[0] as AddRecordProposal).record.category).toBe("ショッピングモール");
+  });
+
+  it("PR-4a: category 未設定は confidence 0.95 でも unknownCategory (lowConfidence / storeAdditionsDisabled より前)", () => {
+    const ps = proposeStores(oneStore({}), emptySeed);
+    expect(ps[0].confidence).toBeGreaterThanOrEqual(0.9);
+    expect(ps[0].reviewReason).toBe("unknownCategory");
+  });
+
+  it("PR-4a: 語彙外かつ低 confidence は unknownCategory (lowConfidence より前)", () => {
+    const ps = proposeStores(
+      oneStore({ category: "ショッピングモール", explicitness: 0.5, ambiguity: 0.3 }),
+      emptySeed,
+    );
+    expect(ps[0].reviewReason).toBe("unknownCategory");
+  });
+
+  it("PR-4a: pseudo カテゴリ (汎用) の新規店も unknownCategory", () => {
+    const ps = proposeStores(oneStore({ category: "汎用" }), emptySeed);
+    expect(ps[0].reviewReason).toBe("unknownCategory");
+  });
+
+  it("PR-4a: 既存 id + 語彙外は idCollision (idCollision の後に判定する順序確認)", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      stores: [{ id: "new-shop", name: "既存", category: "飲食" }],
+    };
+    const ps = proposeStores(oneStore({ category: "ショッピングモール" }), seed);
+    expect(ps[0].reviewReason).toBe("idCollision");
+  });
+
+  it("PR-4a: EXCLUDED は unknownCategory より前 (サブスクリプションは excludedCategory)", () => {
+    const ps = proposeStores(oneStore({ category: "サブスクリプション" }), emptySeed);
+    expect(ps[0].reviewReason).toBe("excludedCategory");
+  });
+
+  it("PR-4a: alias で語彙内に正規化される名前は unknownCategory にならない (美容・健康 → 美容)", () => {
+    const ps = proposeStores(oneStore({ category: "美容・健康" }), emptySeed);
+    expect(ps[0].reviewReason).toBe("storeAdditionsDisabled");
+    expect((ps[0] as AddRecordProposal).record.category).toBe("美容");
+  });
+
+  it("PR-4a: Gemini の自己申告除外 (selfReportedExclusion) は unknownCategory より強い", () => {
+    const ps = proposeStores(
+      oneStore({ category: "ショッピングモール", evidenceQuote: "新しい店 (ページ上で確認できず、対象外)" }),
+      emptySeed,
+    );
+    expect(ps[0].reviewReason).toBe("selfReportedExclusion");
   });
 });
 
@@ -1177,7 +1289,8 @@ describe("proposePrograms (PR-D1)", () => {
       expect(ps[0].reviewReason).toBe("idCollision");
     });
 
-    it("rate > CAMPAIGN_AUTO_RATE_MAX (30%) なら auto 不可", () => {
+    // PR-0b-3: 上限は 30% → 10% (境界含む) になり、理由は idCollision → campaignRateCeiling
+    it("rate ≥ CAMPAIGN_AUTO_RATE_MAX (10%) なら auto 不可 (campaignRateCeiling)", () => {
       const data = baseSource({
         extractor: "campaign",
         programs: [
@@ -1194,7 +1307,7 @@ describe("proposePrograms (PR-D1)", () => {
         ],
       });
       const ps = proposePrograms(data, richSeed);
-      expect(ps[0].reviewReason).toBe("idCollision");
+      expect(ps[0].reviewReason).toBe("campaignRateCeiling");
     });
 
     it("confidence ≥ 0.90 (逐語根拠の健全 campaign) は auto 可 (閾値 0.95→0.90 緩和)", () => {
@@ -1276,7 +1389,9 @@ describe("proposePrograms (PR-D1)", () => {
         ],
       });
       const ps = proposePrograms(data, richSeed);
-      expect(ps[0].reviewReason).toBe("idCollision");
+      // PR-0b-3: 理由は idCollision → campaignConditional (判定詳細に一致語)
+      expect(ps[0].reviewReason).toBe("campaignConditional");
+      expect(ps[0].reviewDetail).toBe("lifestyle:「給与」");
     });
 
     it("integrity issue (selfReportedExclusion) は auto より優先", () => {
@@ -1407,7 +1522,9 @@ describe("proposeMemberships (PR-D1)", () => {
         },
       ],
     });
-    const ps = proposeMemberships(data, emptySeed);
+    // この id 自体は #103 で REMOVED_MEMBERSHIP_IDS に入っており、実 run では tombstone-skip で
+    // 提案されない (PR-0a-2c)。ここでは pseudoStoreTarget ガード単体を見るため tombstone を空にする。
+    const ps = proposeMemberships(data, emptySeed, new Set());
     expect(ps).toHaveLength(1);
     expect(ps[0].reviewReason).toBe("pseudoStoreTarget");
   });
@@ -1595,6 +1712,244 @@ describe("proposeJalTokuyakuMemberships (PR-D2b)", () => {
       stores: [jalStore("royal-host")],
     });
     expect(proposeJalTokuyakuMemberships(data, seed)).toEqual([]);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// PR-0a-2c: membership tombstone の再提案 skip + tierMove
+// ───────────────────────────────────────────────────────────────
+
+// 高 confidence (0.95 × 0.95 = 0.9025 ≥ 0.9) の membership 抽出行。
+const mem = (programId: string, storeId: string, explicitness = 0.95) => ({
+  programId,
+  storeId,
+  evidenceQuote: `${storeId} ポイント 2 倍`,
+  explicitness,
+  ambiguity: 1 - explicitness,
+});
+const seedMem = (programId: string, storeId: string) => ({
+  id: membershipId(programId, storeId),
+  programId,
+  storeId,
+});
+const memIdsOf = (ps: Proposal[]) =>
+  ps.map((p) => {
+    const r = (p as AddRecordProposal).record;
+    return membershipId(r.programId as string, r.storeId as string);
+  });
+
+describe("PR-0a-2c: membership tombstone は再提案しない (silent skip + 1 行ログ)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("TOMBSTONED_MEMBERSHIP_IDS は seed-blocklist の REMOVED_MEMBERSHIP_IDS と一致する", () => {
+    expect([...TOMBSTONED_MEMBERSHIP_IDS].sort()).toEqual(
+      [...new Set(REMOVED_MEMBERSHIP_IDS)].sort(),
+    );
+  });
+
+  it("REMOVED_MEMBERSHIP_IDS (実データ) の id は auto にも review にも出ない。件数は 1 行ログ", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    // #103 の general 4 件 (tombstone 済み) + 健全な 1 件
+    const tombstoned = REMOVED_MEMBERSHIP_IDS.map((id) => {
+      const m = /^m-(prog-.+)-general$/.exec(id);
+      return m ? mem(m[1], "general") : null;
+    }).filter((x): x is ReturnType<typeof mem> => x !== null);
+    expect(tombstoned.length).toBeGreaterThan(0);
+    const data = baseSource({
+      sourceId: "jcb-jpoint-partners",
+      extractor: "jcb-jpoint",
+      memberships: [...tombstoned, mem("prog-jcb-jpoint-20x", "starbucks")],
+    });
+    const ps = proposeMemberships(data, emptySeed);
+    const ids = memIdsOf(ps);
+    for (const id of REMOVED_MEMBERSHIP_IDS) expect(ids).not.toContain(id);
+    expect(ids).toEqual([membershipId("prog-jcb-jpoint-20x", "starbucks")]);
+    expect(log).toHaveBeenCalledWith(
+      `🪦 tombstone-skip: ${tombstoned.length} 件 (source=jcb-jpoint-partners)`,
+    );
+  });
+
+  it("注入した tombstone (takashimaya × Gold 2倍) は skip され、seed に無くても提案されない", () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const tomb = new Set([membershipId("prog-jcb-jpoint-gold-2x", "takashimaya")]);
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [
+        mem("prog-jcb-jpoint-gold-2x", "takashimaya"),
+        mem("prog-jcb-jpoint-gold-2x", "mercari"),
+      ],
+    });
+    const ps = proposeMemberships(data, emptySeed, tomb);
+    expect(memIdsOf(ps)).toEqual([membershipId("prog-jcb-jpoint-gold-2x", "mercari")]);
+  });
+
+  it("skip が 0 件ならログを出さない", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-20x", "starbucks")],
+    });
+    proposeMemberships(data, emptySeed, new Set());
+    expect(log).not.toHaveBeenCalled();
+  });
+
+  it("jal-tokuyaku 経路も tombstone を skip する", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const jalSeed: SeedShape = {
+      ...emptySeed,
+      programs: [
+        {
+          id: "prog-jal-tokuyaku",
+          name: "JALカード特約店",
+          scope: "member-stores",
+          cardIds: ["jal-suica"],
+          rate: 0.02,
+          currencyId: "jal-mile",
+          bonusType: "primary",
+        },
+      ],
+      memberships: [],
+    };
+    const store = (storeId: string) => ({
+      storeId,
+      name: storeId,
+      category: "飲食",
+      evidenceQuote: "JALカード特約店",
+      explicitness: 0.95,
+      ambiguity: 0.05,
+    });
+    const data = baseSource({
+      sourceId: "jal-card-tokuyaku-list",
+      extractor: "jal-tokuyaku",
+      stores: [store("royal-host"), store("orix-rentacar")],
+    });
+    const tomb = new Set([membershipId("prog-jal-tokuyaku", "royal-host")]);
+    const ps = proposeJalTokuyakuMemberships(data, jalSeed, tomb);
+    expect(memIdsOf(ps)).toEqual([membershipId("prog-jal-tokuyaku", "orix-rentacar")]);
+    expect(log).toHaveBeenCalledWith(
+      "🪦 tombstone-skip: 1 件 (source=jal-card-tokuyaku-list)",
+    );
+  });
+});
+
+describe("PR-0a-2c: tierMove (同 store × 同 tier 系列の別倍率は review)", () => {
+  const noTomb = new Set<string>();
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("seed に gold-4x がある takashimaya への gold-2x 提案は tierMove", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-gold-4x", "takashimaya")],
+    };
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-gold-2x", "takashimaya")],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBe("tierMove");
+  });
+
+  it("W と Gold の 2倍は別系列なので tierMove にならない (Gold 4x がある高島屋への W 2x は auto)", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-gold-4x", "takashimaya")],
+    };
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-2x", "takashimaya")],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("同じ run で muji に たまる 2x と 4x を出すと両方 tierMove", () => {
+    const data = baseSource({
+      extractor: "epos-tamaru",
+      memberships: [
+        mem("prog-epos-tamaru-2x", "muji"),
+        mem("prog-epos-tamaru-4x", "muji"),
+      ],
+    });
+    const ps = proposeMemberships(data, emptySeed, noTomb);
+    expect(ps.map((p) => p.reviewReason)).toEqual(["tierMove", "tierMove"]);
+  });
+
+  it("tombstone で skip した行は同 run の集計に入らない (muji 4x を tombstone、2x は auto)", () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const data = baseSource({
+      extractor: "epos-tamaru",
+      memberships: [
+        mem("prog-epos-tamaru-4x", "muji"),
+        mem("prog-epos-tamaru-2x", "muji"),
+      ],
+    });
+    const tomb = new Set([membershipId("prog-epos-tamaru-4x", "muji")]);
+    const ps = proposeMemberships(data, emptySeed, tomb);
+    expect(memIdsOf(ps)).toEqual([membershipId("prog-epos-tamaru-2x", "muji")]);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("seed に同じ id がある行 (既存) は提案せず、他 tier への影響もない", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-epos-tamaru-2x", "muji")],
+    };
+    const data = baseSource({
+      extractor: "epos-tamaru",
+      memberships: [
+        mem("prog-epos-tamaru-2x", "muji"), // 既存
+        mem("prog-epos-tamaru-2x", "uniqlo"), // 新規・別店
+      ],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(memIdsOf(ps)).toEqual([membershipId("prog-epos-tamaru-2x", "uniqlo")]);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("tier 系列でない program は影響を受けない (同じ店に tier membership があっても auto)", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-gold-4x", "takashimaya")],
+    };
+    const data = baseSource({
+      extractor: "campaign",
+      memberships: [mem("prog-jcb-takashimaya-campaign", "takashimaya")],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps).toHaveLength(1);
+    expect(ps[0].reviewReason).toBeUndefined();
+  });
+
+  it("既存の降格が優先: conf < 0.9 は lowConfidence のまま (tierMove で上書きしない)", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-gold-4x", "takashimaya")],
+    };
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-gold-2x", "takashimaya", 0.9)], // 0.9 × 0.9 = 0.81
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps[0].reviewReason).toBe("lowConfidence");
+  });
+
+  it("既存の降格が優先: general は pseudoStoreTarget のまま", () => {
+    const seed: SeedShape = {
+      ...emptySeed,
+      memberships: [seedMem("prog-jcb-jpoint-20x", "general")],
+    };
+    const data = baseSource({
+      extractor: "jcb-jpoint",
+      memberships: [mem("prog-jcb-jpoint-2x", "general")],
+    });
+    const ps = proposeMemberships(data, seed, noTomb);
+    expect(ps[0].reviewReason).toBe("pseudoStoreTarget");
   });
 });
 
@@ -1987,6 +2342,40 @@ describe("promoteChainStoreAutoMerge", () => {
     expect(proposals[0].reviewReason).toBeUndefined();
   });
 
+  // PR-0b-3: autoMerge:false のソースが出した campaign は campaign 参照に数えない
+  it("除外ソース (autoMerge:false) の validTo 付き program だけが参照する店は promote されない", () => {
+    const dpayProgram: Proposal = { ...campaignProgram("prog-dpay-mcd"), sourceId: "d-pay-campaigns" };
+    const props = [
+      disabledStore("store-mcd-shibuya", "マクドナルド 渋谷店"),
+      dpayProgram,
+      membership("store-mcd-shibuya", "prog-dpay-mcd"),
+    ];
+    const current = { stores: [], cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [] };
+    const excluded = promoteChainStoreAutoMerge(props, current, new Set(["d-pay-campaigns"]));
+    expect(excluded.promoted).toBe(0);
+    expect(excluded.proposals[0].reviewReason).toBe("storeAdditionsDisabled");
+    // 除外しない既定の呼び方では従来どおり promote される
+    const legacy = promoteChainStoreAutoMerge(props, current);
+    expect(legacy.promoted).toBe(1);
+    expect(legacy.proposals[0].reviewReason).toBeUndefined();
+  });
+
+  it("除外ソース以外の campaign 参照があれば従来どおり promote", () => {
+    const props = [
+      disabledStore("store-mcd-shibuya", "マクドナルド 渋谷店"),
+      { ...campaignProgram("prog-dpay-mcd"), sourceId: "d-pay-campaigns" } as Proposal,
+      campaignProgram("prog-other-mcd"), // sourceId=src (除外外)
+      membership("store-mcd-shibuya", "prog-dpay-mcd"),
+      membership("store-mcd-shibuya", "prog-other-mcd"),
+    ];
+    const { promoted } = promoteChainStoreAutoMerge(
+      props,
+      { stores: [], cards: [], currencies: [], edges: [], pointCards: [], paymentApps: [] },
+      new Set(["d-pay-campaigns"]),
+    );
+    expect(promoted).toBe(1);
+  });
+
   it("storeAdditionsDisabled 以外の理由は触らない", () => {
     const idCollisionStore: Proposal = {
       ...disabledStore("store-x", "マクドナルド"),
@@ -2108,9 +2497,11 @@ describe("proposeExpiredCampaignDeletions", () => {
 
 describe("H1: entryUrl/officialUrl の URL スキーム検証", () => {
   it("entryUrl=javascript:... の campaign は rec から entryUrl が drop されるが program 自体は auto 可", () => {
+    // PR-0b-3: 対象キー必須 (untargetedProgram) のため pointCardId と seed の pointCards を足す
     const richSeed: SeedShape = {
       ...emptySeed,
       currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+      pointCards: [{ id: "jre-pointcard", name: "JRE POINTカード", currencyId: "jre" }],
     };
     const data = baseSource({
       extractor: "campaign",
@@ -2118,6 +2509,7 @@ describe("H1: entryUrl/officialUrl の URL スキーム検証", () => {
         {
           programId: "prog-xss-entry",
           name: "怪しいキャンペーン",
+          pointCardId: "jre-pointcard",
           rate: 0.03,
           currencyId: "jre",
           validTo: "2099-12-31",
@@ -2411,11 +2803,14 @@ describe("M1: rate の逐語根拠検証 (unsupportedRateClaim)", () => {
 });
 
 describe("M2: isCampaignAutoMergeable 値域ガードパック", () => {
+  // PR-0b-3: 対象キー必須 (untargetedProgram) のため pointCardId と seed の pointCards を足す
   const richSeed: SeedShape = {
     ...emptySeed,
     currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+    pointCards: [{ id: "jre-pointcard", name: "JRE POINTカード", currencyId: "jre" }],
   };
   const baseProgramFields = {
+    pointCardId: "jre-pointcard",
     rate: 0.03,
     currencyId: "jre",
     validTo: "2099-12-31",
@@ -2625,6 +3020,21 @@ describe("guardStaleExtractGeneration", () => {
     expect(proposals[0].reviewReason).toBe("rateDeltaTooLarge");
   });
 
+  it("PR-0b-3: Phase B″ の sourceAutoMergeDisabled (ガード通過済みの印) は stale の方が具体的なので上書きする", () => {
+    const { proposals, guardedBySource } = guardStaleExtractGeneration(
+      [
+        rateUpdate("d-pay-campaigns", "sourceAutoMergeDisabled"),
+        rateUpdate("paypay-campaigns", "sourceAutoMergeDisabled"), // stale でないソースはそのまま
+      ],
+      new Set(["d-pay-campaigns"]),
+    );
+    expect(proposals.map((p) => p.reviewReason)).toEqual([
+      "staleExtractGeneration",
+      "sourceAutoMergeDisabled",
+    ]);
+    expect(guardedBySource.get("d-pay-campaigns")).toBe(1);
+  });
+
   it("PROGRAM_OVERRIDES 経路でない updateField (cards.defaultRate) は対象外", () => {
     const cardUpdate: Proposal = {
       type: "updateField",
@@ -2698,5 +3108,624 @@ describe("guardStaleExtractGeneration", () => {
     );
     expect(guarded.proposals[0].reviewReason).toBe("staleExtractGeneration");
     expect(guarded.guardedBySource.get("jcb-jpoint-partners")).toBe(1);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// PR-0b-3 (Z3): campaign の auto ガード (rate 上限・対象キー・target 照合・条件文言)
+// ───────────────────────────────────────────────────────────────
+
+describe("PR-0b-3: campaign の auto ガード (proposePrograms)", () => {
+  const z3Seed: SeedShape = {
+    ...emptySeed,
+    cards: [
+      { id: "paypay-card", name: "PayPayカード", defaultRate: 0.01, defaultCurrencyId: "paypay" },
+      { id: "dcard", name: "dカード", defaultRate: 0.01, defaultCurrencyId: "d-pt" },
+    ],
+    pointCards: [
+      { id: "d-pointcard", name: "dポイントカード", currencyId: "d-pt" },
+      { id: "jre-pointcard", name: "JRE POINTカード", currencyId: "jre" },
+    ],
+    paymentApps: [
+      { id: "pa-d-pay", name: "d払い" },
+      { id: "pa-paypay", name: "PayPay" },
+    ],
+    currencies: [
+      { id: "d-pt", name: "dポイント", kind: "point" },
+      { id: "paypay", name: "PayPayポイント", kind: "point" },
+      { id: "jre", name: "JRE POINT", kind: "point" },
+    ],
+  };
+  // 全ガードを通る d払い キャンペーン (これを基に 1 項目ずつ崩す)
+  const healthy = {
+    programId: "prog-dpay-z3",
+    name: "d払い 3%還元",
+    paymentAppId: "pa-d-pay",
+    rate: 0.03,
+    currencyId: "d-pt",
+    validTo: "2099-12-31",
+    evidenceQuote: "d払いで3%還元、期間 2099年12月31日まで",
+    explicitness: 1.0,
+    ambiguity: 0.0,
+  };
+  const run = (
+    prog: Partial<typeof healthy> & Record<string, unknown>,
+    opts: Parameters<typeof proposePrograms>[2] = {},
+    extractor: ExtractedSource["extractor"] = "campaign",
+  ) =>
+    proposePrograms(
+      baseSource({ extractor, programs: [{ ...healthy, ...prog } as never] }),
+      z3Seed,
+      opts,
+    )[0];
+  const dpayPolicy = {
+    sourceId: "d-pay-campaigns",
+    extractor: "campaign" as const,
+    autoMerge: false,
+    targets: [{ paymentAppId: "pa-d-pay" }, { pointCardId: "d-pointcard" }],
+  };
+
+  it("対照: 全ガードを通る 3% キャンペーンは auto", () => {
+    expect(run({}).reviewReason).toBeUndefined();
+  });
+
+  describe("rate 上限 (境界値)", () => {
+    it("0.1 ちょうどは campaignRateCeiling (境界含む)", () => {
+      const p = run({ rate: 0.1, evidenceQuote: "d払いで10%還元、期間 2099年12月31日まで", monthlyCapAmountYen: 1000 });
+      expect(p.reviewReason).toBe("campaignRateCeiling");
+      expect(p.reviewDetail).toContain("≥ 10%");
+    });
+    it("0.0999 で cap あり は auto", () => {
+      expect(run({ rate: 0.0999, evidenceQuote: "d払いで9.99%還元、期間 2099年12月31日まで", monthlyCapAmountYen: 1000 }).reviewReason).toBeUndefined();
+    });
+    it("0.06 で cap 無しは campaignRateCeiling (5% 超は上限必須)", () => {
+      const p = run({ rate: 0.06, evidenceQuote: "d払いで6%還元、期間 2099年12月31日まで" });
+      expect(p.reviewReason).toBe("campaignRateCeiling");
+      expect(p.reviewDetail).toContain("上限");
+    });
+    it("0.05 で cap 無しは auto (境界 5% ちょうどは上限不要)", () => {
+      expect(run({ rate: 0.05, evidenceQuote: "d払いで5%還元、期間 2099年12月31日まで" }).reviewReason).toBeUndefined();
+    });
+    it("0.0500001 で cap 無しは campaignRateCeiling", () => {
+      expect(run({ rate: 0.0500001, evidenceQuote: "d払いで5%還元、期間 2099年12月31日まで" }).reviewReason).toBe("campaignRateCeiling");
+    });
+    it("値域 (cap=-100) は条件文言 (「月上限あり」) より前に判定されて idCollision", () => {
+      const p = run({ monthlyCapAmountYen: -100, evidenceQuote: "月上限あり、d払いで3%、期間 2099年12月31日まで" });
+      expect(p.reviewReason).toBe("idCollision");
+      expect(p.reviewDetail).toContain("monthlyCapAmountYen");
+    });
+  });
+
+  describe("対象キー (untargetedProgram)", () => {
+    it("キーが 1 つも無い program は untargetedProgram", () => {
+      const p = run({ paymentAppId: undefined });
+      expect(p.reviewReason).toBe("untargetedProgram");
+      expect(p.reviewDetail).toContain("対象キー");
+    });
+    it("cardIds:[] で他のキーが無い program も untargetedProgram (空配列は死にデータ)", () => {
+      const p = run({ paymentAppId: undefined, cardIds: [] });
+      expect(p.reviewReason).toBe("untargetedProgram");
+      expect("cardIds" in (p as AddRecordProposal).record).toBe(false);
+    });
+    it("ongoing-program 由来でも untargetedProgram", () => {
+      expect(run({ paymentAppId: undefined }, {}, "ongoing-program").reviewReason).toBe("untargetedProgram");
+    });
+    it("untargetedProgram はラダーの最弱: unsupportedRateClaim が後勝ち", () => {
+      expect(
+        run({ paymentAppId: undefined, evidenceQuote: "最大10,000ポイントプレゼント、期間 2099年12月31日まで" }).reviewReason,
+      ).toBe("unsupportedRateClaim");
+    });
+    it("cardIds:[] と paymentAppId を併せ持つ program は record から cardIds が消え、paymentAppId で targeted", () => {
+      const p = run({ cardIds: [] });
+      expect("cardIds" in (p as AddRecordProposal).record).toBe(false);
+      expect((p as AddRecordProposal).record.paymentAppId).toBe("pa-d-pay");
+      expect(p.reviewReason).toBeUndefined();
+    });
+  });
+
+  describe("registry の target 照合 (targetMismatch)", () => {
+    it("d-pay の 2 候補: pa-d-pay は通過", () => {
+      expect(run({}, { policy: dpayPolicy }).reviewReason).toBeUndefined();
+    });
+    it("d-pay の 2 候補: d-pointcard (提示型) は通過", () => {
+      expect(
+        run({ paymentAppId: undefined, pointCardId: "d-pointcard" }, { policy: dpayPolicy }).reviewReason,
+      ).toBeUndefined();
+    });
+    it("d-pay の 2 候補: pa-paypay は targetMismatch (判定詳細に宣言と実際)", () => {
+      const p = run({ paymentAppId: "pa-paypay", currencyId: "paypay" }, { policy: dpayPolicy });
+      expect(p.reviewReason).toBe("targetMismatch");
+      expect(p.reviewDetail).toBe(
+        "target 宣言 [paymentAppId=pa-d-pay | pointCardId=d-pointcard] に対し program は paymentAppId=pa-paypay",
+      );
+    });
+    it("d-pay の 2 候補: pointCardId と paymentAppId の混在は targetMismatch", () => {
+      expect(run({ pointCardId: "d-pointcard" }, { policy: dpayPolicy }).reviewReason).toBe("targetMismatch");
+    });
+    it("paypay の宣言に対して cardIds[paypay-card] + pa-paypay (カード絞り込み) は通過", () => {
+      const paypayPolicy = { ...dpayPolicy, sourceId: "paypay-campaigns", targets: [{ paymentAppId: "pa-paypay" }] };
+      expect(
+        run({ paymentAppId: "pa-paypay", currencyId: "paypay", cardIds: ["paypay-card"] }, { policy: paypayPolicy }).reviewReason,
+      ).toBeUndefined();
+    });
+    it("cardIds の候補: 部分集合なら通過、候補外のカードが混ざれば不一致", () => {
+      const cardPolicy = { ...dpayPolicy, targets: [{ cardIds: ["dcard", "paypay-card"] }] };
+      expect(run({ paymentAppId: undefined, cardIds: ["dcard"] }, { policy: cardPolicy }).reviewReason).toBeUndefined();
+      expect(
+        run({ paymentAppId: undefined, cardIds: ["dcard", "jcb-w"] }, { policy: cardPolicy }).reviewReason,
+      ).toBe("targetMismatch");
+    });
+    it("policy に target が無ければ判定しない (pa-paypay でも targetMismatch にならない)", () => {
+      expect(
+        run({ paymentAppId: "pa-paypay", currencyId: "paypay" }, { policy: { ...dpayPolicy, targets: [] } }).reviewReason,
+      ).toBeUndefined();
+    });
+    it("review 行きの program (validTo 無し → 本来 idCollision) にも targetMismatch が付く (Phase 1 評価)", () => {
+      expect(
+        run({ paymentAppId: "pa-paypay", currencyId: "paypay", validTo: undefined, evidenceQuote: "PayPayで3%還元" }, { policy: dpayPolicy }).reviewReason,
+      ).toBe("targetMismatch");
+    });
+  });
+
+  describe("条件文言・lifestyle (campaignConditional)", () => {
+    it("name の「最大」は campaignConditional で、判定詳細は『label:「語」@field』", () => {
+      const p = run({ name: "【吉野家】最大＋3％還元！" });
+      expect(p.reviewReason).toBe("campaignConditional");
+      expect(p.reviewDetail).toBe("最大:「最大」@name");
+    });
+    it("notes だけにある「対象商品限定です」も拾う", () => {
+      const p = run({ notes: "対象商品限定です" });
+      expect(p.reviewReason).toBe("campaignConditional");
+      expect(p.reviewDetail).toBe("対象限定:「対象商品限定です」@notes");
+    });
+    it("conditions の「家族ポイント 6人以上」は lifestyle", () => {
+      const p = run({ conditions: "家族ポイント 6人以上" });
+      expect(p.reviewReason).toBe("campaignConditional");
+      expect(p.reviewDetail).toBe("lifestyle:「家族ポイント」");
+    });
+    it("rate 上限は条件文言より強い (最大 + 20% は campaignRateCeiling)", () => {
+      expect(run({ name: "最大20%", rate: 0.2, evidenceQuote: "最大20%還元、期間 2099年12月31日まで" }).reviewReason).toBe("campaignRateCeiling");
+    });
+  });
+
+  it("now を注入すると、その時点で未来の validTo は期限切れ扱いにならない", () => {
+    const opts = { now: new Date("2026-07-27T06:00:00+09:00") };
+    expect(run({ validTo: "2026-08-31", evidenceQuote: "d払いで3%還元、期間 2026年8月31日まで" }, opts).reviewReason).toBeUndefined();
+    // (validTo はローカル日付の終端で判定するので、runner の TZ に依らないよう 2 日前にする)
+    expect(
+      run({ validTo: "2026-07-25", evidenceQuote: "d払いで3%還元、期間 2026年7月25日まで" }, opts).reviewReason,
+    ).toBe("idCollision");
+  });
+
+  describe("既存 campaign の率改定", () => {
+    const withExisting = (program: NonNullable<SeedShape["programs"]>[number]): SeedShape => ({
+      ...z3Seed,
+      programs: [program],
+    });
+    it("validTo あり・cap 無し・0.09 → 0.095 の更新は campaignRateCeiling", () => {
+      const seed = withExisting({
+        id: "prog-camp-9", name: "既存", scope: "all-stores", paymentAppId: "pa-d-pay",
+        rate: 0.09, currencyId: "d-pt", validTo: "2099-12-31",
+      });
+      const ps = proposePrograms(
+        baseSource({ extractor: "campaign", programs: [{ ...healthy, programId: "prog-camp-9", rate: 0.095 }] }),
+        seed,
+      );
+      expect(ps[0].type).toBe("updateField");
+      expect(ps[0].reviewReason).toBe("campaignRateCeiling");
+    });
+    it("validTo の無い program (J-POINT 20 倍系) の 0.1 → 0.105 は従来どおり auto", () => {
+      const seed = withExisting({
+        id: "prog-jcb-jpoint-20x", name: "J-POINT 20倍", scope: "member-stores", cardIds: ["dcard"],
+        rate: 0.1, currencyId: "d-pt",
+      });
+      const ps = proposePrograms(
+        baseSource({ extractor: "jcb-jpoint", programs: [{ ...healthy, programId: "prog-jcb-jpoint-20x", paymentAppId: undefined, cardIds: ["dcard"], rate: 0.105 }] }),
+        seed,
+      );
+      expect(ps[0].type).toBe("updateField");
+      expect(ps[0].reviewReason).toBeUndefined();
+    });
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// PR-0b-3 (Z3): Phase C′ membership の内容ガード
+// ───────────────────────────────────────────────────────────────
+
+describe("PR-0b-3: storeNameMismatchDetail (店名照合)", () => {
+  // seed() に依存しない凍結 store 名 (seed-data-stores / seed-additions の実名)
+  const stores: SeedShape = {
+    ...emptySeed,
+    stores: [
+      { id: "kura-sushi", name: "くら寿司", category: "飲食" },
+      { id: "takashimaya", name: "高島屋", category: "百貨店" },
+      { id: "tower-records", name: "タワーレコード", category: "音楽・映像" },
+      { id: "nojima", name: "ノジマ", category: "家電量販店" },
+      { id: "uniqlo", name: "ユニクロ (一部店舗)", category: "ファッション" },
+      { id: "conv-7eleven", name: "セブン-イレブン", category: "コンビニ" },
+      { id: "sukiya", name: "すき家", category: "飲食" },
+      { id: "general", name: "一般加盟店", category: "その他" },
+      { id: "multi", name: "ENEOS／エネオス", category: "ガソリン" },
+    ],
+  };
+
+  it.each([
+    ["kura-sushi", "かっぱ寿司の店舗で最大10倍！", "くら寿司"],
+    ["takashimaya", "タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍", "高島屋"],
+    ["tower-records", "TOWER RECORDS ONLINE エポスポイント 3 倍", "タワーレコード"],
+    ["nojima", "nojima online エポスポイント 3 倍", "ノジマ"],
+  ])("不一致: %s ←「%s」", (storeId, evidence, core) => {
+    expect(storeNameMismatchDetail(storeId, evidence, stores)).toBe(`evidence に店名「${core}」が無い`);
+  });
+
+  it.each([
+    ["uniqlo", "ユニクロオンラインストア エポスポイント 2 倍"], // 括弧除去で一致
+    ["conv-7eleven", "セブンイレブン 対象商品 3%"], // ハイフン除去で一致
+    ["sukiya", "すき家 ポイント 20倍"],
+    ["multi", "エネオス でポイント 2 倍"], // 「/」分割の要素で一致
+  ])("一致: %s ←「%s」", (storeId, evidence) => {
+    expect(storeNameMismatchDetail(storeId, evidence, stores)).toBeNull();
+  });
+
+  it("seed に無い新規 store と擬似 store (general) は null (missingStoreBody / pseudoStoreTarget の担当)", () => {
+    expect(storeNameMismatchDetail("brand-new-store", "無関係な引用", stores)).toBeNull();
+    expect(storeNameMismatchDetail("general", "無関係な引用", stores)).toBeNull();
+  });
+});
+
+describe("PR-0b-3: detectMembershipWording (membership の条件文言)", () => {
+  it("「マクドナルド(モバイルオーダー・マックデリバリー(R)サービス限定)」は一致する", () => {
+    expect(
+      detectMembershipWording({ evidenceQuote: "マクドナルド(モバイルオーダー・マックデリバリー(R)サービス限定)" }),
+    ).toBe("モバイルオーダー:「モバイルオーダー」@evidenceQuote");
+  });
+  it.each(["この店舗限定 2%", "税抜換算", "すき家 ポイント 20倍"])("「%s」は一致しない", (text) => {
+    expect(detectMembershipWording({ evidenceQuote: text })).toBeNull();
+  });
+  it("notes の「商品限定」「【池袋店】」も拾う", () => {
+    expect(detectMembershipWording({ evidenceQuote: "3 倍", notes: "対象の商品限定" })).toBe(
+      "限定:「商品限定」@notes",
+    );
+    expect(detectMembershipWording({ evidenceQuote: "【ビックカメラ池袋店】3 倍" })).toBe(
+      "支店限定:「ビックカメラ池袋店】」@evidenceQuote",
+    );
+  });
+  it("exemptEcWording は EC 語 (オンライン / ネット / 通販 / 経由) だけを免除する", () => {
+    expect(detectMembershipWording({ evidenceQuote: "無印良品ネットストア 2 倍" })).toBe(
+      "EC経由:「ネット」@evidenceQuote",
+    );
+    expect(
+      detectMembershipWording({ evidenceQuote: "無印良品ネットストア 2 倍" }, { exemptEcWording: true }),
+    ).toBeNull();
+    expect(
+      detectMembershipWording({ evidenceQuote: "一部店舗のみ ネット 2 倍" }, { exemptEcWording: true }),
+    ).toBe("一部:「一部」@evidenceQuote");
+  });
+});
+
+describe("PR-0b-3: guardMembershipContent (Phase C′)", () => {
+  const current: SeedShape = {
+    ...emptySeed,
+    stores: [
+      { id: "kura-sushi", name: "くら寿司", category: "飲食" },
+      { id: "muji", name: "無印良品 (一部店舗)", category: "ファッション" },
+      { id: "sukiya", name: "すき家", category: "飲食" },
+    ],
+    programs: [
+      {
+        id: "prog-epos-tamaru-2x", name: "たまるマーケット (2倍)", scope: "member-stores",
+        cardIds: ["epos-card"], rate: 0.01, currencyId: "epos", channel: "online",
+      },
+      {
+        id: "prog-jcb-jpoint-20x", name: "J-POINT (20倍)", scope: "member-stores",
+        cardIds: ["jcb-w"], rate: 0.105, currencyId: "j-point",
+      },
+    ],
+  };
+  const mem = (
+    programId: string,
+    storeId: string,
+    evidenceQuote: string,
+    reviewReason?: Proposal["reviewReason"],
+  ): Proposal => ({
+    type: "addRecord",
+    collection: "memberships",
+    record: { programId, storeId },
+    sourceId: "src",
+    confidence: 0.95,
+    evidence: { evidenceQuote, explicitness: 0.95, ambiguity: 0 },
+    ...(reviewReason ? { reviewReason } : {}),
+  });
+
+  it("店名不一致は storeNameMismatch (文言より先に判定)、条件文言は campaignConditional、判定詳細付き", () => {
+    const { proposals, demotedStoreName, demotedWording } = guardMembershipContent(
+      [
+        mem("prog-jcb-jpoint-20x", "kura-sushi", "かっぱ寿司の店舗で最大10倍！"),
+        mem("prog-jcb-jpoint-20x", "sukiya", "すき家 最大 20倍"),
+        mem("prog-jcb-jpoint-20x", "sukiya", "すき家 ポイント 20倍"),
+      ],
+      current,
+    );
+    expect(proposals.map((p) => p.reviewReason)).toEqual([
+      "storeNameMismatch",
+      "campaignConditional",
+      undefined,
+    ]);
+    expect(proposals[0].reviewDetail).toBe("evidence に店名「くら寿司」が無い");
+    expect(proposals[1].reviewDetail).toBe("最大:「最大」@evidenceQuote");
+    expect(demotedStoreName).toBe(1);
+    expect(demotedWording).toBe(1);
+  });
+
+  it("既に reason を持つ membership (missingStoreBody / lowConfidence) と membership 以外は変えない", () => {
+    const a = mem("prog-jcb-jpoint-20x", "kura-sushi", "かっぱ寿司", "missingStoreBody");
+    const b = mem("prog-jcb-jpoint-20x", "sukiya", "最大", "lowConfidence");
+    const prog: Proposal = {
+      type: "addRecord",
+      collection: "programs",
+      record: { id: "prog-x", name: "最大 3%", rate: 0.03, currencyId: "d-pt" },
+      sourceId: "src",
+      confidence: 1,
+      evidence: { evidenceQuote: "最大", explicitness: 1, ambiguity: 0 },
+    };
+    const { proposals } = guardMembershipContent([a, b, prog], current);
+    expect(proposals[0]).toBe(a);
+    expect(proposals[1]).toBe(b);
+    expect(proposals[2]).toBe(prog);
+  });
+
+  it("実効チャネル online の program (たまる) への membership は「ネットストア」でも通過 (RF6)", () => {
+    const { proposals } = guardMembershipContent(
+      [
+        mem("prog-epos-tamaru-2x", "muji", "無印良品ネットストア エポスポイント 2 倍"),
+        mem("prog-jcb-jpoint-20x", "muji", "無印良品ネットストア J-POINT 2 倍"), // online でない program は止める
+      ],
+      current,
+    );
+    expect(proposals[0].reviewReason).toBeUndefined();
+    expect(proposals[1].reviewReason).toBe("campaignConditional");
+  });
+
+  it("同 run の新規 program の record.channel=online も解決する (programChannelResolver)", () => {
+    const newTier: Proposal = {
+      type: "addRecord",
+      collection: "programs",
+      record: { id: "prog-epos-tamaru-5x", name: "たまる 5倍", scope: "member-stores", rate: 0.025, currencyId: "epos", channel: "online" },
+      sourceId: "epos-tamaru-market",
+      confidence: 0.95,
+      evidence: { evidenceQuote: "5倍", explicitness: 0.95, ambiguity: 0 },
+    };
+    const { proposals } = guardMembershipContent(
+      [newTier, mem("prog-epos-tamaru-5x", "muji", "無印良品ネットストア 5 倍")],
+      current,
+    );
+    expect(proposals[1].reviewReason).toBeUndefined();
+  });
+
+  it("C′ で membership が全て降格した同 run の新規 member-stores program は、C2 で orphanedProgram になる", () => {
+    const newProg: Proposal = {
+      type: "addRecord",
+      collection: "programs",
+      record: { id: "prog-dpay-kura", name: "d払い くら寿司 3%", scope: "member-stores", paymentAppId: "pa-d-pay", rate: 0.03, currencyId: "d-pt", validTo: "2099-12-31" },
+      sourceId: "src",
+      confidence: 1,
+      evidence: { evidenceQuote: "3%", explicitness: 1, ambiguity: 0 },
+    };
+    const guarded = guardMembershipContent(
+      [newProg, mem("prog-dpay-kura", "kura-sushi", "かっぱ寿司で d払い 3%")],
+      current,
+    );
+    expect(guarded.proposals[1].reviewReason).toBe("storeNameMismatch");
+    const atomic = demoteChildlessMemberStorePrograms(guarded.proposals, new Set());
+    expect(atomic.proposals[0].reviewReason).toBe("orphanedProgram");
+  });
+});
+
+describe("PR-0b-3: membership の overrideRate (campaign 由来は 5% 超を review)", () => {
+  const seedWithCurrency: SeedShape = {
+    ...emptySeed,
+    currencies: [{ id: "jre", name: "JRE POINT", kind: "point" }],
+  };
+  const mem = (overrideRate: number, extractor: ExtractedSource["extractor"] = "campaign") =>
+    proposeMemberships(
+      baseSource({
+        extractor,
+        memberships: [
+          { programId: "prog-a", storeId: "store-a", overrideRate, evidenceQuote: "20%", explicitness: 0.95, ambiguity: 0.05 },
+        ],
+      }),
+      seedWithCurrency,
+    )[0];
+
+  it("campaign 由来で 0.2 は campaignRateCeiling (判定詳細付き)", () => {
+    expect(mem(0.2).reviewReason).toBe("campaignRateCeiling");
+    expect(mem(0.2).reviewDetail).toContain("overrideRate 20%");
+  });
+  it("campaign 由来で 0.5 は zeroOrInvalidRate (値域外が後勝ち)", () => {
+    expect(mem(0.5).reviewReason).toBe("zeroOrInvalidRate");
+  });
+  it("campaign 由来で 0.02 は auto", () => {
+    expect(mem(0.02).reviewReason).toBeUndefined();
+  });
+  it("ongoing-program 由来で 0.2 は従来どおり auto", () => {
+    expect(mem(0.2, "ongoing-program").reviewReason).toBeUndefined();
+  });
+});
+
+// PR-5c-1: Phase C5 guardRateWatched。率カナリア (sources/rate-watch.yaml) で監視中の率を cron の auto で
+// 動かすと、rate-watch の契約テスト (seedRateAtCuration = seed の率) が apply 後の safety gate で落ち、
+// その run の auto が全件 safetyFailed になる。その経路を rateWatched で review に回す。
+describe("PR-5c-1: guardRateWatched (Phase C5)", () => {
+  const ev = { evidenceQuote: "J-POINT 20倍", explicitness: 1, ambiguity: 0 };
+  const watchedFile: RateWatchFile = {
+    version: 1,
+    targets: [
+      {
+        id: "jpoint-20x-sukiya",
+        label: "すき家",
+        url: "https://example.com/shop/000450",
+        priority: 1,
+        assertions: [
+          {
+            subject: { kind: "membership", programId: "prog-jcb-jpoint-20x", storeId: "sukiya" },
+            seedRateAtCuration: 0.105,
+            phrases: ["J-POINT 20倍"],
+          },
+        ],
+      },
+      {
+        id: "program-and-card",
+        label: "p",
+        url: "https://example.com/p",
+        priority: 3,
+        assertions: [
+          { subject: { kind: "program", id: "prog-watched" }, seedRateAtCuration: 0.01, phrases: ["x"] },
+          { subject: { kind: "card", id: "jcb-w" }, seedRateAtCuration: 0.01, phrases: ["1%"] },
+        ],
+      },
+    ],
+    excluded: [],
+  };
+  const watched = loadWatchedSubjects(watchedFile);
+  const base = { sourceId: "jcb-jpoint-partners", confidence: 0.95, evidence: ev };
+  const update = (
+    collection: "programs" | "cards",
+    id: string,
+    reviewReason?: Proposal["reviewReason"],
+  ): Proposal => ({
+    ...base,
+    type: "updateField",
+    collection,
+    id,
+    field: collection === "cards" ? "defaultRate" : "rate",
+    from: 0.105,
+    to: 0.11,
+    ...(reviewReason ? { reviewReason } : {}),
+  });
+  const del = (collection: "programs" | "memberships", id: string): Proposal => ({
+    ...base,
+    type: "delete",
+    collection,
+    id,
+  });
+
+  it("監視 program への auto の updateField → rateWatched (reviewDetail に監視元の target)", () => {
+    const { proposals, guarded } = guardRateWatched([update("programs", "prog-watched")], watched);
+    expect(guarded).toBe(1);
+    expect(proposals[0].reviewReason).toBe("rateWatched");
+    expect(proposals[0].reviewDetail).toContain("target「program-and-card」");
+  });
+
+  it("監視 membership の program (率の元) の updateField も rateWatched", () => {
+    const { proposals } = guardRateWatched([update("programs", "prog-jcb-jpoint-20x")], watched);
+    expect(proposals[0].reviewReason).toBe("rateWatched");
+    expect(proposals[0].reviewDetail).toContain(membershipId("prog-jcb-jpoint-20x", "sukiya"));
+  });
+
+  it("監視外の id はそのまま (auto)", () => {
+    const { proposals, guarded } = guardRateWatched(
+      [update("programs", "prog-jcb-jpoint-2x"), del("memberships", membershipId("prog-jcb-jpoint-20x", "gusto"))],
+      watched,
+    );
+    expect(guarded).toBe(0);
+    expect(proposals.map((p) => p.reviewReason)).toEqual([undefined, undefined]);
+  });
+
+  it("既に別理由で review 行きなら触らない (staleExtractGeneration / rateDeltaTooLarge)", () => {
+    const { proposals, guarded } = guardRateWatched(
+      [
+        update("programs", "prog-watched", "staleExtractGeneration"),
+        update("programs", "prog-jcb-jpoint-20x", "rateDeltaTooLarge"),
+      ],
+      watched,
+    );
+    expect(guarded).toBe(0);
+    expect(proposals.map((p) => p.reviewReason)).toEqual(["staleExtractGeneration", "rateDeltaTooLarge"]);
+  });
+
+  it("sourceAutoMergeDisabled (ガード通過済みの印) は rateWatched で上書きする", () => {
+    const { proposals } = guardRateWatched(
+      [update("programs", "prog-watched", "sourceAutoMergeDisabled")],
+      watched,
+    );
+    expect(proposals[0].reviewReason).toBe("rateWatched");
+  });
+
+  it("addRecord はそのまま (監視 program と同じ id でも)", () => {
+    const add: Proposal = {
+      ...base,
+      type: "addRecord",
+      collection: "memberships",
+      record: {
+        id: membershipId("prog-jcb-jpoint-20x", "sukiya"),
+        programId: "prog-jcb-jpoint-20x",
+        storeId: "sukiya",
+      },
+    };
+    const { proposals, guarded } = guardRateWatched([add], watched);
+    expect(guarded).toBe(0);
+    expect(proposals[0].reviewReason).toBeUndefined();
+  });
+
+  it("監視 program の delete と監視 membership の delete → rateWatched", () => {
+    const { proposals, guarded } = guardRateWatched(
+      [
+        del("programs", "prog-jcb-jpoint-20x"),
+        del("memberships", membershipId("prog-jcb-jpoint-20x", "sukiya")),
+      ],
+      watched,
+    );
+    expect(guarded).toBe(2);
+    expect(proposals.map((p) => p.reviewReason)).toEqual(["rateWatched", "rateWatched"]);
+  });
+
+  it("監視 card の updateField/cards → rateWatched (apply 経路は無いが偽の auto を防ぐ)", () => {
+    const { proposals } = guardRateWatched(
+      [update("cards", "jcb-w"), update("cards", "epos-card")],
+      watched,
+    );
+    expect(proposals.map((p) => p.reviewReason)).toEqual(["rateWatched", undefined]);
+  });
+
+  it("rate-watch.yaml が無い → no-op、壊れている → throw (fail-closed)", () => {
+    const missing = loadRateWatchFile(join(tmpdir(), "no-such-dir-5c1", "rate-watch.yaml"));
+    expect(missing).toBeNull();
+    const { proposals, guarded } = guardRateWatched(
+      [update("programs", "prog-jcb-jpoint-20x"), del("programs", "prog-jcb-jpoint-20x")],
+      loadWatchedSubjects(missing),
+    );
+    expect(guarded).toBe(0);
+    expect(proposals.every((p) => p.reviewReason === undefined)).toBe(true);
+
+    const dir = mkdtempSync(join(tmpdir(), "rate-watch-guard-"));
+    try {
+      const broken = join(dir, "rate-watch.yaml");
+      writeFileSync(broken, "version: 1\ntargets:\n  - id: [\n");
+      expect(() => loadRateWatchFile(broken)).toThrow(/rate-watch/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("実際の sources/rate-watch.yaml: J-POINT 20 倍 (W / Gold) の率と店・たまる無印を守る", () => {
+    const real = loadWatchedSubjects(loadRateWatchFile());
+    const { proposals } = guardRateWatched(
+      [
+        update("programs", "prog-jcb-jpoint-20x"),
+        update("programs", "prog-jcb-jpoint-gold-20x"),
+        update("programs", "prog-epos-tamaru-2x"),
+        del("memberships", membershipId("prog-jcb-jpoint-gold-20x", "starbucks")),
+        update("programs", "prog-jcb-jpoint-3x"), // 監視外の tier は従来どおり
+      ],
+      real,
+    );
+    expect(proposals.map((p) => p.reviewReason)).toEqual([
+      "rateWatched",
+      "rateWatched",
+      "rateWatched",
+      "rateWatched",
+      undefined,
+    ]);
   });
 });

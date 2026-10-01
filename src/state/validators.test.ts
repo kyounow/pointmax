@@ -91,6 +91,7 @@ describe("validateImportData: v6 scope 検証", () => {
     id: "prog-1",
     name: "P",
     scope: "member-stores",
+    cardIds: ["c1"], // PR-0b-3: 対象キー必須
     rate: 0.05,
     currencyId: "cur1",
     ...over,
@@ -150,6 +151,7 @@ describe("validateImportData: v6 membership id 検証", () => {
     id: "prog-1",
     name: "P",
     scope: "member-stores",
+    cardIds: ["c1"], // PR-0b-3: 対象キー必須
     rate: 0.05,
     currencyId: "cur1",
   };
@@ -205,6 +207,7 @@ describe("validateImportData: PR-0a-2a channel 検証", () => {
     id: "prog-1",
     name: "P",
     scope: "member-stores",
+    cardIds: ["c1"], // PR-0b-3: 対象キー必須
     rate: 0.05,
     currencyId: "cur1",
     ...over,
@@ -254,6 +257,78 @@ describe("validateImportData: PR-0a-2a channel 検証", () => {
       memberships: [mkMembership({ channel: "online" })],
     });
     expect(r.ok).toBe(true);
+  });
+});
+
+// PR-5a (B11): Card.lastVerifiedAt (基本還元率の確認月) は任意の文字列 (OPT_STR で型だけ検証)。
+describe("validateImportData: PR-5a Card.lastVerifiedAt 検証 (OPT_STR)", () => {
+  it("cards / edges / programs の lastVerifiedAt が文字列・未指定なら受理", () => {
+    const r = validateImportData({
+      ...valid,
+      cards: [{ ...valid.cards[0], lastVerifiedAt: "2026-07" }],
+      edges: [{ ...valid.edges[0], lastVerifiedAt: "2026-07" }],
+      programs: [
+        {
+          id: "prog-1",
+          name: "P",
+          scope: "all-stores",
+          rate: 0.01,
+          currencyId: "cur1",
+          cardIds: ["c1"],
+          lastVerifiedAt: "2026-07",
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    expect(validateImportData(valid).ok).toBe(true);
+  });
+
+  it("cards[0].lastVerifiedAt が文字列でなければ拒否", () => {
+    const r = validateImportData({
+      ...valid,
+      cards: [{ ...valid.cards[0], lastVerifiedAt: 202607 }],
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toContain("cards[0].lastVerifiedAt");
+  });
+});
+
+// PR-0b-3: program は対象キー (cardIds / pointCardId / paymentAppId) 必須。cardIds は非空。
+describe("validateImportData: PR-0b-3 program の対象キー", () => {
+  const base = { id: "prog-t", name: "P", scope: "all-stores", rate: 0.05, currencyId: "cur1" };
+
+  it("対象キーが 1 つも無い program を id と位置付きで拒否", () => {
+    const r = validateImportData({ ...valid, programs: [base] });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.error).toContain("programs[0] (prog-t)");
+      expect(r.error).toContain("対象");
+    }
+  });
+
+  it("cardIds: [] の program を拒否 (どのカードでも発火しない死にデータ。paymentAppId があっても拒否)", () => {
+    for (const extra of [{}, { paymentAppId: "pa1" }]) {
+      const r = validateImportData({ ...valid, programs: [{ ...base, cardIds: [], ...extra }] });
+      expect(r.ok, JSON.stringify(extra)).toBe(false);
+      if (!r.ok) expect(r.error).toContain("空でない cardIds");
+    }
+  });
+
+  it("cardIds に文字列以外が混ざる program を拒否", () => {
+    const r = validateImportData({ ...valid, programs: [{ ...base, cardIds: ["c1", 3] }] });
+    expect(r.ok).toBe(false);
+  });
+
+  it("cardIds / pointCardId / paymentAppId のどれか 1 つで受理、cardIds + paymentAppId の併用も受理", () => {
+    for (const target of [
+      { cardIds: ["c1"] },
+      { pointCardId: "pc1" },
+      { paymentAppId: "pa1" },
+      { cardIds: ["c1"], paymentAppId: "pa1" },
+    ]) {
+      const r = validateImportData({ ...valid, programs: [{ ...base, ...target }] });
+      expect(r.ok, JSON.stringify(target)).toBe(true);
+    }
   });
 });
 

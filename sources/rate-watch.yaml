@@ -1,0 +1,295 @@
+# 率カナリア (PR-5c-1) の監視リスト。scripts/sync/rate-watch.ts が読む (Gemini は使わない = 0 req)。
+#
+# 週次 cron の抽出 (Gemini) とは別の経路で、seed の率の根拠になった公式ページの逐語句が今も載っているかを
+# 素の HTTP GET で照合する。検知だけで seed は書き換えない。仕組みと手動プローブの手順はルート README の
+# 「率カナリア (0 req)」、位置づけは sources/README。
+#
+# 規約 (scripts/sync/rate-watch.test.ts の契約テストが npm test = cron の safety gate でも検査する):
+#   - url は実際に開いて逐語を確認したものだけ (捏造禁止。確認日を notes に書く)。https のみ。
+#   - phrases は正規化 (NFKC・空白の圧縮・3 桁カンマ除去・数字と 倍/%/pt の間の空白除去) 後の部分一致。
+#     anchor の各出現位置の前後 window 字 (既定 300、50〜2000) に全部そろえば match。
+#   - seedRateAtCuration は照合句を確かめたときの seed の率 (program = PROGRAM_OVERRIDES 適用後の rate /
+#     card = defaultRate / membership = overrideRate ?? program.rate)。seed の値と完全一致が契約。
+#     **seed の率を直す PR では、ここも同じ PR で更新する** (しないと CI が落ちる)。
+#   - 監視する program (membership の program を含む) は validTo を持たない常設だけ。
+#   - membership の subject は { programId, storeId } で書く (id は membershipId() で組む。raw id 直書き禁止)。
+#   - storeSet は一覧ページの店名集合の fingerprint (欠けた店名 = storeMissing)。subject は kind: category。
+#   - priority: 1 = 開発者の保有カード (JCB W / EPOS) の高還元 (10% 級) / 2 = 保有カードのその他 /
+#     3 = 非保有カードの高影響 / 4 = 参考。
+#   - 監視中の subject への cron の updateField / delete は diff-and-propose の Phase C5 (guardRateWatched) が
+#     rateWatched で review に回す (auto で seed が変わると上の契約が safety gate で落ちるため)。
+#   - candidates は到達性プローブ (--probe) 専用で照合しない。URL はリポジトリ (registry.yaml / seed) に既にあるものだけ。
+#   - excluded は意図して監視しない subject と理由 (実在は求めない。期限切れ整理で消える campaign も書くため)。
+#     excluded の program (prog-jcb-jpoint-20x / gold-20x / epos-tamaru-2x) は program 単位の句では照合しないが、
+#     監視 membership の率の元なので guardRateWatched の監視対象には含める (loadWatchedSubjects)。
+
+version: 1
+
+targets:
+  # ─── J-POINT パートナー 20 倍 (JCB W = 表示 20 倍 + カード特典 1 倍で 10.5% / Gold = 20 倍で 10%) ───
+  # 店舗詳細ページはサーバー描画の静的 HTML (2026-09-27 に curl + WebFetch で確認、9/28 に rate-watch で照合)。
+  # 本文は「<店名> J-POINT 20 倍 … 手順 1 ポイントアップ登録 無料 ポイントアップ期間 <開始日> 〜」の並び。
+  # phrases は『20倍』だけだとカテゴリ名『ポイント20倍!飲食店』にも一致するので、倍率表示の『J-POINT 20倍』にする。
+  - id: jpoint-20x-sukiya
+    label: J-POINT パートナー すき家 (20倍)
+    url: https://j-pointpartner.jcb.co.jp/shop/000450
+    priority: 1
+    assertions:
+      - subject: { kind: membership, programId: prog-jcb-jpoint-20x, storeId: sukiya }
+        seedRateAtCuration: 0.105
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+      - subject: { kind: membership, programId: prog-jcb-jpoint-gold-20x, storeId: sukiya }
+        seedRateAtCuration: 0.1
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+    notes: ポイントアップ期間 2026年4月16日 〜 (終了日なし)。QUICPay は対象外 (membership.notes)。2026-09-27 確認
+
+  - id: jpoint-20x-yoshinoya
+    label: J-POINT パートナー 吉野家 (20倍)
+    url: https://j-pointpartner.jcb.co.jp/shop/000436
+    priority: 1
+    assertions:
+      - subject: { kind: membership, programId: prog-jcb-jpoint-20x, storeId: yoshinoya }
+        seedRateAtCuration: 0.105
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+      - subject: { kind: membership, programId: prog-jcb-jpoint-gold-20x, storeId: yoshinoya }
+        seedRateAtCuration: 0.1
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+    notes: ポイントアップ期間 2026年1月13日 〜 (終了日なし)。2026-09-27 確認
+
+  - id: jpoint-20x-gusto
+    label: J-POINT パートナー ガスト (20倍)
+    url: https://j-pointpartner.jcb.co.jp/shop/000437
+    priority: 1
+    assertions:
+      - subject: { kind: membership, programId: prog-jcb-jpoint-20x, storeId: gusto }
+        seedRateAtCuration: 0.105
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+      - subject: { kind: membership, programId: prog-jcb-jpoint-gold-20x, storeId: gusto }
+        seedRateAtCuration: 0.1
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+    notes: ポイントアップ期間 2026年1月13日 〜 (終了日なし)。すかいらーくアプリのテーブル決済は対象外。2026-09-27 確認
+
+  - id: jpoint-20x-bamiyan
+    label: J-POINT パートナー バーミヤン (20倍)
+    url: https://j-pointpartner.jcb.co.jp/shop/000439
+    priority: 1
+    assertions:
+      - subject: { kind: membership, programId: prog-jcb-jpoint-20x, storeId: bamiyan }
+        seedRateAtCuration: 0.105
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+      - subject: { kind: membership, programId: prog-jcb-jpoint-gold-20x, storeId: bamiyan }
+        seedRateAtCuration: 0.1
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+    notes: ポイントアップ期間 2026年1月13日 〜 (終了日なし)。すかいらーくアプリのテーブル決済は対象外。2026-09-27 確認
+
+  - id: jpoint-20x-jonathan
+    label: J-POINT パートナー ジョナサン (20倍)
+    url: https://j-pointpartner.jcb.co.jp/shop/000438
+    priority: 1
+    assertions:
+      - subject: { kind: membership, programId: prog-jcb-jpoint-20x, storeId: jonathan }
+        seedRateAtCuration: 0.105
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+      - subject: { kind: membership, programId: prog-jcb-jpoint-gold-20x, storeId: jonathan }
+        seedRateAtCuration: 0.1
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+    notes: ポイントアップ期間 2026年1月13日 〜 (終了日なし)。すかいらーくアプリのテーブル決済は対象外。2026-09-27 確認
+
+  - id: jpoint-20x-saint-marc-cafe
+    label: J-POINT パートナー サンマルクカフェ (20倍、2027-01-12 まで)
+    url: https://j-pointpartner.jcb.co.jp/shop/000344
+    priority: 1
+    assertions:
+      # 20 倍は期間限定 (以前は 2 倍)。終了日『2027年1月12日』も照合し、延長・短縮で不一致にする
+      - subject: { kind: membership, programId: prog-jcb-jpoint-20x, storeId: saint-marc-cafe }
+        seedRateAtCuration: 0.105
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録", "2027年1月12日"]
+      - subject: { kind: membership, programId: prog-jcb-jpoint-gold-20x, storeId: saint-marc-cafe }
+        seedRateAtCuration: 0.1
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録", "2027年1月12日"]
+    notes: >-
+      「2026年1月13日(火)~2027年1月12日(火)まで期間限定でポイントが20倍」、ポイントアップ期間
+      2023年11月16日 〜 2027年1月12日。テナント店・オンラインストアは対象外。2026-09-27 確認
+
+  - id: jpoint-20x-mcdonalds
+    label: J-POINT パートナー マクドナルド (20倍、モバイルオーダー・デリバリー限定)
+    url: https://j-pointpartner.jcb.co.jp/shop/000160
+    priority: 1
+    assertions:
+      - subject: { kind: membership, programId: prog-jcb-jpoint-20x, storeId: mcdonalds }
+        seedRateAtCuration: 0.105
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+      - subject: { kind: membership, programId: prog-jcb-jpoint-gold-20x, storeId: mcdonalds }
+        seedRateAtCuration: 0.1
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録"]
+    notes: membership は channel online。ポイントアップ期間 2026年1月13日 〜 (終了日なし)。2026-09-27 確認
+
+  - id: jpoint-20x-starbucks-online-charge
+    label: J-POINT パートナー スターバックス オンライン入金・オートチャージ (20倍、2027-01-12 まで)
+    url: https://j-pointpartner.jcb.co.jp/shop/000014
+    priority: 1
+    assertions:
+      # 店紹介の文が長く、倍率表示から anchor まで約 400 字あるので window を広げる。
+      # 期間限定の終了日『2027年1月12日』(本文「2026年1月13日(火)~2027年1月12日(火)まですべての券種でポイントが
+      # 20倍になります」、anchor の約 490 字前) も句にして、期間の延長・終了の書き換えを phraseMissing で拾う
+      - subject: { kind: membership, programId: prog-jcb-jpoint-20x, storeId: starbucks }
+        seedRateAtCuration: 0.105
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録", "2027年1月12日"]
+        window: 700
+      - subject: { kind: membership, programId: prog-jcb-jpoint-gold-20x, storeId: starbucks }
+        seedRateAtCuration: 0.1
+        anchor: ポイントアップ期間
+        phrases: ["J-POINT 20倍", "ポイントアップ登録", "2027年1月12日"]
+        window: 700
+    notes: >-
+      スタバの 3 エントリ (000014 オンライン入金・オートチャージ / 000445 モバイルオーダー / 000235 eGift) のうち、
+      期間限定 (2027-01-12 まで全券種 20 倍、以前は一般カード 10 倍) で最初に変わりうる 000014 だけを照合する。
+      残り 2 エントリの掲載は下の一覧 (storeSet) で見る。membership は channel online。2026-09-27 確認
+      (終了日の句は 2026-09-28 に rate-watch の GET で照合)
+
+  # ─── J-POINT 20 倍 飲食店の一覧 (店名集合の fingerprint) ───
+  - id: jpoint-20x-restaurants-list
+    label: J-POINT パートナー「ポイント２０倍！飲食店」一覧 (店名集合)
+    url: https://j-pointpartner.jcb.co.jp/search?shop_category=30
+    priority: 1
+    # 一覧が空になっても tooShort (unreachable) にせず storeMissing にするため下げる (11 件で約 730 字、0 件で約 470 字)
+    minTextLength: 300
+    assertions:
+      - kind: storeSet
+        subject: { kind: category, id: jpoint-20x-restaurants }
+        # 2026-09-28 の一覧 (11 件、WebFetch で確認)。ドミノ・ピザは store 未登録 (seed に membership なし)
+        expectedStoreNames:
+          - マクドナルド（モバイルオーダー・マックデリバリー(R)サービス限定）
+          - スターバックス（スターバックス カードへのオンライン入金・オートチャージ）
+          - すき家
+          - スターバックス（モバイルオーダー）
+          - 吉野家
+          - ガスト
+          - スターバックス（Starbucks eGift）
+          - バーミヤン
+          - ドミノ・ピザ
+          - サンマルクカフェ
+          - ジョナサン
+    notes: >-
+      20 倍からの脱落 (membership の欠落) を 0 req で検知する。検索の実パラメータは shop_category / search_word
+      (keyword は無視されて全 92 件が返る)。店が増えたことは検知しない (増えた店は V3 で見る)
+
+  # ─── エポス たまるマーケット ───
+  - id: tamaru-muji
+    label: たまるマーケット 無印良品ネットストア (2倍)
+    url: https://tamaru.eposcard.co.jp/shop/620/
+    priority: 2
+    assertions:
+      # ページ下部の人気ランキングにも他店の『エポスポイント 2 倍』が並ぶので、店名と倍率を 1 句にし、
+      # 見出しの購入ボタン (『下記に同意しショップを利用する』) の近くだけで照合する
+      - subject: { kind: membership, programId: prog-epos-tamaru-2x, storeId: muji }
+        seedRateAtCuration: 0.01
+        anchor: 下記に同意しショップを利用する
+        phrases: ["無印良品ネットストア エポスポイント 2倍"]
+        window: 100
+    notes: >-
+      ショップ詳細ページ (トップの人気ランキングは毎週入れ替わるので使わない)。見出しは「下記に同意しショップを利用する
+      無印良品ネットストア エポスポイント 2 倍」、期間限定の表記なし。2026-09-28 に curl と WebFetch で確認
+
+candidates:
+  - id: jpoint-search
+    url: https://j-pointpartner.jcb.co.jp/search
+    note: registry jcb-jpoint-partners の取得元 (全 92 件の一覧、サーバー描画)
+  - id: tamaru-top
+    url: https://tamaru.eposcard.co.jp/
+    note: registry epos-tamaru-market の取得元。ランキングは入れ替わるので照合には使わない
+  - id: epos-selectable-pointup
+    url: https://www.eposcard.co.jp/pointup/index.html
+    note: >-
+      選べるポイントアップ (prog-epos-gp-selectable-pointup 0.01) の officialUrl。2026-09-28 の確認では本文が
+      「ポイント 最大2倍」で JQ CARD エポスゴールド向けの説明と混在し、ゴールド・プラチナ会員向けは別ページへの案内
+      (WebFetch の要約も不明瞭)。seed の 2 倍 (1.0%) を一意に裏付ける逐語句にならないので target にしない (V3 で確認)
+  - id: epos-articles
+    url: https://www.eposcard.co.jp/articles/
+    note: registry epos-news-campaigns (停止中) の取得元。お知らせ一覧に当たるかは要確認
+  - id: smbc-vpoint-up
+    url: https://www.smbc.co.jp/kojin/vpoint-up/
+    note: registry smbc-vpoint-up の取得元 (Shift_JIS)
+  - id: rakuten-card-pointday
+    url: https://event.rakuten.co.jp/card/pointday/
+    note: seed の楽天市場 5と0のつく日の officialUrl
+  - id: jal-tokuyakuten
+    url: https://www.jal.co.jp/jp/ja/jalcard/service/tokuyakuten/
+    note: seed の JAL カード特約店の officialUrl
+  - id: paypay-event
+    url: https://paypay.ne.jp/event/
+    note: registry paypay-campaigns の取得元
+  - id: dpay-campaign
+    url: https://service.smt.docomo.ne.jp/keitai_payment/campaign/
+    note: registry d-pay-campaigns の取得元 (一覧は JS 描画の疑い)
+  - id: smbc-card-cardinfo
+    url: https://www.smbc-card.com/mem/cardinfo/cardinfo9001629.jsp
+    note: registry smbc-v-gold-7percent (停止中) の取得元。Actions から 403 が既知
+
+excluded:
+  # 倍率 tier: 週次ソースが率を抽出する (program 単位の逐語句は無い)
+  - subject: { kind: program, id: prog-jcb-jpoint-2x }
+    reason: 倍率 tier。週次ソース jcb-jpoint-partners で率を監視
+  - subject: { kind: program, id: prog-jcb-jpoint-3x }
+    reason: 倍率 tier。週次ソース jcb-jpoint-partners で率を監視
+  - subject: { kind: program, id: prog-jcb-jpoint-20x }
+    reason: >-
+      倍率 tier。週次ソース jcb-jpoint-partners で率を監視。店単位は membership の target で照合しており、
+      その率の元なので cron の updateField / delete は guardRateWatched が rateWatched に降格する
+  - subject: { kind: program, id: prog-jcb-jpoint-gold-2x }
+    reason: 倍率 tier。週次ソース jcb-jpoint-partners で率を監視
+  - subject: { kind: program, id: prog-jcb-jpoint-gold-3x }
+    reason: 倍率 tier。週次ソース jcb-jpoint-partners で率を監視
+  - subject: { kind: program, id: prog-jcb-jpoint-gold-4x }
+    reason: 倍率 tier。週次ソース jcb-jpoint-partners で率を監視
+  - subject: { kind: program, id: prog-jcb-jpoint-gold-20x }
+    reason: >-
+      倍率 tier。週次ソース jcb-jpoint-partners で率を監視。店単位は membership の target で照合しており、
+      その率の元なので cron の updateField / delete は guardRateWatched が rateWatched に降格する
+  - subject: { kind: program, id: prog-epos-tamaru-2x }
+    reason: >-
+      倍率 tier。週次ソース epos-tamaru-market で率を監視。無印 (membership) の target の率の元なので
+      cron の updateField / delete は guardRateWatched が rateWatched に降格する
+  - subject: { kind: program, id: prog-epos-tamaru-3x }
+    reason: 倍率 tier。週次ソース epos-tamaru-market で率を監視
+  - subject: { kind: program, id: prog-epos-tamaru-4x }
+    reason: 倍率 tier。週次ソース epos-tamaru-market で率を監視
+  # ポイントカード提示 9 program
+  - subject: { kind: program, id: prog-rakuten-pointcard-0.5pc }
+    reason: 提示還元。店舗ごとに率が違い、単一の句にならない
+  - subject: { kind: program, id: prog-d-pointcard-0.5pc }
+    reason: 提示還元。店舗ごとに率が違い、単一の句にならない
+  - subject: { kind: program, id: prog-d-pointcard-1pc }
+    reason: 提示還元。店舗ごとに率が違い、単一の句にならない
+  - subject: { kind: program, id: prog-ponta-card-0.5pc }
+    reason: 提示還元。店舗ごとに率が違い、単一の句にならない
+  - subject: { kind: program, id: prog-ponta-card-1pc }
+    reason: 提示還元。店舗ごとに率が違い、単一の句にならない
+  - subject: { kind: program, id: prog-vpoint-card-0.5pc }
+    reason: 提示還元。店舗ごとに率が違い、単一の句にならない
+  - subject: { kind: program, id: prog-nanaco-card-1pc }
+    reason: 提示還元。店舗ごとに率が違い、単一の句にならない
+  - subject: { kind: program, id: prog-waon-card-0.5pc }
+    reason: 提示還元。店舗ごとに率が違い、単一の句にならない
+  - subject: { kind: program, id: prog-jre-pointcard-0.5pc }
+    reason: 提示還元。店舗ごとに率が違い、単一の句にならない
+  # cron が追加した期間限定 campaign (ADDED_PROGRAMS)
+  - subject: { kind: program, id: prog-dpay-kura-sushi-10x-dpoint-2026-07 }
+    reason: 期間限定 campaign (ADDED)。cron が期間と期限切れ整理 (validTo + 30 日で自動削除) を管理
+  - subject: { kind: program, id: prog-paypay-seven-eleven-30-2026-09 }
+    reason: 期間限定 campaign (ADDED)。cron が期間と期限切れ整理 (validTo + 30 日で自動削除) を管理

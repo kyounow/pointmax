@@ -12,7 +12,7 @@ on:
         type: boolean
         default: false
       group:
-        description: '同期グループ (auto=実行日の JST 曜日で導出 / mon / thu / all=全 enabled ソース)'
+        description: '同期グループ (auto=実行日の JST 曜日で導出 / mon / thu / all=全 enabled ソース / rate-watch-only=率カナリアの到達性プローブだけ、Gemini 0 req)'
         type: choice
         default: auto
         options:
@@ -20,6 +20,7 @@ on:
           - mon
           - thu
           - all
+          - rate-watch-only
       thinking_budget:
         description: 'Q1 の A/B 用。空なら既定の 1024'
         type: string
@@ -35,6 +36,9 @@ concurrency:
 
 jobs:
   sync:
+    # group=rate-watch-only の手動実行では動かさない (下の rate-watch-probe だけが動く)。
+    # schedule 起動では github.event.inputs が空 (null) なので、この条件は常に true = 従来どおり動く。
+    if: ${{ github.event.inputs.group != 'rate-watch-only' }}
     runs-on: ubuntu-latest
     # 既定の 360 分をやめる。concurrency は cancel-in-progress:false なので、ハングすると次の cron まで詰まる
     timeout-minutes: 45
@@ -54,8 +58,8 @@ jobs:
         run: npm ci
 
       # 無料枠 (gemini-2.5-flash = 20 req/日) を超えないよう enabled ソースを mon/thu に分割。
-      # 現構成 (2026-09-27、Z4 停止後): enabled 3 本、worst = 単発 3 attempts × 本数 = mon 6 / thu 3 req
-      # (d払い / PayPay を 0b-3 で再有効化すると mon 9 / thu 6)。見積りの正は registry.yaml ヘッダ。
+      # 現構成 (PR-0b-3 で d払い / PayPay を autoMerge:false 付きで再有効化した後): enabled 5 本、
+      # worst = 単発 3 attempts × 本数 = mon 9 / thu 6 req。見積りの正は registry.yaml ヘッダ。
       # 429 の日次枠 (PerDay) を観測したら fetch-all が後続ソースを打ち切る (PR-0b-2)。
       # schedule 起動 (または workflow_dispatch group=auto) は実行時刻の JST 曜日から導出:
       #   木曜 (date +%u = 4) → thu、それ以外 (月曜含む) → mon。
@@ -329,7 +333,7 @@ jobs:
 
       - name: Create/update review PR
         if: steps.review_trigger.outputs.active == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: chore/sync-review-queue
@@ -357,3 +361,30 @@ jobs:
           echo "- autoMergeEnabled: ${{ steps.config.outputs.enabled }}" >> $GITHUB_STEP_SUMMARY
           echo "- safety: ${{ steps.safety.outcome || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
           echo "- review-PR: ${{ steps.review_trigger.outputs.active || 'false' }}" >> $GITHUB_STEP_SUMMARY
+
+  # ===== 率カナリアの到達性プローブ (PR-5c-1) =====
+  # workflow_dispatch の group=rate-watch-only でだけ動く (schedule では inputs が空なので動かない)。
+  # sources/rate-watch.yaml の target / candidate を素の HTTP GET で取り、HTTP status・本文長・title を
+  # Step Summary に表で出す (照合はしない)。Gemini は 0 req、main には何も push しない。
+  # 注意: この run の完了でも deploy.yml の workflow_run (types: completed) が発火し、main が再デプロイされる (害はない)。
+  rate-watch-probe:
+    if: ${{ github.event.inputs.group == 'rate-watch-only' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Rate watch probe (0 req)
+        run: npm run sync:rate-watch -- --probe --out "$RUNNER_TEMP/rate-watch.json"
