@@ -210,6 +210,21 @@ export type ExtractedSource = {
   memberships?: ExtractedMembership[]; // program ↔ store の M2M join
 };
 
+// ExtractedSource の抽出配列キー (件数の集計・ログ・fetch outcome の itemCounts で共用)。
+// crawl-index.ts の ArrayKey (子ページ merge の dedupe キー) と同じ集合。
+export const EXTRACTED_ARRAY_KEYS = [
+  "cards",
+  "storeRules",
+  "categoryRules",
+  "stores",
+  "loyaltyRules",
+  "paymentApps",
+  "programs",
+  "memberships",
+] as const satisfies readonly (keyof ExtractedSource)[];
+
+export type ExtractedArrayKey = (typeof EXTRACTED_ARRAY_KEYS)[number];
+
 // 各抽出項目に必ず付くエビデンス・自己評価。
 // confidence は computeConfidence() で機械的に算出する。
 export type Evidence = {
@@ -400,7 +415,9 @@ export type ReviewReason =
   | "periodChange"            // 既存 program の validFrom/validTo 変更 (キャンペーン延長/期間訂正)。誤期間適用防止のため必ず人手レビュー (sync:approve で承認可)
   | "staleExtractGeneration" // extracted の promptVersion が registry の現行 extractor 版と不一致。
                               // プロンプト改訂直後の旧世代キャッシュによる rate/期間の書き戻し提案 (PROGRAM_OVERRIDES 行き
-                              // updateField) を防ぐ。次回 fetch (新版) 後に promptVersion が一致し再判定される
+                              // updateField) を防ぐ。次回 fetch (新版) 後に promptVersion が一致し再判定される。
+                              // PR-0b-2: extracted の fetchedAt が 14 日超 (keep-last-good / 取得停止) もこの理由 (Phase C3。
+                              // どちらに当たったかは reviewDetail)
   | "rateWatched"             // PR-5c-1: sources/rate-watch.yaml (率カナリア) で監視中の subject への変更 (Phase C5
                               // guardRateWatched)。監視 program (membership の program を含む) の updateField・delete、
                               // 監視 membership の delete、監視 card の updateField。auto で seed が変わると

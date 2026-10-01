@@ -406,7 +406,7 @@ export const REASON_LABELS: Record<ReviewReason, string> = {
   storeAdditionsDisabled: "⏸ storeAdditionsDisabled (store 追加は手動キュレ運用)",
   expiredCampaign: "🟠 expiredCampaign (期限切れだが同 run で期間変更提案あり、人手判断)",
   periodChange: "🟣 periodChange (キャンペーン期間の変更/延長)",
-  staleExtractGeneration: "🧯 staleExtractGeneration (旧世代 extracted による書き戻し)",
+  staleExtractGeneration: "🧯 staleExtractGeneration (旧世代 / 14 日超の古い extracted による書き戻し)",
   rateWatched: "🧯 rateWatched (率カナリアで監視中の率・店)",
   pseudoStoreTarget: "🔴 pseudoStoreTarget (規定還元用ダミー store への誤マッピング疑い)",
   tierMove: "🪜 tierMove (同じ店 × 同じ倍率系列の別倍率)",
@@ -485,7 +485,9 @@ export const REASON_EXPLANATIONS: Record<ReviewReason, string> = {
     "extracted の promptVersion が registry.yaml の extractorVersions[extractor] と不一致。" +
     "プロンプト改訂直後の旧世代キャッシュによる rate/期間の書き戻し提案を防ぐ。" +
     "旧版プロンプトで抽出した古い値が seed (新方針で修正済) との差分を「変更」として出しているだけの可能性が高いため自動適用しない。" +
-    "次回 fetch (新版プロンプト) 後に promptVersion が一致し、従来の閾値判定で再判定される。それまでは無視で OK。",
+    "次回 fetch (新版プロンプト) 後に promptVersion が一致し、従来の閾値判定で再判定される。それまでは無視で OK。" +
+    "または extracted の fetchedAt が 14 日を超えている (keep-last-good や取得停止で古い抽出が残っている) 場合もこの理由になる。" +
+    "次に取得が成功すれば解消する。どちらに当たったかは各項目の「判定詳細」(promptVersion 不一致 / fetchedAt N 日前) に出る。",
   rateWatched:
     "sources/rate-watch.yaml で監視中の率。取り込むなら seed の手修正と seedRateAtCuration の更新を同じ PR で。" +
     "率カナリア (npm run sync:rate-watch、0 req) が公式ページの逐語句で照合している program / membership / card への変更 " +
@@ -560,7 +562,7 @@ export const REASON_ORDER: readonly ReviewReason[] = [
   "orphanedProgram",      // 🟠 対象店 membership 0 の member-stores program。membership 側と同時 approve
   "tierMove",             // 🪜 同じ店 × 同じ倍率系列の別倍率。承認は旧 tier の tombstone と同時 (PR-0a-2c)
   "periodChange",         // 🟣 期間変更/延長。approve で override 反映できる高価値項目
-  "staleExtractGeneration", // 🧯 旧世代 extracted による書き戻し。次回 fetch で解消、それまで保留
+  "staleExtractGeneration", // 🧯 旧世代 / fetchedAt 14 日超の extracted による書き戻し。次回 fetch で解消、それまで保留
   "rateWatched",          // 🧯 率カナリアで監視中の率・店への変更 (PR-5c-1)。seed の手修正と rate-watch.yaml を同じ PR で
   "expiredCampaign",     // 🟠 validTo+30日経過。クリーンアップ候補
   "storeAdditionsDisabled", // ⏸ store 追加は手動キュレ運用、参照リストとして末尾配置

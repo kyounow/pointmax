@@ -10,13 +10,43 @@
 //   npm run sync:fetch-all -- --parallel=2  並列 fetch (Wave 3 C-4 audit-fix、デフォルト 1)
 //                                            ⚠ Gemini 無料枠 (10 RPM) では parallel=1 推奨。
 //                                            有料枠 / GitHub Actions 環境のみ 2-3 を推奨。
+//
+// fetch outcome (PR-0b-2):
+//   outcome ディレクトリ (PM_FETCH_OUTCOME_DIR > $RUNNER_TEMP/pointmax-fetch > mkdtemp) を用意して
+//   子の fetch-source に渡し、各ソースの <id>.outcome.json を読む (spawn 前に前回分を消す)。
+//   あるソースが quotaDaily / billing / config で打ち切った (abortRun) ら、後続ソースは spawn せず
+//   skipped にする (dry-run では打ち切らない)。exit code ではなく outcome ファイルを唯一の信号にする。
+//   GEMINI_MODEL / GEMINI_THINKING_BUDGET は冒頭で 1 回だけ検証し、不正なら全ソース skipped (0 req)。
+//   終了時に GITHUB_STEP_SUMMARY へ表を書き、::warning:: / ::error:: を出す (annotation は fetch-all だけ)。
+//   exit code は従来どおり常に 0 (propose を必ず走らせる)。
 
-import { readFileSync } from "node:fs";
+import { appendFileSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { load as parseYaml } from "js-yaml";
 import type { RegistryFile, RegistrySource } from "./types";
+import {
+  formatFetchError,
+  formatUsage,
+  resolveGeminiModel,
+  resolveThinkingBudget,
+  type RunAbortKind,
+} from "./fetch-response";
+import {
+  buildAnnotationLines,
+  clearFetchOutcome,
+  effectiveOutcome,
+  escapeWorkflowData,
+  outcomeIcon,
+  prepareRunOutcomeDir,
+  readFetchOutcome,
+  renderStepSummary,
+  shouldAbortRemaining,
+  summarizeRun,
+  type FetchOutcome,
+  type SourceRunResult,
+} from "./fetch-outcome";
 
 // ───────────────────────────────────────────────────────────────
 // Paths
@@ -118,6 +148,10 @@ export function selectSourcesForGroup(
 
 type SubprocResult = { code: number | null; error?: Error };
 
+/** 1 ソースを実行する関数 (本番は fetch-source の子プロセス、テストでは偽物) */
+export type RunOne = (sourceId: string, dryRun: boolean) => Promise<SubprocResult>;
+
+// 子プロセスは process.env (PM_FETCH_OUTCOME_DIR を含む) を継承する。
 function runFetchSource(sourceId: string, dryRun: boolean, cwd: string): Promise<SubprocResult> {
   return new Promise((resolvePromise) => {
     const args = ["tsx", "scripts/sync/fetch-source.ts", sourceId];
@@ -156,8 +190,126 @@ async function runWithConcurrency<T, R>(
 }
 
 // ───────────────────────────────────────────────────────────────
+// runGroup: 逐次 / 並列実行 + outcome による後続ソースの打ち切り
+// ───────────────────────────────────────────────────────────────
+
+// ソース間 5 秒スリープ (Gemini 429 / RPM 上限緩和)。
+// gemini-2.5-flash の free tier RPM 上限は 10/min = 1 call/6s。1 ソースが内部で 3 attempts まで
+// retry し得るため、ソース間にも余裕を持たせる。実際に spawn する時だけ入れる (skipped の前は待たない)。
+// dry-run でも習慣的に入れる (本番との動作差を最小化)。
+export const INTER_SOURCE_SLEEP_MS = 5000;
+
+export type RunGroupOptions = {
+  dryRun: boolean;
+  parallel: number;
+  /** null なら outcome を読まない (dry-run: fetch-source は outcome を書かない) */
+  outcomeDir: string | null;
+  runOne: RunOne;
+  sleep: (ms: number) => Promise<void>;
+  interSourceSleepMs?: number;
+  readOutcome?: (dir: string, sourceId: string) => FetchOutcome | null;
+  clearOutcome?: (dir: string, sourceId: string) => void;
+  now?: () => number;
+  onStart?: (source: RegistrySource, index: number, total: number) => void;
+  onFinish?: (result: SourceRunResult, index: number, total: number) => void;
+};
+
+/**
+ * sources を実行し、ソースごとの SourceRunResult を registry 順で返す。
+ * - spawn 前に abortedBy (前のソースの abortRun) があれば spawn せず skippedBy を付ける
+ * - 無ければ clearOutcome → runOne → readOutcome。`!dryRun && abortRun` なら以後を打ち切る
+ * - 並列時は worker が次を取り出す時に共有の abortedBy を確認する
+ */
+export async function runGroup(
+  sources: RegistrySource[],
+  opts: RunGroupOptions,
+): Promise<SourceRunResult[]> {
+  const readOutcome = opts.readOutcome ?? readFetchOutcome;
+  const clearOutcome = opts.clearOutcome ?? clearFetchOutcome;
+  const now = opts.now ?? Date.now;
+  const interSleep = opts.interSourceSleepMs ?? INTER_SOURCE_SLEEP_MS;
+  const total = sources.length;
+  let abortedBy: { kind: RunAbortKind; sourceId: string } | undefined;
+  const results: SourceRunResult[] = new Array(total);
+
+  const skipped = (source: RegistrySource, by: { kind: RunAbortKind; sourceId: string }): SourceRunResult => ({
+    sourceId: source.id,
+    exitCode: null,
+    elapsedSec: 0,
+    outcome: null,
+    skippedBy: { ...by },
+  });
+
+  const runAt = async (i: number): Promise<SourceRunResult> => {
+    const source = sources[i];
+    opts.onStart?.(source, i, total);
+    if (opts.outcomeDir !== null) clearOutcome(opts.outcomeDir, source.id);
+    const t0 = now();
+    const res = await opts.runOne(source.id, opts.dryRun);
+    const elapsedSec = (now() - t0) / 1000;
+    const outcome = opts.outcomeDir !== null ? readOutcome(opts.outcomeDir, source.id) : null;
+    const r: SourceRunResult = {
+      sourceId: source.id,
+      exitCode: res.code,
+      elapsedSec,
+      outcome,
+      ...(res.error ? { spawnError: res.error.message } : {}),
+    };
+    if (!opts.dryRun && abortedBy === undefined && shouldAbortRemaining(outcome) && outcome?.abortRun) {
+      abortedBy = { kind: outcome.abortRun, sourceId: source.id };
+    }
+    return r;
+  };
+
+  const finish = (r: SourceRunResult, i: number): void => {
+    results[i] = r;
+    opts.onFinish?.(r, i, total);
+  };
+
+  if (opts.parallel <= 1) {
+    let spawned = 0;
+    for (let i = 0; i < total; i++) {
+      if (abortedBy !== undefined) {
+        finish(skipped(sources[i], abortedBy), i);
+        continue;
+      }
+      if (spawned > 0) await opts.sleep(interSleep);
+      spawned += 1;
+      finish(await runAt(i), i);
+    }
+  } else {
+    // 並列 pool: ソース間 sleep は省略 (worker 内の subprocess 実行時間で自然にズレる。有料枠想定)
+    await runWithConcurrency(
+      sources.map((_, i) => i),
+      opts.parallel,
+      async (i) => {
+        if (abortedBy !== undefined) {
+          finish(skipped(sources[i], abortedBy), i);
+          return;
+        }
+        finish(await runAt(i), i);
+      },
+    );
+  }
+  return results;
+}
+
+// ───────────────────────────────────────────────────────────────
 // Main
 // ───────────────────────────────────────────────────────────────
+
+function formatRowForConsole(o: FetchOutcome, elapsedSec: number): string {
+  const tail = [
+    o.failKind ? `(${o.failKind})` : "",
+    `items=${o.totalItems}`,
+    `calls=${o.geminiCalls}`,
+    o.keptLastGood ? "kept" : "",
+    `${elapsedSec.toFixed(1)}s`,
+  ]
+    .filter((s) => s !== "")
+    .join(" ");
+  return `${outcomeIcon(o.outcome)} ${o.sourceId.padEnd(32)} ${o.outcome.padEnd(14)} ${tail}`;
+}
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
@@ -182,94 +334,107 @@ async function main(): Promise<void> {
     `📋 registry: ${registry.sources.length} ソース中 ${enabledCount} 件 enabled、group=${group} (${selectedSources.length}/${enabledCount} sources) を fetch`,
   );
 
-  type SourceResult = {
-    id: string;
-    success: boolean;
-    elapsed: number; // seconds
-  };
+  // モデル名 / thinking 予算を 1 回だけ事前検証 (0 req)。不正なら全ソースを skipped (config) にする。
+  let configError: string | undefined;
+  try {
+    const model = resolveGeminiModel(process.env.GEMINI_MODEL);
+    const budget = resolveThinkingBudget(process.env.GEMINI_THINKING_BUDGET);
+    console.log(`🤖 model=${model} thinkingBudget=${budget}`);
+  } catch (e) {
+    configError = formatFetchError(e);
+  }
 
-  const results: SourceResult[] = [];
+  // outcome ディレクトリを用意して子に渡す (spawn は process.env を継承する)。dry-run は outcome を書かない。
+  const outcomeDir = dryRun ? null : prepareRunOutcomeDir(process.env);
+  if (outcomeDir !== null) {
+    process.env.PM_FETCH_OUTCOME_DIR = outcomeDir;
+    console.log(`🗃 outcome dir: ${outcomeDir}`);
+  }
 
-  if (parallel <= 1) {
-    // ─── Sequential (デフォルト) ───
-    for (const source of selectedSources) {
-      console.log(`\n${"─".repeat(60)}`);
-      console.log(`🚀 [${results.length + 1}/${selectedSources.length}] ${source.id}`);
-
-      const startMs = Date.now();
-
-      const spawnArgs = ["tsx", "scripts/sync/fetch-source.ts", source.id];
-      if (dryRun) spawnArgs.push("--dry-run");
-
-      const result = spawnSync("npx", spawnArgs, {
-        stdio: "inherit",
-        shell: process.platform === "win32",
-        cwd: REPO_ROOT,
-      });
-
-      const elapsed = (Date.now() - startMs) / 1000;
-      const success = result.status === 0;
-
-      results.push({ id: source.id, success, elapsed });
-
-      if (!success) {
-        console.log(
-          `❌ ${source.id} failed (exit ${result.status ?? "null"}, ${elapsed.toFixed(1)}s)`,
-        );
-        if (result.error) {
-          console.log(`   spawn error: ${result.error.message}`);
-        }
-      }
-
-      // ソース間で 5 秒スリープ (Gemini 429 / RPM 上限緩和)
-      // gemini-2.5-flash の free tier RPM 上限は 10/min = 1 call/6s。
-      // 1 ソースが内部で 3 attempts まで retry し得るため、ソース間にも
-      // 余裕を持たせて RPM 超過を避ける。dry-run でも習慣的に入れる
-      // (本番との動作差を最小化、6 ソースで合計 25s 待機程度)。
-      if (results.length < selectedSources.length) {
-        await new Promise((r) => setTimeout(r, 5000));
-      }
-    }
+  let results: SourceRunResult[];
+  if (configError !== undefined) {
+    console.log(
+      `::error title=sync-fetch::${escapeWorkflowData(
+        `GEMINI_MODEL / GEMINI_THINKING_BUDGET が不正: ${configError}。全 ${selectedSources.length} ソースを skipped (0 req)`,
+      )}`,
+    );
+    results = selectedSources.map((s) => ({
+      sourceId: s.id,
+      exitCode: null,
+      elapsedSec: 0,
+      outcome: null,
+      skippedBy: { kind: "config", sourceId: "GEMINI_MODEL/GEMINI_THINKING_BUDGET" },
+    }));
   } else {
-    // ─── Parallel pool (--parallel=N) ───
-    // worker N で消化、ソース間 sleep は省略 (worker 内の subprocess 実行時間で
-    // 自然にズレるため、有料枠想定で運用)。
-    let completed = 0;
-    await runWithConcurrency(selectedSources, parallel, async (source) => {
-      const startMs = Date.now();
-      const res = await runFetchSource(source.id, dryRun, REPO_ROOT);
-      const elapsed = (Date.now() - startMs) / 1000;
-      const success = res.code === 0;
-      results.push({ id: source.id, success, elapsed });
-      completed += 1;
-      console.log(
-        `${success ? "✓" : "❌"} [${completed}/${selectedSources.length}] ${source.id} (${elapsed.toFixed(1)}s)${success ? "" : ` exit=${res.code ?? "null"}`}`,
-      );
-      if (!success && res.error) {
-        console.log(`   spawn error: ${res.error.message}`);
-      }
+    results = await runGroup(selectedSources, {
+      dryRun,
+      parallel,
+      outcomeDir,
+      runOne: (id, dr) => runFetchSource(id, dr, REPO_ROOT),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      onStart: (source, i, total) => {
+        if (parallel > 1) return;
+        console.log(`\n${"─".repeat(60)}`);
+        console.log(`🚀 [${i + 1}/${total}] ${source.id}`);
+      },
+      onFinish: (r, i, total) => {
+        if (r.skippedBy) {
+          console.log(
+            `⏭ [${i + 1}/${total}] ${r.sourceId} skipped (${r.skippedBy.sourceId} の ${r.skippedBy.kind} で打ち切り)`,
+          );
+          return;
+        }
+        if (r.exitCode !== 0) {
+          console.log(`❌ ${r.sourceId} exit ${r.exitCode ?? "null"} (${r.elapsedSec.toFixed(1)}s)`);
+          if (r.spawnError) console.log(`   spawn error: ${r.spawnError}`);
+        } else if (parallel > 1) {
+          console.log(`✓ [${i + 1}/${total}] ${r.sourceId} (${r.elapsedSec.toFixed(1)}s)`);
+        }
+      },
     });
   }
 
   // ───────────────────────────────────────────────────────────────
   // Summary
   // ───────────────────────────────────────────────────────────────
-  const succeeded = results.filter((r) => r.success);
-  const failed = results.filter((r) => !r.success);
-
   console.log(`\n${"═".repeat(60)}`);
-  console.log(`📊 fetch-all summary:`);
-  for (const r of results) {
-    const icon = r.success ? "✓" : "✗";
-    const suffix = r.success ? "" : "  failed";
-    console.log(`  ${icon} ${r.id.padEnd(32)} (${r.elapsed.toFixed(1)}s)${suffix}`);
+  console.log(`📊 fetch-all summary (group=${group}):`);
+
+  if (dryRun) {
+    // dry-run は outcome を書かないので exit code だけで表示する
+    for (const r of results) {
+      const ok = r.exitCode === 0;
+      console.log(`  ${ok ? "✓" : "✗"} ${r.sourceId.padEnd(32)} (${r.elapsedSec.toFixed(1)}s)${ok ? " dry-run ok" : ` exit ${r.exitCode ?? "null"}`}`);
+    }
+    process.exit(0);
   }
+
+  const summary = summarizeRun(group, results);
+  for (let i = 0; i < results.length; i++) {
+    console.log(`  ${formatRowForConsole(effectiveOutcome(results[i]), results[i].elapsedSec)}`);
+  }
+  const counts = new Map<string, number>();
+  for (const row of summary.rows) counts.set(row.outcome, (counts.get(row.outcome) ?? 0) + 1);
   console.log(
-    `total: ${succeeded.length} success / ${failed.length} failed / ${results.length} total`,
+    `total: ${[...counts.entries()].map(([k, n]) => `${k} ${n}`).join(" / ")} (${results.length} sources)`,
   );
+  console.log(`📈 usage total ${formatUsage(summary.usage)}`);
+  if (summary.abortedBy) {
+    console.log(`⛔ ${summary.abortedBy.kind} (${summary.abortedBy.sourceId}) で後続ソースを打ち切り`);
+  }
+
+  const stepSummaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (stepSummaryPath) {
+    try {
+      appendFileSync(stepSummaryPath, `${renderStepSummary(summary)}\n`);
+    } catch (e) {
+      console.log(`⚠️ GITHUB_STEP_SUMMARY への書き込みに失敗: ${formatFetchError(e)}`);
+    }
+  }
+  for (const line of buildAnnotationLines(summary)) console.log(line);
 
   // 1 ソース失敗で workflow 停止させない設計: 常に exit 0
-  // propose 側が失敗 fallback を gracefully 扱う。
+  // propose 側が失敗 fallback (prefix 付き notes) を gracefully 扱い、keep-last-good のソースは前回版で進む。
   process.exit(0);
 }
 

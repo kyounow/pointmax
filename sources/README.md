@@ -19,7 +19,7 @@ sources/
   registry.yaml                  # 取得元 URL の台帳 (手編集)。enabled / fetchGroup (mon|thu) / target / autoMerge / notes
   schema/extracted-source.schema.json  # 抽出 JSON の schema (fetch 時に ajv で検証)
   extractors/<name>.prompt.md    # Gemini プロンプト 9 ファイル (ExtractorKind 8 種 + crawl 専用 campaign-index)
-  extracted/<sourceId>.json      # 抽出結果。main には auto-sync 週だけ入る
+  extracted/<sourceId>.json      # 抽出結果。毎 run main に入る (auto-sync 週は auto-sync PR、他の週は Publish step)
   aliases.json                   # cardId / storeId の表記揺れ辞書 (propose 時に正規化)
   proposed-migrations.json       # propose の出力 (autoApplicable / needsReview)。main には auto-sync 週だけ入る
   SYNC_HISTORY.json / .md        # 同期履歴。run ごとに main に入り (変化の無い run を除く)、アプリ設定の「マスタ更新履歴」のデータ源
@@ -28,13 +28,15 @@ sources/
 
 main に置かないもの:
 - `REVIEW_QUEUE.md` — 要レビュー一覧。`chore/sync-review-queue` ブランチ (長寿命 PR #145 の本文) にだけ置く。
-  review-only 週の最新の extracted / proposed-migrations.json も同じブランチにある。
+  review-only 週の最新の proposed-migrations.json も同じブランチにある (extracted は main)。
 - `AUTO_SUMMARY.md` — auto-sync の commit message / PR 本文用の一時生成物 (git 管理外)。
 - 過去スナップショットのディレクトリは無い。過去の抽出結果は git 履歴で追う。
 
 ## パイプライン (weekly-sync.yml)
 
 1. `sync:fetch-all -- --group mon|thu` (JST の曜日から導出。workflow_dispatch では `all` も指定可) → `extracted/`
+   ただし quota 枯渇・API エラー・crash のソースは上書きせず前回版を残す (keep-last-good)。429 日次枠 / 402 /
+   API キー・モデル不正では後続ソースも打ち切る。source ごとの outcome は Actions の Step Summary に出る
 2. `sync:propose` → `proposed-migrations.json` (confidence と各種ガードで autoApplicable / needsReview に分類)
 3. `sync:report` → `AUTO_SUMMARY.md` / `REVIEW_QUEUE.md` / `SYNC_HISTORY.json`・`.md`
 4. auto > 0 なら `sync:apply` → `src/state/seed-additions.ts` だけを書く (SEED_VERSION・手書き seed は触らない)
@@ -43,7 +45,7 @@ main に置かないもの:
 6. 通過したら `auto-sync/YYYY-MM-DD-HHMM` PR を作り、`gh pr merge --squash --auto` で即時マージ
    → `deploy.yml` の `workflow_run` が再デプロイ
 7. Safety 失敗・auto-merge 無効の週は auto を全件 review に降格 (`safetyFailed` / `autoMergeDisabled`) し、
-   SYNC_HISTORY だけを main に直 push する (「Publish SYNC_HISTORY to main」step)。降格後の Regenerate reports は
+   SYNC_HISTORY と extracted を main に直 push する (「Publish SYNC_HISTORY to main」step)。降格後の Regenerate reports は
    同じ generatedAt の entry を置換するので、履歴には降格後の値 (auto 0) が残る (PR-0b-3)
 8. needsReview があれば peter-evans/create-pull-request が `chore/sync-review-queue` を作り直して PR #145 を更新
 
@@ -93,9 +95,9 @@ confidence = evidenceQuote ? explicitness * (1 - ambiguity) : 0.3
 
 | script | 用途 |
 |---|---|
-| `sync:fetch -- <sourceId> [--dry-run]` | 1 ソースを抽出 (enabled:false のソースは拒否) |
+| `sync:fetch -- <sourceId> [--dry-run] [--allow-disabled]` | 1 ソースを抽出 (enabled:false のソースは拒否。再開検証だけ `--allow-disabled`) |
 | `sync:fetch-all -- --group mon\|thu\|all [--dry-run]` | グループ単位で抽出 (cron と同じ) |
-| `sync:propose` | 全 extracted と seed の差分提案 |
+| `sync:propose` | enabled ソースの extracted と seed の差分提案 (`SYNC_INCLUDE_SOURCES=<id>` で停止ソースも含める) |
 | `sync:report` | AUTO_SUMMARY / REVIEW_QUEUE / SYNC_HISTORY を生成 |
 | `sync:apply [--dry-run]` | autoApplicable を seed-additions.ts へ |
 | `sync:approve -- --list` / `-- <ID> ... [--accept-risk]` | needsReview の一覧 / 承認適用 (全額に乗る危険な理由の項目は `--accept-risk` 必須) |
@@ -116,4 +118,4 @@ confidence = evidenceQuote ? explicitness * (1 - ambiguity) : 0.3
 - PR 上の CI (ci / lint / bundle-size) は cron の変更に対して実質走らない。auto-sync PR の run は即時マージと
   ブランチ削除で 0 jobs の failure になり、review PR の run は action_required のまま実行されない。
   cron 由来の変更に対する事前検査は workflow 内の Safety check だけ。
-- review-only 週 (auto 0 件または降格した週) は bot が SYNC_HISTORY を main に直 push する。
+- review-only 週 (auto 0 件または降格した週) は bot が SYNC_HISTORY と extracted を main に直 push する。

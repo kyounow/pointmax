@@ -21,6 +21,10 @@ on:
           - thu
           - all
           - rate-watch-only
+      thinking_budget:
+        description: 'Q1 の A/B 用。空なら既定の 1024'
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -36,6 +40,8 @@ jobs:
     # schedule 起動では github.event.inputs が空 (null) なので、この条件は常に true = 従来どおり動く。
     if: ${{ github.event.inputs.group != 'rate-watch-only' }}
     runs-on: ubuntu-latest
+    # 既定の 360 分をやめる。concurrency は cancel-in-progress:false なので、ハングすると次の cron まで詰まる
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -52,6 +58,9 @@ jobs:
         run: npm ci
 
       # 無料枠 (gemini-2.5-flash = 20 req/日) を超えないよう enabled ソースを mon/thu に分割。
+      # 現構成 (PR-0b-3 で d払い / PayPay を autoMerge:false 付きで再有効化した後): enabled 5 本、
+      # worst = 単発 3 attempts × 本数 = mon 9 / thu 6 req。見積りの正は registry.yaml ヘッダ。
+      # 429 の日次枠 (PerDay) を観測したら fetch-all が後続ソースを打ち切る (PR-0b-2)。
       # schedule 起動 (または workflow_dispatch group=auto) は実行時刻の JST 曜日から導出:
       #   木曜 (date +%u = 4) → thu、それ以外 (月曜含む) → mon。
       # workflow_dispatch で group を明示 (mon/thu/all) した場合はそれを優先。
@@ -73,10 +82,20 @@ jobs:
           fi
           echo "group=$GROUP" >> $GITHUB_OUTPUT
 
+      # fetch-all は常に exit 0 だが、ハングや想定外の失敗でも propose 以降 (部分的な結果 + keep-last-good
+      # で残った前回版) を進め、job の conclusion を success に保つため continue-on-error にする。
+      # source ごとの outcome は PM_FETCH_OUTCOME_DIR に書かれ、fetch-all が Step Summary と
+      # ::warning:: / ::error:: を出す。GEMINI_MODEL / GEMINI_THINKING_BUDGET は repo の vars
+      # (thinking は dispatch 入力が優先)。未設定なら空文字 → 既定 (gemini-2.5-flash / 1024)。
       - name: Fetch sources for group
+        timeout-minutes: 30
+        continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROUP: ${{ steps.group.outputs.group }}
+          PM_FETCH_OUTCOME_DIR: ${{ runner.temp }}/pointmax-fetch
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          GEMINI_THINKING_BUDGET: ${{ inputs.thinking_budget || vars.GEMINI_THINKING_BUDGET }}
         run: npm run sync:fetch-all -- --group "$GROUP"
 
       - name: Propose
@@ -135,6 +154,8 @@ jobs:
           npm test
           npm run build
           MAIN=$(ls dist/assets/index-*.js | head -1)
+          # 既定 shell (bash -e、pipefail 無し) では ls の失敗が head で消えるので、空を明示的に落とす
+          [ -n "$MAIN" ] || { echo "❌ main chunk not found"; exit 3; }
           KIB=$(( $(wc -c < "$MAIN") / 1024 ))
           echo "main chunk: $KIB KiB"
           echo "- main chunk: $KIB KiB" >> $GITHUB_STEP_SUMMARY
@@ -249,24 +270,33 @@ jobs:
       # → アプリ内「更新履歴」タブに review-only 週が出ないバグの修正。
       # SYNC_HISTORY は監査ログ (seed/コード非変更) なので main へ直 push し、
       # deploy.yml の workflow_run トリガーが再デプロイ=公開を担う。
+      # PR-0b-2: sources/extracted/ も同じ commit に入れる (review-only 週も main の extracted を
+      # 更新する)。fetch-source は API 失敗時に extracted を上書きしない (keep-last-good) ので、
+      # 残る「前回版」が checkout 時点の main 版 = 直前 run の取得結果になり、propose の
+      # fetchedAt 鮮度ガード (14 日) が反対グループのソースで恒常的に効くのを防ぐ。
+      # extracted は bundle に入らず (src から import されない)、seed も変えない。
+      # 流れ: add → commit (SYNC_HISTORY + extracted) → stash -u (残りの proposed-migrations /
+      # REVIEW_QUEUE 等) → pull --rebase → push → stash pop。extracted は commit 済みなので
+      # stash に入らず、後段の review-PR (add-paths に extracted/**) には差分として出ない (main にある)。
       - name: Publish SYNC_HISTORY to main (review-only / no auto-merge runs)
         if: ${{ !(steps.counts.outputs.auto > 0 && steps.config.outputs.enabled == 'true' && steps.safety.outcome == 'success') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add sources/SYNC_HISTORY.json sources/SYNC_HISTORY.md
+          git add sources/SYNC_HISTORY.json sources/SYNC_HISTORY.md sources/extracted/
           if git diff --cached --quiet; then
-            echo "ℹ️ SYNC_HISTORY に変更なし (本当に変化なしの週)。skip"
+            echo "ℹ️ SYNC_HISTORY / extracted に変更なし (本当に変化なしの週)。skip"
             exit 0
           fi
-          git commit -m "chore(sync): update SYNC_HISTORY (review-only run)"
-          # review-PR 用に残る作業ツリー変更 (REVIEW_QUEUE/extracted/proposed 等) を
+          git diff --cached --stat
+          git commit -m "chore(sync): update SYNC_HISTORY + extracted (review-only run)"
+          # review-PR 用に残る作業ツリー変更 (REVIEW_QUEUE/proposed 等。extracted は上で commit 済み) を
           # 一時退避してから rebase + push し、後段ステップ用に復元する。
           git stash push -u || true
           git pull --rebase origin main
           git push origin HEAD:main
           git stash pop || true
-          echo "✓ SYNC_HISTORY を main に公開 (workflow_run deploy が再デプロイ)"
+          echo "✓ SYNC_HISTORY / extracted を main に公開 (workflow_run deploy が再デプロイ)"
 
       # ===== Tier 2: Review PR =====
       # 条件:

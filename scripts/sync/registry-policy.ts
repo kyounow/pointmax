@@ -11,9 +11,9 @@
 // キーが不正) なら throw する。ポリシーを黙って空にすると autoMerge:false のソースが auto に戻るため。
 // diff-and-propose の main はこれを呼び、throw は exit 1 (fetch-all も同じ条件で throw する)。
 //
-// ⚠ PR-0b-2 (Z6 の registry フィルタ) は diff-and-propose.ts に loadRegistrySources /
-// filterExtractedByRegistry を持つ。rebase 時はこの loader の `sources` / `enabledIds` に乗り換え、
-// registry の読み込みを 1 か所にする (loadRegistryPolicy().sources を filterExtractedByRegistry に渡せる)。
+// diff-and-propose が registry.yaml を読むのはこの loader の 1 か所だけ (PR-0b-2 の main 追従で一本化):
+// Phase 0′ の enabled フィルタは `sources` を filterExtractedByRegistry に渡し (enabled === true、enabledIds と同じ)、
+// Phase C3 の旧世代判定は `extractorVersions` を使う。
 
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -120,7 +120,7 @@ export function parseRegistryPolicy(data: unknown): RegistryPolicy {
   const ev = data.extractorVersions;
   if (isObject(ev)) {
     for (const [k, v] of Object.entries(ev)) {
-      // YAML が number 化した版数 (例: 3.5) の保険で String 化 (loadExtractorVersions と同じ)
+      // YAML が number 化した版数 (例: 3.5) の保険で String 化 (旧 loadExtractorVersions と同じ)
       if (v != null) extractorVersions[k] = String(v);
     }
   }

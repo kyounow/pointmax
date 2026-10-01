@@ -155,6 +155,18 @@ describe("fetchGroup 契約 (無料枠 mon/thu 分割)", () => {
     expect(disabledWithGroup.map((s) => s.id)).toEqual([]);
   });
 
+  // 一般契約 (Z4 の個別 id 一覧に依存しない): 停止したソースの extracted を残すと、
+  // SYNC_INCLUDE_SOURCES 指定時の propose や手動確認で残骸が入力に混ざる。停止時に git rm する
+  // (registry ヘッダの編集ルール)。再開検証で --allow-disabled 実行した結果も commit しない。
+  it("enabled: false のソースは sources/extracted/<id>.json を持たない", () => {
+    const leftovers = registry.sources.filter(
+      (s) =>
+        !s.enabled &&
+        existsSync(resolve(REPO_ROOT, `sources/extracted/${s.id}.json`)),
+    );
+    expect(leftovers.map((s) => s.id)).toEqual([]);
+  });
+
   // PR-0b-3: 記載順 = 実行順 (selectSourcesForGroup)。取得が不安定な campaign 決済系 (d-pay / paypay) は
   // 各グループの末尾に置き、先頭で無料枠を使い切って収穫のあるソースを巻き添えにしないようにする。
   // ソースを足す / 止める PR はこの期待値も同時に更新する。
@@ -203,8 +215,9 @@ describe("Z4 停止ソース (収穫ゼロのソース停止)", () => {
     },
   );
 
-  // propose (readExtractedSources) は registry を見ずに extracted/*.json を全部読む。
-  // 停止ソースの残骸が review queue に残り続けないよう、停止時に git rm する。
+  // propose は Phase 0′ の registry filter で enabled:false のソースを読み飛ばすが、
+  // SYNC_INCLUDE_SOURCES で含めたときや手動確認で残骸が混ざらないよう、停止時に git rm する
+  // (上の「enabled: false のソースは extracted を持たない」一般契約と同じ趣旨の個別版)。
   it.each(Z4_STOPPED)("Z4 停止ソースの extracted は削除済み: %s", (id) => {
     expect(
       existsSync(resolve(REPO_ROOT, `sources/extracted/${id}.json`)),

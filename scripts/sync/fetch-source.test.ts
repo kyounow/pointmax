@@ -1,8 +1,344 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { salvageBySchema } from "./fetch-source";
-import type { ExtractedSource } from "./types";
+import {
+  callGeminiWithRetry,
+  createGenAI,
+  findSource,
+  keepLastGood,
+  parseArgs,
+  RETRY_DELAYS_MS,
+  salvageBySchema,
+  type GeminiCallResult,
+  type RetryDeps,
+} from "./fetch-source";
+import type { ExtractedSource, RegistryFile, RegistrySource } from "./types";
+
+// ───────────────────────────────────────────────────────────────
+// CLI: --allow-disabled / findSource
+// ───────────────────────────────────────────────────────────────
+describe("parseArgs / findSource (--allow-disabled)", () => {
+  it("parseArgs: --allow-disabled を受け付ける (既定 false)", () => {
+    expect(parseArgs(["x", "--allow-disabled"])).toEqual({
+      sourceId: "x",
+      dryRun: false,
+      allowDisabled: true,
+    });
+    expect(parseArgs(["x", "--dry-run"])).toEqual({
+      sourceId: "x",
+      dryRun: true,
+      allowDisabled: false,
+    });
+  });
+
+  const src = (id: string, enabled: boolean): RegistrySource => ({
+    id,
+    label: id,
+    url: `https://example.com/${id}`,
+    extractor: "campaign",
+    produces: ["programs"],
+    extractionScope: "chains-only",
+    enabled,
+  });
+  const registry: RegistryFile = { version: 1, sources: [src("on", true), src("off", false)] };
+
+  it("既定では disabled のソースで throw、{allowDisabled:true} なら返す", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      expect(() => findSource(registry, "off")).toThrow(/enabled: false/);
+      expect(findSource(registry, "off", { allowDisabled: true }).id).toBe("off");
+      expect(findSource(registry, "on").id).toBe("on");
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it("未登録の id は allowDisabled でも throw", () => {
+    expect(() => findSource(registry, "nope", { allowDisabled: true })).toThrow(/無い/);
+  });
+});
+import {
+  classifyGeminiError,
+  decideWrite,
+  MAX_ATTEMPTS_PER_SOURCE,
+  PrefetchError,
+  summarizeGeminiDiag,
+} from "./fetch-response";
+import {
+  createFetchStats,
+  createOutcomeDraft,
+  finalizeOutcome,
+} from "./fetch-outcome";
+import {
+  API_KEY_INVALID_400_BODY,
+  OVERLOADED_503_BODY,
+  QUOTA_DAILY_429_BODY,
+  QUOTA_MINUTE_429_BODY,
+  apiErrorLike,
+  jsonErrorResponse,
+} from "./fixtures/gemini-errors";
+
+// ───────────────────────────────────────────────────────────────
+// callGeminiWithRetry (Z5): 偽の deps と即時 sleep で実ログの経路を再現する
+// ───────────────────────────────────────────────────────────────
+
+type FakeCall =
+  | "success"
+  | "nonJson"
+  | "empty"
+  | "allUrlsFailed"
+  | { throws: unknown };
+
+function fakeResult(c: Exclude<FakeCall, { throws: unknown }>): GeminiCallResult {
+  const text =
+    c === "success" ? '{"sourceId":"x"}' : c === "nonJson" ? "抽出結果は次のとおりです" : c === "empty" ? "" : "x";
+  const retrievedUrls =
+    c === "allUrlsFailed" ? ["https://example.com/ [URL_RETRIEVAL_STATUS_ERROR]"] : [];
+  return { text, retrievedUrls, diag: summarizeGeminiDiag({}, text) };
+}
+
+/** Gemini 呼び出し (URL Context / 直渡し共通の列) と prefetch の結果を台本どおりに返す偽 deps */
+function fakeDeps(script: { gemini: FakeCall[]; prefetch?: Array<"ok" | { throws: unknown }> }) {
+  const gemini = [...script.gemini];
+  const prefetch = [...(script.prefetch ?? [])];
+  const calls = { urlContext: 0, withText: 0, prefetch: 0 };
+  const sleeps: number[] = [];
+  const next = async (): Promise<GeminiCallResult> => {
+    const c = gemini.shift();
+    if (c === undefined) throw new Error("台本外の Gemini 呼び出し");
+    if (typeof c === "object") throw c.throws;
+    return fakeResult(c);
+  };
+  const deps: RetryDeps = {
+    callUrlContext: async () => {
+      calls.urlContext += 1;
+      return next();
+    },
+    callWithText: async () => {
+      calls.withText += 1;
+      return next();
+    },
+    prefetchText: async () => {
+      calls.prefetch += 1;
+      const p = prefetch.shift() ?? "ok";
+      if (typeof p === "object") throw p.throws;
+      return "本文";
+    },
+    sleep: async (ms) => {
+      sleeps.push(ms);
+    },
+  };
+  return { deps, calls, sleeps };
+}
+
+const ARGS = { systemInstruction: "sys", url: "https://example.com/", sourceId: "d-pay-campaigns" };
+const E429_DAY = { throws: apiErrorLike(429, QUOTA_DAILY_429_BODY) };
+const E429_MIN = { throws: apiErrorLike(429, QUOTA_MINUTE_429_BODY) };
+const E503 = { throws: apiErrorLike(503, OVERLOADED_503_BODY) };
+const E402 = { throws: apiErrorLike(402, { error: { code: 402, message: "billing" } }) };
+const E400_KEY = { throws: apiErrorLike(400, API_KEY_INVALID_400_BODY) };
+const E400_BAD = {
+  throws: apiErrorLike(400, { error: { code: 400, message: "Request payload size exceeds the limit" } }),
+};
+const PREFETCH_403 = { throws: new PrefetchError("prefetch HTTP 403: Forbidden", 403, "http") };
+const PREFETCH_NET = { throws: new PrefetchError("prefetch network error: fetch failed", null, "network") };
+
+describe("callGeminiWithRetry (実ログの再現)", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("(a) 9/20 d-pay: 429 PerDay → Gemini 1 回で打ち切り、応答ゼロ → keep-last-good", async () => {
+    const { deps, calls, sleeps } = fakeDeps({ gemini: [E429_DAY] });
+    const r = await callGeminiWithRetry(ARGS, deps);
+    expect(r.geminiCalls).toBe(1);
+    expect(r.abort).toBe("quotaDaily");
+    expect(r.gotResponse).toBe(false);
+    expect(decideWrite(r)).toBe("keepLastGood");
+    expect(calls.prefetch).toBe(0);
+    expect(sleeps).toEqual([]);
+  });
+
+  it("(b) 9/06: nonJson → nonJson → prefetch → 429 → 3 回、応答はあったが abort なので keep-last-good", async () => {
+    const { deps, sleeps } = fakeDeps({ gemini: ["nonJson", "nonJson", E429_DAY] });
+    const r = await callGeminiWithRetry(ARGS, deps);
+    expect(r.geminiCalls).toBe(3);
+    expect(r.abort).toBe("quotaDaily");
+    expect(r.gotResponse).toBe(true);
+    expect(decideWrite(r)).toBe("keepLastGood");
+    expect(sleeps).toEqual([RETRY_DELAYS_MS.urlContext, RETRY_DELAYS_MS.prefetch]);
+    expect(r.history.map((h) => h.kind)).toEqual(["urlContext", "urlContext", "prefetch"]);
+  });
+
+  it("(c) 8/16: 429 の後の漏れ成功は取りに行かない (1 回で停止)", async () => {
+    const { deps, calls } = fakeDeps({ gemini: [E429_DAY, "success"] });
+    const r = await callGeminiWithRetry(ARGS, deps);
+    expect(r.geminiCalls).toBe(1);
+    expect(calls.urlContext).toBe(1);
+    expect(r.finalStatus).not.toBe("success");
+  });
+
+  it("(d) jre 子ページ: allUrlsFailed → prefetch 403 → Gemini 1 回、内容の失敗なので write (fallback)", async () => {
+    const { deps, calls, sleeps } = fakeDeps({ gemini: ["allUrlsFailed"], prefetch: [PREFETCH_403] });
+    const r = await callGeminiWithRetry(ARGS, deps);
+    expect(r.geminiCalls).toBe(1);
+    expect(calls.prefetch).toBe(1);
+    expect(calls.withText).toBe(0);
+    expect(r.finalStatus).toBe("allUrlsFailed");
+    expect(r.gotResponse).toBe(true);
+    expect(decideWrite(r)).toBe("write");
+    expect(r.history).toEqual([
+      { kind: "urlContext", status: "allUrlsFailed" },
+      { kind: "prefetch", prefetchFailed: true },
+    ]);
+    expect(sleeps).toEqual([]);
+  });
+
+  it("(e) 503 → 503 → prefetch がネットワーク失敗 → 2 回、応答ゼロ → keep-last-good (打ち切りはしない)", async () => {
+    const { deps, sleeps } = fakeDeps({ gemini: [E503, E503], prefetch: [PREFETCH_NET] });
+    const r = await callGeminiWithRetry(ARGS, deps);
+    expect(r.geminiCalls).toBe(2);
+    expect(r.gotResponse).toBe(false);
+    expect(r.abort).toBeUndefined();
+    expect(r.errorKinds).toEqual(["overloaded", "overloaded"]);
+    expect(decideWrite(r)).toBe("keepLastGood");
+    expect(sleeps).toEqual([RETRY_DELAYS_MS.urlContext]);
+  });
+
+  it("(f) nonJson → success → 2 回で success", async () => {
+    const { deps, sleeps } = fakeDeps({ gemini: ["nonJson", "success"] });
+    const r = await callGeminiWithRetry(ARGS, deps);
+    expect(r.geminiCalls).toBe(2);
+    expect(r.finalStatus).toBe("success");
+    expect(r.text).toBe('{"sourceId":"x"}');
+    expect(sleeps).toEqual([5000]);
+  });
+
+  it("(g) 402 → 1 回で abort=billing / 400 API_KEY_INVALID → 1 回で abort=config", async () => {
+    const billing = await callGeminiWithRetry(ARGS, fakeDeps({ gemini: [E402] }).deps);
+    expect(billing.geminiCalls).toBe(1);
+    expect(billing.abort).toBe("billing");
+    const config = await callGeminiWithRetry(ARGS, fakeDeps({ gemini: [E400_KEY] }).deps);
+    expect(config.geminiCalls).toBe(1);
+    expect(config.abort).toBe("config");
+  });
+
+  it("(h) 400 badRequest → URL Context を再試行せず prefetch へ。prefetch 自体は geminiCalls に数えない", async () => {
+    const { deps, calls, sleeps } = fakeDeps({ gemini: [E400_BAD, "success"] });
+    const r = await callGeminiWithRetry(ARGS, deps);
+    expect(r.abort).toBeUndefined();
+    expect(r.geminiCalls).toBe(2);
+    expect(calls.urlContext).toBe(1);
+    expect(calls.prefetch).toBe(1);
+    expect(calls.withText).toBe(1);
+    expect(r.finalStatus).toBe("success");
+    expect(sleeps).toEqual([15000]);
+  });
+
+  it("quotaMinute (retryDelay 27s) の後は既定 5s より長く待つ (上限 60s)", async () => {
+    const { deps, sleeps } = fakeDeps({ gemini: [E429_MIN, "success"] });
+    const r = await callGeminiWithRetry(ARGS, deps);
+    expect(r.abort).toBeUndefined();
+    expect(r.finalStatus).toBe("success");
+    expect(sleeps).toEqual([27_000]);
+  });
+
+  it("性質: どの偽 deps の組み合わせでも Gemini 呼び出しは 3 回以下", async () => {
+    const outcomes: FakeCall[] = ["success", "nonJson", "empty", "allUrlsFailed", E503, E400_BAD, E429_DAY, E429_MIN];
+    const prefetches: Array<"ok" | { throws: unknown }> = ["ok", PREFETCH_403];
+    for (const a of outcomes)
+      for (const b of outcomes)
+        for (const c of outcomes)
+          for (const p of prefetches) {
+            const { deps } = fakeDeps({ gemini: [a, b, c, "success"], prefetch: [p] });
+            const r = await callGeminiWithRetry(ARGS, deps);
+            expect(r.geminiCalls).toBeLessThanOrEqual(MAX_ATTEMPTS_PER_SOURCE);
+            expect(r.history.length).toBeLessThanOrEqual(MAX_ATTEMPTS_PER_SOURCE);
+          }
+  });
+
+  it("keep-last-good の outcome は keptLastGood=true と abortRun を持つ (finalizeOutcome)", async () => {
+    const r = await callGeminiWithRetry(ARGS, fakeDeps({ gemini: [E429_DAY] }).deps);
+    const draft = createOutcomeDraft(ARGS.sourceId);
+    keepLastGood(draft, { id: ARGS.sourceId }, r);
+    const stats = createFetchStats();
+    stats.usage = { ...stats.usage, calls: r.geminiCalls };
+    stats.errorKinds = [...r.errorKinds];
+    const o = finalizeOutcome(draft, stats, "gemini-2.5-flash", new Date());
+    expect(o).toMatchObject({
+      outcome: "quotaExhausted",
+      keptLastGood: true,
+      abortRun: "quotaDaily",
+      failKind: "quotaDaily",
+      geminiCalls: 1,
+    });
+  });
+
+  it("応答ゼロ (503 のみ) の keep-last-good は abortRun 無しの failed (apiError) = 後続を止めない", async () => {
+    const r = await callGeminiWithRetry(
+      ARGS,
+      fakeDeps({ gemini: [E503, E503], prefetch: [PREFETCH_NET] }).deps,
+    );
+    const draft = createOutcomeDraft(ARGS.sourceId);
+    keepLastGood(draft, { id: ARGS.sourceId }, r);
+    const o = finalizeOutcome(draft, createFetchStats(), "m", new Date());
+    expect(o.outcome).toBe("failed");
+    expect(o.failKind).toBe("apiError");
+    expect(o.abortRun).toBeUndefined();
+    expect(o.keptLastGood).toBe(true);
+  });
+});
+
+// ───────────────────────────────────────────────────────────────
+// SDK 契約 (@google/genai): createGenAI に retryOptions を渡していないこと、
+// 429 が ApiError{status, message=本文 JSON} のまま届き 1 呼び出し = 1 req であることを固定する。
+// SDK の版上げ (0c-2 の 2.24 等) で形が変わったらここで落ちる。
+// ───────────────────────────────────────────────────────────────
+describe("SDK 契約: createGenAI の generateContent エラー形", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("429 (9/20 実ログ本文) → ApiError status 429 / message に PerDay / fetch は 1 回 / quotaDaily に分類", async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonErrorResponse(429, "Too Many Requests", QUOTA_DAILY_429_BODY),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const ai = createGenAI("test-key");
+    const err = await ai.models
+      .generateContent({ model: "gemini-2.5-flash", contents: "hi" })
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(err).toMatchObject({ status: 429 });
+    expect((err as Error).message).toContain("PerDay");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(classifyGeminiError(err).kind).toBe("quotaDaily");
+  });
+
+  it("404 → ApiError status 404 (config) / fetch は 1 回", async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonErrorResponse(404, "Not Found", {
+        error: { code: 404, message: "models/gemini-x is not found", status: "NOT_FOUND" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const ai = createGenAI("test-key");
+    const err = await ai.models
+      .generateContent({ model: "gemini-x", contents: "hi" })
+      .then(
+        () => undefined,
+        (e: unknown) => e,
+      );
+    expect(err).toMatchObject({ status: 404 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(classifyGeminiError(err).kind).toBe("config");
+  });
+});
 
 const schema = JSON.parse(
   readFileSync(

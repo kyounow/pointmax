@@ -14,20 +14,23 @@
 //   npm run sync:propose                  # デフォルト: cap = 5/category
 //   CAP_PER_CATEGORY=10 npm run sync:propose
 //   CAP_PER_CATEGORY=0  npm run sync:propose # cap 無効
+//   SYNC_INCLUDE_SOURCES=jre-point-campaigns npm run sync:propose
+//                                         # enabled:false のソースの extracted も入力に含める (再開検証用)
 
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { load as parseYaml } from "js-yaml";
 import { seed, SEED_VERSION } from "../../src/state/seed";
 import type {
   AddRecordProposal,
   ExtractedSource,
   Proposal,
   ProposalReport,
-  RegistryFile,
+  RegistrySource,
 } from "./types";
 import { computeProposalId, isApplicableProposal } from "./types";
+import { hasFailureNotePrefix } from "./fetch-response";
+import { countExtractedItems } from "./fetch-outcome";
 import {
   guardMembershipContent,
   proposeCards,
@@ -71,7 +74,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../..");
 const EXTRACTED_DIR = resolve(REPO_ROOT, "sources/extracted");
 const OUTPUT_PATH = resolve(REPO_ROOT, "sources/proposed-migrations.json");
-const REGISTRY_PATH = resolve(REPO_ROOT, "sources/registry.yaml");
+// registry.yaml の読み込みは registry-policy.ts の loadRegistryPolicy (fail-closed) の 1 か所だけ
+// (Phase 0′ の enabled フィルタ / Phase 1 の target / B″・C″ の autoMerge / C3 の extractorVersions)。
 
 const DEFAULT_CAP_PER_CATEGORY = 5;
 
@@ -106,17 +110,127 @@ function readExtractedSources(): ExtractedSource[] {
   return result;
 }
 
-// notes / 配列空 から fetch 失敗を判定。雑だが運用には十分。
+// 旧形式 (prefix 導入前) の失敗 notes。Gemini 自身が notes に書く文言も含む。
+const LEGACY_FAILURE_PATTERNS: readonly RegExp[] = [
+  /could not be fetched/i,
+  /unable to.*(extract|read)/i,
+  /URL.*(could not|unable).*load/i,
+  /取得できま(せん|せんで)/,
+  /アクセスできま(せん|せんで)/,
+];
+
+// fetch 失敗 (propose の入力にしない) の判定。次のどれかなら失敗:
+//   1. notes が `[fetch-failed:<kind>]` で始まる (fetch-source の writeFallback が書く。
+//      schema fallback のように Gemini 由来の実 promptVersion を持つものもここで拾う)
+//   2. promptVersion が -vUnknown で終わり、抽出配列が全部 0 件 (prefix 導入前の fallback)
+//   3. notes が旧 5 正規表現に一致し、抽出配列が全部 0 件
+//      (件数条件により、items があるのに notes の語句だけで丸ごと skip される誤判定を防ぐ)
+// 実版数で 0 件 (paypay の「該当なし」等) は失敗ではない (正当な 0 件)。
 export function isFailedExtraction(d: ExtractedSource): boolean {
-  if (!d.notes) return false;
-  const failurePatterns: RegExp[] = [
-    /could not be fetched/i,
-    /unable to.*(extract|read)/i,
-    /URL.*(could not|unable).*load/i,
-    /取得できま(せん|せんで)/,
-    /アクセスできま(せん|せんで)/,
-  ];
-  return failurePatterns.some((p) => p.test(d.notes ?? ""));
+  if (hasFailureNotePrefix(d.notes)) return true;
+  const { total } = countExtractedItems(d);
+  if (total > 0) return false;
+  if (typeof d.promptVersion === "string" && d.promptVersion.endsWith("-vUnknown")) return true;
+  const notes = d.notes ?? "";
+  return notes !== "" && LEGACY_FAILURE_PATTERNS.some((p) => p.test(notes));
+}
+
+// ───────────────────────────────────────────────────────────────
+// Registry enabled フィルタ (Z6、Phase 0′)
+// ───────────────────────────────────────────────────────────────
+// readExtractedSources は extracted/*.json を registry と無関係に全部読む。停止 (enabled:false) した
+// ソースや registry から消えたソースの残骸が propose の入力に残らないよう、registry で絞る。
+// registry は main の loadRegistryPolicy() (registry-policy.ts、fail-closed) が読んだ `sources` を渡す
+// (読めなければ throw → exit 1 なので、registry 無しで全件素通りになることは無い)。
+// 停止ソースの再開検証は SYNC_INCLUDE_SOURCES=<id>[,<id>...] で disabled でも含められる
+// (fetch-source --allow-disabled と組で使う)。
+
+/** SYNC_INCLUDE_SOURCES (カンマ区切り) → id 集合。空白は無視。 */
+export function parseIncludeSources(raw?: string): Set<string> {
+  return new Set(
+    (raw ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s !== ""),
+  );
+}
+
+export type RegistryFilterSkip = {
+  sourceId: string;
+  reason: "unregistered" | "disabled";
+};
+
+/**
+ * enabled のソース (と includeIds) の extracted だけを残す。enabled の判定は `enabled === true`
+ * (registry-policy の enabledIds と同じ。"true" 文字列などの不正値は無効扱い = 安全側)。
+ */
+export function filterExtractedByRegistry<T extends Pick<ExtractedSource, "sourceId">>(
+  extracted: T[],
+  sources: readonly Pick<RegistrySource, "id" | "enabled">[],
+  includeIds: ReadonlySet<string>,
+): { kept: T[]; skipped: RegistryFilterSkip[] } {
+  const byId = new Map(sources.map((s) => [s.id, s]));
+  const kept: T[] = [];
+  const skipped: RegistryFilterSkip[] = [];
+  for (const ex of extracted) {
+    const s = byId.get(ex.sourceId);
+    if (!s) {
+      skipped.push({ sourceId: ex.sourceId, reason: "unregistered" });
+    } else if (s.enabled !== true && !includeIds.has(ex.sourceId)) {
+      skipped.push({ sourceId: ex.sourceId, reason: "disabled" });
+    } else {
+      kept.push(ex);
+    }
+  }
+  return { kept, skipped };
+}
+
+// ───────────────────────────────────────────────────────────────
+// fetchedAt 鮮度ガード (Z6)
+// ───────────────────────────────────────────────────────────────
+// keep-last-good (quota 枯渇 / API エラーで上書きしない) や取得停止で、古い extracted が
+// propose にかかり続けることがある。fetchedAt が 14 日を超えたソース由来の
+// PROGRAM_OVERRIDES 行き updateField は、既存の staleExtractGeneration で review に回す
+// (ReviewReason は増やさない)。ログのみ (::warning:: は出さない。毎 run のノイズになるため)。
+// main の Phase C3 で、promptVersion 不一致 (detectStaleExtractSources) との和集合を
+// guardStaleExtractGeneration に渡す。基準時刻は main の `now` (Phase 2 の期限切れ判定と同じ)。
+// 閾値 14 日は cron 2 周期 (月・木で 3〜4 日間隔 × 週 2) とちょうど同じ。2 回続けて取得できなかった
+// ソースは、月曜は cron の遅延 (実測 2h〜2h40m) で判定がぶれ、木曜 (17 日) は必ず stale になる。
+// 影響は rate / 期間の updateField が 1 run 分 auto か review かだけ (addRecord は対象外)。
+
+export const EXTRACT_MAX_AGE_DAYS = 14;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export type StaleFetchedAtInfo = {
+  /** extracted.fetchedAt (欠落なら "(none)") */
+  fetchedAt: string;
+  /** 経過日数 (小数)。fetchedAt が読めなければ null */
+  ageDays: number | null;
+};
+
+/**
+ * now − fetchedAt が maxAgeDays を超えるソース (境界ちょうどは新鮮扱い)。
+ * fetchedAt が欠落 / Date.parse できなければ stale (安全側)。
+ */
+export function detectStaleFetchedAt(
+  extracted: (Pick<ExtractedSource, "sourceId"> & { fetchedAt?: string })[],
+  now: Date,
+  maxAgeDays: number = EXTRACT_MAX_AGE_DAYS,
+): Map<string, StaleFetchedAtInfo> {
+  const stale = new Map<string, StaleFetchedAtInfo>();
+  for (const ex of extracted) {
+    const t = typeof ex.fetchedAt === "string" ? Date.parse(ex.fetchedAt) : Number.NaN;
+    if (!Number.isFinite(t)) {
+      stale.set(ex.sourceId, { fetchedAt: ex.fetchedAt ?? "(none)", ageDays: null });
+      continue;
+    }
+    const ageMs = now.getTime() - t;
+    if (ageMs > maxAgeDays * DAY_MS) {
+      stale.set(ex.sourceId, { fetchedAt: ex.fetchedAt as string, ageDays: ageMs / DAY_MS });
+    }
+  }
+  return stale;
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -522,29 +636,11 @@ export type StaleSourceInfo = {
   currentVersion: string;
 };
 
-/** registry.yaml から extractorVersions を読む (string 正規化)。読めなければ {}。 */
-export function loadExtractorVersions(
-  registryPath: string = REGISTRY_PATH,
-): Partial<Record<string, string>> {
-  try {
-    const text = readFileSync(registryPath, "utf-8");
-    const data = parseYaml(text) as RegistryFile | undefined;
-    const ev = data?.extractorVersions;
-    if (!ev || typeof ev !== "object") return {};
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(ev)) {
-      // YAML が number 化した版数 (例: 3.5) の保険で String 化
-      if (v != null) out[k] = String(v);
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
 /**
  * extracted の promptVersion が registry の現行 extractor 版と不一致 (旧世代キャッシュ)
  * な source を { extracted 版, 現行版 } 付きで返す。
+ * extractorVersions は main が loadRegistryPolicy().extractorVersions (String 化済み) を渡す
+ * (main 追従 2026-10-01 で旧 loadExtractorVersions を廃止し、registry の読み込みを 1 回にした)。
  * - registry に当該 extractor の版数が未定義 → gate skip (map に入れない)
  * - promptVersion 欠落 → "(none)" として不一致扱い (安全側)
  *   (古い extracted ファイルでは欠落し得るので、引数型でも optional にしている)
@@ -577,10 +673,14 @@ export function detectStaleExtractSources(
  * 例外: sourceAutoMergeDisabled (Phase B″ で先に付く「ほかのガードは通過済み」の印) は上書きする
  * (PR-0b-3。旧世代の書き戻しが「ガード通過済み」に見えて普通に承認されるのを防ぐ)。
  * guardedBySource は source ごとの降格件数 (ログ用)。
+ * details (任意、PR-0b-2): sourceId → reviewDetail。渡したソースは降格した提案の reviewDetail を
+ * これで置き換える (promptVersion 不一致か fetchedAt 超過かを ReviewReason を増やさず区別する。
+ * sourceAutoMergeDisabled を上書きしたときに「autoMerge:false」の detail が残るのも防ぐ)。
  */
 export function guardStaleExtractGeneration(
   proposals: Proposal[],
   staleSourceIds: ReadonlySet<string>,
+  details?: ReadonlyMap<string, string>,
 ): { proposals: Proposal[]; guardedBySource: Map<string, number> } {
   const guardedBySource = new Map<string, number>();
   const out: Proposal[] = proposals.map((p) => {
@@ -590,9 +690,41 @@ export function guardStaleExtractGeneration(
     if (!isApplicableProposal(p)) return p; // PROGRAM_OVERRIDES 行き (rate/validFrom/validTo) のみ
     if (!staleSourceIds.has(p.sourceId)) return p;
     guardedBySource.set(p.sourceId, (guardedBySource.get(p.sourceId) ?? 0) + 1);
+    const detail = details?.get(p.sourceId);
+    if (detail !== undefined) {
+      return { ...p, reviewReason: "staleExtractGeneration", reviewDetail: detail } as Proposal;
+    }
     return { ...p, reviewReason: "staleExtractGeneration" } as Proposal;
   });
   return { proposals: out, guardedBySource };
+}
+
+/**
+ * Phase C3 の stale ソースごとの reviewDetail (promptVersion 不一致 / fetchedAt 超過、両方なら併記)。
+ * staleSources と staleFetched の和集合を返し、どちらか片方にしか無いソースでも落ちない。
+ */
+export function describeStaleExtractSources(
+  staleSources: ReadonlyMap<string, StaleSourceInfo>,
+  staleFetched: ReadonlyMap<string, StaleFetchedAtInfo>,
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const src of new Set([...staleSources.keys(), ...staleFetched.keys()])) {
+    const parts: string[] = [];
+    const info = staleSources.get(src);
+    if (info) {
+      parts.push(`promptVersion 不一致 (extracted=${info.extractedVersion} ≠ 現行 ${info.currentVersion})`);
+    }
+    const fetched = staleFetched.get(src);
+    if (fetched) {
+      parts.push(
+        fetched.ageDays === null
+          ? `fetchedAt 不明 (${fetched.fetchedAt})`
+          : `fetchedAt ${Math.floor(fetched.ageDays)} 日前 (> ${EXTRACT_MAX_AGE_DAYS} 日)`,
+      );
+    }
+    out.set(src, parts.join(" / "));
+  }
+  return out;
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -639,8 +771,12 @@ export function guardRateWatched(
 // ───────────────────────────────────────────────────────────────
 
 // ─── Sync pipeline phase 一覧 (実行順、Wave 3 C-3 audit-fix で可視化) ───
-//   Phase 0  : extracted/*.json 読み込み + alias 正規化
-//   Phase 1  : 各エンティティの propose* (stores / cards / programs / memberships 等)
+//   Phase 0  : extracted/*.json 読み込み + registry 読み込み (loadRegistryPolicy、fail-closed) + rate-watch.yaml
+//   Phase 0′ : registry の enabled フィルタ (filterExtractedByRegistry に loadRegistryPolicy().sources を渡す。
+//              enabled === true のソースだけ残し、SYNC_INCLUDE_SOURCES で disabled を含める、PR-0b-2)。
+//              Phase 1 と C3 はフィルタ後の extracted を使う
+//   Phase 1  : 各エンティティの propose* (stores / cards / programs / memberships 等。alias 正規化はここ)
+//              isFailedExtraction (`[fetch-failed:` prefix / vUnknown かつ 0 件 / 旧正規表現かつ 0 件) は skip
 //   Phase 2  : 期限切れ campaign の自動削除提案 (proposeExpiredCampaignDeletions)
 //   Phase A  : 同 run 重複の dedup (dedupeAcrossProposals) ─ 2 件目以降 idCollision
 //   Phase B  : Category cap (applyCategoryCap) ─ 飲食 5/cat 等で deferred
@@ -662,8 +798,10 @@ export function guardRateWatched(
 //   Phase C2 : Program/membership atomicity guard (demoteChildlessMemberStorePrograms)
 //              ─ Phase C / C′ / C″ で membership が全て降格した member-stores program 単独を降格
 //   Phase C3 : Stale extract generation guard (guardStaleExtractGeneration)
-//              ─ 旧世代 extracted (promptVersion 不一致) 由来の PROGRAM_OVERRIDES 行き
-//                updateField を staleExtractGeneration で降格 (書き戻し防止)。B″ の sourceAutoMergeDisabled は上書き
+//              ─ 旧世代 extracted (promptVersion 不一致、registry.extractorVersions と比較) または fetchedAt が
+//                14 日超 (main の now 基準、PR-0b-2 の鮮度ガード) の extracted 由来の PROGRAM_OVERRIDES 行き
+//                updateField を staleExtractGeneration で降格 (書き戻し防止)。B″ の sourceAutoMergeDisabled は上書き。
+//                どちらに当たったかは reviewDetail に書く
 //   (Phase C4 は PR-1 の detectionOnly 用に空けてある)
 //   Phase C5 : Rate-watch guard (guardRateWatched、PR-5c-1)
 //              ─ sources/rate-watch.yaml で監視中の program (membership の program を含む) の updateField・delete、
@@ -675,16 +813,39 @@ export function guardRateWatched(
 
 function main(): void {
   console.log("📥 reading extracted/*.json ...");
-  const extracted = readExtractedSources();
-  console.log(`   loaded: ${extracted.length} file(s)`);
+  const loaded = readExtractedSources();
+  console.log(`   loaded: ${loaded.length} file(s)`);
 
-  // registry のソース別ポリシー (target / autoMerge)。fail-closed: 読めなければ throw → exit 1
-  // (黙って空にすると autoMerge:false のソースが auto に戻るため)。
+  // registry のソース別ポリシー (target / autoMerge) と sources / extractorVersions。registry.yaml を読むのは
+  // ここ 1 回だけ。fail-closed: 読めなければ throw → exit 1
+  // (黙って空にすると autoMerge:false のソースが auto に戻り、Phase 0′ のフィルタも素通りになるため)。
   const registry = loadRegistryPolicy();
+
+  // Phase 0′: registry の enabled フィルタ (停止ソース・未登録ソースの残骸を入力にしない)。
+  //   enabled の判定は enabled === true (registry.enabledIds と同じ)。Phase 1 と C3 はフィルタ後を使う。
+  const includeIds = parseIncludeSources(process.env.SYNC_INCLUDE_SOURCES);
+  const { kept: extracted, skipped: registrySkipped } = filterExtractedByRegistry(
+    loaded,
+    registry.sources,
+    includeIds,
+  );
+  console.log(
+    `🗂 registry filter: kept ${extracted.length} / skipped ${registrySkipped.length}` +
+      (registrySkipped.length > 0
+        ? ` (${registrySkipped.map((s) => `${s.sourceId}:${s.reason}`).join(", ")})`
+        : "") +
+      (includeIds.size > 0 ? ` [SYNC_INCLUDE_SOURCES=${[...includeIds].join(",")}]` : ""),
+  );
+  for (const id of includeIds) {
+    if (!loaded.some((ex) => ex.sourceId === id)) {
+      console.log(`   ⚠️ SYNC_INCLUDE_SOURCES の ${id} は extracted/${id}.json が無いため skip`);
+    }
+  }
+
   // 率カナリアの監視リスト (PR-5c-1)。無ければ null (Phase C5 は no-op)、壊れていれば throw → exit 1
   // (黙って空にすると監視中の率が auto で動き、rate-watch の契約が safety gate で落ちるため)。
   const rateWatch = loadRateWatchFile();
-  // campaign の期限判定と期限切れ整理の基準時刻を 1 回だけ作る (PR-0b-3)
+  // campaign の期限判定・期限切れ整理・C3 の fetchedAt 鮮度ガードの基準時刻を 1 回だけ作る (PR-0b-3 / PR-0b-2)
   const now = new Date();
 
   const current = seed();
@@ -883,20 +1044,37 @@ function main(): void {
   //   rate 差分を書き戻し提案として出すのを防ぐ。当該 source の promptVersion が
   //   registry の現行 extractor 版と不一致なら、PROGRAM_OVERRIDES 行きの updateField
   //   (rate/validFrom/validTo) を auto にせず staleExtractGeneration で review 降格。
+  //   加えて fetchedAt 鮮度ガード (Z6、PR-0b-2): fetchedAt が 14 日を超えた (keep-last-good / 取得停止で
+  //   古いまま残った) extracted 由来の同じ updateField も staleExtractGeneration で降格。ログのみ。
+  //   stale 集合 = promptVersion 不一致 ∪ fetchedAt 超過。基準時刻は Phase 2 と同じ now。
+  //   extractorVersions は loadRegistryPolicy の値 (registry.yaml を読み直さない)。
   const staleSources = detectStaleExtractSources(
     extracted,
-    loadExtractorVersions(),
+    registry.extractorVersions,
   );
+  const staleFetched = detectStaleFetchedAt(extracted, now);
+  for (const [src, info] of staleFetched) {
+    console.log(
+      `🧯 fetchedAt 鮮度ガード: ${src} (fetchedAt ${info.fetchedAt}, ${
+        info.ageDays === null ? "日付不明" : `${Math.floor(info.ageDays)} 日前`
+      } > ${EXTRACT_MAX_AGE_DAYS})`,
+    );
+  }
   const staleGuard = guardStaleExtractGeneration(
     finalProposals,
-    new Set(staleSources.keys()),
+    new Set([...staleSources.keys(), ...staleFetched.keys()]),
+    describeStaleExtractSources(staleSources, staleFetched),
   );
   finalProposals = staleGuard.proposals;
   for (const [src, n] of staleGuard.guardedBySource) {
-    const info = staleSources.get(src)!;
-    console.log(
-      `🧯 stale-generation guard: ${n} 件 (source=${src}, extracted=${info.extractedVersion} ≠ 現行 ${info.currentVersion})`,
-    );
+    const info = staleSources.get(src);
+    const why = [
+      info ? `extracted=${info.extractedVersion} ≠ 現行 ${info.currentVersion}` : "",
+      staleFetched.has(src) ? `fetchedAt > ${EXTRACT_MAX_AGE_DAYS} 日` : "",
+    ]
+      .filter((s) => s !== "")
+      .join(" / ");
+    console.log(`🧯 stale-generation guard: ${n} 件 (source=${src}, ${why})`);
   }
 
   // Phase C5: Rate-watch guard (PR-5c-1。C4 は PR-1 の detectionOnly 用に空けてある)
