@@ -1,34 +1,34 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-10-01T00:19:45.725Z",
+  "fetchedAt": "2026-10-08T00:42:18.377Z",
   "promptVersion": "ongoing-program-v1.2",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "ライフスタイル条件（円預金、外貨預金、住宅ローン、SBI証券、住友生命、カードローン、SMBC日興証券、Vトリップ、Oliveヘルスケア、マネーアシストプラス）に該当するプログラムは抽出対象外。キャンペーンは抽出対象外。",
+  "notes": "ライフスタイル条件（円預金、外貨預金、住宅ローン、SBI証券、住友生命Vitality、カードローン、SMBC日興証券、Vトリップ、Oliveヘルスケア、マネーアシストプラス）に該当するプログラムは出力対象外としました。キャンペーンは出力対象外としました。総店舗数35件中35件抽出。スターバックスはモバイルオーダーのみ対象。",
   "programs": [
     {
       "programId": "prog-smbc-touch-conveni",
-      "name": "SMBC タッチ決済コンビニ高還元",
+      "name": "対象のコンビニ・飲食店 スマホタッチ決済高還元",
       "scope": "member-stores",
       "cardIds": [
         "smbc-v",
         "olive"
       ],
       "paymentAppId": "pa-visa-touch",
-      "rate": 0.075,
+      "rate": 0.08,
       "currencyId": "v-pt",
       "bonusType": "primary",
-      "description": "Visa/Mastercard タッチ決済で対象コンビニ・飲食店 最大+7.5%",
-      "conditions": "Visa/Mastercard タッチ決済利用時のみ。一部商業施設内店舗など対象外あり。カード現物タッチ決済、iD、カードの差し込み、磁気取引は対象外。",
+      "description": "Visa/Mastercard タッチ決済で対象コンビニ・飲食店 最大+7.5%（通常ポイント0.5%と合わせて8%）",
+      "conditions": "Visa/Mastercard タッチ決済利用時のみ。商業施設内にある店舗など、一部ポイント加算の対象とならない店舗がございます。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元。さらに！既存サービスと組み合わせると最大20％ポイント還元。スマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
+      "evidenceQuote": "Vポイントアッププログラムとは：SMBCグループの各社サービスのご利用状況によって、対象のコンビニ・飲食店でのご利用時に最大＋7％のVポイントを還元。A 通常ポイント＝0.5％還元 B 対象店舗でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "programId": "prog-olive-eraberu-tokuten",
-      "name": "Olive 選べる特典",
+      "programId": "prog-olive-selectable-bonus-1pc",
+      "name": "Oliveアカウントの選べる特典 (+1%)",
       "scope": "all-stores",
       "cardIds": [
         "olive"
@@ -36,16 +36,16 @@
       "rate": 0.01,
       "currencyId": "v-pt",
       "bonusType": "addOn",
-      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると還元率アップ。",
-      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択した場合。Olive プラチナプリファードは2つ選択で＋2％還元。",
+      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択で+1%還元。",
+      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。Olive プラチナプリファードのお客さまは、選べる特典で「Vポイントアッププログラム＋1％」を2つ選択した場合、＋2％還元になります。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典※で「Vポイントアッププログラム＋1％」をご選択",
+      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "programId": "prog-smbc-7eleven-touch",
-      "name": "セブン-イレブン スマホタッチ決済 最大11%還元",
+      "programId": "prog-7eleven-touch-11pc",
+      "name": "セブン-イレブン スマホタッチ決済11%還元",
       "scope": "member-stores",
       "cardIds": [
         "smbc-v",
@@ -55,10 +55,10 @@
       "rate": 0.11,
       "currencyId": "v-pt",
       "bonusType": "primary",
-      "description": "セブン-イレブンでスマホのVisa/Mastercardタッチ決済利用で最大11%還元",
-      "conditions": "セブン-イレブンでスマホのVisaのタッチ決済・Mastercardタッチ決済で支払い時。一部商業施設内店舗など対象外あり。カード現物のタッチ決済、iD、カードの差し込み、磁気取引は対象外。お支払い時のセブン-イレブンアプリの会員コード提示によるセブンマイル0.5%を含む。",
+      "description": "セブン-イレブンでスマホのVisa/Mastercardタッチ決済で最大11%還元。",
+      "conditions": "セブン-イレブンでスマホのVisaのタッチ決済・Mastercardタッチ決済で支払い。一部ポイント加算の対象とならない店舗があります。3%のうち0.5%はセブン-イレブンアプリの会員コード提示によるセブンマイル。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "条件達成のうえで、セブン-イレブン（※1）で、スマホのVisaのタッチ決済・Mastercardタッチ決済（※2）で支払うと、最大11％（※3）ポイント還元！",
+      "evidenceQuote": "条件達成でセブン-イレブン最大11%還元：条件達成のうえで、セブン-イレブンで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、最大11％ポイント還元！「最大11％」は、「対象のコンビニ・飲食店で最大8％還元」に加えて、3％が付与された合計還元率です。",
       "explicitness": 0.9,
       "ambiguity": 0.1
     }
@@ -67,252 +67,259 @@
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "seicomart",
-      "evidenceQuote": "セイコーマート",
+      "evidenceQuote": "Vポイント加算対象店舗: セイコーマート",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "conv-7eleven",
-      "evidenceQuote": "セブン‐イレブン",
+      "evidenceQuote": "Vポイント加算対象店舗: セブン‐イレブン",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "poplar",
-      "evidenceQuote": "ポプラ",
+      "evidenceQuote": "Vポイント加算対象店舗: ポプラ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "conv-ministop",
-      "evidenceQuote": "ミニストップ",
+      "evidenceQuote": "Vポイント加算対象店舗: ミニストップ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "conv-lawson",
-      "evidenceQuote": "ローソン",
+      "evidenceQuote": "Vポイント加算対象店舗: ローソン",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "mcdonalds",
-      "evidenceQuote": "マクドナルド",
+      "evidenceQuote": "Vポイント加算対象店舗: マクドナルド",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "mos-burger",
-      "evidenceQuote": "モスバーガー",
+      "evidenceQuote": "Vポイント加算対象店舗: モスバーガー",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "kfc",
-      "evidenceQuote": "ケンタッキーフライドチキン",
+      "evidenceQuote": "Vポイント加算対象店舗: ケンタッキーフライドチキン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni",
+      "storeId": "freshness-burger",
+      "evidenceQuote": "Vポイント加算対象店舗: フレッシュネスバーガー",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "yoshinoya",
-      "evidenceQuote": "吉野家",
+      "evidenceQuote": "Vポイント加算対象店舗: 吉野家",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "saizeriya",
-      "evidenceQuote": "サイゼリヤ",
+      "evidenceQuote": "Vポイント加算対象店舗: サイゼリヤ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "gusto",
-      "evidenceQuote": "ガスト",
+      "evidenceQuote": "Vポイント加算対象店舗: ガスト",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "bamiyan",
-      "evidenceQuote": "バーミヤン",
+      "evidenceQuote": "Vポイント加算対象店舗: バーミヤン",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "shabuyo",
-      "evidenceQuote": "しゃぶ葉",
+      "evidenceQuote": "Vポイント加算対象店舗: しゃぶ葉",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "jonathan",
-      "evidenceQuote": "ジョナサン",
+      "evidenceQuote": "Vポイント加算対象店舗: ジョナサン",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "yumetoan",
-      "evidenceQuote": "夢庵",
+      "evidenceQuote": "Vポイント加算対象店舗: 夢庵",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "sukiya",
-      "evidenceQuote": "すき家",
+      "evidenceQuote": "Vポイント加算対象店舗: すき家",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "hamazushi",
-      "evidenceQuote": "はま寿司",
+      "evidenceQuote": "Vポイント加算対象店舗: はま寿司",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "cocos",
-      "evidenceQuote": "ココス",
+      "evidenceQuote": "Vポイント加算対象店舗: ココス",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "starbucks",
-      "evidenceQuote": "スターバックス",
+      "evidenceQuote": "Vポイント加算対象店舗: スターバックス",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "doutor",
-      "evidenceQuote": "ドトールコーヒーショップ",
+      "evidenceQuote": "Vポイント加算対象店舗: ドトールコーヒーショップ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "excelsior-cafe",
-      "evidenceQuote": "エクセルシオール カフェ",
+      "evidenceQuote": "Vポイント加算対象店舗: エクセルシオール カフェ",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "kappa-sushi",
-      "evidenceQuote": "かっぱ寿司",
+      "evidenceQuote": "Vポイント加算対象店舗: かっぱ寿司",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "steak-gusto",
-      "evidenceQuote": "ステーキガスト",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: ステーキガスト",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "karaage-karayoshi",
-      "evidenceQuote": "から好し",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: から好し",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "musashino-mori-coffee",
-      "evidenceQuote": "むさしの森珈琲",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: むさしの森珈琲",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "aiya",
-      "evidenceQuote": "藍屋",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: 藍屋",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "grazie-gardens",
-      "evidenceQuote": "グラッチェガーデンズ",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: グラッチェガーデンズ",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "uoya-michi",
-      "evidenceQuote": "魚屋路",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: 魚屋路",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "chawan",
-      "evidenceQuote": "chawan",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: chawan",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "la-ohana",
-      "evidenceQuote": "La Ohana",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: La Ohana",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "tonkara-tei",
-      "evidenceQuote": "とんから亭",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: とんから亭",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "yumean-shokudo",
-      "evidenceQuote": "ゆめあん食堂",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: ゆめあん食堂",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "monana",
-      "evidenceQuote": "桃菜",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: 桃菜",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "hachiro-soba",
-      "evidenceQuote": "八郎そば",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: 八郎そば",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
       "programId": "prog-smbc-touch-conveni",
       "storeId": "sanmarusan",
-      "evidenceQuote": "三〇三",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
+      "evidenceQuote": "その他すかいらーくグループ飲食店: 三〇三",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
     },
     {
-      "programId": "prog-smbc-7eleven-touch",
+      "programId": "prog-7eleven-touch-11pc",
       "storeId": "conv-7eleven",
-      "evidenceQuote": "セブン-イレブン（※1）で、スマホのVisaのタッチ決済・Mastercardタッチ決済（※2）で支払うと、最大11％（※3）ポイント還元！",
+      "evidenceQuote": "条件達成のうえで、セブン-イレブンで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、最大11％ポイント還元！",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }
@@ -322,7 +329,7 @@
       "storeId": "freshness-burger",
       "name": "フレッシュネスバーガー",
       "category": "飲食",
-      "evidenceQuote": "フレッシュネスバーガー",
+      "evidenceQuote": "Vポイント加算対象店舗: フレッシュネスバーガー",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }

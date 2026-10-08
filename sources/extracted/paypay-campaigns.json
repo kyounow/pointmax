@@ -1,12 +1,35 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-10-01T00:20:06.157Z",
+  "fetchedAt": "2026-10-08T00:43:12.402Z",
   "promptVersion": "campaign-v3.5",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "programs": [],
-  "memberships": [],
+  "programs": [
+    {
+      "programId": "prog-paypay-conv-7eleven-pasco-2026-10",
+      "name": "セブンーイレブン限定！Pasco超熟をセブンーイレブンアプリのPayPayで支払うとPayPayポイント最大20％戻ってくる！キャンペーン",
+      "scope": "member-stores",
+      "paymentAppId": "pa-paypay",
+      "rate": 0.2,
+      "currencyId": "paypay",
+      "bonusType": "primary",
+      "validFrom": "2026-10-06",
+      "validTo": "2026-10-26",
+      "evidenceQuote": "セブンーイレブン限定！Pasco超熟をセブンーイレブンアプリのPayPayで支払うとPayPayポイント最大20％戻ってくる！キャンペーン 2026/10/6 〜 10/26",
+      "explicitness": 1,
+      "ambiguity": 0.05
+    }
+  ],
+  "memberships": [
+    {
+      "programId": "prog-paypay-conv-7eleven-pasco-2026-10",
+      "storeId": "conv-7eleven",
+      "evidenceQuote": "セブンーイレブン限定",
+      "explicitness": 1,
+      "ambiguity": 0.05
+    }
+  ],
   "stores": [],
-  "notes": "「スクラッチくじ」「最大全額戻ってくる」「最大1,000円分が1,000名様に当たる」「対象者限定」「PayPayギフトを送ると最大300ポイント戻ってくる」などのキャンペーンは、還元率が不明確または抽選・上限設定があり、本プログラムの対象外です。きせかえや金融商品、長期開催キャンペーン（PayPayステップなど）も対象外です。SKUキャンペーン「エリスルナフィット商品の購入で最大30％戻ってくる」は商品限定であり、ここでは除外しています。"
+  "notes": "多数のキャンペーンが記載されていましたが、「くじ」「抽選」「特定店舗不明」「金融・ギャンブル関連」「きせかえ」など、抽出対象外のものが多かったです。上記は主要チェーン店かつ還元率・期間が明確なもののみを抽出しました。"
 }
