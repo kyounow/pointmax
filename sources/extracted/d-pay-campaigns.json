@@ -1,0 +1,9 @@
+{
+  "sourceId": "d-pay-campaigns",
+  "sourceUrl": "https://service.smt.docomo.ne.jp/keitai_payment/campaign/",
+  "fetchedAt": "2026-10-12T00:14:26.286Z",
+  "promptVersion": "campaign-vUnknown",
+  "extractor": "campaign",
+  "geminiModel": "gemini-2.5-flash",
+  "notes": "[fetch-failed:nonJson] Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars):  The browse result shows a list of campaigns. I need to filter them based on the `systemInstruction` and `promptVersion` rules. Key filtering criteria: - **Chains-only**: Focus on nationwide/major wide-area chain stores. - **Specific Rate & Period**: Campaigns must clearly state a rate (e.g., +N%,"
+}
