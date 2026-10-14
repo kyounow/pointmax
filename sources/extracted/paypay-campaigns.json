@@ -1,35 +1,12 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-10-08T00:43:12.402Z",
+  "fetchedAt": "2026-10-14T23:40:48.335Z",
   "promptVersion": "campaign-v3.5",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "programs": [
-    {
-      "programId": "prog-paypay-conv-7eleven-pasco-2026-10",
-      "name": "セブンーイレブン限定！Pasco超熟をセブンーイレブンアプリのPayPayで支払うとPayPayポイント最大20％戻ってくる！キャンペーン",
-      "scope": "member-stores",
-      "paymentAppId": "pa-paypay",
-      "rate": 0.2,
-      "currencyId": "paypay",
-      "bonusType": "primary",
-      "validFrom": "2026-10-06",
-      "validTo": "2026-10-26",
-      "evidenceQuote": "セブンーイレブン限定！Pasco超熟をセブンーイレブンアプリのPayPayで支払うとPayPayポイント最大20％戻ってくる！キャンペーン 2026/10/6 〜 10/26",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    }
-  ],
-  "memberships": [
-    {
-      "programId": "prog-paypay-conv-7eleven-pasco-2026-10",
-      "storeId": "conv-7eleven",
-      "evidenceQuote": "セブンーイレブン限定",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    }
-  ],
-  "stores": [],
-  "notes": "多数のキャンペーンが記載されていましたが、「くじ」「抽選」「特定店舗不明」「金融・ギャンブル関連」「きせかえ」など、抽出対象外のものが多かったです。上記は主要チェーン店かつ還元率・期間が明確なもののみを抽出しました。"
+  "notes": "全キャンペーン中、抽出ルール（全国/広域チェーン、還元率・期間明記、対象外カテゴリ除外など）に合致するキャンペーンなし。一部は「最大N%」等の曖昧な表現、または対象者限定、くじ形式のため除外。",
+  "programs": [],
+  "memberships": [],
+  "stores": []
 }
