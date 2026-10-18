@@ -1,11 +1,11 @@
 {
   "sourceId": "jcb-jpoint-partners",
   "sourceUrl": "https://j-pointpartner.jcb.co.jp/search",
-  "fetchedAt": "2026-10-12T00:12:02.249Z",
+  "fetchedAt": "2026-10-18T22:45:59.831Z",
   "promptVersion": "jcb-jpoint-v1.3",
   "extractor": "jcb-jpoint",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "合計64件中、抽出対象外カテゴリ・個別店舗・地域限定店を除外。既存店舗の倍率変動は無し。クレカ乗車、海外でのお買い物、国内宿泊オンライン予約、JCBトラベル (登録不要) は店舗特定不能のため対象外。会員制ロードサービス≪タイムズロードサービス≫はサービス業態のため対象外。App Store、Google Play、Hulu、U-NEXT、コミックシーモア、ディズニープラス、Qoo10、Uber Eats、Uber はネットサービスのため対象外。ジハンピはチェーン店か不明のため対象外。JCBギフトカード公式オンライン注文は物販でないため対象外。スポーツくじはギャンブルのため対象外。ユニバーサル・スタジオ・ジャパンはエンタメ施設のため対象外。ナガシマリゾート、箱根小涌園ユネッサンはレジャー施設のため対象外。",
+  "notes": "総 63 件中 59 件抽出 (地域限定店舗、個店、海外での買い物、クレカ乗車、国内宿泊オンライン予約、ユニバーサル・スタジオ・ジャパンは対象外)。「海外でのお買い物」「クレカ乗車」「国内宿泊オンライン予約」は店舗を特定できないため対象外。U-NEXT、App Store、Google Play、Hulu、コミックシーモア、ユニバーサル・スタジオ・ジャパン、タイムズロードサービスは「プレミアムでおトク」表記があり、最大倍率がゴールドカードのみ対象と判断。楽天モバイルは確認できず。Amazon.co.jpは3倍 (変更なし)、スターバックス20倍 (変更なし)。",
   "programs": [
     {
       "programId": "prog-jcb-jpoint-2x",
@@ -72,38 +72,6 @@
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-4x",
-      "name": "J-POINT パートナー (4倍)",
-      "scope": "member-stores",
-      "cardIds": [
-        "jcb-w"
-      ],
-      "rate": 0.025,
-      "currencyId": "j-point",
-      "bonusType": "primary",
-      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
-      "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-      "evidenceQuote": "高島屋 ポイント 最大 4 倍 プレミアムでおトク",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-4x",
-      "name": "J-POINT パートナー Gold (4倍)",
-      "scope": "member-stores",
-      "cardIds": [
-        "jcb-gold"
-      ],
-      "rate": 0.02,
-      "currencyId": "j-point",
-      "bonusType": "primary",
-      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
-      "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-      "evidenceQuote": "高島屋 ポイント 最大 4 倍 プレミアムでおトク",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
       "programId": "prog-jcb-jpoint-5x",
       "name": "J-POINT パートナー (5倍)",
       "scope": "member-stores",
@@ -145,9 +113,9 @@
       "rate": 0.035,
       "currencyId": "j-point",
       "bonusType": "primary",
-      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。登録不要。",
+      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
       "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-      "evidenceQuote": "オリックスレンタカー ポイント 6 倍 登録不要",
+      "evidenceQuote": "オリックスレンタカー ポイント 6 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -161,9 +129,9 @@
       "rate": 0.03,
       "currencyId": "j-point",
       "bonusType": "primary",
-      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。登録不要。",
+      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。",
       "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-      "evidenceQuote": "オリックスレンタカー ポイント 6 倍 登録不要",
+      "evidenceQuote": "オリックスレンタカー ポイント 6 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -209,9 +177,9 @@
       "rate": 0.105,
       "currencyId": "j-point",
       "bonusType": "primary",
-      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。スターバックスはカードへのオンライン入金・オートチャージ、モバイルオーダー、Starbucks eGift限定。マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。",
+      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。スターバックスはモバイルオーダー、カードオンライン入金・オートチャージ、Starbucks eGift限定。マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。",
       "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-      "evidenceQuote": "スターバックス（スターバックス カードへのオンライン入金・オートチャージ） ポイント 20 倍",
+      "evidenceQuote": "JCBトラベル ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -225,15 +193,93 @@
       "rate": 0.1,
       "currencyId": "j-point",
       "bonusType": "primary",
-      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。スターバックスはカードへのオンライン入金・オートチャージ、モバイルオーダー、Starbucks eGift限定。マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。",
+      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。スターバックスはモバイルオーダー、カードオンライン入金・オートチャージ、Starbucks eGift限定。マクドナルドはモバイルオーダー・マックデリバリー(R)サービス限定。",
       "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
-      "evidenceQuote": "スターバックス（スターバックス カードへのオンライン入金・オートチャージ） ポイント 20 倍",
+      "evidenceQuote": "JCBトラベル ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-max5x",
+      "name": "J-POINT パートナー (最大5倍)",
+      "scope": "member-stores",
+      "cardIds": [
+        "jcb-w"
+      ],
+      "rate": 0.03,
+      "currencyId": "j-point",
+      "bonusType": "primary",
+      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。プレミアムでおトク表記あり。",
+      "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
+      "evidenceQuote": "U-NEXT ポイント 最大 5 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-max5x",
+      "name": "J-POINT パートナー Gold (最大5倍)",
+      "scope": "member-stores",
+      "cardIds": [
+        "jcb-gold"
+      ],
+      "rate": 0.025,
+      "currencyId": "j-point",
+      "bonusType": "primary",
+      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。プレミアムでおトク表記あり。",
+      "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
+      "evidenceQuote": "U-NEXT ポイント 最大 5 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-max4x",
+      "name": "J-POINT パートナー (最大4倍)",
+      "scope": "member-stores",
+      "cardIds": [
+        "jcb-w"
+      ],
+      "rate": 0.025,
+      "currencyId": "j-point",
+      "bonusType": "primary",
+      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。プレミアムでおトク表記あり。",
+      "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
+      "evidenceQuote": "高島屋 ポイント 最大 4 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-max4x",
+      "name": "J-POINT パートナー Gold (最大4倍)",
+      "scope": "member-stores",
+      "cardIds": [
+        "jcb-gold"
+      ],
+      "rate": 0.02,
+      "currencyId": "j-point",
+      "bonusType": "primary",
+      "conditions": "J-POINT パートナーサイトで店ごとのポイントアップ登録 (無料、期限なし) が必要。プレミアムでおトク表記あり。",
+      "entryUrl": "https://j-pointpartner.jcb.co.jp/search",
+      "evidenceQuote": "高島屋 ポイント 最大 4 倍 プレミアムでおトク",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }
   ],
   "memberships": [
     {
+      "programId": "prog-jcb-jpoint-20x",
+      "storeId": "jcb-travel",
+      "evidenceQuote": "JCBトラベル ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-20x",
+      "storeId": "jcb-travel",
+      "evidenceQuote": "JCBトラベル ポイント 20 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "programId": "prog-jcb-jpoint-3x",
       "storeId": "amazon",
       "evidenceQuote": "Amazon.co.jp ポイント 3 倍",
@@ -278,14 +324,56 @@
     {
       "programId": "prog-jcb-jpoint-20x",
       "storeId": "starbucks",
-      "evidenceQuote": "スターバックス（スターバックス カードへのオンライン入金・オートチャージ） ポイント 20 倍",
+      "evidenceQuote": "スターバックス（モバイルオーダー） ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-20x",
       "storeId": "starbucks",
-      "evidenceQuote": "スターバックス（スターバックス カードへのオンライン入金・オートチャージ） ポイント 20 倍",
+      "evidenceQuote": "スターバックス（モバイルオーダー） ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-max5x",
+      "storeId": "u-next",
+      "evidenceQuote": "U-NEXT ポイント 最大 5 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-max5x",
+      "storeId": "u-next",
+      "evidenceQuote": "U-NEXT ポイント 最大 5 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "sports-kuji",
+      "evidenceQuote": "スポーツくじ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "sports-kuji",
+      "evidenceQuote": "スポーツくじ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-20x",
+      "storeId": "sukiya",
+      "evidenceQuote": "すき家 ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-20x",
+      "storeId": "sukiya",
+      "evidenceQuote": "すき家 ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -305,15 +393,15 @@
     },
     {
       "programId": "prog-jcb-jpoint-20x",
-      "storeId": "sukiya",
-      "evidenceQuote": "すき家 ポイント 20 倍",
+      "storeId": "yoshinoya",
+      "evidenceQuote": "吉野家 ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-20x",
-      "storeId": "sukiya",
-      "evidenceQuote": "すき家 ポイント 20 倍",
+      "storeId": "yoshinoya",
+      "evidenceQuote": "吉野家 ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -332,30 +420,44 @@
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-20x",
-      "storeId": "yoshinoya",
-      "evidenceQuote": "吉野家 ポイント 20 倍",
+      "programId": "prog-jcb-jpoint-max5x",
+      "storeId": "app-store",
+      "evidenceQuote": "App Store ポイント 最大 5 倍 プレミアムでおトク",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-gold-20x",
-      "storeId": "yoshinoya",
-      "evidenceQuote": "吉野家 ポイント 20 倍",
+      "programId": "prog-jcb-jpoint-gold-max5x",
+      "storeId": "app-store",
+      "evidenceQuote": "App Store ポイント 最大 5 倍 プレミアムでおトク",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-20x",
-      "storeId": "saint-marc-cafe",
-      "evidenceQuote": "サンマルクカフェ ポイント 20 倍",
+      "programId": "prog-jcb-jpoint-3x",
+      "storeId": "qoo10",
+      "evidenceQuote": "Qoo10 ポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-gold-20x",
-      "storeId": "saint-marc-cafe",
-      "evidenceQuote": "サンマルクカフェ ポイント 20 倍",
+      "programId": "prog-jcb-jpoint-gold-3x",
+      "storeId": "qoo10",
+      "evidenceQuote": "Qoo10 ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "jcb-gift-card-online",
+      "evidenceQuote": "JCBギフトカード公式 オンライン注文 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "jcb-gift-card-online",
+      "evidenceQuote": "JCBギフトカード公式 オンライン注文 ポイント 2 倍 プレミアムでおトク",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -375,6 +477,20 @@
     },
     {
       "programId": "prog-jcb-jpoint-20x",
+      "storeId": "saint-marc-cafe",
+      "evidenceQuote": "サンマルクカフェ ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-20x",
+      "storeId": "saint-marc-cafe",
+      "evidenceQuote": "サンマルクカフェ ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-20x",
       "storeId": "domino-pizza",
       "evidenceQuote": "ドミノ・ピザ ポイント 20 倍",
       "explicitness": 0.95,
@@ -388,16 +504,30 @@
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "mercari",
-      "evidenceQuote": "メルカリ ポイント 2 倍",
+      "programId": "prog-jcb-jpoint-20x",
+      "storeId": "jihampi",
+      "evidenceQuote": "ジハンピ ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "mercari",
-      "evidenceQuote": "メルカリ ポイント 2 倍",
+      "programId": "prog-jcb-jpoint-gold-20x",
+      "storeId": "jihampi",
+      "evidenceQuote": "ジハンピ ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-20x",
+      "storeId": "disney-plus",
+      "evidenceQuote": "ディズニープラス ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-20x",
+      "storeId": "disney-plus",
+      "evidenceQuote": "ディズニープラス ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -412,6 +542,76 @@
       "programId": "prog-jcb-jpoint-gold-2x",
       "storeId": "welcia",
       "evidenceQuote": "ウエルシア・ハックドラッグ・金光薬品 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "mercari",
+      "evidenceQuote": "メルカリ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "mercari",
+      "evidenceQuote": "メルカリ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-max5x",
+      "storeId": "google-play",
+      "evidenceQuote": "Google Play ポイント 最大 5 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-max5x",
+      "storeId": "google-play",
+      "evidenceQuote": "Google Play ポイント 最大 5 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-max4x",
+      "storeId": "takashimaya",
+      "evidenceQuote": "高島屋 ポイント 最大 4 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-max4x",
+      "storeId": "takashimaya",
+      "evidenceQuote": "高島屋 ポイント 最大 4 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-3x",
+      "storeId": "uber-eats",
+      "evidenceQuote": "Uber Eats ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-3x",
+      "storeId": "uber-eats",
+      "evidenceQuote": "Uber Eats ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "apollo-station",
+      "evidenceQuote": "apollostation ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "apollo-station",
+      "evidenceQuote": "apollostation ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -426,48 +626,48 @@
       "programId": "prog-jcb-jpoint-gold-20x",
       "storeId": "jonathan",
       "evidenceQuote": "ジョナサン ポイント 20 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-4x",
-      "storeId": "takashimaya",
-      "evidenceQuote": "高島屋 ポイント 最大 4 倍 プレミアムでおトク",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-4x",
-      "storeId": "takashimaya",
-      "evidenceQuote": "高島屋 ポイント 最大 4 倍 プレミアムでおトク",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-10x",
-      "storeId": "toku-taku",
-      "evidenceQuote": "タクシーアプリ『GO』 ポイント 10 倍 プレミアムでおトク",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-10x",
-      "storeId": "toku-taku",
+      "storeId": "go-taxi-app",
+      "evidenceQuote": "タクシーアプリ『GO』 ポイント 10 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-10x",
+      "storeId": "go-taxi-app",
       "evidenceQuote": "タクシーアプリ『GO』 ポイント 10 倍 プレミアムでおトク",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-2x",
-      "storeId": "apollo-station",
-      "evidenceQuote": "apollostation ポイント 2 倍",
+      "storeId": "times-parking",
+      "evidenceQuote": "タイムズパーキング （タイムズクラブアプリ精算限定） ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "apollo-station",
-      "evidenceQuote": "apollostation ポイント 2 倍",
+      "storeId": "times-parking",
+      "evidenceQuote": "タイムズパーキング （タイムズクラブアプリ精算限定） ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "joshin",
+      "evidenceQuote": "ジョーシン ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "joshin",
+      "evidenceQuote": "ジョーシン ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -482,48 +682,20 @@
       "programId": "prog-jcb-jpoint-gold-2x",
       "storeId": "seijoishii",
       "evidenceQuote": "成城石井・成城石井.com（オンラインショップ）・Le Bar a Vin ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "times-parking",
-      "evidenceQuote": "タイムズパーキング （タイムズクラブアプリ精算限定） ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "times-parking",
-      "evidenceQuote": "タイムズパーキング （タイムズクラブアプリ精算限定） ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-5x",
-      "storeId": "aoki",
+      "storeId": "aoyama",
       "evidenceQuote": "洋服の青山 ポイント 5 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-5x",
-      "storeId": "aoki",
+      "storeId": "aoyama",
       "evidenceQuote": "洋服の青山 ポイント 5 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "joshin",
-      "evidenceQuote": "ジョーシン ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "joshin",
-      "evidenceQuote": "ジョーシン ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -570,16 +742,44 @@
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "softmap",
-      "evidenceQuote": "ソフマップ ポイント 2 倍",
+      "programId": "prog-jcb-jpoint-10x",
+      "storeId": "uber",
+      "evidenceQuote": "Uber ポイント 10 倍 プレミアムでおトク",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "softmap",
-      "evidenceQuote": "ソフマップ ポイント 2 倍",
+      "programId": "prog-jcb-jpoint-gold-10x",
+      "storeId": "uber",
+      "evidenceQuote": "Uber ポイント 10 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-max5x",
+      "storeId": "hulu",
+      "evidenceQuote": "Hulu ポイント 最大 5 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-max5x",
+      "storeId": "hulu",
+      "evidenceQuote": "Hulu ポイント 最大 5 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-max5x",
+      "storeId": "comic-cmoa",
+      "evidenceQuote": "コミックシーモア ポイント 最大 5 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-max5x",
+      "storeId": "comic-cmoa",
+      "evidenceQuote": "コミックシーモア ポイント 最大 5 倍 プレミアムでおトク",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -594,6 +794,20 @@
       "programId": "prog-jcb-jpoint-gold-2x",
       "storeId": "yamaya",
       "evidenceQuote": "やまや ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "softmap",
+      "evidenceQuote": "ソフマップ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "softmap",
+      "evidenceQuote": "ソフマップ ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -613,6 +827,48 @@
     },
     {
       "programId": "prog-jcb-jpoint-2x",
+      "storeId": "tobu-dept-ikebukuro",
+      "evidenceQuote": "東武百貨店 池袋店 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "tobu-dept-ikebukuro",
+      "evidenceQuote": "東武百貨店 池袋店 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-5x",
+      "storeId": "poplar",
+      "evidenceQuote": "ポプラグループ ポイント 5 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-5x",
+      "storeId": "poplar",
+      "evidenceQuote": "ポプラグループ ポイント 5 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "kisoji-group",
+      "evidenceQuote": "木曽路グループ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "kisoji-group",
+      "evidenceQuote": "木曽路グループ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
       "storeId": "wellpark",
       "evidenceQuote": "ウェルパーク ポイント 2 倍",
       "explicitness": 0.95,
@@ -627,22 +883,15 @@
     },
     {
       "programId": "prog-jcb-jpoint-2x",
-      "storeId": "tobu-dept",
-      "evidenceQuote": "東武百貨店 池袋店 ポイント 2 倍",
+      "storeId": "kokumin",
+      "evidenceQuote": "コクミン ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "tobu-dept",
-      "evidenceQuote": "東武百貨店 池袋店 ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-10x",
-      "storeId": "s-ride",
-      "evidenceQuote": "S.RIDE（エスライド） ポイント 10 倍 プレミアムでおトク",
+      "storeId": "kokumin",
+      "evidenceQuote": "コクミン ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -654,16 +903,23 @@
       "ambiguity": 0.05
     },
     {
+      "programId": "prog-jcb-jpoint-gold-10x",
+      "storeId": "s-ride",
+      "evidenceQuote": "S.RIDE（エスライド） ポイント 10 倍 プレミアムでおトク",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "programId": "prog-jcb-jpoint-2x",
-      "storeId": "kisoji-group",
-      "evidenceQuote": "木曽路グループ ポイント 2 倍",
+      "storeId": "takashimaya-shopping-center",
+      "evidenceQuote": "タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "kisoji-group",
-      "evidenceQuote": "木曽路グループ ポイント 2 倍",
+      "storeId": "takashimaya-shopping-center",
+      "evidenceQuote": "タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -682,58 +938,16 @@
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "kokumin",
-      "evidenceQuote": "コクミン ポイント 2 倍",
+      "programId": "prog-jcb-jpoint-20x",
+      "storeId": "times-road-service",
+      "evidenceQuote": "会員制ロードサービス≪タイムズロードサービス≫ ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "kokumin",
-      "evidenceQuote": "コクミン ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-5x",
-      "storeId": "poplar",
-      "evidenceQuote": "ポプラグループ ポイント 5 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-5x",
-      "storeId": "poplar",
-      "evidenceQuote": "ポプラグループ ポイント 5 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "takashimaya",
-      "evidenceQuote": "タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "takashimaya",
-      "evidenceQuote": "タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "sekai-no-yamachan",
-      "evidenceQuote": "世界の山ちゃん／山 ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "sekai-no-yamachan",
-      "evidenceQuote": "世界の山ちゃん／山 ポイント 2 倍",
+      "programId": "prog-jcb-jpoint-gold-20x",
+      "storeId": "times-road-service",
+      "evidenceQuote": "会員制ロードサービス≪タイムズロードサービス≫ ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -752,6 +966,48 @@
       "ambiguity": 0.05
     },
     {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "nagashima-resort",
+      "evidenceQuote": "ナガシマリゾート ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "nagashima-resort",
+      "evidenceQuote": "ナガシマリゾート ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "james",
+      "evidenceQuote": "ジェームス ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "james",
+      "evidenceQuote": "ジェームス ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "sekai-no-yamachan",
+      "evidenceQuote": "世界の山ちゃん／山 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "sekai-no-yamachan",
+      "evidenceQuote": "世界の山ちゃん／山 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "programId": "prog-jcb-jpoint-5x",
       "storeId": "haruyama-chain",
       "evidenceQuote": "はるやまチェーン ポイント 5 倍",
@@ -766,6 +1022,48 @@
       "ambiguity": 0.05
     },
     {
+      "programId": "prog-jcb-jpoint-3x",
+      "storeId": "budget-rent-a-car",
+      "evidenceQuote": "バジェット・レンタカー ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-3x",
+      "storeId": "budget-rent-a-car",
+      "evidenceQuote": "バジェット・レンタカー ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "mitsui-car-shares",
+      "evidenceQuote": "三井のカーシェアーズ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "mitsui-car-shares",
+      "evidenceQuote": "三井のカーシェアーズ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "fuji-corporation",
+      "evidenceQuote": "フジ・コーポレーション ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "fuji-corporation",
+      "evidenceQuote": "フジ・コーポレーション ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "programId": "prog-jcb-jpoint-2x",
       "storeId": "kojitsu-sanso",
       "evidenceQuote": "好日山荘 ポイント 2 倍",
@@ -776,81 +1074,39 @@
       "programId": "prog-jcb-jpoint-gold-2x",
       "storeId": "kojitsu-sanso",
       "evidenceQuote": "好日山荘 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "dacs",
+      "evidenceQuote": "ダックス ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "dacs",
+      "evidenceQuote": "ダックス ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-6x",
-      "storeId": "orix-rent-a-car",
+      "storeId": "orix-rentacar",
       "evidenceQuote": "オリックスレンタカー ポイント 6 倍 登録不要",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-6x",
-      "storeId": "orix-rent-a-car",
+      "storeId": "orix-rentacar",
       "evidenceQuote": "オリックスレンタカー ポイント 6 倍 登録不要",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-2x",
-      "storeId": "fuji-corporation",
-      "evidenceQuote": "フジ・コーポレーション ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "fuji-corporation",
-      "evidenceQuote": "フジ・コーポレーション ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "mitsui-car-shares",
-      "evidenceQuote": "三井のカーシェアーズ ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "mitsui-car-shares",
-      "evidenceQuote": "三井のカーシェアーズ ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "daacs",
-      "evidenceQuote": "ダックス ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "daacs",
-      "evidenceQuote": "ダックス ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "james",
-      "evidenceQuote": "ジェームス ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "james",
-      "evidenceQuote": "ジェームス ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
       "storeId": "konaka-group",
       "evidenceQuote": "コナカグループ ポイント 2 倍",
       "explicitness": 0.95,
@@ -860,48 +1116,6 @@
       "programId": "prog-jcb-jpoint-gold-2x",
       "storeId": "konaka-group",
       "evidenceQuote": "コナカグループ ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-3x",
-      "storeId": "budget-rent-a-car",
-      "evidenceQuote": "バジェット・レンタカー ポイント 3 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-3x",
-      "storeId": "budget-rent-a-car",
-      "evidenceQuote": "バジェット・レンタカー ポイント 3 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "hotel-chinzanso-tokyo",
-      "evidenceQuote": "ホテル椿山荘東京 ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "hotel-chinzanso-tokyo",
-      "evidenceQuote": "ホテル椿山荘東京 ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-3x",
-      "storeId": "fukudaya-dept",
-      "evidenceQuote": "福田屋百貨店 ポイント 3 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-3x",
-      "storeId": "fukudaya-dept",
-      "evidenceQuote": "福田屋百貨店 ポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -921,15 +1135,71 @@
     },
     {
       "programId": "prog-jcb-jpoint-2x",
-      "storeId": "le-trois",
-      "evidenceQuote": "ル・トロワ ポイント 2 倍",
+      "storeId": "hokkai-ichiba",
+      "evidenceQuote": "北海市場 ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "le-trois",
-      "evidenceQuote": "ル・トロワ ポイント 2 倍",
+      "storeId": "hokkai-ichiba",
+      "evidenceQuote": "北海市場 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-3x",
+      "storeId": "fukudaya-dept",
+      "evidenceQuote": "福田屋百貨店 ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-3x",
+      "storeId": "fukudaya-dept",
+      "evidenceQuote": "福田屋百貨店 ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "hotel-chinzanso-tokyo",
+      "evidenceQuote": "ホテル椿山荘東京 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "hotel-chinzanso-tokyo",
+      "evidenceQuote": "ホテル椿山荘東京 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "hakone-kowakien-yunessun",
+      "evidenceQuote": "箱根小涌園ユネッサン ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "hakone-kowakien-yunessun",
+      "evidenceQuote": "箱根小涌園ユネッサン ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "bridgestone-sports-online-store",
+      "evidenceQuote": "ブリヂストンスポーツオンラインストア ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "bridgestone-sports-online-store",
+      "evidenceQuote": "ブリヂストンスポーツオンラインストア ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -949,85 +1219,57 @@
     },
     {
       "programId": "prog-jcb-jpoint-2x",
-      "storeId": "fuku-yakuhin",
-      "evidenceQuote": "ふく薬品 ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "fuku-yakuhin",
-      "evidenceQuote": "ふく薬品 ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-2x",
-      "storeId": "dai-marufujii-central",
+      "storeId": "daimaru-fujii-central",
       "evidenceQuote": "大丸藤井セントラル ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "dai-marufujii-central",
+      "storeId": "daimaru-fujii-central",
       "evidenceQuote": "大丸藤井セントラル ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-jcb-jpoint-3x",
-      "storeId": "daishin-homecenter",
-      "evidenceQuote": "ダイシン ポイント 3 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-3x",
-      "storeId": "daishin-homecenter",
-      "evidenceQuote": "ダイシン ポイント 3 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
       "programId": "prog-jcb-jpoint-2x",
-      "storeId": "bridgestone-sports-online",
-      "evidenceQuote": "ブリヂストンスポーツオンラインストア ポイント 2 倍",
+      "storeId": "hakone-kowakien-tenyu",
+      "evidenceQuote": "箱根小涌園 天悠・伊東 緑涌・伊東小涌園 ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-2x",
-      "storeId": "bridgestone-sports-online",
-      "evidenceQuote": "ブリヂストンスポーツオンラインストア ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-5x",
-      "storeId": "alex-drug",
-      "evidenceQuote": "アレックス ポイント 5 倍 登録不要",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-jcb-jpoint-gold-5x",
-      "storeId": "alex-drug",
-      "evidenceQuote": "アレックス ポイント 5 倍 登録不要",
+      "storeId": "hakone-kowakien-tenyu",
+      "evidenceQuote": "箱根小涌園 天悠・伊東 緑涌・伊東小涌園 ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-3x",
-      "storeId": "humming-bird-group",
-      "evidenceQuote": "ハミングバード・グループ ポイント 3 倍",
+      "storeId": "eshi-shopping-center-pal",
+      "evidenceQuote": "江釣子ショッピングセンター・パル ポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-jcb-jpoint-gold-3x",
-      "storeId": "humming-bird-group",
-      "evidenceQuote": "ハミングバード・グループ ポイント 3 倍",
+      "storeId": "eshi-shopping-center-pal",
+      "evidenceQuote": "江釣子ショッピングセンター・パル ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "le-trois",
+      "evidenceQuote": "ル・トロワ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "le-trois",
+      "evidenceQuote": "ル・トロワ ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1047,6 +1289,34 @@
     },
     {
       "programId": "prog-jcb-jpoint-2x",
+      "storeId": "fujino-kirameki-fuji-gotemba",
+      "evidenceQuote": "藤乃煌 富士御殿場 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "fujino-kirameki-fuji-gotemba",
+      "evidenceQuote": "藤乃煌 富士御殿場 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
+      "storeId": "fuku-yakuhin",
+      "evidenceQuote": "ふく薬品 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-2x",
+      "storeId": "fuku-yakuhin",
+      "evidenceQuote": "ふく薬品 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-2x",
       "storeId": "megane-no-prince",
       "evidenceQuote": "メガネのプリンス ポイント 2 倍",
       "explicitness": 0.95,
@@ -1056,16 +1326,158 @@
       "programId": "prog-jcb-jpoint-gold-2x",
       "storeId": "megane-no-prince",
       "evidenceQuote": "メガネのプリンス ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-3x",
+      "storeId": "daishin",
+      "evidenceQuote": "ダイシン ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-3x",
+      "storeId": "daishin",
+      "evidenceQuote": "ダイシン ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-3x",
+      "storeId": "o-b-u-company",
+      "evidenceQuote": "O・Ｂ・Ｕ Company ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-3x",
+      "storeId": "o-b-u-company",
+      "evidenceQuote": "O・Ｂ・Ｕ Company ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-3x",
+      "storeId": "hummingbird-group",
+      "evidenceQuote": "ハミングバード・グループ ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-3x",
+      "storeId": "hummingbird-group",
+      "evidenceQuote": "ハミングバード・グループ ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-5x",
+      "storeId": "sendai-oden-sankichi",
+      "evidenceQuote": "仙台 おでん 三吉 ポイント 5 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-5x",
+      "storeId": "sendai-oden-sankichi",
+      "evidenceQuote": "仙台 おでん 三吉 ポイント 5 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-5x",
+      "storeId": "arex",
+      "evidenceQuote": "アレックス ポイント 5 倍 登録不要",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-jcb-jpoint-gold-5x",
+      "storeId": "arex",
+      "evidenceQuote": "アレックス ポイント 5 倍 登録不要",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }
   ],
   "stores": [
     {
+      "storeId": "jcb-travel",
+      "name": "JCBトラベル",
+      "category": "旅行代理店",
+      "evidenceQuote": "JCBトラベル ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "sports-kuji",
+      "name": "スポーツくじ",
+      "category": "エンタメ・チケット",
+      "evidenceQuote": "スポーツくじ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "qoo10",
+      "name": "Qoo10",
+      "category": "ネット通販",
+      "evidenceQuote": "Qoo10 ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jcb-gift-card-online",
+      "name": "JCBギフトカード公式 オンライン注文",
+      "category": "生活サービス",
+      "evidenceQuote": "JCBギフトカード公式 オンライン注文 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "storeId": "domino-pizza",
       "name": "ドミノ・ピザ",
       "category": "飲食",
       "evidenceQuote": "ドミノ・ピザ ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "jihampi",
+      "name": "ジハンピ",
+      "category": "飲食",
+      "evidenceQuote": "ジハンピ ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "disney-plus",
+      "name": "ディズニープラス",
+      "category": "音楽・映像",
+      "evidenceQuote": "ディズニープラス ポイント 20 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "uber-eats",
+      "name": "Uber Eats",
+      "category": "飲食",
+      "evidenceQuote": "Uber Eats ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "go-taxi-app",
+      "name": "タクシーアプリ『GO』",
+      "category": "交通",
+      "evidenceQuote": "タクシーアプリ『GO』 ポイント 10 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "times-parking",
+      "name": "タイムズパーキング",
+      "category": "車・バイク",
+      "evidenceQuote": "タイムズパーキング （タイムズクラブアプリ精算限定） ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1078,18 +1490,10 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "times-parking",
-      "name": "タイムズパーキング",
-      "category": "交通",
-      "evidenceQuote": "タイムズパーキング （タイムズクラブアプリ精算限定） ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "yamaya",
-      "name": "やまや",
-      "category": "スーパー",
-      "evidenceQuote": "やまや ポイント 2 倍",
+      "storeId": "aoyama",
+      "name": "洋服の青山",
+      "category": "ファッション",
+      "evidenceQuote": "洋服の青山 ポイント 5 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1102,26 +1506,10 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "wellpark",
-      "name": "ウェルパーク",
-      "category": "ドラッグストア",
-      "evidenceQuote": "ウェルパーク ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "tobu-dept",
-      "name": "東武百貨店",
+      "storeId": "tobu-dept-ikebukuro",
+      "name": "東武百貨店 池袋店",
       "category": "百貨店",
       "evidenceQuote": "東武百貨店 池袋店 ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "s-ride",
-      "name": "S.RIDE",
-      "category": "交通",
-      "evidenceQuote": "S.RIDE（エスライド） ポイント 10 倍 プレミアムでおトク",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1134,10 +1522,10 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "owndays",
-      "name": "OWNDAYS",
-      "category": "メガネ",
-      "evidenceQuote": "OWNDAYS／オンデーズ ポイント 3 倍",
+      "storeId": "wellpark",
+      "name": "ウェルパーク",
+      "category": "ドラッグストア",
+      "evidenceQuote": "ウェルパーク ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1150,10 +1538,34 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "sekai-no-yamachan",
-      "name": "世界の山ちゃん",
-      "category": "飲食",
-      "evidenceQuote": "世界の山ちゃん／山 ポイント 2 倍",
+      "storeId": "s-ride",
+      "name": "S.RIDE（エスライド）",
+      "category": "交通",
+      "evidenceQuote": "S.RIDE（エスライド） ポイント 10 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "takashimaya-shopping-center",
+      "name": "タカシマヤグループのショッピングセンター・レストラン街",
+      "category": "百貨店",
+      "evidenceQuote": "タカシマヤグループのショッピングセンター・レストラン街 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "owndays",
+      "name": "OWNDAYS／オンデーズ",
+      "category": "メガネ",
+      "evidenceQuote": "OWNDAYS／オンデーズ ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "times-road-service",
+      "name": "タイムズロードサービス",
+      "category": "車・バイク",
+      "evidenceQuote": "会員制ロードサービス≪タイムズロードサービス≫ ポイント 20 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1166,34 +1578,10 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "haruyama-chain",
-      "name": "はるやまチェーン",
-      "category": "ファッション",
-      "evidenceQuote": "はるやまチェーン ポイント 5 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "orix-rent-a-car",
-      "name": "オリックスレンタカー",
-      "category": "レンタカー",
-      "evidenceQuote": "オリックスレンタカー ポイント 6 倍 登録不要",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "fuji-corporation",
-      "name": "フジ・コーポレーション",
-      "category": "車・バイク",
-      "evidenceQuote": "フジ・コーポレーション ポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "daacs",
-      "name": "ダックス",
-      "category": "ドラッグストア",
-      "evidenceQuote": "ダックス ポイント 2 倍",
+      "storeId": "nagashima-resort",
+      "name": "ナガシマリゾート",
+      "category": "レジャー・エンタメ",
+      "evidenceQuote": "ナガシマリゾート ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1206,10 +1594,18 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "konaka-group",
-      "name": "コナカグループ",
+      "storeId": "sekai-no-yamachan",
+      "name": "世界の山ちゃん",
+      "category": "飲食",
+      "evidenceQuote": "世界の山ちゃん／山 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "haruyama-chain",
+      "name": "はるやまチェーン",
       "category": "ファッション",
-      "evidenceQuote": "コナカグループ ポイント 2 倍",
+      "evidenceQuote": "はるやまチェーン ポイント 5 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1222,18 +1618,26 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "hotel-chinzanso-tokyo",
-      "name": "ホテル椿山荘東京",
-      "category": "ホテル",
-      "evidenceQuote": "ホテル椿山荘東京 ポイント 2 倍",
+      "storeId": "fuji-corporation",
+      "name": "フジ・コーポレーション",
+      "category": "車・バイク",
+      "evidenceQuote": "フジ・コーポレーション ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "fukudaya-dept",
-      "name": "福田屋百貨店",
-      "category": "百貨店",
-      "evidenceQuote": "福田屋百貨店 ポイント 3 倍",
+      "storeId": "dacs",
+      "name": "ダックス",
+      "category": "ドラッグストア",
+      "evidenceQuote": "ダックス ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "konaka-group",
+      "name": "コナカグループ",
+      "category": "ファッション",
+      "evidenceQuote": "コナカグループ ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1246,10 +1650,42 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "le-trois",
-      "name": "ル・トロワ",
+      "storeId": "hokkai-ichiba",
+      "name": "北海市場",
+      "category": "スーパー",
+      "evidenceQuote": "北海市場 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "fukudaya-dept",
+      "name": "福田屋百貨店",
       "category": "百貨店",
-      "evidenceQuote": "ル・トロワ ポイント 2 倍",
+      "evidenceQuote": "福田屋百貨店 ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hotel-chinzanso-tokyo",
+      "name": "ホテル椿山荘東京",
+      "category": "ホテル",
+      "evidenceQuote": "ホテル椿山荘東京 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hakone-kowakien-yunessun",
+      "name": "箱根小涌園ユネッサン",
+      "category": "レジャー・エンタメ",
+      "evidenceQuote": "箱根小涌園ユネッサン ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "bridgestone-sports-online-store",
+      "name": "ブリヂストンスポーツオンラインストア",
+      "category": "スポーツ",
+      "evidenceQuote": "ブリヂストンスポーツオンラインストア ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1262,6 +1698,46 @@
       "ambiguity": 0.05
     },
     {
+      "storeId": "daimaru-fujii-central",
+      "name": "大丸藤井セントラル",
+      "category": "雑貨",
+      "evidenceQuote": "大丸藤井セントラル ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "hakone-kowakien-tenyu",
+      "name": "箱根小涌園 天悠",
+      "category": "ホテル",
+      "evidenceQuote": "箱根小涌園 天悠・伊東 緑涌・伊東小涌園 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "eshi-shopping-center-pal",
+      "name": "江釣子ショッピングセンター・パル",
+      "category": "ショッピングモール",
+      "evidenceQuote": "江釣子ショッピングセンター・パル ポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "le-trois",
+      "name": "ル・トロワ",
+      "category": "ショッピングモール",
+      "evidenceQuote": "ル・トロワ ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "fujino-kirameki-fuji-gotemba",
+      "name": "藤乃煌 富士御殿場",
+      "category": "ホテル",
+      "evidenceQuote": "藤乃煌 富士御殿場 ポイント 2 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "storeId": "fuku-yakuhin",
       "name": "ふく薬品",
       "category": "ドラッグストア",
@@ -1270,15 +1746,15 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "dai-marufujii-central",
-      "name": "大丸藤井セントラル",
-      "category": "雑貨",
-      "evidenceQuote": "大丸藤井セントラル ポイント 2 倍",
+      "storeId": "megane-no-prince",
+      "name": "メガネのプリンス",
+      "category": "メガネ",
+      "evidenceQuote": "メガネのプリンス ポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "daishin-homecenter",
+      "storeId": "daishin",
       "name": "ダイシン",
       "category": "ホームセンター",
       "evidenceQuote": "ダイシン ポイント 3 倍",
@@ -1286,23 +1762,15 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "bridgestone-sports-online",
-      "name": "ブリヂストンスポーツオンラインストア",
-      "category": "スポーツ",
-      "evidenceQuote": "ブリヂストンスポーツオンラインストア ポイント 2 倍",
+      "storeId": "o-b-u-company",
+      "name": "O・Ｂ・Ｕ Company",
+      "category": "家具・インテリア",
+      "evidenceQuote": "O・Ｂ・Ｕ Company ポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "alex-drug",
-      "name": "アレックス",
-      "category": "ドラッグストア",
-      "evidenceQuote": "アレックス ポイント 5 倍 登録不要",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "humming-bird-group",
+      "storeId": "hummingbird-group",
       "name": "ハミングバード・グループ",
       "category": "飲食",
       "evidenceQuote": "ハミングバード・グループ ポイント 3 倍",
@@ -1310,10 +1778,18 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "megane-no-prince",
-      "name": "メガネのプリンス",
-      "category": "メガネ",
-      "evidenceQuote": "メガネのプリンス ポイント 2 倍",
+      "storeId": "sendai-oden-sankichi",
+      "name": "仙台 おでん 三吉",
+      "category": "飲食",
+      "evidenceQuote": "仙台 おでん 三吉 ポイント 5 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "arex",
+      "name": "アレックス",
+      "category": "家電量販店",
+      "evidenceQuote": "アレックス ポイント 5 倍 登録不要",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }
