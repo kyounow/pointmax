@@ -3,6 +3,32 @@
 > 自動生成。最新が上、最大 52 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-10-22 (auto 1 件 / review 297 件)
+
+- 平均 confidence: 1.00 / source 数: 4
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| expired-cleanup | プログラム | 1 |
+
+### Review queue 内訳 (297 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 157 |
+| storeAdditionsDisabled | 71 |
+| missingProgramBody | 43 |
+| idCollision | 24 |
+| unknownCategory | 2 |
+
+<details><summary>追加項目 1 件</summary>
+
+### expired-cleanup / プログラム (1)
+- プログラム 削除 prog-paypay-seven-eleven-30-2026-09
+
+</details>
+
+---
+
 ## 2026-10-19 (auto 0 件 / review 271 件)
 
 - source 数: 4
