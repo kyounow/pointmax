@@ -1,15 +1,15 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-10-14T23:39:58.788Z",
+  "fetchedAt": "2026-10-21T23:53:50.376Z",
   "promptVersion": "ongoing-program-v1.2",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Vポイントアッププログラムの常設還元施策を抽出。ライフスタイル条件（円預金、外貨預金、住宅ローン、SBI証券、住友生命、カードローン、SMBC日興証券、Vトリップ、Oliveヘルスケア、マネーアシストプラス）は対象外とし、programs / memberships には含めていません。stores[] に新規追加対象のチェーン店舗はありませんでした。全体で総 N 件中 3 件抽出しました。",
+  "notes": "ライフスタイル条件（円預金、外貨預金、住宅ローン、SBI証券、住友生命、カードローン、SMBC日興証券、Vトリップ、Oliveヘルスケア、マネーアシストプラス）に該当するプログラムは出力対象外。総31件中2件を抽出。",
   "programs": [
     {
-      "programId": "prog-smbc-vup-touch-conveni",
-      "name": "Vポイントアッププログラム 対象店舗スマホタッチ決済",
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "name": "SMBC タッチ決済コンビニ・飲食高還元",
       "scope": "member-stores",
       "cardIds": [
         "smbc-v",
@@ -18,35 +18,17 @@
       "paymentAppId": "pa-visa-touch",
       "rate": 0.075,
       "currencyId": "v-pt",
-      "bonusType": "primary",
-      "description": "Vポイントアッププログラム対象のコンビニ・飲食店でVisa/Mastercardのタッチ決済またはモバイルオーダー利用で+7.5%還元",
-      "conditions": "対象店舗でのスマホのVisaのタッチ決済・Mastercardタッチ決済、またはモバイルオーダー利用時。カード現物のタッチ決済、iD、カードの差し込み、磁気取引は対象外。",
-      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "対象店舗でスマホのVisaのタッチ決済・Mastercard®︎タッチ決済またはモバイルオーダーを利用＋7.5％還元",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-smbc-vup-kazoku",
-      "name": "Vポイントアッププログラム 家族ポイント",
-      "scope": "all-stores",
-      "cardIds": [
-        "smbc-v",
-        "olive"
-      ],
-      "rate": 0.05,
-      "currencyId": "v-pt",
       "bonusType": "addOn",
-      "description": "Vポイントアッププログラム家族ポイントに6人以上登録で+5%還元",
-      "conditions": "家族ポイントに6人以上登録（主会員1人＋従会員5人以上）が条件",
+      "description": "Visa/Mastercard タッチ決済またはモバイルオーダーで対象コンビニ・飲食店 最大+7.5%",
+      "conditions": "Visa/Mastercardタッチ決済またはモバイルオーダー利用時のみ。一部対象外店舗あり。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "家族ポイントに6人以上登録（主会員1人＋従会員5人以上）＝＋5％還元",
+      "evidenceQuote": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "programId": "prog-smbc-vup-olive-eraberu",
-      "name": "Vポイントアッププログラム Oliveアカウント選べる特典",
+      "programId": "prog-olive-choose-bonus-1pc",
+      "name": "Olive 選べる特典 Vポイントアッププログラム+1%",
       "scope": "all-stores",
       "cardIds": [
         "olive"
@@ -54,78 +36,276 @@
       "rate": 0.01,
       "currencyId": "v-pt",
       "bonusType": "addOn",
-      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると+1%還元。プラチナプリファードは2つ選択で+2%還元。",
-      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。Olive プラチナプリファードの場合は、2つ選択で+2%還元。",
+      "description": "Oliveアカウントの選べる特典でVポイントアッププログラム+1%を選択で還元率が1%アップ",
+      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択した場合。Olive プラチナプリファードのお客さまは、選べる特典で「Vポイントアッププログラム＋1％」を2つ選択した場合、＋2％還元になります。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典 ※ で「Vポイントアッププログラム＋1％」をご選択",
+      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％",
       "explicitness": 0.9,
       "ambiguity": 0.1
     }
   ],
   "memberships": [
     {
-      "programId": "prog-smbc-vup-touch-conveni",
+      "programId": "prog-smbc-touch-conveni-restaurant",
       "storeId": "conv-7eleven",
-      "evidenceQuote": "セブン-イレブン（※1）で、スマホのVisaのタッチ決済・Mastercardタッチ決済（※2）で支払うと、最大11％（※3）ポイント還元！",
+      "evidenceQuote": "セブン‐イレブン",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-vup-touch-conveni",
+      "programId": "prog-smbc-touch-conveni-restaurant",
       "storeId": "conv-lawson",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤなど）",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
+      "evidenceQuote": "ローソン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-vup-touch-conveni",
-      "storeId": "conv-familymart",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤなど）",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "conv-ministop",
+      "evidenceQuote": "ミニストップ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-vup-touch-conveni",
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "seicomart",
+      "evidenceQuote": "セイコーマート",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "poplar",
+      "evidenceQuote": "ポプラ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
       "storeId": "mcdonalds",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤなど）",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
+      "evidenceQuote": "マクドナルド",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-vup-touch-conveni",
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "mos-burger",
+      "evidenceQuote": "モスバーガー",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "kfc",
+      "evidenceQuote": "ケンタッキーフライドチキン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "yoshinoya",
+      "evidenceQuote": "吉野家",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
       "storeId": "saizeriya",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤなど）",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
+      "evidenceQuote": "サイゼリヤ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     },
     {
-      "programId": "prog-smbc-vup-touch-conveni",
-      "storeId": "sukiya",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、すき家、ドトールコーヒーショップ、エクセルシオールカフェ、ガストなど）",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
-    },
-    {
-      "programId": "prog-smbc-vup-touch-conveni",
-      "storeId": "doutor",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、すき家、ドトールコーヒーショップ、エクセルシオールカフェ、ガストなど）",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
-    },
-    {
-      "programId": "prog-smbc-vup-touch-conveni",
-      "storeId": "excelsior-cafe",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、すき家、ドトールコーヒーショップ、エクセルシオールカフェ、ガストなど）",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
-    },
-    {
-      "programId": "prog-smbc-vup-touch-conveni",
+      "programId": "prog-smbc-touch-conveni-restaurant",
       "storeId": "gusto",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、すき家、ドトールコーヒーショップ、エクセルシオールカフェ、ガストなど）",
-      "explicitness": 0.8,
-      "ambiguity": 0.2
+      "evidenceQuote": "ガスト",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "bamiyan",
+      "evidenceQuote": "バーミヤン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "shabuyo",
+      "evidenceQuote": "しゃぶ葉",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "jonathan",
+      "evidenceQuote": "ジョナサン",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "yumetoan",
+      "evidenceQuote": "夢庵",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "sukiya",
+      "evidenceQuote": "すき家",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "hamazushi",
+      "evidenceQuote": "はま寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "cocos",
+      "evidenceQuote": "ココス",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "starbucks",
+      "evidenceQuote": "スターバックス",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "doutor",
+      "evidenceQuote": "ドトールコーヒーショップ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "excelsior-cafe",
+      "evidenceQuote": "エクセルシオール カフェ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "kappa-sushi",
+      "evidenceQuote": "かっぱ寿司",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "steak-gusto",
+      "evidenceQuote": "ステーキガスト",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "karaage-karayoshi",
+      "evidenceQuote": "から好し",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "musashino-mori-coffee",
+      "evidenceQuote": "むさしの森珈琲",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "aiya",
+      "evidenceQuote": "藍屋",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "grazie-gardens",
+      "evidenceQuote": "グラッチェガーデンズ",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "uoya-michi",
+      "evidenceQuote": "魚屋路",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "chawan",
+      "evidenceQuote": "chawan",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "la-ohana",
+      "evidenceQuote": "La Ohana",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "tonkara-tei",
+      "evidenceQuote": "とんから亭",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "yumean-shokudo",
+      "evidenceQuote": "ゆめあん食堂",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "monana",
+      "evidenceQuote": "桃菜",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "hachiro-soba",
+      "evidenceQuote": "八郎そば",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "sanmarusan",
+      "evidenceQuote": "三〇三",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "storeId": "freshness-burger",
+      "evidenceQuote": "フレッシュネスバーガー",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
     }
   ],
-  "stores": []
+  "stores": [
+    {
+      "storeId": "freshness-burger",
+      "name": "フレッシュネスバーガー",
+      "category": "飲食",
+      "evidenceQuote": "フレッシュネスバーガー",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    }
+  ]
 }

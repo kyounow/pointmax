@@ -2,6 +2,41 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-10-22",
+      "generatedAt": "2026-10-21T23:54:18.124Z",
+      "totalCount": 1,
+      "avgConfidence": 1,
+      "sourcesProcessed": 4,
+      "bySource": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "count": 1,
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "expired-cleanup",
+          "collection": "programs",
+          "summary": "プログラム 削除 prog-paypay-seven-eleven-30-2026-09",
+          "sourceLabel": "expired-cleanup",
+          "collectionLabel": "プログラム"
+        }
+      ],
+      "reviewStats": {
+        "total": 297,
+        "byReason": {
+          "idCollision": 24,
+          "missingStoreBody": 157,
+          "missingProgramBody": 43,
+          "storeAdditionsDisabled": 71,
+          "unknownCategory": 2
+        }
+      }
+    },
+    {
       "date": "2026-10-19",
       "generatedAt": "2026-10-18T22:48:08.521Z",
       "totalCount": 0,
