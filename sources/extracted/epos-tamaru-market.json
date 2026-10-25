@@ -1,11 +1,11 @@
 {
   "sourceId": "epos-tamaru-market",
   "sourceUrl": "https://tamaru.eposcard.co.jp/",
-  "fetchedAt": "2026-10-18T22:47:25.500Z",
+  "fetchedAt": "2026-10-25T23:02:01.538Z",
   "promptVersion": "epos-tamaru-v1.1",
   "extractor": "epos-tamaru",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "定額付与型のため対象外: ZOZOTOWN (新規購入) エポスポイント 475, 朝日小学生新聞・朝日中高生新聞 エポスポイント 225, スキルマーケット【ココナラ】 エポスポイント 275, リアルチケット エポスポイント 200 [sync] schema 違反で除去したアイテム: memberships:17。",
+  "notes": "新規 33 ショップ確認。定額付与型のため対象外: ZOZOTOWN（新規購入） (475ポイント)、リアルチケット (200ポイント)、朝日小学生新聞・朝日中高生新聞 (225ポイント)、スキルマーケット【ココナラ】 (275ポイント)。 [sync] schema 違反で除去したアイテム: memberships:16。",
   "programs": [
     {
       "programId": "prog-epos-tamaru-2x",
@@ -79,7 +79,7 @@
       "description": "たまるマーケット経由で 5倍 (総倍率、EPOS 基本 0.5% × 5 = 実効 2.5%)",
       "conditions": "たまるマーケット経由での購入が必要。",
       "entryUrl": "https://tamaru.eposcard.co.jp/",
-      "evidenceQuote": "ロクシタンオンラインショップ エポスポイント 5 倍",
+      "evidenceQuote": "無印良品ネットストア エポスポイント 5 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -136,7 +136,7 @@
       "description": "たまるマーケット経由で 9倍 (総倍率、EPOS 基本 0.5% × 9 = 実効 4.5%)",
       "conditions": "たまるマーケット経由での購入が必要。",
       "entryUrl": "https://tamaru.eposcard.co.jp/",
-      "evidenceQuote": "タカミ公式オンラインショップ エポスポイント 9 倍",
+      "evidenceQuote": "MoMA Design Store エポスポイント 9 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -231,7 +231,7 @@
       "description": "たまるマーケット経由で 18倍 (総倍率、EPOS 基本 0.5% × 18 = 実効 9.0%)",
       "conditions": "たまるマーケット経由での購入が必要。",
       "entryUrl": "https://tamaru.eposcard.co.jp/",
-      "evidenceQuote": "山田養蜂場オンラインショップ エポスポイント 18 倍",
+      "evidenceQuote": "ピザハットオンライン エポスポイント 18 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -269,7 +269,7 @@
       "description": "たまるマーケット経由で 25倍 (総倍率、EPOS 基本 0.5% × 25 = 実効 12.5%)",
       "conditions": "たまるマーケット経由での購入が必要。",
       "entryUrl": "https://tamaru.eposcard.co.jp/",
-      "evidenceQuote": "洋服の青山オンラインストア エポスポイント 25 倍",
+      "evidenceQuote": "山田養蜂場オンラインショップ エポスポイント 25 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -302,6 +302,13 @@
       "ambiguity": 0.05
     },
     {
+      "programId": "prog-epos-tamaru-5x",
+      "storeId": "muji",
+      "evidenceQuote": "無印良品ネットストア エポスポイント 5 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "programId": "prog-epos-tamaru-2x",
       "storeId": "marui",
       "evidenceQuote": "マルイのネット通販≪マルイウェブチャネル≫ エポスポイント 2 倍",
@@ -326,13 +333,6 @@
       "programId": "prog-epos-tamaru-2x",
       "storeId": "uniqlo",
       "evidenceQuote": "ユニクロオンラインストア エポスポイント 2 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-epos-tamaru-2x",
-      "storeId": "muji",
-      "evidenceQuote": "無印良品ネットストア エポスポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -373,36 +373,43 @@
     },
     {
       "programId": "prog-epos-tamaru-2x",
-      "storeId": "ticket-pia",
-      "evidenceQuote": "チケットぴあ エポスポイント 2 倍",
+      "storeId": "ana-travelers",
+      "evidenceQuote": "ANAの国内・海外ツアー【ANAトラベラーズ】 エポスポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-epos-tamaru-18x",
-      "storeId": "yamada-yohojo-online",
-      "evidenceQuote": "山田養蜂場オンラインショップ エポスポイント 18 倍",
+      "programId": "prog-epos-tamaru-3x",
+      "storeId": "orbis",
+      "evidenceQuote": "オルビス エポスポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-5x",
-      "storeId": "dhc-online-shop",
+      "storeId": "dhc",
       "evidenceQuote": "DHCオンラインショップ エポスポイント 5 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-2x",
-      "storeId": "nitori-online",
+      "storeId": "nitori",
       "evidenceQuote": "ニトリ 家具・インテリアの通販サイト【楽天市場】 エポスポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-4x",
-      "storeId": "daiso-net-store",
+      "storeId": "daiso-netstore",
       "evidenceQuote": "ダイソーネットストア エポスポイント 4 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-epos-tamaru-9x",
+      "storeId": "moma-design-store",
+      "evidenceQuote": "MoMA Design Store エポスポイント 9 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -415,28 +422,21 @@
     },
     {
       "programId": "prog-epos-tamaru-5x",
-      "storeId": "keyuca-online-shop",
+      "storeId": "keyuca",
       "evidenceQuote": "KEYUCA オンラインショップ エポスポイント 5 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-epos-tamaru-9x",
-      "storeId": "moma-design-store",
-      "evidenceQuote": "MoMA Design Store エポスポイント 9 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
       "programId": "prog-epos-tamaru-17x",
-      "storeId": "shu-uemura-online",
+      "storeId": "shu-uemura",
       "evidenceQuote": "シュウ ウエムラ公式オンラインショップ エポスポイント 17 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-9x",
-      "storeId": "takami-online-shop",
+      "storeId": "takami-online",
       "evidenceQuote": "タカミ公式オンラインショップ エポスポイント 9 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -450,14 +450,14 @@
     },
     {
       "programId": "prog-epos-tamaru-6x",
-      "storeId": "blue-bottle-coffee-online",
+      "storeId": "blue-bottle-coffee",
       "evidenceQuote": "ブルーボトルコーヒー公式オンラインストア エポスポイント 6 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-17x",
-      "storeId": "maison-margiela-fragrances",
+      "storeId": "maison-margiela-fragrance",
       "evidenceQuote": "メゾン マルジェラ フレグランス公式オンラインストア エポスポイント 17 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -471,21 +471,28 @@
     },
     {
       "programId": "prog-epos-tamaru-3x",
-      "storeId": "jre-mall-shopping",
+      "storeId": "jre-mall",
       "evidenceQuote": "JRE MALL ショッピング エポスポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-5x",
-      "storeId": "house-of-rose-online",
+      "storeId": "house-of-rose",
       "evidenceQuote": "ハウスオブローゼ オンラインショップ本店／化粧品 エポスポイント 5 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-25x",
-      "storeId": "yofuku-no-aoyama-online",
+      "storeId": "yamada-youhoujo",
+      "evidenceQuote": "山田養蜂場オンラインショップ エポスポイント 25 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "programId": "prog-epos-tamaru-25x",
+      "storeId": "yofuku-no-aoyama",
       "evidenceQuote": "洋服の青山オンラインストア エポスポイント 25 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -505,15 +512,15 @@
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-epos-tamaru-7x",
-      "storeId": "petit-bateau-online",
-      "evidenceQuote": "プチバトーオンラインブティック エポスポイント 7 倍",
+      "programId": "prog-epos-tamaru-13x",
+      "storeId": "petit-bateau",
+      "evidenceQuote": "プチバトーオンラインブティック エポスポイント 13 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-13x",
-      "storeId": "charles-keith-online",
+      "storeId": "charles-keith",
       "evidenceQuote": "CHARLES & KEITH 公式オンラインストア エポスポイント 13 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -541,21 +548,21 @@
     },
     {
       "programId": "prog-epos-tamaru-19x",
-      "storeId": "ipsa-official-site",
+      "storeId": "ipsa",
       "evidenceQuote": "IPSA 公式サイト エポスポイント 19 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-7x",
-      "storeId": "aeon-shop",
+      "storeId": "aeon",
       "evidenceQuote": "おうちでイオン イオンショップ エポスポイント 7 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
       "programId": "prog-epos-tamaru-3x",
-      "storeId": "expedia-hotel-flight",
+      "storeId": "expedia-flight-hotel",
       "evidenceQuote": "【航空券＋宿泊の同時予約】旅行予約のエクスペディア エポスポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -576,7 +583,7 @@
     },
     {
       "programId": "prog-epos-tamaru-10x",
-      "storeId": "belluna-catalog",
+      "storeId": "belluna",
       "evidenceQuote": "カタログ通販ベルーナ（Belluna） エポスポイント 10 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -590,7 +597,7 @@
     },
     {
       "programId": "prog-epos-tamaru-13x",
-      "storeId": "michael-kors-online-outlet",
+      "storeId": "michael-kors-outlet",
       "evidenceQuote": "マイケル・コース オンラインアウトレットストア エポスポイント 13 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -610,6 +617,13 @@
       "ambiguity": 0.05
     },
     {
+      "programId": "prog-epos-tamaru-19x",
+      "storeId": "e87-com",
+      "evidenceQuote": "e87.com（千趣会 イイハナ） エポスポイント 19 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
       "programId": "prog-epos-tamaru-13x",
       "storeId": "honeys",
       "evidenceQuote": "Honeys エポスポイント 13 倍",
@@ -618,7 +632,7 @@
     },
     {
       "programId": "prog-epos-tamaru-3x",
-      "storeId": "apahotels",
+      "storeId": "apa-hotels",
       "evidenceQuote": "アパホテルズ＆リゾーツ エポスポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -632,7 +646,7 @@
     },
     {
       "programId": "prog-epos-tamaru-5x",
-      "storeId": "nihon-ryoko",
+      "storeId": "nippon-ryoko",
       "evidenceQuote": "日本旅行 エポスポイント 5 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -655,15 +669,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "shein",
-      "name": "SHEIN",
-      "category": "ファッション",
-      "evidenceQuote": "SHEIN エポスポイント 7 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "adidas-online-shop",
+      "storeId": "adidas",
       "name": "adidas ONLINE SHOP",
       "category": "ファッション",
       "evidenceQuote": "adidas ONLINE SHOP エポスポイント 7 倍",
@@ -680,7 +686,7 @@
     },
     {
       "storeId": "agoda",
-      "name": "アゴダ",
+      "name": "国内・海外のホテル予約ならアゴダ",
       "category": "ホテル",
       "evidenceQuote": "国内・海外のホテル予約ならアゴダ エポスポイント 7 倍",
       "explicitness": 0.95,
@@ -711,15 +717,15 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "ticket-pia",
-      "name": "チケットぴあ",
-      "category": "エンタメ・チケット",
-      "evidenceQuote": "チケットぴあ エポスポイント 2 倍",
+      "storeId": "ana-travelers",
+      "name": "ANAトラベラーズ",
+      "category": "旅行代理店",
+      "evidenceQuote": "ANAの国内・海外ツアー【ANAトラベラーズ】 エポスポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "shiseido-online-store",
+      "storeId": "shiseido-online",
       "name": "資生堂オンラインストア",
       "category": "美容",
       "evidenceQuote": "資生堂オンラインストア エポスポイント 13 倍",
@@ -727,31 +733,15 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "yamada-yohojo-online",
-      "name": "山田養蜂場オンラインショップ",
+      "storeId": "orbis",
+      "name": "オルビス",
       "category": "美容",
-      "evidenceQuote": "山田養蜂場オンラインショップ エポスポイント 18 倍",
+      "evidenceQuote": "オルビス エポスポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "at-cosme-shopping",
-      "name": "@cosme SHOPPING",
-      "category": "美容",
-      "evidenceQuote": "@cosme SHOPPING エポスポイント 4 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "loccitane-online-shop",
-      "name": "ロクシタンオンラインショップ",
-      "category": "美容",
-      "evidenceQuote": "ロクシタンオンラインショップ エポスポイント 5 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "dhc-online-shop",
+      "storeId": "dhc",
       "name": "DHCオンラインショップ",
       "category": "美容",
       "evidenceQuote": "DHCオンラインショップ エポスポイント 5 倍",
@@ -759,34 +749,34 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "nitori-online",
-      "name": "ニトリ 家具・インテリアの通販サイト【楽天市場】",
+      "storeId": "loccitane",
+      "name": "ロクシタンオンラインショップ",
+      "category": "美容",
+      "evidenceQuote": "ロクシタンオンラインショップ エポスポイント 5 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "cosme-shopping",
+      "name": "@cosme SHOPPING",
+      "category": "美容",
+      "evidenceQuote": "@cosme SHOPPING エポスポイント 4 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "nitori",
+      "name": "ニトリ",
       "category": "ネット通販",
       "evidenceQuote": "ニトリ 家具・インテリアの通販サイト【楽天市場】 エポスポイント 2 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "daiso-net-store",
+      "storeId": "daiso-netstore",
       "name": "ダイソーネットストア",
       "category": "雑貨",
       "evidenceQuote": "ダイソーネットストア エポスポイント 4 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "cainz",
-      "name": "カインズ",
-      "category": "ホームセンター",
-      "evidenceQuote": "カインズ エポスポイント 3 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "keyuca-online-shop",
-      "name": "KEYUCA オンラインショップ",
-      "category": "雑貨",
-      "evidenceQuote": "KEYUCA オンラインショップ エポスポイント 5 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -799,7 +789,23 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "shu-uemura-online",
+      "storeId": "cainz",
+      "name": "カインズ",
+      "category": "ホームセンター",
+      "evidenceQuote": "カインズ エポスポイント 3 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "keyuca",
+      "name": "KEYUCA オンラインショップ",
+      "category": "雑貨",
+      "evidenceQuote": "KEYUCA オンラインショップ エポスポイント 5 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "shu-uemura",
       "name": "シュウ ウエムラ公式オンラインショップ",
       "category": "美容",
       "evidenceQuote": "シュウ ウエムラ公式オンラインショップ エポスポイント 17 倍",
@@ -807,7 +813,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "takami-online-shop",
+      "storeId": "takami-online",
       "name": "タカミ公式オンラインショップ",
       "category": "美容",
       "evidenceQuote": "タカミ公式オンラインショップ エポスポイント 9 倍",
@@ -823,7 +829,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "blue-bottle-coffee-online",
+      "storeId": "blue-bottle-coffee",
       "name": "ブルーボトルコーヒー公式オンラインストア",
       "category": "飲食",
       "evidenceQuote": "ブルーボトルコーヒー公式オンラインストア エポスポイント 6 倍",
@@ -831,7 +837,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "maison-margiela-fragrances",
+      "storeId": "maison-margiela-fragrance",
       "name": "メゾン マルジェラ フレグランス公式オンラインストア",
       "category": "美容",
       "evidenceQuote": "メゾン マルジェラ フレグランス公式オンラインストア エポスポイント 17 倍",
@@ -839,7 +845,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "over-e-online-shop",
+      "storeId": "overe",
       "name": "overE 公式オンラインショップ",
       "category": "ファッション",
       "evidenceQuote": "overE 公式オンラインショップ エポスポイント 6 倍",
@@ -849,13 +855,13 @@
     {
       "storeId": "adobe-creative-cloud",
       "name": "Adobe Creative Cloud",
-      "category": "ビジネス・教育",
+      "category": "ネットサービスのみ",
       "evidenceQuote": "Adobe Creative Cloud エポスポイント 30 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "jre-mall-shopping",
+      "storeId": "jre-mall",
       "name": "JRE MALL ショッピング",
       "category": "ネット通販",
       "evidenceQuote": "JRE MALL ショッピング エポスポイント 3 倍",
@@ -863,10 +869,18 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "house-of-rose-online",
-      "name": "ハウスオブローゼ オンラインショップ本店／化粧品",
+      "storeId": "house-of-rose",
+      "name": "ハウスオブローゼ オンラインショップ本店",
       "category": "美容",
       "evidenceQuote": "ハウスオブローゼ オンラインショップ本店／化粧品 エポスポイント 5 倍",
+      "explicitness": 0.95,
+      "ambiguity": 0.05
+    },
+    {
+      "storeId": "yamada-youhoujo",
+      "name": "山田養蜂場オンラインショップ",
+      "category": "食品",
+      "evidenceQuote": "山田養蜂場オンラインショップ エポスポイント 25 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -879,7 +893,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "yofuku-no-aoyama-online",
+      "storeId": "yofuku-no-aoyama",
       "name": "洋服の青山オンラインストア",
       "category": "ファッション",
       "evidenceQuote": "洋服の青山オンラインストア エポスポイント 25 倍",
@@ -888,22 +902,22 @@
     },
     {
       "storeId": "oisix",
-      "name": "Oisix（おいしっくす）",
-      "category": "ネット通販",
+      "name": "Oisix",
+      "category": "食品",
       "evidenceQuote": "Oisix（おいしっくす） エポスポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "petit-bateau-online",
+      "storeId": "petit-bateau",
       "name": "プチバトーオンラインブティック",
       "category": "ファッション",
-      "evidenceQuote": "プチバトーオンラインブティック エポスポイント 7 倍",
+      "evidenceQuote": "プチバトーオンラインブティック エポスポイント 13 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
     {
-      "storeId": "charles-keith-online",
+      "storeId": "charles-keith",
       "name": "CHARLES & KEITH 公式オンラインストア",
       "category": "ファッション",
       "evidenceQuote": "CHARLES & KEITH 公式オンラインストア エポスポイント 13 倍",
@@ -912,8 +926,8 @@
     },
     {
       "storeId": "lululemon",
-      "name": "lululemon(ルルレモン)",
-      "category": "ファッション",
+      "name": "lululemon",
+      "category": "スポーツ",
       "evidenceQuote": "lululemon(ルルレモン) エポスポイント 3 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -935,9 +949,9 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "ring-bell-catalog",
+      "storeId": "ringbell",
       "name": "カタログギフトのリンベル",
-      "category": "ネット通販",
+      "category": "雑貨",
       "evidenceQuote": "カタログギフトのリンベル エポスポイント 13 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
@@ -951,7 +965,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "ipsa-official-site",
+      "storeId": "ipsa",
       "name": "IPSA 公式サイト",
       "category": "美容",
       "evidenceQuote": "IPSA 公式サイト エポスポイント 19 倍",
@@ -959,7 +973,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "jalpak-domestic-tour",
+      "storeId": "jal-pack-domestic",
       "name": "ジャルパック 国内ツアー",
       "category": "旅行代理店",
       "evidenceQuote": "ジャルパック 国内ツアー エポスポイント 3 倍",
@@ -967,7 +981,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "jalpak-overseas-tour",
+      "storeId": "jal-pack-international",
       "name": "ジャルパック 海外ツアー",
       "category": "旅行代理店",
       "evidenceQuote": "ジャルパック 海外ツアー エポスポイント 4 倍",
@@ -975,16 +989,8 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "aeon-shop",
-      "name": "おうちでイオン イオンショップ",
-      "category": "スーパー",
-      "evidenceQuote": "おうちでイオン イオンショップ エポスポイント 7 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "expedia-hotel-flight",
-      "name": "【航空券＋宿泊の同時予約】旅行予約のエクスペディア",
+      "storeId": "expedia-flight-hotel",
+      "name": "エクスペディア (航空券＋宿泊)",
       "category": "旅行代理店",
       "evidenceQuote": "【航空券＋宿泊の同時予約】旅行予約のエクスペディア エポスポイント 3 倍",
       "explicitness": 0.95,
@@ -1007,24 +1013,8 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "gap-online-store",
-      "name": "Gapオンラインストア",
-      "category": "ファッション",
-      "evidenceQuote": "Gapオンラインストア エポスポイント 10 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "big-holiday-ski-snowboard",
-      "name": "ビッグホリデースキーツアー＆スノボツアー予約サイト",
-      "category": "旅行代理店",
-      "evidenceQuote": "ビッグホリデースキーツアー＆スノボツアー予約サイト エポスポイント 5 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "belluna-catalog",
-      "name": "カタログ通販ベルーナ（Belluna）",
+      "storeId": "belluna",
+      "name": "カタログ通販ベルーナ",
       "category": "ネット通販",
       "evidenceQuote": "カタログ通販ベルーナ（Belluna） エポスポイント 10 倍",
       "explicitness": 0.95,
@@ -1039,7 +1029,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "michael-kors-online-outlet",
+      "storeId": "michael-kors-outlet",
       "name": "マイケル・コース オンラインアウトレットストア",
       "category": "ファッション",
       "evidenceQuote": "マイケル・コース オンラインアウトレットストア エポスポイント 13 倍",
@@ -1063,7 +1053,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "hibiya-kadan",
+      "storeId": "hibiya-kadank",
       "name": "日比谷花壇",
       "category": "雑貨",
       "evidenceQuote": "日比谷花壇 エポスポイント 13 倍",
@@ -1074,7 +1064,7 @@
       "storeId": "e87-com",
       "name": "e87.com（千趣会 イイハナ）",
       "category": "雑貨",
-      "evidenceQuote": "e87.com（千趣会 イイハナ） エポスポイント 18 倍",
+      "evidenceQuote": "e87.com（千趣会 イイハナ） エポスポイント 19 倍",
       "explicitness": 0.95,
       "ambiguity": 0.05
     },
@@ -1095,7 +1085,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "apahotels",
+      "storeId": "apa-hotels",
       "name": "アパホテルズ＆リゾーツ",
       "category": "ホテル",
       "evidenceQuote": "アパホテルズ＆リゾーツ エポスポイント 3 倍",
@@ -1103,15 +1093,7 @@
       "ambiguity": 0.05
     },
     {
-      "storeId": "nojima-online",
-      "name": "nojima onlines",
-      "category": "家電量販店",
-      "evidenceQuote": "nojima onlines エポスポイント 3 倍",
-      "explicitness": 0.95,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "nihon-ryoko",
+      "storeId": "nippon-ryoko",
       "name": "日本旅行",
       "category": "旅行代理店",
       "evidenceQuote": "日本旅行 エポスポイント 5 倍",
@@ -1120,7 +1102,7 @@
     },
     {
       "storeId": "his",
-      "name": "HIS（エイチアイエス）",
+      "name": "HIS",
       "category": "旅行代理店",
       "evidenceQuote": "HIS（エイチアイエス） エポスポイント 3 倍",
       "explicitness": 0.95,
