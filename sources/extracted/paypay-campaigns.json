@@ -1,12 +1,12 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-10-21T23:54:17.499Z",
+  "fetchedAt": "2026-10-29T00:36:56.243Z",
   "promptVersion": "campaign-v3.5",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
   "programs": [],
   "memberships": [],
   "stores": [],
-  "notes": "「最大○○還元」「抽選」「対象者限定」などの条件が付くキャンペーンが多く、確実な還元率と期間が明記された店舗対象キャンペーンが見つかりませんでした。"
+  "notes": "No campaigns found that meet all extraction criteria: clear, fixed rate (not '最大' or '最大全額'), specific chain stores mentioned for the campaign (not just general product campaigns), and not lottery-based. '毎月おトク！PayPayを使うならセブン−イレブン' lacks a specified rate."
 }

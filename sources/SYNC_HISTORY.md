@@ -3,6 +3,29 @@
 > 自動生成。最新が上、最大 52 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-10-29 (auto 0 件 / review 218 件)
+
+- source 数: 5
+
+### Review queue 内訳 (218 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 108 |
+| storeAdditionsDisabled | 59 |
+| idCollision | 22 |
+| missingProgramBody | 12 |
+| lowConfidence | 7 |
+| campaignRateCeiling | 3 |
+| unknownCategory | 3 |
+| unsupportedRateClaim | 2 |
+| tierMove | 2 |
+
+<details><summary>追加項目 0 件</summary>
+
+</details>
+
+---
+
 ## 2026-10-26 (auto 0 件 / review 246 件)
 
 - source 数: 5
