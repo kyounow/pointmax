@@ -1,153 +1,43 @@
 {
   "sourceId": "d-pay-campaigns",
   "sourceUrl": "https://service.smt.docomo.ne.jp/keitai_payment/campaign/",
-  "fetchedAt": "2026-10-25T23:02:18.204Z",
+  "fetchedAt": "2026-11-02T00:13:52.618Z",
   "promptVersion": "campaign-v3.5",
   "extractor": "campaign",
   "programs": [
     {
-      "programId": "prog-d-pay-dpoint-coupon-30x-2026-06",
-      "name": "d払いクーポン利用でdポイント最大30倍！",
-      "scope": "member-stores",
-      "paymentAppId": "pa-d-pay",
-      "rate": 0.3,
-      "currencyId": "d-pt",
-      "bonusType": "addOn",
-      "validFrom": "2026-06-16",
-      "evidenceQuote": "d払いクーポン利用でdポイント最大30倍！ 2026/06/16～",
-      "explicitness": 1,
-      "ambiguity": 0.05,
-      "requiresEntry": true
-    },
-    {
-      "programId": "prog-d-pointcard-coke-on-50-pct-2026-09",
-      "name": "Coke ON（R）｜＋50％ポイント還元",
+      "programId": "prog-d-pointcard-matsukiyo-cocokara-10-percent-2026-11",
+      "name": "マツキヨ・ココカラ｜もれなく＋10％還元中",
       "scope": "member-stores",
       "pointCardId": "d-pointcard",
-      "rate": 0.5,
+      "rate": 0.1,
       "currencyId": "d-pt",
       "bonusType": "addOn",
-      "validFrom": "2026-09-01",
+      "validFrom": "2026-11-01",
       "validTo": "2026-11-30",
-      "evidenceQuote": "Coke ON（R）｜＋50％ポイント還元 2026/09/01～2026/11/30",
+      "evidenceQuote": "dポイントカード マツキヨ・ココカラ｜もれなく＋10％還元中 2026/11/01～2026/11/30 エントリー受付中",
       "explicitness": 1,
       "ambiguity": 0.05,
       "requiresEntry": true
-    },
-    {
-      "programId": "prog-d-pay-store-support-30pct-2026-09",
-      "name": "店舗限定 最大＋30％還元★今こそまとめ買い！",
-      "scope": "member-stores",
-      "paymentAppId": "pa-d-pay",
-      "rate": 0.3,
-      "currencyId": "d-pt",
-      "bonusType": "addOn",
-      "validFrom": "2026-09-01",
-      "validTo": "2026-10-31",
-      "evidenceQuote": "最大＋30％還元★今こそまとめ買い！ 2026/09/01～2026/10/31",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-d-pay-joyfulhonda-5x-2026-10",
-      "name": "ジョイフル本田ｄ払い５倍キャンペーン",
-      "scope": "member-stores",
-      "paymentAppId": "pa-d-pay",
-      "rate": 0.05,
-      "currencyId": "d-pt",
-      "bonusType": "addOn",
-      "validFrom": "2026-10-01",
-      "validTo": "2026-10-31",
-      "evidenceQuote": "ジョイフル本田ｄ払い５倍キャンペーン 2026/10/01～2026/10/31",
-      "explicitness": 1,
-      "ambiguity": 0.05,
-      "requiresEntry": true
-    },
-    {
-      "programId": "prog-d-pointcard-matsukiyo-cocokara-20pct-2026-10",
-      "name": "マツキヨ・ココカラ｜もれなく＋20％還元中",
-      "scope": "member-stores",
-      "pointCardId": "d-pointcard",
-      "rate": 0.2,
-      "currencyId": "d-pt",
-      "bonusType": "addOn",
-      "validFrom": "2026-10-01",
-      "validTo": "2026-10-31",
-      "evidenceQuote": "マツキヨ・ココカラ｜もれなく＋20％還元中 2026/10/01～2026/10/31",
-      "explicitness": 1,
-      "ambiguity": 0.05,
-      "requiresEntry": true
-    },
-    {
-      "programId": "prog-d-pointcard-matsukiyo-cocokara-kao-2026-10",
-      "name": "マツキヨ・ココカラで花王商品購入がおトク",
-      "scope": "member-stores",
-      "pointCardId": "d-pointcard",
-      "rate": 0.2,
-      "currencyId": "d-pt",
-      "bonusType": "addOn",
-      "validFrom": "2026-10-01",
-      "validTo": "2026-10-31",
-      "evidenceQuote": "マツキヨ・ココカラで花王商品購入がおトク 2026/10/01～2026/10/31",
-      "explicitness": 1,
-      "ambiguity": 0.05
     }
   ],
   "memberships": [
     {
-      "programId": "prog-d-pay-joyfulhonda-5x-2026-10",
-      "storeId": "joyful-honda",
-      "evidenceQuote": "ジョイフル本田ｄ払い５倍キャンペーン",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-d-pointcard-matsukiyo-cocokara-20pct-2026-10",
+      "programId": "prog-d-pointcard-matsukiyo-cocokara-10-percent-2026-11",
       "storeId": "matsukiyo",
-      "evidenceQuote": "マツキヨ・ココカラ｜もれなく＋20％還元中",
+      "evidenceQuote": "マツキヨ",
       "explicitness": 1,
       "ambiguity": 0.05
     },
     {
-      "programId": "prog-d-pointcard-matsukiyo-cocokara-20pct-2026-10",
+      "programId": "prog-d-pointcard-matsukiyo-cocokara-10-percent-2026-11",
       "storeId": "cocokara",
-      "evidenceQuote": "マツキヨ・ココカラ｜もれなく＋20％還元中",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-d-pointcard-matsukiyo-cocokara-kao-2026-10",
-      "storeId": "matsukiyo",
-      "evidenceQuote": "マツキヨ・ココカラで花王商品購入がおトク",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-d-pointcard-matsukiyo-cocokara-kao-2026-10",
-      "storeId": "cocokara",
-      "evidenceQuote": "マツキヨ・ココカラで花王商品購入がおトク",
+      "evidenceQuote": "ココカラ",
       "explicitness": 1,
       "ambiguity": 0.05
     }
   ],
-  "stores": [
-    {
-      "storeId": "coke-on",
-      "name": "Coke ON",
-      "category": "飲食",
-      "evidenceQuote": "Coke ON（R）｜＋50％ポイント還元",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    },
-    {
-      "storeId": "joyful-honda",
-      "name": "ジョイフル本田",
-      "category": "ホームセンター",
-      "evidenceQuote": "ジョイフル本田ｄ払い５倍キャンペーン",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    }
-  ],
-  "notes": "総75件中6件抽出（自治体マイナポイントなど対象外カテゴリ、抽選・最大還元で率不明確なもの、期間不明確なもの、エントリー必須で率不明なもの、dカード特約店、金融・保険・ローン・投資・携帯乗り換え・ネットサービスのみは除外。Coke ONは「飲食」に分類）",
+  "stores": [],
+  "notes": "総 60 件以上中 1 件抽出。ほとんどが抽選、最大ポイント、金額還元、自治体応援、他サービス連携、dカードキャンペーン、不明瞭なカテゴリで抽出対象外。また、d払いキャンペーンページですが、dポイントカード提示のキャンペーンが多く、d払い決済による還元キャンペーンはほとんどありませんでした。Coke ONは+50%還元と記載がありますが、d払い決済ではなくdポイントカードのカテゴリに含まれるため、対象外と判断しました。ジョイフル本田d払い５倍キャンペーンはd払いですが、5倍がどの通常還元に対するものか不明確なため除外しました。はるやま、フォーエルは抽選でdポイント最大50倍のため除外。やよい軒は火曜日限定ですが、具体的な還元率が記載されていないため除外。資生堂オンラインストアはサイト限定のため除外。ウェルパークは毎週木・土・日はおトクとあるが、還元率不明のため除外。",
   "geminiModel": "gemini-2.5-flash"
 }
