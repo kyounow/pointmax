@@ -2,6 +2,44 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-11-02",
+      "generatedAt": "2026-11-02T00:13:53.230Z",
+      "totalCount": 1,
+      "avgConfidence": 0.902,
+      "sourcesProcessed": 5,
+      "bySource": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "count": 1,
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (3倍) → ニューバランス",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 243,
+        "byReason": {
+          "campaignRateCeiling": 1,
+          "missingProgramBody": 9,
+          "idCollision": 22,
+          "missingStoreBody": 129,
+          "tierMove": 4,
+          "lowConfidence": 7,
+          "storeAdditionsDisabled": 65,
+          "unknownCategory": 6
+        }
+      }
+    },
+    {
       "date": "2026-10-29",
       "generatedAt": "2026-10-29T00:36:56.645Z",
       "totalCount": 0,
