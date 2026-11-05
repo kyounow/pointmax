@@ -2,6 +2,28 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-11-05",
+      "generatedAt": "2026-11-05T01:18:57.358Z",
+      "totalCount": 0,
+      "avgConfidence": null,
+      "sourcesProcessed": 4,
+      "bySource": [],
+      "items": [],
+      "reviewStats": {
+        "total": 246,
+        "byReason": {
+          "campaignRateCeiling": 1,
+          "missingProgramBody": 9,
+          "idCollision": 23,
+          "missingStoreBody": 129,
+          "tierMove": 4,
+          "lowConfidence": 9,
+          "storeAdditionsDisabled": 65,
+          "unknownCategory": 6
+        }
+      }
+    },
+    {
       "date": "2026-11-02",
       "generatedAt": "2026-11-02T00:13:53.230Z",
       "totalCount": 1,

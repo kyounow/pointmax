@@ -1,12 +1,9 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-10-29T00:36:56.243Z",
-  "promptVersion": "campaign-v3.5",
+  "fetchedAt": "2026-11-05T01:18:56.859Z",
+  "promptVersion": "campaign-vUnknown",
   "extractor": "campaign",
   "geminiModel": "gemini-2.5-flash",
-  "programs": [],
-  "memberships": [],
-  "stores": [],
-  "notes": "No campaigns found that meet all extraction criteria: clear, fixed rate (not '最大' or '最大全額'), specific chain stores mentioned for the campaign (not just general product campaigns), and not lottery-based. '毎月おトク！PayPayを使うならセブン−イレブン' lacks a specified rate."
+  "notes": "[fetch-failed:nonJson] Gemini could not extract structured data from this URL. Likely cause: page is a navigation hub, not the partner list itself. Raw response (first 300 chars): I have reviewed the content of the PayPay campaign page. Many of the listed campaigns are \"skuキャンペーン\" (SKU campaigns), \"抽選で\" (lottery), \"きせかえ\" (theme customization), \"対象者限定\" (limited to specific users), or have unclear rates/mechanisms. Based on the prompt's strict rules, I need to focus on: - **Sp"
 }
