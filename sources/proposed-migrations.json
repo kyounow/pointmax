@@ -1,25 +1,8 @@
 {
-  "generatedAt": "2026-11-02T00:13:53.230Z",
+  "generatedAt": "2026-11-05T01:18:57.358Z",
   "fromSeedVersion": 47,
   "toSeedVersion": 47,
-  "autoApplicable": [
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-epos-tamaru-3x",
-        "storeId": "new-balance"
-      },
-      "sourceId": "epos-tamaru-market",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "ニューバランス公式オンラインアウトレット エポスポイント 3 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-c7122c1532"
-    }
-  ],
+  "autoApplicable": [],
   "needsReview": [
     {
       "type": "addRecord",
@@ -3009,8 +2992,8 @@
       "type": "addRecord",
       "collection": "programs",
       "record": {
-        "id": "prog-smbc-touch-conveni-75",
-        "name": "SMBC タッチ決済コンビニ・飲食店高還元",
+        "id": "prog-smbc-touch-conveni",
+        "name": "対象店舗 スマホタッチ決済・モバイルオーダー",
         "scope": "member-stores",
         "rate": 0.075,
         "currencyId": "v-pt",
@@ -3019,10 +3002,10 @@
           "olive"
         ],
         "paymentAppId": "pa-visa-touch",
-        "bonusType": "primary",
-        "description": "Visa/Mastercard タッチ決済で対象コンビニ・飲食店 最大+7.5%",
+        "bonusType": "addOn",
+        "description": "対象のコンビニ・飲食店でスマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用で+7.5%還元",
         "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-        "conditions": "Visa/Mastercard タッチ決済利用時のみ。一部の店舗および決済方法（一定金額を超えて端末挿入など）は対象外。"
+        "conditions": "対象カード（SMBCグループ発行Visa/Mastercard）、スマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用が必須。カード現物のタッチ決済、iD、差し込み、磁気取引は対象外。一部店舗や一定金額以上の利用でタッチ決済にならない場合は対象外。通常ポイント0.5%と合算で合計8%還元。"
       },
       "sourceId": "smbc-vpoint-up",
       "confidence": 0.81,
@@ -3033,14 +3016,14 @@
       },
       "reviewReason": "idCollision",
       "reviewDetail": "新規 program (extractor=ongoing-program は campaign 以外)",
-      "proposalId": "pro-a67d268fd4"
+      "proposalId": "pro-5438f33fb2"
     },
     {
       "type": "addRecord",
       "collection": "programs",
       "record": {
-        "id": "prog-olive-selectable-option-1",
-        "name": "Oliveアカウント 選べる特典 Vポイントアッププログラム+1%",
+        "id": "prog-olive-eraberu-plus1",
+        "name": "Olive 選べる特典 Vポイントアッププログラム+1%",
         "scope": "all-stores",
         "rate": 0.01,
         "currencyId": "v-pt",
@@ -3048,9 +3031,9 @@
           "olive"
         ],
         "bonusType": "addOn",
-        "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると、対象店舗で+1%還元。",
+        "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択した場合に適用",
         "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-        "conditions": "Oliveアカウントで選べる特典にて「Vポイントアッププログラム＋1％」を選択していること。Olive プラチナプリファードのお客さまは、2つ選択すると＋2％還元。"
+        "conditions": "Oliveアカウントを契約し、選べる特典で「Vポイントアッププログラム＋1％」を選択すること。Oliveプラチナプリファードは2つ選択した場合+2%還元。"
       },
       "sourceId": "smbc-vpoint-up",
       "confidence": 0.81,
@@ -3061,143 +3044,206 @@
       },
       "reviewReason": "idCollision",
       "reviewDetail": "新規 program (extractor=ongoing-program は campaign 以外)",
-      "proposalId": "pro-3c0ebcf2f7"
+      "proposalId": "pro-6c7645690c"
+    },
+    {
+      "type": "addRecord",
+      "collection": "programs",
+      "record": {
+        "id": "prog-family-point-max",
+        "name": "家族ポイント",
+        "scope": "all-stores",
+        "rate": 0.05,
+        "currencyId": "v-pt",
+        "cardIds": [
+          "smbc-v",
+          "olive"
+        ],
+        "bonusType": "addOn",
+        "description": "家族ポイントに登録される家族の人数に応じて還元率アップ。最大6人以上登録で+5%還元",
+        "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+        "conditions": "対象の三井住友カードに入会した本会員と家族（6人以上）が家族ポイントに登録することが条件。最大5%まで。"
+      },
+      "sourceId": "smbc-vpoint-up",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "C 家族ポイントに6人以上登録（主会員1人＋従会員5人以上）＝＋5％還元",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "idCollision",
+      "reviewDetail": "新規 program (extractor=ongoing-program は campaign 以外)",
+      "proposalId": "pro-e1b02403e2"
     },
     {
       "type": "addRecord",
       "collection": "memberships",
       "record": {
-        "programId": "prog-smbc-touch-conveni-75",
+        "programId": "prog-smbc-touch-conveni",
         "storeId": "conv-7eleven"
       },
       "sourceId": "smbc-vpoint-up",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "条件達成でセブン-イレブン最大11%還元 (「対象のコンビニ・飲食店で最大8％還元」に加えて、3％が付与された合計還元率)",
+        "evidenceQuote": "条件達成でセブン-イレブン最大11%還元",
         "explicitness": 0.95,
         "ambiguity": 0.05
       },
       "reviewReason": "missingProgramBody",
-      "proposalId": "mem-a00ada2535"
+      "proposalId": "mem-3a8935449a"
     },
     {
       "type": "addRecord",
       "collection": "memberships",
       "record": {
-        "programId": "prog-smbc-touch-conveni-75",
+        "programId": "prog-smbc-touch-conveni",
         "storeId": "conv-lawson"
       },
       "sourceId": "smbc-vpoint-up",
-      "confidence": 0.6400000000000001,
+      "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "対象のコンビニ・飲食店（セブン‐イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司など）",
-        "explicitness": 0.8,
-        "ambiguity": 0.2
+        "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "mem-3cec7c4f90"
+      "proposalId": "mem-e5cf7a9170"
     },
     {
       "type": "addRecord",
       "collection": "memberships",
       "record": {
-        "programId": "prog-smbc-touch-conveni-75",
+        "programId": "prog-smbc-touch-conveni",
         "storeId": "conv-familymart"
       },
       "sourceId": "smbc-vpoint-up",
-      "confidence": 0.6400000000000001,
+      "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "対象のコンビニ・飲食店（セブン‐イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司など）",
-        "explicitness": 0.8,
-        "ambiguity": 0.2
+        "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "mem-9f809c28ac"
+      "proposalId": "mem-c83692bbe7"
     },
     {
       "type": "addRecord",
       "collection": "memberships",
       "record": {
-        "programId": "prog-smbc-touch-conveni-75",
+        "programId": "prog-smbc-touch-conveni",
         "storeId": "mcdonalds"
       },
       "sourceId": "smbc-vpoint-up",
-      "confidence": 0.6400000000000001,
+      "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "対象のコンビニ・飲食店（セブン‐イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司など）",
-        "explicitness": 0.8,
-        "ambiguity": 0.2
+        "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "mem-4a21111719"
+      "proposalId": "mem-9bd4684150"
     },
     {
       "type": "addRecord",
       "collection": "memberships",
       "record": {
-        "programId": "prog-smbc-touch-conveni-75",
+        "programId": "prog-smbc-touch-conveni",
         "storeId": "saizeriya"
       },
       "sourceId": "smbc-vpoint-up",
-      "confidence": 0.6400000000000001,
+      "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "対象のコンビニ・飲食店（セブン‐イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司など）",
-        "explicitness": 0.8,
-        "ambiguity": 0.2
+        "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "mem-7d3ee97fa0"
+      "proposalId": "mem-8d9aea54d1"
     },
     {
       "type": "addRecord",
       "collection": "memberships",
       "record": {
-        "programId": "prog-smbc-touch-conveni-75",
+        "programId": "prog-smbc-touch-conveni",
         "storeId": "doutor"
       },
       "sourceId": "smbc-vpoint-up",
-      "confidence": 0.6400000000000001,
+      "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "対象のコンビニ・飲食店（セブン‐イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司など）",
-        "explicitness": 0.8,
-        "ambiguity": 0.2
+        "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "mem-561da3e530"
+      "proposalId": "mem-3cfc1e3890"
     },
     {
       "type": "addRecord",
       "collection": "memberships",
       "record": {
-        "programId": "prog-smbc-touch-conveni-75",
+        "programId": "prog-smbc-touch-conveni",
         "storeId": "excelsior-cafe"
       },
       "sourceId": "smbc-vpoint-up",
-      "confidence": 0.6400000000000001,
+      "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "対象のコンビニ・飲食店（セブン‐イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司など）",
-        "explicitness": 0.8,
-        "ambiguity": 0.2
+        "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "mem-04889ee653"
+      "proposalId": "mem-84681a7eb0"
     },
     {
       "type": "addRecord",
       "collection": "memberships",
       "record": {
-        "programId": "prog-smbc-touch-conveni-75",
-        "storeId": "kappa-sushi"
+        "programId": "prog-smbc-touch-conveni",
+        "storeId": "sukiya"
       },
       "sourceId": "smbc-vpoint-up",
-      "confidence": 0.6400000000000001,
+      "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "対象のコンビニ・飲食店（セブン‐イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオール カフェ、かっぱ寿司など）",
-        "explicitness": 0.8,
-        "ambiguity": 0.2
+        "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
       },
       "reviewReason": "lowConfidence",
-      "proposalId": "mem-526d8bd616"
+      "proposalId": "mem-88645ac65c"
+    },
+    {
+      "type": "addRecord",
+      "collection": "memberships",
+      "record": {
+        "programId": "prog-smbc-touch-conveni",
+        "storeId": "kura-sushi"
+      },
+      "sourceId": "smbc-vpoint-up",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "lowConfidence",
+      "proposalId": "mem-5c1009f2d8"
+    },
+    {
+      "type": "addRecord",
+      "collection": "memberships",
+      "record": {
+        "programId": "prog-smbc-touch-conveni",
+        "storeId": "hamazushi"
+      },
+      "sourceId": "smbc-vpoint-up",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "lowConfidence",
+      "proposalId": "mem-bb8ada1ce3"
     },
     {
       "type": "addRecord",
@@ -4497,9 +4543,9 @@
     }
   ],
   "summary": {
-    "autoApplicableCount": 1,
-    "needsReviewCount": 243,
-    "sourcesProcessed": 5,
-    "sourcesFailed": 0
+    "autoApplicableCount": 0,
+    "needsReviewCount": 246,
+    "sourcesProcessed": 4,
+    "sourcesFailed": 1
   }
 }
