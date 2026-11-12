@@ -1,15 +1,15 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-11-05T01:18:10.222Z",
+  "fetchedAt": "2026-11-12T02:08:17.852Z",
   "promptVersion": "ongoing-program-v1.2",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Vポイントアッププログラム全体でライフスタイル条件（円預金、外貨預金、住宅ローン、SBI証券、住友生命Vitality、カードローン、日興証券、Vトリップ、Oliveヘルスケア、マネーアシストプラス）が多数確認されたため、これらは抽出対象外としました。抽出対象は、店舗および決済方法に紐づく還元アップと、単純なOpt-in特典のみです。プログラム全体で「最大20%還元」とあるが、これはライフスタイル条件も含むため、個別のプログラムでは最大還元率に達しない場合があります。",
+  "notes": "Vポイントアッププログラムにおいて、ライフスタイル条件（円預金残高、外貨預金、住宅ローン、SBI証券、Vitality、カードローン、SMBC日興証券、Vトリップ、Oliveヘルスケア、マネーアシストプラス）に該当するプログラムは出力対象外としました。また、家族ポイントもライフスタイル条件（家族登録人数）のため出力対象外としました。stores[]はチェーン店に限定し、セブン-イレブンのみ抽出。",
   "programs": [
     {
-      "programId": "prog-smbc-touch-conveni",
-      "name": "対象店舗 スマホタッチ決済・モバイルオーダー",
+      "programId": "prog-smbc-touch-conveni-restaurant",
+      "name": "SMBC タッチ決済対象コンビニ・飲食店 +7.5%",
       "scope": "member-stores",
       "cardIds": [
         "smbc-v",
@@ -18,17 +18,17 @@
       "paymentAppId": "pa-visa-touch",
       "rate": 0.075,
       "currencyId": "v-pt",
-      "bonusType": "addOn",
-      "description": "対象のコンビニ・飲食店でスマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用で+7.5%還元",
-      "conditions": "対象カード（SMBCグループ発行Visa/Mastercard）、スマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用が必須。カード現物のタッチ決済、iD、差し込み、磁気取引は対象外。一部店舗や一定金額以上の利用でタッチ決済にならない場合は対象外。通常ポイント0.5%と合算で合計8%還元。",
+      "bonusType": "primary",
+      "description": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercardタッチ決済を利用で+7.5%還元。",
+      "conditions": "スマホのVisaのタッチ決済・Mastercardタッチ決済またはモバイルオーダー利用時のみ。一部の店舗および指定のポイント還元にならない場合や、一定金額を超えるとタッチ決済ではなく挿入決済となり対象外になる場合あり。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
       "evidenceQuote": "B 対象店舗でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "programId": "prog-olive-eraberu-plus1",
-      "name": "Olive 選べる特典 Vポイントアッププログラム+1%",
+      "programId": "prog-olive-eraberu-tokuten",
+      "name": "Olive 選べる特典 Vポイントアッププログラム +1%",
       "scope": "all-stores",
       "cardIds": [
         "olive"
@@ -36,102 +36,21 @@
       "rate": 0.01,
       "currencyId": "v-pt",
       "bonusType": "addOn",
-      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択した場合に適用",
-      "conditions": "Oliveアカウントを契約し、選べる特典で「Vポイントアッププログラム＋1％」を選択すること。Oliveプラチナプリファードは2つ選択した場合+2%還元。",
+      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると適用。",
+      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。Olive プラチナプリファード会員は2つ選択で＋2％還元。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
       "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典 ※ で「Vポイントアッププログラム＋1％」をご選択",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-family-point-max",
-      "name": "家族ポイント",
-      "scope": "all-stores",
-      "cardIds": [
-        "smbc-v",
-        "olive"
-      ],
-      "rate": 0.05,
-      "currencyId": "v-pt",
-      "bonusType": "addOn",
-      "description": "家族ポイントに登録される家族の人数に応じて還元率アップ。最大6人以上登録で+5%還元",
-      "conditions": "対象の三井住友カードに入会した本会員と家族（6人以上）が家族ポイントに登録することが条件。最大5%まで。",
-      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "C 家族ポイントに6人以上登録（主会員1人＋従会員5人以上）＝＋5％還元",
       "explicitness": 0.9,
       "ambiguity": 0.1
     }
   ],
   "memberships": [
     {
-      "programId": "prog-smbc-touch-conveni",
+      "programId": "prog-smbc-touch-conveni-restaurant",
       "storeId": "conv-7eleven",
       "evidenceQuote": "条件達成でセブン-イレブン最大11%還元",
       "explicitness": 0.95,
       "ambiguity": 0.05
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "conv-lawson",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "conv-familymart",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "mcdonalds",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "saizeriya",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "doutor",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "excelsior-cafe",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "sukiya",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "kura-sushi",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
-    },
-    {
-      "programId": "prog-smbc-touch-conveni",
-      "storeId": "hamazushi",
-      "evidenceQuote": "対象のコンビニ・飲食店（セブン-イレブン、ローソン、ファミリーマート、マクドナルド、サイゼリヤ、ドトールコーヒーショップ、エクセルシオールカフェ、すき家、くら寿司、はま寿司 等）",
-      "explicitness": 0.9,
-      "ambiguity": 0.1
     }
   ],
   "stores": []
