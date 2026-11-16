@@ -3,6 +3,35 @@
 > 自動生成。最新が上、最大 52 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-11-16 (auto 1 件 / review 230 件)
+
+- 平均 confidence: 0.90 / source 数: 4
+
+| 取得元 | 種別 | 件数 |
+|---|---|---:|
+| たまるマーケット (EPOS ポイントアップサイト、公式) | 提携店舗 | 1 |
+
+### Review queue 内訳 (230 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 130 |
+| storeAdditionsDisabled | 61 |
+| idCollision | 18 |
+| lowConfidence | 9 |
+| missingProgramBody | 7 |
+| storeNameMismatch | 2 |
+| unknownCategory | 2 |
+| campaignRateCeiling | 1 |
+
+<details><summary>追加項目 1 件</summary>
+
+### たまるマーケット (EPOS ポイントアップサイト、公式) / 提携店舗 (1)
+- たまるマーケット (4倍) → アイリスプラザ
+
+</details>
+
+---
+
 ## 2026-11-12 (auto 0 件 / review 252 件)
 
 - source 数: 5
@@ -1287,58 +1316,6 @@
 - 楽天ポイントカード提示 0.5% → gion-tsubaki-an
 - 楽天ポイントカード提示 0.5% → baguette
 - 楽天ポイントカード提示 0.5% → bistro309
-
-</details>
-
----
-
-## 2026-05-18 (auto 36 件)
-
-- commit: [`8fad1eb`](https://github.com/kyounow/pointmax/commit/8fad1eb) / 平均 confidence: 0.90 / source 数: 11
-
-| 取得元 | 種別 | 件数 |
-|---|---|---:|
-| Pontaポイント 提携店・サービス (公式) | 提携店舗 | 36 |
-
-<details><summary>追加項目 36 件</summary>
-
-### Pontaポイント 提携店・サービス (公式) / 提携店舗 (36)
-- Pontaカード提示 0.5% → アルビス
-- Pontaカード提示 0.5% → エースコンタクト
-- Pontaカード提示 0.5% → 大賀薬局
-- Pontaカード提示 0.5% → 高島屋
-- Pontaカード提示 0.5% → tomod-s
-- Pontaカード提示 0.5% → ナチュラルローソン
-- Pontaカード提示 0.5% → ミネドラッグ
-- Pontaカード提示 0.5% → yakudo
-- Pontaカード提示 0.5% → ライフ
-- Pontaカード提示 0.5% → ローソンストア100
-- Pontaカード提示 0.5% → ホテル京阪チェーン
-- Pontaカード提示 0.5% → ルートインホテルズ
-- Pontaカード提示 0.5% → エクセルシオール カフェ
-- Pontaカード提示 0.5% → カフェ レクセル
-- Pontaカード提示 0.5% → steak-asakuma
-- Pontaカード提示 0.5% → AOKI
-- Pontaカード提示 0.5% → ORIHICA
-- Pontaカード提示 0.5% → jumble-store
-- Pontaカード提示 0.5% → セカンドストリート
-- Pontaカード提示 0.5% → ベストメガネコンタクト
-- Pontaカード提示 0.5% → メガネサロンルック
-- Pontaカード提示 0.5% → LuckRack
-- Pontaカード提示 0.5% → apollostation
-- Pontaカード提示 0.5% → ＨＭＶ（店舗）
-- Pontaカード提示 0.5% → geo
-- Pontaカード提示 0.5% → sanyodo-shoten
-- Pontaカード提示 0.5% → ソク読み
-- Pontaカード提示 0.5% → 丸善ジュンク堂書店
-- Pontaカード提示 0.5% → yaesu-book-center
-- Pontaカード提示 0.5% → ローソンチケット
-- Pontaカード提示 0.5% → ヒマラヤ
-- Pontaカード提示 0.5% → コジマ
-- Pontaカード提示 0.5% → コミュファ
-- Pontaカード提示 0.5% → softmap
-- Pontaカード提示 0.5% → ビックカメラ
-- Pontaカード提示 0.5% → BBIQ（QTnet）
 
 </details>
 
