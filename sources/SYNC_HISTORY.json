@@ -2,6 +2,44 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-11-16",
+      "generatedAt": "2026-11-16T00:47:46.124Z",
+      "totalCount": 1,
+      "avgConfidence": 0.902,
+      "sourcesProcessed": 4,
+      "bySource": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "count": 1,
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "items": [
+        {
+          "sourceId": "epos-tamaru-market",
+          "collection": "memberships",
+          "summary": "たまるマーケット (4倍) → アイリスプラザ",
+          "sourceLabel": "たまるマーケット (EPOS ポイントアップサイト、公式)",
+          "collectionLabel": "提携店舗"
+        }
+      ],
+      "reviewStats": {
+        "total": 230,
+        "byReason": {
+          "idCollision": 18,
+          "missingStoreBody": 130,
+          "lowConfidence": 9,
+          "missingProgramBody": 7,
+          "storeNameMismatch": 2,
+          "campaignRateCeiling": 1,
+          "storeAdditionsDisabled": 61,
+          "unknownCategory": 2
+        }
+      }
+    },
+    {
       "date": "2026-11-12",
       "generatedAt": "2026-11-12T02:09:18.082Z",
       "totalCount": 0,
@@ -2053,277 +2091,6 @@
         }
       ],
       "commitSha": "dda20d6"
-    },
-    {
-      "date": "2026-05-18",
-      "generatedAt": "2026-05-17T22:02:12.000Z",
-      "totalCount": 36,
-      "avgConfidence": 0.9,
-      "sourcesProcessed": 11,
-      "commitSha": "8fad1eb",
-      "bySource": [
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "count": 36,
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        }
-      ],
-      "items": [
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → アルビス",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → エースコンタクト",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → 大賀薬局",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → 高島屋",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → tomod-s",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ナチュラルローソン",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ミネドラッグ",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → yakudo",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ライフ",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ローソンストア100",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ホテル京阪チェーン",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ルートインホテルズ",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → エクセルシオール カフェ",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → カフェ レクセル",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → steak-asakuma",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → AOKI",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ORIHICA",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → jumble-store",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → セカンドストリート",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ベストメガネコンタクト",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → メガネサロンルック",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → LuckRack",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → apollostation",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ＨＭＶ（店舗）",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → geo",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → sanyodo-shoten",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ソク読み",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → 丸善ジュンク堂書店",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → yaesu-book-center",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ローソンチケット",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ヒマラヤ",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → コジマ",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → コミュファ",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → softmap",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → ビックカメラ",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        },
-        {
-          "sourceId": "ponta-partners",
-          "collection": "memberships",
-          "summary": "Pontaカード提示 0.5% → BBIQ（QTnet）",
-          "sourceLabel": "Pontaポイント 提携店・サービス (公式)",
-          "collectionLabel": "提携店舗"
-        }
-      ]
     }
   ]
 }
