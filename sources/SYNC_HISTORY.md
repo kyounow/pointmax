@@ -3,6 +3,27 @@
 > 自動生成。最新が上、最大 52 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-11-19 (auto 0 件 / review 228 件)
+
+- source 数: 4
+
+### Review queue 内訳 (228 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 129 |
+| storeAdditionsDisabled | 61 |
+| idCollision | 19 |
+| lowConfidence | 9 |
+| missingProgramBody | 7 |
+| storeNameMismatch | 2 |
+| unknownCategory | 1 |
+
+<details><summary>追加項目 0 件</summary>
+
+</details>
+
+---
+
 ## 2026-11-16 (auto 1 件 / review 230 件)
 
 - 平均 confidence: 0.90 / source 数: 4
@@ -1257,65 +1278,6 @@
 | userBlocked | 6 |
 
 <details><summary>追加項目 0 件</summary>
-
-</details>
-
----
-
-## 2026-05-21 (auto 43 件)
-
-- commit: [`dda20d6`](https://github.com/kyounow/pointmax/commit/dda20d6) / 平均 confidence: 0.90 / source 数: 13
-
-| 取得元 | 種別 | 件数 |
-|---|---|---:|
-| 楽天ポイントカード 加盟店 (公式) | 提携店舗 | 43 |
-
-<details><summary>追加項目 43 件</summary>
-
-### 楽天ポイントカード 加盟店 (公式) / 提携店舗 (43)
-- 楽天ポイントカード提示 0.5% → korakuen
-- 楽天ポイントカード提示 0.5% → ステーキガスト
-- 楽天ポイントカード提示 0.5% → から好し
-- 楽天ポイントカード提示 0.5% → むさしの森珈琲
-- 楽天ポイントカード提示 0.5% → 魚屋路
-- 楽天ポイントカード提示 0.5% → La Ohana
-- 楽天ポイントカード提示 0.5% → とんから亭
-- 楽天ポイントカード提示 0.5% → ゆめあん食堂
-- 楽天ポイントカード提示 0.5% → 八郎そば
-- 楽天ポイントカード提示 0.5% → 桃菜
-- 楽天ポイントカード提示 0.5% → jolly-pasta
-- 楽天ポイントカード提示 0.5% → nakau
-- 楽天ポイントカード提示 0.5% → zetteria
-- 楽天ポイントカード提示 0.5% → jukusei-yakiniku-ichiban
-- 楽天ポイントカード提示 0.5% → olive-no-oka
-- 楽天ポイントカード提示 0.5% → kyubeya
-- 楽天ポイントカード提示 0.5% → katsuan
-- 楽天ポイントカード提示 0.5% → mister-donut
-- 楽天ポイントカード提示 0.5% → mosdo
-- 楽天ポイントカード提示 0.5% → kura-sushi
-- 楽天ポイントカード提示 0.5% → god-katsu
-- 楽天ポイントカード提示 0.5% → pasta-de-coco
-- 楽天ポイントカード提示 0.5% → hidakaya
-- 楽天ポイントカード提示 0.5% → rairaken
-- 楽天ポイントカード提示 0.5% → yakitori-hidaka
-- 楽天ポイントカード提示 0.5% → chukafast-ichiban
-- 楽天ポイントカード提示 0.5% → tainan
-- 楽天ポイントカード提示 0.5% → ramen-hidaka
-- 楽天ポイントカード提示 0.5% → taishu-sakaba-hidaka
-- 楽天ポイントカード提示 0.5% → taishu-shokudo-hidaka
-- 楽天ポイントカード提示 0.5% → hanamaru-udon
-- 楽天ポイントカード提示 0.5% → umagena
-- 楽天ポイントカード提示 0.5% → tsurusaku
-- 楽天ポイントカード提示 0.5% → sanuki-menya
-- 楽天ポイントカード提示 0.5% → takamatsu-teshi
-- 楽天ポイントカード提示 0.5% → mango-tree-cafe
-- 楽天ポイントカード提示 0.5% → mango-tree-kitchen
-- 楽天ポイントカード提示 0.5% → dancing-crab
-- 楽天ポイントカード提示 0.5% → saint-marc-cafe
-- 楽天ポイントカード提示 0.5% → kamakura-pasta
-- 楽天ポイントカード提示 0.5% → gion-tsubaki-an
-- 楽天ポイントカード提示 0.5% → baguette
-- 楽天ポイントカード提示 0.5% → bistro309
 
 </details>
 

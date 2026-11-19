@@ -1,15 +1,15 @@
 {
   "sourceId": "smbc-vpoint-up",
   "sourceUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-  "fetchedAt": "2026-11-12T02:08:17.852Z",
+  "fetchedAt": "2026-11-19T02:15:41.852Z",
   "promptVersion": "ongoing-program-v1.2",
   "extractor": "ongoing-program",
   "geminiModel": "gemini-2.5-flash",
-  "notes": "Vポイントアッププログラムにおいて、ライフスタイル条件（円預金残高、外貨預金、住宅ローン、SBI証券、Vitality、カードローン、SMBC日興証券、Vトリップ、Oliveヘルスケア、マネーアシストプラス）に該当するプログラムは出力対象外としました。また、家族ポイントもライフスタイル条件（家族登録人数）のため出力対象外としました。stores[]はチェーン店に限定し、セブン-イレブンのみ抽出。",
+  "notes": "Vポイントアッププログラム全体で合計10件の還元アップ要素が提示されているが、ライフスタイル条件付きのものは全て出力対象外。具体的には、円預金、外貨預金、住宅ローン、SBI証券、住友生命、カードローン、SMBC日興証券、Vトリップ、Oliveヘルスケア、マネーアシストプラスの各プログラムは出力しない。合計60件の抽出制限内で、対象コンビニ・飲食店とOlive選べる特典に絞って出力。ミニストップの特典終了は2027年2月1日以降の予定。",
   "programs": [
     {
-      "programId": "prog-smbc-touch-conveni-restaurant",
-      "name": "SMBC タッチ決済対象コンビニ・飲食店 +7.5%",
+      "programId": "prog-smbc-touch-conveni",
+      "name": "対象店舗でスマホのタッチ決済・モバイルオーダー",
       "scope": "member-stores",
       "cardIds": [
         "smbc-v",
@@ -18,17 +18,35 @@
       "paymentAppId": "pa-visa-touch",
       "rate": 0.075,
       "currencyId": "v-pt",
-      "bonusType": "primary",
-      "description": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercardタッチ決済を利用で+7.5%還元。",
-      "conditions": "スマホのVisaのタッチ決済・Mastercardタッチ決済またはモバイルオーダー利用時のみ。一部の店舗および指定のポイント還元にならない場合や、一定金額を超えるとタッチ決済ではなく挿入決済となり対象外になる場合あり。",
+      "bonusType": "addOn",
+      "description": "対象のコンビニ・飲食店でスマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用で+7.5%還元",
+      "conditions": "対象店舗でスマホのVisaのタッチ決済・Mastercardタッチ決済またはモバイルオーダーを利用。カード現物のタッチ決済、iD、カードの差し込み、磁気取引は対象外。一部ポイント加算対象とならない店舗および指定のポイント還元にならない場合あり。一定金額を超えるとタッチ決済ではなく挿入決済となりポイント加算対象外となる場合あり。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
       "evidenceQuote": "B 対象店舗でスマホのVisaのタッチ決済・Mastercard®タッチ決済またはモバイルオーダーを利用＋7.5％還元",
       "explicitness": 0.9,
       "ambiguity": 0.1
     },
     {
-      "programId": "prog-olive-eraberu-tokuten",
-      "name": "Olive 選べる特典 Vポイントアッププログラム +1%",
+      "programId": "prog-smbc-family-point",
+      "name": "家族ポイント",
+      "scope": "all-stores",
+      "cardIds": [
+        "smbc-v",
+        "olive"
+      ],
+      "rate": 0.05,
+      "currencyId": "v-pt",
+      "bonusType": "addOn",
+      "description": "家族ポイントに6人以上登録でVポイント+5%還元",
+      "conditions": "家族ポイントに6人以上登録（主会員1人＋従会員5人以上）が条件。登録されるご家族は、対象の三井住友カードに入会した本会員さまであり、当サービスに登録することが条件。最大5%まで。",
+      "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+      "evidenceQuote": "C 家族ポイントに6人以上登録（主会員1人＋従会員5人以上）＝＋5％還元",
+      "explicitness": 0.9,
+      "ambiguity": 0.1
+    },
+    {
+      "programId": "prog-olive-selectable-bonus",
+      "name": "Oliveアカウント 選べる特典",
       "scope": "all-stores",
       "cardIds": [
         "olive"
@@ -36,19 +54,19 @@
       "rate": 0.01,
       "currencyId": "v-pt",
       "bonusType": "addOn",
-      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると適用。",
-      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。Olive プラチナプリファード会員は2つ選択で＋2％還元。",
+      "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると+1%還元",
+      "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。Olive プラチナプリファードのお客さまは、選べる特典で「Vポイントアッププログラム＋1％」を2つ選択した場合、＋2％還元。",
       "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典 ※ で「Vポイントアッププログラム＋1％」をご選択",
+      "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典 で「Vポイントアッププログラム＋1％」をご選択",
       "explicitness": 0.9,
       "ambiguity": 0.1
     }
   ],
   "memberships": [
     {
-      "programId": "prog-smbc-touch-conveni-restaurant",
+      "programId": "prog-smbc-touch-conveni",
       "storeId": "conv-7eleven",
-      "evidenceQuote": "条件達成でセブン-イレブン最大11%還元",
+      "evidenceQuote": "条件達成のうえで、セブン-イレブンで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、最大11％ポイント還元！",
       "explicitness": 0.95,
       "ambiguity": 0.05
     }

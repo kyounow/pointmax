@@ -1,44 +1,9 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-11-12T02:09:17.724Z",
+  "fetchedAt": "2026-11-19T02:15:55.527Z",
   "promptVersion": "campaign-v3.5",
   "extractor": "campaign",
-  "geminiModel": "gemini-2.5-flash",
-  "programs": [
-    {
-      "programId": "prog-paypay-fancl-supplement-2026-11",
-      "name": "ファンケル サプリメント対象商品 最大10%還元キャンペーン",
-      "scope": "member-stores",
-      "paymentAppId": "pa-paypay",
-      "rate": 0.1,
-      "currencyId": "paypay",
-      "bonusType": "addOn",
-      "validFrom": "2026-11-01",
-      "validTo": "2026-11-30",
-      "evidenceQuote": "ファンケルサプリメント対象商品の購入でPayPayポイントが最大10％戻ってくるキャンペーン 2026/11/1 〜 11/30",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    }
-  ],
-  "memberships": [
-    {
-      "programId": "prog-paypay-fancl-supplement-2026-11",
-      "storeId": "fancl",
-      "evidenceQuote": "ファンケルサプリメント対象商品の購入でPayPayポイントが最大10％戻ってくるキャンペーン",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    }
-  ],
-  "stores": [
-    {
-      "storeId": "fancl",
-      "name": "ファンケル",
-      "category": "化粧品・美容",
-      "evidenceQuote": "ファンケルサプリメント対象商品の購入",
-      "explicitness": 1,
-      "ambiguity": 0.05
-    }
-  ],
-  "notes": "抽出スコープ: chains-only。抽選、率不明確、全体施策、きせかえキャンペーンは対象外とした。サンスターオーラルケア商品のキャンペーンは対象店舗が不明なため抽出対象外とした。PayPay祭、PayPayスクラッチくじは抽選のため対象外とした。"
+  "notes": "キャンペーンページに、抽出要件（具体的な還元率と期間の明示、抽選・上限煽り・店舗非依存・率不明でないこと）を満たすキャンペーンが見つかりませんでした。",
+  "geminiModel": "gemini-2.5-flash"
 }
