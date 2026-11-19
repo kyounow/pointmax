@@ -1,25 +1,8 @@
 {
-  "generatedAt": "2026-11-16T00:47:46.124Z",
+  "generatedAt": "2026-11-19T02:15:56.062Z",
   "fromSeedVersion": 47,
   "toSeedVersion": 47,
-  "autoApplicable": [
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-epos-tamaru-4x",
-        "storeId": "iris-plaza"
-      },
-      "sourceId": "epos-tamaru-market",
-      "confidence": 0.9025,
-      "evidence": {
-        "evidenceQuote": "アイリスプラザ エポスポイント 4 倍",
-        "explicitness": 0.95,
-        "ambiguity": 0.05
-      },
-      "proposalId": "mem-4bb2a71c7d"
-    }
-  ],
+  "autoApplicable": [],
   "needsReview": [
     {
       "type": "addRecord",
@@ -2938,50 +2921,8 @@
       "type": "addRecord",
       "collection": "programs",
       "record": {
-        "id": "prog-paypay-fancl-supplement-2026-11",
-        "name": "ファンケル サプリメント対象商品 最大10%還元キャンペーン",
-        "scope": "member-stores",
-        "rate": 0.1,
-        "currencyId": "paypay",
-        "paymentAppId": "pa-paypay",
-        "bonusType": "addOn",
-        "validFrom": "2026-11-01",
-        "validTo": "2026-11-30"
-      },
-      "sourceId": "paypay-campaigns",
-      "confidence": 0.95,
-      "evidence": {
-        "evidenceQuote": "ファンケルサプリメント対象商品の購入でPayPayポイントが最大10％戻ってくるキャンペーン 2026/11/1 〜 11/30",
-        "explicitness": 1,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "campaignRateCeiling",
-      "reviewDetail": "rate 10% ≥ 10%",
-      "proposalId": "pro-0e4cc1bdac"
-    },
-    {
-      "type": "addRecord",
-      "collection": "memberships",
-      "record": {
-        "programId": "prog-paypay-fancl-supplement-2026-11",
-        "storeId": "fancl"
-      },
-      "sourceId": "paypay-campaigns",
-      "confidence": 0.95,
-      "evidence": {
-        "evidenceQuote": "ファンケルサプリメント対象商品の購入でPayPayポイントが最大10％戻ってくるキャンペーン",
-        "explicitness": 1,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "missingStoreBody",
-      "proposalId": "mem-422105f339"
-    },
-    {
-      "type": "addRecord",
-      "collection": "programs",
-      "record": {
-        "id": "prog-smbc-touch-conveni-restaurant",
-        "name": "SMBC タッチ決済対象コンビニ・飲食店 +7.5%",
+        "id": "prog-smbc-touch-conveni",
+        "name": "対象店舗でスマホのタッチ決済・モバイルオーダー",
         "scope": "member-stores",
         "rate": 0.075,
         "currencyId": "v-pt",
@@ -2990,10 +2931,10 @@
           "olive"
         ],
         "paymentAppId": "pa-visa-touch",
-        "bonusType": "primary",
-        "description": "対象のコンビニ・飲食店でスマホのVisaのタッチ決済・Mastercardタッチ決済を利用で+7.5%還元。",
+        "bonusType": "addOn",
+        "description": "対象のコンビニ・飲食店でスマホのVisa/Mastercardタッチ決済またはモバイルオーダー利用で+7.5%還元",
         "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-        "conditions": "スマホのVisaのタッチ決済・Mastercardタッチ決済またはモバイルオーダー利用時のみ。一部の店舗および指定のポイント還元にならない場合や、一定金額を超えるとタッチ決済ではなく挿入決済となり対象外になる場合あり。"
+        "conditions": "対象店舗でスマホのVisaのタッチ決済・Mastercardタッチ決済またはモバイルオーダーを利用。カード現物のタッチ決済、iD、カードの差し込み、磁気取引は対象外。一部ポイント加算対象とならない店舗および指定のポイント還元にならない場合あり。一定金額を超えるとタッチ決済ではなく挿入決済となりポイント加算対象外となる場合あり。"
       },
       "sourceId": "smbc-vpoint-up",
       "confidence": 0.81,
@@ -3004,14 +2945,43 @@
       },
       "reviewReason": "idCollision",
       "reviewDetail": "新規 program (extractor=ongoing-program は campaign 以外)",
-      "proposalId": "pro-8ea53de79a"
+      "proposalId": "pro-51a055fe7e"
     },
     {
       "type": "addRecord",
       "collection": "programs",
       "record": {
-        "id": "prog-olive-eraberu-tokuten",
-        "name": "Olive 選べる特典 Vポイントアッププログラム +1%",
+        "id": "prog-smbc-family-point",
+        "name": "家族ポイント",
+        "scope": "all-stores",
+        "rate": 0.05,
+        "currencyId": "v-pt",
+        "cardIds": [
+          "smbc-v",
+          "olive"
+        ],
+        "bonusType": "addOn",
+        "description": "家族ポイントに6人以上登録でVポイント+5%還元",
+        "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
+        "conditions": "家族ポイントに6人以上登録（主会員1人＋従会員5人以上）が条件。登録されるご家族は、対象の三井住友カードに入会した本会員さまであり、当サービスに登録することが条件。最大5%まで。"
+      },
+      "sourceId": "smbc-vpoint-up",
+      "confidence": 0.81,
+      "evidence": {
+        "evidenceQuote": "C 家族ポイントに6人以上登録（主会員1人＋従会員5人以上）＝＋5％還元",
+        "explicitness": 0.9,
+        "ambiguity": 0.1
+      },
+      "reviewReason": "idCollision",
+      "reviewDetail": "新規 program (extractor=ongoing-program は campaign 以外)",
+      "proposalId": "pro-86fc392d18"
+    },
+    {
+      "type": "addRecord",
+      "collection": "programs",
+      "record": {
+        "id": "prog-olive-selectable-bonus",
+        "name": "Oliveアカウント 選べる特典",
         "scope": "all-stores",
         "rate": 0.01,
         "currencyId": "v-pt",
@@ -3019,37 +2989,37 @@
           "olive"
         ],
         "bonusType": "addOn",
-        "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると適用。",
+        "description": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」を選択すると+1%還元",
         "officialUrl": "https://www.smbc.co.jp/kojin/vpoint-up/",
-        "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。Olive プラチナプリファード会員は2つ選択で＋2％還元。"
+        "conditions": "Oliveアカウントの選べる特典で「Vポイントアッププログラム＋1％」をご選択。Olive プラチナプリファードのお客さまは、選べる特典で「Vポイントアッププログラム＋1％」を2つ選択した場合、＋2％還元。"
       },
       "sourceId": "smbc-vpoint-up",
       "confidence": 0.81,
       "evidence": {
-        "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典 ※ で「Vポイントアッププログラム＋1％」をご選択",
+        "evidenceQuote": "Oliveアカウントの選べる特典 ＋1％ Oliveアカウントの選べる特典 で「Vポイントアッププログラム＋1％」をご選択",
         "explicitness": 0.9,
         "ambiguity": 0.1
       },
       "reviewReason": "idCollision",
       "reviewDetail": "新規 program (extractor=ongoing-program は campaign 以外)",
-      "proposalId": "pro-964378e4cd"
+      "proposalId": "pro-d6f5ef8363"
     },
     {
       "type": "addRecord",
       "collection": "memberships",
       "record": {
-        "programId": "prog-smbc-touch-conveni-restaurant",
+        "programId": "prog-smbc-touch-conveni",
         "storeId": "conv-7eleven"
       },
       "sourceId": "smbc-vpoint-up",
       "confidence": 0.9025,
       "evidence": {
-        "evidenceQuote": "条件達成でセブン-イレブン最大11%還元",
+        "evidenceQuote": "条件達成のうえで、セブン-イレブンで、スマホのVisaのタッチ決済・Mastercardタッチ決済で支払うと、最大11％ポイント還元！",
         "explicitness": 0.95,
         "ambiguity": 0.05
       },
       "reviewReason": "missingProgramBody",
-      "proposalId": "mem-1b795abe39"
+      "proposalId": "mem-3a8935449a"
     },
     {
       "type": "addRecord",
@@ -3608,24 +3578,6 @@
       },
       "reviewReason": "storeAdditionsDisabled",
       "proposalId": "sto-223761e1c5"
-    },
-    {
-      "type": "addRecord",
-      "collection": "stores",
-      "record": {
-        "id": "fancl",
-        "name": "ファンケル",
-        "category": "化粧品・美容"
-      },
-      "sourceId": "paypay-campaigns",
-      "confidence": 0.95,
-      "evidence": {
-        "evidenceQuote": "ファンケルサプリメント対象商品の購入",
-        "explicitness": 1,
-        "ambiguity": 0.05
-      },
-      "reviewReason": "unknownCategory",
-      "proposalId": "sto-93bac13ebf"
     },
     {
       "type": "addRecord",
@@ -4241,8 +4193,8 @@
     }
   ],
   "summary": {
-    "autoApplicableCount": 1,
-    "needsReviewCount": 230,
+    "autoApplicableCount": 0,
+    "needsReviewCount": 228,
     "sourcesProcessed": 4,
     "sourcesFailed": 1
   }
