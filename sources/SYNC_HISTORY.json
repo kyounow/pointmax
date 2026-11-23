@@ -2,6 +2,29 @@
   "version": 1,
   "entries": [
     {
+      "date": "2026-11-23",
+      "generatedAt": "2026-11-23T01:26:05.409Z",
+      "totalCount": 0,
+      "avgConfidence": null,
+      "sourcesProcessed": 5,
+      "bySource": [],
+      "items": [],
+      "reviewStats": {
+        "total": 240,
+        "byReason": {
+          "campaignConditional": 1,
+          "campaignRateCeiling": 3,
+          "unsupportedRateClaim": 3,
+          "missingProgramBody": 11,
+          "lowConfidence": 5,
+          "missingStoreBody": 129,
+          "idCollision": 25,
+          "storeAdditionsDisabled": 58,
+          "unknownCategory": 5
+        }
+      }
+    },
+    {
       "date": "2026-11-19",
       "generatedAt": "2026-11-19T02:15:56.062Z",
       "totalCount": 0,
@@ -1770,26 +1793,6 @@
           "excludedCategory": 5,
           "userBlocked": 3,
           "storeAdditionsDisabled": 10
-        }
-      }
-    },
-    {
-      "date": "2026-05-28",
-      "generatedAt": "2026-05-27T22:35:21.927Z",
-      "totalCount": 0,
-      "avgConfidence": null,
-      "sourcesProcessed": 13,
-      "bySource": [],
-      "items": [],
-      "reviewStats": {
-        "total": 262,
-        "byReason": {
-          "idCollision": 62,
-          "lowConfidence": 121,
-          "missingStoreBody": 19,
-          "excludedCategory": 6,
-          "userBlocked": 6,
-          "safetyFailed": 48
         }
       }
     }

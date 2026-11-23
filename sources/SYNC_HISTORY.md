@@ -3,6 +3,29 @@
 > 自動生成。最新が上、最大 52 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-11-23 (auto 0 件 / review 240 件)
+
+- source 数: 5
+
+### Review queue 内訳 (240 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 129 |
+| storeAdditionsDisabled | 58 |
+| idCollision | 25 |
+| missingProgramBody | 11 |
+| lowConfidence | 5 |
+| unknownCategory | 5 |
+| campaignRateCeiling | 3 |
+| unsupportedRateClaim | 3 |
+| campaignConditional | 1 |
+
+<details><summary>追加項目 0 件</summary>
+
+</details>
+
+---
+
 ## 2026-11-19 (auto 0 件 / review 228 件)
 
 - source 数: 4
@@ -1258,26 +1281,6 @@
 - 楽天ポイントカード提示 0.5% → ドラッグユタカ
 - 楽天ポイントカード提示 0.5% → アメリカンドラッグ
 - 楽天ポイントカード提示 0.5% → アカカベグループ
-
-</details>
-
----
-
-## 2026-05-28 (auto 0 件 / review 262 件)
-
-- source 数: 13
-
-### Review queue 内訳 (262 件)
-| 理由 | 件数 |
-|---|---:|
-| lowConfidence | 121 |
-| idCollision | 62 |
-| safetyFailed | 48 |
-| missingStoreBody | 19 |
-| excludedCategory | 6 |
-| userBlocked | 6 |
-
-<details><summary>追加項目 0 件</summary>
 
 </details>
 
