@@ -1,9 +1,12 @@
 {
   "sourceId": "paypay-campaigns",
   "sourceUrl": "https://paypay.ne.jp/event/",
-  "fetchedAt": "2026-11-19T02:15:55.527Z",
+  "fetchedAt": "2026-11-26T03:22:35.694Z",
   "promptVersion": "campaign-v3.5",
   "extractor": "campaign",
-  "notes": "キャンペーンページに、抽出要件（具体的な還元率と期間の明示、抽選・上限煽り・店舗非依存・率不明でないこと）を満たすキャンペーンが見つかりませんでした。",
-  "geminiModel": "gemini-2.5-flash"
+  "geminiModel": "gemini-2.5-flash",
+  "programs": [],
+  "memberships": [],
+  "stores": [],
+  "notes": "抽出スコープとルールに基づき、具体的な還元率と期間が明確に提示された店舗固有のキャンペーンがありませんでした。PayPayスクラッチくじ、最大還元率（実効率不明）、抽選、商品限定（店舗情報なし）のキャンペーンは除外しました。"
 }

@@ -3,6 +3,29 @@
 > 自動生成。最新が上、最大 52 件。`scripts/sync/report.ts` が cron 実行ごとに先頭追記する。
 > アプリ内「更新履歴」タブから同じデータを参照可能。
 
+## 2026-11-26 (auto 0 件 / review 275 件)
+
+- source 数: 5
+
+### Review queue 内訳 (275 件)
+| 理由 | 件数 |
+|---|---:|
+| missingStoreBody | 129 |
+| storeAdditionsDisabled | 57 |
+| missingProgramBody | 46 |
+| idCollision | 25 |
+| lowConfidence | 7 |
+| unknownCategory | 5 |
+| unsupportedRateClaim | 3 |
+| campaignRateCeiling | 2 |
+| campaignConditional | 1 |
+
+<details><summary>追加項目 0 件</summary>
+
+</details>
+
+---
+
 ## 2026-11-23 (auto 0 件 / review 240 件)
 
 - source 数: 5
@@ -1249,38 +1272,6 @@
 | excludedCategory | 8 |
 
 <details><summary>追加項目 0 件</summary>
-
-</details>
-
----
-
-## 2026-06-01 (auto 6 件 / review 139 件)
-
-- 平均 confidence: 0.90 / source 数: 14
-
-| 取得元 | 種別 | 件数 |
-|---|---|---:|
-| 楽天ポイントカード 加盟店 (公式) | 提携店舗 | 6 |
-
-### Review queue 内訳 (139 件)
-| 理由 | 件数 |
-|---|---:|
-| idCollision | 68 |
-| lowConfidence | 27 |
-| missingStoreBody | 26 |
-| storeAdditionsDisabled | 10 |
-| excludedCategory | 5 |
-| userBlocked | 3 |
-
-<details><summary>追加項目 6 件</summary>
-
-### 楽天ポイントカード 加盟店 (公式) / 提携店舗 (6)
-- 楽天ポイントカード提示 0.5% → ダイコクドラッグ
-- 楽天ポイントカード提示 0.5% → B&Dドラッグストア
-- 楽天ポイントカード提示 0.5% → ドラッグイレブン
-- 楽天ポイントカード提示 0.5% → ドラッグユタカ
-- 楽天ポイントカード提示 0.5% → アメリカンドラッグ
-- 楽天ポイントカード提示 0.5% → アカカベグループ
 
 </details>
 
